@@ -1,10 +1,10 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde_json::Value as JsonValue;
 
-/// Provenance for one layer in the effective Genex configuration.
+/// Provenance for one layer in the effective Ruxex configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigLayerSource {
-    /// Default configuration supplied with the installed Genex package.
+    /// Default configuration supplied with the installed Ruxex package.
     PackagedDefaults { file: AbsolutePathBuf },
     /// Managed preferences delivered by MDM.
     Mdm { domain: String, key: String },
@@ -17,8 +17,8 @@ pub enum ConfigLayerSource {
         file: AbsolutePathBuf,
         profile: Option<String>,
     },
-    /// Configuration loaded from a project's `.genex` directory.
-    Project { dot_genex_folder: AbsolutePathBuf },
+    /// Configuration loaded from a project's `.ruxex` directory.
+    Project { dot_ruxex_folder: AbsolutePathBuf },
     /// Overrides supplied for the current session.
     SessionFlags,
 }
@@ -86,10 +86,10 @@ pub fn format_config_layer_source(source: &ConfigLayerSource, config_toml_file: 
         ConfigLayerSource::User { file, .. } => {
             format!("user ({})", file.as_path().display())
         }
-        ConfigLayerSource::Project { dot_genex_folder } => {
+        ConfigLayerSource::Project { dot_ruxex_folder } => {
             format!(
                 "project ({}/{config_toml_file})",
-                dot_genex_folder.as_path().display()
+                dot_ruxex_folder.as_path().display()
             )
         }
         ConfigLayerSource::SessionFlags => "session-flags".to_string(),

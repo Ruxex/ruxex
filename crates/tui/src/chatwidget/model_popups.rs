@@ -127,7 +127,7 @@ impl ChatWidget {
 
         let header = self.model_menu_header(
             "Select Model and Effort",
-            "Access legacy models by running genex -m <model_name> or in your config.toml",
+            "Access legacy models by running ruxex -m <model_name> or in your config.toml",
         );
         self.show_model_selection_view(SelectionViewParams {
             view_id: Some(view_id),
@@ -616,8 +616,8 @@ impl ChatWidget {
 #[cfg(test)]
 mod tests {
     use super::model_listing_supported;
-    use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-    use genex_app_server_protocol::RemoteCompactionSupport;
+    use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+    use ruxex_app_server_protocol::RemoteCompactionSupport;
 
     #[test]
     fn model_listing_affordance_is_hidden_when_provider_does_not_support_listing() {

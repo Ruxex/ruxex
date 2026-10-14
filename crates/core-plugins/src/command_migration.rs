@@ -42,7 +42,7 @@ impl RewriteProfile {
     }
 }
 
-/// Controls how migrated commands obtain the description required by a Genex skill.
+/// Controls how migrated commands obtain the description required by a Ruxex skill.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CommandDescriptionMode {
     /// Skip source commands that do not declare a non-empty frontmatter description.

@@ -7,33 +7,33 @@ use std::time::Duration;
 
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use genex_config::AbsolutePathBuf;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirements;
-use genex_config::ConfigRequirementsToml;
-use genex_config::Constrained;
-use genex_config::ConstrainedWithSource;
-use genex_config::HookEventsToml;
-use genex_config::HookHandlerConfig;
-use genex_config::ManagedHooksRequirementsToml;
-use genex_config::MatcherGroup;
-use genex_config::RequirementSource;
-use genex_config::Sourced;
-use genex_config::TomlValue;
-use genex_plugin::ExecutorPluginHookSource;
-use genex_plugin::PluginHookSource;
-use genex_plugin::PluginId;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookExecutionMode;
-use genex_protocol::protocol::HookHandlerType;
-use genex_protocol::protocol::HookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookSource;
-use genex_protocol::protocol::HookTrustStatus;
+use ruxex_config::AbsolutePathBuf;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::Constrained;
+use ruxex_config::ConstrainedWithSource;
+use ruxex_config::HookEventsToml;
+use ruxex_config::HookHandlerConfig;
+use ruxex_config::ManagedHooksRequirementsToml;
+use ruxex_config::MatcherGroup;
+use ruxex_config::RequirementSource;
+use ruxex_config::Sourced;
+use ruxex_config::TomlValue;
+use ruxex_plugin::ExecutorPluginHookSource;
+use ruxex_plugin::PluginHookSource;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookExecutionMode;
+use ruxex_protocol::protocol::HookHandlerType;
+use ruxex_protocol::protocol::HookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookSource;
+use ruxex_protocol::protocol::HookTrustStatus;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::Notify;
@@ -58,7 +58,7 @@ fn cwd() -> AbsolutePathBuf {
 
 fn mdm_requirement_source() -> RequirementSource {
     RequirementSource::MdmManagedPreferences {
-        domain: "com.genex.genex".to_string(),
+        domain: "com.ruxex.ruxex".to_string(),
         key: "requirements_toml_base64".to_string(),
     }
 }
@@ -256,7 +256,7 @@ fn required_managed_hooks_allow_disabled_hooks_feature() {
     for plugin_hook_sources in [
         Vec::new(),
         vec![bundled_cleanup_source(
-            "browser@genex-bundled",
+            "browser@ruxex-bundled",
             "node_repl",
             "Stop",
         )],
@@ -1384,14 +1384,14 @@ fn allow_managed_hooks_only_keeps_managed_requirement_and_config_layer_hooks() {
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.genex.genex".to_string(),
+                    domain: "com.ruxex.ruxex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
             ),
             ConfigLayerEntry::new(
                 ConfigLayerSource::Mdm {
-                    domain: "com.genex.genex".to_string(),
+                    domain: "com.ruxex.ruxex".to_string(),
                     key: "config".to_string(),
                 },
                 config_toml_with_pre_tool_use("python3 /tmp/mdm-hook.py"),
@@ -1716,7 +1716,7 @@ fn bundled_cleanup_source(plugin_id: &str, server: &str, event: &str) -> PluginH
     PluginHookSource {
         plugin_id: PluginId::parse(plugin_id).expect("plugin ID"),
         plugin_data_root: plugin_root.join("data"),
-        source_path: plugin_root.join(".genex-plugin/plugin.json"),
+        source_path: plugin_root.join(".ruxex-plugin/plugin.json"),
         source_relative_path: "plugin.json#hooks[0]".to_string(),
         plugin_root,
         hooks: serde_json::from_value(serde_json::json!({
@@ -1734,12 +1734,12 @@ fn bundled_cleanup_source(plugin_id: &str, server: &str, event: &str) -> PluginH
 #[test]
 fn bundled_cleanup_hooks_are_trusted_without_saved_hashes() {
     for (plugin_id, server) in [
-        ("browser@genex-bundled", "node_repl"),
-        ("chrome@genex-bundled", "node_repl"),
-        ("chrome-dev@genex-bundled", "node_repl"),
-        ("chrome-internal@genex-bundled", "node_repl"),
-        ("computer-use@genex-bundled", "node_repl"),
-        ("unified-computer-use@genex-bundled", "cua_repl"),
+        ("browser@ruxex-bundled", "node_repl"),
+        ("chrome@ruxex-bundled", "node_repl"),
+        ("chrome-dev@ruxex-bundled", "node_repl"),
+        ("chrome-internal@ruxex-bundled", "node_repl"),
+        ("computer-use@ruxex-bundled", "node_repl"),
+        ("unified-computer-use@ruxex-bundled", "cua_repl"),
     ] {
         for event in ["Stop", "Interrupt", "SubagentStop"] {
             let discovered = super::discovery::discover_handlers(
@@ -1771,7 +1771,7 @@ fn bundled_cleanup_hooks_are_trusted_without_saved_hashes() {
 
 #[test]
 fn bundled_cleanup_trust_does_not_extend_to_other_handlers() {
-    let mut source = bundled_cleanup_source("browser@genex-bundled", "node_repl", "Stop");
+    let mut source = bundled_cleanup_source("browser@ruxex-bundled", "node_repl", "Stop");
     let cleanup = source.hooks.stop[0].hooks[0].clone();
     source.hooks.stop[0].hooks.extend([
         HookHandlerConfig::McpTool {
@@ -1826,15 +1826,15 @@ fn bundled_cleanup_trust_does_not_extend_to_other_handlers() {
 #[test]
 fn bundled_cleanup_trust_requires_matching_plugin_server_and_event() {
     for (plugin_id, server, event) in [
-        ("other@genex-bundled", "node_repl", "Stop"),
+        ("other@ruxex-bundled", "node_repl", "Stop"),
         ("browser@other", "node_repl", "Stop"),
-        ("browser@genex-bundled-alpha", "node_repl", "Stop"),
-        ("browser@genex-bundled", "node_repl", "PreToolUse"),
-        ("browser@genex-bundled", "cua_repl", "Stop"),
-        ("unified-computer-use@genex-bundled", "node_repl", "Stop"),
+        ("browser@ruxex-bundled-alpha", "node_repl", "Stop"),
+        ("browser@ruxex-bundled", "node_repl", "PreToolUse"),
+        ("browser@ruxex-bundled", "cua_repl", "Stop"),
+        ("unified-computer-use@ruxex-bundled", "node_repl", "Stop"),
         ("unified-computer-use@other", "cua_repl", "Stop"),
         (
-            "unified-computer-use@genex-bundled",
+            "unified-computer-use@ruxex-bundled",
             "cua_repl",
             "PreToolUse",
         ),
@@ -1883,7 +1883,7 @@ fn local_mcp_cleanup_hooks_require_saved_trust() {
 
 #[test]
 fn builtin_cleanup_ignores_disablement_but_preserves_managed_only_policy() {
-    let source = bundled_cleanup_source("browser@genex-bundled", "node_repl", "Stop");
+    let source = bundled_cleanup_source("browser@ruxex-bundled", "node_repl", "Stop");
     let discovered = super::discovery::discover_handlers(
         /*config_layer_stack*/ None,
         vec![source.clone()],
@@ -1948,7 +1948,7 @@ fn builtin_cleanup_ignores_disablement_but_preserves_managed_only_policy() {
 
 #[test]
 fn disabled_hooks_feature_keeps_builtin_cleanup_but_not_trusted_plugin_hooks() {
-    let mut source = bundled_cleanup_source("browser@genex-bundled", "node_repl", "Stop");
+    let mut source = bundled_cleanup_source("browser@ruxex-bundled", "node_repl", "Stop");
     source.hooks.stop[0].hooks.push(HookHandlerConfig::Command {
         command: "echo ordinary hook".to_string(),
         timeout_sec: None,
@@ -2259,17 +2259,17 @@ fn executor_stop_hook_fixture() -> (
         executor,
     );
     let source = ExecutorPluginHookSource {
-        plugin_id: PluginId::parse("computer-use@genex-bundled").expect("valid plugin ID"),
+        plugin_id: PluginId::parse("computer-use@ruxex-bundled").expect("valid plugin ID"),
         environment_id: "executor-a".to_string(),
         mcp_environment_id: None,
         mcp_metadata: None,
         plugin_root: "file:///plugins/computer-use"
             .parse()
             .expect("valid plugin root URI"),
-        manifest_path: "file:///plugins/computer-use/.genex-plugin/plugin.json"
+        manifest_path: "file:///plugins/computer-use/.ruxex-plugin/plugin.json"
             .parse()
             .expect("valid plugin manifest URI"),
-        source_relative_path: ".genex-plugin/plugin.json#hooks[0]".to_string(),
+        source_relative_path: ".ruxex-plugin/plugin.json#hooks[0]".to_string(),
         hooks: HookEventsToml {
             stop: vec![MatcherGroup {
                 matcher: None,
@@ -2298,14 +2298,14 @@ fn executor_stop_hook_fixture() -> (
             status_message: None,
             additional_context_limit: Default::default(),
             source_path: HandlerSourcePath::ExecutorScoped {
-                plugin_id: PluginId::parse("computer-use@genex-bundled").expect("valid plugin ID"),
+                plugin_id: PluginId::parse("computer-use@ruxex-bundled").expect("valid plugin ID"),
                 environment_id: "executor-a".to_string(),
                 mcp_environment_id: None,
                 mcp_metadata: None,
-                manifest_path: "file:///plugins/computer-use/.genex-plugin/plugin.json"
+                manifest_path: "file:///plugins/computer-use/.ruxex-plugin/plugin.json"
                     .parse()
                     .expect("valid plugin manifest URI"),
-                source_relative_path: ".genex-plugin/plugin.json#hooks[0]".to_string(),
+                source_relative_path: ".ruxex-plugin/plugin.json#hooks[0]".to_string(),
             },
             source: HookSource::Plugin,
             display_order: 0,
@@ -2325,7 +2325,7 @@ fn executor_stop_hook_fixture() -> (
     );
     assert!(!engine.handlers[0].can_apply_control_effects());
     let request_metadata = Some(serde_json::Map::from_iter([(
-        "x-genex-turn-metadata".to_string(),
+        "x-ruxex-turn-metadata".to_string(),
         serde_json::json!({ "turn_id": "turn-1" }),
     )]));
     let request = StopRequest {
@@ -2474,7 +2474,7 @@ fn executor_stop_hooks_register_each_target_environment_once() {
     let (mut engine, _, _, _, first_source) = executor_stop_hook_fixture();
     let mut expected_handlers = engine.handlers.clone();
     let mut duplicate_target = first_source.clone();
-    duplicate_target.plugin_id = PluginId::parse("chrome@genex-bundled").expect("valid plugin ID");
+    duplicate_target.plugin_id = PluginId::parse("chrome@ruxex-bundled").expect("valid plugin ID");
     let mut second_source = first_source.clone();
     second_source.environment_id = "executor-b".to_string();
     let mut second_handler = expected_handlers[0].clone();
@@ -2693,7 +2693,7 @@ async fn mcp_tool_hooks_expand_event_input_and_apply_pre_tool_decisions() {
     );
     assert_eq!(
         outcome.hook_events[0].run.execution_mode,
-        genex_protocol::protocol::HookExecutionMode::Sync
+        ruxex_protocol::protocol::HookExecutionMode::Sync
     );
     assert_eq!(
         *calls.lock().expect("lock MCP calls"),

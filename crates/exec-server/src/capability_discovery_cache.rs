@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 use tokio::sync::Mutex;
 
 use crate::CapabilityRootDiscoverRequest;

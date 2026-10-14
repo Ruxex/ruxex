@@ -4,7 +4,7 @@ use std::path::Path;
 
 use super::PageCursor;
 use super::repository_cwd_filter;
-use genex_app_server_protocol::ThreadListCwdFilter;
+use ruxex_app_server_protocol::ThreadListCwdFilter;
 
 /// Holds the expanded checkout set for the cursor's entire listing cycle.
 #[derive(Default)]

@@ -24,40 +24,40 @@ use crate::protocol::v2::UserInput;
 use crate::protocol::v2::WebSearchAction;
 use crate::protocol::v2::WebSearchItem;
 use crate::protocol::v2::web_search_action_from_core;
-use genex_extension_items::image_generation::ImageGenerationItem;
-use genex_protocol::items::parse_hook_prompt_message;
-use genex_protocol::protocol::AgentMessageEvent;
-use genex_protocol::protocol::AgentReasoningEvent;
-use genex_protocol::protocol::AgentReasoningRawContentEvent;
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use genex_protocol::protocol::ContextCompactedEvent;
-use genex_protocol::protocol::DynamicToolCallResponseEvent;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandBeginEvent;
-use genex_protocol::protocol::ExecCommandEndEvent;
-use genex_protocol::protocol::ImageGenerationBeginEvent;
-use genex_protocol::protocol::ImageGenerationEndEvent;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ItemStartedEvent;
-use genex_protocol::protocol::McpToolCallBeginEvent;
-use genex_protocol::protocol::McpToolCallEndEvent;
-use genex_protocol::protocol::PatchApplyBeginEvent;
-use genex_protocol::protocol::PatchApplyEndEvent;
-use genex_protocol::protocol::ThreadRolledBackEvent;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_protocol::protocol::UserMessageImageKind;
-use genex_protocol::protocol::ViewImageToolCallEvent;
-use genex_protocol::protocol::WebSearchBeginEvent;
-use genex_protocol::protocol::WebSearchEndEvent;
+use ruxex_extension_items::image_generation::ImageGenerationItem;
+use ruxex_protocol::items::parse_hook_prompt_message;
+use ruxex_protocol::protocol::AgentMessageEvent;
+use ruxex_protocol::protocol::AgentReasoningEvent;
+use ruxex_protocol::protocol::AgentReasoningRawContentEvent;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use ruxex_protocol::protocol::ContextCompactedEvent;
+use ruxex_protocol::protocol::DynamicToolCallResponseEvent;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandBeginEvent;
+use ruxex_protocol::protocol::ExecCommandEndEvent;
+use ruxex_protocol::protocol::ImageGenerationBeginEvent;
+use ruxex_protocol::protocol::ImageGenerationEndEvent;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ItemStartedEvent;
+use ruxex_protocol::protocol::McpToolCallBeginEvent;
+use ruxex_protocol::protocol::McpToolCallEndEvent;
+use ruxex_protocol::protocol::PatchApplyBeginEvent;
+use ruxex_protocol::protocol::PatchApplyEndEvent;
+use ruxex_protocol::protocol::ThreadRolledBackEvent;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_protocol::protocol::UserMessageImageKind;
+use ruxex_protocol::protocol::ViewImageToolCallEvent;
+use ruxex_protocol::protocol::WebSearchBeginEvent;
+use ruxex_protocol::protocol::WebSearchEndEvent;
 #[cfg(test)]
-use genex_protocol::review_format::REVIEW_FALLBACK_MESSAGE;
-use genex_rollout::CompactedItem;
-use genex_rollout::RolloutItem;
+use ruxex_protocol::review_format::REVIEW_FALLBACK_MESSAGE;
+use ruxex_rollout::CompactedItem;
+use ruxex_rollout::RolloutItem;
 use std::collections::HashMap;
 use tracing::warn;
 use uuid::Uuid;
@@ -71,9 +71,9 @@ use crate::protocol::v2::PatchApplyStatus;
 #[cfg(test)]
 use crate::protocol::v2::PatchChangeKind;
 #[cfg(test)]
-use genex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use ruxex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
 #[cfg(test)]
-use genex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use ruxex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
 
 /// Convert persisted [`RolloutItem`] entries into a sequence of [`Turn`] values.
 ///
@@ -309,7 +309,7 @@ impl ThreadHistoryBuilder {
     /// tracking used by running thread resume/rejoin.
     ///
     /// This function should handle all EventMsg variants that can be persisted in a rollout file.
-    /// See `should_persist_event_msg` in `genex-rs/core/rollout/policy.rs`.
+    /// See `should_persist_event_msg` in `ruxex-rs/core/rollout/policy.rs`.
     pub fn handle_event(&mut self, event: &EventMsg) {
         match event {
             EventMsg::UserMessage(payload) => self.handle_user_message(payload),
@@ -419,8 +419,8 @@ impl ThreadHistoryBuilder {
         self.active_change_set.take().unwrap_or_default()
     }
 
-    fn handle_response_item(&mut self, item: &genex_protocol::models::ResponseItem) {
-        let genex_protocol::models::ResponseItem::Message {
+    fn handle_response_item(&mut self, item: &ruxex_protocol::models::ResponseItem) {
+        let ruxex_protocol::models::ResponseItem::Message {
             role, content, id, ..
         } = item
         else {
@@ -570,33 +570,33 @@ impl ThreadHistoryBuilder {
     fn handle_materialized_item_lifecycle(
         &mut self,
         turn_id: &str,
-        item: &genex_protocol::items::TurnItem,
+        item: &ruxex_protocol::items::TurnItem,
     ) {
         let is_review_mode_item = matches!(
             item,
-            genex_protocol::items::TurnItem::EnteredReviewMode(_)
-                | genex_protocol::items::TurnItem::ExitedReviewMode(_)
+            ruxex_protocol::items::TurnItem::EnteredReviewMode(_)
+                | ruxex_protocol::items::TurnItem::ExitedReviewMode(_)
         );
         let should_upsert = match item {
-            genex_protocol::items::TurnItem::Plan(plan) => !plan.text.is_empty(),
-            genex_protocol::items::TurnItem::HookPrompt(_)
-            | genex_protocol::items::TurnItem::FunctionCallOutput(_)
-            | genex_protocol::items::TurnItem::CommandExecution(_)
-            | genex_protocol::items::TurnItem::DynamicToolCall(_)
-            | genex_protocol::items::TurnItem::CollabAgentToolCall(_)
-            | genex_protocol::items::TurnItem::SubAgentActivity(_)
-            | genex_protocol::items::TurnItem::Extension(_)
-            | genex_protocol::items::TurnItem::EnteredReviewMode(_)
-            | genex_protocol::items::TurnItem::ExitedReviewMode(_) => true,
-            genex_protocol::items::TurnItem::UserMessage(_)
-            | genex_protocol::items::TurnItem::AgentMessage(_)
-            | genex_protocol::items::TurnItem::Reasoning(_)
-            | genex_protocol::items::TurnItem::WebSearch(_)
-            | genex_protocol::items::TurnItem::ImageView(_)
-            | genex_protocol::items::TurnItem::ImageGeneration(_)
-            | genex_protocol::items::TurnItem::FileChange(_)
-            | genex_protocol::items::TurnItem::McpToolCall(_)
-            | genex_protocol::items::TurnItem::ContextCompaction(_) => false,
+            ruxex_protocol::items::TurnItem::Plan(plan) => !plan.text.is_empty(),
+            ruxex_protocol::items::TurnItem::HookPrompt(_)
+            | ruxex_protocol::items::TurnItem::FunctionCallOutput(_)
+            | ruxex_protocol::items::TurnItem::CommandExecution(_)
+            | ruxex_protocol::items::TurnItem::DynamicToolCall(_)
+            | ruxex_protocol::items::TurnItem::CollabAgentToolCall(_)
+            | ruxex_protocol::items::TurnItem::SubAgentActivity(_)
+            | ruxex_protocol::items::TurnItem::Extension(_)
+            | ruxex_protocol::items::TurnItem::EnteredReviewMode(_)
+            | ruxex_protocol::items::TurnItem::ExitedReviewMode(_) => true,
+            ruxex_protocol::items::TurnItem::UserMessage(_)
+            | ruxex_protocol::items::TurnItem::AgentMessage(_)
+            | ruxex_protocol::items::TurnItem::Reasoning(_)
+            | ruxex_protocol::items::TurnItem::WebSearch(_)
+            | ruxex_protocol::items::TurnItem::ImageView(_)
+            | ruxex_protocol::items::TurnItem::ImageGeneration(_)
+            | ruxex_protocol::items::TurnItem::FileChange(_)
+            | ruxex_protocol::items::TurnItem::McpToolCall(_)
+            | ruxex_protocol::items::TurnItem::ContextCompaction(_) => false,
         };
 
         if should_upsert {
@@ -673,7 +673,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_dynamic_tool_call_request(
         &mut self,
-        payload: &genex_protocol::dynamic_tools::DynamicToolCallRequest,
+        payload: &ruxex_protocol::dynamic_tools::DynamicToolCallRequest,
     ) {
         let item = ThreadItem::DynamicToolCall {
             id: payload.call_id.clone(),
@@ -830,7 +830,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_begin(
         &mut self,
-        payload: &genex_protocol::protocol::CollabAgentSpawnBeginEvent,
+        payload: &ruxex_protocol::protocol::CollabAgentSpawnBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -848,7 +848,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_end(
         &mut self,
-        payload: &genex_protocol::protocol::CollabAgentSpawnEndEvent,
+        payload: &ruxex_protocol::protocol::CollabAgentSpawnEndEvent,
     ) {
         let has_receiver = payload.new_thread_id.is_some();
         let status = match &payload.status {
@@ -882,7 +882,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_begin(
         &mut self,
-        payload: &genex_protocol::protocol::CollabAgentInteractionBeginEvent,
+        payload: &ruxex_protocol::protocol::CollabAgentInteractionBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -900,7 +900,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_end(
         &mut self,
-        payload: &genex_protocol::protocol::CollabAgentInteractionEndEvent,
+        payload: &ruxex_protocol::protocol::CollabAgentInteractionEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -923,7 +923,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_sub_agent_activity(
         &mut self,
-        payload: &genex_protocol::protocol::SubAgentActivityEvent,
+        payload: &ruxex_protocol::protocol::SubAgentActivityEvent,
     ) {
         self.upsert_item_in_current_turn(ThreadItem::SubAgentActivity {
             id: payload.event_id.clone(),
@@ -935,7 +935,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_begin(
         &mut self,
-        payload: &genex_protocol::protocol::CollabWaitingBeginEvent,
+        payload: &ruxex_protocol::protocol::CollabWaitingBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -957,7 +957,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_end(
         &mut self,
-        payload: &genex_protocol::protocol::CollabWaitingEndEvent,
+        payload: &ruxex_protocol::protocol::CollabWaitingEndEvent,
     ) {
         let status = if payload
             .statuses
@@ -991,7 +991,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_close_begin(
         &mut self,
-        payload: &genex_protocol::protocol::CollabCloseBeginEvent,
+        payload: &ruxex_protocol::protocol::CollabCloseBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -1007,7 +1007,7 @@ impl ThreadHistoryBuilder {
         self.upsert_item_in_current_turn(item);
     }
 
-    fn handle_collab_close_end(&mut self, payload: &genex_protocol::protocol::CollabCloseEndEvent) {
+    fn handle_collab_close_end(&mut self, payload: &ruxex_protocol::protocol::CollabCloseEndEvent) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
             _ => CollabAgentToolCallStatus::Completed,
@@ -1034,7 +1034,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_begin(
         &mut self,
-        payload: &genex_protocol::protocol::CollabResumeBeginEvent,
+        payload: &ruxex_protocol::protocol::CollabResumeBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -1052,7 +1052,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_end(
         &mut self,
-        payload: &genex_protocol::protocol::CollabResumeEndEvent,
+        payload: &ruxex_protocol::protocol::CollabResumeEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -1085,7 +1085,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_entered_review_mode(
         &mut self,
-        payload: &genex_protocol::protocol::EnteredReviewModeEvent,
+        payload: &ruxex_protocol::protocol::EnteredReviewModeEvent,
     ) {
         let review = payload
             .user_facing_hint
@@ -1103,7 +1103,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_exited_review_mode(
         &mut self,
-        payload: &genex_protocol::protocol::ExitedReviewModeEvent,
+        payload: &ruxex_protocol::protocol::ExitedReviewModeEvent,
     ) {
         let review = review_output_text(payload.review_output.as_ref());
         let id = payload
@@ -1144,7 +1144,7 @@ impl ThreadHistoryBuilder {
             turn.error = Some(V2TurnError {
                 misalignment: payload.misalignment.clone().map(Into::into),
                 message: payload.message.clone(),
-                genex_error_info: payload.genex_error_info.clone().map(Into::into),
+                ruxex_error_info: payload.ruxex_error_info.clone().map(Into::into),
                 additional_details: None,
             });
             tracking_changes.then(|| ThreadHistoryTurnChange::from_pending_turn(turn))
@@ -1204,7 +1204,7 @@ impl ThreadHistoryBuilder {
         let terminal_error = payload.error.as_ref().map(|error| V2TurnError {
             misalignment: error.misalignment.clone().map(Into::into),
             message: error.message.clone(),
-            genex_error_info: error.genex_error_info.clone().map(Into::into),
+            ruxex_error_info: error.ruxex_error_info.clone().map(Into::into),
             additional_details: None,
         });
         let apply_completion = |turn: &mut PendingTurn| {
@@ -1526,19 +1526,19 @@ impl ThreadHistoryBuilder {
 }
 
 fn convert_dynamic_tool_content_items(
-    items: &[genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
+    items: &[ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
 ) -> Vec<DynamicToolCallOutputContentItem> {
     items
         .iter()
         .cloned()
         .map(|item| match item {
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
                 DynamicToolCallOutputContentItem::InputText { text }
             }
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url,
             } => DynamicToolCallOutputContentItem::InputImage { image_url },
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
                 audio_url,
             } => DynamicToolCallOutputContentItem::InputAudio { audio_url },
         })
@@ -1663,51 +1663,51 @@ mod tests {
     use crate::protocol::v2::AsyncUserInputQuestion;
     use crate::protocol::v2::CommandExecutionSource;
     use crate::protocol::v2::CommandExecutionStatus;
-    use genex_extension_items::ExtensionItem as CoreExtensionItem;
-    use genex_extension_items::sleep::SleepItem as CoreSleepItem;
-    use genex_protocol::ThreadId;
-    use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-    use genex_protocol::items::CommandExecutionItem as CoreCommandExecutionItem;
-    use genex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
-    use genex_protocol::items::EnteredReviewModeItem as CoreEnteredReviewModeItem;
-    use genex_protocol::items::ExitedReviewModeItem as CoreExitedReviewModeItem;
-    use genex_protocol::items::HookPromptFragment as CoreHookPromptFragment;
-    use genex_protocol::items::SubAgentActivityItem as CoreSubAgentActivityItem;
-    use genex_protocol::items::TurnItem as CoreTurnItem;
-    use genex_protocol::items::UserMessageItem as CoreUserMessageItem;
-    use genex_protocol::items::build_hook_prompt_message;
-    use genex_protocol::mcp::CallToolResult;
-    use genex_protocol::models::ImageDetail;
-    use genex_protocol::models::MessagePhase as CoreMessagePhase;
-    use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
-    use genex_protocol::parse_command::ParsedCommand;
-    use genex_protocol::protocol::AgentReasoningEvent;
-    use genex_protocol::protocol::AgentReasoningRawContentEvent;
-    use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-    use genex_protocol::protocol::DynamicToolCallResponseEvent;
-    use genex_protocol::protocol::EnteredReviewModeEvent;
-    use genex_protocol::protocol::ExecCommandBeginEvent;
-    use genex_protocol::protocol::ExecCommandEndEvent;
-    use genex_protocol::protocol::ExecCommandSource;
-    use genex_protocol::protocol::ExitedReviewModeEvent;
-    use genex_protocol::protocol::GenexErrorInfo;
-    use genex_protocol::protocol::ItemStartedEvent;
-    use genex_protocol::protocol::McpInvocation;
-    use genex_protocol::protocol::McpToolCallEndEvent;
-    use genex_protocol::protocol::PatchApplyBeginEvent;
-    use genex_protocol::protocol::ReviewTarget;
-    use genex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
-    use genex_protocol::protocol::ThreadRolledBackEvent;
-    use genex_protocol::protocol::TurnAbortReason;
-    use genex_protocol::protocol::TurnAbortedEvent;
-    use genex_protocol::protocol::TurnCompleteEvent;
-    use genex_protocol::protocol::TurnStartedEvent;
-    use genex_protocol::protocol::UserMessageEvent;
-    use genex_protocol::protocol::WebSearchBeginEvent;
-    use genex_protocol::protocol::WebSearchEndEvent;
-    use genex_rollout::CompactedItem;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_extension_items::ExtensionItem as CoreExtensionItem;
+    use ruxex_extension_items::sleep::SleepItem as CoreSleepItem;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+    use ruxex_protocol::items::CommandExecutionItem as CoreCommandExecutionItem;
+    use ruxex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
+    use ruxex_protocol::items::EnteredReviewModeItem as CoreEnteredReviewModeItem;
+    use ruxex_protocol::items::ExitedReviewModeItem as CoreExitedReviewModeItem;
+    use ruxex_protocol::items::HookPromptFragment as CoreHookPromptFragment;
+    use ruxex_protocol::items::SubAgentActivityItem as CoreSubAgentActivityItem;
+    use ruxex_protocol::items::TurnItem as CoreTurnItem;
+    use ruxex_protocol::items::UserMessageItem as CoreUserMessageItem;
+    use ruxex_protocol::items::build_hook_prompt_message;
+    use ruxex_protocol::mcp::CallToolResult;
+    use ruxex_protocol::models::ImageDetail;
+    use ruxex_protocol::models::MessagePhase as CoreMessagePhase;
+    use ruxex_protocol::models::WebSearchAction as CoreWebSearchAction;
+    use ruxex_protocol::parse_command::ParsedCommand;
+    use ruxex_protocol::protocol::AgentReasoningEvent;
+    use ruxex_protocol::protocol::AgentReasoningRawContentEvent;
+    use ruxex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+    use ruxex_protocol::protocol::DynamicToolCallResponseEvent;
+    use ruxex_protocol::protocol::EnteredReviewModeEvent;
+    use ruxex_protocol::protocol::ExecCommandBeginEvent;
+    use ruxex_protocol::protocol::ExecCommandEndEvent;
+    use ruxex_protocol::protocol::ExecCommandSource;
+    use ruxex_protocol::protocol::ExitedReviewModeEvent;
+    use ruxex_protocol::protocol::RuxexErrorInfo;
+    use ruxex_protocol::protocol::ItemStartedEvent;
+    use ruxex_protocol::protocol::McpInvocation;
+    use ruxex_protocol::protocol::McpToolCallEndEvent;
+    use ruxex_protocol::protocol::PatchApplyBeginEvent;
+    use ruxex_protocol::protocol::ReviewTarget;
+    use ruxex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
+    use ruxex_protocol::protocol::ThreadRolledBackEvent;
+    use ruxex_protocol::protocol::TurnAbortReason;
+    use ruxex_protocol::protocol::TurnAbortedEvent;
+    use ruxex_protocol::protocol::TurnCompleteEvent;
+    use ruxex_protocol::protocol::TurnStartedEvent;
+    use ruxex_protocol::protocol::UserMessageEvent;
+    use ruxex_protocol::protocol::WebSearchBeginEvent;
+    use ruxex_protocol::protocol::WebSearchEndEvent;
+    use ruxex_rollout::CompactedItem;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use std::time::Duration;
@@ -2441,7 +2441,7 @@ mod tests {
                 item: CoreTurnItem::UserMessage(CoreUserMessageItem {
                     id: "user-item-id".to_string(),
                     client_id: Some("client-message-1".to_string()),
-                    content: vec![genex_protocol::user_input::UserInput::Text {
+                    content: vec![ruxex_protocol::user_input::UserInput::Text {
                         text: "hello".into(),
                         text_elements: Vec::new(),
                     }],
@@ -2549,7 +2549,7 @@ mod tests {
                 result: "Zm9v".into(),
                 transparent_background: Some(true),
                 failure: Some(
-                    genex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
+                    ruxex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
                         limit_id: "image_gen".into(),
                         resets_at: Some(1_786_150_800),
                     },
@@ -2595,7 +2595,7 @@ mod tests {
                         result: "Zm9v".into(),
                         transparent_background: Some(true),
                         failure: Some(
-                            genex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
+                            ruxex_extension_items::image_generation::ImageGenerationFailure::UsageLimitExceeded {
                                 limit_id: "image_gen".into(),
                                 resets_at: Some(1_786_150_800),
                             },
@@ -2994,15 +2994,15 @@ mod tests {
             }),
             EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "genex".into(),
+                query: "ruxex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("genex".into()),
+                    query: Some("ruxex".into()),
                     queries: None,
                 },
                 results: Some(vec![serde_json::json!({
                     "type": "text_result",
                     "ref_id": "turn0search0",
-                    "url": "https://example.com/genex",
+                    "url": "https://example.com/ruxex",
                 })]),
             }),
             EventMsg::ExecCommandEnd(ExecCommandEndEvent {
@@ -3055,15 +3055,15 @@ mod tests {
             turns[0].items[1],
             ThreadItem::WebSearch(WebSearchItem {
                 id: "search-1".into(),
-                query: "genex".into(),
+                query: "ruxex".into(),
                 action: Some(WebSearchAction::Search {
-                    query: Some("genex".into()),
+                    query: Some("ruxex".into()),
                     queries: None,
                 }),
                 results: Some(vec![serde_json::json!({
                     "type": "text_result",
                     "ref_id": "turn0search0",
-                    "url": "https://example.com/genex",
+                    "url": "https://example.com/ruxex",
                 })]),
             })
         );
@@ -3200,11 +3200,11 @@ mod tests {
                 ..Default::default()
             }),
             EventMsg::DynamicToolCallRequest(
-                genex_protocol::dynamic_tools::DynamicToolCallRequest {
+                ruxex_protocol::dynamic_tools::DynamicToolCallRequest {
                     call_id: "dyn-1".into(),
                     turn_id: "turn-1".into(),
                     started_at_ms: 0,
-                    namespace: Some("genex_app".into()),
+                    namespace: Some("ruxex_app".into()),
                     tool: "lookup_ticket".into(),
                     arguments: serde_json::json!({"id":"ABC-123"}),
                 },
@@ -3213,7 +3213,7 @@ mod tests {
                 call_id: "dyn-1".into(),
                 turn_id: "turn-1".into(),
                 completed_at_ms: 0,
-                namespace: Some("genex_app".into()),
+                namespace: Some("ruxex_app".into()),
                 tool: "lookup_ticket".into(),
                 arguments: serde_json::json!({"id":"ABC-123"}),
                 content_items: vec![
@@ -3244,7 +3244,7 @@ mod tests {
             turns[0].items[1],
             ThreadItem::DynamicToolCall {
                 id: "dyn-1".into(),
-                namespace: Some("genex_app".into()),
+                namespace: Some("ruxex_app".into()),
                 tool: "lookup_ticket".into(),
                 arguments: serde_json::json!({"id":"ABC-123"}),
                 status: DynamicToolCallStatus::Completed,
@@ -3312,7 +3312,7 @@ mod tests {
                 success: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    genex_protocol::protocol::FileChange::Add {
+                    ruxex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -3365,9 +3365,9 @@ mod tests {
 
     #[test]
     fn assigns_late_legacy_mcp_completion_to_original_turn() {
-        use genex_protocol::items::McpToolCallItem;
-        use genex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
-        use genex_protocol::protocol::HasLegacyEvent;
+        use ruxex_protocol::items::McpToolCallItem;
+        use ruxex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
+        use ruxex_protocol::protocol::HasLegacyEvent;
 
         let completion = ItemCompletedEvent {
             thread_id: ThreadId::new(),
@@ -3689,7 +3689,7 @@ mod tests {
                 auto_approved: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    genex_protocol::protocol::FileChange::Add {
+                    ruxex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -3758,7 +3758,7 @@ mod tests {
                 started_at_ms: 0,
                 changes: [(
                     PathBuf::from("README.md"),
-                    genex_protocol::protocol::FileChange::Add {
+                    ruxex_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -3925,7 +3925,7 @@ mod tests {
                 error: Some(ErrorEvent {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
+                    ruxex_error_info: Some(RuxexErrorInfo::ServerOverloaded),
                 }),
                 completed_at: Some(20),
                 duration_ms: Some(10_000),
@@ -3957,8 +3957,8 @@ mod tests {
                         misalignment: None,
                         message: "Selected model is at capacity. Please try a different model."
                             .into(),
-                        genex_error_info: Some(
-                            crate::protocol::v2::GenexErrorInfo::ServerOverloaded,
+                        ruxex_error_info: Some(
+                            crate::protocol::v2::RuxexErrorInfo::ServerOverloaded,
                         ),
                         additional_details: None,
                     }),
@@ -4118,7 +4118,7 @@ mod tests {
                 local_images: Vec::new(),
                 ..Default::default()
             }),
-            EventMsg::CollabResumeEnd(genex_protocol::protocol::CollabResumeEndEvent {
+            EventMsg::CollabResumeEnd(ruxex_protocol::protocol::CollabResumeEndEvent {
                 call_id: "resume-1".into(),
                 completed_at_ms: 0,
                 sender_thread_id: ThreadId::try_from("00000000-0000-0000-0000-000000000001")
@@ -4177,7 +4177,7 @@ mod tests {
                 local_images: Vec::new(),
                 ..Default::default()
             }),
-            EventMsg::CollabAgentSpawnEnd(genex_protocol::protocol::CollabAgentSpawnEndEvent {
+            EventMsg::CollabAgentSpawnEnd(ruxex_protocol::protocol::CollabAgentSpawnEndEvent {
                 call_id: "spawn-1".into(),
                 completed_at_ms: 0,
                 sender_thread_id,
@@ -4186,7 +4186,7 @@ mod tests {
                 new_agent_role: Some("explorer".into()),
                 prompt: "inspect the repo".into(),
                 model: "legacy-model".into(),
-                reasoning_effort: genex_protocol::model_types::ReasoningEffort::Medium,
+                reasoning_effort: ruxex_protocol::model_types::ReasoningEffort::Medium,
                 status: AgentStatus::Running,
             }),
         ];
@@ -4208,7 +4208,7 @@ mod tests {
                 receiver_thread_ids: vec!["00000000-0000-0000-0000-000000000002".into()],
                 prompt: Some("inspect the repo".into()),
                 model: Some("legacy-model".into()),
-                reasoning_effort: Some(genex_protocol::model_types::ReasoningEffort::Medium),
+                reasoning_effort: Some(ruxex_protocol::model_types::ReasoningEffort::Medium),
                 agents_states: [(
                     "00000000-0000-0000-0000-000000000002".into(),
                     CollabAgentState {
@@ -4241,7 +4241,7 @@ mod tests {
                 ..Default::default()
             }),
             EventMsg::CollabAgentInteractionBegin(
-                genex_protocol::protocol::CollabAgentInteractionBeginEvent {
+                ruxex_protocol::protocol::CollabAgentInteractionBeginEvent {
                     call_id: "send-1".into(),
                     started_at_ms: 0,
                     sender_thread_id: sender,
@@ -4250,7 +4250,7 @@ mod tests {
                 },
             ),
             EventMsg::CollabAgentInteractionEnd(
-                genex_protocol::protocol::CollabAgentInteractionEndEvent {
+                ruxex_protocol::protocol::CollabAgentInteractionEndEvent {
                     call_id: "send-1".into(),
                     completed_at_ms: 0,
                     sender_thread_id: sender,
@@ -4314,7 +4314,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "rollback failed".into(),
-                genex_error_info: Some(GenexErrorInfo::ThreadRollbackFailed),
+                ruxex_error_info: Some(RuxexErrorInfo::ThreadRollbackFailed),
             }),
         ];
 
@@ -4359,7 +4359,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "request-level failure".into(),
-                genex_error_info: Some(GenexErrorInfo::BadRequest),
+                ruxex_error_info: Some(RuxexErrorInfo::BadRequest),
             }),
         ];
 
@@ -4413,7 +4413,7 @@ mod tests {
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "stream failure".into(),
-                genex_error_info: Some(GenexErrorInfo::ResponseStreamDisconnected {
+                ruxex_error_info: Some(RuxexErrorInfo::ResponseStreamDisconnected {
                     http_status_code: Some(502),
                 }),
             }),
@@ -4441,8 +4441,8 @@ mod tests {
             Some(TurnError {
                 misalignment: None,
                 message: "stream failure".into(),
-                genex_error_info: Some(
-                    crate::protocol::v2::GenexErrorInfo::ResponseStreamDisconnected {
+                ruxex_error_info: Some(
+                    crate::protocol::v2::RuxexErrorInfo::ResponseStreamDisconnected {
                         http_status_code: Some(502),
                     }
                 ),
@@ -4477,7 +4477,7 @@ mod tests {
                 error: Some(ErrorEvent {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
+                    ruxex_error_info: Some(RuxexErrorInfo::ServerOverloaded),
                 }),
                 completed_at: Some(20),
                 duration_ms: Some(10_000),
@@ -4507,7 +4507,7 @@ mod tests {
                 error: Some(TurnError {
                     misalignment: None,
                     message: "Selected model is at capacity. Please try a different model.".into(),
-                    genex_error_info: Some(crate::protocol::v2::GenexErrorInfo::ServerOverloaded),
+                    ruxex_error_info: Some(crate::protocol::v2::RuxexErrorInfo::ServerOverloaded),
                     additional_details: None,
                 }),
                 started_at: Some(10),
@@ -4577,7 +4577,7 @@ mod tests {
 
     #[test]
     fn canonical_hook_prompt_completion_updates_turn_history() {
-        let hook_prompt = CoreTurnItem::HookPrompt(genex_protocol::items::HookPromptItem {
+        let hook_prompt = CoreTurnItem::HookPrompt(ruxex_protocol::items::HookPromptItem {
             id: "hook-prompt-1".into(),
             fragments: vec![CoreHookPromptFragment::from_single_hook(
                 "Retry with tests.",
@@ -4611,7 +4611,7 @@ mod tests {
     #[test]
     fn completed_sub_agent_activity_updates_completed_parent_turn() {
         let child_thread_id = ThreadId::new();
-        let child_path = genex_protocol::AgentPath::root()
+        let child_path = ruxex_protocol::AgentPath::root()
             .join("worker")
             .expect("worker path");
         let items = vec![
@@ -4672,10 +4672,10 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             })),
             RolloutItem::ResponseItem(
-                genex_protocol::models::ResponseItem::Message {
-                    id: Some(genex_protocol::ResponseItemId::with_suffix("msg", "1")),
+                ruxex_protocol::models::ResponseItem::Message {
+                    id: Some(ruxex_protocol::ResponseItemId::with_suffix("msg", "1")),
                     role: "user".into(),
-                    content: vec![genex_protocol::models::ContentItem::InputText {
+                    content: vec![ruxex_protocol::models::ContentItem::InputText {
                         text: "plain text".into(),
                     }],
                     phase: None,
@@ -4755,9 +4755,9 @@ mod tests {
         let changes = builder.handle_rollout_item_with_changes(&RolloutItem::EventMsg(
             EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "genex".into(),
+                query: "ruxex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("genex".into()),
+                    query: Some("ruxex".into()),
                     queries: None,
                 },
                 results: None,
@@ -4770,9 +4770,9 @@ mod tests {
                     turn_id: "rollout-0".into(),
                     item: ThreadItem::WebSearch(WebSearchItem {
                         id: "search-1".into(),
-                        query: "genex".into(),
+                        query: "ruxex".into(),
                         action: Some(WebSearchAction::Search {
-                            query: Some("genex".into()),
+                            query: Some("ruxex".into()),
                             queries: None,
                         }),
                         results: None,
@@ -4899,9 +4899,9 @@ mod tests {
             })),
             RolloutItem::EventMsg(EventMsg::WebSearchEnd(WebSearchEndEvent {
                 call_id: "search-1".into(),
-                query: "genex".into(),
+                query: "ruxex".into(),
                 action: CoreWebSearchAction::Search {
-                    query: Some("genex".into()),
+                    query: Some("ruxex".into()),
                     queries: None,
                 },
                 results: None,
@@ -4914,9 +4914,9 @@ mod tests {
                     turn_id: "rollout-0".into(),
                     item: ThreadItem::WebSearch(WebSearchItem {
                         id: "search-1".into(),
-                        query: "genex".into(),
+                        query: "ruxex".into(),
                         action: Some(WebSearchAction::Search {
-                            query: Some("genex".into()),
+                            query: Some("ruxex".into()),
                             queries: None,
                         }),
                         results: None,

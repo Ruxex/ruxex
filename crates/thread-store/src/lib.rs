@@ -1,6 +1,6 @@
 //! Storage-neutral thread persistence interfaces.
 //!
-//! Application code should treat [`genex_protocol::ThreadId`] as the only durable thread handle.
+//! Application code should treat [`ruxex_protocol::ThreadId`] as the only durable thread handle.
 //! Implementations are responsible for resolving that id to local rollout files, RPC requests, or
 //! any other backing store.
 
@@ -18,14 +18,14 @@ mod types;
 
 pub use error::ThreadStoreError;
 pub use error::ThreadStoreResult;
-pub use genex_state::AddThreadAttachmentOutcome;
-pub use genex_state::MAX_QUEUE_ITEMS;
-pub use genex_state::MAX_THREAD_ATTACHMENT_PAYLOAD_BYTES;
-pub use genex_state::ProjectSortKey;
-pub use genex_state::QueuedUserSubmissionRecord;
-pub use genex_state::RemoveThreadAttachmentOutcome;
-pub use genex_state::ThreadAttachment;
-pub use genex_state::ThreadAttachmentPage;
+pub use ruxex_state::AddThreadAttachmentOutcome;
+pub use ruxex_state::MAX_QUEUE_ITEMS;
+pub use ruxex_state::MAX_THREAD_ATTACHMENT_PAYLOAD_BYTES;
+pub use ruxex_state::ProjectSortKey;
+pub use ruxex_state::QueuedUserSubmissionRecord;
+pub use ruxex_state::RemoveThreadAttachmentOutcome;
+pub use ruxex_state::ThreadAttachment;
+pub use ruxex_state::ThreadAttachmentPage;
 pub use in_memory::InMemoryThreadStore;
 pub use in_memory::InMemoryThreadStoreCalls;
 pub use live_thread::LiveThread;

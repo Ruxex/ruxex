@@ -5,50 +5,50 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirementsToml;
-use genex_exec_server::CapabilityRootDiscovery;
-use genex_exec_server::CapabilityTextFile;
-use genex_exec_server::CopyOptions;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::DiscoveredSkillFiles;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecutorCapabilityDiscoveryCache;
-use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::ExecutorFileSystemFuture;
-use genex_exec_server::FileMetadata;
-use genex_exec_server::FileSystemReadStream;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadDirectoryEntry;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WalkEntry;
-use genex_exec_server::WalkEntryKind;
-use genex_exec_server::WalkOptions;
-use genex_exec_server::WalkOutcome;
-use genex_exec_server::WriteFileOptions;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::Product;
-use genex_skills_extension::ExecutorSkillProvider;
-use genex_skills_extension::HostSkillsLoadInput;
-use genex_skills_extension::HostSkillsService;
-use genex_skills_extension::catalog::SkillAuthority;
-use genex_skills_extension::catalog::SkillCatalog;
-use genex_skills_extension::catalog::SkillCatalogEntry;
-use genex_skills_extension::catalog::SkillPackageId;
-use genex_skills_extension::catalog::SkillResourceId;
-use genex_skills_extension::catalog::SkillSourceKind;
-use genex_skills_extension::provider::SkillListQuery;
-use genex_skills_extension::provider::SkillProvider;
-use genex_skills_extension::provider::SkillReadRequest;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_exec_server::CapabilityRootDiscovery;
+use ruxex_exec_server::CapabilityTextFile;
+use ruxex_exec_server::CopyOptions;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::DiscoveredSkillFiles;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecutorCapabilityDiscoveryCache;
+use ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::ExecutorFileSystemFuture;
+use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemReadStream;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadDirectoryEntry;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WalkEntry;
+use ruxex_exec_server::WalkEntryKind;
+use ruxex_exec_server::WalkOptions;
+use ruxex_exec_server::WalkOutcome;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::Product;
+use ruxex_skills_extension::ExecutorSkillProvider;
+use ruxex_skills_extension::HostSkillsLoadInput;
+use ruxex_skills_extension::HostSkillsService;
+use ruxex_skills_extension::catalog::SkillAuthority;
+use ruxex_skills_extension::catalog::SkillCatalog;
+use ruxex_skills_extension::catalog::SkillCatalogEntry;
+use ruxex_skills_extension::catalog::SkillPackageId;
+use ruxex_skills_extension::catalog::SkillResourceId;
+use ruxex_skills_extension::catalog::SkillSourceKind;
+use ruxex_skills_extension::provider::SkillListQuery;
+use ruxex_skills_extension::provider::SkillProvider;
+use ruxex_skills_extension::provider::SkillReadRequest;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
 const SKILL_CONTENTS: &str =
@@ -245,8 +245,8 @@ impl ExecutorFileSystem for SyntheticFileSystem {
 #[tokio::test]
 async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
     let test_root =
-        std::env::temp_dir().join(format!("genex-executor-skill-fs-{}", std::process::id()));
-    let project_folder = AbsolutePathBuf::from_absolute_path_checked(test_root.join(".genex"))
+        std::env::temp_dir().join(format!("ruxex-executor-skill-fs-{}", std::process::id()));
+    let project_folder = AbsolutePathBuf::from_absolute_path_checked(test_root.join(".ruxex"))
         .expect("absolute project folder");
     let alias_root = project_folder.join("skills");
     let canonical_root = AbsolutePathBuf::from_absolute_path_checked(test_root.join("canonical"))
@@ -257,7 +257,7 @@ async fn skill_loading_and_reads_use_the_supplied_executor_file_system() {
     let config_layer_stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_genex_folder: project_folder,
+                dot_ruxex_folder: project_folder,
             },
             toml::from_str("[skills.bundled]\nenabled = false\n")
                 .expect("valid bundled skills config"),
@@ -454,18 +454,18 @@ async fn executor_discovery_preserves_locator_alias_roots() {
 async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "genex-executor-skill-parity-{}-{id}",
+        "ruxex-executor-skill-parity-{}-{id}",
         std::process::id()
     ));
-    let plugin_manifest = test_root.join(".genex-plugin/plugin.json");
+    let plugin_manifest = test_root.join(".ruxex-plugin/plugin.json");
     let deploy_skill = test_root.join("skills/deploy/SKILL.md");
-    let deploy_metadata = test_root.join("skills/deploy/agents/genex.yaml");
+    let deploy_metadata = test_root.join("skills/deploy/agents/ruxex.yaml");
     let excluded_skill = test_root.join("skills/excluded/SKILL.md");
-    let excluded_metadata = test_root.join("skills/excluded/agents/genex.yaml");
+    let excluded_metadata = test_root.join("skills/excluded/agents/ruxex.yaml");
     let repaired_skill = test_root.join("skills/repaired/SKILL.md");
     let invalid_skill = test_root.join("skills/invalid/SKILL.md");
     let invalid_metadata_skill = test_root.join("skills/invalid-metadata/SKILL.md");
-    let invalid_metadata = test_root.join("skills/invalid-metadata/agents/genex.yaml");
+    let invalid_metadata = test_root.join("skills/invalid-metadata/agents/ruxex.yaml");
     for path in [
         &plugin_manifest,
         &deploy_skill,
@@ -552,7 +552,7 @@ async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
         .expect("list bundled executor skills");
 
     assert_eq!(bundled.warnings, direct.warnings);
-    let comparable_entries = |catalog: &genex_skills_extension::catalog::SkillCatalog| {
+    let comparable_entries = |catalog: &ruxex_skills_extension::catalog::SkillCatalog| {
         catalog
             .entries
             .iter()
@@ -648,7 +648,7 @@ async fn executor_discovery_routes_produce_equivalent_catalog_metadata() {
 #[tokio::test]
 async fn pre_discovered_executor_catalog_snapshot() {
     let test_root = create_local_skill_root("snapshot").expect("create local skill root");
-    let manifest_dir = test_root.join(".genex-plugin");
+    let manifest_dir = test_root.join(".ruxex-plugin");
     let metadata_dir = test_root.join("skill/agents");
     std::fs::create_dir_all(&manifest_dir).expect("create plugin manifest directory");
     std::fs::create_dir_all(&metadata_dir).expect("create skill metadata directory");
@@ -658,7 +658,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
     )
     .expect("write plugin manifest");
     std::fs::write(
-        metadata_dir.join("genex.yaml"),
+        metadata_dir.join("ruxex.yaml"),
         "dependencies:\n  tools:\n    - type: mcp\n      value: deployer\n      description: Deployment server.\npolicy:\n  allow_implicit_invocation: false\n",
     )
     .expect("write skill metadata");
@@ -722,7 +722,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
             .collect::<Vec<_>>(),
     });
     snapshot.sort_all_objects();
-    let snapshot_file = genex_utils_cargo_bin::find_resource!(
+    let snapshot_file = ruxex_utils_cargo_bin::find_resource!(
         "tests/snapshots/executor_file_system_authority__pre_discovered_executor_catalog.snap"
     )
     .expect("resolve catalog snapshot");
@@ -745,13 +745,13 @@ async fn pre_discovered_executor_catalog_snapshot() {
 async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata() {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "genex-executor-skill-discovery-{}-{id}",
+        "ruxex-executor-skill-discovery-{}-{id}",
         std::process::id()
     ));
-    let outer_manifest = test_root.join(".genex-plugin/plugin.json");
+    let outer_manifest = test_root.join(".ruxex-plugin/plugin.json");
     let hidden_skill = test_root.join(".hidden/deploy/SKILL.md");
-    let hidden_metadata = test_root.join(".hidden/deploy/agents/genex.yaml");
-    let inner_manifest = test_root.join("nested/.genex-plugin/plugin.json");
+    let hidden_metadata = test_root.join(".hidden/deploy/agents/ruxex.yaml");
+    let inner_manifest = test_root.join("nested/.ruxex-plugin/plugin.json");
     let inner_skill = test_root.join("nested/skills/audit/SKILL.md");
     for (path, contents) in [
         (&outer_manifest, r#"{"name":"outer"}"#),
@@ -776,7 +776,7 @@ async fn direct_executor_discovery_preserves_hidden_nested_and_probed_metadata()
     {
         use std::os::unix::fs::symlink;
 
-        let metadata_target = test_root.join("linked-genex.yaml");
+        let metadata_target = test_root.join("linked-ruxex.yaml");
         std::fs::write(&metadata_target, metadata_contents).expect("write metadata target");
         symlink(metadata_target, &hidden_metadata).expect("link metadata");
     }
@@ -973,7 +973,7 @@ async fn high_level_discovery_batches_more_than_128_roots() {
 fn create_local_skill_root(label: &str) -> io::Result<std::path::PathBuf> {
     let id = NEXT_TEST_ROOT_ID.fetch_add(1, Ordering::Relaxed);
     let test_root = std::env::temp_dir().join(format!(
-        "genex-executor-skill-{label}-{}-{id}",
+        "ruxex-executor-skill-{label}-{}-{id}",
         std::process::id()
     ));
     let skill_dir = test_root.join("skill");

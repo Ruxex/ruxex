@@ -10,11 +10,11 @@ use crate::history_cell::HistoryCell;
 use crate::history_cell::PlainHistoryCell;
 use crate::history_cell::UserHistoryCell;
 use crate::history_cell::new_proposed_plan;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
 
 
 #[test]

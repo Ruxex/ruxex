@@ -1,5 +1,5 @@
 [package]
-name = "genex-app-server-protocol-noop-macros"
+name = "ruxex-app-server-protocol-noop-macros"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

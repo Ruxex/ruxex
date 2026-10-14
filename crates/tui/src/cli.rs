@@ -1,9 +1,9 @@
 use clap::Args;
 use clap::FromArgMatches;
 use clap::Parser;
-use genex_utils_cli::ApprovalModeCliArg;
-use genex_utils_cli::CliConfigOverrides;
-use genex_utils_cli::SharedCliOptions;
+use ruxex_utils_cli::ApprovalModeCliArg;
+use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_cli::SharedCliOptions;
 
 #[derive(Parser, Clone, Debug)]
 #[command(version)]
@@ -12,12 +12,12 @@ pub struct Cli {
     #[arg(value_name = "PROMPT", value_hint = clap::ValueHint::Other)]
     pub prompt: Option<String>,
 
-    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Ruxex.
     #[arg(long = "strict-config", default_value_t = false)]
     pub strict_config: bool,
 
-    // Internal controls set by the top-level `genex resume` subcommand.
-    // These are not exposed as user flags on the base `genex` command.
+    // Internal controls set by the top-level `ruxex resume` subcommand.
+    // These are not exposed as user flags on the base `ruxex` command.
     #[clap(skip)]
     pub resume_picker: bool,
 
@@ -25,7 +25,7 @@ pub struct Cli {
     pub resume_last: bool,
 
     /// Internal: resume a specific recorded session by id (UUID). Set by the
-    /// top-level `genex resume <SESSION_ID>` wrapper; not exposed as a public flag.
+    /// top-level `ruxex resume <SESSION_ID>` wrapper; not exposed as a public flag.
     #[clap(skip)]
     pub resume_session_id: Option<String>,
 
@@ -41,8 +41,8 @@ pub struct Cli {
     #[clap(skip)]
     pub agents_overview: bool,
 
-    // Internal controls set by the top-level `genex fork` subcommand.
-    // These are not exposed as user flags on the base `genex` command.
+    // Internal controls set by the top-level `ruxex fork` subcommand.
+    // These are not exposed as user flags on the base `ruxex` command.
     #[clap(skip)]
     pub fork_picker: bool,
 
@@ -50,7 +50,7 @@ pub struct Cli {
     pub fork_last: bool,
 
     /// Internal: fork a specific recorded session by id (UUID). Set by the
-    /// top-level `genex fork <SESSION_ID>` wrapper; not exposed as a public flag.
+    /// top-level `ruxex fork <SESSION_ID>` wrapper; not exposed as a public flag.
     #[clap(skip)]
     pub fork_session_id: Option<String>,
 

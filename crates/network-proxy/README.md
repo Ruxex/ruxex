@@ -1,6 +1,6 @@
-# genex-network-proxy
+# ruxex-network-proxy
 
-`genex-network-proxy` is Genex's local network policy enforcement proxy. It runs:
+`ruxex-network-proxy` is Ruxex's local network policy enforcement proxy. It runs:
 
 - an HTTP proxy (default `127.0.0.1:3128`)
 - a SOCKS5 proxy (default `127.0.0.1:8081`, enabled by default)
@@ -14,7 +14,7 @@ It enforces an allow/deny policy and a "limited" mode intended for read-only net
 
 ### 1) Configure
 
-`genex-network-proxy` reads from Genex's merged `config.toml` (via `genex-core` config loading).
+`ruxex-network-proxy` reads from Ruxex's merged `config.toml` (via `ruxex-core` config loading).
 
 Network settings live under the selected permissions profile. Example config:
 
@@ -38,7 +38,7 @@ dangerously_allow_non_loopback_proxy = false
 mode = "full" # default when unset; use "limited" for read-only mode
 # HTTPS MITM is enabled automatically when `mode = "limited"` or when MITM hooks are configured.
 # The CA private key remains in proxy memory. When MITM is active, spawned commands receive CA
-# bundle env vars pointing at immutable public files under $GENEX_HOME/proxy/ so common HTTPS
+# bundle env vars pointing at immutable public files under $RUXEX_HOME/proxy/ so common HTTPS
 # clients trust the managed CA.
 
 # If false, local/private networking is rejected. Explicit allowlisting of local IP literals
@@ -82,7 +82,7 @@ strip_request_headers = ["authorization"]
 ### 2) Run the proxy
 
 ```bash
-cargo run -p genex-network-proxy --
+cargo run -p ruxex-network-proxy --
 ```
 
 ### 3) Point a client at it
@@ -121,10 +121,10 @@ through the same host allowlist/denylist checks.
 
 ## Library API
 
-`genex-network-proxy` can be embedded as a library with a thin API:
+`ruxex-network-proxy` can be embedded as a library with a thin API:
 
 ```rust
-use genex_network_proxy::{NetworkProxy, NetworkDecision, NetworkPolicyRequest};
+use ruxex_network_proxy::{NetworkProxy, NetworkDecision, NetworkPolicyRequest};
 
 let proxy = NetworkProxy::builder()
     .http_addr("127.0.0.1:8080".parse()?)
@@ -162,8 +162,8 @@ the decider can auto-allow network requests originating from that command.
 
 ## OTEL Audit Events (embedded/managed)
 
-When `genex-network-proxy` is embedded in managed Genex runtime, policy decisions emit structured
-OTEL-compatible events with `target=genex_otel.network_proxy`.
+When `ruxex-network-proxy` is embedded in managed Ruxex runtime, policy decisions emit structured
+OTEL-compatible events with `target=ruxex_otel.network_proxy`.
 
 Event name:
 
@@ -208,7 +208,7 @@ Audit events intentionally avoid logging full URL/path/query data.
 
 ## Security notes (important)
 
-This section documents the protections implemented by `genex-network-proxy`, and the boundaries of
+This section documents the protections implemented by `ruxex-network-proxy`, and the boundaries of
 what it can reasonably guarantee.
 
 - Allowlist-first policy: if `domains` has no `allow` entries, requests are blocked until an allowlist is configured.

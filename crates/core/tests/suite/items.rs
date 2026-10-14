@@ -1,27 +1,27 @@
 #![cfg(not(target_os = "windows"))]
 
 use anyhow::Ok;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::WebSearchAction;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ItemStartedEvent;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::ByteRange;
-use genex_protocol::user_input::TextElement;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::WebSearchAction;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ItemStartedEvent;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::ByteRange;
+use ruxex_protocol::user_input::TextElement;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -38,10 +38,10 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -74,7 +74,7 @@ async fn user_message_item_is_emitted() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await?;
 
     let first_response = sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]);
     mount_sse_once(&server, first_response).await;
@@ -96,11 +96,11 @@ async fn user_message_item_is_emitted() -> anyhow::Result<()> {
         },
     ];
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(expected_input.clone()))
         .await?;
 
-    let started_item = wait_for_event_match(&genex, |ev| match ev {
+    let started_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::UserMessage(item),
             ..
@@ -108,7 +108,7 @@ async fn user_message_item_is_emitted() -> anyhow::Result<()> {
         _ => None,
     })
     .await;
-    let completed_item = wait_for_event_match(&genex, |ev| match ev {
+    let completed_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::UserMessage(item),
             ..
@@ -121,7 +121,7 @@ async fn user_message_item_is_emitted() -> anyhow::Result<()> {
     assert_eq!(started_item.content, expected_input);
     assert_eq!(completed_item.content, started_item.content);
 
-    let legacy_message = wait_for_event_match(&genex, |ev| match ev {
+    let legacy_message = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::UserMessage(event) => Some(event.clone()),
         _ => None,
     })
@@ -143,7 +143,7 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await?;
 
     let first_response = sse(vec![
         ev_response_created("resp-1"),
@@ -152,14 +152,14 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, first_response).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "please summarize results".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(&genex, |ev| match ev {
+    let started = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::AgentMessage(item),
             ..
@@ -167,7 +167,7 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(&genex, |ev| match ev {
+    let completed = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::AgentMessage(item),
             ..
@@ -177,7 +177,7 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
     .await;
 
     assert_eq!(started.id, completed.id);
-    let Some(genex_protocol::items::AgentMessageContent::Text { text }) = completed.content.first()
+    let Some(ruxex_protocol::items::AgentMessageContent::Text { text }) = completed.content.first()
     else {
         panic!("expected agent message text content");
     };
@@ -192,7 +192,7 @@ async fn reasoning_item_is_emitted() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await?;
 
     let reasoning_item = ev_reasoning_item(
         "reasoning-1",
@@ -207,14 +207,14 @@ async fn reasoning_item_is_emitted() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, first_response).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "explain your reasoning".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(&genex, |ev| match ev {
+    let started = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -222,7 +222,7 @@ async fn reasoning_item_is_emitted() -> anyhow::Result<()> {
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(&genex, |ev| match ev {
+    let completed = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -249,7 +249,7 @@ async fn missing_streamed_reasoning_id_is_reused_for_completion() -> anyhow::Res
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let TestGenex { genex, .. } = test_genex().build_with_auto_env(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build_with_auto_env(&server).await?;
 
     let mut reasoning_added = ev_reasoning_item_added("unused", &[]);
     reasoning_added["item"]
@@ -272,14 +272,14 @@ async fn missing_streamed_reasoning_id_is_reused_for_completion() -> anyhow::Res
     )
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "explain your reasoning".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started_id = wait_for_event_match(&genex, |ev| match ev {
+    let started_id = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -287,7 +287,7 @@ async fn missing_streamed_reasoning_id_is_reused_for_completion() -> anyhow::Res
         _ => None,
     })
     .await;
-    let completed_id = wait_for_event_match(&genex, |ev| match ev {
+    let completed_id = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -309,7 +309,7 @@ async fn web_search_item_is_emitted() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_history_mode(ThreadHistoryMode::Paginated)
         .build(&server)
         .await?;
@@ -325,14 +325,14 @@ async fn web_search_item_is_emitted() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, first_response).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "find the weather".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(&genex, |ev| match ev {
+    let started = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::WebSearch(item),
             started_at_ms,
@@ -341,12 +341,12 @@ async fn web_search_item_is_emitted() -> anyhow::Result<()> {
         _ => None,
     })
     .await;
-    let begin = wait_for_event_match(&genex, |ev| match ev {
+    let begin = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::WebSearchBegin(event) => Some(event.clone()),
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(&genex, |ev| match ev {
+    let completed = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::WebSearch(item),
             started_at_ms,
@@ -371,12 +371,12 @@ async fn web_search_item_is_emitted() -> anyhow::Result<()> {
         }
     );
 
-    genex.flush_rollout().await?;
-    let rollout_path = genex.rollout_path().expect("paginated rollout path");
+    ruxex.flush_rollout().await?;
+    let rollout_path = ruxex.rollout_path().expect("paginated rollout path");
     let rollout = std::fs::read_to_string(rollout_path)?;
     let persisted_completion = rollout
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .find_map(|line| match line.item {
@@ -399,11 +399,11 @@ async fn agent_message_content_delta_has_item_metadata() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let stream = sse(vec![
         ev_response_created("resp-1"),
@@ -414,14 +414,14 @@ async fn agent_message_content_delta_has_item_metadata() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, stream).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "please stream text".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let (started_turn_id, started_item) = wait_for_event_match(&genex, |ev| match ev {
+    let (started_turn_id, started_item) = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             turn_id,
             item: TurnItem::AgentMessage(item),
@@ -431,12 +431,12 @@ async fn agent_message_content_delta_has_item_metadata() -> anyhow::Result<()> {
     })
     .await;
 
-    let delta_event = wait_for_event_match(&genex, |ev| match ev {
+    let delta_event = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::AgentMessageContentDelta(event) => Some(event.clone()),
         _ => None,
     })
     .await;
-    let completed_item = wait_for_event_match(&genex, |ev| match ev {
+    let completed_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::AgentMessage(item),
             ..
@@ -461,11 +461,11 @@ async fn plan_mode_emits_plan_item_from_proposed_plan_block() -> anyhow::Result<
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let plan_block = "<proposed_plan>\n- Step 1\n- Step 2\n</proposed_plan>\n";
     let full_message = format!("Intro\n{plan_block}Outro");
@@ -487,7 +487,7 @@ async fn plan_mode_emits_plan_item_from_proposed_plan_block() -> anyhow::Result<
         },
     };
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_plan_turn(
             "please plan",
             session_configured.model.clone(),
@@ -495,13 +495,13 @@ async fn plan_mode_emits_plan_item_from_proposed_plan_block() -> anyhow::Result<
         )?)
         .await?;
 
-    let plan_delta = wait_for_event_match(&genex, |ev| match ev {
+    let plan_delta = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::PlanDelta(event) => Some(event.clone()),
         _ => None,
     })
     .await;
 
-    let plan_completed = wait_for_event_match(&genex, |ev| match ev {
+    let plan_completed = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::Plan(item),
             ..
@@ -526,11 +526,11 @@ async fn plan_mode_strips_plan_from_agent_messages() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let plan_block = "<proposed_plan>\n- Step 1\n- Step 2\n</proposed_plan>\n";
     let full_message = format!("Intro\n{plan_block}Outro");
@@ -552,7 +552,7 @@ async fn plan_mode_strips_plan_from_agent_messages() -> anyhow::Result<()> {
         },
     };
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_plan_turn(
             "please plan",
             session_configured.model.clone(),
@@ -566,7 +566,7 @@ async fn plan_mode_strips_plan_from_agent_messages() -> anyhow::Result<()> {
     let mut plan_item = None;
 
     while plan_delta.is_none() || agent_item.is_none() || plan_item.is_none() {
-        let ev = wait_for_event(&genex, |_| true).await;
+        let ev = wait_for_event(&ruxex, |_| true).await;
         match ev {
             EventMsg::AgentMessageContentDelta(event) => {
                 agent_deltas.push(event.delta);
@@ -614,11 +614,11 @@ async fn plan_mode_streaming_citations_are_stripped_across_added_deltas_and_done
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let added_text = "Intro <oai-mem-";
     let deltas = [
@@ -649,7 +649,7 @@ async fn plan_mode_streaming_citations_are_stripped_across_added_deltas_and_done
         },
     };
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_plan_turn(
             "please plan with citations",
             session_configured.model.clone(),
@@ -674,7 +674,7 @@ async fn plan_mode_streaming_citations_are_stripped_across_added_deltas_and_done
     let mut idx = 0usize;
 
     let turn_complete_idx = loop {
-        let ev = wait_for_event(&genex, |_| true).await;
+        let ev = wait_for_event(&ruxex, |_| true).await;
         match ev {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::AgentMessage(item),
@@ -794,11 +794,11 @@ async fn plan_mode_streaming_proposed_plan_tag_split_across_added_and_delta_is_p
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let added_text = "Intro\n<proposed";
     let deltas = ["_plan>\n- Step 1\n</proposed_plan>\nOutro"];
@@ -824,7 +824,7 @@ async fn plan_mode_streaming_proposed_plan_tag_split_across_added_and_delta_is_p
         },
     };
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_plan_turn(
             "please plan",
             session_configured.model.clone(),
@@ -840,7 +840,7 @@ async fn plan_mode_streaming_proposed_plan_tag_split_across_added_and_delta_is_p
     let mut plan_deltas = Vec::new();
 
     loop {
-        let ev = wait_for_event(&genex, |_| true).await;
+        let ev = wait_for_event(&ruxex, |_| true).await;
         match ev {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::AgentMessage(item),
@@ -901,11 +901,11 @@ async fn plan_mode_handles_missing_plan_close_tag() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let full_message = "Intro\n<proposed_plan>\n- Step 1\n";
     let stream = sse(vec![
@@ -926,7 +926,7 @@ async fn plan_mode_handles_missing_plan_close_tag() -> anyhow::Result<()> {
         },
     };
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_plan_turn(
             "please plan",
             session_configured.model.clone(),
@@ -939,7 +939,7 @@ async fn plan_mode_handles_missing_plan_close_tag() -> anyhow::Result<()> {
     let mut agent_item = None;
 
     while plan_delta.is_none() || plan_item.is_none() || agent_item.is_none() {
-        let ev = wait_for_event(&genex, |_| true).await;
+        let ev = wait_for_event(&ruxex, |_| true).await;
         match ev {
             EventMsg::PlanDelta(event) => {
                 plan_delta = Some(event.delta);
@@ -981,7 +981,7 @@ async fn reasoning_content_delta_has_item_metadata() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await?;
 
     let stream = sse(vec![
         ev_response_created("resp-1"),
@@ -992,14 +992,14 @@ async fn reasoning_content_delta_has_item_metadata() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, stream).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "reason through it".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let reasoning_item = wait_for_event_match(&genex, |ev| match ev {
+    let reasoning_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -1008,7 +1008,7 @@ async fn reasoning_content_delta_has_item_metadata() -> anyhow::Result<()> {
     })
     .await;
 
-    let delta_event = wait_for_event_match(&genex, |ev| match ev {
+    let delta_event = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ReasoningContentDelta(event) => Some(event.clone()),
         _ => None,
     })
@@ -1026,7 +1026,7 @@ async fn sequential_cutoff_renders_done_summaries_for_active_reasoning_item() ->
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config
                 .features
@@ -1063,14 +1063,14 @@ async fn sequential_cutoff_renders_done_summaries_for_active_reasoning_item() ->
     )
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "reason through it".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let reasoning_item = wait_for_event_match(&genex, |ev| match ev {
+    let reasoning_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -1082,7 +1082,7 @@ async fn sequential_cutoff_renders_done_summaries_for_active_reasoning_item() ->
     let mut summary_deltas = Vec::new();
     let mut summary_sections = Vec::new();
     loop {
-        match wait_for_event(&genex, |_| true).await {
+        match wait_for_event(&ruxex, |_| true).await {
             EventMsg::ReasoningContentDelta(event) => {
                 summary_deltas.push((event.item_id, event.delta, event.summary_index));
             }
@@ -1111,7 +1111,7 @@ async fn reasoning_raw_content_delta_respects_flag() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config.show_raw_agent_reasoning = true;
         })
@@ -1127,14 +1127,14 @@ async fn reasoning_raw_content_delta_respects_flag() -> anyhow::Result<()> {
     ]);
     mount_sse_once(&server, stream).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "show raw reasoning".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let reasoning_item = wait_for_event_match(&genex, |ev| match ev {
+    let reasoning_item = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ItemStarted(ItemStartedEvent {
             item: TurnItem::Reasoning(item),
             ..
@@ -1143,7 +1143,7 @@ async fn reasoning_raw_content_delta_respects_flag() -> anyhow::Result<()> {
     })
     .await;
 
-    let delta_event = wait_for_event_match(&genex, |ev| match ev {
+    let delta_event = wait_for_event_match(&ruxex, |ev| match ev {
         EventMsg::ReasoningRawContentDelta(event) => Some(event.clone()),
         _ => None,
     })

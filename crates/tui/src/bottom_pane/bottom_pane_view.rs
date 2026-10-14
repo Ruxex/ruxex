@@ -4,7 +4,7 @@ use crate::bottom_pane::McpServerElicitationFormRequest;
 use crate::keymap::KeymapContextSet;
 use crate::render::renderable::Renderable;
 use crossterm::event::KeyEvent;
-use genex_app_server_protocol::ToolRequestUserInputParams;
+use ruxex_app_server_protocol::ToolRequestUserInputParams;
 use std::time::Instant;
 
 use super::CancellationEvent;
@@ -160,7 +160,7 @@ pub(crate) trait BottomPaneView: Renderable {
     ///
     /// Views that return `true` surface an "Action Required" terminal title
     /// instead of the normal working spinner so terminal tabs clearly show that
-    /// Genex needs user input.
+    /// Ruxex needs user input.
     fn terminal_title_requires_action(&self) -> bool {
         false
     }

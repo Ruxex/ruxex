@@ -1,17 +1,17 @@
 use std::collections::BTreeMap;
 
 use crate::merge::merge_toml_values;
-use genex_network_proxy::InjectedHeaderConfig;
-use genex_network_proxy::MitmHookActionsConfig;
-use genex_network_proxy::MitmHookBodyConfig;
-use genex_network_proxy::MitmHookConfig;
-use genex_network_proxy::MitmHookMatchConfig;
-use genex_network_proxy::NetworkDomainPermission as ProxyNetworkDomainPermission;
-use genex_network_proxy::NetworkMode;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
-use genex_network_proxy::normalize_host;
-use genex_protocol::permissions::FileSystemAccessMode;
+use ruxex_network_proxy::InjectedHeaderConfig;
+use ruxex_network_proxy::MitmHookActionsConfig;
+use ruxex_network_proxy::MitmHookBodyConfig;
+use ruxex_network_proxy::MitmHookConfig;
+use ruxex_network_proxy::MitmHookMatchConfig;
+use ruxex_network_proxy::NetworkDomainPermission as ProxyNetworkDomainPermission;
+use ruxex_network_proxy::NetworkMode;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
+use ruxex_network_proxy::normalize_host;
+use ruxex_protocol::permissions::FileSystemAccessMode;
 use indexmap::IndexMap;
 use schemars::JsonSchema;
 use serde::Deserialize;

@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::RuntimeResponse;
-use genex_code_mode_protocol::StartedCell;
-use genex_code_mode_protocol::host::DelegateRequest;
-use genex_code_mode_protocol::host::RequestId;
-use genex_code_mode_protocol::host::SessionId;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::RuntimeResponse;
+use ruxex_code_mode_protocol::StartedCell;
+use ruxex_code_mode_protocol::host::DelegateRequest;
+use ruxex_code_mode_protocol::host::RequestId;
+use ruxex_code_mode_protocol::host::SessionId;
 use pretty_assertions::assert_eq;
 use tokio::sync::Semaphore;
 use tokio::sync::mpsc;

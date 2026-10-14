@@ -48,26 +48,26 @@ use crate::store::PluginInstallResult as StorePluginInstallResult;
 use crate::store::PluginStore;
 use crate::store::PluginStoreError;
 use crate::store::error_context_sub_error_type;
-use genex_config::ConfigLayerStack;
-use genex_config::SkillConfigRules;
-use genex_config::clear_user_plugin;
-use genex_config::set_user_plugin_enabled;
-use genex_config::skill_config_rules_from_stack;
-use genex_config::types::PluginConfig;
-use genex_credential_broker::SharedCredentialBroker;
-use genex_hooks::plugin_hook_declarations;
-use genex_plugin::PluginCapabilitySummary;
-use genex_plugin::PluginId;
-use genex_plugin::PluginIdError;
-use genex_plugin::prompt_safe_plugin_description;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::Product;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillRootLoader;
-use genex_skills::SkillRootSnapshots;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::SkillConfigRules;
+use ruxex_config::clear_user_plugin;
+use ruxex_config::set_user_plugin_enabled;
+use ruxex_config::skill_config_rules_from_stack;
+use ruxex_config::types::PluginConfig;
+use ruxex_credential_broker::SharedCredentialBroker;
+use ruxex_hooks::plugin_hook_declarations;
+use ruxex_plugin::PluginCapabilitySummary;
+use ruxex_plugin::PluginId;
+use ruxex_plugin::PluginIdError;
+use ruxex_plugin::prompt_safe_plugin_description;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::Product;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillRootLoader;
+use ruxex_skills::SkillRootSnapshots;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -251,7 +251,7 @@ impl From<PluginDetail> for PluginCapabilitySummary {
 }
 
 pub struct PluginsManager {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     store: PluginStore,
     configured_marketplace_upgrade_state: RwLock<ConfiguredMarketplaceUpgradeState>,
     non_curated_cache_refresh_state: RwLock<NonCuratedCacheRefreshState>,
@@ -311,11 +311,11 @@ struct PluginLoadCacheKey {
 }
 
 impl PluginLoadCacheKey {
-    fn from_config(config: &PluginsConfigInput, genex_home: &Path) -> Self {
+    fn from_config(config: &PluginsConfigInput, ruxex_home: &Path) -> Self {
         Self {
             configured_plugins: configured_plugins_from_stack(
                 &config.config_layer_stack,
-                genex_home,
+                ruxex_home,
             ),
             skill_config_rules: skill_config_rules_from_stack(&config.config_layer_stack),
         }
@@ -324,12 +324,12 @@ impl PluginLoadCacheKey {
 
 impl PluginsManager {
     pub fn new(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         credential_broker: SharedCredentialBroker,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
         Self::new_with_options(
-            genex_home,
+            ruxex_home,
             Some(Product::Codex),
             credential_broker,
             skill_root_loader,
@@ -337,21 +337,21 @@ impl PluginsManager {
     }
 
     pub fn new_with_options(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         restriction_product: Option<Product>,
         credential_broker: SharedCredentialBroker,
         skill_root_loader: Arc<dyn SkillRootLoader<PluginSkillRoot>>,
     ) -> Self {
-        // Product restrictions are enforced at marketplace admission time for a given GENEX_HOME:
+        // Product restrictions are enforced at marketplace admission time for a given RUXEX_HOME:
         // listing, install, and curated refresh all consult this restriction context before new
         // plugins enter local config or cache. After admission, runtime plugin loading trusts the
-        // contents of that GENEX_HOME and does not re-filter configured plugins by product, so
+        // contents of that RUXEX_HOME and does not re-filter configured plugins by product, so
         // already-admitted plugins may continue exposing MCP servers/tools from shared local state.
         //
-        // This assumes a single GENEX_HOME is only used by one product.
+        // This assumes a single RUXEX_HOME is only used by one product.
         Self {
-            genex_home: genex_home.clone(),
-            store: PluginStore::new(genex_home),
+            ruxex_home: ruxex_home.clone(),
+            store: PluginStore::new(ruxex_home),
             configured_marketplace_upgrade_state: RwLock::new(
                 ConfiguredMarketplaceUpgradeState::default(),
             ),
@@ -371,8 +371,8 @@ impl PluginsManager {
     /// Resolves a credential only for the explicitly supplied Plugin or Marketplace owner.
     pub async fn resolve_credential(
         &self,
-        request: genex_credential_broker::CredentialRequest,
-    ) -> genex_credential_broker::CredentialResult {
+        request: ruxex_credential_broker::CredentialRequest,
+    ) -> ruxex_credential_broker::CredentialResult {
         self.credential_broker.resolve(request).await
     }
 
@@ -394,7 +394,7 @@ impl PluginsManager {
         if !config.plugins_enabled {
             return None;
         }
-        let key = PluginLoadCacheKey::from_config(config, self.genex_home.as_path());
+        let key = PluginLoadCacheKey::from_config(config, self.ruxex_home.as_path());
         self.loaded_plugins_cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -416,7 +416,7 @@ impl PluginsManager {
             return PluginLoadOutcome::default();
         }
         let mut cache_outcome = RequestOutcome::Hit;
-        let cache_key = PluginLoadCacheKey::from_config(config, self.genex_home.as_path());
+        let cache_key = PluginLoadCacheKey::from_config(config, self.ruxex_home.as_path());
         if let Some(plugins) = self.cached_loaded_plugins(&cache_key) {
             cache_outcome.record();
             return PluginLoadOutcome::from_plugins(plugins);
@@ -579,7 +579,7 @@ impl PluginsManager {
             MarketplacePolicy::from_requirements(config_layer_stack.requirements())
                 .validate_install(
                     config_layer_stack,
-                    self.genex_home.as_path(),
+                    self.ruxex_home.as_path(),
                     &request.marketplace_path,
                     &resolved.plugin_id.marketplace_name,
                 )
@@ -650,14 +650,14 @@ impl PluginsManager {
     ) -> Result<PluginInstallOutcome, PluginInstallError> {
         let auth_policy = resolved.policy.authentication;
         let store = self.store.clone();
-        let genex_home = self.genex_home.clone();
+        let ruxex_home = self.ruxex_home.clone();
         let manifest_fallback_contents = resolved
             .manifest_fallback
             .contents_if_has_metadata()
             .map(str::to_string);
         let result: StorePluginInstallResult = tokio::task::spawn_blocking(move || {
             let materialized =
-                materialize_marketplace_plugin_source(genex_home.as_path(), &resolved.source)
+                materialize_marketplace_plugin_source(ruxex_home.as_path(), &resolved.source)
                     .map_err(PluginStoreError::Invalid)?;
             let source_path = materialized.path;
             match manifest_fallback_contents.as_deref() {
@@ -673,7 +673,7 @@ impl PluginsManager {
         .map_err(PluginInstallError::join)??;
 
         set_user_plugin_enabled(
-            &self.genex_home,
+            &self.ruxex_home,
             result.plugin_id.as_key(),
             /*enabled*/ true,
         )
@@ -700,7 +700,7 @@ impl PluginsManager {
             .await
             .map_err(PluginUninstallError::join)??;
 
-        clear_user_plugin(&self.genex_home, plugin_id.as_key())
+        clear_user_plugin(&self.ruxex_home, plugin_id.as_key())
             .await
             .map_err(anyhow::Error::from)?;
 
@@ -840,7 +840,7 @@ impl PluginsManager {
         MarketplacePolicy::from_requirements(config.config_layer_stack.requirements())
             .validate_install(
                 &config.config_layer_stack,
-                self.genex_home.as_path(),
+                self.ruxex_home.as_path(),
                 &request.marketplace_path,
                 &plugin.plugin_id.marketplace_name,
             )
@@ -930,10 +930,10 @@ impl PluginsManager {
                 ))
             })?
         } else {
-            let genex_home = self.genex_home.clone();
+            let ruxex_home = self.ruxex_home.clone();
             let source = plugin.source.clone();
             let materialized = tokio::task::spawn_blocking(move || {
-                materialize_marketplace_plugin_source(genex_home.as_path(), &source)
+                materialize_marketplace_plugin_source(ruxex_home.as_path(), &source)
             })
             .await
             .map_err(|err| {
@@ -950,7 +950,7 @@ impl PluginsManager {
             ));
         }
         let loaded_manifest =
-            if genex_utils_plugins::find_plugin_manifest_path(source_path.as_path()).is_some() {
+            if ruxex_utils_plugins::find_plugin_manifest_path(source_path.as_path()).is_some() {
                 load_plugin_manifest_with_format(source_path.as_path())
             } else {
                 plugin
@@ -1137,7 +1137,7 @@ impl PluginsManager {
         reload_config: &ConfigLayerReload,
     ) -> Result<ConfiguredMarketplaceUpgradeOutcome, String> {
         let mut outcome = upgrade_configured_git_marketplaces_with_mode(
-            self.genex_home.as_path(),
+            self.ruxex_home.as_path(),
             &config.config_layer_stack,
             marketplace_name,
             mode,
@@ -1153,13 +1153,13 @@ impl PluginsManager {
         if !outcome.upgraded_roots.is_empty() {
             let mut configured_plugin_keys = configured_plugins_from_stack(
                 &config.config_layer_stack,
-                self.genex_home.as_path(),
+                self.ruxex_home.as_path(),
             )
             .into_keys()
             .collect::<Vec<_>>();
             configured_plugin_keys.sort_unstable();
             match refresh_non_curated_plugin_cache_force_reinstall_detailed(
-                self.genex_home.as_path(),
+                self.ruxex_home.as_path(),
                 &outcome.upgraded_roots,
                 &configured_plugin_keys,
                 mode,
@@ -1322,7 +1322,7 @@ impl PluginsManager {
             let refresh_result = match request.mode {
                 NonCuratedCacheRefreshMode::IfVersionChanged => {
                     refresh_non_curated_plugin_cache_detailed(
-                        self.genex_home.as_path(),
+                        self.ruxex_home.as_path(),
                         &request.roots,
                         &request.configured_plugin_keys,
                         request.git_mode,
@@ -1330,7 +1330,7 @@ impl PluginsManager {
                 }
                 NonCuratedCacheRefreshMode::ForceReinstall => {
                     refresh_non_curated_plugin_cache_force_reinstall_detailed(
-                        self.genex_home.as_path(),
+                        self.ruxex_home.as_path(),
                         &request.roots,
                         &request.configured_plugin_keys,
                         request.git_mode,
@@ -1388,7 +1388,7 @@ impl PluginsManager {
 
     fn configured_plugin_states(&self, config: &PluginsConfigInput) -> ConfiguredPluginStates {
         let configured_plugins =
-            configured_plugins_from_stack(&config.config_layer_stack, self.genex_home.as_path());
+            configured_plugins_from_stack(&config.config_layer_stack, self.ruxex_home.as_path());
         let installed = configured_plugins
             .keys()
             .filter(|plugin_key| {
@@ -1413,7 +1413,7 @@ impl PluginsManager {
         let mut roots = additional_roots.to_vec();
         roots.extend(installed_marketplace_roots_from_layer_stack(
             &config.config_layer_stack,
-            self.genex_home.as_path(),
+            self.ruxex_home.as_path(),
         ));
         roots.sort_unstable();
         roots.dedup();
@@ -1431,7 +1431,7 @@ impl PluginsManager {
             policy
                 .validate_install(
                     &config.config_layer_stack,
-                    self.genex_home.as_path(),
+                    self.ruxex_home.as_path(),
                     &marketplace.path,
                     &marketplace.name,
                 )

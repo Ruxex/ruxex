@@ -1,15 +1,15 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-utils-output-truncation"
+name = "ruxex-utils-output-truncation"
 version.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-protocol = { workspace = true }
-genex-utils-string = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-string = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

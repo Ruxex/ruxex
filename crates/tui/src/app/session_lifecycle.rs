@@ -296,11 +296,11 @@ impl App {
                 let agent_path = source_agent_path(&thread.source);
                 let is_running = matches!(
                     thread.status,
-                    genex_app_server_protocol::ThreadStatus::Active { .. }
+                    ruxex_app_server_protocol::ThreadStatus::Active { .. }
                 );
                 let is_closed = matches!(
                     thread.status,
-                    genex_app_server_protocol::ThreadStatus::NotLoaded
+                    ruxex_app_server_protocol::ThreadStatus::NotLoaded
                 );
                 self.upsert_agent_picker_thread(
                     thread_id,
@@ -948,7 +948,7 @@ impl App {
                     }
                 }
                 self.local_settings = crate::local_settings::LocalSettings::from(&config);
-                self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
+                self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
                 self.config = config;
 
                 let name_error = if let Some(name) = new_thread_name {
@@ -1264,7 +1264,7 @@ impl App {
             self.shutdown_current_thread(app_server).await;
         }
         self.local_settings = local_settings;
-        self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
+        self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
         self.config = resume_config;
         tui.set_notification_settings(
             self.local_settings.tui.notification_settings.method,

@@ -38,19 +38,19 @@ use crate::tool_result::ToolResultEvent;
 use crate::tool_result::emit_tool_result;
 use eventsource_stream::Event as StreamEvent;
 use eventsource_stream::EventStreamError as StreamError;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::ToolName;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ToolResultLogConfig;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::ToolName;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::ToolResultLogConfig;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::user_input::UserInput;
 use opentelemetry_sdk::metrics::data::ResourceMetrics;
 use reqwest::Error;
 use reqwest::Response;
@@ -79,8 +79,8 @@ fn trace_field_value<'a>(fields: &'a [(&str, &str)], key: &str) -> Option<&'a st
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AuthEnvTelemetryMetadata {
-    pub genex_api_key_env_present: bool,
-    pub genex_api_key_env_enabled: bool,
+    pub ruxex_api_key_env_present: bool,
+    pub ruxex_api_key_env_enabled: bool,
     pub provider_env_key_name: Option<String>,
     pub provider_env_key_present: Option<bool>,
 }
@@ -269,7 +269,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.startup_phase",
+                event.name = "ruxex.startup_phase",
                 startup.phase = phase,
                 startup.status = status,
                 duration_ms = %duration.as_millis(),
@@ -285,7 +285,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.turn_ttft",
+                event.name = "ruxex.turn_ttft",
                 duration_ms = %duration.as_millis(),
             },
             log: {},
@@ -342,7 +342,7 @@ impl SessionTelemetry {
         }
         log_event!(
             self,
-            event.name = "genex.turn_cost",
+            event.name = "ruxex.turn_cost",
             turn.id = turn_id,
             usage.estimated_usd = estimated_usd,
             turn.interrupted = interrupted,
@@ -366,7 +366,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.plugin_install_elicitation_sent",
+                event.name = "ruxex.plugin_install_elicitation_sent",
                 plugin_install.tool_type = tool_type,
                 plugin_install.tool_id = tool_id,
                 plugin_install.tool_name = tool_name,
@@ -399,7 +399,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.plugin_install_suggestion",
+                event.name = "ruxex.plugin_install_suggestion",
                 plugin_install.tool_type = tool_type,
                 plugin_install.tool_id = tool_id,
                 plugin_install.tool_name = tool_name,
@@ -565,10 +565,10 @@ impl SessionTelemetry {
                 handle_responses_span
                     .record("gen_ai.usage.output_tokens", token_usage.output_tokens);
                 handle_responses_span.record(
-                    "genex.usage.reasoning_output_tokens",
+                    "ruxex.usage.reasoning_output_tokens",
                     token_usage.reasoning_output_tokens,
                 );
-                handle_responses_span.record("genex.usage.total_tokens", token_usage.total_tokens);
+                handle_responses_span.record("ruxex.usage.total_tokens", token_usage.total_tokens);
             }
             _ => {}
         }
@@ -589,10 +589,10 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.conversation_starts",
+                event.name = "ruxex.conversation_starts",
                 provider_name = %provider_name,
-                auth.env_genex_api_key_present = self.metadata.auth_env.genex_api_key_env_present,
-                auth.env_genex_api_key_enabled = self.metadata.auth_env.genex_api_key_env_enabled,
+                auth.env_ruxex_api_key_present = self.metadata.auth_env.ruxex_api_key_env_present,
+                auth.env_ruxex_api_key_enabled = self.metadata.auth_env.ruxex_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 reasoning_effort = reasoning_effort.as_ref().map(ToString::to_string),
@@ -676,7 +676,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.api_request",
+                event.name = "ruxex.api_request",
                 duration_ms = %duration.as_millis(),
                 http.response.status_code = status,
                 error.message = error,
@@ -687,8 +687,8 @@ impl SessionTelemetry {
                 auth.recovery_mode = recovery_mode,
                 auth.recovery_phase = recovery_phase,
                 endpoint = endpoint,
-                auth.env_genex_api_key_present = self.metadata.auth_env.genex_api_key_env_present,
-                auth.env_genex_api_key_enabled = self.metadata.auth_env.genex_api_key_env_enabled,
+                auth.env_ruxex_api_key_present = self.metadata.auth_env.ruxex_api_key_env_present,
+                auth.env_ruxex_api_key_enabled = self.metadata.auth_env.ruxex_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.request_id = request_id,
@@ -723,7 +723,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.websocket_connect",
+                event.name = "ruxex.websocket_connect",
                 duration_ms = %duration.as_millis(),
                 http.response.status_code = status,
                 success = success_str,
@@ -734,8 +734,8 @@ impl SessionTelemetry {
                 auth.recovery_mode = recovery_mode,
                 auth.recovery_phase = recovery_phase,
                 endpoint = endpoint,
-                auth.env_genex_api_key_present = self.metadata.auth_env.genex_api_key_env_present,
-                auth.env_genex_api_key_enabled = self.metadata.auth_env.genex_api_key_env_enabled,
+                auth.env_ruxex_api_key_present = self.metadata.auth_env.ruxex_api_key_env_present,
+                auth.env_ruxex_api_key_enabled = self.metadata.auth_env.ruxex_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.connection_reused = connection_reused,
@@ -767,12 +767,12 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.websocket_request",
+                event.name = "ruxex.websocket_request",
                 duration_ms = %duration.as_millis(),
                 success = success_str,
                 error.message = error,
-                auth.env_genex_api_key_present = self.metadata.auth_env.genex_api_key_env_present,
-                auth.env_genex_api_key_enabled = self.metadata.auth_env.genex_api_key_env_enabled,
+                auth.env_ruxex_api_key_present = self.metadata.auth_env.ruxex_api_key_env_present,
+                auth.env_ruxex_api_key_enabled = self.metadata.auth_env.ruxex_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.connection_reused = connection_reused,
@@ -796,7 +796,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.auth_recovery",
+                event.name = "ruxex.auth_recovery",
                 auth.mode = mode,
                 auth.step = step,
                 auth.outcome = outcome,
@@ -926,7 +926,7 @@ impl SessionTelemetry {
         );
         log_event!(
             self,
-            event.name = "genex.sse_event",
+            event.name = "ruxex.sse_event",
             event.kind = %kind,
             duration_ms = %duration.as_millis(),
         );
@@ -950,21 +950,21 @@ impl SessionTelemetry {
         match kind {
             Some(kind) => log_event!(
                 self,
-                event.name = "genex.sse_event",
+                event.name = "ruxex.sse_event",
                 event.kind = %kind,
                 duration_ms = %duration.as_millis(),
                 error.message = %error,
             ),
             None => log_event!(
                 self,
-                event.name = "genex.sse_event",
+                event.name = "ruxex.sse_event",
                 duration_ms = %duration.as_millis(),
                 error.message = %error,
             ),
         }
         trace_event!(
             self,
-            event.name = "genex.sse_event",
+            event.name = "ruxex.sse_event",
             event.kind = %kind_str,
             duration_ms = %duration.as_millis(),
             error.message = %error,
@@ -978,7 +978,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.sse_event",
+                event.name = "ruxex.sse_event",
                 event.kind = %"response.completed",
                 error.message = %error,
             },
@@ -991,7 +991,7 @@ impl SessionTelemetry {
         log_and_trace_event!(
             self,
             common: {
-                event.name = "genex.sse_event",
+                event.name = "ruxex.sse_event",
                 event.kind = %"response.completed",
                 input_token_count = %usage.input_tokens,
                 output_token_count = %usage.output_tokens,
@@ -1037,13 +1037,13 @@ impl SessionTelemetry {
 
         log_event!(
             self,
-            event.name = "genex.user_prompt",
+            event.name = "ruxex.user_prompt",
             prompt_length = %prompt.chars().count(),
             prompt = %prompt_to_log,
         );
         trace_event!(
             self,
-            event.name = "genex.user_prompt",
+            event.name = "ruxex.user_prompt",
             prompt_length = %prompt.chars().count(),
             text_input_count = text_input_count as i64,
             image_input_count = image_input_count as i64,
@@ -1062,7 +1062,7 @@ impl SessionTelemetry {
         match source {
             Some(source) => log_event!(
                 self,
-                event.name = "genex.tool_decision",
+                event.name = "ruxex.tool_decision",
                 tool_name = %tool_name.name,
                 tool_namespace = %tool_namespace,
                 call_id = %call_id,
@@ -1071,7 +1071,7 @@ impl SessionTelemetry {
             ),
             None => log_event!(
                 self,
-                event.name = "genex.tool_decision",
+                event.name = "ruxex.tool_decision",
                 tool_name = %tool_name.name,
                 tool_namespace = %tool_namespace,
                 call_id = %call_id,
@@ -1093,7 +1093,7 @@ impl SessionTelemetry {
             escalated_duration.map(|duration| duration.as_millis().min(i64::MAX as u128) as i64);
         log_event!(
             self,
-            event.name = "genex.sandbox_outcome",
+            event.name = "ruxex.sandbox_outcome",
             tool_name = %tool_name,
             call_id = %call_id,
             outcome = %outcome,
@@ -1102,7 +1102,7 @@ impl SessionTelemetry {
         );
         trace_event!(
             self,
-            event.name = "genex.sandbox_outcome",
+            event.name = "ruxex.sandbox_outcome",
             tool_name = %tool_name,
             call_id = %call_id,
             outcome = %outcome,

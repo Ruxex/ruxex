@@ -1,9 +1,9 @@
-use genex_extension_api::FunctionCallError;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolExecutorFuture;
-use genex_extension_api::ToolName;
-use genex_extension_api::ToolSpec;
+use ruxex_extension_api::FunctionCallError;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolExecutorFuture;
+use ruxex_extension_api::ToolName;
+use ruxex_extension_api::ToolSpec;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

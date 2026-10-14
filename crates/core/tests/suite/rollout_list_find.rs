@@ -1,30 +1,30 @@
 #![allow(clippy::unwrap_used)]
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
 use chrono::Utc;
-use genex_core::RolloutRecorder;
-use genex_core::RolloutRecorderParams;
-use genex_core::config::ConfigBuilder;
-use genex_core::find_archived_thread_path_by_id_str;
-use genex_core::find_thread_path_by_id_str;
-use genex_protocol::ThreadId;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::SessionSource;
-use genex_rollout::find_thread_meta_by_name_str;
-use genex_rollout::StateDbHandle;
-use genex_state::StateRuntime;
-use genex_state::ThreadMetadataBuilder;
+use ruxex_core::RolloutRecorder;
+use ruxex_core::RolloutRecorderParams;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::find_archived_thread_path_by_id_str;
+use ruxex_core::find_thread_path_by_id_str;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_rollout::find_thread_meta_by_name_str;
+use ruxex_rollout::StateDbHandle;
+use ruxex_state::StateRuntime;
+use ruxex_state::ThreadMetadataBuilder;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
 
 /// Create <subdir>/YYYY/MM/DD and write a minimal rollout file containing the
 /// provided conversation id in the SessionMeta line. Returns the absolute path.
-fn write_minimal_rollout_with_id_in_subdir(genex_home: &Path, subdir: &str, id: Uuid) -> PathBuf {
-    let sessions = genex_home.join(subdir).join("2024/01/01");
+fn write_minimal_rollout_with_id_in_subdir(ruxex_home: &Path, subdir: &str, id: Uuid) -> PathBuf {
+    let sessions = ruxex_home.join(subdir).join("2024/01/01");
     std::fs::create_dir_all(&sessions).unwrap();
 
     let file = sessions.join(format!("rollout-2024-01-01T00-00-00-{id}.jsonl"));
@@ -57,17 +57,17 @@ fn write_minimal_rollout_with_id_at_path(file: &Path, id: Uuid) {
 
 /// Create sessions/YYYY/MM/DD and write a minimal rollout file containing the
 /// provided conversation id in the SessionMeta line. Returns the absolute path.
-fn write_minimal_rollout_with_id(genex_home: &Path, id: Uuid) -> PathBuf {
-    write_minimal_rollout_with_id_in_subdir(genex_home, "sessions", id)
+fn write_minimal_rollout_with_id(ruxex_home: &Path, id: Uuid) -> PathBuf {
+    write_minimal_rollout_with_id_in_subdir(ruxex_home, "sessions", id)
 }
 
 async fn upsert_thread_metadata(
-    genex_home: &Path,
+    ruxex_home: &Path,
     thread_id: ThreadId,
     rollout_path: PathBuf,
 ) -> StateDbHandle {
     let runtime = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs()),
     )
     .await
     .unwrap();
@@ -81,7 +81,7 @@ async fn upsert_thread_metadata(
         Utc::now(),
         SessionSource::default(),
     );
-    builder.cwd = genex_home.to_path_buf();
+    builder.cwd = ruxex_home.to_path_buf();
     let metadata = builder.build("test-provider");
     runtime.upsert_thread(&metadata).await.unwrap();
     runtime
@@ -102,16 +102,16 @@ async fn find_locates_rollout_file_by_id() {
 }
 
 #[tokio::test]
-async fn find_handles_gitignore_covering_genex_home_directory() {
+async fn find_handles_gitignore_covering_ruxex_home_directory() {
     let repo = TempDir::new().unwrap();
-    let genex_home = repo.path().join(".genex");
-    std::fs::create_dir_all(&genex_home).unwrap();
-    std::fs::write(repo.path().join(".gitignore"), ".genex/**\n").unwrap();
+    let ruxex_home = repo.path().join(".ruxex");
+    std::fs::create_dir_all(&ruxex_home).unwrap();
+    std::fs::write(repo.path().join(".gitignore"), ".ruxex/**\n").unwrap();
     let id = Uuid::new_v4();
-    let expected = write_minimal_rollout_with_id(&genex_home, id);
+    let expected = write_minimal_rollout_with_id(&ruxex_home, id);
 
     let found =
-        find_thread_path_by_id_str(&genex_home, &id.to_string(), /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(&ruxex_home, &id.to_string(), /*state_db_ctx*/ None)
             .await
             .unwrap();
 
@@ -177,7 +177,7 @@ async fn find_locates_rollout_file_written_by_recorder() -> std::io::Result<()> 
     // Ensures the name-based finder locates a rollout produced by the real recorder.
     let home = TempDir::new().unwrap();
     let config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .build()
         .await?;
     let thread_id = ThreadId::new();

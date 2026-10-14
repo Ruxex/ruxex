@@ -1,18 +1,18 @@
 use std::fs;
 use std::sync::Arc;
 
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::SkillDependencies;
-use genex_skills::SkillInterface;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillPolicy;
-use genex_skills::SkillToolDependency;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::SkillDiscoveryMode;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::SkillDependencies;
+use ruxex_skills::SkillInterface;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillPolicy;
+use ruxex_skills::SkillToolDependency;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -37,7 +37,7 @@ fn write_skill(root: &TempDir, directory: &str, frontmatter: &str) -> AbsolutePa
 fn write_metadata(root: &TempDir, directory: &str, contents: &str) {
     let metadata_dir = root.path().join(directory).join("agents");
     fs::create_dir_all(&metadata_dir).expect("create metadata directory");
-    fs::write(metadata_dir.join("genex.yaml"), contents).expect("write metadata");
+    fs::write(metadata_dir.join("ruxex.yaml"), contents).expect("write metadata");
 }
 
 fn root_for(temp_dir: &TempDir, scope: SkillScope) -> HostSkillRoot {
@@ -361,7 +361,7 @@ async fn skips_hidden_host_skills() {
 #[tokio::test]
 async fn discovers_nested_plugin_namespace_without_plugin_identity() {
     let root = TempDir::new().expect("temp dir");
-    let plugin_manifest = root.path().join("nested/.genex-plugin/plugin.json");
+    let plugin_manifest = root.path().join("nested/.ruxex-plugin/plugin.json");
     fs::create_dir_all(plugin_manifest.parent().expect("plugin manifest parent"))
         .expect("create plugin manifest directory");
     fs::write(&plugin_manifest, r#"{"name":"plugin-name"}"#).expect("write plugin manifest");
@@ -479,7 +479,7 @@ async fn recursive_plugin_root_preserves_owner_namespace_and_shared_asset_policy
         "skills/group/demo",
         "name: demo\ndescription: Demo skill",
     );
-    let nested_manifest = root.path().join("skills/group/.genex-plugin/plugin.json");
+    let nested_manifest = root.path().join("skills/group/.ruxex-plugin/plugin.json");
     fs::create_dir_all(nested_manifest.parent().expect("nested manifest parent"))
         .expect("create nested plugin manifest directory");
     fs::write(nested_manifest, r#"{"name":"conflicting-plugin"}"#)

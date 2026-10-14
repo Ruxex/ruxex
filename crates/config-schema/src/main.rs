@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// Generate the JSON Schema for `config.toml` and write it to `config.schema.json`.
 #[derive(Parser)]
-#[command(name = "genex-write-config-schema")]
+#[command(name = "ruxex-write-config-schema")]
 struct Args {
     #[arg(short, long, value_name = "PATH")]
     out: Option<PathBuf>,
@@ -17,6 +17,6 @@ fn main() -> Result<()> {
     let out_path = args.out.unwrap_or_else(|| {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../core/config.schema.json")
     });
-    genex_config::schema::write_config_schema(&out_path)?;
+    ruxex_config::schema::write_config_schema(&out_path)?;
     Ok(())
 }

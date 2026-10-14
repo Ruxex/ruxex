@@ -1,5 +1,5 @@
-use genex_skills::SkillDependencies;
-use genex_skills::SkillToolDependency;
+use ruxex_skills::SkillDependencies;
+use ruxex_skills::SkillToolDependency;
 use pretty_assertions::assert_eq;
 
 use super::*;

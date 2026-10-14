@@ -5,7 +5,7 @@ import type { AbsolutePathBuf } from "../AbsolutePathBuf";
 import type { ProcessTerminalSize } from "./ProcessTerminalSize";
 
 /**
- * Spawn a standalone process (argv vector) without a Genex sandbox on the host
+ * Spawn a standalone process (argv vector) without a Ruxex sandbox on the host
  * where the app server is running.
  *
  * `process/spawn` returns after the process has started and the connection-scoped

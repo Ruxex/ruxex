@@ -15,12 +15,12 @@ use crate::history_cell::split_reasoning_summary_parts;
 use crate::inline_visualization::InlineVisualizationContext;
 use crate::legacy_core::config::Config;
 use crate::multi_agents::sub_agent_activity_summary;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::ThreadId;
-use genex_protocol::items::UserMessageItem;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ratatui::style::Stylize as _;
 use ratatui::text::Line;
 
@@ -116,7 +116,7 @@ pub(crate) fn thread_items_to_transcript_cells(
                     client_id,
                     content: content
                         .into_iter()
-                        .map(genex_app_server_protocol::UserInput::into_core)
+                        .map(ruxex_app_server_protocol::UserInput::into_core)
                         .collect(),
                 };
                 cells.push(Arc::new(UserHistoryCell {
@@ -151,7 +151,7 @@ pub(crate) fn thread_items_to_transcript_cells(
                     )
                 {
                     cells.push(Arc::new(PrefixedWrappedHistoryCell::new(
-                        format!("Sent by Genex from task {source_thread_id}\n{prompt}"),
+                        format!("Sent by Ruxex from task {source_thread_id}\n{prompt}"),
                         "• ".dim(),
                         "  ",
                     )));
@@ -190,7 +190,7 @@ pub(crate) fn thread_items_to_transcript_cells(
                     item.id,
                     item.query,
                     item.action
-                        .unwrap_or(genex_app_server_protocol::WebSearchAction::Other),
+                        .unwrap_or(ruxex_app_server_protocol::WebSearchAction::Other),
                 )));
             }
             ThreadItem::ImageView { path, .. } => {

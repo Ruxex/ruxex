@@ -1,4 +1,4 @@
-//! Schema-heavy configuration TOML types used by Genex.
+//! Schema-heavy configuration TOML types used by Ruxex.
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -25,22 +25,22 @@ use crate::types::ShellEnvironmentPolicyToml;
 use crate::types::SkillsConfig;
 use crate::types::Tui;
 use crate::types::UriBasedFileOpener;
-use genex_features::FeaturesToml;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::config_types::WebSearchToolConfig;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path::normalize_for_path_comparison;
+use ruxex_features::FeaturesToml;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::config_types::WebSearchToolConfig;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path::normalize_for_path_comparison;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -123,7 +123,7 @@ pub struct OrchestratorFeatureToml {
     pub enabled: Option<bool>,
 }
 
-/// Base config deserialized from ~/.genex/config.toml.
+/// Base config deserialized from ~/.ruxex/config.toml.
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct ConfigToml {
@@ -134,7 +134,7 @@ pub struct ConfigToml {
     #[serde(skip)]
     #[schemars(skip)]
     pub model: Option<String>,
-    /// Connection settings for the single built-in provider mounted by this Genex runtime.
+    /// Connection settings for the single built-in provider mounted by this Ruxex runtime.
     /// This is supplied by the host/runtime and is not deserialized from user config.
     #[serde(skip)]
     #[schemars(skip)]
@@ -180,12 +180,12 @@ pub struct ConfigToml {
     /// Sandbox mode to use.
     pub sandbox_mode: Option<SandboxMode>,
 
-    /// Allow macOS sandbox writable roots at or beneath GENEX_HOME to traverse
+    /// Allow macOS sandbox writable roots at or beneath RUXEX_HOME to traverse
     /// symlinks. Read only from the host's user config at startup; defaults to false.
     /// This grants no write access by itself, but trusts symlink targets even if
-    /// they change between commands or lie outside GENEX_HOME.
+    /// they change between commands or lie outside RUXEX_HOME.
     /// This setting has no effect on Linux.
-    pub allow_symlinked_genex_home: Option<bool>,
+    pub allow_symlinked_ruxex_home: Option<bool>,
 
     /// Sandbox configuration to apply if `sandbox` is `WorkspaceWrite`.
     pub sandbox_workspace_write: Option<SandboxWorkspaceWrite>,
@@ -218,7 +218,7 @@ pub struct ConfigToml {
     /// Optional path to a file containing model instructions that will override
     /// the built-in instructions for the selected model. Users are STRONGLY
     /// DISCOURAGED from using this field, as deviating from the instructions
-    /// sanctioned by Genex will likely degrade model performance.
+    /// sanctioned by Ruxex will likely degrade model performance.
     pub model_instructions_file: Option<AbsolutePathBuf>,
 
     /// Compact prompt used for history compaction.
@@ -233,13 +233,13 @@ pub struct ConfigToml {
     pub forced_login_method: Option<ForcedLoginMethod>,
 
     /// Preferred backend for storing CLI auth credentials.
-    /// file (default): Use a file in the Genex home directory.
+    /// file (default): Use a file in the Ruxex home directory.
     /// keyring: Use an OS-specific keyring service.
     /// auto: Use the keyring if available, otherwise use a file.
     #[serde(default)]
     pub cli_auth_credentials_store: Option<AuthCredentialsStoreMode>,
 
-    /// Definition for MCP servers that Genex can reach out to for tool calls.
+    /// Definition for MCP servers that Ruxex can reach out to for tool calls.
     #[serde(default)]
     // Uses the raw MCP input shape (custom deserialization) rather than `McpServerConfig`.
     #[schemars(schema_with = "crate::schema::mcp_servers_schema")]
@@ -252,13 +252,13 @@ pub struct ConfigToml {
     /// Preferred backend for storing MCP OAuth credentials.
     /// keyring: Use an OS-specific keyring service.
     ///          https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2
-    /// file: Use a file in the Genex home directory.
+    /// file: Use a file in the Ruxex home directory.
     /// auto (default): Use the OS-specific keyring service if available, otherwise use a file.
     #[serde(default)]
     pub mcp_oauth_credentials_store: Option<OAuthCredentialsStoreMode>,
 
     /// Optional fixed port for the local HTTP callback server used during MCP OAuth login.
-    /// When unset, Genex will bind to an ephemeral port chosen by the OS.
+    /// When unset, Ruxex will bind to an ephemeral port chosen by the OS.
     pub mcp_oauth_callback_port: Option<u16>,
 
     /// Optional redirect URI to use during MCP OAuth login.
@@ -292,17 +292,17 @@ pub struct ConfigToml {
     #[serde(default)]
     pub profiles: HashMap<String, ConfigProfile>,
 
-    /// Settings that govern if and what will be written to `~/.genex/history.jsonl`.
+    /// Settings that govern if and what will be written to `~/.ruxex/history.jsonl`.
     #[serde(default = "default_history")]
     pub history: Option<History>,
 
-    /// Directory where Genex stores the SQLite state DB.
-    /// Defaults to `$GENEX_SQLITE_HOME` when set. Otherwise uses `$GENEX_HOME`.
+    /// Directory where Ruxex stores the SQLite state DB.
+    /// Defaults to `$RUXEX_SQLITE_HOME` when set. Otherwise uses `$RUXEX_HOME`.
     pub sqlite_home: Option<AbsolutePathBuf>,
 
-    /// Directory where Genex writes log files. Setting this value explicitly
+    /// Directory where Ruxex writes log files. Setting this value explicitly
     /// also enables the TUI text log in this directory.
-    /// Defaults to `$GENEX_HOME/log`.
+    /// Defaults to `$RUXEX_HOME/log`.
     pub log_dir: Option<AbsolutePathBuf>,
 
     /// Optional URI-based file opener. If set, citations to files in the model
@@ -391,7 +391,7 @@ pub struct ConfigToml {
     /// Suppress warnings about unstable (under development) features.
     pub suppress_unstable_features_warning: Option<bool>,
 
-    /// When `false`, disables metrics across Genex product surfaces in this machine.
+    /// When `false`, disables metrics across Ruxex product surfaces in this machine.
     /// Defaults to `true`.
     pub metrics: Option<MetricsConfigToml>,
 

@@ -1,7 +1,7 @@
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::InterAgentCommunication;
 
-const AGENT_COMMUNICATION_TARGET: &str = "genex_otel.agent_communication";
+const AGENT_COMMUNICATION_TARGET: &str = "ruxex_otel.agent_communication";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum AgentCommunicationKind {
@@ -50,7 +50,7 @@ pub(crate) fn emit_agent_communication_send(
     tracing::info!(
         target: AGENT_COMMUNICATION_TARGET,
         {
-            event.name = "genex.agent_communication",
+            event.name = "ruxex.agent_communication",
             communication_id,
             kind = context.kind.as_str(),
             state = "send",
@@ -69,7 +69,7 @@ pub(crate) fn emit_agent_communication_receive(communication_id: &str) {
     tracing::info!(
         target: AGENT_COMMUNICATION_TARGET,
         {
-            event.name = "genex.agent_communication",
+            event.name = "ruxex.agent_communication",
             communication_id,
             state = "receive",
         },

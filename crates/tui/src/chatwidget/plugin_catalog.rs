@@ -27,15 +27,15 @@ use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::tui::FrameRequester;
 use crossterm::event::KeyCode;
-use genex_app_server_protocol::PluginAuthPolicy;
-use genex_app_server_protocol::PluginAvailability;
-use genex_app_server_protocol::PluginDetail;
-use genex_app_server_protocol::PluginInstallPolicy;
-use genex_app_server_protocol::PluginListResponse;
-use genex_app_server_protocol::PluginMarketplaceEntry;
-use genex_app_server_protocol::PluginSource;
-use genex_app_server_protocol::PluginSummary;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::PluginAuthPolicy;
+use ruxex_app_server_protocol::PluginAvailability;
+use ruxex_app_server_protocol::PluginDetail;
+use ruxex_app_server_protocol::PluginInstallPolicy;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::PluginMarketplaceEntry;
+use ruxex_app_server_protocol::PluginSource;
+use ruxex_app_server_protocol::PluginSummary;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
@@ -212,7 +212,7 @@ impl ChatWidget {
             format!("Remove {marketplace_display_name} marketplace?").dim(),
         ));
         header.push(Line::from(
-            "This removes the configured marketplace from Genex.".dim(),
+            "This removes the configured marketplace from Ruxex.".dim(),
         ));
 
         let cwd_for_remove = self.config.cwd.to_path_buf();
@@ -972,7 +972,7 @@ impl ChatWidget {
                         let marketplace_path = location.clone().into_request_params();
                         tx.send(AppEvent::FetchPluginDetail {
                             cwd: cwd.clone(),
-                            params: genex_app_server_protocol::PluginReadParams {
+                            params: ruxex_app_server_protocol::PluginReadParams {
                                 marketplace_path,
                                 plugin_name: plugin_name.clone(),
                             },
@@ -1429,7 +1429,7 @@ fn plugin_hook_summary(plugin: &PluginDetail) -> String {
     if plugin.hooks.is_empty() {
         "No plugin hooks.".to_string()
     } else {
-        let mut event_counts = Vec::<(genex_app_server_protocol::HookEventName, usize)>::new();
+        let mut event_counts = Vec::<(ruxex_app_server_protocol::HookEventName, usize)>::new();
         for hook in &plugin.hooks {
             if let Some((_, handler_count)) = event_counts
                 .iter_mut()

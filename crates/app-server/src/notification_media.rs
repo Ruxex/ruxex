@@ -1,11 +1,11 @@
-use genex_app_server_protocol::DynamicToolCallOutputContentItem;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ResponseItem;
+use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ResponseItem;
 
 pub(crate) fn without_notification_media(notification: ServerNotification) -> ServerNotification {
     match notification {

@@ -3,16 +3,16 @@
 use std::sync::Arc;
 
 use core_test_support::responses;
-use core_test_support::test_genex::test_genex;
-use genex_core::config::Config;
-use genex_core::config::TokenBudgetConfig;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_history_notes_extension::install;
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_providers::create_model_provider;
+use core_test_support::test_ruxex::test_ruxex;
+use ruxex_core::config::Config;
+use ruxex_core::config::TokenBudgetConfig;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_history_notes_extension::install;
+use ruxex_login::AuthHeaders;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::create_model_provider;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -58,7 +58,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
         ],
     )
     .await;
-    let auth = GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
+    let auth = RuxexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
     let credential_manager = CredentialManager::from_auth_for_testing(auth.clone());
     let provider = create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri()))),
@@ -66,7 +66,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
     );
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     install(&mut extensions, provider);
-    let test = test_genex()
+    let test = test_ruxex()
         .with_auth(auth)
         .with_model_info_override("example-model", |model_info| {
             model_info.supports_experimental_context = true;

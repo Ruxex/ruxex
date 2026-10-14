@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-model-provider"
+name = "ruxex-model-provider"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_model_provider"
+name = "ruxex_model_provider"
 path = "src/lib.rs"
 
 [lints]
@@ -15,14 +15,14 @@ workspace = true
 [dependencies]
 chrono = { workspace = true }
 futures = { workspace = true }
-genex-api = { workspace = true }
-genex-http-client = { workspace = true }
-genex-login = { workspace = true }
-genex-model-provider-info = { workspace = true }
-genex-models-manager = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-response-debug-context = { workspace = true }
+ruxex-api = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-response-debug-context = { workspace = true }
 http = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -36,7 +36,7 @@ uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
 base64 = { workspace = true }
-genex-utils-redacted-string = { workspace = true }
+ruxex-utils-redacted-string = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }

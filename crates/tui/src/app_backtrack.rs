@@ -46,11 +46,11 @@ use color_eyre::eyre::bail;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnStatus;
-use genex_protocol::ThreadId;
-use genex_protocol::models::local_image_label_text;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::local_image_label_text;
 
 const NO_PREVIOUS_MESSAGE_TO_EDIT: &str = "No previous message to edit.";
 pub(crate) const SIDE_EDIT_PREVIOUS_UNAVAILABLE_MESSAGE: &str =
@@ -652,7 +652,7 @@ mod tests {
     use crate::bottom_pane::MentionBinding;
     use crate::history_cell::AgentMessageCell;
     use crate::history_cell::HistoryCell;
-    use genex_app_server_protocol::UserInput;
+    use ruxex_app_server_protocol::UserInput;
     use pretty_assertions::assert_eq;
     use ratatui::prelude::Line;
     use std::path::PathBuf;
@@ -683,7 +683,7 @@ mod tests {
                     }],
                 })
                 .collect(),
-            items_view: genex_app_server_protocol::TurnItemsView::Full,
+            items_view: ruxex_app_server_protocol::TurnItemsView::Full,
             status,
             error: None,
             started_at: None,

@@ -5,24 +5,24 @@ use anyhow::Context;
 use chrono::DateTime;
 use clap::Parser;
 use clap::ValueEnum;
-use genex_app_server::runtime::mount_provider_home_for_config;
-use genex_core::config::ConfigBuilder;
-use genex_state::LogQuery;
-use genex_state::LogRow;
-use genex_state::SqliteConfig;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server::runtime::mount_provider_home_for_config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_state::LogQuery;
+use ruxex_state::LogRow;
+use ruxex_state::SqliteConfig;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use owo_colors::OwoColorize;
 
 #[derive(Debug, Parser)]
-#[command(name = "genex-state-logs")]
-#[command(about = "Tail Genex logs from the dedicated logs SQLite DB with simple filters")]
+#[command(name = "ruxex-state-logs")]
+#[command(about = "Tail Ruxex logs from the dedicated logs SQLite DB with simple filters")]
 struct Args {
-    /// Path to GENEX_HOME. Defaults to $GENEX_HOME or ~/.genex.
-    #[arg(long, env = "GENEX_HOME")]
-    genex_home: Option<PathBuf>,
+    /// Path to RUXEX_HOME. Defaults to $RUXEX_HOME or ~/.ruxex.
+    #[arg(long, env = "RUXEX_HOME")]
+    ruxex_home: Option<PathBuf>,
 
-    /// Direct path to the logs SQLite database. Overrides --genex-home.
+    /// Direct path to the logs SQLite database. Overrides --ruxex-home.
     #[arg(long)]
     db: Option<PathBuf>,
 
@@ -141,8 +141,8 @@ async fn resolve_sqlite_config(args: &Args) -> anyhow::Result<SqliteConfig> {
     }
 
     let mut config_builder = ConfigBuilder::default();
-    if let Some(genex_home) = args.genex_home.as_ref() {
-        config_builder = config_builder.genex_home(genex_home.clone());
+    if let Some(ruxex_home) = args.ruxex_home.as_ref() {
+        config_builder = config_builder.ruxex_home(ruxex_home.clone());
     }
     let config = config_builder.build().await?;
     mount_provider_home_for_config(&config)
@@ -406,31 +406,31 @@ mod tests {
 
     #[test]
     fn log_level_rejects_aliases_and_unknown_values() {
-        assert!(Args::try_parse_from(["genex-state-logs", "--level", "warning"]).is_err());
-        assert!(Args::try_parse_from(["genex-state-logs", "--level", "err"]).is_err());
-        assert!(Args::try_parse_from(["genex-state-logs", "--level", "warn,error"]).is_err());
+        assert!(Args::try_parse_from(["ruxex-state-logs", "--level", "warning"]).is_err());
+        assert!(Args::try_parse_from(["ruxex-state-logs", "--level", "err"]).is_err());
+        assert!(Args::try_parse_from(["ruxex-state-logs", "--level", "warn,error"]).is_err());
     }
 
     #[test]
     fn log_level_accepts_canonical_values_case_insensitively() {
-        let args = Args::try_parse_from(["genex-state-logs", "--level", "WARN"])
+        let args = Args::try_parse_from(["ruxex-state-logs", "--level", "WARN"])
             .expect("parse uppercase log level");
 
         assert_eq!(args.level, Some(LogLevelThreshold::Warn));
     }
 
-    /// Explicit database selection must not parse an overridden Genex home.
+    /// Explicit database selection must not parse an overridden Ruxex home.
     #[tokio::test]
-    async fn direct_db_skips_genex_home_config() {
-        let genex_home = tempfile::tempdir().expect("create Genex home");
-        std::fs::write(genex_home.path().join("config.toml"), "model = [")
+    async fn direct_db_skips_ruxex_home_config() {
+        let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
+        std::fs::write(ruxex_home.path().join("config.toml"), "model = [")
             .expect("write invalid config");
         let sqlite_home = tempfile::tempdir().expect("create SQLite home");
         let db_path = sqlite_home.path().join("logs_2.sqlite");
         let args = Args::try_parse_from([
-            OsString::from("genex-state-logs"),
-            OsString::from("--genex-home"),
-            genex_home.path().as_os_str().to_owned(),
+            OsString::from("ruxex-state-logs"),
+            OsString::from("--ruxex-home"),
+            ruxex_home.path().as_os_str().to_owned(),
             OsString::from("--db"),
             db_path.as_os_str().to_owned(),
         ])
@@ -445,13 +445,13 @@ mod tests {
 
     #[tokio::test]
     async fn home_derived_db_requires_provider_marker() {
-        let genex_home = tempfile::tempdir().expect("create Genex home");
-        std::fs::write(genex_home.path().join("state.sqlite"), b"existing state")
+        let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
+        std::fs::write(ruxex_home.path().join("state.sqlite"), b"existing state")
             .expect("write existing state marker");
         let args = Args::try_parse_from([
-            OsString::from("genex-state-logs"),
-            OsString::from("--genex-home"),
-            genex_home.path().as_os_str().to_owned(),
+            OsString::from("ruxex-state-logs"),
+            OsString::from("--ruxex-home"),
+            ruxex_home.path().as_os_str().to_owned(),
         ])
         .expect("parse arguments");
 
@@ -459,7 +459,7 @@ mod tests {
             .await
             .expect_err("existing home without marker must be rejected");
 
-        assert!(error.to_string().contains("genex-home.json"));
+        assert!(error.to_string().contains("ruxex-home.json"));
     }
 
     /// Direct database selection must preserve native path bytes.
@@ -474,7 +474,7 @@ mod tests {
         db_path.extend_from_slice(b"/non-utf8-\xff/logs_2.sqlite");
         let db_path = PathBuf::from(OsString::from_vec(db_path));
         let args = Args::try_parse_from([
-            OsString::from("genex-state-logs"),
+            OsString::from("ruxex-state-logs"),
             OsString::from("--db"),
             db_path.as_os_str().to_owned(),
         ])

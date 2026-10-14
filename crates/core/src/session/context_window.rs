@@ -1,8 +1,8 @@
 use super::session::Session;
 use super::turn_context::TurnContext;
 use crate::config::Config;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::model_types::ModelInfo;
 
 #[derive(Debug)]
 pub(crate) struct ContextWindowTokenStatus {

@@ -1,14 +1,14 @@
 use super::AgentControl;
 use crate::agent::AgentStatus;
 use crate::config::Config;
-use crate::genex_thread::GenexThread;
+use crate::ruxex_thread::RuxexThread;
 use crate::thread_manager::ThreadManagerState;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -51,7 +51,7 @@ impl AgentControl {
         state: &Arc<ThreadManagerState>,
         config: &Config,
         protected_thread_id: Option<ThreadId>,
-    ) -> GenexResult<V2ResidencySlot> {
+    ) -> RuxexResult<V2ResidencySlot> {
         let capacity = config
             .effective_agent_max_threads(MultiAgentVersion::V2)
             .unwrap_or(usize::MAX);
@@ -83,7 +83,7 @@ impl V2Residency {
         manager: &Arc<ThreadManagerState>,
         capacity: usize,
         protected_thread_id: Option<ThreadId>,
-    ) -> GenexResult<V2ResidencySlot> {
+    ) -> RuxexResult<V2ResidencySlot> {
         loop {
             if self.try_reserve_pending_slot(capacity) {
                 return Ok(V2ResidencySlot {
@@ -95,7 +95,7 @@ impl V2Residency {
                 .try_unload_one_resident(manager, protected_thread_id)
                 .await
             {
-                return Err(GenexErr::new(GenexErrorDetails::AgentLimitReached {
+                return Err(RuxexErr::new(RuxexErrorDetails::AgentLimitReached {
                     max_threads: capacity,
                 }));
             }
@@ -221,7 +221,7 @@ fn touch_resident(residents: &mut VecDeque<ThreadId>, thread_id: ThreadId) {
     residents.push_back(thread_id);
 }
 
-fn is_resident_candidate(thread: &GenexThread) -> bool {
+fn is_resident_candidate(thread: &RuxexThread) -> bool {
     thread.multi_agent_version() == Some(MultiAgentVersion::V2)
         && is_v2_resident_session_source(&thread.session_source)
 }
@@ -230,7 +230,7 @@ pub(super) fn is_v2_resident_session_source(session_source: &SessionSource) -> b
     matches!(session_source, SessionSource::SubAgent(_))
 }
 
-async fn is_unloadable(thread: &GenexThread) -> bool {
+async fn is_unloadable(thread: &RuxexThread) -> bool {
     matches!(
         thread.agent_status().await,
         AgentStatus::Completed(_) | AgentStatus::Errored(_) | AgentStatus::Interrupted

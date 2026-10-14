@@ -2,26 +2,26 @@ use std::fmt;
 use std::sync::Arc;
 
 use anyhow::Result;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::LocalFileSystem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::LocalFileSystem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
-use crate::common::exec_server::TestGenexHelperPaths;
-use crate::common::exec_server::test_genex_helper_paths;
+use crate::common::exec_server::TestRuxexHelperPaths;
+use crate::common::exec_server::test_ruxex_helper_paths;
 
 pub(crate) struct FileSystemContext {
     pub(crate) file_system: Arc<dyn ExecutorFileSystem>,
-    _helper_paths: Option<TestGenexHelperPaths>,
+    _helper_paths: Option<TestRuxexHelperPaths>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -42,10 +42,10 @@ pub(crate) async fn create_file_system_context(
 ) -> Result<FileSystemContext> {
     match implementation {
         FileSystemImplementation::Local => {
-            let helper_paths = test_genex_helper_paths()?;
+            let helper_paths = test_ruxex_helper_paths()?;
             let runtime_paths = ExecServerRuntimePaths::new(
-                helper_paths.genex_exe.clone(),
-                helper_paths.genex_linux_sandbox_exe.clone(),
+                helper_paths.ruxex_exe.clone(),
+                helper_paths.ruxex_linux_sandbox_exe.clone(),
             )?;
             Ok(FileSystemContext {
                 file_system: Arc::new(LocalFileSystem::with_runtime_paths(runtime_paths)),

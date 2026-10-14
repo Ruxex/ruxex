@@ -1,8 +1,8 @@
 use anyhow::Ok;
-use genex_core::TurnInputRequest;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SafetyBufferingEvent;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SafetyBufferingEvent;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_response_once;
@@ -10,7 +10,7 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -41,20 +41,20 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
             metadata,
             ev_completed("resp-1"),
         ]))
-        .insert_header("x-genex-safety-buffering-enabled", "true")
-        .insert_header("x-genex-safety-buffering-faster-model", FASTER_MODEL),
+        .insert_header("x-ruxex-safety-buffering-enabled", "true")
+        .insert_header("x-ruxex-safety-buffering-faster-model", FASTER_MODEL),
     )
     .await;
 
-    let test = test_genex().build(&server).await?;
-    test.genex
+    let test = test_ruxex().build(&server).await?;
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let event = wait_for_event_match(&test.genex, |event| match event {
+    let event = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::SafetyBuffering(event) => Some(event.clone()),
         _ => None,
     })
@@ -69,7 +69,7 @@ async fn emits_safety_buffering_from_response_metadata_with_the_header_fallback_
             faster_model: Some(FASTER_MODEL.to_string()),
         }
     );
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -95,15 +95,15 @@ async fn emits_safety_buffering_with_the_responses_api_model_without_header_gati
     )
     .await;
 
-    let test = test_genex().build(&server).await?;
-    test.genex
+    let test = test_ruxex().build(&server).await?;
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Check this request".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let event = wait_for_event_match(&test.genex, |event| match event {
+    let event = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::SafetyBuffering(event) => Some(event.clone()),
         _ => None,
     })
@@ -118,7 +118,7 @@ async fn emits_safety_buffering_with_the_responses_api_model_without_header_gati
             faster_model: Some(FASTER_MODEL.to_string()),
         }
     );
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

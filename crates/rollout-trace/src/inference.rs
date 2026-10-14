@@ -9,8 +9,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::TokenUsage;
 use http::HeaderMap;
 use http::HeaderValue;
 use serde::Serialize;
@@ -18,7 +18,7 @@ use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
 use crate::model::AgentThreadId;
-use crate::model::GenexTurnId;
+use crate::model::RuxexTurnId;
 use crate::model::InferenceCallId;
 use crate::payload::RawPayloadKind;
 use crate::raw_event::RawTraceEventContext;
@@ -48,13 +48,13 @@ enum InferenceTraceContextState {
 struct EnabledInferenceTraceContext {
     writer: Arc<TraceWriter>,
     thread_id: AgentThreadId,
-    genex_turn_id: GenexTurnId,
+    ruxex_turn_id: RuxexTurnId,
     model: String,
 }
 
 /// One concrete upstream request attempt.
 ///
-/// A Genex turn can create multiple attempts when auth recovery retries the
+/// A Ruxex turn can create multiple attempts when auth recovery retries the
 /// HTTP request or WebSocket setup falls back to HTTP. Completion is often
 /// observed after the client returns the response stream, so the attempt owns
 /// the terminal guard that prevents duplicate lifecycle events.
@@ -98,18 +98,18 @@ impl InferenceTraceContext {
         }
     }
 
-    /// Builds an enabled context for all upstream attempts made by one Genex turn.
+    /// Builds an enabled context for all upstream attempts made by one Ruxex turn.
     pub fn enabled(
         writer: Arc<TraceWriter>,
         thread_id: AgentThreadId,
-        genex_turn_id: GenexTurnId,
+        ruxex_turn_id: RuxexTurnId,
         model: String,
     ) -> Self {
         Self {
             state: InferenceTraceContextState::Enabled(EnabledInferenceTraceContext {
                 writer,
                 thread_id,
-                genex_turn_id,
+                ruxex_turn_id,
                 model,
             }),
         }
@@ -185,7 +185,7 @@ impl InferenceTraceAttempt {
             RawTraceEventPayload::InferenceStarted {
                 inference_call_id: attempt.inference_call_id.clone(),
                 thread_id: attempt.context.thread_id.clone(),
-                genex_turn_id: attempt.context.genex_turn_id.clone(),
+                ruxex_turn_id: attempt.context.ruxex_turn_id.clone(),
                 model: attempt.context.model.clone(),
                 request_payload,
             },
@@ -195,7 +195,7 @@ impl InferenceTraceAttempt {
     /// Records successful provider completion and serializes the observed output items.
     ///
     /// Callers pass protocol-native response items so this crate owns the
-    /// trace-specific serialization rules. That keeps genex-core focused on
+    /// trace-specific serialization rules. That keeps ruxex-core focused on
     /// transport behavior while preserving trace evidence that normal request
     /// serialization intentionally omits.
     pub fn record_completed(
@@ -261,7 +261,7 @@ impl InferenceTraceAttempt {
         );
     }
 
-    /// Records a provider stream that Genex intentionally stopped consuming.
+    /// Records a provider stream that Ruxex intentionally stopped consuming.
     ///
     /// This happens when the turn is interrupted or when mailbox delivery
     /// preempts the current sampling request. Complete output items observed
@@ -313,7 +313,7 @@ impl InferenceTraceAttempt {
 ///
 /// The protocol serializer intentionally omits some readable reasoning content
 /// when shaping items for later model requests. Rollout traces need the item as
-/// Genex received it, so this helper restores that content in the raw payload.
+/// Ruxex received it, so this helper restores that content in the raw payload.
 pub(crate) fn trace_response_item_json(item: &ResponseItem) -> JsonValue {
     let mut value = serde_json::to_value(item).unwrap_or_else(|err| {
         serde_json::json!({
@@ -378,7 +378,7 @@ fn append_with_context_best_effort(
 ) {
     let event_context = RawTraceEventContext {
         thread_id: Some(context.thread_id.clone()),
-        genex_turn_id: Some(context.genex_turn_id.clone()),
+        ruxex_turn_id: Some(context.ruxex_turn_id.clone()),
     };
     let _ = context.writer.append_with_context(event_context, payload);
 }
@@ -387,9 +387,9 @@ fn append_with_context_best_effort(
 mod tests {
     use std::sync::Arc;
 
-    use genex_protocol::ResponseItemId;
-    use genex_protocol::models::ReasoningItemContent;
-    use genex_protocol::models::ReasoningItemReasoningSummary;
+    use ruxex_protocol::ResponseItemId;
+    use ruxex_protocol::models::ReasoningItemContent;
+    use ruxex_protocol::models::ReasoningItemReasoningSummary;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use tempfile::TempDir;
@@ -449,8 +449,8 @@ mod tests {
             agent_path: "/root".to_string(),
             metadata_payload: None,
         })?;
-        writer.append(RawTraceEventPayload::GenexTurnStarted {
-            genex_turn_id: "turn-1".to_string(),
+        writer.append(RawTraceEventPayload::RuxexTurnStarted {
+            ruxex_turn_id: "turn-1".to_string(),
             thread_id: "thread-root".to_string(),
         })?;
         let context = InferenceTraceContext::enabled(
@@ -480,7 +480,7 @@ mod tests {
 
         assert_eq!(rollout.inference_calls.len(), 1);
         assert_eq!(inference.thread_id, "thread-root");
-        assert_eq!(inference.genex_turn_id, "turn-1");
+        assert_eq!(inference.ruxex_turn_id, "turn-1");
         assert_eq!(inference.execution.status, ExecutionStatus::Completed);
         assert_eq!(inference.upstream_request_id, Some("req-1".to_string()));
         assert_eq!(rollout.raw_payloads.len(), 2);

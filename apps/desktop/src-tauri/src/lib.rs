@@ -3,17 +3,17 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_client::RemoteAppServerClient;
-use genex_app_server_client::RemoteAppServerConnectArgs;
-use genex_app_server_client::RemoteAppServerEndpoint;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ClientResponse;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::Result as JsonRpcResult;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_client::RemoteAppServerClient;
+use ruxex_app_server_client::RemoteAppServerConnectArgs;
+use ruxex_app_server_client::RemoteAppServerEndpoint;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ClientResponse;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::Result as JsonRpcResult;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
@@ -78,14 +78,14 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState::default())
         .setup(|_app| {
-            let home = desktop_genex_home().map_err(std::io::Error::other)?;
+            let home = desktop_ruxex_home().map_err(std::io::Error::other)?;
 
             // The setup hook runs before Tauri exposes commands or starts the
             // app-server child, so these process-wide values are safe to set
             // once here and are inherited by the managed daemon.
             unsafe {
-                std::env::set_var("GENEX_HOME", &home);
-                std::env::set_var("GENEX_SQLITE_HOME", &home);
+                std::env::set_var("RUXEX_HOME", &home);
+                std::env::set_var("RUXEX_SQLITE_HOME", &home);
             }
             Ok(())
         })
@@ -96,7 +96,7 @@ pub fn run() {
             app_server_reject_server_request
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Genex Desktop");
+        .expect("error while running Ruxex Desktop");
 }
 
 #[cfg(test)]
@@ -104,15 +104,15 @@ mod tests {
     use super::DESKTOP_EXPERIMENTAL_API;
     use super::DesktopAppServerErrorKind;
     use super::command_error;
-    use super::desktop_genex_home_from_user_home;
+    use super::desktop_ruxex_home_from_user_home;
     use serde_json::json;
     use std::path::Path;
 
     #[test]
     fn desktop_home_is_isolated_under_user_home() {
         assert_eq!(
-            desktop_genex_home_from_user_home(Path::new("/home/user")),
-            Path::new("/home/user/.genex_desktop"),
+            desktop_ruxex_home_from_user_home(Path::new("/home/user")),
+            Path::new("/home/user/.ruxex_desktop"),
         );
     }
 
@@ -148,19 +148,19 @@ mod tests {
     }
 }
 
-const DESKTOP_GENEX_HOME_DIR: &str = ".genex_desktop";
+const DESKTOP_RUXEX_HOME_DIR: &str = ".ruxex_desktop";
 const DESKTOP_EXPERIMENTAL_API: bool = true;
 
-fn desktop_genex_home_from_user_home(user_home: &Path) -> PathBuf {
-    user_home.join(DESKTOP_GENEX_HOME_DIR)
+fn desktop_ruxex_home_from_user_home(user_home: &Path) -> PathBuf {
+    user_home.join(DESKTOP_RUXEX_HOME_DIR)
 }
 
-fn desktop_genex_home() -> Result<PathBuf, String> {
+fn desktop_ruxex_home() -> Result<PathBuf, String> {
     let user_home =
         dirs::home_dir().ok_or_else(|| "failed to resolve user home directory".to_string())?;
-    let home = desktop_genex_home_from_user_home(&user_home);
+    let home = desktop_ruxex_home_from_user_home(&user_home);
     fs::create_dir_all(&home)
-        .map_err(|error| format!("failed to create Desktop Genex home: {error}"))?;
+        .map_err(|error| format!("failed to create Desktop Ruxex home: {error}"))?;
     Ok(home)
 }
 
@@ -169,7 +169,7 @@ async fn connect_app_server(
 ) -> Result<RemoteAppServerClient, std::io::Error> {
     RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
-        client_name: "genex-desktop".to_string(),
+        client_name: "ruxex-desktop".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: DESKTOP_EXPERIMENTAL_API,
         opt_out_notification_methods: Vec::new(),
@@ -188,10 +188,10 @@ async fn ensure_app_server(
         return Ok(status);
     }
 
-    let home = desktop_genex_home()
+    let home = desktop_ruxex_home()
         .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
     let socket_path =
-        genex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
+        ruxex_app_server_client::app_server_control_socket_path(&home).map_err(|error| {
             command_error(DesktopAppServerErrorKind::Initialization, error.to_string())
         })?;
     let (client, bootstrapped_version) = match connect_app_server(socket_path.clone()).await {
@@ -199,10 +199,10 @@ async fn ensure_app_server(
         Err(_) => {
             let package_source = runtime_package_source(&app)
                 .map_err(|error| command_error(DesktopAppServerErrorKind::Lifecycle, error))?;
-            let bootstrap = genex_app_server_daemon::bootstrap_from_package_with_host_args(
+            let bootstrap = ruxex_app_server_daemon::bootstrap_from_package_with_host_args(
                 &package_source,
                 &[
-                    OsString::from(genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
+                    OsString::from(ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG),
                     OsString::from("--managed-daemon"),
                 ],
             )
@@ -345,20 +345,20 @@ fn runtime_package_source(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .resource_dir()
         .map_err(|error| format!("failed to resolve application resources: {error}"))?
-        .join("genex-package");
-    if resource_package.join("genex-package.json").is_file() {
+        .join("ruxex-package");
+    if resource_package.join("ruxex-package.json").is_file() {
         return Ok(resource_package);
     }
 
     let development_package = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("resources")
-        .join("genex-package");
-    if development_package.join("genex-package.json").is_file() {
+        .join("ruxex-package");
+    if development_package.join("ruxex-package.json").is_file() {
         return Ok(development_package);
     }
 
     Err(format!(
-        "bundled Genex runtime package not found at {} or {}",
+        "bundled Ruxex runtime package not found at {} or {}",
         resource_package.display(),
         development_package.display()
     ))

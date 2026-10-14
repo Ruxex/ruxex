@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use http::HeaderValue;
 
 pub(crate) const X_OAI_ATTESTATION_HEADER: &str = "x-oai-attestation";

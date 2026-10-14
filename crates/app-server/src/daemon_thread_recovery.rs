@@ -5,7 +5,7 @@
 use std::io;
 use std::path::PathBuf;
 
-use genex_app_server_transport::daemon_recovery;
+use ruxex_app_server_transport::daemon_recovery;
 
 pub(crate) async fn snapshot(
     path: PathBuf,

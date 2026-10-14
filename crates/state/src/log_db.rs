@@ -10,10 +10,10 @@
 //! ## Usage
 //!
 //! ```no_run
-//! use genex_state::log_db;
+//! use ruxex_state::log_db;
 //! use tracing_subscriber::prelude::*;
 //!
-//! # async fn example(state_db: std::sync::Arc<genex_state::StateRuntime>) {
+//! # async fn example(state_db: std::sync::Arc<ruxex_state::StateRuntime>) {
 //! let layer = log_db::start(state_db);
 //! let _ = tracing_subscriber::registry()
 //!     .with(layer)
@@ -62,23 +62,23 @@ pub fn default_filter() -> Targets {
         .with_target("log", LevelFilter::OFF)
         // Avoid constructing backend diagnostics when no other layer needs them.
         .with_targets(SQLX_LOG_TARGETS.map(|target| (format!("{target}::"), LevelFilter::OFF)))
-        .with_target("genex_rmcp_client", LevelFilter::INFO)
+        .with_target("ruxex_rmcp_client", LevelFilter::INFO)
         .with_target("opentelemetry-otlp", LevelFilter::OFF)
         .with_target("opentelemetry-http", LevelFilter::OFF)
         .with_target("tonic::transport", LevelFilter::WARN)
         .with_target("tower::buffer", LevelFilter::WARN)
-        .with_target("genex_otel.log_only", LevelFilter::OFF)
-        .with_target("genex_otel.trace_safe", LevelFilter::OFF)
+        .with_target("ruxex_otel.log_only", LevelFilter::OFF)
+        .with_target("ruxex_otel.trace_safe", LevelFilter::OFF)
         .with_target("rmcp", LevelFilter::INFO)
-        .with_target("genex_api::responses_websocket_timing", LevelFilter::OFF)
-        .with_target("genex_core::post_sampling_token_estimate", LevelFilter::OFF)
+        .with_target("ruxex_api::responses_websocket_timing", LevelFilter::OFF)
+        .with_target("ruxex_core::post_sampling_token_estimate", LevelFilter::OFF)
         // Full model request bodies and streamed response payloads overwhelm the
         // SQLite log database, but remain available to explicit TRACE subscribers.
-        .with_target("genex_http_client::transport", LevelFilter::DEBUG)
-        .with_target("genex_api::sse", LevelFilter::DEBUG)
+        .with_target("ruxex_http_client::transport", LevelFilter::DEBUG)
+        .with_target("ruxex_api::sse", LevelFilter::DEBUG)
         // Per-chunk streaming traces otherwise flood the bounded SQLite log queue.
-        .with_target("genex_tui::streaming::controller", LevelFilter::DEBUG)
-        .with_target("genex_tui::streaming::table_holdback", LevelFilter::DEBUG)
+        .with_target("ruxex_tui::streaming::controller", LevelFilter::DEBUG)
+        .with_target("ruxex_tui::streaming::table_holdback", LevelFilter::DEBUG)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -250,7 +250,7 @@ where
         }
 
         // The SDK emits DEBUG timer meta-events every second per process; these
-        // were over 30% of retained logs in measured high-fanout Genex environments.
+        // were over 30% of retained logs in measured high-fanout Ruxex environments.
         if target == "opentelemetry_sdk"
             && matches!(
                 *metadata.level(),
@@ -548,7 +548,7 @@ mod filter_tests;
 #[cfg(test)]
 mod tests {
 
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tracing_subscriber::filter::Targets;
     use tracing_subscriber::layer::SubscriberExt;
@@ -556,8 +556,8 @@ mod tests {
 
     use super::*;
 
-    fn temp_genex_home() -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("genex-state-log-db-{}", Uuid::new_v4()))
+    fn temp_ruxex_home() -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("ruxex-state-log-db-{}", Uuid::new_v4()))
     }
 
     async fn wait_for_log_count(runtime: &StateRuntime, expected: usize) -> Vec<crate::LogRow> {
@@ -597,9 +597,9 @@ mod tests {
 
     #[tokio::test]
     async fn flush_persists_logs_for_query() {
-        let genex_home = temp_genex_home();
+        let ruxex_home = temp_ruxex_home();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -625,14 +625,14 @@ mod tests {
         assert_eq!(after_flush.len(), 1);
         assert_eq!(after_flush[0].message.as_deref(), Some("buffered-log"));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn configured_batch_size_flushes_without_explicit_flush() {
-        let genex_home = temp_genex_home();
+        let ruxex_home = temp_ruxex_home();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -676,14 +676,14 @@ mod tests {
             vec![Some("first-batch-log"), Some("second-batch-log")]
         );
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn configured_flush_interval_persists_buffered_logs() {
-        let genex_home = temp_genex_home();
+        let ruxex_home = temp_ruxex_home();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -711,7 +711,7 @@ mod tests {
 
         assert_eq!(after_interval[0].message.as_deref(), Some("interval-log"));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]

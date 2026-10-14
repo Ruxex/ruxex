@@ -33,12 +33,12 @@ pub(crate) fn is_duplicate_root(path: &Path) -> io::Result<bool> {
     }
 }
 
-pub(crate) fn ensure_supported_path(path: &Path) -> genex_protocol::error::Result<()> {
+pub(crate) fn ensure_supported_path(path: &Path) -> ruxex_protocol::error::Result<()> {
     let alias = crate::bwrap::WSLG_DISTRO_ROOT;
     if path.starts_with(alias)
         || fs::canonicalize(path).is_ok_and(|resolved| resolved.starts_with(alias))
     {
-        return Err(genex_protocol::error::GenexErr::Fatal(format!(
+        return Err(ruxex_protocol::error::RuxexErr::Fatal(format!(
             "restricted sandboxes do not support paths under {alias}: {}; use the corresponding path under the primary filesystem root instead",
             path.display()
         )));

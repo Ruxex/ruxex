@@ -3,29 +3,29 @@ use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
 use clap_complete::generate;
-use genex_app_server::runtime::configured_app_server_runtime_from_config;
-use genex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
-use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
-use genex_arg0::Arg0DispatchPaths;
-use genex_exec::Cli as ExecCli;
-use genex_exec::Command as ExecCommand;
-use genex_exec::ReviewArgs;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_execpolicy::ExecPolicyCheckCommand;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_model_provider::ModelProviderFactory;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::ProviderInit;
-use genex_rollout_trace::REDUCED_STATE_FILE_NAME;
-use genex_rollout_trace::replay_bundle;
-use genex_tui::AppExitInfo;
-use genex_tui::Cli as TuiCli;
-use genex_tui::ExitReason;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cli::CliConfigOverrides;
-use genex_utils_cli::ProfileV2Name;
-use genex_utils_cli::SharedCliOptions;
+use ruxex_app_server::runtime::configured_app_server_runtime_from_config;
+use ruxex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
+use ruxex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_exec::Cli as ExecCli;
+use ruxex_exec::Command as ExecCommand;
+use ruxex_exec::ReviewArgs;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_execpolicy::ExecPolicyCheckCommand;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_model_provider::ModelProviderFactory;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderInit;
+use ruxex_rollout_trace::REDUCED_STATE_FILE_NAME;
+use ruxex_rollout_trace::replay_bundle;
+use ruxex_tui::AppExitInfo;
+use ruxex_tui::Cli as TuiCli;
+use ruxex_tui::ExitReason;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_cli::ProfileV2Name;
+use ruxex_utils_cli::SharedCliOptions;
 use std::collections::HashSet;
 use std::io::IsTerminal;
 use std::io::Write;
@@ -57,24 +57,24 @@ use crate::run_login_status;
 use crate::run_logout;
 use crate::state_db_recovery as local_state_db;
 
-use genex_config::LoaderOverrides;
-use genex_core::build_models_manager_with_provider;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::find_genex_home;
-use genex_core::config::resolve_profile_v2_config_path;
-use genex_features::FEATURES;
-use genex_features::Stage;
-use genex_features::is_known_feature_key;
-use genex_home::GenexHomeUserInstructionsProvider;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::user_input::UserInput;
-use genex_terminal_detection::TerminalName;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::build_models_manager_with_provider;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_core::config::edit::ConfigEditsBuilder;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_core::config::resolve_profile_v2_config_path;
+use ruxex_features::FEATURES;
+use ruxex_features::Stage;
+use ruxex_features::is_known_feature_key;
+use ruxex_home::RuxexHomeUserInstructionsProvider;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_terminal_detection::TerminalName;
 
-/// Genex CLI
+/// Ruxex CLI
 ///
 /// If no subcommand is specified, options will be forwarded to the interactive CLI.
 #[derive(Debug, Parser)]
@@ -84,10 +84,10 @@ use genex_terminal_detection::TerminalName;
     // If a sub‑command is given, ignore requirements of the default args.
     subcommand_negates_reqs = true,
     // The executable is sometimes invoked via a platform‑specific name like
-    // `genex-x86_64-unknown-linux-musl`, but the help output should always use
-    // the generic `genex` command name that users run.
-    bin_name = "genex",
-    override_usage = "genex [OPTIONS] [PROMPT]\n       genex [OPTIONS] <COMMAND> [ARGS]"
+    // `ruxex-x86_64-unknown-linux-musl`, but the help output should always use
+    // the generic `ruxex` command name that users run.
+    bin_name = "ruxex",
+    override_usage = "ruxex [OPTIONS] [PROMPT]\n       ruxex [OPTIONS] <COMMAND> [ARGS]"
 )]
 struct MultitoolCli {
     #[clap(flatten)]
@@ -113,8 +113,8 @@ enum Subcommand {
 
     /// Internal: forward a local TCP socket through an HTTP/3 CONNECT proxy.
     #[clap(hide = true)]
-    TcpTunnel(genex_tcp_tunnel::Args),
-    /// Run Genex non-interactively.
+    TcpTunnel(ruxex_tcp_tunnel::Args),
+    /// Run Ruxex non-interactively.
     #[clap(visible_alias = "e")]
     Exec(ExecCli),
 
@@ -127,10 +127,10 @@ enum Subcommand {
     /// Log out from the mounted model provider and delete its credentials.
     Logout(LogoutCommand),
 
-    /// Manage external MCP servers for Genex.
+    /// Manage external MCP servers for Ruxex.
     Mcp(McpCli),
 
-    /// Manage Genex plugins.
+    /// Manage Ruxex plugins.
     Plugin(PluginCli),
 
     /// [experimental] Run the app server or related tooling.
@@ -139,10 +139,10 @@ enum Subcommand {
     /// Generate shell completion scripts.
     Completion(CompletionCommand),
 
-    /// Diagnose local Genex installation, config, auth, and runtime health.
+    /// Diagnose local Ruxex installation, config, auth, and runtime health.
     Doctor(DoctorCommand),
 
-    /// Run commands within a Genex-provided sandbox.
+    /// Run commands within a Ruxex-provided sandbox.
     Sandbox(HostSandboxArgs),
 
     /// Debugging tools.
@@ -244,7 +244,7 @@ struct DebugModelsCommand {}
 
 #[derive(Debug, Parser)]
 struct ReviewCommand {
-    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Ruxex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -324,7 +324,7 @@ pub(crate) struct SessionArchiveConfigOverrides {
     #[clap(flatten)]
     shared: SharedCliOptions,
 
-    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Ruxex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -401,7 +401,7 @@ type HostSandboxArgs = UnsupportedSandboxArgs;
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
 #[derive(Debug, Parser)]
 struct UnsupportedSandboxArgs {
-    /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
+    /// Layer $RUXEX_HOME/<name>.config.toml on top of the base user config.
     #[arg(long = "profile", short = 'p')]
     pub config_profile: Option<ProfileV2Name>,
 
@@ -456,9 +456,9 @@ struct AppServerCommand {
     subcommand: Option<AppServerSubcommand>,
 
     #[command(flatten)]
-    code_mode_host: genex_app_server::AppServerCodeModeHostArgs,
+    code_mode_host: ruxex_app_server::AppServerCodeModeHostArgs,
 
-    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Ruxex.
     #[arg(long = "strict-config", default_value_t = false)]
     strict_config: bool,
 
@@ -467,9 +467,9 @@ struct AppServerCommand {
     #[arg(
         long = "listen",
         value_name = "URL",
-        default_value = genex_app_server::AppServerTransport::DEFAULT_LISTEN_URL
+        default_value = ruxex_app_server::AppServerTransport::DEFAULT_LISTEN_URL
     )]
-    listen: genex_app_server::AppServerTransport,
+    listen: ruxex_app_server::AppServerTransport,
 
     /// Use stdio as the transport (equivalent to `--listen stdio://`).
     #[arg(long = "stdio", conflicts_with = "listen")]
@@ -498,12 +498,12 @@ struct AppServerCommand {
     metrics_default_enabled: bool,
 
     #[command(flatten)]
-    auth: genex_app_server::AppServerWebsocketAuthArgs,
+    auth: ruxex_app_server::AppServerWebsocketAuthArgs,
 }
 
 #[derive(Debug, Parser)]
 struct ExecServerCommand {
-    /// Error out when config.toml contains fields that are not recognized by this version of Genex.
+    /// Error out when config.toml contains fields that are not recognized by this version of Ruxex.
     #[arg(
         id = "exec_server_strict_config",
         long = "strict-config",
@@ -518,7 +518,7 @@ struct ExecServerCommand {
         value_name = "COUNT",
         default_value = "1"
     )]
-    request_dispatch_mode: genex_exec_server::RequestDispatchMode,
+    request_dispatch_mode: ruxex_exec_server::RequestDispatchMode,
 
     /// Transport endpoint URL. Supported values: `stdio` or `stdio://`.
     #[arg(long = "listen", value_name = "URL")]
@@ -540,7 +540,7 @@ enum AppServerSubcommand {
     /// [experimental] Generate JSON Schema for the app server protocol.
     GenerateJsonSchema(GenerateJsonSchemaCommand),
 
-    /// [internal] Generate internal JSON Schema artifacts for Genex tooling.
+    /// [internal] Generate internal JSON Schema artifacts for Ruxex tooling.
     #[clap(hide = true)]
     GenerateInternalJsonSchema(GenerateInternalJsonSchemaCommand),
 }
@@ -646,14 +646,14 @@ fn run_execpolicycheck(cmd: ExecPolicyCheckCommand) -> anyhow::Result<()> {
 }
 
 async fn run_session_archive_cli_command(
-    action: genex_tui::SessionArchiveAction,
+    action: ruxex_tui::SessionArchiveAction,
     cmd: SessionArchiveCommand,
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
     root_remote: Option<String>,
     root_remote_auth_token_env: Option<String>,
     arg0_paths: Arg0DispatchPaths,
-    provider_factory: Option<genex_tui::ProviderRuntimeFactory>,
+    provider_factory: Option<ruxex_tui::ProviderRuntimeFactory>,
 ) -> anyhow::Result<String> {
     let SessionArchiveCommand {
         target,
@@ -666,10 +666,10 @@ async fn run_session_archive_cli_command(
         remote.remote.or(root_remote),
         remote.remote_auth_token_env.or(root_remote_auth_token_env),
     )?;
-    genex_tui::run_session_archive_command(
+    ruxex_tui::run_session_archive_command(
         action,
         target,
-        genex_tui::SessionArchiveCommandOptions {
+        ruxex_tui::SessionArchiveCommandOptions {
             cli: interactive,
             arg0_paths,
             explicit_remote_endpoint,
@@ -680,22 +680,22 @@ async fn run_session_archive_cli_command(
     .map_err(|err| anyhow::anyhow!("{err}"))
 }
 
-fn delete_action(target: &str, force: bool) -> anyhow::Result<genex_tui::SessionArchiveAction> {
-    if force && genex_protocol::ThreadId::from_string(target).is_err() {
+fn delete_action(target: &str, force: bool) -> anyhow::Result<ruxex_tui::SessionArchiveAction> {
+    if force && ruxex_protocol::ThreadId::from_string(target).is_err() {
         anyhow::bail!("--force requires a session UUID; names must be confirmed interactively");
     }
     let confirmation = match force {
-        true => genex_tui::DeleteConfirmation::Skip,
-        false => genex_tui::DeleteConfirmation::Prompt,
+        true => ruxex_tui::DeleteConfirmation::Skip,
+        false => ruxex_tui::DeleteConfirmation::Prompt,
     };
-    Ok(genex_tui::SessionArchiveAction::Delete(confirmation))
+    Ok(ruxex_tui::SessionArchiveAction::Delete(confirmation))
 }
 
 async fn run_debug_app_server_command(cmd: DebugAppServerCommand) -> anyhow::Result<()> {
     match cmd.subcommand {
         DebugAppServerSubcommand::SendMessageV2(cmd) => {
-            let genex_bin = std::env::current_exe()?;
-            genex_app_server_test_client::send_message_v2(&genex_bin, &[], cmd.user_message, &None)
+            let ruxex_bin = std::env::current_exe()?;
+            ruxex_app_server_test_client::send_message_v2(&ruxex_bin, &[], cmd.user_message, &None)
                 .await
         }
     }
@@ -782,11 +782,11 @@ fn stage_str(stage: Stage) -> &'static str {
 }
 
 type ProviderRuntimeFactory = (
-    fn(ProviderInit) -> genex_app_server::AppServerRuntime,
+    fn(ProviderInit) -> ruxex_app_server::AppServerRuntime,
     ProviderDescriptor,
 );
 
-/// Runs the complete Genex CLI using the provider type selected by the host.
+/// Runs the complete Ruxex CLI using the provider type selected by the host.
 ///
 /// The provider type is compiled into the host and reconstructed in any
 /// provider-owned AppServer daemon process. No provider instance crosses the
@@ -797,7 +797,7 @@ pub async fn run_with_provider<P: ModelProviderFactory>(
     run_cli(
         arg0_paths,
         Some((
-            genex_app_server::AppServerRuntimeBuilder::build_from_provider_factory::<P>,
+            ruxex_app_server::AppServerRuntimeBuilder::build_from_provider_factory::<P>,
             P::provider_descriptor(),
         )),
     )
@@ -829,7 +829,7 @@ async fn run_cli(
         && let Some(agents_endpoint) = &options.remote.remote
         && root_endpoint != agents_endpoint
     {
-        anyhow::bail!("`genex agents` received conflicting remote server endpoints");
+        anyhow::bail!("`ruxex agents` received conflicting remote server endpoints");
     }
     let root_remote = agents_options
         .and_then(|options| options.remote.remote.clone())
@@ -857,7 +857,7 @@ async fn run_cli(
             );
             if open_agents_overview {
                 if interactive.prompt.is_some() || !interactive.images.is_empty() {
-                    anyhow::bail!("`genex agents` does not accept an initial prompt or images");
+                    anyhow::bail!("`ruxex agents` does not accept an initial prompt or images");
                 }
                 if root_remote.is_some()
                     && (!interactive.add_dir.is_empty()
@@ -873,7 +873,7 @@ async fn run_cli(
                             }))
                 {
                     anyhow::bail!(
-                        "`genex agents` cannot apply additional-directory overrides to a remote server"
+                        "`ruxex agents` cannot apply additional-directory overrides to a remote server"
                     );
                 }
                 if root_remote.is_none() {
@@ -882,7 +882,7 @@ async fn run_cli(
                         root_remote_auth_token_env.clone(),
                     )?;
                     #[cfg(not(unix))]
-                    anyhow::bail!("`genex agents` requires `--remote` on this platform");
+                    anyhow::bail!("`ruxex agents` requires `--remote` on this platform");
                 }
                 interactive.agents_overview = true;
             }
@@ -897,7 +897,7 @@ async fn run_cli(
             handle_app_exit(exit_info)?;
         }
         Some(Subcommand::TcpTunnel(args)) => {
-            return genex_tcp_tunnel::run(args).await;
+            return ruxex_tcp_tunnel::run(args).await;
         }
         Some(Subcommand::Exec(mut exec_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -914,14 +914,14 @@ async fn run_cli(
                 root_config_overrides.clone(),
             );
             if let Some(provider_factory) = provider_factory.clone() {
-                genex_exec::run_main_with_provider_factory(
+                ruxex_exec::run_main_with_provider_factory(
                     exec_cli,
                     arg0_paths.clone(),
                     provider_factory,
                 )
                 .await?;
             } else {
-                genex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+                ruxex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
             }
         }
         Some(Subcommand::Review(ReviewCommand {
@@ -933,7 +933,7 @@ async fn run_cli(
                 root_remote_auth_token_env.as_deref(),
                 "review",
             )?;
-            let mut exec_cli = ExecCli::try_parse_from(["genex", "exec"])?;
+            let mut exec_cli = ExecCli::try_parse_from(["ruxex", "exec"])?;
             exec_cli
                 .shared
                 .inherit_exec_root_options(&interactive.shared);
@@ -944,14 +944,14 @@ async fn run_cli(
                 root_config_overrides.clone(),
             );
             if let Some(provider_factory) = provider_factory.clone() {
-                genex_exec::run_main_with_provider_factory(
+                ruxex_exec::run_main_with_provider_factory(
                     exec_cli,
                     arg0_paths.clone(),
                     provider_factory,
                 )
                 .await?;
             } else {
-                genex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+                ruxex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
             }
         }
         Some(Subcommand::Mcp(mut mcp_cli)) => {
@@ -1018,45 +1018,45 @@ async fn run_cli(
             match subcommand {
                 None => {
                     let transport = if stdio {
-                        genex_app_server::AppServerTransport::Stdio
+                        ruxex_app_server::AppServerTransport::Stdio
                     } else {
                         listen
                     };
                     let auth = auth.try_into_settings()?;
-                    let runtime_options = genex_app_server::AppServerRuntimeOptions {
+                    let runtime_options = ruxex_app_server::AppServerRuntimeOptions {
                         code_mode_host_transport: code_mode_host.into(),
                         managed_daemon,
                         ..Default::default()
                     };
                     let exit = if let Some(provider_factory) = provider_factory.clone() {
-                        genex_app_server::run_main_with_transport_options_and_provider_factory(
+                        ruxex_app_server::run_main_with_transport_options_and_provider_factory(
                             arg0_paths.clone(),
                             root_config_overrides,
                             LoaderOverrides::default(),
                             strict_config,
                             metrics_default_enabled,
                             transport,
-                            genex_protocol::protocol::SessionSource::VSCode,
+                            ruxex_protocol::protocol::SessionSource::VSCode,
                             auth,
                             runtime_options,
                             provider_factory,
                         )
                         .await?
                     } else {
-                        genex_app_server::run_main_with_transport_options(
+                        ruxex_app_server::run_main_with_transport_options(
                             arg0_paths.clone(),
                             root_config_overrides,
                             LoaderOverrides::default(),
                             strict_config,
                             metrics_default_enabled,
                             transport,
-                            genex_protocol::protocol::SessionSource::VSCode,
+                            ruxex_protocol::protocol::SessionSource::VSCode,
                             auth,
                             runtime_options,
                         )
                         .await?
                     };
-                    if exit == genex_app_server::AppServerExit::Forced {
+                    if exit == ruxex_app_server::AppServerExit::Forced {
                         // Runtime teardown can wait forever for blocked rollout I/O.
                         std::process::exit(0);
                     }
@@ -1086,7 +1086,7 @@ async fn run_cli(
                         )
                         .await?;
                         let output =
-                            genex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
+                            ruxex_app_server_daemon::bootstrap(AppServerBootstrapOptions {})
                                 .await?;
                         println!("{}", serde_json::to_string(&output)?);
                     }
@@ -1121,27 +1121,27 @@ async fn run_cli(
                     let socket_path = match proxy_cli.socket_path {
                         Some(socket_path) => socket_path,
                         None => {
-                            let genex_home = find_genex_home()?;
-                            genex_app_server::app_server_control_socket_path(&genex_home)?
+                            let ruxex_home = find_ruxex_home()?;
+                            ruxex_app_server::app_server_control_socket_path(&ruxex_home)?
                         }
                     };
-                    genex_stdio_to_uds::run(socket_path.as_path()).await?;
+                    ruxex_stdio_to_uds::run(socket_path.as_path()).await?;
                 }
                 Some(AppServerSubcommand::GenerateTs(gen_cli)) => {
-                    let options = genex_app_server_protocol::GenerateTsOptions {
+                    let options = ruxex_app_server_protocol::GenerateTsOptions {
                         experimental_api: gen_cli.experimental,
                         ..Default::default()
                     };
-                    genex_app_server_protocol::generate_ts_with_options(&gen_cli.out_dir, options)?;
+                    ruxex_app_server_protocol::generate_ts_with_options(&gen_cli.out_dir, options)?;
                 }
                 Some(AppServerSubcommand::GenerateJsonSchema(gen_cli)) => {
-                    genex_app_server_protocol::generate_json_with_experimental(
+                    ruxex_app_server_protocol::generate_json_with_experimental(
                         &gen_cli.out_dir,
                         gen_cli.experimental,
                     )?;
                 }
                 Some(AppServerSubcommand::GenerateInternalJsonSchema(gen_cli)) => {
-                    genex_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
+                    ruxex_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
                 }
             }
         }
@@ -1177,7 +1177,7 @@ async fn run_cli(
         }
         Some(Subcommand::Archive(cmd)) => {
             let output = run_session_archive_cli_command(
-                genex_tui::SessionArchiveAction::Archive,
+                ruxex_tui::SessionArchiveAction::Archive,
                 cmd,
                 interactive,
                 root_config_overrides.clone(),
@@ -1219,7 +1219,7 @@ async fn run_cli(
         }
         Some(Subcommand::Unarchive(cmd)) => {
             let output = run_session_archive_cli_command(
-                genex_tui::SessionArchiveAction::Unarchive,
+                ruxex_tui::SessionArchiveAction::Unarchive,
                 cmd,
                 interactive,
                 root_config_overrides.clone(),
@@ -1330,21 +1330,21 @@ async fn run_cli(
             #[cfg(target_os = "macos")]
             crate::run_command_under_seatbelt(
                 sandbox_cli,
-                arg0_paths.genex_linux_sandbox_exe.clone(),
+                arg0_paths.ruxex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(target_os = "linux")]
             crate::run_command_under_landlock(
                 sandbox_cli,
-                arg0_paths.genex_linux_sandbox_exe.clone(),
+                arg0_paths.ruxex_linux_sandbox_exe.clone(),
                 loader_overrides,
             )
             .await?;
             #[cfg(not(any(target_os = "macos", target_os = "linux")))]
             {
                 let _ = loader_overrides;
-                anyhow::bail!("`genex sandbox` is not supported on this operating system");
+                anyhow::bail!("`ruxex sandbox` is not supported on this operating system");
             }
         }
         Some(Subcommand::Debug(DebugCommand { subcommand })) => match subcommand {
@@ -1405,7 +1405,7 @@ async fn run_cli(
                 "stdio-to-uds",
             )?;
             let socket_path = cmd.socket_path;
-            genex_stdio_to_uds::run(socket_path.as_path()).await?;
+            ruxex_stdio_to_uds::run(socket_path.as_path()).await?;
         }
         Some(Subcommand::ExecServer(cmd)) => {
             reject_remote_mode_for_subcommand(
@@ -1497,7 +1497,7 @@ fn profile_v2_for_subcommand<'a>(
             subcommand: DebugSubcommand::PromptInput(_),
         }) => Ok(Some(profile_v2)),
         _ => anyhow::bail!(
-            "--profile only applies to runtime commands and `genex mcp`: `genex`, `genex exec`, `genex review`, `genex resume`, `genex queue`, `genex archive`, `genex delete`, `genex unarchive`, `genex fork`, `genex mcp`, `genex sandbox`, and `genex debug prompt-input`."
+            "--profile only applies to runtime commands and `ruxex mcp`: `ruxex`, `ruxex exec`, `ruxex review`, `ruxex resume`, `ruxex queue`, `ruxex archive`, `ruxex delete`, `ruxex unarchive`, `ruxex fork`, `ruxex mcp`, `ruxex sandbox`, and `ruxex debug prompt-input`."
         ),
     }
 }
@@ -1508,12 +1508,12 @@ async fn run_exec_server_command(
     root_config_overrides: &CliConfigOverrides,
     strict_config: bool,
 ) -> anyhow::Result<()> {
-    let genex_self_exe = arg0_paths
-        .genex_self_exe
+    let ruxex_self_exe = arg0_paths
+        .ruxex_self_exe
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Genex executable path is not configured"))?;
+        .ok_or_else(|| anyhow::anyhow!("Ruxex executable path is not configured"))?;
     let runtime_paths =
-        ExecServerRuntimePaths::new(genex_self_exe, arg0_paths.genex_linux_sandbox_exe.clone())?;
+        ExecServerRuntimePaths::new(ruxex_self_exe, arg0_paths.ruxex_linux_sandbox_exe.clone())?;
     let config_result = load_exec_server_config(root_config_overrides, strict_config).await;
     let config = if strict_config {
         Some(config_result?)
@@ -1523,10 +1523,10 @@ async fn run_exec_server_command(
     let (_otel, telemetry) = exec_server_telemetry::init(config.as_ref());
     #[cfg(target_os = "macos")]
     let runtime_paths =
-        runtime_paths.with_allowed_symlinked_genex_home(config.as_ref().and_then(|config| {
-            genex_config::allowed_symlinked_genex_home(
+        runtime_paths.with_allowed_symlinked_ruxex_home(config.as_ref().and_then(|config| {
+            ruxex_config::allowed_symlinked_ruxex_home(
                 &config.config_layer_stack,
-                &config.genex_home,
+                &config.ruxex_home,
             )
         }));
     let http_client_factory = config
@@ -1535,9 +1535,9 @@ async fn run_exec_server_command(
         .unwrap_or_else(|| HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault));
     let listen_url = cmd
         .listen
-        .unwrap_or_else(|| genex_exec_server::DEFAULT_LISTEN_URL.to_string());
+        .unwrap_or_else(|| ruxex_exec_server::DEFAULT_LISTEN_URL.to_string());
     let run = exec_server_telemetry::run_until_shutdown(
-        genex_exec_server::run_main_with_telemetry(
+        ruxex_exec_server::run_main_with_telemetry(
             &listen_url,
             runtime_paths,
             telemetry,
@@ -1553,7 +1553,7 @@ async fn run_exec_server_command(
 async fn load_exec_server_config(
     root_config_overrides: &CliConfigOverrides,
     strict_config: bool,
-) -> anyhow::Result<genex_core::config::Config> {
+) -> anyhow::Result<ruxex_core::config::Config> {
     let cli_kv_overrides = root_config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
@@ -1565,20 +1565,20 @@ async fn load_exec_server_config(
 
 async fn enable_feature_in_config(feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let genex_home = find_genex_home()?;
-    ConfigEditsBuilder::new(&genex_home)
+    let ruxex_home = find_ruxex_home()?;
+    ConfigEditsBuilder::new(&ruxex_home)
         .set_feature_enabled(feature, /*enabled*/ true)
         .apply()
         .await?;
     println!("Enabled feature `{feature}` in config.toml.");
-    maybe_print_under_development_feature_warning(&genex_home, feature);
+    maybe_print_under_development_feature_warning(&ruxex_home, feature);
     Ok(())
 }
 
 async fn disable_feature_in_config(feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let genex_home = find_genex_home()?;
-    ConfigEditsBuilder::new(&genex_home)
+    let ruxex_home = find_ruxex_home()?;
+    ConfigEditsBuilder::new(&ruxex_home)
         .set_feature_enabled(feature, /*enabled*/ false)
         .apply()
         .await?;
@@ -1591,23 +1591,23 @@ fn loader_overrides_for_profile(
 ) -> anyhow::Result<LoaderOverrides> {
     match profile_v2 {
         Some(profile_v2) => {
-            let genex_home = find_genex_home()?;
-            Ok(loader_overrides_for_profile_at_genex_home(
+            let ruxex_home = find_ruxex_home()?;
+            Ok(loader_overrides_for_profile_at_ruxex_home(
                 Some(profile_v2),
-                &genex_home,
+                &ruxex_home,
             ))
         }
         None => Ok(LoaderOverrides::default()),
     }
 }
 
-fn loader_overrides_for_profile_at_genex_home(
+fn loader_overrides_for_profile_at_ruxex_home(
     profile_v2: Option<&ProfileV2Name>,
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
 ) -> LoaderOverrides {
     match profile_v2 {
         Some(profile_v2) => LoaderOverrides {
-            user_config_path: Some(resolve_profile_v2_config_path(genex_home, profile_v2)),
+            user_config_path: Some(resolve_profile_v2_config_path(ruxex_home, profile_v2)),
             user_config_profile: Some(profile_v2.clone()),
             ..Default::default()
         },
@@ -1615,7 +1615,7 @@ fn loader_overrides_for_profile_at_genex_home(
     }
 }
 
-fn maybe_print_under_development_feature_warning(genex_home: &std::path::Path, feature: &str) {
+fn maybe_print_under_development_feature_warning(ruxex_home: &std::path::Path, feature: &str) {
     let Some(spec) = FEATURES.iter().find(|spec| spec.key == feature) else {
         return;
     };
@@ -1623,7 +1623,7 @@ fn maybe_print_under_development_feature_warning(genex_home: &std::path::Path, f
         return;
     }
 
-    let config_path = genex_home.join(genex_config::CONFIG_TOML_FILE);
+    let config_path = ruxex_home.join(ruxex_config::CONFIG_TOML_FILE);
     eprintln!(
         "Under-development features enabled: {feature}. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in {}.",
         config_path.display()
@@ -1668,7 +1668,7 @@ async fn run_debug_prompt_input_command(
         interactive.approval_policy.map(Into::into)
     };
     let sandbox_mode = if shared.dangerously_bypass_approvals_and_sandbox {
-        Some(genex_protocol::config_types::SandboxMode::DangerFullAccess)
+        Some(ruxex_protocol::config_types::SandboxMode::DangerFullAccess)
     } else {
         shared.sandbox_mode.map(Into::into)
     };
@@ -1677,8 +1677,8 @@ async fn run_debug_prompt_input_command(
         approval_policy,
         sandbox_mode,
         cwd: shared.cwd,
-        genex_self_exe: arg0_paths.genex_self_exe,
-        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe,
+        ruxex_self_exe: arg0_paths.ruxex_self_exe,
+        ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe,
         show_raw_agent_reasoning: None,
         ephemeral: Some(true),
         bypass_hook_trust: shared.bypass_hook_trust.then_some(true),
@@ -1706,22 +1706,22 @@ async fn run_debug_prompt_input_command(
         });
     }
 
-    let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
-        config.genex_home.clone(),
+    let user_instructions_provider = Arc::new(RuxexHomeUserInstructionsProvider::new(
+        config.ruxex_home.clone(),
     ));
-    let mut extensions = genex_extension_api::ExtensionRegistryBuilder::new();
-    genex_skills_extension::install(&mut extensions, |config: &Config| {
-        genex_skills_extension::SkillsExtensionConfig {
+    let mut extensions = ruxex_extension_api::ExtensionRegistryBuilder::new();
+    ruxex_skills_extension::install(&mut extensions, |config: &Config| {
+        ruxex_skills_extension::SkillsExtensionConfig {
             include_instructions: config.include_skill_instructions,
             max_context_tokens: config.skill_max_context_tokens,
             bundled_skills_enabled: config.bundled_skills_enabled(),
             orchestrator_skills_enabled: config.orchestrator_skills_enabled,
             shadow_selection_enabled: config
                 .features
-                .enabled(genex_features::Feature::SkillSearch),
+                .enabled(ruxex_features::Feature::SkillSearch),
         }
     });
-    let prompt_input = genex_core::build_prompt_input(
+    let prompt_input = ruxex_core::build_prompt_input(
         config,
         runtime.provider(),
         input,
@@ -1765,9 +1765,9 @@ async fn runtime_for_provider(
     config: &Config,
     enable_api_key_env: bool,
     provider_factory: Option<ProviderRuntimeFactory>,
-) -> anyhow::Result<genex_app_server::AppServerRuntime> {
+) -> anyhow::Result<ruxex_app_server::AppServerRuntime> {
     if let Some(provider_factory) = provider_factory {
-        let init = genex_app_server::runtime::provider_init_from_config_with_descriptor(
+        let init = ruxex_app_server::runtime::provider_init_from_config_with_descriptor(
             config,
             enable_api_key_env,
             &provider_factory.1,
@@ -1795,12 +1795,12 @@ fn reject_remote_mode_for_subcommand(
 ) -> anyhow::Result<()> {
     if let Some(remote) = remote {
         anyhow::bail!(
-            "`--remote {remote}` is only supported for interactive TUI commands, not `genex {subcommand}`"
+            "`--remote {remote}` is only supported for interactive TUI commands, not `ruxex {subcommand}`"
         );
     }
     if remote_auth_token_env.is_some() {
         anyhow::bail!(
-            "`--remote-auth-token-env` is only supported for interactive TUI commands, not `genex {subcommand}`"
+            "`--remote-auth-token-env` is only supported for interactive TUI commands, not `ruxex {subcommand}`"
         );
     }
     Ok(())
@@ -1830,12 +1830,12 @@ fn reject_unsupported_worktree_for_subcommand(
         None => Ok(()),
         Some(Subcommand::Fork(command)) if command.session_id.is_some() && !command.last => Ok(()),
         Some(Subcommand::Fork(_)) => {
-            anyhow::bail!("`genex fork --worktree` requires an explicit session ID")
+            anyhow::bail!("`ruxex fork --worktree` requires an explicit session ID")
         }
         Some(Subcommand::Exec(command)) => match &command.command {
             None | Some(ExecCommand::Fork(_)) => Ok(()),
             Some(ExecCommand::Resume(_)) => anyhow::bail!(
-                "`--worktree` cannot resume an existing session; use `genex exec fork --worktree`"
+                "`--worktree` cannot resume an existing session; use `ruxex exec fork --worktree`"
             ),
             Some(ExecCommand::Review(_)) => {
                 anyhow::bail!("`--worktree` is not supported for code review")
@@ -1843,7 +1843,7 @@ fn reject_unsupported_worktree_for_subcommand(
         },
         _ => {
             anyhow::bail!(
-                "`--worktree` supports new interactive sessions, `genex fork`, `genex exec`, and `genex exec fork`"
+                "`--worktree` supports new interactive sessions, `ruxex fork`, `ruxex exec`, and `ruxex exec fork`"
             )
         }
     }
@@ -1858,9 +1858,9 @@ fn reject_removed_top_level_command(
     }
 
     match interactive.prompt.as_deref() {
-        Some("app") => anyhow::bail!("`genex app` has been removed"),
+        Some("app") => anyhow::bail!("`ruxex app` has been removed"),
         Some("update") => anyhow::bail!(
-            "`genex update` has been removed; update Genex with the package manager or distribution that installed it"
+            "`ruxex update` has been removed; update Ruxex with the package manager or distribution that installed it"
         ),
         _ => Ok(()),
     }
@@ -1886,7 +1886,7 @@ fn reject_root_strict_config_for_subcommand(
 /// flag should be rejected after parsing.
 ///
 /// `--strict-config` is parsed on the root interactive CLI so commands like
-/// `genex --strict-config` continue to work for the TUI and for wrappers that
+/// `ruxex --strict-config` continue to work for the TUI and for wrappers that
 /// forward root options into another command shape. Clap will still accept that
 /// root flag before the dispatcher knows which subcommand the user selected, so
 /// unsupported subcommands need an explicit post-parse reject path.
@@ -1946,7 +1946,7 @@ fn reject_strict_config_for_unsupported_subcommand(
     subcommand: &str,
 ) -> anyhow::Result<()> {
     if strict_config {
-        anyhow::bail!("`--strict-config` is not supported for `genex {subcommand}`");
+        anyhow::bail!("`--strict-config` is not supported for `ruxex {subcommand}`");
     }
     Ok(())
 }
@@ -1986,7 +1986,7 @@ async fn print_app_server_daemon_output(
     let output = if provider_factory.is_some() {
         crate::run_host_app_server_lifecycle(command).await?
     } else {
-        genex_app_server_daemon::run(command).await?
+        ruxex_app_server_daemon::run(command).await?
     };
     println!("{}", serde_json::to_string(&output)?);
     Ok(())
@@ -1998,7 +1998,7 @@ async fn mount_provider_home_before_daemon(
 ) -> anyhow::Result<()> {
     let config = cloud_config::load_config(config_overrides, LoaderOverrides::default()).await?;
     if let Some(provider_factory) = provider_factory {
-        genex_model_provider::mount_provider_home(&config.genex_home, &provider_factory.1)
+        ruxex_model_provider::mount_provider_home(&config.ruxex_home, &provider_factory.1)
             .map(|_| ())
             .map_err(anyhow::Error::from)
     } else {
@@ -2036,7 +2036,7 @@ async fn run_interactive_tui(
     if interactive.no_daemon {
         if interactive.agents_overview {
             return Ok(AppExitInfo::fatal(
-                "--no-daemon cannot be used with genex agents. The agents overview requires a shared server. Use genex --no-daemon to work without it.",
+                "--no-daemon cannot be used with ruxex agents. The agents overview requires a shared server. Use ruxex --no-daemon to work without it.",
             ));
         }
         if remote.is_some() {
@@ -2050,7 +2050,7 @@ async fn run_interactive_tui(
         interactive.prompt = Some(prompt.replace("\r\n", "\n").replace('\r', "\n"));
     }
 
-    let terminal_info = genex_terminal_detection::terminal_info();
+    let terminal_info = ruxex_terminal_detection::terminal_info();
     if terminal_info.name == TerminalName::Dumb {
         if !(std::io::stdin().is_terminal() && std::io::stderr().is_terminal()) {
             return Ok(AppExitInfo::fatal(
@@ -2059,7 +2059,7 @@ async fn run_interactive_tui(
         }
 
         eprintln!(
-            "WARNING: TERM is set to \"dumb\". Genex's interactive TUI may not work in this terminal."
+            "WARNING: TERM is set to \"dumb\". Ruxex's interactive TUI may not work in this terminal."
         );
         if !confirm("Continue anyway? [y/N]: ")? {
             return Ok(AppExitInfo::fatal(
@@ -2082,11 +2082,11 @@ async fn run_interactive_tui(
         let daemon_start = if provider_factory.is_some() {
             crate::run_host_app_server_lifecycle(AppServerLifecycleCommand::Start).await
         } else {
-            genex_app_server_daemon::run(AppServerLifecycleCommand::Start).await
+            ruxex_app_server_daemon::run(AppServerLifecycleCommand::Start).await
         };
         daemon_start
             .map_err(|err| std::io::Error::other(format!(
-                "{err:#}\nThe agents overview requires a shared server. Use genex --no-daemon to work without it."
+                "{err:#}\nThe agents overview requires a shared server. Use ruxex --no-daemon to work without it."
             )))?;
     }
 
@@ -2103,10 +2103,10 @@ async fn run_interactive_tui(
         None
     };
     let start_tui = || {
-        genex_tui::run_main_with_provider_factory(
+        ruxex_tui::run_main_with_provider_factory(
             interactive.clone(),
             arg0_paths.clone(),
-            genex_config::LoaderOverrides::default(),
+            ruxex_config::LoaderOverrides::default(),
             remote_endpoint.clone(),
             provider_factory.clone(),
             provider_executable.clone(),
@@ -2161,7 +2161,7 @@ where
             Err(backup_err) => {
                 local_state_db::print_diagnostic_guidance(startup_error);
                 return Ok(AppExitInfo::fatal(format!(
-                    "failed to move damaged Genex local database files into a backup folder automatically: {backup_err}"
+                    "failed to move damaged Ruxex local database files into a backup folder automatically: {backup_err}"
                 )));
             }
         }
@@ -2171,10 +2171,10 @@ where
 pub(crate) fn resolve_remote_endpoint(
     remote: Option<String>,
     remote_auth_token_env: Option<String>,
-) -> std::io::Result<Option<genex_tui::RemoteAppServerEndpoint>> {
+) -> std::io::Result<Option<ruxex_tui::RemoteAppServerEndpoint>> {
     let mut remote_endpoint = remote
         .as_deref()
-        .map(genex_tui::resolve_remote_addr)
+        .map(ruxex_tui::resolve_remote_addr)
         .transpose()
         .map_err(std::io::Error::other)?;
     if let Some(remote_auth_token_env) = remote_auth_token_env {
@@ -2183,14 +2183,14 @@ pub(crate) fn resolve_remote_endpoint(
                 "`--remote-auth-token-env` requires `--remote`.",
             ));
         };
-        if !genex_tui::remote_addr_supports_auth_token(endpoint) {
+        if !ruxex_tui::remote_addr_supports_auth_token(endpoint) {
             return Err(std::io::Error::other(
                 "`--remote-auth-token-env` requires a `wss://` or loopback `ws://` remote.",
             ));
         }
         let auth_token = read_remote_auth_token_from_env_var(&remote_auth_token_env)
             .map_err(std::io::Error::other)?;
-        let genex_tui::RemoteAppServerEndpoint::WebSocket {
+        let ruxex_tui::RemoteAppServerEndpoint::WebSocket {
             auth_token: slot, ..
         } = endpoint
         else {
@@ -2217,7 +2217,7 @@ fn confirm(prompt: &str) -> std::io::Result<bool> {
     Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
 }
 
-/// Build the final `TuiCli` for a `genex resume` invocation.
+/// Build the final `TuiCli` for a `ruxex resume` invocation.
 fn finalize_resume_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -2228,7 +2228,7 @@ fn finalize_resume_interactive(
     mut resume_cli: TuiCli,
 ) -> TuiCli {
     // Start with the parsed interactive CLI so resume shares the same
-    // configuration surface area as `genex` without additional flags.
+    // configuration surface area as `ruxex` without additional flags.
     // Clap assigns the first positional to `session_id`. With `--last`, reinterpret it as the
     // prompt when no second positional prompt was provided.
     let resume_session_id = if last && resume_cli.prompt.is_none() {
@@ -2252,7 +2252,7 @@ fn finalize_resume_interactive(
     interactive
 }
 
-/// Build the final `TuiCli` for a `genex fork` invocation.
+/// Build the final `TuiCli` for a `ruxex fork` invocation.
 fn finalize_fork_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -2262,7 +2262,7 @@ fn finalize_fork_interactive(
     mut fork_cli: TuiCli,
 ) -> TuiCli {
     // Start with the parsed interactive CLI so fork shares the same
-    // configuration surface area as `genex` without additional flags.
+    // configuration surface area as `ruxex` without additional flags.
     // Clap assigns the first positional to `session_id`. With `--last`, reinterpret it as the
     // prompt when no second positional prompt was provided.
     let fork_session_id = if last && fork_cli.prompt.is_none() {
@@ -2349,6 +2349,6 @@ fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli)
 
 fn print_completion(cmd: CompletionCommand) {
     let mut app = MultitoolCli::command();
-    let name = "genex";
+    let name = "ruxex";
     generate(cmd.shell, &mut app, name, &mut std::io::stdout());
 }

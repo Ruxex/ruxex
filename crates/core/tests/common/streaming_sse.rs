@@ -117,13 +117,13 @@ pub async fn start_streaming_sse_server(
                             return;
                         }
 
-                        let responses_route = matches!(path, "/v1/responses" | "/backend-api/genex/responses");
+                        let responses_route = matches!(path, "/v1/responses" | "/backend-api/ruxex/responses");
                         if method == "GET" && responses_route {
                             let _ = write_http_response(&mut stream, /*status*/ 426, "websockets unsupported", "text/plain").await;
                             return;
                         }
 
-                        if method == "POST" && (responses_route || path == "/backend-api/genex/guardian") {
+                        if method == "POST" && (responses_route || path == "/backend-api/ruxex/guardian") {
                             let body = match read_request_body(&mut stream, &request, body_prefix)
                                 .await
                             {
@@ -291,9 +291,9 @@ fn unix_ms_now() -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_http_client::ClientRouteClass;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
+    use ruxex_http_client::ClientRouteClass;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
     use pretty_assertions::assert_eq;
     use tokio::net::TcpStream;
     use tokio::time::Duration;

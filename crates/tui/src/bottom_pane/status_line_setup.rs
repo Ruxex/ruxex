@@ -75,7 +75,7 @@ pub(crate) enum StatusLineItem {
     )]
     ProjectRoot,
 
-    /// Hostname of the machine running Genex.
+    /// Hostname of the machine running Ruxex.
     Hostname,
 
     /// Current git branch name (if in a repository).
@@ -113,8 +113,8 @@ pub(crate) enum StatusLineItem {
     /// Remaining usage on the secondary rate limit.
     WeeklyLimit,
 
-    /// Genex application version.
-    GenexVersion,
+    /// Ruxex application version.
+    RuxexVersion,
 
     /// Total context window size in tokens.
     ContextWindowSize,
@@ -183,7 +183,7 @@ impl StatusLineItem {
             StatusLineItem::WeeklyLimit => {
                 "Remaining usage on the secondary usage limit (omitted when unavailable)"
             }
-            StatusLineItem::GenexVersion => "Genex application version",
+            StatusLineItem::RuxexVersion => "Ruxex application version",
             StatusLineItem::ContextWindowSize => {
                 "Total context window size in tokens (omitted when unknown)"
             }
@@ -226,7 +226,7 @@ impl StatusLineItem {
             StatusLineItem::ContextUsed => StatusSurfacePreviewItem::ContextUsed,
             StatusLineItem::FiveHourLimit => StatusSurfacePreviewItem::FiveHourLimit,
             StatusLineItem::WeeklyLimit => StatusSurfacePreviewItem::WeeklyLimit,
-            StatusLineItem::GenexVersion => StatusSurfacePreviewItem::GenexVersion,
+            StatusLineItem::RuxexVersion => StatusSurfacePreviewItem::RuxexVersion,
             StatusLineItem::ContextWindowSize => StatusSurfacePreviewItem::ContextWindowSize,
             StatusLineItem::UsedTokens => StatusSurfacePreviewItem::UsedTokens,
             StatusLineItem::TotalInputTokens => StatusSurfacePreviewItem::TotalInputTokens,

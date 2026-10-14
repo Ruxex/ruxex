@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use genex_model_provider::ProviderBackendRequest;
-use genex_model_provider::SharedModelProvider;
-use genex_utils_output_truncation::TruncationPolicy;
+use ruxex_model_provider::ProviderBackendRequest;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_utils_output_truncation::TruncationPolicy;
 use http::HeaderValue;
 use serde_json::Value;
 use serde_json::json;
@@ -84,11 +84,11 @@ impl HistoryNotesBackend {
             })
             .await
             .map_err(|error| match error {
-                genex_model_provider::ProviderError::Unauthenticated
-                | genex_model_provider::ProviderError::Unauthorized => {
+                ruxex_model_provider::ProviderError::Unauthenticated
+                | ruxex_model_provider::ProviderError::Unauthorized => {
                     format!("{OPERATION_ERROR_PREFIX} Could not apply backend authentication.")
                 }
-                genex_model_provider::ProviderError::Provider(message)
+                ruxex_model_provider::ProviderError::Provider(message)
                     if message.contains("invalid JSON") =>
                 {
                     format!("{OPERATION_ERROR_PREFIX} The backend returned invalid JSON.")

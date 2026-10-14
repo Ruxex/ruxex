@@ -5,12 +5,12 @@ use crate::collaboration_mode_presets::builtin_collaboration_mode_presets;
 use crate::config::ModelsManagerConfig;
 use crate::model_info;
 use chrono::Utc;
-use genex_http_client::HttpClientFactory;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelPreset;
 use std::fmt;
 use std::future::Future;
 use std::path::PathBuf;
@@ -293,7 +293,7 @@ pub type SharedModelsManager = Arc<dyn ModelsManager>;
 
 /// Builds a cache-backed or static model manager for a catalog source.
 pub fn build_models_manager(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     catalog_source: Arc<dyn ModelCatalogSource>,
     config_model_catalog: Option<ModelCatalog>,
 ) -> SharedModelsManager {
@@ -302,7 +302,7 @@ pub fn build_models_manager(
             catalog_source.auth_context(),
             model_catalog,
         )),
-        None => Arc::new(RemoteModelsManager::new(genex_home, catalog_source)),
+        None => Arc::new(RemoteModelsManager::new(ruxex_home, catalog_source)),
     }
 }
 
@@ -353,8 +353,8 @@ pub struct StaticModelsManager {
 
 impl RemoteModelsManager {
     /// Construct a remote model manager backed by a persistent cache.
-    pub fn new(genex_home: PathBuf, catalog_source: Arc<dyn ModelCatalogSource>) -> Self {
-        let cache_path = genex_home.join(MODEL_CACHE_FILE);
+    pub fn new(ruxex_home: PathBuf, catalog_source: Arc<dyn ModelCatalogSource>) -> Self {
+        let cache_path = ruxex_home.join(MODEL_CACHE_FILE);
         Self::new_with_optional_cache(
             Some(Arc::new(FileModelsCache::new(
                 cache_path,
@@ -638,7 +638,7 @@ impl RemoteModelsManager {
             return false;
         };
         let _timer =
-            genex_otel::start_global_timer("genex.remote_models.load_cache.duration_ms", &[]);
+            ruxex_otel::start_global_timer("ruxex.remote_models.load_cache.duration_ms", &[]);
         let client_version = crate::client_version_to_whole();
         info!(client_version, "models cache: evaluating cache eligibility");
         let Some(identity) = self.catalog_source.identity() else {

@@ -1,6 +1,6 @@
 use crate::JsonSchema;
 use crate::TS;
-use genex_utils_redacted_string::RedactedString;
+use ruxex_utils_redacted_string::RedactedString;
 use serde::Deserialize;
 use serde::Serialize;
 

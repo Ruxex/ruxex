@@ -2,9 +2,9 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_keyring_store::KeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_keyring_store::KeyringStore;
 use tracing::warn;
 
 use super::OAuthKeyringLoadError;

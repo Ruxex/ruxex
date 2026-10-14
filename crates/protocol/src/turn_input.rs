@@ -41,7 +41,7 @@ pub enum TurnInput {
 /// One turn input and the context that follows it through submission.
 ///
 /// Callers choose start-or-steer, idle-start, or steer-only behavior through
-/// the corresponding `GenexThread` method.
+/// the corresponding `RuxexThread` method.
 #[derive(Clone, Debug)]
 pub struct TurnInputRequest {
     pub input: TurnInput,
@@ -142,7 +142,7 @@ pub enum TurnInputMode {
     Steer { expected_turn_id: String },
 }
 
-/// Requested cyber treatment for a provider-authorized Genex turn.
+/// Requested cyber treatment for a provider-authorized Ruxex turn.
 /// Authorization and model-tier restrictions remain server-owned.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]

@@ -1,6 +1,6 @@
 use super::*;
 use anyhow::Result;
-use genex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortReason;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

@@ -1,14 +1,14 @@
 use eventsource_stream::Event as StreamEvent;
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_otel::Result;
-use genex_otel::RuntimeMetricTotals;
-use genex_otel::RuntimeMetricsSummary;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
-use genex_protocol::ThreadId;
-use genex_protocol::ToolName;
-use genex_protocol::protocol::SessionSource;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
+use ruxex_otel::Result;
+use ruxex_otel::RuntimeMetricTotals;
+use ruxex_otel::RuntimeMetricsSummary;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::ToolName;
+use ruxex_protocol::protocol::SessionSource;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
@@ -18,7 +18,7 @@ use tokio_tungstenite::tungstenite::Message;
 fn runtime_metrics_summary_collects_tool_api_and_streaming_metrics() -> Result<()> {
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
-        MetricsConfig::in_memory("test", "genex-cli", env!("CARGO_PKG_VERSION"), exporter)
+        MetricsConfig::in_memory("test", "ruxex-cli", env!("CARGO_PKG_VERSION"), exporter)
             .with_runtime_reader(),
     )?;
     let manager = SessionTelemetry::new(
@@ -89,12 +89,12 @@ fn runtime_metrics_summary_collects_tool_api_and_streaming_metrics() -> Result<(
     ))));
     manager.record_websocket_event(&ws_timing_response, Duration::from_millis(20));
     manager.record_duration(
-        "genex.turn.ttft.duration_ms",
+        "ruxex.turn.ttft.duration_ms",
         Duration::from_millis(95),
         &[],
     );
     manager.record_duration(
-        "genex.turn.ttfm.duration_ms",
+        "ruxex.turn.ttfm.duration_ms",
         Duration::from_millis(180),
         &[],
     );

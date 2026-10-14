@@ -1,5 +1,5 @@
 use super::*;
-use genex_app_server_protocol::ImageReference;
+use ruxex_app_server_protocol::ImageReference;
 use pretty_assertions::assert_eq;
 use std::collections::VecDeque;
 
@@ -235,14 +235,14 @@ async fn steer_rejection_queues_review_follow_up_before_existing_queued_messages
     handle_error(
         &mut chat,
         "cannot steer a review turn",
-        Some(GenexErrorInfo::ActiveTurnNotSteerable {
+        Some(RuxexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: NonSteerableTurnKind::Review,
         }),
     );
     handle_error(
         &mut chat,
         "cannot steer a review turn",
-        Some(GenexErrorInfo::ActiveTurnNotSteerable {
+        Some(RuxexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: NonSteerableTurnKind::Review,
         }),
     );
@@ -1142,10 +1142,10 @@ async fn custom_prompt_submit_sends_review_op() {
     chat.handle_paste("  please audit dependencies  ".to_string());
     chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
 
-    // Expect AppEvent::GenexOp(Op::Review { .. }) with trimmed prompt
+    // Expect AppEvent::RuxexOp(Op::Review { .. }) with trimmed prompt
     let evt = rx.try_recv().expect("expected one app event");
     match evt {
-        AppEvent::GenexOp(Op::Review { target }) => {
+        AppEvent::RuxexOp(Op::Review { target }) => {
             assert_eq!(
                 target,
                 ReviewTarget::Custom {
@@ -1166,7 +1166,7 @@ async fn custom_prompt_enter_empty_does_not_send() {
     // Enter without any text
     chat.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
 
-    // No AppEvent::GenexOp should be sent
+    // No AppEvent::RuxexOp should be sent
     assert!(rx.try_recv().is_err(), "no app event should be sent");
 }
 

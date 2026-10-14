@@ -91,7 +91,7 @@ impl LocalChild {
 }
 
 // libc does not expose this Apple extension. It is available since macOS 10.15,
-// before Genex's minimum supported macOS version (12).
+// before Ruxex's minimum supported macOS version (12).
 unsafe extern "C" {
     fn posix_spawn_file_actions_addchdir_np(
         actions: *mut libc::posix_spawn_file_actions_t,

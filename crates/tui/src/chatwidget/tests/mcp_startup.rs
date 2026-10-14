@@ -230,7 +230,7 @@ async fn pending_mcp_startup_does_not_reject_queued_compaction() {
 
     assert!(
         std::iter::from_fn(|| rx.try_recv().ok())
-            .any(|event| matches!(event, AppEvent::GenexOp(Op::Compact)))
+            .any(|event| matches!(event, AppEvent::RuxexOp(Op::Compact)))
     );
 }
 
@@ -254,7 +254,7 @@ async fn pending_mcp_startup_does_not_drain_follow_up_before_review_starts() {
     assert_eq!(chat.input_queue.queued_user_messages.len(), 1);
     assert!(
         std::iter::from_fn(|| rx.try_recv().ok())
-            .any(|event| { matches!(event, AppEvent::GenexOp(Op::Review { .. })) })
+            .any(|event| { matches!(event, AppEvent::RuxexOp(Op::Review { .. })) })
     );
     assert_no_submit_op(&mut op_rx);
 }

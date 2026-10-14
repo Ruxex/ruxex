@@ -45,7 +45,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use unicode_width::UnicodeWidthChar;
 
 /// Replacement for a tab character in rendered diff content.
@@ -96,7 +96,7 @@ use crate::terminal_palette::default_bg;
 use crate::terminal_palette::indexed_color;
 use crate::terminal_palette::rgb_color;
 use crate::terminal_palette::stdout_color_level;
-use genex_git_utils::get_git_repo_root;
+use ruxex_git_utils::get_git_repo_root;
 
 /// Classifies a diff line for gutter sign rendering and style selection.
 ///
@@ -1382,7 +1382,7 @@ mod tests {
 
     #[test]
     fn display_path_prefers_cwd_without_git_repo() {
-        let cwd = PathBuf::from("/workspace/genex");
+        let cwd = PathBuf::from("/workspace/ruxex");
         let path = cwd.join("tui").join("example.png");
 
         let rendered = display_path_for(&path, &cwd);

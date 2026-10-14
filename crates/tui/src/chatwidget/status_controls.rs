@@ -366,7 +366,7 @@ impl ChatWidget {
 
         if self
             .rate_limit_snapshots_by_limit_id
-            .contains_key(genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
+            .contains_key(ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
         {
             for item in [
                 StatusSurfacePreviewItem::FiveHourLimit,

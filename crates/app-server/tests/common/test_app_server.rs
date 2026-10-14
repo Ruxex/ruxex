@@ -16,96 +16,96 @@ use tokio::process::ChildStdout;
 use anyhow::Context;
 use anyhow::ensure;
 use core_test_support::is_remote_test_environment;
-use core_test_support::test_genex::TestEnv;
-use core_test_support::test_genex::test_env;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CollaborationModeListParams;
-use genex_app_server_protocol::CommandExecParams;
-use genex_app_server_protocol::CommandExecResizeParams;
-use genex_app_server_protocol::CommandExecTerminateParams;
-use genex_app_server_protocol::CommandExecWriteParams;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigReadParams;
-use genex_app_server_protocol::ConfigValueWriteParams;
-use genex_app_server_protocol::FsCopyParams;
-use genex_app_server_protocol::FsCreateDirectoryParams;
-use genex_app_server_protocol::FsGetMetadataParams;
-use genex_app_server_protocol::FsReadDirectoryParams;
-use genex_app_server_protocol::FsReadFileParams;
-use genex_app_server_protocol::FsRemoveParams;
-use genex_app_server_protocol::FsUnwatchParams;
-use genex_app_server_protocol::FsWatchParams;
-use genex_app_server_protocol::FsWriteFileParams;
-use genex_app_server_protocol::GetAccountParams;
-use genex_app_server_protocol::HooksListParams;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::ListMcpServerStatusParams;
-use genex_app_server_protocol::MarketplaceAddParams;
-use genex_app_server_protocol::MarketplaceRemoveParams;
-use genex_app_server_protocol::MarketplaceUpgradeParams;
-use genex_app_server_protocol::McpResourceReadParams;
-use genex_app_server_protocol::McpServerToolCallParams;
-use genex_app_server_protocol::ModelListParams;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadParams;
-use genex_app_server_protocol::PermissionProfileListParams;
-use genex_app_server_protocol::PluginInstallParams;
-use genex_app_server_protocol::PluginInstalledParams;
-use genex_app_server_protocol::PluginListParams;
-use genex_app_server_protocol::PluginReadParams;
-use genex_app_server_protocol::PluginSearchParams;
-use genex_app_server_protocol::PluginUninstallParams;
-use genex_app_server_protocol::ProcessKillParams;
-use genex_app_server_protocol::ProcessSpawnParams;
-use genex_app_server_protocol::ProjectImportParams;
-use genex_app_server_protocol::ProjectListParams;
-use genex_app_server_protocol::ProjectReadParams;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ReviewStartParams;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SkillsExtraRootsSetParams;
-use genex_app_server_protocol::SkillsListParams;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadCompactStartParams;
-use genex_app_server_protocol::ThreadDeleteParams;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadInjectItemsParams;
-use genex_app_server_protocol::ThreadItemsListParams;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadMetadataUpdateParams;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadSearchOccurrencesParams;
-use genex_app_server_protocol::ThreadSearchParams;
-use genex_app_server_protocol::ThreadSectionMoveParams;
-use genex_app_server_protocol::ThreadSetNameParams;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadShellCommandParams;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnEnvironmentParams;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnSteerParams;
-use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
-use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use genex_model_provider::PROVIDER_HOME_MARKER_FILE;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::ProviderHomeMarker;
+use core_test_support::test_ruxex::TestEnv;
+use core_test_support::test_ruxex::test_env;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CollaborationModeListParams;
+use ruxex_app_server_protocol::CommandExecParams;
+use ruxex_app_server_protocol::CommandExecResizeParams;
+use ruxex_app_server_protocol::CommandExecTerminateParams;
+use ruxex_app_server_protocol::CommandExecWriteParams;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigReadParams;
+use ruxex_app_server_protocol::ConfigValueWriteParams;
+use ruxex_app_server_protocol::FsCopyParams;
+use ruxex_app_server_protocol::FsCreateDirectoryParams;
+use ruxex_app_server_protocol::FsGetMetadataParams;
+use ruxex_app_server_protocol::FsReadDirectoryParams;
+use ruxex_app_server_protocol::FsReadFileParams;
+use ruxex_app_server_protocol::FsRemoveParams;
+use ruxex_app_server_protocol::FsUnwatchParams;
+use ruxex_app_server_protocol::FsWatchParams;
+use ruxex_app_server_protocol::FsWriteFileParams;
+use ruxex_app_server_protocol::GetAccountParams;
+use ruxex_app_server_protocol::HooksListParams;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::ListMcpServerStatusParams;
+use ruxex_app_server_protocol::MarketplaceAddParams;
+use ruxex_app_server_protocol::MarketplaceRemoveParams;
+use ruxex_app_server_protocol::MarketplaceUpgradeParams;
+use ruxex_app_server_protocol::McpResourceReadParams;
+use ruxex_app_server_protocol::McpServerToolCallParams;
+use ruxex_app_server_protocol::ModelListParams;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadParams;
+use ruxex_app_server_protocol::PermissionProfileListParams;
+use ruxex_app_server_protocol::PluginInstallParams;
+use ruxex_app_server_protocol::PluginInstalledParams;
+use ruxex_app_server_protocol::PluginListParams;
+use ruxex_app_server_protocol::PluginReadParams;
+use ruxex_app_server_protocol::PluginSearchParams;
+use ruxex_app_server_protocol::PluginUninstallParams;
+use ruxex_app_server_protocol::ProcessKillParams;
+use ruxex_app_server_protocol::ProcessSpawnParams;
+use ruxex_app_server_protocol::ProjectImportParams;
+use ruxex_app_server_protocol::ProjectListParams;
+use ruxex_app_server_protocol::ProjectReadParams;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ReviewStartParams;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SkillsExtraRootsSetParams;
+use ruxex_app_server_protocol::SkillsListParams;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadCompactStartParams;
+use ruxex_app_server_protocol::ThreadDeleteParams;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadInjectItemsParams;
+use ruxex_app_server_protocol::ThreadItemsListParams;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateParams;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadSearchOccurrencesParams;
+use ruxex_app_server_protocol::ThreadSearchParams;
+use ruxex_app_server_protocol::ThreadSectionMoveParams;
+use ruxex_app_server_protocol::ThreadSetNameParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadShellCommandParams;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnEnvironmentParams;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnSteerParams;
+use ruxex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderHomeMarker;
 use serde::de::DeserializeOwned;
 use tempfile::TempDir;
 use tokio::process::Command;
@@ -130,26 +130,26 @@ pub struct TestAppServer {
     auto_env: Option<TestEnv>,
     json_logs: JsonLogCapture,
     // Fields drop in declaration order. Tear down the delayed child before
-    // removing an owned GENEX_HOME that may still be its cwd on Windows.
+    // removing an owned RUXEX_HOME that may still be its cwd on Windows.
     _delayed_exec_server: Option<()>,
     _attribution_settings_server: Option<MockServer>,
-    _owned_genex_home: Option<TempDir>,
+    _owned_ruxex_home: Option<TempDir>,
 }
 
-pub const DEFAULT_CLIENT_NAME: &str = "genex-app-server-tests";
+pub const DEFAULT_CLIENT_NAME: &str = "ruxex-app-server-tests";
 pub const DISABLE_PLUGIN_STARTUP_TASKS_ARG: &str = "--disable-plugin-startup-tasks-for-tests";
-const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "GENEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
+const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "RUXEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
 #[cfg(windows)]
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(25);
 #[cfg(not(windows))]
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 impl TestAppServer {
-    /// Starts building a server with a temporary GENEX_HOME and the standard
+    /// Starts building a server with a temporary RUXEX_HOME and the standard
     /// automatic test environment.
     pub fn builder() -> TestAppServerBuilder {
         TestAppServerBuilder {
-            genex_home: None,
+            ruxex_home: None,
             environment: TestAppServerEnvironment::Auto,
             program: None,
             env_overrides: Vec::new(),
@@ -222,7 +222,7 @@ impl TestAppServer {
     }
 
     async fn new_with_program_env_and_args(
-        genex_home: &Path,
+        ruxex_home: &Path,
         program: &Path,
         env_overrides: &[(&str, Option<&str>)],
         args: &[&str],
@@ -232,13 +232,13 @@ impl TestAppServer {
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
-        cmd.current_dir(genex_home);
-        cmd.env("GENEX_HOME", genex_home);
+        cmd.current_dir(ruxex_home);
+        cmd.env("RUXEX_HOME", ruxex_home);
         cmd.env("RUST_LOG", "warn");
         // Keep integration tests isolated from host managed configuration.
         cmd.env(
-            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            genex_home.join("managed_config.toml"),
+            "RUXEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            ruxex_home.join("managed_config.toml"),
         );
         cmd.env_remove(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
         cmd.args(args);
@@ -263,7 +263,7 @@ impl TestAppServer {
                 .is_err_and(|error| error.kind() == std::io::ErrorKind::ExecutableFileBusy)
                 || retries == 2
             {
-                break process.context("genex app-server proc should start")?;
+                break process.context("ruxex app-server proc should start")?;
             }
             retries += 1;
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -301,7 +301,7 @@ impl TestAppServer {
             json_logs,
             _delayed_exec_server: None,
             _attribution_settings_server: None,
-            _owned_genex_home: None,
+            _owned_ruxex_home: None,
         })
     }
 
@@ -1504,7 +1504,7 @@ impl TestAppServer {
 
 /// Builder for TestAppServer.
 pub struct TestAppServerBuilder {
-    genex_home: Option<PathBuf>,
+    ruxex_home: Option<PathBuf>,
     environment: TestAppServerEnvironment,
     program: Option<PathBuf>,
     env_overrides: Vec<(String, Option<String>)>,
@@ -1518,9 +1518,9 @@ enum TestAppServerEnvironment {
 }
 
 impl TestAppServerBuilder {
-    /// Uses this existing GENEX_HOME instead of a temporary one.
-    pub fn with_genex_home(mut self, genex_home: &Path) -> Self {
-        self.genex_home = Some(genex_home.to_path_buf());
+    /// Uses this existing RUXEX_HOME instead of a temporary one.
+    pub fn with_ruxex_home(mut self, ruxex_home: &Path) -> Self {
+        self.ruxex_home = Some(ruxex_home.to_path_buf());
         self
     }
 
@@ -1602,30 +1602,30 @@ impl TestAppServerBuilder {
         Ok(server)
     }
 
-    /// Builds a server with a temporary GENEX_HOME and automatic environment
+    /// Builds a server with a temporary RUXEX_HOME and automatic environment
     /// by default.
     pub async fn build(self) -> anyhow::Result<TestAppServer> {
         let Self {
-            genex_home,
+            ruxex_home,
             environment,
             program,
             env_overrides,
             args,
             exec_server_delay,
         } = self;
-        let (genex_home, owned_genex_home) = match genex_home {
-            Some(genex_home) => (genex_home, None),
+        let (ruxex_home, owned_ruxex_home) = match ruxex_home {
+            Some(ruxex_home) => (ruxex_home, None),
             None => {
-                let owned_genex_home = TempDir::new()?;
+                let owned_ruxex_home = TempDir::new()?;
                 (
-                    owned_genex_home.path().to_path_buf(),
-                    Some(owned_genex_home),
+                    owned_ruxex_home.path().to_path_buf(),
+                    Some(owned_ruxex_home),
                 )
             }
         };
-        initialize_test_provider_home(&genex_home)?;
-        let attribution_settings_server = if genex_home.join("auth.json").is_file() {
-            let config_path = genex_home.join("config.toml");
+        initialize_test_provider_home(&ruxex_home)?;
+        let attribution_settings_server = if ruxex_home.join("auth.json").is_file() {
+            let config_path = ruxex_home.join("config.toml");
             let config = std::fs::read_to_string(&config_path)?;
             if config
                 .lines()
@@ -1660,7 +1660,7 @@ impl TestAppServerBuilder {
         };
         let (auto_env, delayed_exec_server) = match environment {
             TestAppServerEnvironment::Auto => {
-                let environments_toml = genex_home.join("environments.toml");
+                let environments_toml = ruxex_home.join("environments.toml");
                 ensure!(
                     !environments_toml.try_exists().with_context(|| format!(
                         "check whether {} exists",
@@ -1691,8 +1691,8 @@ impl TestAppServerBuilder {
         };
         let program = match program {
             Some(program) => program,
-            None => genex_utils_cargo_bin::cargo_bin("genex-app-server")
-                .context("should find binary for genex-app-server")?,
+            None => ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")
+                .context("should find binary for ruxex-app-server")?,
         };
         let env_overrides = env_overrides
             .iter()
@@ -1700,27 +1700,27 @@ impl TestAppServerBuilder {
             .collect::<Vec<_>>();
         let args = args.iter().map(String::as_str).collect::<Vec<_>>();
         let mut app_server = TestAppServer::new_with_program_env_and_args(
-            &genex_home,
+            &ruxex_home,
             &program,
             &env_overrides,
             &args,
         )
         .await?;
         app_server.auto_env = auto_env;
-        app_server._owned_genex_home = owned_genex_home;
+        app_server._owned_ruxex_home = owned_ruxex_home;
         app_server._delayed_exec_server = delayed_exec_server;
         app_server._attribution_settings_server = attribution_settings_server;
         Ok(app_server)
     }
 }
 
-fn initialize_test_provider_home(genex_home: &Path) -> anyhow::Result<()> {
-    let marker_path = genex_home.join(PROVIDER_HOME_MARKER_FILE);
+fn initialize_test_provider_home(ruxex_home: &Path) -> anyhow::Result<()> {
+    let marker_path = ruxex_home.join(PROVIDER_HOME_MARKER_FILE);
     if marker_path.exists() {
         return Ok(());
     }
 
-    let provider_id = std::fs::read_to_string(genex_home.join("config.toml"))
+    let provider_id = std::fs::read_to_string(ruxex_home.join("config.toml"))
         .ok()
         .and_then(|config| {
             config.lines().find_map(|line| {
@@ -1744,7 +1744,7 @@ fn initialize_test_provider_home(genex_home: &Path) -> anyhow::Result<()> {
 
 impl Drop for TestAppServer {
     fn drop(&mut self) {
-        // These tests spawn a `genex-app-server` child process.
+        // These tests spawn a `ruxex-app-server` child process.
         //
         // We keep that child alive for the test and rely on Tokio's `kill_on_drop(true)` when this
         // helper is dropped. Tokio documents kill-on-drop as best-effort: dropping requests

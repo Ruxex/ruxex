@@ -11,17 +11,17 @@ use tempfile::tempdir;
 /// Use a separate local endpoint so warmup cannot affect the test server's request assertions;
 /// the same production HTTP capability still applies all proxy and certificate policy.
 pub(crate) async fn warm_http_client(
-    client: &dyn genex_exec_server::HttpClient,
+    client: &dyn ruxex_exec_server::HttpClient,
 ) -> anyhow::Result<()> {
     let server = wiremock::MockServer::start().await;
     client
-        .http_request(genex_exec_server::HttpRequestParams {
+        .http_request(ruxex_exec_server::HttpRequestParams {
             method: "GET".to_string(),
             url: server.uri(),
             headers: Vec::new(),
             body: None,
             timeout_ms: None,
-            redirect_policy: genex_exec_server::HttpRedirectPolicy::Stop,
+            redirect_policy: ruxex_exec_server::HttpRedirectPolicy::Stop,
             request_id: "test-client-warmup".to_string(),
             stream_response: false,
         })
@@ -29,25 +29,25 @@ pub(crate) async fn warm_http_client(
     Ok(())
 }
 
-/// Serializes tests that mutate process-wide GENEX_HOME.
+/// Serializes tests that mutate process-wide RUXEX_HOME.
 ///
 /// Keep OAuth tests on this one guard instead of defining per-module helpers; otherwise
 /// concurrently running test modules can point File/Secrets storage at different homes.
-pub(crate) struct TempGenexHome {
+pub(crate) struct TempRuxexHome {
     _guard: MutexGuard<'static, ()>,
     _dir: tempfile::TempDir,
 }
 
-impl TempGenexHome {
+impl TempRuxexHome {
     pub(crate) fn new() -> Self {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
         let guard = LOCK
             .get_or_init(Mutex::default)
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        let dir = tempdir().expect("create GENEX_HOME temp dir");
+        let dir = tempdir().expect("create RUXEX_HOME temp dir");
         unsafe {
-            std::env::set_var("GENEX_HOME", dir.path());
+            std::env::set_var("RUXEX_HOME", dir.path());
         }
         Self {
             _guard: guard,
@@ -60,10 +60,10 @@ impl TempGenexHome {
     }
 }
 
-impl Drop for TempGenexHome {
+impl Drop for TempRuxexHome {
     fn drop(&mut self) {
         unsafe {
-            std::env::remove_var("GENEX_HOME");
+            std::env::remove_var("RUXEX_HOME");
         }
     }
 }

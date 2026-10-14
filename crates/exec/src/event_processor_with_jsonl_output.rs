@@ -3,23 +3,23 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
-use genex_app_server_protocol::CollabAgentTool;
-use genex_app_server_protocol::CollabAgentToolCallStatus;
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::McpToolCallStatus;
-use genex_app_server_protocol::PatchApplyStatus;
-use genex_app_server_protocol::PatchChangeKind;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::TurnStatus;
-use genex_core::config::Config;
-use genex_protocol::models::WebSearchAction;
-use genex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_app_server_protocol::CollabAgentTool;
+use ruxex_app_server_protocol::CollabAgentToolCallStatus;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::McpToolCallStatus;
+use ruxex_app_server_protocol::PatchApplyStatus;
+use ruxex_app_server_protocol::PatchChangeKind;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_core::config::Config;
+use ruxex_protocol::models::WebSearchAction;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
 use serde_json::json;
 
 use crate::event_processor::EventProcessor;
-pub use crate::event_processor::GenexStatus;
+pub use crate::event_processor::RuxexStatus;
 use crate::event_processor::handle_last_message;
 use crate::exec_events::AgentMessageItem;
 use crate::exec_events::CollabAgentState;
@@ -75,7 +75,7 @@ struct RunningTodoList {
 #[derive(Debug, PartialEq)]
 pub struct CollectedThreadEvents {
     pub events: Vec<ThreadEvent>,
-    pub status: GenexStatus,
+    pub status: RuxexStatus,
 }
 
 impl EventProcessorWithJsonOutput {
@@ -127,13 +127,13 @@ impl EventProcessorWithJsonOutput {
         }
     }
 
-    pub fn map_todo_items(plan: &[genex_app_server_protocol::TurnPlanStep]) -> Vec<TodoItem> {
+    pub fn map_todo_items(plan: &[ruxex_app_server_protocol::TurnPlanStep]) -> Vec<TodoItem> {
         plan.iter()
             .map(|step| TodoItem {
                 text: step.step.clone(),
                 completed: matches!(
                     step.status,
-                    genex_app_server_protocol::TurnPlanStepStatus::Completed
+                    ruxex_app_server_protocol::TurnPlanStepStatus::Completed
                 ),
             })
             .collect()
@@ -264,25 +264,25 @@ impl EventProcessorWithJsonOutput {
                                 thread_id,
                                 CollabAgentState {
                                     status: match state.status {
-                                        genex_app_server_protocol::CollabAgentStatus::PendingInit => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::PendingInit => {
                                             CollabAgentStatus::PendingInit
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::Running => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::Running => {
                                             CollabAgentStatus::Running
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::Interrupted => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::Interrupted => {
                                             CollabAgentStatus::Interrupted
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::Completed => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::Completed => {
                                             CollabAgentStatus::Completed
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::Errored => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::Errored => {
                                             CollabAgentStatus::Errored
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::Shutdown => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::Shutdown => {
                                             CollabAgentStatus::Shutdown
                                         }
-                                        genex_app_server_protocol::CollabAgentStatus::NotFound => {
+                                        ruxex_app_server_protocol::CollabAgentStatus::NotFound => {
                                             CollabAgentStatus::NotFound
                                         }
                                     },
@@ -407,7 +407,7 @@ impl EventProcessorWithJsonOutput {
                     details: ThreadItemDetails::Error(ErrorItem { message }),
                 },
             })],
-            status: GenexStatus::Running,
+            status: RuxexStatus::Running,
         }
     }
 
@@ -430,7 +430,7 @@ impl EventProcessorWithJsonOutput {
                         details: ThreadItemDetails::Error(ErrorItem { message }),
                     },
                 }));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::Warning(notification) => {
                 let warning = self.collect_warning(notification.message);
@@ -447,7 +447,7 @@ impl EventProcessorWithJsonOutput {
                 let error = ThreadErrorEvent { message };
                 self.last_critical_error = Some(error.clone());
                 events.push(ThreadEvent::Error(error));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::DeprecationNotice(notification) => {
                 let message = match notification.details {
@@ -462,16 +462,16 @@ impl EventProcessorWithJsonOutput {
                         details: ThreadItemDetails::Error(ErrorItem { message }),
                     },
                 }));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::HookStarted(_) | ServerNotification::HookCompleted(_) => {
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ItemStarted(notification) => {
                 if let Some(item) = self.map_started_item(notification.item) {
                     events.push(ThreadEvent::ItemStarted(ItemStartedEvent { item }));
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ItemCompleted(notification) => {
                 if let Some(item) = self.map_completed_item_mut(notification.item) {
@@ -482,7 +482,7 @@ impl EventProcessorWithJsonOutput {
                     }
                     events.push(ThreadEvent::ItemCompleted(ItemCompletedEvent { item }));
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ModelRerouted(notification) => {
                 events.push(ThreadEvent::ItemCompleted(ItemCompletedEvent {
@@ -496,12 +496,12 @@ impl EventProcessorWithJsonOutput {
                         }),
                     },
                 }));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
-            ServerNotification::ModelVerification(_) => GenexStatus::Running,
+            ServerNotification::ModelVerification(_) => RuxexStatus::Running,
             ServerNotification::ThreadTokenUsageUpdated(notification) => {
                 self.last_total_token_usage = Some(notification.token_usage);
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::TurnCompleted(notification) => {
                 if let Some(running) = self.running_todo_list.take() {
@@ -526,7 +526,7 @@ impl EventProcessorWithJsonOutput {
                         events.push(ThreadEvent::TurnCompleted(TurnCompletedEvent {
                             usage: self.usage_from_last_total(),
                         }));
-                        GenexStatus::InitiateShutdown
+                        RuxexStatus::InitiateShutdown
                     }
                     TurnStatus::Failed => {
                         self.final_message = None;
@@ -547,17 +547,17 @@ impl EventProcessorWithJsonOutput {
                                 message: "turn failed".to_string(),
                             });
                         events.push(ThreadEvent::TurnFailed(TurnFailedEvent { error }));
-                        GenexStatus::InitiateShutdown
+                        RuxexStatus::InitiateShutdown
                     }
                     TurnStatus::Interrupted => {
                         self.final_message = None;
                         self.emit_final_message_on_shutdown = false;
-                        GenexStatus::InitiateShutdown
+                        RuxexStatus::InitiateShutdown
                     }
-                    TurnStatus::InProgress => GenexStatus::Running,
+                    TurnStatus::InProgress => RuxexStatus::Running,
                 }
             }
-            ServerNotification::TurnDiffUpdated(_) => GenexStatus::Running,
+            ServerNotification::TurnDiffUpdated(_) => RuxexStatus::Running,
             ServerNotification::TurnPlanUpdated(notification) => {
                 let items = Self::map_todo_items(&notification.plan);
                 if let Some(running) = self.running_todo_list.as_mut() {
@@ -582,13 +582,13 @@ impl EventProcessorWithJsonOutput {
                         },
                     }));
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::TurnStarted(_) => {
                 events.push(ThreadEvent::TurnStarted(TurnStartedEvent {}));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
-            _ => GenexStatus::Running,
+            _ => RuxexStatus::Running,
         };
 
         CollectedThreadEvents { events, status }
@@ -605,7 +605,7 @@ impl EventProcessor for EventProcessorWithJsonOutput {
         self.emit(Self::thread_started_event(session_configured));
     }
 
-    fn process_server_notification(&mut self, notification: ServerNotification) -> GenexStatus {
+    fn process_server_notification(&mut self, notification: ServerNotification) -> RuxexStatus {
         let collected = self.collect_thread_events(notification);
         for event in collected.events {
             self.emit(event);
@@ -613,7 +613,7 @@ impl EventProcessor for EventProcessorWithJsonOutput {
         collected.status
     }
 
-    fn process_warning(&mut self, message: String) -> GenexStatus {
+    fn process_warning(&mut self, message: String) -> RuxexStatus {
         let collected = self.collect_warning(message);
         for event in collected.events {
             self.emit(event);

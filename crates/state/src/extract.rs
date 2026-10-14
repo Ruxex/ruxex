@@ -1,13 +1,13 @@
 use crate::model::ThreadMetadata;
-use genex_history::RolloutItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_protocol::protocol::strip_user_message_prefix;
-use genex_protocol::protocol::user_message_preview;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_protocol::protocol::strip_user_message_prefix;
+use ruxex_protocol::protocol::user_message_preview;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -165,35 +165,35 @@ mod tests {
     use crate::model::ThreadMetadata;
     use chrono::DateTime;
     use chrono::Utc;
-    use genex_history::RolloutItem;
-    use genex_protocol::ThreadId;
-    use genex_protocol::config_types::CollaborationMode;
-    use genex_protocol::config_types::ModeKind;
-    use genex_protocol::config_types::ReasoningSummary;
-    use genex_protocol::config_types::Settings;
-    use genex_protocol::items::TurnItem;
-    use genex_protocol::items::UserMessageItem;
-    use genex_protocol::model_types::ReasoningEffort;
-    use genex_protocol::models::ContentItem;
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::models::ResponseItem;
-    use genex_protocol::protocol::AskForApproval;
-    use genex_protocol::protocol::EventMsg;
-    use genex_protocol::protocol::ItemCompletedEvent;
-    use genex_protocol::protocol::SandboxPolicy;
-    use genex_protocol::protocol::SessionMeta;
-    use genex_protocol::protocol::SessionMetaLine;
-    use genex_protocol::protocol::SessionSource;
-    use genex_protocol::protocol::ThreadGoal;
-    use genex_protocol::protocol::ThreadGoalStatus;
-    use genex_protocol::protocol::ThreadGoalUpdatedEvent;
-    use genex_protocol::protocol::ThreadHistoryMode;
-    use genex_protocol::protocol::ThreadSettingsAppliedEvent;
-    use genex_protocol::protocol::ThreadSettingsSnapshot;
-    use genex_protocol::protocol::TurnContextItem;
-    use genex_protocol::protocol::USER_MESSAGE_BEGIN;
-    use genex_protocol::protocol::UserMessageEvent;
-    use genex_protocol::user_input::UserInput;
+    use ruxex_history::RolloutItem;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::config_types::CollaborationMode;
+    use ruxex_protocol::config_types::ModeKind;
+    use ruxex_protocol::config_types::ReasoningSummary;
+    use ruxex_protocol::config_types::Settings;
+    use ruxex_protocol::items::TurnItem;
+    use ruxex_protocol::items::UserMessageItem;
+    use ruxex_protocol::model_types::ReasoningEffort;
+    use ruxex_protocol::models::ContentItem;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::models::ResponseItem;
+    use ruxex_protocol::protocol::AskForApproval;
+    use ruxex_protocol::protocol::EventMsg;
+    use ruxex_protocol::protocol::ItemCompletedEvent;
+    use ruxex_protocol::protocol::SandboxPolicy;
+    use ruxex_protocol::protocol::SessionMeta;
+    use ruxex_protocol::protocol::SessionMetaLine;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_protocol::protocol::ThreadGoal;
+    use ruxex_protocol::protocol::ThreadGoalStatus;
+    use ruxex_protocol::protocol::ThreadGoalUpdatedEvent;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_protocol::protocol::ThreadSettingsAppliedEvent;
+    use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+    use ruxex_protocol::protocol::TurnContextItem;
+    use ruxex_protocol::protocol::USER_MESSAGE_BEGIN;
+    use ruxex_protocol::protocol::UserMessageEvent;
+    use ruxex_protocol::user_input::UserInput;
 
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -391,7 +391,7 @@ mod tests {
                     timestamp: "2026-02-26T00:00:00.000Z".to_string(),
                     cwd: PathBuf::from("/child/worktree"),
                     runtime_workspace_roots: None,
-                    originator: "genex_cli_rs".to_string(),
+                    originator: "ruxex_cli_rs".to_string(),
                     cli_version: "0.0.0".to_string(),
                     source: SessionSource::Cli,
                     thread_source: None,
@@ -438,7 +438,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: None,
-                summary: genex_protocol::config_types::ReasoningSummary::Auto,
+                summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
             }),
         );
 
@@ -484,7 +484,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: None,
-                summary: genex_protocol::config_types::ReasoningSummary::Auto,
+                summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
             }),
         );
 
@@ -526,7 +526,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: Some(ReasoningEffort::High),
-                summary: genex_protocol::config_types::ReasoningSummary::Auto,
+                summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
             }),
         );
 
@@ -565,7 +565,7 @@ mod tests {
                 multi_agent_mode: None,
                 cyber_access_program: None,
                 effort: Some(ReasoningEffort::High),
-                summary: genex_protocol::config_types::ReasoningSummary::Auto,
+                summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
             }),
         );
 
@@ -638,7 +638,7 @@ mod tests {
                     timestamp: "2026-02-26T00:00:00.000Z".to_string(),
                     cwd: PathBuf::from("/workspace"),
                     runtime_workspace_roots: None,
-                    originator: "genex_cli_rs".to_string(),
+                    originator: "ruxex_cli_rs".to_string(),
                     cli_version: "0.0.0".to_string(),
                     source: SessionSource::Cli,
                     thread_source: None,

@@ -1,9 +1,9 @@
 [[production]]
-package = "genex-cli"
-bin = "genex"
-reason = "genex CLI binary"
+package = "ruxex-cli"
+bin = "ruxex"
+reason = "ruxex CLI binary"
 
 [[production]]
-package = "genex-app-server"
-bin = "genex-app-server"
-reason = "Genex app-server binary"
+package = "ruxex-app-server"
+bin = "ruxex-app-server"
+reason = "Ruxex app-server binary"

@@ -2,21 +2,21 @@
 use crate::bwrap::WSL1_BWRAP_WARNING;
 #[cfg(target_os = "linux")]
 use crate::bwrap::is_wsl1;
-use crate::landlock::GENEX_LINUX_SANDBOX_ARG0;
+use crate::landlock::RUXEX_LINUX_SANDBOX_ARG0;
 use crate::landlock::create_linux_sandbox_command_args_for_permission_profile;
 use crate::policy_transforms::effective_permission_profile;
 use crate::policy_transforms::should_require_platform_sandbox;
 #[cfg(target_os = "macos")]
 use crate::seatbelt::MacosSeatbeltProfile;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::io;
@@ -204,7 +204,7 @@ impl std::fmt::Display for SandboxTransformError {
                 "sandbox policy cwd URI `{cwd}` is not valid on this host: {source}"
             ),
             Self::MissingLinuxSandboxExecutable => {
-                write!(f, "missing genex-linux-sandbox executable path")
+                write!(f, "missing ruxex-linux-sandbox executable path")
             }
             Self::EnvironmentNetworkProxy(err) => {
                 write!(f, "failed to prepare environment network proxy: {err}")
@@ -243,7 +243,7 @@ pub struct SandboxManager {
     #[cfg(target_os = "macos")]
     seatbelt_profile: MacosSeatbeltProfile,
     #[cfg(target_os = "macos")]
-    allowed_symlinked_genex_home: Option<AbsolutePathBuf>,
+    allowed_symlinked_ruxex_home: Option<AbsolutePathBuf>,
 }
 
 impl SandboxManager {
@@ -257,18 +257,18 @@ impl SandboxManager {
             #[cfg(target_os = "macos")]
             seatbelt_profile: MacosSeatbeltProfile::FileSystemHelper,
             #[cfg(target_os = "macos")]
-            allowed_symlinked_genex_home: None,
+            allowed_symlinked_ruxex_home: None,
         }
     }
 
     /// Allows otherwise-authorized writable roots beneath the opted-in user home
     /// to follow symlinks, including targets outside that home.
     #[cfg(target_os = "macos")]
-    pub fn with_allowed_symlinked_genex_home(
+    pub fn with_allowed_symlinked_ruxex_home(
         mut self,
-        allowed_symlinked_genex_home: Option<AbsolutePathBuf>,
+        allowed_symlinked_ruxex_home: Option<AbsolutePathBuf>,
     ) -> Self {
-        self.allowed_symlinked_genex_home = allowed_symlinked_genex_home;
+        self.allowed_symlinked_ruxex_home = allowed_symlinked_ruxex_home;
         self
     }
 
@@ -365,7 +365,7 @@ impl SandboxManager {
                         extra_allow_unix_sockets: &[],
                     },
                     self.seatbelt_profile,
-                    self.allowed_symlinked_genex_home.as_ref(),
+                    self.allowed_symlinked_ruxex_home.as_ref(),
                 )
                 .map_err(|err| match err {
                     SeatbeltPreparationError::FileSystem(message) => {
@@ -528,10 +528,10 @@ fn os_string_to_command_component(value: OsString) -> String {
 }
 
 fn linux_sandbox_arg0_override(exe: &Path) -> String {
-    if exe.file_name().and_then(|name| name.to_str()) == Some(GENEX_LINUX_SANDBOX_ARG0) {
+    if exe.file_name().and_then(|name| name.to_str()) == Some(RUXEX_LINUX_SANDBOX_ARG0) {
         os_string_to_command_component(exe.as_os_str().to_owned())
     } else {
-        GENEX_LINUX_SANDBOX_ARG0.to_string()
+        RUXEX_LINUX_SANDBOX_ARG0.to_string()
     }
 }
 

@@ -25,53 +25,53 @@ use anyhow::bail;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::DynamicToolSpec;
-use genex_app_server_protocol::FileChangeApprovalDecision;
-use genex_app_server_protocol::FileChangeRequestApprovalParams;
-use genex_app_server_protocol::FileChangeRequestApprovalResponse;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::InitializeResponse;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::LogoutAccountResponse;
-use genex_app_server_protocol::ModelListParams;
-use genex_app_server_protocol::ModelListResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadDecrementElicitationParams;
-use genex_app_server_protocol::ThreadDecrementElicitationResponse;
-use genex_app_server_protocol::ThreadIncrementElicitationParams;
-use genex_app_server_protocol::ThreadIncrementElicitationResponse;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_core::config::Config;
-use genex_otel::OtelProvider;
-use genex_otel::current_span_w3c_trace_context;
-use genex_protocol::dynamic_tools::normalize_dynamic_tool_specs;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::DynamicToolSpec;
+use ruxex_app_server_protocol::FileChangeApprovalDecision;
+use ruxex_app_server_protocol::FileChangeRequestApprovalParams;
+use ruxex_app_server_protocol::FileChangeRequestApprovalResponse;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::InitializeResponse;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::LogoutAccountResponse;
+use ruxex_app_server_protocol::ModelListParams;
+use ruxex_app_server_protocol::ModelListResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadDecrementElicitationParams;
+use ruxex_app_server_protocol::ThreadDecrementElicitationResponse;
+use ruxex_app_server_protocol::ThreadIncrementElicitationParams;
+use ruxex_app_server_protocol::ThreadIncrementElicitationResponse;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_core::config::Config;
+use ruxex_otel::OtelProvider;
+use ruxex_otel::current_span_w3c_trace_context;
+use ruxex_protocol::dynamic_tools::normalize_dynamic_tool_specs;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -99,24 +99,24 @@ const NOTIFICATIONS_TO_OPT_OUT: &[&str] = &[
 const APP_SERVER_GRACEFUL_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5);
 const APP_SERVER_GRACEFUL_SHUTDOWN_POLL_INTERVAL: Duration = Duration::from_millis(100);
 const DEFAULT_ANALYTICS_ENABLED: bool = true;
-const OTEL_SERVICE_NAME: &str = "genex-app-server-test-client";
+const OTEL_SERVICE_NAME: &str = "ruxex-app-server-test-client";
 const TRACE_DISABLED_MESSAGE: &str =
-    "Not enabled - enable tracing in $GENEX_HOME/config.toml to get a trace URL!";
+    "Not enabled - enable tracing in $RUXEX_HOME/config.toml to get a trace URL!";
 
-/// Minimal launcher that initializes the Genex app-server and logs the handshake.
+/// Minimal launcher that initializes the Ruxex app-server and logs the handshake.
 #[derive(Parser)]
-#[command(author = "Genex", version, about = "Bootstrap Genex app-server", long_about = None)]
+#[command(author = "Ruxex", version, about = "Bootstrap Ruxex app-server", long_about = None)]
 struct Cli {
     /// Path to the standalone app-server binary. When set, requests use
     /// stdio by spawning it as a child process.
-    #[arg(long = "app-server-bin", env = "GENEX_APP_SERVER_BIN", global = true)]
+    #[arg(long = "app-server-bin", env = "RUXEX_APP_SERVER_BIN", global = true)]
     app_server_bin: Option<PathBuf>,
 
     /// Existing websocket server URL to connect to.
     ///
     /// If neither `--app-server-bin` nor `--url` is provided, defaults to
     /// `ws://127.0.0.1:4222`.
-    #[arg(long, env = "GENEX_APP_SERVER_URL", global = true)]
+    #[arg(long, env = "RUXEX_APP_SERVER_URL", global = true)]
     url: Option<String>,
 
     /// Forwarded to the app-server as `--config key=value`. Repeatable.
@@ -150,7 +150,7 @@ enum CliCommand {
     /// Start the standalone app-server binary on a websocket endpoint in the background.
     ///
     /// Logs are written to:
-    ///   `/tmp/genex-app-server-test-client/`
+    ///   `/tmp/ruxex-app-server-test-client/`
     Serve {
         /// WebSocket listen URL passed to the app-server binary as `--listen`.
         #[arg(long, default_value = "ws://127.0.0.1:4222")]
@@ -159,9 +159,9 @@ enum CliCommand {
         #[arg(long, default_value_t = false)]
         kill: bool,
     },
-    /// Send a user message through the Genex app-server.
+    /// Send a user message through the Ruxex app-server.
     SendMessage {
-        /// User message to send to Genex.
+        /// User message to send to Ruxex.
         user_message: String,
     },
     /// Send a user message through the app-server V2 thread/turn APIs.
@@ -169,14 +169,14 @@ enum CliCommand {
         /// Opt into experimental app-server methods and fields.
         #[arg(long)]
         experimental_api: bool,
-        /// User message to send to Genex.
+        /// User message to send to Ruxex.
         user_message: String,
     },
     /// Resume a V2 thread by id, then send a user message.
     ResumeMessageV2 {
         /// Existing thread id to resume.
         thread_id: String,
-        /// User message to send to Genex.
+        /// User message to send to Ruxex.
         user_message: String,
     },
     /// Resume a V2 thread and continuously stream notifications/events.
@@ -214,10 +214,10 @@ enum CliCommand {
     },
     /// Log out of the current account and wait for the account update.
     TestLogout,
-    /// List the available models from the Genex app-server.
+    /// List the available models from the Ruxex app-server.
     #[command(name = "model-list")]
     ModelList,
-    /// List stored threads from the Genex app-server.
+    /// List stored threads from the Ruxex app-server.
     #[command(name = "thread-list")]
     ThreadList {
         /// Number of threads to return.
@@ -241,7 +241,7 @@ enum CliCommand {
     #[command(name = "live-elicitation-timeout-pause")]
     LiveElicitationTimeoutPause {
         /// Model passed to `thread/start`.
-        #[arg(long, env = "GENEX_E2E_MODEL", default_value = "example-model")]
+        #[arg(long, env = "RUXEX_E2E_MODEL", default_value = "example-model")]
         model: String,
         /// Existing workspace path used as the turn cwd.
         #[arg(long, value_name = "path", default_value = ".")]
@@ -271,7 +271,7 @@ pub async fn run() -> Result<()> {
         CliCommand::Serve { listen, kill } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "serve")?;
             let app_server_bin =
-                app_server_bin.unwrap_or_else(|| PathBuf::from("genex-app-server"));
+                app_server_bin.unwrap_or_else(|| PathBuf::from("ruxex-app-server"));
             serve(&app_server_bin, &config_overrides, &listen, kill)
         }
         CliCommand::SendMessage { user_message } => {
@@ -391,7 +391,7 @@ pub async fn run() -> Result<()> {
 }
 
 enum Endpoint {
-    SpawnGenex(PathBuf),
+    SpawnRuxex(PathBuf),
     ConnectWs(String),
 }
 
@@ -400,12 +400,12 @@ struct BackgroundAppServer {
     url: String,
 }
 
-fn resolve_endpoint(genex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
-    if genex_bin.is_some() && url.is_some() {
+fn resolve_endpoint(ruxex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
+    if ruxex_bin.is_some() && url.is_some() {
         bail!("--app-server-bin and --url are mutually exclusive");
     }
-    if let Some(genex_bin) = genex_bin {
-        return Ok(Endpoint::SpawnGenex(genex_bin));
+    if let Some(ruxex_bin) = ruxex_bin {
+        return Ok(Endpoint::SpawnRuxex(ruxex_bin));
     }
     if let Some(url) = url {
         return Ok(Endpoint::ConnectWs(url));
@@ -414,11 +414,11 @@ fn resolve_endpoint(genex_bin: Option<PathBuf>, url: Option<String>) -> Result<E
 }
 
 fn resolve_shared_websocket_url(
-    genex_bin: Option<PathBuf>,
+    ruxex_bin: Option<PathBuf>,
     url: Option<String>,
     command: &str,
 ) -> Result<String> {
-    if genex_bin.is_some() {
+    if ruxex_bin.is_some() {
         bail!(
             "{command} requires --url or an already-running websocket app-server; --app-server-bin would spawn a private stdio app-server instead"
         );
@@ -428,16 +428,16 @@ fn resolve_shared_websocket_url(
 }
 
 impl BackgroundAppServer {
-    fn spawn(genex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+    fn spawn(ruxex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
         let listener = TcpListener::bind("127.0.0.1:0")
             .context("failed to reserve a local port for websocket app-server")?;
         let addr = listener.local_addr()?;
         drop(listener);
 
         let url = format!("ws://{addr}");
-        let mut cmd = Command::new(genex_bin);
-        if let Some(genex_bin_parent) = genex_bin.parent() {
-            let mut path = OsString::from(genex_bin_parent.as_os_str());
+        let mut cmd = Command::new(ruxex_bin);
+        if let Some(ruxex_bin_parent) = ruxex_bin.parent() {
+            let mut path = OsString::from(ruxex_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -454,7 +454,7 @@ impl BackgroundAppServer {
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{}` app-server", genex_bin.display()))?;
+            .with_context(|| format!("failed to start `{}` app-server", ruxex_bin.display()))?;
 
         Ok(Self { process, url })
     }
@@ -472,8 +472,8 @@ impl Drop for BackgroundAppServer {
     }
 }
 
-fn serve(genex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool) -> Result<()> {
-    let runtime_dir = PathBuf::from("/tmp/genex-app-server-test-client");
+fn serve(ruxex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool) -> Result<()> {
+    let runtime_dir = PathBuf::from("/tmp/ruxex-app-server-test-client");
     fs::create_dir_all(&runtime_dir)
         .with_context(|| format!("failed to create runtime dir {}", runtime_dir.display()))?;
     let log_path = runtime_dir.join("app-server.log");
@@ -491,8 +491,8 @@ fn serve(genex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .with_context(|| format!("failed to clone log file handle {}", log_path.display()))?;
 
     let mut cmdline = format!(
-        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,genex_=trace {}",
-        shell_quote(&genex_bin.display().to_string())
+        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,ruxex_=trace {}",
+        shell_quote(&ruxex_bin.display().to_string())
     );
     for override_kv in config_overrides {
         cmdline.push_str(&format!(" --config {}", shell_quote(override_kv)));
@@ -507,11 +507,11 @@ fn serve(genex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .stdout(Stdio::from(log_file))
         .stderr(Stdio::from(log_file_stderr))
         .spawn()
-        .with_context(|| format!("failed to start `{}` app-server", genex_bin.display()))?;
+        .with_context(|| format!("failed to start `{}` app-server", ruxex_bin.display()))?;
 
     let pid = child.id();
 
-    println!("started genex app-server");
+    println!("started ruxex app-server");
     println!("listen: {listen}");
     println!("pid: {pid} (launcher process)");
     println!("log: {}", log_path.display());
@@ -614,12 +614,12 @@ async fn send_message(
 }
 
 pub async fn send_message_v2(
-    genex_bin: &Path,
+    ruxex_bin: &Path,
     config_overrides: &[String],
     user_message: String,
     dynamic_tools: &Option<Vec<DynamicToolSpec>>,
 ) -> Result<()> {
-    let endpoint = Endpoint::SpawnGenex(genex_bin.to_path_buf());
+    let endpoint = Endpoint::SpawnRuxex(ruxex_bin.to_path_buf());
     send_message_v2_endpoint(
         &endpoint,
         config_overrides,
@@ -957,7 +957,7 @@ async fn with_client<T>(
     command_name: &'static str,
     endpoint: &Endpoint,
     config_overrides: &[String],
-    f: impl FnOnce(&mut GenexClient) -> Result<T>,
+    f: impl FnOnce(&mut RuxexClient) -> Result<T>,
 ) -> Result<T> {
     let tracing = TestClientTracing::initialize(config_overrides).await?;
     let command_span = info_span!(
@@ -968,7 +968,7 @@ async fn with_client<T>(
     );
     let trace_summary = command_span.in_scope(|| TraceSummary::capture(tracing.traces_enabled));
     let result = command_span.in_scope(|| {
-        let mut client = GenexClient::connect(endpoint, config_overrides)?;
+        let mut client = RuxexClient::connect(endpoint, config_overrides)?;
         f(&mut client)
     });
     print_trace_summary(&trace_summary);
@@ -977,7 +977,7 @@ async fn with_client<T>(
 
 fn thread_increment_elicitation(url: &str, thread_id: String) -> Result<()> {
     let endpoint = Endpoint::ConnectWs(url.to_string());
-    let mut client = GenexClient::connect(&endpoint, &[])?;
+    let mut client = RuxexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -991,7 +991,7 @@ fn thread_increment_elicitation(url: &str, thread_id: String) -> Result<()> {
 
 fn thread_decrement_elicitation(url: &str, thread_id: String) -> Result<()> {
     let endpoint = Endpoint::ConnectWs(url.to_string());
-    let mut client = GenexClient::connect(&endpoint, &[])?;
+    let mut client = RuxexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -1004,7 +1004,7 @@ fn thread_decrement_elicitation(url: &str, thread_id: String) -> Result<()> {
 }
 
 fn live_elicitation_timeout_pause(
-    genex_bin: Option<PathBuf>,
+    ruxex_bin: Option<PathBuf>,
     url: Option<String>,
     config_overrides: &[String],
     model: String,
@@ -1017,10 +1017,10 @@ fn live_elicitation_timeout_pause(
     }
 
     let mut _background_server = None;
-    let websocket_url = match (genex_bin, url) {
+    let websocket_url = match (ruxex_bin, url) {
         (Some(_), Some(_)) => bail!("--app-server-bin and --url are mutually exclusive"),
-        (Some(genex_bin), None) => {
-            let server = BackgroundAppServer::spawn(&genex_bin, config_overrides)?;
+        (Some(ruxex_bin), None) => {
+            let server = BackgroundAppServer::spawn(&ruxex_bin, config_overrides)?;
             let websocket_url = server.url.clone();
             _background_server = Some(server);
             websocket_url
@@ -1042,9 +1042,9 @@ fn live_elicitation_timeout_pause(
         .canonicalize()
         .with_context(|| format!("failed to resolve workspace `{}`", workspace.display()))?;
     let app_server_test_client_bin = std::env::current_exe()
-        .context("failed to resolve genex-app-server-test-client binary path")?;
+        .context("failed to resolve ruxex-app-server-test-client binary path")?;
     let endpoint = Endpoint::ConnectWs(websocket_url.clone());
-    let mut client = GenexClient::connect(&endpoint, &[])?;
+    let mut client = RuxexClient::connect(&endpoint, &[])?;
 
     let initialize = client.initialize()?;
     println!("< initialize response: {initialize:?}");
@@ -1204,7 +1204,7 @@ enum ClientTransport {
     },
 }
 
-struct GenexClient {
+struct RuxexClient {
     transport: ClientTransport,
     pending_notifications: VecDeque<JSONRPCNotification>,
     command_approval_behavior: CommandApprovalBehavior,
@@ -1239,27 +1239,27 @@ fn item_started_before_helper_done_is_unexpected(
     !matches!(item, ThreadItem::UserMessage { .. })
 }
 
-impl GenexClient {
+impl RuxexClient {
     fn connect(endpoint: &Endpoint, config_overrides: &[String]) -> Result<Self> {
         match endpoint {
-            Endpoint::SpawnGenex(genex_bin) => Self::spawn_stdio(genex_bin, config_overrides),
+            Endpoint::SpawnRuxex(ruxex_bin) => Self::spawn_stdio(ruxex_bin, config_overrides),
             Endpoint::ConnectWs(url) => Self::connect_websocket(url),
         }
     }
 
-    fn spawn_stdio(genex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
-        Self::spawn_stdio_with_env(genex_bin, config_overrides, &[])
+    fn spawn_stdio(ruxex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+        Self::spawn_stdio_with_env(ruxex_bin, config_overrides, &[])
     }
 
     fn spawn_stdio_with_env(
-        genex_bin: &Path,
+        ruxex_bin: &Path,
         config_overrides: &[String],
         environment: &[(OsString, OsString)],
     ) -> Result<Self> {
-        let genex_bin_display = genex_bin.display();
-        let mut cmd = Command::new(genex_bin);
-        if let Some(genex_bin_parent) = genex_bin.parent() {
-            let mut path = OsString::from(genex_bin_parent.as_os_str());
+        let ruxex_bin_display = ruxex_bin.display();
+        let mut cmd = Command::new(ruxex_bin);
+        if let Some(ruxex_bin_parent) = ruxex_bin.parent() {
+            let mut path = OsString::from(ruxex_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -1272,25 +1272,25 @@ impl GenexClient {
         for (name, value) in environment {
             cmd.env(name, value);
         }
-        let mut genex_app_server = cmd
+        let mut ruxex_app_server = cmd
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{genex_bin_display}` app-server"))?;
+            .with_context(|| format!("failed to start `{ruxex_bin_display}` app-server"))?;
 
-        let stdin = genex_app_server
+        let stdin = ruxex_app_server
             .stdin
             .take()
-            .context("genex app-server stdin unavailable")?;
-        let stdout = genex_app_server
+            .context("ruxex app-server stdin unavailable")?;
+        let stdout = ruxex_app_server
             .stdout
             .take()
-            .context("genex app-server stdout unavailable")?;
+            .context("ruxex app-server stdout unavailable")?;
 
         Ok(Self {
             transport: ClientTransport::Stdio {
-                child: genex_app_server,
+                child: ruxex_app_server,
                 stdin: Some(stdin),
                 stdout: BufReader::new(stdout),
             },
@@ -1320,7 +1320,7 @@ impl GenexClient {
                     if Instant::now() >= deadline {
                         return Err(err).with_context(|| {
                             format!(
-                                "failed to connect to websocket app-server at `{url}`; if no server is running, start one with `genex-app-server-test-client serve --listen {url}`"
+                                "failed to connect to websocket app-server at `{url}`; if no server is running, start one with `ruxex-app-server-test-client serve --listen {url}`"
                             )
                         });
                     }
@@ -1372,8 +1372,8 @@ impl GenexClient {
             request_id: request_id.clone(),
             params: InitializeParams {
                 client_info: ClientInfo {
-                    name: "genex-toy-app-server".to_string(),
-                    title: Some("Genex Toy App Server".to_string()),
+                    name: "ruxex-toy-app-server".to_string(),
+                    title: Some("Ruxex Toy App Server".to_string()),
                     version: env!("CARGO_PKG_VERSION").to_string(),
                 },
                 capabilities: Some(InitializeCapabilities {
@@ -1863,10 +1863,10 @@ impl GenexClient {
                     writeln!(stdin, "{payload}")?;
                     stdin
                         .flush()
-                        .context("failed to flush payload to genex app-server")?;
+                        .context("failed to flush payload to ruxex app-server")?;
                     return Ok(());
                 }
-                bail!("genex app-server stdin closed")
+                bail!("ruxex app-server stdin closed")
             }
             ClientTransport::WebSocket { socket, url } => {
                 socket
@@ -1883,9 +1883,9 @@ impl GenexClient {
                 let mut response_line = String::new();
                 let bytes = stdout
                     .read_line(&mut response_line)
-                    .context("failed to read from genex app-server")?;
+                    .context("failed to read from ruxex app-server")?;
                 if bytes == 0 {
-                    bail!("genex app-server closed stdout");
+                    bail!("ruxex app-server closed stdout");
                 }
                 Ok(response_line)
             }
@@ -1927,7 +1927,7 @@ impl TestClientTracing {
         let config = Config::load_with_cli_overrides(cli_kv_overrides)
             .await
             .context("error loading config")?;
-        let otel_provider = genex_core::otel_init::build_provider(
+        let otel_provider = ruxex_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             Some(OTEL_SERVICE_NAME),
@@ -1991,7 +1991,7 @@ fn print_trace_summary(trace_summary: &TraceSummary) {
     }
 }
 
-impl Drop for GenexClient {
+impl Drop for RuxexClient {
     fn drop(&mut self) {
         let ClientTransport::Stdio { child, stdin, .. } = &mut self.transport else {
             return;
@@ -2000,14 +2000,14 @@ impl Drop for GenexClient {
         let _ = stdin.take();
 
         if let Ok(Some(status)) = child.try_wait() {
-            println!("[genex app-server exited: {status}]");
+            println!("[ruxex app-server exited: {status}]");
             return;
         }
 
         let deadline = SystemTime::now() + APP_SERVER_GRACEFUL_SHUTDOWN_TIMEOUT;
         loop {
             if let Ok(Some(status)) = child.try_wait() {
-                println!("[genex app-server exited: {status}]");
+                println!("[ruxex app-server exited: {status}]");
                 return;
             }
 

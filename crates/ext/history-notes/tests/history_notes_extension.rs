@@ -1,36 +1,36 @@
 use std::sync::Arc;
 
-use genex_config::LoaderOverrides;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::TokenBudgetConfig;
-use genex_extension_api::ContentItemKind;
-use genex_extension_api::ConversationHistory;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionRegistry;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::NoopTurnItemEmitter;
-use genex_extension_api::PromptFragment;
-use genex_extension_api::PromptSlot;
-use genex_extension_api::ThreadStartInput;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolCallSource;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolName;
-use genex_extension_api::ToolPayload;
-use genex_history_notes_extension::install;
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::WireApi;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_providers::create_model_provider;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::TokenBudgetConfig;
+use ruxex_extension_api::ContentItemKind;
+use ruxex_extension_api::ConversationHistory;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::NoopTurnItemEmitter;
+use ruxex_extension_api::PromptFragment;
+use ruxex_extension_api::PromptSlot;
+use ruxex_extension_api::ThreadStartInput;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolCallSource;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolName;
+use ruxex_extension_api::ToolPayload;
+use ruxex_history_notes_extension::install;
+use ruxex_login::AuthHeaders;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::WireApi;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_providers::create_model_provider;
 use http::HeaderMap;
 use http::HeaderValue;
 use pretty_assertions::assert_eq;
@@ -50,7 +50,7 @@ const THREAD_HINT: &str = "Recent notes (up to 5, most-recent first):\n- /root/w
 async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestResult {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/genex/alpha/notes/v2/read_file"))
+        .and(path("/backend-api/ruxex/alpha/notes/v2/read_file"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
@@ -58,18 +58,18 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         .mount(&server)
         .await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/genex/alpha/notes/v2/thread_hint"))
+        .and(path("/backend-api/ruxex/alpha/notes/v2/thread_hint"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"text": THREAD_HINT})))
         .mount(&server)
         .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await?;
-    config.model_provider.base_url = Some(format!("{}/backend-api/genex", server.uri()));
+    config.model_provider.base_url = Some(format!("{}/backend-api/ruxex", server.uri()));
     config.model_provider.name = "provider".to_string();
     config.model_provider.wire_api = WireApi::Responses;
     config.token_budget = Some(TokenBudgetConfig {
@@ -83,7 +83,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         HeaderValue::from_static("actor-biscuit"),
     );
     let credential_manager =
-        CredentialManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
+        CredentialManager::from_auth_for_testing(RuxexAuth::Headers(AuthHeaders::new(headers)));
     let provider = create_model_provider(
         config.model_provider.clone(),
         Some(Arc::clone(&credential_manager)),
@@ -254,7 +254,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         }
         Mock::given(method("POST"))
             .and(path(format!(
-                "/backend-api/genex/alpha/{namespace}/v2/{name}"
+                "/backend-api/ruxex/alpha/{namespace}/v2/{name}"
             )))
             .and(header("x-provider-actor-authorization", "actor-biscuit"))
             .respond_with(ResponseTemplate::new(200).set_body_json(response))
@@ -305,7 +305,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
         {"data": "cG5n", "mime_type": "image/png", "detail": "original"}
     ]);
     Mock::given(method("POST"))
-        .and(path("/backend-api/genex/alpha/history/v2/read_item"))
+        .and(path("/backend-api/ruxex/alpha/history/v2/read_item"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(response))
         .mount(&server)
@@ -337,7 +337,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     ] {
         server.reset().await;
         Mock::given(method("POST"))
-            .and(path("/backend-api/genex/alpha/notes/v2/thread_hint"))
+            .and(path("/backend-api/ruxex/alpha/notes/v2/thread_hint"))
             .respond_with(ResponseTemplate::new(200).set_body_json(result))
             .mount(&server)
             .await;
@@ -366,11 +366,11 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
 }
 
 #[tokio::test]
-async fn history_notes_require_an_responses_provider_and_genex_backend_auth() -> TestResult {
-    let genex_home = TempDir::new()?;
+async fn history_notes_require_an_responses_provider_and_ruxex_backend_auth() -> TestResult {
+    let ruxex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await?;
     config.token_budget = Some(TokenBudgetConfig {
@@ -380,7 +380,7 @@ async fn history_notes_require_an_responses_provider_and_genex_backend_auth() ->
 
     for (provider, auth) in [(
         config.model_provider.clone(),
-        GenexAuth::from_api_key("test-api-key"),
+        RuxexAuth::from_api_key("test-api-key"),
     )] {
         config.model_provider = provider;
         let mut builder = ExtensionRegistryBuilder::<Config>::new();

@@ -153,7 +153,7 @@ async fn completion_replay_waits_for_older_turn_items_to_load() {
     let mut older = completed_turn(Some(125_000), Some(older_completed_at));
     older.id = "older-turn".to_string();
     let mut unloaded = older.clone();
-    unloaded.items_view = genex_app_server_protocol::TurnItemsView::NotLoaded;
+    unloaded.items_view = ruxex_app_server_protocol::TurnItemsView::NotLoaded;
     unloaded.items.clear();
     let newer = completed_turn(Some(1_000), Some(COMPLETED_AT));
 
@@ -184,7 +184,7 @@ async fn completion_failed_and_interrupted_turns_do_not_report_success() {
             turn.error = (status == AppServerTurnStatus::Failed).then(|| AppServerTurnError {
                 misalignment: None,
                 message: "The task failed.".to_string(),
-                genex_error_info: None,
+                ruxex_error_info: None,
                 additional_details: None,
             });
             if let Some(replay_kind) = replay_kind {

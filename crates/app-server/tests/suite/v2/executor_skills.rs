@@ -4,21 +4,21 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::CapabilityRootLocation;
-use genex_app_server_protocol::GrantedPermissionProfile;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::PermissionGrantScope;
-use genex_app_server_protocol::PermissionsRequestApprovalResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SelectedCapabilityRoot;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput;
-use genex_app_server_protocol::WarningNotification;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::CapabilityRootLocation;
+use ruxex_app_server_protocol::GrantedPermissionProfile;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::PermissionGrantScope;
+use ruxex_app_server_protocol::PermissionsRequestApprovalResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SelectedCapabilityRoot;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::WarningNotification;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::responses;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_target_windows;
@@ -95,7 +95,7 @@ async fn exercise_executor_skill(scenario: ExecutorSkillScenario) -> Result<()> 
     }
 
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let (sandbox_config, permission_profile) = if restricted {
         (
             "default_permissions = \"workspace\"",
@@ -119,7 +119,7 @@ async fn exercise_executor_skill(scenario: ExecutorSkillScenario) -> Result<()> 
         String::new()
     };
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -144,9 +144,9 @@ stream_max_retries = 0
         ),
     )?;
     if scenario == ExecutorSkillScenario::ExplicitOnly {
-        mount_analytics_capture(&server, genex_home.path()).await?;
+        mount_analytics_capture(&server, ruxex_home.path()).await?;
     }
-    let local_skill_dir = genex_home.path().join("skills/local-deploy");
+    let local_skill_dir = ruxex_home.path().join("skills/local-deploy");
     std::fs::create_dir_all(&local_skill_dir)?;
     std::fs::write(
         local_skill_dir.join("SKILL.md"),
@@ -155,13 +155,13 @@ stream_max_retries = 0
         ),
     )?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let auto_env = app_server.auto_env()?;
     let environment_id = auto_env.selection().environment_id.clone();
     let plugin_dir = auto_env.selection().cwd.join("plugin")?;
-    let manifest_dir = plugin_dir.join(".genex-plugin")?;
+    let manifest_dir = plugin_dir.join(".ruxex-plugin")?;
     let skill_dir = plugin_dir.join("skills/deploy")?;
     let agents_dir = skill_dir.join("agents")?;
     let reference_dir = skill_dir.join("references")?;
@@ -180,7 +180,7 @@ stream_max_retries = 0
     }
     let manifest_path = manifest_dir.join("plugin.json")?;
     let skill_path = skill_dir.join("SKILL.md")?;
-    let genex_yaml_path = agents_dir.join("genex.yaml")?;
+    let ruxex_yaml_path = agents_dir.join("ruxex.yaml")?;
     let reference_path = reference_dir.join("details.md")?;
     let reference_size = match scenario {
         ExecutorSkillScenario::VisibleWithBudgetWarning => 600 * 1024,
@@ -208,7 +208,7 @@ stream_max_retries = 0
             Default::default(), /*sandbox*/ None,
         ),
         file_system.write_file(
-            &genex_yaml_path,
+            &ruxex_yaml_path,
             format!(
                 "policy:\n  allow_implicit_invocation: {allow_implicit_invocation}\n"
             )
@@ -223,7 +223,7 @@ stream_max_retries = 0
     )?;
     #[cfg(unix)]
     if scenario == ExecutorSkillScenario::RestrictedDeniedReference {
-        let external_reference_dir = genex_home.path().join("external-reference");
+        let external_reference_dir = ruxex_home.path().join("external-reference");
         std::fs::create_dir_all(&external_reference_dir)?;
         let external_reference = external_reference_dir.join("details.md");
         std::fs::write(
@@ -239,7 +239,7 @@ stream_max_retries = 0
     }
     #[cfg(unix)]
     if scenario == ExecutorSkillScenario::RestrictedVisible && !auto_env.environment().is_remote() {
-        let denied_skill_dir = genex_home.path().join("denied-skill");
+        let denied_skill_dir = ruxex_home.path().join("denied-skill");
         std::fs::create_dir_all(&denied_skill_dir)?;
         std::fs::write(
             denied_skill_dir.join("SKILL.md"),
@@ -346,7 +346,7 @@ stream_max_retries = 0
         ]),
     ];
     if scenario == ExecutorSkillScenario::RestrictedDeniedReference {
-        let external_reference_dir = genex_home.path().join("external-reference");
+        let external_reference_dir = ruxex_home.path().join("external-reference");
         model_responses.insert(
             3,
             responses::sse(vec![

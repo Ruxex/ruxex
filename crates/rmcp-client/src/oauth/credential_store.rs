@@ -1,12 +1,12 @@
-//! Adapts Genex's pinned credential storage to RMCP-owned OAuth refreshes.
+//! Adapts Ruxex's pinned credential storage to RMCP-owned OAuth refreshes.
 //!
 //! Attach this store only after `AuthorizationManager::initialize_from_store` completes
 //! against an in-memory store. Initialization may save tokenless client credentials, which
 //! this refresh adapter does not support.
 //!
 //! Ordinary token reads use the cached credentials. Refresh-guard acquisition rereads
-//! the pinned store before RMCP exchanges the token and saves the result. Genex
-//! Genex preparation rechecks freshness under that guard before asking RMCP to refresh.
+//! the pinned store before RMCP exchanges the token and saves the result. Ruxex
+//! Ruxex preparation rechecks freshness under that guard before asking RMCP to refresh.
 //! Saves and clears require an active guard; no store operation reacquires the lock.
 //! The runtime snapshot advances only for credentials compatible with this connection,
 //! so replacement logins still cause a rebuild.
@@ -19,8 +19,8 @@ use std::sync::Weak;
 use anyhow::Context;
 use anyhow::Result;
 use futures::future::BoxFuture;
-use genex_keyring_store::DefaultKeyringStore;
-use genex_keyring_store::KeyringStore;
+use ruxex_keyring_store::DefaultKeyringStore;
+use ruxex_keyring_store::KeyringStore;
 use oauth2::Scope;
 use oauth2::TokenResponse;
 use rmcp::transport::auth::AuthError;
@@ -192,7 +192,7 @@ impl<K: KeyringStore + Clone + 'static> CredentialStore for OAuthCredentialStore
             let mut token_response = credentials
                 .token_response
                 .ok_or(AuthError::AuthorizationRequired)?;
-            // Genex stores granted scopes in the token response rather than a separate field.
+            // Ruxex stores granted scopes in the token response rather than a separate field.
             if token_response.scopes().is_none() && !credentials.granted_scopes.is_empty() {
                 token_response.set_scopes(Some(
                     credentials

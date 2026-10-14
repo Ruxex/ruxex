@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_async_utils::CancelErr;
-use genex_async_utils::OrCancelExt;
-use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_async_utils::CancelErr;
+use ruxex_async_utils::OrCancelExt;
+use ruxex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 use uuid::Uuid;
@@ -28,22 +28,22 @@ use crate::tools::runtimes::apply_package_path_prepend;
 use crate::tools::runtimes::maybe_wrap_shell_lc_with_snapshot;
 use crate::tools::runtimes::strip_managed_proxy_env;
 use crate::user_shell_command::user_shell_command_record_item;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
-use genex_protocol::items::CommandExecutionItem;
-use genex_protocol::items::CommandExecutionStatus;
-use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_sandboxing::SandboxType;
-use genex_shell_command::parse_command::parse_command;
-use genex_thread_store::PersistContext;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::items::CommandExecutionItem;
+use ruxex_protocol::items::CommandExecutionStatus;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_sandboxing::SandboxType;
+use ruxex_shell_command::parse_command::parse_command;
+use ruxex_thread_store::PersistContext;
 
 use super::SessionTask;
 use super::SessionTaskResult;
 use crate::session::session::Session;
-use genex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 
 const USER_SHELL_TIMEOUT_MS: u64 = 60 * 60 * 1000; // 1 hour
 
@@ -112,7 +112,7 @@ pub(crate) async fn execute_user_shell_command(
     session
         .services
         .session_telemetry
-        .counter("genex.task.user_shell", /*inc*/ 1, &[]);
+        .counter("ruxex.task.user_shell", /*inc*/ 1, &[]);
 
     if mode == UserShellCommandMode::StandaloneTurn {
         // Auxiliary mode runs within an existing active turn. That turn already
@@ -145,12 +145,12 @@ pub(crate) async fn execute_user_shell_command(
     let use_login_shell = true;
     let display_command = environment_shell.derive_exec_args(&command, use_login_shell);
     // TODO(anp): Migrate user-shell events and execution plumbing to PathUri so this local-only
-    // feature does not need to project the selected environment cwd onto the Genex host.
+    // feature does not need to project the selected environment cwd onto the Ruxex host.
     let Ok(cwd) = turn_environment.cwd().to_abs_path() else {
         send_user_shell_error(
             &session,
             turn_context.as_ref(),
-            "shell working directory is not native to the Genex host",
+            "shell working directory is not native to the Ruxex host",
         )
         .await;
         return;
@@ -378,7 +378,7 @@ async fn send_user_shell_error(session: &Session, turn_context: &TurnContext, me
             EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: message.to_string(),
-                genex_error_info: None,
+                ruxex_error_info: None,
             }),
         )
         .await;

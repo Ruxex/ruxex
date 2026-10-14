@@ -1,14 +1,14 @@
-use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use genex_code_mode_protocol::CodeModeToolKind;
-use genex_code_mode_protocol::ExecuteRequest;
-use genex_code_mode_protocol::FunctionCallOutputContentItem;
-use genex_code_mode_protocol::ImageDetail;
-use genex_code_mode_protocol::MissingCodeModeHostDuration;
-use genex_code_mode_protocol::RuntimeResponse;
-use genex_code_mode_protocol::ToolDefinition;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::grpc as proto;
-use genex_protocol::ToolName;
+use ruxex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::CodeModeToolKind;
+use ruxex_code_mode_protocol::ExecuteRequest;
+use ruxex_code_mode_protocol::FunctionCallOutputContentItem;
+use ruxex_code_mode_protocol::ImageDetail;
+use ruxex_code_mode_protocol::MissingCodeModeHostDuration;
+use ruxex_code_mode_protocol::RuntimeResponse;
+use ruxex_code_mode_protocol::ToolDefinition;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::grpc as proto;
+use ruxex_protocol::ToolName;
 use serde_json::Value as JsonValue;
 use tonic::Status;
 

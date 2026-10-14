@@ -1,6 +1,6 @@
 # MCP client conformance
 
-This directory tests the actual Genex executable against the official Model
+This directory tests the actual Ruxex executable against the official Model
 Context Protocol client conformance suite. It exercises the shipping legacy,
 intermediate `2025-11-25`, and modern `2026-07-28` protocols, localhost HTTP,
 stdio, OAuth, and additional transport and security regression fixtures.
@@ -11,24 +11,24 @@ Use Node.js 22 and Python 3.10 or later.
 
 ## Run the conformance gate
 
-First install the frozen workspace dependencies and build Genex:
+First install the frozen workspace dependencies and build Ruxex:
 
 ```bash
 pnpm install --frozen-lockfile
-cargo build --locked --manifest-path Cargo.toml -p genex-cli --bin genex
+cargo build --locked --manifest-path Cargo.toml -p ruxex-cli --bin ruxex
 ```
 
-From a published Genex checkout, run:
+From a published Ruxex checkout, run:
 
 ```bash
-python3 scripts/mcp_conformance/run_genex_compliance.py \
-  target/debug/genex \
+python3 scripts/mcp_conformance/run_ruxex_compliance.py \
+  target/debug/ruxex \
   --conformance-cli node_modules/@modelcontextprotocol/conformance/dist/index.js \
   --baseline-report scripts/mcp_conformance/regression-baseline-v1.json \
-  --report /tmp/genex-mcp-conformance.json
+  --report /tmp/ruxex-mcp-conformance.json
 ```
 
-The positional executable can also point to an already built Genex binary.
+The positional executable can also point to an already built Ruxex binary.
 `--conformance-cli` selects the exact, lockfile-installed upstream JavaScript
 runner instead of downloading a moving version during a test.
 
@@ -55,8 +55,8 @@ Create a compact baseline from a reviewed complete report without contacting
 the upstream suite again:
 
 ```bash
-python3 scripts/mcp_conformance/run_genex_compliance.py \
-  /absolute/path/to/genex \
+python3 scripts/mcp_conformance/run_ruxex_compliance.py \
+  /absolute/path/to/ruxex \
   --baseline-report /absolute/path/to/full-conformance-report.json \
   --extract-baseline /tmp/mcp-conformance-regression-baseline-v1.json
 ```
@@ -67,18 +67,18 @@ it to conceal a regression.
 
 ## Run the production reviewer regression gate
 
-The separate reviewer gate tests the real Genex app-server across all three
+The separate reviewer gate tests the real Ruxex app-server across all three
 shipping, legacy, and modern protocol modes. It covers stdio and localhost
 HTTP, exact-integer tool and elicitation schemas, bounded multi-round requests,
 malformed discovery response IDs, repeated pagination cursors, SSE framing and
-keepalives, and catalog boundaries. In a published Genex checkout, run:
+keepalives, and catalog boundaries. In a published Ruxex checkout, run:
 
 ```bash
 python3 scripts/mcp_conformance/review_regressions.py \
-  /absolute/path/to/genex \
+  /absolute/path/to/ruxex \
   --mode all \
   --baseline-report scripts/mcp_conformance/review-regression-baseline-v1.json \
-  --report /tmp/genex-mcp-review-regressions.json
+  --report /tmp/ruxex-mcp-review-regressions.json
 ```
 
 A complete, main-derived baseline records all 186 real check identities and all
@@ -92,7 +92,7 @@ production report without rerunning the client:
 
 ```bash
 python3 scripts/mcp_conformance/review_regressions.py \
-  /absolute/path/to/genex \
+  /absolute/path/to/ruxex \
   --baseline-report /absolute/path/to/full-review-regressions.json \
   --extract-baseline /tmp/review-regression-baseline-v1.json
 ```
@@ -109,13 +109,13 @@ env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 \
 ## Run the required SDK integration
 
 The existing required SDK workflow runs the complete Python fixture self-tests.
-Its TypeScript job builds the actual Genex executable, sets `GENEX_EXEC_PATH`,
+Its TypeScript job builds the actual Ruxex executable, sets `RUXEX_EXEC_PATH`,
 installs the pinned upstream conformance runner, and runs both the official
 authenticated suite and the separate production reviewer regression matrix.
 Neither gate can be skipped. To reproduce the focused integration locally:
 
 ```bash
-GENEX_EXEC_PATH=/absolute/path/to/genex \
+RUXEX_EXEC_PATH=/absolute/path/to/ruxex \
   pnpm --filter @codex/codex-sdk test -- \
   --runInBand tests/mcpConformance.test.ts
 ```

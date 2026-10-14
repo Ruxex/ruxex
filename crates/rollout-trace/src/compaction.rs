@@ -2,7 +2,7 @@
 //!
 //! Remote compaction is a model-facing request with a different semantic role
 //! from normal sampling. Keeping the no-op capable trace handle in this crate
-//! lets `genex-core` record exact endpoint payloads without owning trace schema
+//! lets `ruxex-core` record exact endpoint payloads without owning trace schema
 //! details.
 
 use std::fmt::Display;
@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ResponseItem;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use tracing::warn;
@@ -19,7 +19,7 @@ use crate::inference::trace_response_item_json;
 use crate::model::AgentThreadId;
 use crate::model::CompactionId;
 use crate::model::CompactionRequestId;
-use crate::model::GenexTurnId;
+use crate::model::RuxexTurnId;
 use crate::payload::RawPayloadKind;
 use crate::raw_event::RawTraceEventContext;
 use crate::raw_event::RawTraceEventPayload;
@@ -46,7 +46,7 @@ enum CompactionTraceContextState {
 struct EnabledCompactionTraceContext {
     writer: Arc<TraceWriter>,
     thread_id: AgentThreadId,
-    genex_turn_id: GenexTurnId,
+    ruxex_turn_id: RuxexTurnId,
     compaction_id: CompactionId,
     model: String,
 }
@@ -97,7 +97,7 @@ impl CompactionTraceContext {
     pub fn enabled(
         writer: Arc<TraceWriter>,
         thread_id: AgentThreadId,
-        genex_turn_id: GenexTurnId,
+        ruxex_turn_id: RuxexTurnId,
         compaction_id: CompactionId,
         model: String,
     ) -> Self {
@@ -105,7 +105,7 @@ impl CompactionTraceContext {
             state: CompactionTraceContextState::Enabled(EnabledCompactionTraceContext {
                 writer,
                 thread_id,
-                genex_turn_id,
+                ruxex_turn_id,
                 compaction_id,
                 model,
             }),
@@ -154,7 +154,7 @@ impl CompactionTraceContext {
 
         let event_context = RawTraceEventContext {
             thread_id: Some(context.thread_id.clone()),
-            genex_turn_id: Some(context.genex_turn_id.clone()),
+            ruxex_turn_id: Some(context.ruxex_turn_id.clone()),
         };
         if let Err(err) = context.writer.append_with_context(
             event_context,
@@ -194,7 +194,7 @@ impl CompactionTraceAttempt {
                 compaction_id: attempt.context.compaction_id.clone(),
                 compaction_request_id: attempt.compaction_request_id.clone(),
                 thread_id: attempt.context.thread_id.clone(),
-                genex_turn_id: attempt.context.genex_turn_id.clone(),
+                ruxex_turn_id: attempt.context.ruxex_turn_id.clone(),
                 model: attempt.context.model.clone(),
                 request_payload,
             },
@@ -274,7 +274,7 @@ fn append_with_context_best_effort(
 ) {
     let event_context = RawTraceEventContext {
         thread_id: Some(context.thread_id.clone()),
-        genex_turn_id: Some(context.genex_turn_id.clone()),
+        ruxex_turn_id: Some(context.ruxex_turn_id.clone()),
     };
     let _ = context.writer.append_with_context(event_context, payload);
 }

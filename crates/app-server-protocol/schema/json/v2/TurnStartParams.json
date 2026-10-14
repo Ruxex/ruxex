@@ -96,7 +96,7 @@
       "type": "object"
     },
     "CollaborationMode": {
-      "description": "Collaboration mode for a Genex session.",
+      "description": "Collaboration mode for a Ruxex session.",
       "properties": {
         "mode": {
           "$ref": "#/definitions/ModeKind"
@@ -112,7 +112,7 @@
       "type": "object"
     },
     "CyberAccessProgram": {
-      "description": "Requested cyber treatment for a provider-authorized Genex turn. Authorization and model-tier restrictions remain server-owned.",
+      "description": "Requested cyber treatment for a provider-authorized Ruxex turn. Authorization and model-tier restrictions remain server-owned.",
       "enum": [
         "standard",
         "daybreakBlue",

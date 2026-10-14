@@ -1,12 +1,12 @@
-use genex_execpolicy::Decision as ExecPolicyDecision;
-use genex_execpolicy::NetworkRuleProtocol as ExecPolicyNetworkRuleProtocol;
-use genex_network_proxy::BlockedRequest;
-use genex_network_proxy::NetworkPolicyDecision;
-use genex_protocol::approvals::NetworkApprovalContext;
-use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::network_policy::NetworkPolicyDecisionPayload;
+use ruxex_execpolicy::Decision as ExecPolicyDecision;
+use ruxex_execpolicy::NetworkRuleProtocol as ExecPolicyNetworkRuleProtocol;
+use ruxex_network_proxy::BlockedRequest;
+use ruxex_network_proxy::NetworkPolicyDecision;
+use ruxex_protocol::approvals::NetworkApprovalContext;
+use ruxex_protocol::approvals::NetworkApprovalProtocol;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::network_policy::NetworkPolicyDecisionPayload;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ExecPolicyNetworkRuleAmendment {

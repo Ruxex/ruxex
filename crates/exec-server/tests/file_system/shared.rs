@@ -1,37 +1,37 @@
 use anyhow::Context;
 use anyhow::Result;
 use futures::TryStreamExt;
-use genex_exec_server::CopyOptions;
-use genex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::CopyOptions;
+use ruxex_exec_server::CreateDirectoryOptions;
 #[cfg(unix)]
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::FILE_READ_CHUNK_SIZE;
-use genex_exec_server::FileMetadata;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::LocalFileSystem;
-use genex_exec_server::ReadDirectoryEntry;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WalkEntry;
-use genex_exec_server::WalkEntryKind;
-use genex_exec_server::WalkOptions;
-use genex_exec_server::WalkOutcome;
-use genex_exec_server::WriteFileOptions;
-use genex_file_system::MAX_WALK_DEPTH;
-use genex_file_system::MAX_WALK_DIRECTORIES;
-use genex_file_system::MAX_WALK_ENTRIES;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
-use genex_sandboxing::policy_transforms::effective_network_sandbox_policy;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FILE_READ_CHUNK_SIZE;
+use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::LocalFileSystem;
+use ruxex_exec_server::ReadDirectoryEntry;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WalkEntry;
+use ruxex_exec_server::WalkEntryKind;
+use ruxex_exec_server::WalkOptions;
+use ruxex_exec_server::WalkOutcome;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_file_system::MAX_WALK_DEPTH;
+use ruxex_file_system::MAX_WALK_DIRECTORIES;
+use ruxex_file_system::MAX_WALK_ENTRIES;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
+use ruxex_sandboxing::policy_transforms::effective_network_sandbox_policy;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -1050,18 +1050,18 @@ async fn file_system_restricted_reads_require_sandbox() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_file_operations_cannot_read_helper_siblings() -> Result<()> {
-    let helper_paths = crate::common::exec_server::test_genex_helper_paths()?;
+    let helper_paths = crate::common::exec_server::test_ruxex_helper_paths()?;
     let root = TempDir::new()?;
     let runtime_dir = root.path().join("runtime");
     let workspace = root.path().join("workspace");
     std::fs::create_dir(&runtime_dir)?;
     std::fs::create_dir(&workspace)?;
 
-    let helper = runtime_dir.join("genex-test-helper");
-    std::fs::hard_link(&helper_paths.genex_exe, &helper)
-        .or_else(|_| std::fs::copy(&helper_paths.genex_exe, &helper).map(|_| ()))?;
-    let linux_sandbox = if helper_paths.genex_linux_sandbox_exe.is_some() {
-        let alias = runtime_dir.join("genex-linux-sandbox");
+    let helper = runtime_dir.join("ruxex-test-helper");
+    std::fs::hard_link(&helper_paths.ruxex_exe, &helper)
+        .or_else(|_| std::fs::copy(&helper_paths.ruxex_exe, &helper).map(|_| ()))?;
+    let linux_sandbox = if helper_paths.ruxex_linux_sandbox_exe.is_some() {
+        let alias = runtime_dir.join("ruxex-linux-sandbox");
         std::fs::hard_link(&helper, &alias)
             .or_else(|_| std::fs::copy(&helper, &alias).map(|_| ()))?;
         Some(alias)

@@ -4,8 +4,8 @@
 //! configuration and app-server initialization remain responsive to safe local editing.
 
 use super::*;
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::TerminalName;
 
 pub(super) async fn run_main_inner(
     mut cli: Cli,
@@ -29,7 +29,7 @@ pub(super) async fn run_main_inner(
         }
         if cli.fork_picker || cli.fork_last {
             return Err(std::io::Error::other(
-                "`genex fork --worktree` requires an explicit session ID",
+                "`ruxex fork --worktree` requires an explicit session ID",
             ));
         }
     }
@@ -53,7 +53,7 @@ pub(super) async fn run_main_inner(
     }
 
     let raw_overrides = cli.config_overrides.raw_overrides.clone();
-    let overrides_cli = genex_utils_cli::CliConfigOverrides { raw_overrides };
+    let overrides_cli = ruxex_utils_cli::CliConfigOverrides { raw_overrides };
     let cli_kv_overrides = match overrides_cli.parse_overrides() {
         // Parse `-c` overrides from the CLI.
         Ok(v) => v,
@@ -66,17 +66,17 @@ pub(super) async fn run_main_inner(
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let genex_home = match find_genex_home() {
-        Ok(genex_home) => genex_home.to_path_buf(),
+    let ruxex_home = match find_ruxex_home() {
+        Ok(ruxex_home) => ruxex_home.to_path_buf(),
         Err(err) => {
-            eprintln!("Error finding genex home: {err}");
+            eprintln!("Error finding ruxex home: {err}");
             std::process::exit(1);
         }
     };
 
     let mut launch_loader_overrides = loader_overrides.clone();
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
-        let user_config_path = resolve_profile_v2_config_path(&genex_home, profile_v2);
+        let user_config_path = resolve_profile_v2_config_path(&ruxex_home, profile_v2);
         launch_loader_overrides.user_config_path = Some(user_config_path);
         launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
@@ -88,7 +88,7 @@ pub(super) async fn run_main_inner(
         )?;
         let validation_environment_manager =
             if should_load_configured_environments(&loader_overrides, &validation_target) {
-                EnvironmentManager::prepare_from_genex_home(&genex_home).await
+                EnvironmentManager::prepare_from_ruxex_home(&ruxex_home).await
             } else {
                 EnvironmentManager::prepare_from_env().await
             }
@@ -132,9 +132,9 @@ pub(super) async fn run_main_inner(
         && (reuse_implicit_local_daemon || search_only_config_override)
         && launch_loader_overrides.packaged_defaults_path.is_none()
         && startup_preflight::should_delay_startup_composer_for_first_login(
-            &genex_home,
-            genex_config::loader::system_config_toml_file(),
-            || genex_config::loader::has_local_managed_configuration(&genex_home),
+            &ruxex_home,
+            ruxex_config::loader::system_config_toml_file(),
+            || ruxex_config::loader::has_local_managed_configuration(&ruxex_home),
             |name| std::env::var_os(name),
         )
     {
@@ -153,7 +153,7 @@ pub(super) async fn run_main_inner(
 
     let default_daemon = if explicit_remote_endpoint.is_none() && reuse_implicit_local_daemon {
         startup_draft
-            .run_until(maybe_probe_default_daemon_socket(&genex_home))
+            .run_until(maybe_probe_default_daemon_socket(&ruxex_home))
             .await?
     } else {
         None
@@ -169,13 +169,13 @@ pub(super) async fn run_main_inner(
         .filter(|_| app_server_target.uses_remote_workspace());
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.genex_self_exe.clone(),
-        arg0_paths.genex_linux_sandbox_exe.clone(),
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
     )?;
     let prepared_environment_manager =
         if should_load_configured_environments(&loader_overrides, &app_server_target) {
             startup_draft
-                .run_until(EnvironmentManager::prepare_from_genex_home(&genex_home))
+                .run_until(EnvironmentManager::prepare_from_ruxex_home(&ruxex_home))
                 .await?
         } else {
             startup_draft
@@ -199,7 +199,7 @@ pub(super) async fn run_main_inner(
     )?;
     let mut loader_overrides = loader_overrides;
     if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
-        let user_config_path = resolve_profile_v2_config_path(&genex_home, profile_v2);
+        let user_config_path = resolve_profile_v2_config_path(&ruxex_home, profile_v2);
         loader_overrides.user_config_path = Some(user_config_path);
         loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
@@ -207,7 +207,7 @@ pub(super) async fn run_main_inner(
 
     let bootstrap_config = startup_draft
         .run_until(load_bootstrap_config_or_exit(
-            &genex_home,
+            &ruxex_home,
             config_cwd.as_ref(),
             cli_kv_overrides.clone(),
             loader_overrides.clone(),
@@ -238,8 +238,8 @@ pub(super) async fn run_main_inner(
         approval_policy,
         sandbox_mode,
         cwd: cwd_override,
-        genex_self_exe: arg0_paths.genex_self_exe.clone(),
-        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
+        ruxex_self_exe: arg0_paths.ruxex_self_exe.clone(),
+        ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe.clone(),
         show_raw_agent_reasoning: None,
         bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
         additional_writable_roots: additional_dirs,
@@ -259,10 +259,10 @@ pub(super) async fn run_main_inner(
         && !cli.no_daemon
         && !app_server_target.uses_remote_workspace();
     if auto_start_daemon && daemon_exclusion.is_none() {
-        // The daemon creates its control state under GENEX_HOME before it starts the
+        // The daemon creates its control state under RUXEX_HOME before it starts the
         // managed app-server. Mount the provider home first so that this startup-created
         // state cannot make a fresh root look like an uninitialized existing root.
-        genex_app_server_client::mount_provider_home_for_config(&config).map_err(|err| {
+        ruxex_app_server_client::mount_provider_home_for_config(&config).map_err(|err| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 format!("failed to mount provider data root: {err}"),
@@ -275,8 +275,8 @@ pub(super) async fn run_main_inner(
                 // Package installation may print progress; keep ordinary Ctrl+C handling.
                 crossterm::terminal::disable_raw_mode()?;
                 let result = if let Some(executable) = host_executable.as_deref() {
-                    genex_app_server_daemon::run_with_host_executable(
-                        genex_app_server_daemon::LifecycleCommand::Start,
+                    ruxex_app_server_daemon::run_with_host_executable(
+                        ruxex_app_server_daemon::LifecycleCommand::Start,
                         executable,
                         &[
                             std::ffi::OsString::from(super::APP_SERVER_DAEMON_MODE_ARG),
@@ -285,7 +285,7 @@ pub(super) async fn run_main_inner(
                     )
                     .await
                 } else {
-                    genex_app_server_daemon::run(genex_app_server_daemon::LifecycleCommand::Start)
+                    ruxex_app_server_daemon::run(ruxex_app_server_daemon::LifecycleCommand::Start)
                         .await
                 };
                 daemon_telemetry::record_start(&config, &result).await;
@@ -331,8 +331,8 @@ pub(super) async fn run_main_inner(
             )
         });
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
-        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
+        ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
     );
     let environment_manager = Arc::new(
         prepared_environment_manager
@@ -340,11 +340,11 @@ pub(super) async fn run_main_inner(
             .map_err(std::io::Error::other)?,
     );
 
-    remove_legacy_tui_log_file(config.genex_home.as_path());
+    remove_legacy_tui_log_file(config.ruxex_home.as_path());
 
     let otel_originator = originator().value;
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        genex_app_server_client::build_otel_provider(
+        ruxex_app_server_client::build_otel_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -376,13 +376,13 @@ pub(super) async fn run_main_inner(
     };
     let metrics = otel
         .as_ref()
-        .and_then(genex_otel::OtelProvider::metrics)
+        .and_then(ruxex_otel::OtelProvider::metrics)
         .cloned();
     if let Some(metrics) = &metrics {
-        let _ = genex_otel::record_process_start_once(metrics, otel_originator.as_str());
+        let _ = ruxex_otel::record_process_start_once(metrics, otel_originator.as_str());
         let telemetry =
-            genex_rollout::sqlite_telemetry_recorder(metrics.clone(), otel_originator.as_str());
-        let _ = genex_state::install_process_db_telemetry(telemetry);
+            ruxex_rollout::sqlite_telemetry_recorder(metrics.clone(), otel_originator.as_str());
+        let _ = ruxex_state::install_process_db_telemetry(telemetry);
     }
     let selection_reason = match (&app_server_target, daemon_exclusion) {
         (AppServerTarget::Remote { .. }, _) => "explicit_remote",
@@ -394,7 +394,7 @@ pub(super) async fn run_main_inner(
         (AppServerTarget::Embedded, None) => "auto_start_disabled",
     };
     let daemon_settings = if metrics.is_some() {
-        genex_app_server_daemon::telemetry::settings_tags(&config.genex_home)
+        ruxex_app_server_daemon::telemetry::settings_tags(&config.ruxex_home)
             .await
             .to_vec()
     } else {
@@ -422,7 +422,7 @@ pub(super) async fn run_main_inner(
             (true, AppServerTarget::Remote { .. }) => "remote",
         };
         // Use a fixed category, not the versioned or user-provided terminal identifier.
-        let terminal_info = genex_terminal_detection::terminal_info();
+        let terminal_info = ruxex_terminal_detection::terminal_info();
         let terminal_name = match terminal_info.name {
             TerminalName::AppleTerminal => "apple_terminal",
             TerminalName::Ghostty => "ghostty",
@@ -448,7 +448,7 @@ pub(super) async fn run_main_inner(
             ("terminal_name", terminal_name),
             ("multiplexer", multiplexer),
         ]);
-        let _ = metrics.counter("genex.tui.start", /*inc*/ 1, &launch_tags);
+        let _ = metrics.counter("ruxex.tui.start", /*inc*/ 1, &launch_tags);
     };
     let launch_telemetry = daemon_telemetry::Launch(Some(launch_telemetry));
     let state_db = startup_draft
@@ -531,7 +531,7 @@ pub(super) async fn run_main_inner(
         let log_file = log_file_opts.open(log_dir.join(TUI_LOG_FILE_NAME))?;
         let (non_blocking, guard) = non_blocking(log_file);
         let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-            EnvFilter::new("genex_core=info,genex_tui=info,genex_rmcp_client=info")
+            EnvFilter::new("ruxex_core=info,ruxex_tui=info,ruxex_rmcp_client=info")
         });
         let file_layer = tracing_subscriber::fmt::layer()
             .with_writer(non_blocking)

@@ -1,11 +1,11 @@
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_protocol::config_types::SandboxMode as CoreSandboxMode;
-use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use genex_protocol::protocol::GenexErrorInfo as CoreGenexErrorInfo;
-use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
-use genex_protocol::protocol::NonSteerableTurnKind as CoreNonSteerableTurnKind;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_protocol::config_types::SandboxMode as CoreSandboxMode;
+use ruxex_protocol::protocol::AskForApproval as CoreAskForApproval;
+use ruxex_protocol::protocol::RuxexErrorInfo as CoreRuxexErrorInfo;
+use ruxex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
+use ruxex_protocol::protocol::NonSteerableTurnKind as CoreNonSteerableTurnKind;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -50,14 +50,14 @@ pub enum NonSteerableTurnKind {
     Compact,
 }
 
-/// This translation layer make sure that we expose Genex error code in camel case.
+/// This translation layer make sure that we expose Ruxex error code in camel case.
 ///
 /// When an upstream HTTP status is available (for example, from the Responses API or a provider),
-/// it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.
+/// it is forwarded in `httpStatusCode` on the relevant `ruxexErrorInfo` variant.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
-pub enum GenexErrorInfo {
+pub enum RuxexErrorInfo {
     ContextWindowExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
@@ -103,41 +103,41 @@ pub enum GenexErrorInfo {
     Other,
 }
 
-impl From<CoreGenexErrorInfo> for GenexErrorInfo {
-    fn from(value: CoreGenexErrorInfo) -> Self {
+impl From<CoreRuxexErrorInfo> for RuxexErrorInfo {
+    fn from(value: CoreRuxexErrorInfo) -> Self {
         match value {
-            CoreGenexErrorInfo::ContextWindowExceeded => GenexErrorInfo::ContextWindowExceeded,
-            CoreGenexErrorInfo::SessionBudgetExceeded => GenexErrorInfo::SessionBudgetExceeded,
-            CoreGenexErrorInfo::UsageLimitExceeded => GenexErrorInfo::UsageLimitExceeded,
-            CoreGenexErrorInfo::RateLimitExceeded => GenexErrorInfo::RateLimitExceeded,
-            CoreGenexErrorInfo::ServerOverloaded => GenexErrorInfo::ServerOverloaded,
-            CoreGenexErrorInfo::CyberPolicy => GenexErrorInfo::CyberPolicy,
-            CoreGenexErrorInfo::MisalignmentPolicyViolation => {
-                GenexErrorInfo::MisalignmentPolicyViolation
+            CoreRuxexErrorInfo::ContextWindowExceeded => RuxexErrorInfo::ContextWindowExceeded,
+            CoreRuxexErrorInfo::SessionBudgetExceeded => RuxexErrorInfo::SessionBudgetExceeded,
+            CoreRuxexErrorInfo::UsageLimitExceeded => RuxexErrorInfo::UsageLimitExceeded,
+            CoreRuxexErrorInfo::RateLimitExceeded => RuxexErrorInfo::RateLimitExceeded,
+            CoreRuxexErrorInfo::ServerOverloaded => RuxexErrorInfo::ServerOverloaded,
+            CoreRuxexErrorInfo::CyberPolicy => RuxexErrorInfo::CyberPolicy,
+            CoreRuxexErrorInfo::MisalignmentPolicyViolation => {
+                RuxexErrorInfo::MisalignmentPolicyViolation
             }
-            CoreGenexErrorInfo::HttpConnectionFailed { http_status_code } => {
-                GenexErrorInfo::HttpConnectionFailed { http_status_code }
+            CoreRuxexErrorInfo::HttpConnectionFailed { http_status_code } => {
+                RuxexErrorInfo::HttpConnectionFailed { http_status_code }
             }
-            CoreGenexErrorInfo::ResponseStreamConnectionFailed { http_status_code } => {
-                GenexErrorInfo::ResponseStreamConnectionFailed { http_status_code }
+            CoreRuxexErrorInfo::ResponseStreamConnectionFailed { http_status_code } => {
+                RuxexErrorInfo::ResponseStreamConnectionFailed { http_status_code }
             }
-            CoreGenexErrorInfo::InternalServerError => GenexErrorInfo::InternalServerError,
-            CoreGenexErrorInfo::Unauthorized => GenexErrorInfo::Unauthorized,
-            CoreGenexErrorInfo::BadRequest => GenexErrorInfo::BadRequest,
-            CoreGenexErrorInfo::ThreadRollbackFailed => GenexErrorInfo::ThreadRollbackFailed,
-            CoreGenexErrorInfo::SandboxError => GenexErrorInfo::SandboxError,
-            CoreGenexErrorInfo::ResponseStreamDisconnected { http_status_code } => {
-                GenexErrorInfo::ResponseStreamDisconnected { http_status_code }
+            CoreRuxexErrorInfo::InternalServerError => RuxexErrorInfo::InternalServerError,
+            CoreRuxexErrorInfo::Unauthorized => RuxexErrorInfo::Unauthorized,
+            CoreRuxexErrorInfo::BadRequest => RuxexErrorInfo::BadRequest,
+            CoreRuxexErrorInfo::ThreadRollbackFailed => RuxexErrorInfo::ThreadRollbackFailed,
+            CoreRuxexErrorInfo::SandboxError => RuxexErrorInfo::SandboxError,
+            CoreRuxexErrorInfo::ResponseStreamDisconnected { http_status_code } => {
+                RuxexErrorInfo::ResponseStreamDisconnected { http_status_code }
             }
-            CoreGenexErrorInfo::ResponseTooManyFailedAttempts { http_status_code } => {
-                GenexErrorInfo::ResponseTooManyFailedAttempts { http_status_code }
+            CoreRuxexErrorInfo::ResponseTooManyFailedAttempts { http_status_code } => {
+                RuxexErrorInfo::ResponseTooManyFailedAttempts { http_status_code }
             }
-            CoreGenexErrorInfo::ActiveTurnNotSteerable { turn_kind } => {
-                GenexErrorInfo::ActiveTurnNotSteerable {
+            CoreRuxexErrorInfo::ActiveTurnNotSteerable { turn_kind } => {
+                RuxexErrorInfo::ActiveTurnNotSteerable {
                     turn_kind: turn_kind.into(),
                 }
             }
-            CoreGenexErrorInfo::Other => GenexErrorInfo::Other,
+            CoreRuxexErrorInfo::Other => RuxexErrorInfo::Other,
         }
     }
 }

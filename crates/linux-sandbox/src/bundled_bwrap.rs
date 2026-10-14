@@ -11,8 +11,8 @@ use std::sync::OnceLock;
 
 use crate::exec_util::argv_to_cstrings;
 use crate::exec_util::make_files_inheritable;
-use genex_install_context::InstallContext;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_install_context::InstallContext;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use sha2::Digest as _;
 use sha2::Sha256;
 
@@ -96,9 +96,9 @@ fn legacy_candidates_for_exe(exe: &Path) -> Vec<PathBuf> {
     };
 
     let mut candidates = Vec::new();
-    candidates.push(exe_dir.join("genex-resources").join("bwrap"));
+    candidates.push(exe_dir.join("ruxex-resources").join("bwrap"));
     if let Some(package_target_dir) = exe_dir.parent() {
-        candidates.push(package_target_dir.join("genex-resources").join("bwrap"));
+        candidates.push(package_target_dir.join("ruxex-resources").join("bwrap"));
     }
     candidates.push(exe_dir.join("bwrap"));
     candidates
@@ -114,9 +114,9 @@ fn is_executable_file(path: &Path) -> bool {
 fn expected_sha256() -> Option<[u8; 32]> {
     static EXPECTED: OnceLock<Option<[u8; 32]>> = OnceLock::new();
     *EXPECTED.get_or_init(|| {
-        let raw_digest = option_env!("GENEX_BWRAP_SHA256")?;
+        let raw_digest = option_env!("RUXEX_BWRAP_SHA256")?;
         let digest = parse_sha256_hex(raw_digest)
-            .unwrap_or_else(|err| panic!("invalid GENEX_BWRAP_SHA256 value: {err}"));
+            .unwrap_or_else(|err| panic!("invalid RUXEX_BWRAP_SHA256 value: {err}"));
         (digest != NULL_SHA256_DIGEST).then_some(digest)
     })
 }
@@ -187,9 +187,9 @@ fn bytes_to_hex(bytes: &[u8; 32]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_install_context::GenexPackageLayout;
-    use genex_install_context::InstallContext;
-    use genex_install_context::InstallMethod;
+    use ruxex_install_context::RuxexPackageLayout;
+    use ruxex_install_context::InstallContext;
+    use ruxex_install_context::InstallMethod;
     use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::NamedTempFile;
@@ -200,14 +200,14 @@ mod tests {
         let temp_dir = tempdir().expect("temp dir");
         let package_dir = temp_dir.path();
         let bin_dir = package_dir.join("bin");
-        let resources_dir = package_dir.join("genex-resources");
+        let resources_dir = package_dir.join("ruxex-resources");
         let expected_bwrap = resources_dir.join("bwrap");
         fs::create_dir_all(&bin_dir).expect("create bin dir");
         write_executable(&expected_bwrap);
 
         let context = InstallContext {
             method: InstallMethod::Other,
-            package_layout: Some(GenexPackageLayout {
+            package_layout: Some(RuxexPackageLayout {
                 package_dir: AbsolutePathBuf::from_absolute_path(package_dir).expect("absolute"),
                 bin_dir: AbsolutePathBuf::from_absolute_path(&bin_dir).expect("absolute"),
                 resources_dir: Some(
@@ -226,8 +226,8 @@ mod tests {
     #[test]
     fn finds_legacy_standalone_bundled_bwrap_next_to_exe_resources() {
         let temp_dir = tempdir().expect("temp dir");
-        let exe = temp_dir.path().join("genex");
-        let expected_bwrap = temp_dir.path().join("genex-resources").join("bwrap");
+        let exe = temp_dir.path().join("ruxex");
+        let expected_bwrap = temp_dir.path().join("ruxex-resources").join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);
 
@@ -241,8 +241,8 @@ mod tests {
     fn finds_npm_bundled_bwrap_next_to_target_vendor_dir() {
         let temp_dir = tempdir().expect("temp dir");
         let target_dir = temp_dir.path().join("vendor/x86_64-unknown-linux-musl");
-        let exe = target_dir.join("genex").join("genex");
-        let expected_bwrap = target_dir.join("genex-resources").join("bwrap");
+        let exe = target_dir.join("ruxex").join("ruxex");
+        let expected_bwrap = target_dir.join("ruxex-resources").join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);
 
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn finds_adjacent_dev_bwrap() {
         let temp_dir = tempdir().expect("temp dir");
-        let exe = temp_dir.path().join("genex");
+        let exe = temp_dir.path().join("ruxex");
         let expected_bwrap = temp_dir.path().join("bwrap");
         write_executable(&exe);
         write_executable(&expected_bwrap);

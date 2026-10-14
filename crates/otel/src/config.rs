@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 /// Validates configured span attributes before they are attached to exported spans.
 pub fn validate_span_attributes(attributes: &BTreeMap<String, String>) -> std::io::Result<()> {
@@ -21,7 +21,7 @@ pub struct OtelSettings {
     pub environment: String,
     pub service_name: String,
     pub service_version: String,
-    pub genex_home: PathBuf,
+    pub ruxex_home: PathBuf,
     pub exporter: OtelExporter,
     pub trace_exporter: OtelExporter,
     pub metrics_exporter: OtelExporter,

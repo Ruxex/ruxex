@@ -5,15 +5,15 @@ use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerDiagnosticsGauge;
-use genex_app_server_protocol::ServerDiagnosticsParams;
-use genex_app_server_protocol::ServerDiagnosticsResponse;
-use genex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerDiagnosticsGauge;
+use ruxex_app_server_protocol::ServerDiagnosticsParams;
+use ruxex_app_server_protocol::ServerDiagnosticsResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -24,10 +24,10 @@ const READ_TIMEOUT: Duration = Duration::from_secs(20);
 #[tokio::test]
 async fn server_diagnostics_exposes_process_and_registered_thread_gauge() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     app_server
@@ -72,9 +72,9 @@ async fn server_diagnostics_exposes_process_and_registered_thread_gauge() -> Res
 
 #[tokio::test]
 async fn server_diagnostics_requires_experimental_capability() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let initialization = app_server

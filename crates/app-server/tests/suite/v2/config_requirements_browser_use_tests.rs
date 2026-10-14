@@ -1,6 +1,6 @@
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientInfo;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -26,14 +26,14 @@ async fn config_requirements_read_preserves_webmcp_policy() -> Result<()> {
             Some((None, Some(false))),
         ),
     ] {
-        let genex_home = TempDir::new()?;
-        std::fs::write(genex_home.path().join("requirements.toml"), contents)?;
+        let ruxex_home = TempDir::new()?;
+        std::fs::write(ruxex_home.path().join("requirements.toml"), contents)?;
         std::fs::write(
-            genex_home.path().join("config.toml"),
+            ruxex_home.path().join("config.toml"),
             "[browser_use]\nallow_webmcp = true",
         )?;
         let mut server = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build()
             .await?;
         let read_timeout = Duration::from_secs(/*secs*/ 60);

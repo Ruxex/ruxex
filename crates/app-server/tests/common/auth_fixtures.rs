@@ -2,10 +2,10 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_login::AuthDotJson;
-use genex_login::AuthKeyringBackendKind;
-use genex_login::save_auth;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_login::AuthDotJson;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::save_auth;
 use serde_json::json;
 
 /// Builder for writing API-key credentials in tests.
@@ -87,13 +87,13 @@ pub fn encode_fixture_token(claims: &AuthFixtureClaims) -> Result<String> {
 }
 
 pub fn write_api_key_auth(
-    genex_home: &Path,
+    ruxex_home: &Path,
     fixture: ApiKeyAuthFixture,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> Result<()> {
     save_auth(
-        genex_home,
-        &AuthDotJson::new(genex_login::ProviderAuth::api_key(fixture.api_key)),
+        ruxex_home,
+        &AuthDotJson::new(ruxex_login::ProviderAuth::api_key(fixture.api_key)),
         cli_auth_credentials_store_mode,
         AuthKeyringBackendKind::default(),
     )

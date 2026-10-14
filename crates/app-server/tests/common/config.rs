@@ -1,5 +1,5 @@
-use genex_features::FEATURES;
-use genex_features::Feature;
+use ruxex_features::FEATURES;
+use ruxex_features::Feature;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -97,7 +97,7 @@ impl MockResponsesConfig {
         self
     }
 
-    pub fn write(self, genex_home: &Path) -> std::io::Result<()> {
+    pub fn write(self, ruxex_home: &Path) -> std::io::Result<()> {
         let Self {
             provider_id,
             provider_name,
@@ -132,7 +132,7 @@ impl MockResponsesConfig {
         };
 
         std::fs::write(
-            genex_home.join("config.toml"),
+            ruxex_home.join("config.toml"),
             format!(
                 r#"
 model = "{model}"
@@ -157,7 +157,7 @@ stream_max_retries = 0
 }
 
 pub fn write_mock_responses_config_toml(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
@@ -172,11 +172,11 @@ pub fn write_mock_responses_config_toml(
         ))
         .with_provider_config("supports_websockets = false");
 
-    config.write(genex_home)
+    config.write(ruxex_home)
 }
 
 pub fn write_mock_responses_config_toml_with_managed_auth_base_url(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     managed_auth_base_url: &str,
 ) -> std::io::Result<()> {
@@ -184,7 +184,7 @@ pub fn write_mock_responses_config_toml_with_managed_auth_base_url(
         .with_root_config(&format!(
             "managed_auth_base_url = \"{managed_auth_base_url}\""
         ))
-        .write(genex_home)
+        .write(ruxex_home)
 }
 
 #[cfg(test)]

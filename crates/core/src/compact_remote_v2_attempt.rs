@@ -8,17 +8,17 @@ use crate::compact_remote_history::trim_function_call_history_to_fit_context_win
 use crate::responses_metadata::CompactionTurnMetadata;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
-use genex_history::GenexHarnessMetadata;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::TokenUsage;
-use genex_rollout_trace::CompactionTraceContext;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_rollout_trace::CompactionTraceContext;
 use tracing::info;
 
 pub(super) struct RemoteCompactV2Attempt {
     pub(super) trace_input_history: Option<Vec<ResponseItem>>,
     pub(super) prompt_input: Vec<ResponseItem>,
-    pub(super) prompt_input_metadata: Vec<Option<GenexHarnessMetadata>>,
+    pub(super) prompt_input_metadata: Vec<Option<RuxexHarnessMetadata>>,
     pub(super) compaction_output: ResponseItem,
     pub(super) compaction_response_id: String,
     pub(super) token_usage: Option<TokenUsage>,
@@ -32,7 +32,7 @@ pub(super) async fn run_remote_compact_v2_attempt(
     client_session: Option<&mut ModelClientSession>,
     compaction_trace: &CompactionTraceContext,
     compaction_metadata: CompactionTurnMetadata,
-) -> GenexResult<RemoteCompactV2Attempt> {
+) -> RuxexResult<RemoteCompactV2Attempt> {
     let turn_context = &step_context.turn;
     let mut history = sess.clone_history().await;
     let base_instructions = sess.get_prompt_base_instructions().await;

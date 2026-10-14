@@ -8,17 +8,17 @@
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::TerminalResizeReflowConfig;
 use crate::legacy_core::config::TerminalResizeReflowMaxRows;
-use genex_config::types::History;
-use genex_config::types::Notice;
-use genex_config::types::Tui;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::types::History;
+use ruxex_config::types::Notice;
+use ruxex_config::types::Tui;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct LocalSettings {
     pub(crate) tui: Tui,
     pub(crate) history: History,
     pub(crate) notices: Notice,
-    pub(crate) genex_home: AbsolutePathBuf,
+    pub(crate) ruxex_home: AbsolutePathBuf,
     pub(crate) user_config_path: AbsolutePathBuf,
 }
 
@@ -80,12 +80,12 @@ impl LocalSettings {
             },
             history: config.history.clone(),
             notices: config.notices.clone(),
-            genex_home: config.genex_home.clone(),
+            ruxex_home: config.ruxex_home.clone(),
             user_config_path: config
                 .config_layer_stack
                 .get_user_config_file()
                 .cloned()
-                .unwrap_or_else(|| config.genex_home.join("config.toml")),
+                .unwrap_or_else(|| config.ruxex_home.join("config.toml")),
         }
     }
 }

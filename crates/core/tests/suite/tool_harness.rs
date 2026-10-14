@@ -1,20 +1,20 @@
 #![cfg(not(target_os = "windows"))]
 
-use genex_core::TurnInputRequest;
-use core_test_support::test_genex::local_selections;
+use ruxex_core::TurnInputRequest;
+use core_test_support::test_ruxex::local_selections;
 use std::fs;
 
 use assert_matches::assert_matches;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::plan_tool::StepStatus;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::plan_tool::StepStatus;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::assert_regex_match;
 use core_test_support::responses;
@@ -27,9 +27,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use serde_json::Value;
 use serde_json::json;
@@ -67,9 +67,9 @@ async fn exec_command_tool_executes_command_and_streams_output() -> anyhow::Resu
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("test-model");
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex().with_model("test-model");
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -99,7 +99,7 @@ async fn exec_command_tool_executes_command_and_streams_output() -> anyhow::Resu
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please run the shell command".into(),
@@ -123,7 +123,7 @@ async fn exec_command_tool_executes_command_and_streams_output() -> anyhow::Resu
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let (output_text, _) = call_output(&req, call_id);
@@ -141,9 +141,9 @@ async fn update_plan_tool_emits_plan_update_event() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_config(|config| config.update_plan_enabled = true);
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex().with_config(|config| config.update_plan_enabled = true);
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -177,7 +177,7 @@ async fn update_plan_tool_emits_plan_update_event() -> anyhow::Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please update the plan".into(),
@@ -202,7 +202,7 @@ async fn update_plan_tool_emits_plan_update_event() -> anyhow::Result<()> {
         .await?;
 
     let mut saw_plan_update = false;
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::PlanUpdate(update) => {
             saw_plan_update = true;
             assert_eq!(update.explanation.as_deref(), Some("Tool harness check"));
@@ -233,9 +233,9 @@ async fn update_plan_tool_rejects_malformed_payload() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_config(|config| config.update_plan_enabled = true);
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex().with_config(|config| config.update_plan_enabled = true);
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -265,7 +265,7 @@ async fn update_plan_tool_rejects_malformed_payload() -> anyhow::Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please update the plan".into(),
@@ -290,7 +290,7 @@ async fn update_plan_tool_rejects_malformed_payload() -> anyhow::Result<()> {
         .await?;
 
     let mut saw_plan_update = false;
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::PlanUpdate(_) => {
             saw_plan_update = true;
             false
@@ -327,9 +327,9 @@ async fn apply_patch_tool_executes_and_emits_patch_events() -> anyhow::Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -363,7 +363,7 @@ async fn apply_patch_tool_executes_and_emits_patch_events() -> anyhow::Result<()
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please apply a patch".into(),
@@ -391,7 +391,7 @@ async fn apply_patch_tool_executes_and_emits_patch_events() -> anyhow::Result<()
     let mut saw_file_change_completed = false;
     let mut saw_patch_begin = false;
     let mut patch_end_success = None;
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::ItemStarted(started) => {
             if let TurnItem::FileChange(item) = &started.item {
                 saw_file_change_started = true;
@@ -406,7 +406,7 @@ async fn apply_patch_tool_executes_and_emits_patch_events() -> anyhow::Result<()
                 assert_eq!(item.id, call_id);
                 assert_eq!(
                     item.status,
-                    Some(genex_protocol::protocol::PatchApplyStatus::Completed)
+                    Some(ruxex_protocol::protocol::PatchApplyStatus::Completed)
                 );
             }
             false
@@ -467,9 +467,9 @@ async fn apply_patch_reports_parse_diagnostics() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -498,7 +498,7 @@ async fn apply_patch_reports_parse_diagnostics() -> anyhow::Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please apply a patch".into(),
@@ -522,7 +522,7 @@ async fn apply_patch_reports_parse_diagnostics() -> anyhow::Result<()> {
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let (output_text, success_flag) = custom_call_output(&req, call_id);

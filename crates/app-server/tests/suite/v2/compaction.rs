@@ -10,27 +10,27 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RawResponseCompletedNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ResponseUsageMetadata;
-use genex_app_server_protocol::ThreadCompactStartParams;
-use genex_app_server_protocol::ThreadCompactStartResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TokenUsageBreakdown;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RawResponseCompletedNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ResponseUsageMetadata;
+use ruxex_app_server_protocol::ThreadCompactStartParams;
+use ruxex_app_server_protocol::ThreadCompactStartResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TokenUsageBreakdown;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -89,20 +89,20 @@ async fn auto_compaction_emits_started_and_completed_items(route: CompactionRout
     ]);
     let requests = responses::mount_sse_sequence(&server, vec![sse1, sse2, sse3, sse4]).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut config = compaction_config(&server.uri(), /*auto_compact_limit*/ 200_000);
     if let CompactionRoute::Remote = route {
         config = config.with_provider_name("provider");
         write_api_key_auth(
-            genex_home.path(),
+            ruxex_home.path(),
             ApiKeyAuthFixture::new("test-token").plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }
-    config.write(genex_home.path())?;
+    config.write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -177,16 +177,16 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
     ]);
     let _responses = responses::mount_sse_sequence(&server, vec![seed, sse, followup]).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let initial_cwd = TempDir::new()?;
     let updated_cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     let updated_roots = vec![updated_cwd.path().abs(), extra_root.path().abs()];
-    compaction_config(&server.uri(), /*auto_compact_limit*/ 1_000_000).write(genex_home.path())?;
+    compaction_config(&server.uri(), /*auto_compact_limit*/ 1_000_000).write(ruxex_home.path())?;
 
     // Top-level cwd restoration uses host-native paths, not a foreign executor's paths.
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -274,7 +274,7 @@ async fn thread_compact_start_triggers_compaction_and_returns_empty_response() -
     timeout(DEFAULT_READ_TIMEOUT, mcp.shutdown_gracefully()).await??;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -303,11 +303,11 @@ async fn thread_compact_start_rejects_invalid_thread_id() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
-    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -333,11 +333,11 @@ async fn thread_compact_start_rejects_unknown_thread_id() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
-    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    compaction_config(&server.uri(), AUTO_COMPACT_LIMIT).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

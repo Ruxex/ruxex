@@ -8,7 +8,7 @@
  * Only the `file:` scheme is currently accepted. Construction validates the
  * URL, and the URI cannot be mutated after construction. [`Self::basename`],
  * [`Self::parent`], and [`Self::join`] operate on URI path segments without
- * interpreting them using the operating system running Genex. Fallback URIs
+ * interpreting them using the operating system running Ruxex. Fallback URIs
  * created by [`Self::from_abs_path`] are opaque to these lexical operations.
  *
  * `file:` paths retain their URI spelling. A local POSIX `file:` URI can also retain

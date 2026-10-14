@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-web-search-extension"
+name = "ruxex-web-search-extension"
 version.workspace = true
 
 [lib]
-name = "genex_web_search_extension"
+name = "ruxex_web_search_extension"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,18 +13,18 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-api = { workspace = true }
-genex-core = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-extension-items = { workspace = true }
-genex-http-client = { workspace = true }
-genex-login = { workspace = true }
-genex-model-provider = { workspace = true }
-genex-model-provider-info = { workspace = true }
-genex-providers = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-tools = { workspace = true }
+ruxex-api = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-tools = { workspace = true }
 http = { workspace = true }
 schemars = { workspace = true }
 serde_json = { workspace = true }

@@ -16,53 +16,53 @@ use crate::tools::lifecycle::process_mcp_tool_result;
 use crate::tools::sandboxing::ApprovalAction;
 use crate::tools::sandboxing::ToolError;
 use crate::turn_metadata::ExecutionMetadata;
-use genex_config::ConfigLayerSource;
-use genex_config::types::AppToolApproval;
-use genex_extension_api::McpToolContext;
-use genex_features::Feature;
-use genex_mcp::McpPermissionPromptAutoApproveContext;
-use genex_mcp::PreparedMcpCall;
-use genex_mcp::SandboxState;
-use genex_mcp::ToolInfo;
-use genex_mcp::mcp_permission_prompt_is_auto_approved;
-use genex_prompts::ResolvedModelMessages;
-use genex_protocol::approvals::ElicitationRequest;
-use genex_protocol::items::McpAppDisplayMode;
-use genex_protocol::items::McpAppUi;
-use genex_protocol::items::McpToolCallError;
-use genex_protocol::items::McpToolCallItem;
-use genex_protocol::items::McpToolCallStatus;
-use genex_protocol::items::TurnItem;
-use genex_protocol::mcp::CONFIRMATION_POLICIES_META_KEY;
-use genex_protocol::mcp::CallToolResult;
-use genex_protocol::mcp::is_node_repl_backed_server;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as MCP_TOOL_APPROVAL_KIND_KEY;
-use genex_protocol::mcp_approval_meta::APPROVAL_KIND_MCP_TOOL_CALL as MCP_TOOL_APPROVAL_KIND_MCP_TOOL_CALL;
-use genex_protocol::mcp_approval_meta::PERSIST_ALWAYS as MCP_TOOL_APPROVAL_PERSIST_ALWAYS;
-use genex_protocol::mcp_approval_meta::PERSIST_KEY as MCP_TOOL_APPROVAL_PERSIST_KEY;
-use genex_protocol::mcp_approval_meta::PERSIST_SESSION as MCP_TOOL_APPROVAL_PERSIST_SESSION;
-use genex_protocol::mcp_approval_meta::TOOL_DESCRIPTION_KEY as MCP_TOOL_APPROVAL_TOOL_DESCRIPTION_KEY;
-use genex_protocol::mcp_approval_meta::TOOL_PARAMS_DISPLAY_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_DISPLAY_KEY;
-use genex_protocol::mcp_approval_meta::TOOL_PARAMS_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_KEY;
-use genex_protocol::mcp_approval_meta::TOOL_TITLE_KEY as MCP_TOOL_APPROVAL_TOOL_TITLE_KEY;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::McpInvocation;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputArgs;
-use genex_protocol::request_user_input::RequestUserInputQuestion;
-use genex_protocol::request_user_input::RequestUserInputQuestionOption;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_tools::ToolName;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::truncate_text;
-use genex_utils_path_uri::PathUri;
-use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::types::AppToolApproval;
+use ruxex_extension_api::McpToolContext;
+use ruxex_features::Feature;
+use ruxex_mcp::McpPermissionPromptAutoApproveContext;
+use ruxex_mcp::PreparedMcpCall;
+use ruxex_mcp::SandboxState;
+use ruxex_mcp::ToolInfo;
+use ruxex_mcp::mcp_permission_prompt_is_auto_approved;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_protocol::approvals::ElicitationRequest;
+use ruxex_protocol::items::McpAppDisplayMode;
+use ruxex_protocol::items::McpAppUi;
+use ruxex_protocol::items::McpToolCallError;
+use ruxex_protocol::items::McpToolCallItem;
+use ruxex_protocol::items::McpToolCallStatus;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::mcp::CONFIRMATION_POLICIES_META_KEY;
+use ruxex_protocol::mcp::CallToolResult;
+use ruxex_protocol::mcp::is_node_repl_backed_server;
+use ruxex_protocol::mcp_approval_meta::APPROVAL_KIND_KEY as MCP_TOOL_APPROVAL_KIND_KEY;
+use ruxex_protocol::mcp_approval_meta::APPROVAL_KIND_MCP_TOOL_CALL as MCP_TOOL_APPROVAL_KIND_MCP_TOOL_CALL;
+use ruxex_protocol::mcp_approval_meta::PERSIST_ALWAYS as MCP_TOOL_APPROVAL_PERSIST_ALWAYS;
+use ruxex_protocol::mcp_approval_meta::PERSIST_KEY as MCP_TOOL_APPROVAL_PERSIST_KEY;
+use ruxex_protocol::mcp_approval_meta::PERSIST_SESSION as MCP_TOOL_APPROVAL_PERSIST_SESSION;
+use ruxex_protocol::mcp_approval_meta::TOOL_DESCRIPTION_KEY as MCP_TOOL_APPROVAL_TOOL_DESCRIPTION_KEY;
+use ruxex_protocol::mcp_approval_meta::TOOL_PARAMS_DISPLAY_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_DISPLAY_KEY;
+use ruxex_protocol::mcp_approval_meta::TOOL_PARAMS_KEY as MCP_TOOL_APPROVAL_TOOL_PARAMS_KEY;
+use ruxex_protocol::mcp_approval_meta::TOOL_TITLE_KEY as MCP_TOOL_APPROVAL_TOOL_TITLE_KEY;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::McpInvocation;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::request_user_input::RequestUserInputAnswer;
+use ruxex_protocol::request_user_input::RequestUserInputArgs;
+use ruxex_protocol::request_user_input::RequestUserInputQuestion;
+use ruxex_protocol::request_user_input::RequestUserInputQuestionOption;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_tools::ToolName;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::truncate_text;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
 use rmcp::model::ToolAnnotations;
 use serde::Deserialize;
 use serde::Serialize;
@@ -83,13 +83,13 @@ use telemetry::emit_mcp_call_metrics;
 use telemetry::mcp_call_metric_outcome;
 use telemetry::record_mcp_call_outcome_span_telemetry;
 
-const MCP_RESULT_TELEMETRY_META_KEY: &str = "genex/telemetry";
+const MCP_RESULT_TELEMETRY_META_KEY: &str = "ruxex/telemetry";
 const MCP_RESULT_TELEMETRY_SPAN_KEY: &str = "span";
 const MCP_RESULT_TELEMETRY_TARGET_ID_KEY: &str = "target_id";
 const MCP_RESULT_TELEMETRY_DID_TRIGGER_SERVER_USER_FLOW_KEY: &str = "did_trigger_server_user_flow";
-const MCP_RESULT_TELEMETRY_TARGET_ID_SPAN_ATTR: &str = "genex.mcp.target.id";
+const MCP_RESULT_TELEMETRY_TARGET_ID_SPAN_ATTR: &str = "ruxex.mcp.target.id";
 const MCP_RESULT_TELEMETRY_SERVER_USER_FLOW_SPAN_ATTR: &str =
-    "genex.mcp.server_user_flow.triggered";
+    "ruxex.mcp.server_user_flow.triggered";
 const MCP_RESULT_TELEMETRY_TARGET_ID_MAX_CHARS: usize = 256;
 const MCP_TOOL_CALL_EVENT_RESULT_MAX_BYTES: usize = DEFAULT_OUTPUT_BYTES_CAP;
 
@@ -487,10 +487,10 @@ fn mcp_tool_call_span(
         turn.id = turn_context.sub_id.as_str(),
         server.address = Empty,
         server.port = Empty,
-        genex.mcp.target.id = Empty,
-        genex.mcp.server_user_flow.triggered = Empty,
+        ruxex.mcp.target.id = Empty,
+        ruxex.mcp.server_user_flow.triggered = Empty,
         error.type = Empty,
-        genex.mcp.error.code = Empty,
+        ruxex.mcp.error.code = Empty,
     );
     record_server_fields(&span, fields.server_origin);
     span
@@ -592,7 +592,7 @@ async fn augment_mcp_tool_request_meta_with_sandbox_state(
     // TurnEnvironment::sandbox_context instead of the runtime-wide Landlock value.
     let sandbox_state = serde_json::to_value(SandboxState {
         permission_profile: prepared_call.permission_profile().clone(),
-        genex_linux_sandbox_exe: prepared_call.config().genex_linux_sandbox_exe.clone(),
+        ruxex_linux_sandbox_exe: prepared_call.config().ruxex_linux_sandbox_exe.clone(),
         sandbox_cwd,
         use_legacy_landlock: prepared_call.config().use_legacy_landlock,
     })?;
@@ -600,7 +600,7 @@ async fn augment_mcp_tool_request_meta_with_sandbox_state(
     match meta.as_mut() {
         Some(serde_json::Value::Object(map)) => {
             map.insert(
-                genex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY.to_string(),
+                ruxex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY.to_string(),
                 sandbox_state,
             );
         }
@@ -608,7 +608,7 @@ async fn augment_mcp_tool_request_meta_with_sandbox_state(
         None => {
             let mut map = serde_json::Map::new();
             map.insert(
-                genex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY.to_string(),
+                ruxex_mcp::MCP_SANDBOX_STATE_META_CAPABILITY.to_string(),
                 sandbox_state,
             );
             meta = Some(serde_json::Value::Object(map));
@@ -627,7 +627,7 @@ fn sandbox_cwd_for_mcp_server(step_context: &StepContext, environment_id: &str) 
         return Some(environment.cwd().clone());
     }
 
-    if environment_id == genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID {
+    if environment_id == ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID {
         #[allow(deprecated)]
         return Some(PathUri::from_abs_path(&step_context.turn.cwd));
     }
@@ -871,7 +871,7 @@ impl Session {
     }
 }
 
-const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "genex/outputTemplate";
+const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "ruxex/outputTemplate";
 const MCP_TOOL_UI_RESOURCE_URI_META_KEY: &str = "ui/resourceUri";
 const MCP_TOOL_PLUGIN_ID_META_KEY: &str = "plugin_id";
 const MCP_TOOL_ITEM_ID_META_KEY: &str = "itemId";
@@ -894,7 +894,7 @@ async fn custom_mcp_tool_approval_mode(
         .and_then(|table| table.get("mcp_servers"))
         .cloned()
         .and_then(|value| {
-            HashMap::<String, genex_config::types::McpServerConfig>::deserialize(value).ok()
+            HashMap::<String, ruxex_config::types::McpServerConfig>::deserialize(value).ok()
         })
         .and_then(|servers| {
             let server_config = servers.get(server)?;
@@ -949,7 +949,7 @@ fn build_mcp_tool_call_request_meta(
         ))
     {
         request_meta.insert(
-            crate::X_GENEX_TURN_METADATA_HEADER.to_string(),
+            crate::X_RUXEX_TURN_METADATA_HEADER.to_string(),
             turn_metadata,
         );
     }
@@ -1089,7 +1089,7 @@ async fn maybe_request_mcp_tool_approval(
     invocation_tool_name: &ToolName,
     hook_tool_name: &HookToolName,
     metadata: &McpToolApprovalMetadata,
-    config: &genex_mcp::McpConfig,
+    config: &ruxex_mcp::McpConfig,
     permission_profile: &PermissionProfile,
     policy: McpToolApprovalPolicy,
 ) -> Option<ReviewDecision> {
@@ -1152,7 +1152,7 @@ async fn maybe_request_mcp_tool_approval(
         match sess.request_approval(action, approval_context).await {
             Ok(decision) => decision,
             Err(ToolError::Rejected(rejection)) => ReviewDecision::denied(rejection),
-            Err(ToolError::Genex(_)) => ReviewDecision::Abort,
+            Err(ToolError::Ruxex(_)) => ReviewDecision::Abort,
         },
     )
 }
@@ -1187,7 +1187,7 @@ pub(crate) async fn request_mcp_tool_user_approval(
     }
 
     if turn_context.session_source.is_non_root_agent() {
-        return ReviewDecision::denied(genex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE);
+        return ReviewDecision::denied(ruxex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE);
     }
 
     let tool_call_mcp_elicitation_enabled = turn_context
@@ -1296,7 +1296,7 @@ fn mcp_tool_metadata(tool_info: &ToolInfo, plugin_id: Option<&str>) -> McpToolAp
             .tool
             .meta
             .as_ref()
-            .and_then(|meta| meta.get("genex/ui"))
+            .and_then(|meta| meta.get("ruxex/ui"))
             .and_then(|ui| ui.get("preferredModelDisplayMode"))
             .and_then(serde_json::Value::as_str)
         {
@@ -1770,7 +1770,7 @@ fn user_mcp_server_is_configured(config: &Config, server: &str) -> anyhow::Resul
         return Ok(false);
     };
     let servers =
-        HashMap::<String, genex_config::types::McpServerConfig>::deserialize(mcp_servers_toml)?;
+        HashMap::<String, ruxex_config::types::McpServerConfig>::deserialize(mcp_servers_toml)?;
     Ok(servers.contains_key(server))
 }
 
@@ -1792,7 +1792,7 @@ fn project_mcp_tool_approval_config_folder(
                 .and_then(|table| table.get("mcp_servers"))
                 .cloned()
                 .and_then(|value| {
-                    HashMap::<String, genex_config::types::McpServerConfig>::deserialize(value).ok()
+                    HashMap::<String, ruxex_config::types::McpServerConfig>::deserialize(value).ok()
                 })?;
             if servers.contains_key(server) {
                 layer.config_folder()

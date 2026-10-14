@@ -6,17 +6,17 @@ use crate::chatwidget::ReplayKind;
 use crate::chatwidget::tests::make_chatwidget_manual_with_sender;
 use crate::status::format_estimated_usd_micros;
 use crate::tui::FrameRequester;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadUsage;
-use genex_app_server_protocol::ThreadUsageBreakdownGroup;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnError;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStatus;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadUsage;
+use ruxex_app_server_protocol::ThreadUsageBreakdownGroup;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnError;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use std::time::Instant;
@@ -72,7 +72,7 @@ async fn temporary_thread_usage_failures_have_bounded_retries() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -104,7 +104,7 @@ async fn status_history_survives_exhausted_billing_retries() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -174,7 +174,7 @@ async fn status_history_updates_again_after_billing_settles() {
         let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        chat.has_genex_backend_auth = true;
+        chat.has_ruxex_backend_auth = true;
         chat.plan_type = Some(PlanType::Business);
         chat.local_settings.tui.status_line = Some(vec![selected_item.to_string()]);
         chat.refresh_status_line();
@@ -248,7 +248,7 @@ async fn replayed_turn_completions_do_not_start_live_billing_refreshes() {
                 Some(TurnError {
                     misalignment: None,
                     message: "the replayed turn failed".to_string(),
-                    genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
+                    ruxex_error_info: Some(RuxexErrorInfo::ServerOverloaded),
                     additional_details: None,
                 }),
             ),
@@ -256,7 +256,7 @@ async fn replayed_turn_completions_do_not_start_live_billing_refreshes() {
             let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
             let thread_id = ThreadId::new();
             chat.thread_id = Some(thread_id);
-            chat.has_genex_backend_auth = true;
+            chat.has_ruxex_backend_auth = true;
             chat.plan_type = Some(PlanType::Business);
             chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
             chat.refresh_status_line();
@@ -307,7 +307,7 @@ async fn replayed_errors_do_not_start_live_billing_refreshes() {
         let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        chat.has_genex_backend_auth = true;
+        chat.has_ruxex_backend_auth = true;
         chat.plan_type = Some(PlanType::Business);
         chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
         chat.refresh_status_line();
@@ -326,7 +326,7 @@ async fn replayed_errors_do_not_start_live_billing_refreshes() {
             error: TurnError {
                 misalignment: None,
                 message: "the replayed turn failed".to_string(),
-                genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
+                ruxex_error_info: Some(RuxexErrorInfo::ServerOverloaded),
                 additional_details: None,
             },
             will_retry: false,
@@ -355,7 +355,7 @@ async fn transient_zero_cost_preserves_fresh_credits_and_breakdowns() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec![
         "thread-credits".to_string(),
@@ -423,7 +423,7 @@ async fn transient_zero_credits_preserves_credits_only_estimates() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["thread-credits".to_string()]);
     chat.local_settings.tui.terminal_title = chat.local_settings.tui.status_line.clone();
@@ -479,7 +479,7 @@ async fn cost_settlement_waits_for_new_or_missing_usd_estimates() {
         let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        chat.has_genex_backend_auth = true;
+        chat.has_ruxex_backend_auth = true;
         chat.plan_type = Some(PlanType::Business);
         chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
         chat.refresh_status_line();
@@ -540,7 +540,7 @@ async fn credits_only_settlement_completes_without_usd_estimates() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.terminal_title = Some(vec!["thread-credits".to_string()]);
     chat.refresh_terminal_title();
@@ -580,7 +580,7 @@ async fn combined_billing_surfaces_wait_for_credits_and_cost() {
         let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        chat.has_genex_backend_auth = true;
+        chat.has_ruxex_backend_auth = true;
         chat.plan_type = Some(PlanType::Business);
         chat.local_settings.tui.status_line = Some(vec![status_line_item.to_string()]);
         chat.local_settings.tui.terminal_title = Some(vec![title_item.to_string()]);
@@ -638,7 +638,7 @@ async fn billing_surfaces_render_for_every_supported_enterprise_plan() {
         let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let thread_id = ThreadId::new();
         chat.thread_id = Some(thread_id);
-        chat.has_genex_backend_auth = true;
+        chat.has_ruxex_backend_auth = true;
         chat.plan_type = Some(plan_type);
         chat.local_settings.tui.status_line = Some(vec![
             "thread-credits".to_string(),
@@ -674,7 +674,7 @@ async fn early_draw_rearms_thread_usage_retry_after_immediate_redraw() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -712,7 +712,7 @@ async fn unchanged_thread_usage_has_bounded_settlement_refreshes() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -770,7 +770,7 @@ async fn early_draw_rearms_thread_usage_settlement_after_immediate_redraw() {
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -832,7 +832,7 @@ async fn thread_usage_settlement_requires_request_started_after_turn_completion(
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.refresh_status_line();
@@ -922,7 +922,7 @@ async fn deselecting_billing_surfaces_cancels_polling_and_preserves_status_cache
     let (mut chat, _sender, mut rx, _op_rx) = make_chatwidget_manual_with_sender().await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec!["estimated-thread-cost".to_string()]);
     chat.local_settings.tui.terminal_title = Some(vec!["thread-credits".to_string()]);

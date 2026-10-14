@@ -1,23 +1,23 @@
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::ConnectionRequestId;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadGoal;
-use genex_app_server_protocol::ThreadHistoryBuilder;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadSettings;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnError;
-use genex_core::GenexThread;
-use genex_core::ThreadConfigSnapshot;
-use genex_file_watcher::WatchRegistration;
-use genex_protocol::ThreadId;
-use genex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
-use genex_protocol::items::TurnItem as CoreTurnItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::protocol::EventMsg;
-use genex_rollout::RolloutItem;
-use genex_rollout::state_db::StateDbHandle;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadGoal;
+use ruxex_app_server_protocol::ThreadHistoryBuilder;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSettings;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnError;
+use ruxex_core::RuxexThread;
+use ruxex_core::ThreadConfigSnapshot;
+use ruxex_file_watcher::WatchRegistration;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
+use ruxex_protocol::items::TurnItem as CoreTurnItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::state_db::StateDbHandle;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -38,17 +38,17 @@ pub(crate) struct PendingThreadResumeRequest {
     pub(crate) cold_resume_token_usage_turn_id: Option<String>,
     pub(crate) config_snapshot: ThreadConfigSnapshot,
     pub(crate) instruction_sources: Vec<LegacyAppPathString>,
-    pub(crate) thread_summary: genex_app_server_protocol::Thread,
+    pub(crate) thread_summary: ruxex_app_server_protocol::Thread,
     pub(crate) emit_thread_goal_update: bool,
     pub(crate) thread_goal_state_db: Option<StateDbHandle>,
     pub(crate) include_turns: bool,
     pub(crate) initial_turns_page:
-        Option<genex_app_server_protocol::ThreadResumeInitialTurnsPageParams>,
+        Option<ruxex_app_server_protocol::ThreadResumeInitialTurnsPageParams>,
     pub(crate) paginated_turns: Option<Vec<Turn>>,
-    pub(crate) paginated_initial_turns_page: Option<genex_app_server_protocol::TurnsPage>,
+    pub(crate) paginated_initial_turns_page: Option<ruxex_app_server_protocol::TurnsPage>,
     pub(crate) paginated_initial_turns_page_with_active_slot:
-        Option<genex_app_server_protocol::TurnsPage>,
-    pub(crate) resume_cursor_store: Option<Arc<dyn genex_thread_store::ThreadStore>>,
+        Option<ruxex_app_server_protocol::TurnsPage>,
+    pub(crate) resume_cursor_store: Option<Arc<dyn ruxex_thread_store::ThreadStore>>,
 }
 
 // ThreadListenerCommand is used to perform operations in the context of the thread listener, for serialization purposes.
@@ -111,12 +111,12 @@ pub(crate) struct ThreadState {
     last_thread_settings: Option<ThreadSettings>,
     listener_command_tx: Option<mpsc::UnboundedSender<ThreadListenerCommand>>,
     current_turn_history: ThreadHistoryBuilder,
-    listener_thread: Option<Weak<GenexThread>>,
+    listener_thread: Option<Weak<RuxexThread>>,
     watch_registration: WatchRegistration,
 }
 
 impl ThreadState {
-    pub(crate) fn listener_matches(&self, conversation: &Arc<GenexThread>) -> bool {
+    pub(crate) fn listener_matches(&self, conversation: &Arc<RuxexThread>) -> bool {
         self.listener_thread
             .as_ref()
             .and_then(Weak::upgrade)
@@ -126,7 +126,7 @@ impl ThreadState {
     pub(crate) fn set_listener(
         &mut self,
         cancel_tx: oneshot::Sender<()>,
-        conversation: &Arc<GenexThread>,
+        conversation: &Arc<RuxexThread>,
         watch_registration: WatchRegistration,
         thread_settings_baseline: ThreadSettings,
     ) -> (mpsc::UnboundedReceiver<ThreadListenerCommand>, u64) {

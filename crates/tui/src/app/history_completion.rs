@@ -1,9 +1,9 @@
 //! Group older history items at successful turn boundaries before projecting transcript cells.
 //! A page splitting a turn only adds completion metadata when it contains that turn's last item.
 
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnStatus;
 use std::collections::HashMap;
 
 pub(super) fn group_completed_turn_items(

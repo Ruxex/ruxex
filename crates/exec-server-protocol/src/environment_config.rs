@@ -1,4 +1,4 @@
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -19,8 +19,8 @@ pub struct EnvironmentConfigReadParams {
 pub struct EnvironmentConfigReadResponse {
     /// Executor user home used to expand `~` in path-bearing values.
     pub user_home_dir: Option<PathUri>,
-    /// Executor Genex home used as the base directory for cloud-provided layers.
-    pub genex_home_dir: PathUri,
+    /// Executor Ruxex home used as the base directory for cloud-provided layers.
+    pub ruxex_home_dir: PathUri,
     /// Executor hostname used to select matching remote sandbox requirements.
     pub hostname: Option<String>,
     pub config: EnvironmentConfigLayerStack,

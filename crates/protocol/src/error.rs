@@ -4,13 +4,13 @@ pub use crate::auth::RefreshTokenFailedReason;
 use crate::exec_output::ExecToolCallOutput;
 use crate::network_policy::NetworkPolicyDecisionPayload;
 use crate::protocol::ErrorEvent;
-use crate::protocol::GenexErrorInfo;
+use crate::protocol::RuxexErrorInfo;
 use crate::protocol::MisalignmentErrorDetails;
 use crate::protocol::TruncationPolicy;
-use genex_async_utils::CancelErr;
-use genex_http_client::HttpError;
-use genex_utils_string::truncate_middle_chars;
-use genex_utils_string::truncate_middle_with_token_budget;
+use ruxex_async_utils::CancelErr;
+use ruxex_http_client::HttpError;
+use ruxex_utils_string::truncate_middle_chars;
+use ruxex_utils_string::truncate_middle_with_token_budget;
 use http::StatusCode;
 use serde_json;
 use std::fmt;
@@ -20,7 +20,7 @@ use strum_macros::EnumDiscriminants;
 use thiserror::Error;
 use tokio::task::JoinError;
 
-pub type Result<T> = std::result::Result<T, GenexErr>;
+pub type Result<T> = std::result::Result<T, RuxexErr>;
 
 /// Limit UI error messages to a reasonable size while keeping useful context.
 const ERROR_MESSAGE_UI_MAX_BYTES: usize = 2 * 1024;
@@ -60,18 +60,18 @@ pub enum SandboxErr {
     LandlockRestrict,
 }
 
-pub struct GenexErr {
-    details: GenexErrorDetails,
+pub struct RuxexErr {
+    details: RuxexErrorDetails,
     retry_delay: Option<Duration>,
 }
 
-/// The semantic category and diagnostic payload for a [`GenexErr`].
+/// The semantic category and diagnostic payload for a [`RuxexErr`].
 #[derive(Error, Debug, EnumDiscriminants)]
-#[strum_discriminants(name(GenexErrKind))]
+#[strum_discriminants(name(RuxexErrKind))]
 #[strum_discriminants(derive(serde::Serialize))]
 #[strum_discriminants(serde(rename_all = "snake_case"))]
 #[strum_discriminants(doc = "The payload-free semantic category used for analytics.")]
-pub enum GenexErrorDetails {
+pub enum RuxexErrorDetails {
     #[error("turn aborted. Something went wrong.")]
     TurnAborted,
 
@@ -89,7 +89,7 @@ pub enum GenexErrorDetails {
     RateLimitExceeded(String),
     // The iOS input-limit classifier matches this message's ASCII prefix.
     #[error(
-        "Genex ran out of room in the model's context window. Start a new thread or clear earlier history before retrying."
+        "Ruxex ran out of room in the model's context window. Start a new thread or clear earlier history before retrying."
     )]
     ContextWindowExceeded,
     #[error("no thread with id: {0}")]
@@ -104,7 +104,7 @@ pub enum GenexErrorDetails {
     #[error("request timed out")]
     RequestTimeout,
     /// Returned by run_command_stream when the child could not be spawned (its stdout/stderr pipes
-    /// could not be captured). Analogous to the previous `GenexError::Spawn` variant.
+    /// could not be captured). Analogous to the previous `RuxexError::Spawn` variant.
     #[error("spawn failed: child stdout/stderr not captured")]
     Spawn,
     /// Returned by run_command_stream when the user pressed Ctrl-C (SIGINT). Session uses this to
@@ -149,7 +149,7 @@ pub enum GenexErrorDetails {
     /// Sandbox error
     #[error("sandbox error: {0}")]
     Sandbox(#[from] SandboxErr),
-    #[error("genex-linux-sandbox was required but not provided")]
+    #[error("ruxex-linux-sandbox was required but not provided")]
     LandlockSandboxExecutableNotProvided,
     #[error("unsupported operation: {0}")]
     UnsupportedOperation(String),
@@ -176,16 +176,16 @@ pub enum GenexErrorDetails {
     EnvVar(EnvVarError),
 }
 
-impl From<&GenexErr> for GenexErrKind {
-    fn from(error: &GenexErr) -> Self {
+impl From<&RuxexErr> for RuxexErrKind {
+    fn from(error: &RuxexErr) -> Self {
         error.details().into()
     }
 }
 
-impl fmt::Debug for GenexErr {
+impl fmt::Debug for RuxexErr {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.details {
-            GenexErrorDetails::Stream(message) => formatter
+            RuxexErrorDetails::Stream(message) => formatter
                 .debug_tuple("Stream")
                 .field(message)
                 .field(&self.retry_delay)
@@ -195,20 +195,20 @@ impl fmt::Debug for GenexErr {
     }
 }
 
-impl fmt::Display for GenexErr {
+impl fmt::Display for RuxexErr {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.details, formatter)
     }
 }
 
-impl std::error::Error for GenexErr {
+impl std::error::Error for RuxexErr {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.details.source()
     }
 }
 
-impl From<GenexErrorDetails> for GenexErr {
-    fn from(details: GenexErrorDetails) -> Self {
+impl From<RuxexErrorDetails> for RuxexErr {
+    fn from(details: RuxexErrorDetails) -> Self {
         Self {
             details,
             retry_delay: None,
@@ -216,65 +216,65 @@ impl From<GenexErrorDetails> for GenexErr {
     }
 }
 
-impl From<CancelErr> for GenexErr {
+impl From<CancelErr> for RuxexErr {
     fn from(error: CancelErr) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
-impl From<SandboxErr> for GenexErr {
+impl From<SandboxErr> for RuxexErr {
     fn from(error: SandboxErr) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
-impl From<io::Error> for GenexErr {
+impl From<io::Error> for RuxexErr {
     fn from(error: io::Error) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
-impl From<serde_json::Error> for GenexErr {
+impl From<serde_json::Error> for RuxexErr {
     fn from(error: serde_json::Error) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
-impl From<JoinError> for GenexErr {
+impl From<JoinError> for RuxexErr {
     fn from(error: JoinError) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
 #[cfg(target_os = "linux")]
-impl From<landlock::RulesetError> for GenexErr {
+impl From<landlock::RulesetError> for RuxexErr {
     fn from(error: landlock::RulesetError) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
 #[cfg(target_os = "linux")]
-impl From<landlock::PathFdError> for GenexErr {
+impl From<landlock::PathFdError> for RuxexErr {
     fn from(error: landlock::PathFdError) -> Self {
-        GenexErrorDetails::from(error).into()
+        RuxexErrorDetails::from(error).into()
     }
 }
 
-impl From<CancelErr> for GenexErrorDetails {
+impl From<CancelErr> for RuxexErrorDetails {
     fn from(_: CancelErr) -> Self {
-        GenexErrorDetails::TurnAborted
+        RuxexErrorDetails::TurnAborted
     }
 }
 
 // TODO(anp): Remove this compatibility macro once callers construct
-// `GenexErrorDetails` directly.
-macro_rules! genex_err_unit_constructors {
+// `RuxexErrorDetails` directly.
+macro_rules! ruxex_err_unit_constructors {
     ($($variant:ident),* $(,)?) => {
         $(
             #[doc(hidden)]
             #[allow(non_upper_case_globals)]
             pub const $variant: Self = Self {
-                details: GenexErrorDetails::$variant,
+                details: RuxexErrorDetails::$variant,
                 retry_delay: None,
             };
         )*
@@ -282,22 +282,22 @@ macro_rules! genex_err_unit_constructors {
 }
 
 // TODO(anp): Remove this compatibility macro once callers construct
-// `GenexErrorDetails` directly.
-macro_rules! genex_err_tuple_constructors {
+// `RuxexErrorDetails` directly.
+macro_rules! ruxex_err_tuple_constructors {
     ($($(#[$attr:meta])* $variant:ident($value:ident: $value_type:ty)),* $(,)?) => {
         $(
             $(#[$attr])*
             #[doc(hidden)]
             #[allow(non_snake_case)]
             pub fn $variant($value: $value_type) -> Self {
-                GenexErrorDetails::$variant($value).into()
+                RuxexErrorDetails::$variant($value).into()
             }
         )*
     };
 }
 
-impl GenexErr {
-    genex_err_unit_constructors!(
+impl RuxexErr {
+    ruxex_err_unit_constructors!(
         TurnAborted,
         SessionBudgetExceeded,
         ContextWindowExceeded,
@@ -313,7 +313,7 @@ impl GenexErr {
         LandlockSandboxExecutableNotProvided,
     );
 
-    genex_err_tuple_constructors!(
+    ruxex_err_tuple_constructors!(
         Stream(message: String),
         ThreadNotFound(thread_id: ThreadId),
         UnexpectedStatus(error: UnexpectedResponseError),
@@ -336,61 +336,61 @@ impl GenexErr {
     );
 
     // TODO(anp): Remove this compatibility constructor once callers construct
-    // `GenexErrorDetails` directly.
+    // `RuxexErrorDetails` directly.
     #[doc(hidden)]
     #[allow(non_snake_case)]
     pub fn InvalidImageRequest() -> Self {
-        GenexErrorDetails::InvalidImageRequest().into()
+        RuxexErrorDetails::InvalidImageRequest().into()
     }
 
     /// Creates an error with no server-provided retry delay.
-    pub fn new(details: GenexErrorDetails) -> Self {
+    pub fn new(details: RuxexErrorDetails) -> Self {
         details.into()
     }
 
     /// Returns the semantic failure and its diagnostic payload.
-    pub fn details(&self) -> &GenexErrorDetails {
+    pub fn details(&self) -> &RuxexErrorDetails {
         &self.details
     }
 
     pub fn is_retryable(&self) -> bool {
         match self.details() {
-            GenexErrorDetails::TurnAborted
-            | GenexErrorDetails::SessionBudgetExceeded
-            | GenexErrorDetails::Interrupted
-            | GenexErrorDetails::EnvVar(_)
-            | GenexErrorDetails::Fatal(_)
-            | GenexErrorDetails::QuotaExceeded
-            | GenexErrorDetails::InvalidImageRequest()
-            | GenexErrorDetails::InvalidRequest(_)
-            | GenexErrorDetails::ToolCollision(_)
-            | GenexErrorDetails::RefreshTokenFailed(_)
-            | GenexErrorDetails::UnsupportedOperation(_)
-            | GenexErrorDetails::Sandbox(_)
-            | GenexErrorDetails::LandlockSandboxExecutableNotProvided
-            | GenexErrorDetails::RetryLimit(_)
-            | GenexErrorDetails::ContextWindowExceeded
-            | GenexErrorDetails::ThreadNotFound(_)
-            | GenexErrorDetails::AgentLimitReached { .. }
-            | GenexErrorDetails::Spawn
-            | GenexErrorDetails::SessionConfiguredNotFirstEvent
-            | GenexErrorDetails::ServerOverloaded
-            | GenexErrorDetails::CyberPolicy { .. }
-            | GenexErrorDetails::MisalignmentPolicyViolation { .. } => false,
-            GenexErrorDetails::Stream(..)
-            | GenexErrorDetails::RateLimitExceeded(_)
-            | GenexErrorDetails::Timeout
-            | GenexErrorDetails::RequestTimeout
-            | GenexErrorDetails::UnexpectedStatus(_)
-            | GenexErrorDetails::ResponseStreamFailed(_)
-            | GenexErrorDetails::ConnectionFailed(_)
-            | GenexErrorDetails::InternalServerError
-            | GenexErrorDetails::InternalAgentDied
-            | GenexErrorDetails::Io(_)
-            | GenexErrorDetails::Json(_)
-            | GenexErrorDetails::TokioJoin(_) => true,
+            RuxexErrorDetails::TurnAborted
+            | RuxexErrorDetails::SessionBudgetExceeded
+            | RuxexErrorDetails::Interrupted
+            | RuxexErrorDetails::EnvVar(_)
+            | RuxexErrorDetails::Fatal(_)
+            | RuxexErrorDetails::QuotaExceeded
+            | RuxexErrorDetails::InvalidImageRequest()
+            | RuxexErrorDetails::InvalidRequest(_)
+            | RuxexErrorDetails::ToolCollision(_)
+            | RuxexErrorDetails::RefreshTokenFailed(_)
+            | RuxexErrorDetails::UnsupportedOperation(_)
+            | RuxexErrorDetails::Sandbox(_)
+            | RuxexErrorDetails::LandlockSandboxExecutableNotProvided
+            | RuxexErrorDetails::RetryLimit(_)
+            | RuxexErrorDetails::ContextWindowExceeded
+            | RuxexErrorDetails::ThreadNotFound(_)
+            | RuxexErrorDetails::AgentLimitReached { .. }
+            | RuxexErrorDetails::Spawn
+            | RuxexErrorDetails::SessionConfiguredNotFirstEvent
+            | RuxexErrorDetails::ServerOverloaded
+            | RuxexErrorDetails::CyberPolicy { .. }
+            | RuxexErrorDetails::MisalignmentPolicyViolation { .. } => false,
+            RuxexErrorDetails::Stream(..)
+            | RuxexErrorDetails::RateLimitExceeded(_)
+            | RuxexErrorDetails::Timeout
+            | RuxexErrorDetails::RequestTimeout
+            | RuxexErrorDetails::UnexpectedStatus(_)
+            | RuxexErrorDetails::ResponseStreamFailed(_)
+            | RuxexErrorDetails::ConnectionFailed(_)
+            | RuxexErrorDetails::InternalServerError
+            | RuxexErrorDetails::InternalAgentDied
+            | RuxexErrorDetails::Io(_)
+            | RuxexErrorDetails::Json(_)
+            | RuxexErrorDetails::TokioJoin(_) => true,
             #[cfg(target_os = "linux")]
-            GenexErrorDetails::LandlockRuleset(_) | GenexErrorDetails::LandlockPathFd(_) => false,
+            RuxexErrorDetails::LandlockRuleset(_) | RuxexErrorDetails::LandlockPathFd(_) => false,
         }
     }
 
@@ -404,37 +404,37 @@ impl GenexErr {
     }
 
     /// Translate core error to client-facing protocol error.
-    pub fn to_genex_protocol_error(&self) -> GenexErrorInfo {
+    pub fn to_ruxex_protocol_error(&self) -> RuxexErrorInfo {
         match &self.details {
-            GenexErrorDetails::ContextWindowExceeded => GenexErrorInfo::ContextWindowExceeded,
-            GenexErrorDetails::SessionBudgetExceeded => GenexErrorInfo::SessionBudgetExceeded,
-            GenexErrorDetails::RateLimitExceeded(_) => GenexErrorInfo::RateLimitExceeded,
-            GenexErrorDetails::QuotaExceeded => GenexErrorInfo::UsageLimitExceeded,
-            GenexErrorDetails::ServerOverloaded => GenexErrorInfo::ServerOverloaded,
-            GenexErrorDetails::CyberPolicy { .. } => GenexErrorInfo::CyberPolicy,
-            GenexErrorDetails::MisalignmentPolicyViolation { .. } => {
-                GenexErrorInfo::MisalignmentPolicyViolation
+            RuxexErrorDetails::ContextWindowExceeded => RuxexErrorInfo::ContextWindowExceeded,
+            RuxexErrorDetails::SessionBudgetExceeded => RuxexErrorInfo::SessionBudgetExceeded,
+            RuxexErrorDetails::RateLimitExceeded(_) => RuxexErrorInfo::RateLimitExceeded,
+            RuxexErrorDetails::QuotaExceeded => RuxexErrorInfo::UsageLimitExceeded,
+            RuxexErrorDetails::ServerOverloaded => RuxexErrorInfo::ServerOverloaded,
+            RuxexErrorDetails::CyberPolicy { .. } => RuxexErrorInfo::CyberPolicy,
+            RuxexErrorDetails::MisalignmentPolicyViolation { .. } => {
+                RuxexErrorInfo::MisalignmentPolicyViolation
             }
-            GenexErrorDetails::RetryLimit(_) => GenexErrorInfo::ResponseTooManyFailedAttempts {
+            RuxexErrorDetails::RetryLimit(_) => RuxexErrorInfo::ResponseTooManyFailedAttempts {
                 http_status_code: self.http_status_code_value(),
             },
-            GenexErrorDetails::ConnectionFailed(_) => GenexErrorInfo::HttpConnectionFailed {
+            RuxexErrorDetails::ConnectionFailed(_) => RuxexErrorInfo::HttpConnectionFailed {
                 http_status_code: self.http_status_code_value(),
             },
-            GenexErrorDetails::ResponseStreamFailed(_) => {
-                GenexErrorInfo::ResponseStreamConnectionFailed {
+            RuxexErrorDetails::ResponseStreamFailed(_) => {
+                RuxexErrorInfo::ResponseStreamConnectionFailed {
                     http_status_code: self.http_status_code_value(),
                 }
             }
-            GenexErrorDetails::RefreshTokenFailed(_) => GenexErrorInfo::Unauthorized,
-            GenexErrorDetails::SessionConfiguredNotFirstEvent
-            | GenexErrorDetails::InternalServerError
-            | GenexErrorDetails::InternalAgentDied => GenexErrorInfo::InternalServerError,
-            GenexErrorDetails::UnsupportedOperation(_)
-            | GenexErrorDetails::ThreadNotFound(_)
-            | GenexErrorDetails::AgentLimitReached { .. } => GenexErrorInfo::BadRequest,
-            GenexErrorDetails::Sandbox(_) => GenexErrorInfo::SandboxError,
-            _ => GenexErrorInfo::Other,
+            RuxexErrorDetails::RefreshTokenFailed(_) => RuxexErrorInfo::Unauthorized,
+            RuxexErrorDetails::SessionConfiguredNotFirstEvent
+            | RuxexErrorDetails::InternalServerError
+            | RuxexErrorDetails::InternalAgentDied => RuxexErrorInfo::InternalServerError,
+            RuxexErrorDetails::UnsupportedOperation(_)
+            | RuxexErrorDetails::ThreadNotFound(_)
+            | RuxexErrorDetails::AgentLimitReached { .. } => RuxexErrorInfo::BadRequest,
+            RuxexErrorDetails::Sandbox(_) => RuxexErrorInfo::SandboxError,
+            _ => RuxexErrorInfo::Other,
         }
     }
 
@@ -446,9 +446,9 @@ impl GenexErr {
         };
         ErrorEvent {
             message,
-            genex_error_info: Some(self.to_genex_protocol_error()),
+            ruxex_error_info: Some(self.to_ruxex_protocol_error()),
             misalignment: match &self.details {
-                GenexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
+                RuxexErrorDetails::MisalignmentPolicyViolation { misalignment, .. } => {
                     misalignment.clone()
                 }
                 _ => None,
@@ -458,10 +458,10 @@ impl GenexErr {
 
     pub fn http_status_code_value(&self) -> Option<u16> {
         let http_status_code = match &self.details {
-            GenexErrorDetails::RetryLimit(err) => Some(err.status),
-            GenexErrorDetails::UnexpectedStatus(err) => Some(err.status),
-            GenexErrorDetails::ConnectionFailed(err) => err.source.status(),
-            GenexErrorDetails::ResponseStreamFailed(err) => err.source.status(),
+            RuxexErrorDetails::RetryLimit(err) => Some(err.status),
+            RuxexErrorDetails::UnexpectedStatus(err) => Some(err.status),
+            RuxexErrorDetails::ConnectionFailed(err) => err.source.status(),
+            RuxexErrorDetails::ResponseStreamFailed(err) => err.source.status(),
             _ => None,
         };
         http_status_code.as_ref().map(StatusCode::as_u16)
@@ -624,9 +624,9 @@ impl std::fmt::Display for EnvVarError {
     }
 }
 
-pub fn get_error_message_ui(e: &GenexErr) -> String {
+pub fn get_error_message_ui(e: &RuxexErr) -> String {
     let message = match e.details() {
-        GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+        RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
             let aggregated = output.aggregated_output.text.trim();
             if !aggregated.is_empty() {
                 output.aggregated_output.text.clone()
@@ -645,7 +645,7 @@ pub fn get_error_message_ui(e: &GenexErr) -> String {
             }
         }
         // Timeouts are not sandbox errors from a UX perspective; present them plainly.
-        GenexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
+        RuxexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
             format!(
                 "error: command timed out after {} ms",
                 output.duration.as_millis()

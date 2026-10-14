@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use genex_extension_api::ExtensionEventSink;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadGoal;
-use genex_protocol::protocol::ThreadGoalUpdatedEvent;
+use ruxex_extension_api::ExtensionEventSink;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadGoal;
+use ruxex_protocol::protocol::ThreadGoalUpdatedEvent;
 
 #[derive(Clone)]
 pub(crate) struct GoalEventEmitter {

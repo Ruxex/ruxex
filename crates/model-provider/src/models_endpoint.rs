@@ -4,29 +4,29 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_api::ModelsClient;
-use genex_api::RequestTelemetry;
-use genex_api::ReqwestTransport;
-use genex_api::TransportError;
-use genex_api::auth_header_telemetry;
-use genex_api::map_api_error;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
-use genex_login::AuthEnvTelemetry;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_login::collect_auth_env_telemetry;
-use genex_login::default_client::create_client_for_route_async;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::manager::ModelCatalogFuture;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_models_manager::manager::ModelCatalogSource;
-use genex_otel::TelemetryAuthMode;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelCatalog;
-use genex_response_debug_context::extract_response_debug_context;
-use genex_response_debug_context::telemetry_transport_error_message;
+use ruxex_api::ModelsClient;
+use ruxex_api::RequestTelemetry;
+use ruxex_api::ReqwestTransport;
+use ruxex_api::TransportError;
+use ruxex_api::auth_header_telemetry;
+use ruxex_api::map_api_error;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_login::AuthEnvTelemetry;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_login::collect_auth_env_telemetry;
+use ruxex_login::default_client::create_client_for_route_async;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::manager::ModelCatalogFuture;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_models_manager::manager::ModelCatalogSource;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_response_debug_context::extract_response_debug_context;
+use ruxex_response_debug_context::telemetry_transport_error_message;
 use http::HeaderMap;
 use tokio::time::timeout;
 
@@ -68,7 +68,7 @@ impl ModelsEndpoint {
         }
     }
 
-    async fn auth(&self) -> Option<GenexAuth> {
+    async fn auth(&self) -> Option<RuxexAuth> {
         provider_auth(self.credential_manager.as_ref(), None, &self.provider_info).await
     }
 
@@ -78,14 +78,14 @@ impl ModelsEndpoint {
         http_client_factory: HttpClientFactory,
     ) -> CoreResult<ModelCatalogSnapshot> {
         let _timer =
-            genex_otel::start_global_timer("genex.remote_models.fetch_update.duration_ms", &[]);
+            ruxex_otel::start_global_timer("ruxex.remote_models.fetch_update.duration_ms", &[]);
         let auth = self.auth().await;
         let identity = crate::models_identity::identity(
             self.provider_id.as_deref(),
             &self.provider_info,
             auth.as_ref(),
         )?;
-        let auth_mode = auth.as_ref().map(GenexAuth::auth_mode);
+        let auth_mode = auth.as_ref().map(RuxexAuth::auth_mode);
         let api_provider = self.provider_info.to_api_provider(auth_mode)?;
         let api_auth = resolve_provider_auth(auth.as_ref(), &self.provider_info)?;
         let request_url =
@@ -110,7 +110,7 @@ impl ModelsEndpoint {
                 .map_err(map_api_error)
         })
         .await
-        .map_err(|_| GenexErr::RequestTimeout)??;
+        .map_err(|_| RuxexErr::RequestTimeout)??;
         Ok(ModelCatalogSnapshot {
             catalog: ModelCatalog { models },
             identity,
@@ -224,9 +224,9 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             .unwrap_or_default();
         let status = status.map(|status| status.as_u16());
         tracing::event!(
-            target: "genex_otel.log_only",
+            target: "ruxex_otel.log_only",
             tracing::Level::INFO,
-            event.name = "genex.api_request",
+            event.name = "ruxex.api_request",
             duration_ms = %duration.as_millis(),
             http.response.status_code = status,
             success = success,
@@ -235,8 +235,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_genex_api_key_present = self.auth_env.api_key_env_present,
-            auth.env_genex_api_key_enabled = self.auth_env.api_key_env_enabled,
+            auth.env_ruxex_api_key_present = self.auth_env.api_key_env_present,
+            auth.env_ruxex_api_key_enabled = self.auth_env.api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),
@@ -244,9 +244,9 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.mode = self.auth_mode.as_deref(),
         );
         tracing::event!(
-            target: "genex_otel.trace_safe",
+            target: "ruxex_otel.trace_safe",
             tracing::Level::INFO,
-            event.name = "genex.api_request",
+            event.name = "ruxex.api_request",
             duration_ms = %duration.as_millis(),
             http.response.status_code = status,
             success = success,
@@ -255,8 +255,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             endpoint = MODELS_ENDPOINT,
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
-            auth.env_genex_api_key_present = self.auth_env.api_key_env_present,
-            auth.env_genex_api_key_enabled = self.auth_env.api_key_env_enabled,
+            auth.env_ruxex_api_key_present = self.auth_env.api_key_env_present,
+            auth.env_ruxex_api_key_enabled = self.auth_env.api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.request_id = response_debug.request_id.as_deref(),
@@ -276,13 +276,13 @@ mod tests {
     use std::sync::Mutex;
 
     use super::*;
-    use genex_http_client::OutboundProxyPolicy;
-    use genex_login::default_client::RESIDENCY_HEADER_NAME;
-    use genex_login::default_client::ResidencyRequirement;
-    use genex_login::default_client::create_client;
-    use genex_login::default_client::set_default_client_residency_requirement;
-    use genex_protocol::config_types::ModelProviderAuthInfo;
-    use genex_protocol::model_types::ModelCatalog;
+    use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_login::default_client::RESIDENCY_HEADER_NAME;
+    use ruxex_login::default_client::ResidencyRequirement;
+    use ruxex_login::default_client::create_client;
+    use ruxex_login::default_client::set_default_client_residency_requirement;
+    use ruxex_protocol::config_types::ModelProviderAuthInfo;
+    use ruxex_protocol::model_types::ModelCatalog;
     use pretty_assertions::assert_eq;
     use wiremock::Mock;
     use wiremock::MockServer;
@@ -442,38 +442,38 @@ mod tests {
     #[derive(Debug)]
     struct RotatingAuth(std::sync::atomic::AtomicUsize);
 
-    impl genex_login::ExternalAuth for RotatingAuth {
-        fn resolve(&self) -> genex_login::ExternalAuthFuture<'_, GenexAuth> {
+    impl ruxex_login::ExternalAuth for RotatingAuth {
+        fn resolve(&self) -> ruxex_login::ExternalAuthFuture<'_, RuxexAuth> {
             Box::pin(async move {
                 let generation = self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                Ok(GenexAuth::from_api_key(&format!("token-{generation}")))
+                Ok(RuxexAuth::from_api_key(&format!("token-{generation}")))
             })
         }
 
         fn refresh(
             &self,
-            _context: genex_login::ExternalAuthRefreshContext,
-        ) -> genex_login::ExternalAuthFuture<'_, GenexAuth> {
+            _context: ruxex_login::ExternalAuthRefreshContext,
+        ) -> ruxex_login::ExternalAuthFuture<'_, RuxexAuth> {
             self.resolve()
         }
     }
 
     #[tokio::test]
     async fn command_auth_refresh_fetches_a_catalog_for_the_current_credentials() {
-        use genex_models_manager::manager::ModelsManager;
-        use genex_models_manager::manager::RefreshStrategy;
-        use genex_models_manager::manager::RemoteModelsManager;
+        use ruxex_models_manager::manager::ModelsManager;
+        use ruxex_models_manager::manager::RefreshStrategy;
+        use ruxex_models_manager::manager::RemoteModelsManager;
 
         let server = MockServer::start().await;
-        let auth = CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("initial"));
+        let auth = CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key("initial"));
         auth.set_external_auth(Arc::new(RotatingAuth(std::sync::atomic::AtomicUsize::new(
             0,
         ))))
         .await
         .unwrap();
-        let model = genex_protocol::model_types::ModelInfo {
+        let model = ruxex_protocol::model_types::ModelInfo {
             used_fallback_model_metadata: false,
-            ..genex_models_manager::model_info::model_info_from_slug("command-auth-model")
+            ..ruxex_models_manager::model_info::model_info_from_slug("command-auth-model")
         };
         Mock::given(method("GET"))
             .and(path("/models"))

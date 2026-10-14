@@ -27,13 +27,13 @@ async fn local_thread_sections_require_sqlite_and_preserve_section_identity() {
         })
     ));
 
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = LocalThreadStore::new(config, Some(runtime));
     assert!(store.supports_thread_sections());
 
-    let appearance = genex_state::ThreadSectionAppearance {
+    let appearance = ruxex_state::ThreadSectionAppearance {
         icon: Some("folder".to_string()),
         color: Some("purple".to_string()),
     };

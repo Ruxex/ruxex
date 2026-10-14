@@ -2,7 +2,7 @@
 Module: sandboxing
 
 Core-owned adapter types for exec/runtime plumbing. Policy selection and
-command transformation live in the genex-sandboxing crate; this module keeps
+command transformation live in the ruxex-sandboxing crate; this module keeps
 the exec-only metadata and translates transformed sandbox commands back into
 ExecRequest for execution.
 */
@@ -12,20 +12,20 @@ use crate::exec::ExecExpiration;
 use crate::exec::StdoutStream;
 use crate::exec::execute_exec_request;
 #[cfg(target_os = "macos")]
-use crate::spawn::GENEX_SANDBOX_ENV_VAR;
-use crate::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use genex_file_system::FileSystemSandboxContext;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use genex_protocol::error::GenexErr;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::models::PermissionProfile;
-pub use genex_protocol::models::SandboxPermissions;
-use genex_sandboxing::SandboxExecRequest;
-use genex_sandboxing::SandboxType;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use crate::spawn::RUXEX_SANDBOX_ENV_VAR;
+use crate::spawn::RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::models::PermissionProfile;
+pub use ruxex_protocol::models::SandboxPermissions;
+use ruxex_sandboxing::SandboxExecRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -36,7 +36,7 @@ pub(crate) struct ExecOptions {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ExecServerEnvConfig {
-    pub(crate) policy: genex_exec_server::ExecEnvPolicy,
+    pub(crate) policy: ruxex_exec_server::ExecEnvPolicy,
     pub(crate) local_policy_env: HashMap<String, String>,
 }
 
@@ -46,7 +46,7 @@ pub struct ExecRequest {
     pub cwd: PathUri,
     pub env: HashMap<String, String>,
     pub(crate) exec_server_env_config: Option<ExecServerEnvConfig>,
-    pub(crate) exec_server_shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
+    pub(crate) exec_server_shell_snapshot: Option<ruxex_exec_server::ShellSnapshotRequest>,
     pub network: Option<NetworkProxy>,
     pub network_environment_id: Option<String>,
     pub expiration: ExecExpiration,
@@ -98,7 +98,7 @@ impl ExecRequest {
     pub(crate) fn from_sandbox_exec_request(
         request: SandboxExecRequest,
         options: ExecOptions,
-    ) -> Result<Self, GenexErr> {
+    ) -> Result<Self, RuxexErr> {
         let SandboxExecRequest {
             command,
             cwd,
@@ -118,13 +118,13 @@ impl ExecRequest {
         let network_sandbox_policy = permission_profile.network_sandbox_policy();
         if !network_sandbox_policy.is_enabled() {
             env.insert(
-                GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR.to_string(),
+                RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR.to_string(),
                 "1".to_string(),
             );
         }
         #[cfg(target_os = "macos")]
         if sandbox == SandboxType::MacosSeatbelt {
-            env.insert(GENEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
+            env.insert(RUXEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
         }
         Ok(Self {
             command,
@@ -150,7 +150,7 @@ impl ExecRequest {
 pub async fn execute_env(
     exec_request: ExecRequest,
     stdout_stream: Option<StdoutStream>,
-) -> genex_protocol::error::Result<ExecToolCallOutput> {
+) -> ruxex_protocol::error::Result<ExecToolCallOutput> {
     execute_exec_request(exec_request, stdout_stream, /*after_spawn*/ None).await
 }
 
@@ -158,6 +158,6 @@ pub async fn execute_exec_request_with_after_spawn(
     exec_request: ExecRequest,
     stdout_stream: Option<StdoutStream>,
     after_spawn: Option<Box<dyn FnOnce() + Send>>,
-) -> genex_protocol::error::Result<ExecToolCallOutput> {
+) -> ruxex_protocol::error::Result<ExecToolCallOutput> {
     execute_exec_request(exec_request, stdout_stream, after_spawn).await
 }

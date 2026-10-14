@@ -1,8 +1,8 @@
 use crate::app::has_launch_setting;
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigOverrides;
-use genex_app_server_protocol::NewThreadModelDefaults;
-use genex_protocol::config_types::ServiceTier;
+use ruxex_app_server_protocol::NewThreadModelDefaults;
+use ruxex_protocol::config_types::ServiceTier;
 use toml::Value as TomlValue;
 
 pub(crate) fn apply_managed_new_thread_defaults(
@@ -18,7 +18,7 @@ pub(crate) fn apply_managed_new_thread_defaults(
     // dedicated flags such as `-m` (`harness_overrides`), generic `-c key=value` settings
     // (`cli_kv_overrides`), and explicitly selected profiles.
     // Model and reasoning effort are a compatibility-sensitive pair, so an explicit override of
-    // either opts out of both managed values. For example, `genex -m legacy-model` keeps that model and
+    // either opts out of both managed values. For example, `ruxex -m legacy-model` keeps that model and
     // its existing/default effort, while `-c model_reasoning_effort=low` does not switch to the
     // managed model. Service tier remains independent and is resolved against the selected model
     // before the thread starts.

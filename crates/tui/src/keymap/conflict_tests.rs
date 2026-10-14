@@ -1,7 +1,7 @@
 //! Regression coverage for conflict diagnostics and validation pass ordering.
 
 use super::RuntimeKeymap;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::TuiKeymap;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -30,8 +30,8 @@ fn conflicting_contexts_report_the_first_conflict_in_validation_order() {
             RuntimeKeymap::from_config(&keymap).expect_err("expected binding conflict"),
             format!(
                 "Ambiguous `tui.keymap.{context}` bindings: `{first}` and `{second}` use the same key. \
-Set unique keys in `~/.genex/config.toml` and retry. \
-See the Genex keymap documentation for supported actions and examples."
+Set unique keys in `~/.ruxex/config.toml` and retry. \
+See the Ruxex keymap documentation for supported actions and examples."
             )
         );
         config.remove(context);

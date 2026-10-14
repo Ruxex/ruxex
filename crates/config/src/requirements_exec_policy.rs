@@ -1,10 +1,10 @@
-use genex_execpolicy::Decision;
-use genex_execpolicy::Policy;
-use genex_execpolicy::RequirementsExecPolicy;
-use genex_execpolicy::RuleRef;
-use genex_execpolicy::rule::PatternToken;
-use genex_execpolicy::rule::PrefixPattern;
-use genex_execpolicy::rule::PrefixRule;
+use ruxex_execpolicy::Decision;
+use ruxex_execpolicy::Policy;
+use ruxex_execpolicy::RequirementsExecPolicy;
+use ruxex_execpolicy::RuleRef;
+use ruxex_execpolicy::rule::PatternToken;
+use ruxex_execpolicy::rule::PrefixPattern;
+use ruxex_execpolicy::rule::PrefixRule;
 use multimap::MultiMap;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -79,14 +79,14 @@ pub enum RequirementsExecPolicyParseError {
     MissingDecision { rule_index: usize },
 
     #[error(
-        "rules prefix_rule at index {rule_index} has decision 'allow', which is not permitted in requirements.toml: Genex merges these rules with other config and uses the most restrictive result (use 'prompt' or 'forbidden')"
+        "rules prefix_rule at index {rule_index} has decision 'allow', which is not permitted in requirements.toml: Ruxex merges these rules with other config and uses the most restrictive result (use 'prompt' or 'forbidden')"
     )]
     AllowDecisionNotAllowed { rule_index: usize },
 }
 
 impl RequirementsExecPolicyToml {
     /// Convert requirements TOML rules into the internal `.rules`
-    /// representation used by `genex-execpolicy`.
+    /// representation used by `ruxex-execpolicy`.
     pub fn to_policy(&self) -> Result<Policy, RequirementsExecPolicyParseError> {
         if self.prefix_rules.is_empty() {
             return Err(RequirementsExecPolicyParseError::EmptyPrefixRules);

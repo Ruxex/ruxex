@@ -12,11 +12,11 @@ use crossterm::Command;
 use crossterm::event::KeyboardEnhancementFlags;
 use crossterm::event::PopKeyboardEnhancementFlags;
 use crossterm::event::PushKeyboardEnhancementFlags;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
 use ratatui::crossterm::execute;
 
-const DISABLE_KEYBOARD_ENHANCEMENT_ENV_VAR: &str = "GENEX_TUI_DISABLE_KEYBOARD_ENHANCEMENT";
+const DISABLE_KEYBOARD_ENHANCEMENT_ENV_VAR: &str = "RUXEX_TUI_DISABLE_KEYBOARD_ENHANCEMENT";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum VscodeDetection {
@@ -161,8 +161,8 @@ fn tmux_should_enable_modify_other_keys_for(
 }
 
 fn read_tmux_extended_keys_format() -> Option<String> {
-    let executable = genex_utils_path::system_executable("tmux")?;
-    let path = genex_utils_path::system_path().ok()?;
+    let executable = ruxex_utils_path::system_executable("tmux")?;
+    let path = ruxex_utils_path::system_path().ok()?;
     for args in [
         ["display-message", "-p", "#{extended-keys-format}"],
         ["show-options", "-gqv", "extended-keys-format"],
@@ -248,7 +248,7 @@ mod tests {
     use super::tmux_should_enable_modify_other_keys_for;
     use crossterm::Command;
     use crossterm::event::PushKeyboardEnhancementFlags;
-    use genex_terminal_detection::TerminalName;
+    use ruxex_terminal_detection::TerminalName;
     use pretty_assertions::assert_eq;
 
     fn ansi_for(command: impl Command) -> String {

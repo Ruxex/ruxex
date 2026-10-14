@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::NetworkPermit;
-use genex_http_client::OutboundProxyPolicy;
-use genex_http_client::OutboundProxyRoute;
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::NetworkPermit;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_http_client::OutboundProxyRoute;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use pretty_assertions::assert_eq;
 use rcgen::CertifiedKey;
 use rcgen::generate_simple_self_signed;
@@ -127,10 +127,10 @@ async fn tungstenite_default_tls_mode_ignores_invalid_custom_ca_in_a_subprocess(
         }
         command
             .env(
-                "GENEX_CA_CERTIFICATE",
-                "/genex-websocket-client-nonexistent-custom-ca.pem",
+                "RUXEX_CA_CERTIFICATE",
+                "/ruxex-websocket-client-nonexistent-custom-ca.pem",
             )
-            .env("GENEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL", target_url)
+            .env("RUXEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL", target_url)
             .output()
             .expect("WebSocket default-TLS subprocess should run")
     })
@@ -148,13 +148,13 @@ async fn tungstenite_default_tls_mode_ignores_invalid_custom_ca_in_a_subprocess(
 
 #[tokio::test]
 async fn tungstenite_default_tls_mode_subprocess_probe() {
-    let Ok(url) = std::env::var("GENEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL") else {
+    let Ok(url) = std::env::var("RUXEX_WEBSOCKET_DEFAULT_TLS_PROBE_URL") else {
         return;
     };
     let factory = HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault);
     assert!(
         WebSocketConnector::new(&factory).is_err(),
-        "explicit Genex TLS should reject the invalid custom CA"
+        "explicit Ruxex TLS should reject the invalid custom CA"
     );
     let connector =
         WebSocketConnector::new_with_tls_mode(&factory, WebSocketTlsMode::TungsteniteDefault)
@@ -165,7 +165,7 @@ async fn tungstenite_default_tls_mode_subprocess_probe() {
     let (mut websocket, _) = connector
         .connect(request, WebSocketConfig::default())
         .await
-        .expect("WebSocket should connect without constructing Genex TLS");
+        .expect("WebSocket should connect without constructing Ruxex TLS");
     let expected = Message::Text("Tungstenite default TLS".into());
     websocket
         .send(expected.clone())
@@ -241,17 +241,17 @@ async fn environment_proxy_route_honors_no_proxy_in_a_subprocess() {
 
 #[tokio::test]
 async fn no_proxy_subprocess_probe() {
-    let Ok(url) = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_URL") else {
+    let Ok(url) = std::env::var("RUXEX_WEBSOCKET_NO_PROXY_PROBE_URL") else {
         return;
     };
-    let proxy_url = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_PROXY")
+    let proxy_url = std::env::var("RUXEX_WEBSOCKET_NO_PROXY_PROBE_PROXY")
         .expect("parent test should provide a proxy URL");
     let no_proxy = std::env::var("NO_PROXY").expect("parent test should provide a no-proxy value");
     let request = url
         .into_client_request()
         .expect("websocket request should build");
     let tls_config =
-        if let Ok(certificate_hex) = std::env::var("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER") {
+        if let Ok(certificate_hex) = std::env::var("RUXEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER") {
             ensure_rustls_crypto_provider();
             assert_eq!(
                 certificate_hex.len() % 2,
@@ -553,16 +553,16 @@ async fn assert_no_proxy_subprocess(no_proxy: &str, expect_proxy: bool, proxy_tl
                 &proxy_url,
             )
             .env("NO_PROXY", no_proxy)
-            .env("GENEX_WEBSOCKET_NO_PROXY_PROBE_URL", target_url)
-            .env("GENEX_WEBSOCKET_NO_PROXY_PROBE_PROXY", proxy_url);
-        command.env_remove("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER");
+            .env("RUXEX_WEBSOCKET_NO_PROXY_PROBE_URL", target_url)
+            .env("RUXEX_WEBSOCKET_NO_PROXY_PROBE_PROXY", proxy_url);
+        command.env_remove("RUXEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER");
         if let Some(certificate) = certificate {
             let certificate_hex = certificate
                 .as_ref()
                 .iter()
                 .map(|byte| format!("{byte:02x}"))
                 .collect::<String>();
-            command.env("GENEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER", certificate_hex);
+            command.env("RUXEX_WEBSOCKET_NO_PROXY_PROBE_CA_DER", certificate_hex);
         }
         command
             .output()

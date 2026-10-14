@@ -4,16 +4,16 @@ use std::sync::Arc;
 
 use dirs::home_dir;
 use futures::StreamExt;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::system_cache_root_dir;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::PluginSkillRoot;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::system_cache_root_dir;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::PluginSkillRoot;
 
 use crate::loader::HostSkillRoot;
 
@@ -89,7 +89,7 @@ fn roots_from_layer_stack(
                 }
             }
             ConfigLayerSource::User { .. } => {
-                // Deprecated user skills location (`$GENEX_HOME/skills`), kept for backward
+                // Deprecated user skills location (`$RUXEX_HOME/skills`), kept for backward
                 // compatibility.
                 roots.push(local_root(
                     config_folder.join(SKILLS_DIR_NAME),

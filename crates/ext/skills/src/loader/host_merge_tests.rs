@@ -4,21 +4,21 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::Ordering;
 
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::LoadedSkillRoot;
-use genex_skills::SkillError;
-use genex_skills::SkillRootSnapshotCache;
-use genex_skills::SkillRootSnapshots;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::SkillDiscoveryMode;
-use genex_utils_plugins::migrated_command_skills_root;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::LoadedSkillRoot;
+use ruxex_skills::SkillError;
+use ruxex_skills::SkillRootSnapshotCache;
+use ruxex_skills::SkillRootSnapshots;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::SkillDiscoveryMode;
+use ruxex_utils_plugins::migrated_command_skills_root;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::sync::Semaphore;
@@ -176,7 +176,7 @@ async fn product_filtered_native_skill_does_not_hide_migrated_command() {
     let metadata_dir = fixture.native_root.join("review/agents");
     fs::create_dir_all(&metadata_dir).expect("create metadata directory");
     fs::write(
-        metadata_dir.join("genex.yaml"),
+        metadata_dir.join("ruxex.yaml"),
         "policy:\n  products: [unknown]\n",
     )
     .expect("write product policy");

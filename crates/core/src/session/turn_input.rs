@@ -20,22 +20,22 @@ use super::turn_context::TurnContext;
 use crate::state::ActiveTurn;
 use crate::state::TurnState;
 use crate::tasks::RegularTask;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AdditionalContextEntry;
-use genex_protocol::protocol::NonSteerableTurnKind;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::turn_input::NotSubmittedReason;
-use genex_protocol::turn_input::TurnInput as SubmittedTurnInput;
-use genex_protocol::turn_input::TurnInputMode;
-use genex_protocol::turn_input::TurnInputRequest;
-use genex_protocol::turn_input::TurnInputSubmission;
-use genex_protocol::turn_input::TurnStartOptions;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AdditionalContextEntry;
+use ruxex_protocol::protocol::NonSteerableTurnKind;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::turn_input::NotSubmittedReason;
+use ruxex_protocol::turn_input::TurnInput as SubmittedTurnInput;
+use ruxex_protocol::turn_input::TurnInputMode;
+use ruxex_protocol::turn_input::TurnInputRequest;
+use ruxex_protocol::turn_input::TurnInputSubmission;
+use ruxex_protocol::turn_input::TurnStartOptions;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -85,7 +85,7 @@ impl PreparedTurnInputSettings {
         session: &Session,
         thread_settings: ThreadSettingsOverrides,
         start_options: TurnStartOptions,
-    ) -> GenexResult<Self> {
+    ) -> RuxexResult<Self> {
         let thread_settings_update = if thread_settings == ThreadSettingsOverrides::default() {
             None
         } else {
@@ -93,7 +93,7 @@ impl PreparedTurnInputSettings {
             session
                 .preview_settings(&updates)
                 .await
-                .map_err(|error| GenexErr::InvalidRequest(error.to_string()))?;
+                .map_err(|error| RuxexErr::InvalidRequest(error.to_string()))?;
             Some(updates)
         };
         Ok(Self {
@@ -114,7 +114,7 @@ impl PreparedTurnInputSettings {
         session: &Arc<Session>,
         submission_id: String,
         kind: TurnStartKind,
-    ) -> GenexResult<Option<Arc<TurnContext>>> {
+    ) -> RuxexResult<Option<Arc<TurnContext>>> {
         let TurnStartOptions {
             turn_trigger,
             final_output_json_schema,
@@ -179,13 +179,13 @@ impl PreparedTurnInputSettings {
 
     /// Applies only persistent settings after steering succeeds. The active
     /// turn keeps its existing context; subsequent turns see the update.
-    async fn apply_steered(self, session: &Session, submission_id: String) -> GenexResult<()> {
+    async fn apply_steered(self, session: &Session, submission_id: String) -> RuxexResult<()> {
         let Some(thread_settings_update) = self.thread_settings_update else {
             return Ok(());
         };
         thread_settings::apply_update(session, submission_id, thread_settings_update)
             .await
-            .map_err(|error| GenexErr::InvalidRequest(error.to_string()))
+            .map_err(|error| RuxexErr::InvalidRequest(error.to_string()))
     }
 }
 
@@ -194,7 +194,7 @@ pub(super) async fn handle(
     request: TurnInputRequest,
     mode: TurnInputMode,
     submission_id: String,
-) -> GenexResult<TurnInputSubmission> {
+) -> RuxexResult<TurnInputSubmission> {
     match mode {
         TurnInputMode::StartOrSteer => start_or_steer(session, request, submission_id).await,
         TurnInputMode::StartIfIdle => {
@@ -219,7 +219,7 @@ pub(super) async fn handle(
             expected_previous_turn_id,
         } => {
             if !matches!(&request.input, SubmittedTurnInput::ResponseItem(_)) {
-                return Err(GenexErr::InvalidRequest(
+                return Err(RuxexErr::InvalidRequest(
                     "continuation requires internal response input".to_string(),
                 ));
             }
@@ -243,7 +243,7 @@ pub(super) async fn handle_recovery(
     thread_settings: ThreadSettingsOverrides,
     start_options: TurnStartOptions,
     submission_id: String,
-) -> GenexResult<TurnInputSubmission> {
+) -> RuxexResult<TurnInputSubmission> {
     let request = TurnInputRequest::user_input(Vec::new())
         .with_thread_settings(thread_settings)
         .on_start(TurnStartOptions {
@@ -264,7 +264,7 @@ async fn start_or_steer(
     session: &Arc<Session>,
     request: TurnInputRequest,
     submission_id: String,
-) -> GenexResult<TurnInputSubmission> {
+) -> RuxexResult<TurnInputSubmission> {
     let TurnInputRequest {
         mut input,
         thread_settings,
@@ -280,7 +280,7 @@ async fn start_or_steer(
             ..
         }) => true,
         _ => {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "only user input or standalone function-call outputs can start or steer a turn"
                     .to_string(),
             ));
@@ -366,7 +366,7 @@ async fn start_if_idle(
     submission_id: String,
     kind: TurnStartKind,
     expected_previous_turn_id: Option<String>,
-) -> GenexResult<TurnInputSubmission> {
+) -> RuxexResult<TurnInputSubmission> {
     let TurnInputRequest {
         input,
         thread_settings,
@@ -503,7 +503,7 @@ async fn steer(
     request: TurnInputRequest,
     expected_turn_id: String,
     submission_id: String,
-) -> GenexResult<TurnInputSubmission> {
+) -> RuxexResult<TurnInputSubmission> {
     let TurnInputRequest {
         mut input,
         thread_settings,
@@ -513,7 +513,7 @@ async fn steer(
         ..
     } = request;
     if !matches!(&input, SubmittedTurnInput::UserInput { .. }) {
-        return Err(GenexErr::InvalidRequest(
+        return Err(RuxexErr::InvalidRequest(
             "only user input can steer a turn".to_string(),
         ));
     }

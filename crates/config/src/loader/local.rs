@@ -17,8 +17,8 @@ use crate::RequirementSource;
 use crate::RequirementsLayerEntry;
 use crate::compose_requirements;
 use crate::merge_toml_values;
-use genex_file_system::ExecutorFileSystem;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::io;
 use std::path::Path;
@@ -92,22 +92,22 @@ pub struct LocalTomlLayer<S> {
 /// current MDM configuration.
 pub async fn load_local_config_layers(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: &AbsolutePathBuf,
 ) -> io::Result<LocalConfigLayers> {
-    load_local_config_layers_with_overrides(fs, genex_home, cwd, &LoaderOverrides::default()).await
+    load_local_config_layers_with_overrides(fs, ruxex_home, cwd, &LoaderOverrides::default()).await
 }
 
 pub(super) async fn load_local_config_layers_with_overrides(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: &AbsolutePathBuf,
     overrides: &LoaderOverrides,
 ) -> io::Result<LocalConfigLayers> {
-    let genex_home = AbsolutePathBuf::from_absolute_path(genex_home)?;
+    let ruxex_home = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
     let loaded_managed = layer_io::load_config_layers_internal(
         fs,
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         overrides.clone(),
         /*strict_config*/ false,
     )
@@ -116,7 +116,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     let system_file = system_config_toml_file_with_overrides(overrides)?;
     let system =
         load_config_toml_for_required_layer_raw(fs, &system_file, /*strict_config*/ false).await?;
-    let user_file = genex_home.join(CONFIG_TOML_FILE);
+    let user_file = ruxex_home.join(CONFIG_TOML_FILE);
     let user =
         load_config_toml_for_required_layer_raw(fs, &user_file, /*strict_config*/ false).await?;
 
@@ -130,17 +130,17 @@ pub(super) async fn load_local_config_layers_with_overrides(
     project_discovery::merge_managed_config_for_discovery(
         &mut discovery_config,
         &loaded_managed,
-        genex_home.as_path(),
+        ruxex_home.as_path(),
     )?;
     let project_root_markers = vec![".git".to_string()];
-    let requirements = local_requirements_layers(fs, genex_home.as_path(), overrides).await?;
+    let requirements = local_requirements_layers(fs, ruxex_home.as_path(), overrides).await?;
     let mut trust_context = project_trust_context(
         fs,
         &discovery_config,
         &trusted_broker_config,
         cwd,
         &project_root_markers,
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         &user_file,
     )
     .await?;
@@ -162,7 +162,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
         cwd,
         &trust_context.project_root,
         &trust_context,
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         /*strict_config*/ false,
     )
     .await?;
@@ -184,7 +184,7 @@ pub(super) async fn load_local_config_layers_with_overrides(
     ];
     append_project_layers(fs, &mut config_layers, project_layers.layers).await?;
 
-    append_mdm_config_layer(&mut config_layers, loaded_managed, &genex_home)?;
+    append_mdm_config_layer(&mut config_layers, loaded_managed, &ruxex_home)?;
 
     Ok(LocalConfigLayers {
         config: LocalTomlLayerStack {
@@ -213,9 +213,9 @@ async fn append_project_layers(
         }
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Project {
-                dot_genex_folder: layer.dot_genex_folder.clone(),
+                dot_ruxex_folder: layer.dot_ruxex_folder.clone(),
             },
-            base_dir: layer.dot_genex_folder,
+            base_dir: layer.dot_ruxex_folder,
             toml: config,
         });
 
@@ -230,7 +230,7 @@ async fn append_project_layers(
         };
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Project {
-                dot_genex_folder: hooks_config_folder.clone(),
+                dot_ruxex_folder: hooks_config_folder.clone(),
             },
             base_dir: hooks_config_folder,
             toml: TomlValue::Table(toml::map::Map::from_iter([(
@@ -245,15 +245,15 @@ async fn append_project_layers(
 fn append_mdm_config_layer(
     output: &mut Vec<LocalTomlLayer<ConfigLayerSource>>,
     loaded: layer_io::LoadedConfigLayers,
-    genex_home: &AbsolutePathBuf,
+    ruxex_home: &AbsolutePathBuf,
 ) -> io::Result<()> {
     if let Some(config) = loaded.managed_config_from_mdm {
         output.push(LocalTomlLayer {
             source: ConfigLayerSource::Mdm {
-                domain: "com.genex.genex".to_string(),
+                domain: "com.ruxex.ruxex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
-            base_dir: genex_home.clone(),
+            base_dir: ruxex_home.clone(),
             toml: config.managed_config,
         });
     }
@@ -262,11 +262,11 @@ fn append_mdm_config_layer(
 
 async fn local_requirements_layers(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     overrides: &LoaderOverrides,
 ) -> io::Result<LocalTomlLayerStack<RequirementSource>> {
     #[cfg(not(target_os = "macos"))]
-    let _ = genex_home;
+    let _ = ruxex_home;
 
     let system_file = system_requirements_toml_file_with_overrides(overrides)?;
     let system = load_requirements_toml(fs, &system_file).await?;
@@ -276,7 +276,7 @@ async fn local_requirements_layers(
 
     #[cfg(target_os = "macos")]
     {
-        let genex_home = AbsolutePathBuf::from_absolute_path(genex_home)?;
+        let ruxex_home = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
         entries.extend(
             super::macos::load_managed_admin_requirements_layer(
                 overrides
@@ -284,7 +284,7 @@ async fn local_requirements_layers(
                     .as_deref(),
             )
             .await?
-            .map(|layer| layer.with_base_dir(genex_home)),
+            .map(|layer| layer.with_base_dir(ruxex_home)),
         );
     }
 

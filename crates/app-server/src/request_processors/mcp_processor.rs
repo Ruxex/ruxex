@@ -1,9 +1,9 @@
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
-use genex_core::McpManager;
-use genex_mcp::McpServerSource;
-use genex_mcp::ReadResourceRequestParams;
-use genex_mcp::resolve_oauth_callback;
+use ruxex_core::McpManager;
+use ruxex_mcp::McpServerSource;
+use ruxex_mcp::ReadResourceRequestParams;
+use ruxex_mcp::resolve_oauth_callback;
 
 use crate::thread_state::ThreadStateManager;
 
@@ -109,7 +109,7 @@ impl McpRequestProcessor {
     pub(super) async fn load_thread(
         &self,
         thread_id: &str,
-    ) -> Result<(ThreadId, Arc<GenexThread>), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Arc<RuxexThread>), JSONRPCErrorError> {
         let thread_id = ThreadId::from_string(thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
 
@@ -159,7 +159,7 @@ impl McpRequestProcessor {
                 (mcp_config, runtime_context)
             }
         };
-        let effective_servers = genex_mcp::effective_mcp_servers(&mcp_config);
+        let effective_servers = ruxex_mcp::effective_mcp_servers(&mcp_config);
         let Some(server) = effective_servers.get(&name) else {
             return Err(invalid_request(format!(
                 "No MCP server named '{name}' found."
@@ -171,7 +171,7 @@ impl McpRequestProcessor {
             StreamableHttpRedirectMode::Legacy
         };
         let server = server.config();
-        if matches!(server.auth, genex_config::McpServerAuth::EmaAuth) {
+        if matches!(server.auth, ruxex_config::McpServerAuth::EmaAuth) {
             return Err(invalid_request(
                 "Enterprise MCP authorization requires the trusted enterprise IdP configuration; ordinary MCP OAuth login is not available for this server",
             ));
@@ -201,7 +201,7 @@ impl McpRequestProcessor {
             discover_supported_scopes(
                 &server.transport,
                 Arc::clone(&http_client),
-                genex_rmcp_client::OAuthDiscoveryTimeout::Requested,
+                ruxex_rmcp_client::OAuthDiscoveryTimeout::Requested,
                 redirect_mode,
             )
             .await
@@ -321,10 +321,10 @@ impl McpRequestProcessor {
     async fn list_mcp_server_status_response(
         request_id: String,
         params: ListMcpServerStatusParams,
-        mcp_config: genex_mcp::McpConfig,
+        mcp_config: ruxex_mcp::McpConfig,
         runtime_context: McpRuntimeContext,
         mcp_manager: Arc<McpManager>,
-        thread: Option<Arc<genex_core::GenexThread>>,
+        thread: Option<Arc<ruxex_core::RuxexThread>>,
     ) -> Result<ListMcpServerStatusResponse, JSONRPCErrorError> {
         let detail = match params.detail.unwrap_or(McpServerStatusDetail::Full) {
             McpServerStatusDetail::Full => McpSnapshotDetail::Full,
@@ -516,7 +516,7 @@ impl McpRequestProcessor {
 }
 
 fn mcp_operation_error(error: anyhow::Error) -> JSONRPCErrorError {
-    match genex_rmcp_client::mcp_error(&error) {
+    match ruxex_rmcp_client::mcp_error(&error) {
         Some(error) => JSONRPCErrorError {
             code: i64::from(error.code.0),
             message: error.message.to_string(),

@@ -3,30 +3,30 @@ use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::tools::context::SharedTurnDiffTracker;
 use crate::tools::sandboxing::ToolError;
-use genex_apply_patch::AppliedPatchDelta;
-use genex_core_plugins::PluginCommandAttribution;
-use genex_core_plugins::recognize_artifact_operation;
-use genex_otel::ARTIFACT_OPERATION_EXPECTED_OUTPUT_COUNT_METRIC;
-use genex_otel::ARTIFACT_OPERATION_STARTED_METRIC;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::items::CommandExecutionItem;
-use genex_protocol::items::CommandExecutionStatus;
-use genex_protocol::items::FileChangeItem;
-use genex_protocol::items::ModelInvocationContext;
-use genex_protocol::items::TurnItem;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::parse_command::ParsedCommand;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::ExecCommandStatus;
-use genex_protocol::protocol::FileChange;
-use genex_protocol::protocol::PatchApplyStatus;
-use genex_protocol::protocol::TurnDiffEvent;
-use genex_shell_command::parse_command::parse_command;
-use genex_utils_path_uri::PathUri;
-use genex_utils_string::truncate_middle_with_token_budget;
+use ruxex_apply_patch::AppliedPatchDelta;
+use ruxex_core_plugins::PluginCommandAttribution;
+use ruxex_core_plugins::recognize_artifact_operation;
+use ruxex_otel::ARTIFACT_OPERATION_EXPECTED_OUTPUT_COUNT_METRIC;
+use ruxex_otel::ARTIFACT_OPERATION_STARTED_METRIC;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::items::CommandExecutionItem;
+use ruxex_protocol::items::CommandExecutionStatus;
+use ruxex_protocol::items::FileChangeItem;
+use ruxex_protocol::items::ModelInvocationContext;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::parse_command::ParsedCommand;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_protocol::protocol::ExecCommandStatus;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_protocol::protocol::PatchApplyStatus;
+use ruxex_protocol::protocol::TurnDiffEvent;
+use ruxex_shell_command::parse_command::parse_command;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_string::truncate_middle_with_token_budget;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -384,15 +384,15 @@ impl ToolEmitter {
                 };
                 (event, result)
             }
-            Err(ToolError::Genex(err)) => match err.details() {
-                GenexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
+            Err(ToolError::Ruxex(err)) => match err.details() {
+                RuxexErrorDetails::Sandbox(SandboxErr::Timeout { output }) => {
                     let output = output.as_ref().clone();
                     let response = self.format_exec_output_for_model(&output, ctx);
                     let event = ToolEventStage::Failure(ToolEventFailure::Output(output));
                     let result = Err(FunctionCallError::RespondToModel(response));
                     (event, result)
                 }
-                GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+                RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                     let output = output.as_ref().clone();
                     let response = self.format_exec_output_for_model(&output, ctx);
                     // apply_patch can be denied after it has already committed a

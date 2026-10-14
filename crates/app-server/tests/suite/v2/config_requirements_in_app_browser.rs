@@ -1,12 +1,12 @@
 use anyhow::Result;
 use anyhow::ensure;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::BrowserUseRequirements;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ConfigRequirementsReadResponse;
-use genex_app_server_protocol::InAppBrowserRequirements;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::BrowserUseRequirements;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+use ruxex_app_server_protocol::InAppBrowserRequirements;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -19,9 +19,9 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 const ALLOW: &str = "[in_app_browser]\nallow_external_browser_settings_import = true";
 const DENY: &str = "[in_app_browser]\nallow_external_browser_settings_import = false";
 
-async fn start_stable_server(genex_home: &TempDir) -> Result<TestAppServer> {
+async fn start_stable_server(ruxex_home: &TempDir) -> Result<TestAppServer> {
     let mut server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let initialized = timeout(
@@ -48,11 +48,11 @@ async fn config_requirements_read_preserves_import_policy() -> Result<()> {
         (ALLOW, Some(Some(true))),
         (DENY, Some(Some(false))),
     ] {
-        let genex_home = TempDir::new()?;
-        std::fs::write(genex_home.path().join("requirements.toml"), contents)?;
+        let ruxex_home = TempDir::new()?;
+        std::fs::write(ruxex_home.path().join("requirements.toml"), contents)?;
         // An unrecognized ordinary user setting cannot override managed policy.
-        std::fs::write(genex_home.path().join("config.toml"), ALLOW)?;
-        let mut server = start_stable_server(&genex_home).await?;
+        std::fs::write(ruxex_home.path().join("config.toml"), ALLOW)?;
+        let mut server = start_stable_server(&ruxex_home).await?;
         let request_id = server.send_config_requirements_read_request().await?;
         let wire: Value = timeout(READ_TIMEOUT, server.read_response(request_id)).await??;
         let expected_wire = expected_table
@@ -79,16 +79,16 @@ async fn config_requirements_read_preserves_import_policy() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn import_policy_is_separate_from_browser_feature_and_agent_policy() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         format!(
             "[features]\nin_app_browser = true\nbrowser_use = false\n\
              [browser_use]\ndisable_auto_review = true\n{DENY}"
         ),
     )?;
-    std::fs::write(genex_home.path().join("config.toml"), ALLOW)?;
-    let mut server = start_stable_server(&genex_home).await?;
+    std::fs::write(ruxex_home.path().join("config.toml"), ALLOW)?;
+    let mut server = start_stable_server(&ruxex_home).await?;
     let request_id = server.send_config_requirements_read_request().await?;
     let response: ConfigRequirementsReadResponse =
         timeout(READ_TIMEOUT, server.read_response(request_id)).await??;
@@ -122,10 +122,10 @@ async fn import_policy_is_separate_from_browser_feature_and_agent_policy() -> Re
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_requirements_read_rejects_invalid_import_policy() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let mut server = start_stable_server(&genex_home).await?;
+    let ruxex_home = TempDir::new()?;
+    let mut server = start_stable_server(&ruxex_home).await?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         "[in_app_browser]\nallow_external_browser_settings_import = \"false\"",
     )?;
     let request_id = server.send_config_requirements_read_request().await?;

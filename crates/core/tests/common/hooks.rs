@@ -1,21 +1,21 @@
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerStack;
-use genex_config::TomlValue;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_hooks::HookListEntry;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::TomlValue;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_hooks::HookListEntry;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 pub fn trust_discovered_hooks(config: &mut Config) {
     config
         .features
-        .enable(Feature::GenexHooks)
+        .enable(Feature::RuxexHooks)
         .expect("test config should allow feature update");
 
-    let listed = genex_hooks::list_hooks(genex_hooks::HooksConfig {
+    let listed = ruxex_hooks::list_hooks(ruxex_hooks::HooksConfig {
         feature_enabled: true,
         config_layer_stack: Some(config.config_layer_stack.clone()),
-        ..genex_hooks::HooksConfig::default()
+        ..ruxex_hooks::HooksConfig::default()
     });
     assert!(
         !listed.hooks.is_empty(),
@@ -26,12 +26,12 @@ pub fn trust_discovered_hooks(config: &mut Config) {
 
 pub fn trust_hooks(config: &mut Config, hooks: Vec<HookListEntry>) {
     config.config_layer_stack =
-        trusted_config_layer_stack(&config.config_layer_stack, &config.genex_home, hooks);
+        trusted_config_layer_stack(&config.config_layer_stack, &config.ruxex_home, hooks);
 }
 
 pub fn trusted_config_layer_stack(
     config_layer_stack: &ConfigLayerStack,
-    genex_home: &AbsolutePathBuf,
+    ruxex_home: &AbsolutePathBuf,
     hooks: Vec<HookListEntry>,
 ) -> ConfigLayerStack {
     let mut user_config = config_layer_stack
@@ -64,6 +64,6 @@ pub fn trusted_config_layer_stack(
     }
 
     config_layer_stack
-        .with_user_config(&genex_home.join(CONFIG_TOML_FILE), user_config)
+        .with_user_config(&ruxex_home.join(CONFIG_TOML_FILE), user_config)
         .expect("hook user config should be valid")
 }

@@ -3,13 +3,13 @@
 //!
 //! These tests intentionally run through `custom_ca_probe` and
 //! `build_reqwest_client_for_subprocess_tests` instead of calling the helper in-process. The
-//! detailed explanation of what "hermetic" means here lives in `genex_http_client::custom_ca`; these
+//! detailed explanation of what "hermetic" means here lives in `ruxex_http_client::custom_ca`; these
 //! tests add the process-level half of that contract by scrubbing inherited CA environment
 //! variables before each subprocess launch. Most assertions here cover CA file selection, PEM
 //! parsing, and user-facing errors. The HTTPS probes go further and perform real POSTs against
 //! locally generated certificates, including through a TLS-intercepting CONNECT proxy.
 
-use genex_utils_cargo_bin::cargo_bin;
+use ruxex_utils_cargo_bin::cargo_bin;
 use rcgen::BasicConstraints;
 use rcgen::CertificateParams;
 use rcgen::CertifiedIssuer;
@@ -38,10 +38,10 @@ use std::time::Duration;
 use std::time::Instant;
 use tempfile::TempDir;
 
-const GENEX_CA_CERT_ENV: &str = "GENEX_CA_CERTIFICATE";
-const PROBE_PROXY_ENV: &str = "GENEX_CUSTOM_CA_PROBE_PROXY";
-const PROBE_TLS13_ENV: &str = "GENEX_CUSTOM_CA_PROBE_TLS13";
-const PROBE_URL_ENV: &str = "GENEX_CUSTOM_CA_PROBE_URL";
+const RUXEX_CA_CERT_ENV: &str = "RUXEX_CA_CERTIFICATE";
+const PROBE_PROXY_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_PROXY";
+const PROBE_TLS13_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_TLS13";
+const PROBE_URL_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_URL";
 const SSL_CERT_FILE_ENV: &str = "SSL_CERT_FILE";
 const PROXY_ENV_VARS: &[&str] = &[
     "HTTP_PROXY",
@@ -93,7 +93,7 @@ fn probe_command() -> Command {
     );
     // `Command` inherits the parent environment by default, so scrub CA-related variables first or
     // these tests can accidentally pass/fail based on the developer shell or CI runner.
-    cmd.env_remove(GENEX_CA_CERT_ENV);
+    cmd.env_remove(RUXEX_CA_CERT_ENV);
     cmd.env_remove(PROBE_PROXY_ENV);
     cmd.env_remove(PROBE_TLS13_ENV);
     cmd.env_remove(PROBE_URL_ENV);
@@ -138,7 +138,7 @@ fn run_probe_posting_through_tls_intercepting_proxy(
 }
 
 fn spawn_tls13_test_server() -> Tls13TestServer {
-    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    ruxex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let material = generate_tls13_material();
     let listener = TcpListener::bind(("127.0.0.1", 0)).expect("TLS test server should bind");
     listener
@@ -191,7 +191,7 @@ fn spawn_plain_http_origin() -> PlainHttpOrigin {
 }
 
 fn spawn_tls_intercepting_proxy() -> TlsInterceptingProxy {
-    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    ruxex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let material = generate_tls13_material();
     let listener = TcpListener::bind(("127.0.0.1", 0)).expect("TLS intercepting proxy should bind");
     listener
@@ -226,7 +226,7 @@ fn generate_tls13_material() -> Tls13Material {
     ca_params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
     ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
     let mut ca_distinguished_name = DistinguishedName::new();
-    ca_distinguished_name.push(DnType::CommonName, "genex test CA");
+    ca_distinguished_name.push(DnType::CommonName, "ruxex test CA");
     ca_params.distinguished_name = ca_distinguished_name;
     let ca_key_pair =
         KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).expect("test CA key pair should generate");
@@ -388,11 +388,11 @@ fn assert_token_exchange_request(request: &str) {
 }
 
 #[test]
-fn uses_genex_ca_cert_env() {
+fn uses_ruxex_ca_cert_env() {
     let temp_dir = TempDir::new().expect("tempdir");
     let cert_path = write_cert_file(&temp_dir, "ca.pem", TEST_CERT_1);
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(output.status.success());
 }
@@ -408,13 +408,13 @@ fn falls_back_to_ssl_cert_file() {
 }
 
 #[test]
-fn prefers_genex_ca_cert_over_ssl_cert_file() {
+fn prefers_ruxex_ca_cert_over_ssl_cert_file() {
     let temp_dir = TempDir::new().expect("tempdir");
     let cert_path = write_cert_file(&temp_dir, "ca.pem", TEST_CERT_1);
     let bad_path = write_cert_file(&temp_dir, "bad.pem", "");
 
     let output = run_probe(&[
-        (GENEX_CA_CERT_ENV, cert_path.as_path()),
+        (RUXEX_CA_CERT_ENV, cert_path.as_path()),
         (SSL_CERT_FILE_ENV, bad_path.as_path()),
     ]);
 
@@ -427,7 +427,7 @@ fn handles_multi_certificate_bundle() {
     let bundle = format!("{TEST_CERT_1}\n{TEST_CERT_2}");
     let cert_path = write_cert_file(&temp_dir, "bundle.pem", &bundle);
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(output.status.success());
 }
@@ -439,7 +439,7 @@ fn posts_to_tls13_server_using_custom_ca_bundle() {
     let cert_path = write_cert_file(&temp_dir, "tls-ca.pem", &server.ca_cert_pem);
 
     let output =
-        run_probe_posting_to_tls13_server(&[(GENEX_CA_CERT_ENV, cert_path.as_path())], &server.url);
+        run_probe_posting_to_tls13_server(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())], &server.url);
     let server_result = server.request_rx.recv_timeout(Duration::from_secs(5));
 
     assert!(
@@ -462,7 +462,7 @@ fn posts_to_token_origin_through_tls_intercepting_proxy_with_custom_ca_bundle() 
     let cert_path = write_cert_file(&temp_dir, "proxy-ca.pem", &proxy.ca_cert_pem);
 
     let output = run_probe_posting_through_tls_intercepting_proxy(
-        &[(GENEX_CA_CERT_ENV, cert_path.as_path())],
+        &[(RUXEX_CA_CERT_ENV, cert_path.as_path())],
         &origin.url,
         &proxy.url,
     );
@@ -490,12 +490,12 @@ fn rejects_empty_pem_file_with_hint() {
     let temp_dir = TempDir::new().expect("tempdir");
     let cert_path = write_cert_file(&temp_dir, "empty.pem", "");
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("no certificates found in PEM file"));
-    assert!(stderr.contains("GENEX_CA_CERTIFICATE"));
+    assert!(stderr.contains("RUXEX_CA_CERTIFICATE"));
     assert!(stderr.contains("SSL_CERT_FILE"));
 }
 
@@ -508,12 +508,12 @@ fn rejects_malformed_pem_with_hint() {
         "-----BEGIN CERTIFICATE-----\nMIIBroken",
     );
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("failed to parse PEM file"));
-    assert!(stderr.contains("GENEX_CA_CERTIFICATE"));
+    assert!(stderr.contains("RUXEX_CA_CERTIFICATE"));
     assert!(stderr.contains("SSL_CERT_FILE"));
 }
 
@@ -522,7 +522,7 @@ fn accepts_openssl_trusted_certificate() {
     let temp_dir = TempDir::new().expect("tempdir");
     let cert_path = write_cert_file(&temp_dir, "trusted.pem", TRUSTED_TEST_CERT);
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(output.status.success());
 }
@@ -534,7 +534,7 @@ fn accepts_bundle_with_crl() {
     let bundle = format!("{TEST_CERT_1}\n{crl}");
     let cert_path = write_cert_file(&temp_dir, "bundle_crl.pem", &bundle);
 
-    let output = run_probe(&[(GENEX_CA_CERT_ENV, cert_path.as_path())]);
+    let output = run_probe(&[(RUXEX_CA_CERT_ENV, cert_path.as_path())]);
 
     assert!(output.status.success());
 }

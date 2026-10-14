@@ -52,9 +52,9 @@ pub(super) fn emit_network_policy_decision(
     };
     let metadata = &context.metadata;
     tracing::event!(
-        target: "genex_otel.log_only",
+        target: "ruxex_otel.log_only",
         tracing::Level::INFO,
-        event.name = "genex.network_proxy.policy_decision",
+        event.name = "ruxex.network_proxy.policy_decision",
         event.timestamp = decision.timestamp,
         conversation.id = metadata.conversation_id.as_deref(),
         app.version = metadata.app_version.as_deref(),

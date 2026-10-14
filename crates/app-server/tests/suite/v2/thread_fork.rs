@@ -10,71 +10,71 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::ActivePermissionProfile;
-use genex_app_server_protocol::ApprovalsReviewer;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::DeprecationNoticeNotification;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxMode;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::ThreadAttachmentAddParams;
-use genex_app_server_protocol::ThreadAttachmentAddResponse;
-use genex_app_server_protocol::ThreadAttachmentListParams;
-use genex_app_server_protocol::ThreadAttachmentListResponse;
-use genex_app_server_protocol::ThreadAttachmentRemoveParams;
-use genex_app_server_protocol::ThreadAttachmentRemoveResponse;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSearchOccurrencesParams;
-use genex_app_server_protocol::ThreadSearchOccurrencesResponse;
-use genex_app_server_protocol::ThreadSource;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStartedNotification;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadTurnsListResponse;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_features::Feature;
-use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use genex_protocol::ThreadId;
-use genex_protocol::items::TurnItem as CoreTurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
-use genex_rollout::append_rollout_item_to_path;
-use genex_rollout::append_thread_name;
-use genex_rollout::read_session_meta_line;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ActivePermissionProfile;
+use ruxex_app_server_protocol::ApprovalsReviewer;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::DeprecationNoticeNotification;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxMode;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::ThreadAttachmentAddParams;
+use ruxex_app_server_protocol::ThreadAttachmentAddResponse;
+use ruxex_app_server_protocol::ThreadAttachmentListParams;
+use ruxex_app_server_protocol::ThreadAttachmentListResponse;
+use ruxex_app_server_protocol::ThreadAttachmentRemoveParams;
+use ruxex_app_server_protocol::ThreadAttachmentRemoveResponse;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSearchOccurrencesParams;
+use ruxex_app_server_protocol::ThreadSearchOccurrencesResponse;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStartedNotification;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadTurnsListResponse;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_features::Feature;
+use ruxex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::TurnItem as CoreTurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
+use ruxex_rollout::append_rollout_item_to_path;
+use ruxex_rollout::append_thread_name;
+use ruxex_rollout::read_session_meta_line;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -127,18 +127,18 @@ async fn list_threads(mcp: &mut TestAppServer) -> Result<ThreadListResponse> {
 #[tokio::test]
 async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let preview = "Saved user message";
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
     )?;
 
-    let original_path = genex_home
+    let original_path = ruxex_home
         .path()
         .join("sessions")
         .join("2025")
@@ -158,7 +158,7 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
     let original_contents = std::fs::read_to_string(&original_path)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -306,15 +306,15 @@ async fn thread_fork_preserves_persisted_permission_profile_and_honors_overrides
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
     for history_mode in [ThreadHistoryMode::Paginated] {
-        let genex_home = TempDir::new()?;
+        let ruxex_home = TempDir::new()?;
         MockResponsesConfig::new(&server.uri())
             .with_root_config("default_permissions = \":danger-full-access\"")
             .with_extra_config("[permissions.dev]\nextends = \":read-only\"")
-            .write(genex_home.path())?;
+            .write(ruxex_home.path())?;
 
         let source_thread_id = {
             let mut mcp = TestAppServer::builder()
-                .with_genex_home(genex_home.path())
+                .with_ruxex_home(ruxex_home.path())
                 .without_managed_config()
                 .build_initialized()
                 .await?;
@@ -344,7 +344,7 @@ async fn thread_fork_preserves_persisted_permission_profile_and_honors_overrides
         };
 
         let mut mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .without_managed_config()
             .build_initialized()
             .await?;
@@ -414,12 +414,12 @@ async fn assert_thread_fork_preserves_persisted_approvals_reviewer(
     history_mode: ThreadHistoryMode,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let (source_thread_id, source_turn_id) = {
         let mut mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build_initialized()
             .await?;
 
@@ -509,7 +509,7 @@ async fn assert_thread_fork_preserves_persisted_approvals_reviewer(
     };
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let fork_id = mcp
@@ -581,11 +581,11 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
     history_mode: ThreadHistoryMode,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -638,7 +638,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
             },
         })
         .await?;
-    let sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
+    let sqlite = ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs());
     let pool = sqlite.open_read_write_pool(&sqlite.state_db_path()).await?;
     sqlx::query(
         "CREATE TRIGGER fail_fork_attachment_copy BEFORE INSERT ON thread_attachments \
@@ -739,7 +739,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
     assert_ne!(copied.data[0].id, attachment.attachment.id);
     assert_eq!(
         copied.data[0],
-        genex_app_server_protocol::ThreadAttachment {
+        ruxex_app_server_protocol::ThreadAttachment {
             id: copied.data[0].id.clone(),
             created_at: copied.data[0].created_at,
             ..attachment.attachment.clone()
@@ -861,7 +861,7 @@ async fn assert_thread_fork_at_named_boundary_keeps_only_terminal_prefix(
     // Resuming a fork must not copy its parent's attachments again after an explicit removal.
     mcp.shutdown_gracefully().await?;
     let mut resumed = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let _: ThreadResumeResponse = resumed
@@ -909,9 +909,9 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
         ]),
     ])
     .await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
-    let config_path = genex_home.path().join("config.toml");
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
+    let config_path = ruxex_home.path().join("config.toml");
     let config = std::fs::read_to_string(&config_path)?;
     std::fs::write(
         &config_path,
@@ -919,7 +919,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -953,13 +953,13 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
     timeout(DEFAULT_READ_TIMEOUT, mcp.shutdown_gracefully()).await??;
     drop(mcp);
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
 
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     let source_goal = state_db
@@ -967,7 +967,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
         .replace_thread_goal(
             source_thread_id,
             "continue after the retry",
-            genex_state::ThreadGoalStatus::Active,
+            ruxex_state::ThreadGoalStatus::Active,
             /*token_budget*/ Some(150),
         )
         .await?;
@@ -977,7 +977,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
             source_thread_id,
             /*time_delta_seconds*/ 11,
             /*token_delta*/ 37,
-            genex_state::GoalAccountingMode::ActiveOnly,
+            ruxex_state::GoalAccountingMode::ActiveOnly,
             Some(source_goal.goal_id.as_str()),
         )
         .await?;
@@ -1055,7 +1055,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
     let forked_thread_id = ThreadId::from_string(&forked_thread.id)?;
     drop(mcp);
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -1119,7 +1119,7 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
     assert!(forked_goal.time_used_seconds >= source_goal.time_used_seconds);
     assert_eq!(
         forked_goal.status,
-        genex_state::ThreadGoalStatus::BudgetLimited
+        ruxex_state::ThreadGoalStatus::BudgetLimited
     );
     assert_eq!(
         state_db
@@ -1135,21 +1135,21 @@ async fn thread_fork_defers_inherited_active_goal_until_next_turn() -> Result<()
 #[tokio::test]
 async fn thread_fork_inherits_explicit_source_name_from_session_index() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
     let source_thread_id = ThreadId::from_string(&conversation_id)?;
     let source_name = "Renamed parent thread";
-    append_thread_name(genex_home.path(), source_thread_id, source_name).await?;
+    append_thread_name(ruxex_home.path(), source_thread_id, source_name).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1176,17 +1176,17 @@ async fn thread_fork_inherits_explicit_source_name_from_session_index() -> Resul
 #[tokio::test]
 async fn thread_fork_can_load_source_by_path() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let preview = "Saved user message";
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
     )?;
-    let original_path = genex_home
+    let original_path = ruxex_home
         .path()
         .join("sessions")
         .join("2025")
@@ -1197,7 +1197,7 @@ async fn thread_fork_can_load_source_by_path() -> Result<()> {
         ));
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1223,17 +1223,17 @@ async fn thread_fork_can_load_source_by_path() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_can_cut_before_unfinished_stored_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
-    let source_path = rollout_path(genex_home.path(), filename_ts, &conversation_id);
+    let source_path = rollout_path(ruxex_home.path(), filename_ts, &conversation_id);
     let unfinished_turn_id = "unfinished-turn";
     append_rollout_item_to_path(
         &source_path,
@@ -1257,7 +1257,7 @@ async fn thread_fork_can_cut_before_unfinished_stored_turn() -> Result<()> {
     .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1295,17 +1295,17 @@ async fn thread_fork_can_cut_before_unfinished_stored_turn() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_emits_restored_token_usage_before_next_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_rollout_with_token_usage(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1346,17 +1346,17 @@ async fn thread_fork_emits_restored_token_usage_before_next_turn() -> Result<()>
 #[tokio::test]
 async fn thread_fork_can_exclude_turns_and_skip_restored_token_usage() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_rollout_with_token_usage(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1392,21 +1392,21 @@ async fn thread_fork_can_exclude_turns_and_skip_restored_token_usage() -> Result
 async fn thread_fork_tracks_thread_initialized_analytics() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(genex_home.path())?;
-    mount_analytics_capture(&server, genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    mount_analytics_capture(&server, ruxex_home.path()).await?;
 
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .without_managed_config()
         .build_initialized()
@@ -1428,7 +1428,7 @@ async fn thread_fork_tracks_thread_initialized_analytics() -> Result<()> {
         event,
         &thread.id,
         &thread.session_id,
-        "genex",
+        "ruxex",
         "mock-model",
         "forked",
         "user",
@@ -1446,11 +1446,11 @@ async fn thread_fork_tracks_thread_initialized_analytics() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_rejects_unmaterialized_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1489,17 +1489,17 @@ async fn thread_fork_rejects_unmaterialized_thread() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
     let source_path = rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         conversation_id.as_str(),
     );
@@ -1525,7 +1525,7 @@ async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
         append_rollout_item_to_path(source_path.as_path(), &item).await?;
     }
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1575,7 +1575,7 @@ async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
         .expect("forked turn response request");
     let request_body = response_request.body_json::<Value>()?;
     let turn_metadata: Value = serde_json::from_str(
-        request_body["client_metadata"]["x-genex-turn-metadata"]
+        request_body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("forked turn metadata"),
     )?;
@@ -1644,29 +1644,29 @@ async fn thread_fork_creates_reference_backed_paginated_thread() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_accepts_resumed_rollout_under_symlinked_sessions_root() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let external = TempDir::new()?;
     let external_sessions = external.path().join("sessions");
     std::fs::create_dir_all(external_sessions.as_path())?;
     std::os::unix::fs::symlink(
         external_sessions.as_path(),
-        genex_home.path().join("sessions"),
+        ruxex_home.path().join("sessions"),
     )?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
     let source_path = rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         conversation_id.as_str(),
     );
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1697,17 +1697,17 @@ async fn thread_fork_accepts_resumed_rollout_under_symlinked_sessions_root() -> 
 #[tokio::test]
 async fn thread_fork_warns_for_paginated_full_history_hydration() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1776,7 +1776,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
     multi_agent_version: MultiAgentVersion,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&server.uri());
     let (config, expected_marker_role, thread_source) = match multi_agent_version {
         MultiAgentVersion::V2 => (
@@ -1787,14 +1787,14 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         MultiAgentVersion::V1 => (config, "user", None),
         MultiAgentVersion::Disabled => unreachable!("interruption markers require agent support"),
     };
-    config.write(genex_home.path())?;
+    config.write(ruxex_home.path())?;
     let source_thread_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
-    let source_path = rollout_path(genex_home.path(), "2025-01-05T12-00-00", &source_thread_id);
+    let source_path = rollout_path(ruxex_home.path(), "2025-01-05T12-00-00", &source_thread_id);
     let source_id = ThreadId::from_string(source_thread_id.as_str())?;
     let user_response_item = |id: &str| {
         RolloutItem::ResponseItem(
@@ -1817,7 +1817,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
             item: CoreTurnItem::UserMessage(UserMessageItem {
                 id: id.to_string(),
                 client_id: None,
-                content: vec![genex_protocol::user_input::UserInput::Text {
+                content: vec![ruxex_protocol::user_input::UserInput::Text {
                     text: format!("{id} needle"),
                     text_elements: Vec::new(),
                 }],
@@ -1845,7 +1845,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
     )
     .await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -1905,7 +1905,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         .expect("fork history base");
     let child_rollout = std::fs::read_to_string(forked_path.as_path())?
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?;
     assert!(matches!(
         child_rollout.as_slice(),
@@ -1925,7 +1925,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
             },
         ] if matches!(
             &response_item.item,
-            genex_protocol::models::ResponseItem::Message { role, .. }
+            ruxex_protocol::models::ResponseItem::Message { role, .. }
                 if role == expected_marker_role
         ) && aborted.turn_id.as_deref() == Some("active-turn")
     ));
@@ -2087,7 +2087,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
 
     drop(mcp);
     let mut resumed_app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -2135,7 +2135,7 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
         .expect("cold-resumed model request")
         .body_json::<Value>()?;
     let turn_metadata: Value = serde_json::from_str(
-        request_body["client_metadata"]["x-genex-turn-metadata"]
+        request_body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("cold-resumed turn metadata"),
     )?;
@@ -2170,18 +2170,18 @@ async fn assert_thread_fork_freezes_active_paginated_turn_as_interrupted(
 #[tokio::test]
 async fn thread_fork_with_empty_path_uses_thread_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -2224,14 +2224,14 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
         .mount(&server)
         .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     MockResponsesConfig::new(&model_server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{managed_auth_base_url}""#))
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     write_api_key_auth(
-        genex_home.path(),
+        ruxex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
@@ -2242,7 +2242,7 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
     )?;
 
     let conversation_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -2250,7 +2250,7 @@ async fn thread_fork_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
 
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
@@ -2312,13 +2312,13 @@ async fn assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(
     history_mode: ThreadHistoryMode,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let preview = "Saved user message";
     let create_rollout = create_fake_paginated_rollout;
     let conversation_id = create_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -2327,7 +2327,7 @@ async fn assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -2502,16 +2502,16 @@ async fn assert_thread_fork_ephemeral_remains_pathless_and_omits_listing(
 #[tokio::test]
 async fn thread_fork_rejects_incompatible_boundaries_and_ephemeral_goal_deferral() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -2549,13 +2549,13 @@ async fn thread_fork_rejects_incompatible_boundaries_and_ephemeral_goal_deferral
 }
 
 #[tokio::test]
-async fn pathless_ephemeral_thread_rejects_genex_home_path_after_reload() -> Result<()> {
+async fn pathless_ephemeral_thread_rejects_ruxex_home_path_after_reload() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let parent_thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Parent message",
@@ -2563,7 +2563,7 @@ async fn pathless_ephemeral_thread_rejects_genex_home_path_after_reload() -> Res
 
     let side_thread_id = {
         let mut app_server = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .without_auto_env()
             .build_initialized()
             .await?;
@@ -2603,16 +2603,16 @@ async fn pathless_ephemeral_thread_rejects_genex_home_path_after_reload() -> Res
     };
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
-    let genex_home_path = genex_home.path().to_path_buf();
+    let ruxex_home_path = ruxex_home.path().to_path_buf();
 
     let resume_id = app_server
         .send_thread_resume_request(ThreadResumeParams {
             thread_id: side_thread_id.clone(),
-            path: Some(genex_home_path.clone()),
+            path: Some(ruxex_home_path.clone()),
             ..Default::default()
         })
         .await?;
@@ -2635,7 +2635,7 @@ async fn pathless_ephemeral_thread_rejects_genex_home_path_after_reload() -> Res
     let fork_id = app_server
         .send_thread_fork_request(ThreadForkParams {
             thread_id: side_thread_id,
-            path: Some(genex_home_path),
+            path: Some(ruxex_home_path),
             ..Default::default()
         })
         .await?;

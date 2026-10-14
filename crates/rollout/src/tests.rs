@@ -1,7 +1,7 @@
 #![allow(warnings, clippy::all)]
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
@@ -33,18 +33,18 @@ use crate::list::get_threads;
 use crate::list::read_head_for_summary;
 use crate::rollout_date_parts;
 use anyhow::Result;
-use genex_history::GenexHarnessMetadata;
-use genex_protocol::ThreadId;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadGoal;
-use genex_protocol::protocol::ThreadGoalStatus;
-use genex_protocol::protocol::ThreadGoalUpdatedEvent;
-use genex_protocol::protocol::UserMessageEvent;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadGoal;
+use ruxex_protocol::protocol::ThreadGoalStatus;
+use ruxex_protocol::protocol::ThreadGoalUpdatedEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
 
 const NO_SOURCE_FILTER: &[SessionSource] = &[];
 const TEST_PROVIDER: &str = "test-provider";
@@ -92,7 +92,7 @@ async fn insert_state_db_thread(
     archived: bool,
 ) -> crate::state_db::StateDbHandle {
     let runtime =
-        genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(home.abs()))
+        ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(home.abs()))
             .await
             .expect("state db should initialize");
     runtime
@@ -103,7 +103,7 @@ async fn insert_state_db_thread(
         .with_ymd_and_hms(2025, 1, 3, 12, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path.to_path_buf(),
         created_at,
@@ -303,7 +303,7 @@ async fn find_thread_path_repairs_missing_db_row_after_filesystem_fallback() {
 
     // Create an empty state DB so lookup takes the DB-first path and then falls back to files.
     let runtime =
-        genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(home.abs()))
+        ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(home.abs()))
             .await
             .expect("state db should initialize");
     runtime
@@ -357,7 +357,7 @@ async fn assert_state_db_rollout_path(
     expected_path: Option<&Path>,
 ) {
     let runtime =
-        genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(home.abs()))
+        ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(home.abs()))
             .await
             .expect("state db should initialize");
     let path = runtime
@@ -1303,7 +1303,7 @@ async fn read_head_for_summary_omits_harness_metadata() {
         ordinal: None,
         item: RolloutItem::ResponseItem(ResponseItemEnvelope {
             item: response_item.clone(),
-            metadata: Some(GenexHarnessMetadata::default()),
+            metadata: Some(RuxexHarnessMetadata::default()),
         }),
     };
     fs::write(

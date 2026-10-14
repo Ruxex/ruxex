@@ -1,8 +1,8 @@
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::request_user_input::RequestUserInputQuestion;
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::request_user_input::RequestUserInputQuestion;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 

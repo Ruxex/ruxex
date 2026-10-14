@@ -1,6 +1,6 @@
 use super::*;
-use genex_context_fragments::AnnotatedContent;
-use genex_protocol::models::ContentItemKind;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_protocol::models::ContentItemKind;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use serde::Serialize;

@@ -5,13 +5,13 @@
 
 use crate::AuthRouteConfig;
 use crate::CredentialManager;
-use crate::GenexAuth;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
+use crate::RuxexAuth;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 use std::sync::Arc;
 
 /// Creates an authentication manager with optional credentials for cross-crate tests.
-pub fn credential_manager_from_optional_auth(auth: Option<GenexAuth>) -> Arc<CredentialManager> {
+pub fn credential_manager_from_optional_auth(auth: Option<RuxexAuth>) -> Arc<CredentialManager> {
     CredentialManager::from_optional_auth_for_testing(auth)
 }
 

@@ -10,8 +10,8 @@ use crate::startup_draft::StartupDraftSessionAction;
 /// Dropping a cancelled worker or undelivered event removes only a clean checkout.
 #[derive(Debug)]
 pub(crate) struct PendingWorktree {
-    pub(in crate::app) manager: genex_worktree::WorktreeManager,
-    pub(in crate::app) checkout: Option<genex_worktree::ManagedWorktree>,
+    pub(in crate::app) manager: ruxex_worktree::WorktreeManager,
+    pub(in crate::app) checkout: Option<ruxex_worktree::ManagedWorktree>,
 }
 
 impl Drop for PendingWorktree {
@@ -30,7 +30,7 @@ impl Drop for PendingWorktree {
 impl App {
     fn agents_overview_retained_worktree_error(
         &mut self,
-        checkout: &genex_worktree::ManagedWorktree,
+        checkout: &ruxex_worktree::ManagedWorktree,
         reason: impl std::fmt::Display,
     ) {
         self.add_agents_overview_error(format!("{reason} A checkout was retained at {}; remove it with `git worktree remove <checkout-path>` from the source repository if it is no longer needed.", checkout.root.display()));
@@ -90,8 +90,8 @@ impl App {
         app_server: &mut AppServerSession,
         cwd: Option<AbsolutePathBuf>,
         managed_worktree: Option<(
-            genex_worktree::WorktreeManager,
-            genex_worktree::ManagedWorktree,
+            ruxex_worktree::WorktreeManager,
+            ruxex_worktree::ManagedWorktree,
         )>,
         mut startup_draft: Option<&mut StartupDraftPump>,
     ) -> Result<AppRunControl> {
@@ -240,17 +240,17 @@ impl App {
                 "The source project is not trusted."
             );
             let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-                &self.config.genex_home,
+                &self.config.ruxex_home,
                 /*cwd*/ None,
                 Vec::new(),
-                genex_config::ConfigLoadOptions::default(),
+                ruxex_config::ConfigLoadOptions::default(),
             )
             .await?;
-            let settings = genex_worktree::WorktreeSettings::for_cli(
-                &self.config.genex_home,
+            let settings = ruxex_worktree::WorktreeSettings::for_cli(
+                &self.config.ruxex_home,
                 host.config_toml.desktop.as_ref(),
             )?;
-            anyhow::Ok(genex_worktree::WorktreeManager::new(settings))
+            anyhow::Ok(ruxex_worktree::WorktreeManager::new(settings))
         }
         .await;
         let manager = match setup {
@@ -266,9 +266,9 @@ impl App {
         let sender = self.app_event_tx.clone();
         tokio::spawn(async move {
             let result = tokio::task::spawn_blocking(move || {
-                genex_worktree::default_worktree_base(config.cwd.as_path())
+                ruxex_worktree::default_worktree_base(config.cwd.as_path())
                     .and_then(|base| {
-                        manager.create(&genex_worktree::CreateWorktree {
+                        manager.create(&ruxex_worktree::CreateWorktree {
                             source_cwd: config.cwd.to_path_buf(),
                             base: Some(base),
                         })

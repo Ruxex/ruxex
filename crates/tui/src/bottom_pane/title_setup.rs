@@ -37,7 +37,7 @@ use crate::render::renderable::Renderable;
 #[derive(EnumIter, EnumString, Display, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[strum(serialize_all = "kebab-case")]
 pub(crate) enum TerminalTitleItem {
-    /// Genex app name.
+    /// Ruxex app name.
     AppName,
     /// Project root name, or a compact cwd fallback.
     #[strum(to_string = "project-name", serialize = "project")]
@@ -66,8 +66,8 @@ pub(crate) enum TerminalTitleItem {
     FiveHourLimit,
     /// Remaining usage on the secondary rate limit.
     WeeklyLimit,
-    /// Genex application version.
-    GenexVersion,
+    /// Ruxex application version.
+    RuxexVersion,
     /// Total tokens used in the current session.
     UsedTokens,
     /// Total input tokens consumed.
@@ -95,7 +95,7 @@ pub(crate) enum TerminalTitleItem {
 impl TerminalTitleItem {
     pub(crate) fn description(self) -> &'static str {
         match self {
-            TerminalTitleItem::AppName => "Genex app name",
+            TerminalTitleItem::AppName => "Ruxex app name",
             TerminalTitleItem::Project => "Project name (falls back to current directory name)",
             TerminalTitleItem::CurrentDir => "Current working directory",
             TerminalTitleItem::Spinner => {
@@ -119,7 +119,7 @@ impl TerminalTitleItem {
             TerminalTitleItem::WeeklyLimit => {
                 "Remaining usage on the secondary usage limit (omitted when unavailable)"
             }
-            TerminalTitleItem::GenexVersion => "Genex application version",
+            TerminalTitleItem::RuxexVersion => "Ruxex application version",
             TerminalTitleItem::UsedTokens => "Total tokens used in session (omitted when zero)",
             TerminalTitleItem::TotalInputTokens => "Total input tokens used in session",
             TerminalTitleItem::TotalOutputTokens => "Total output tokens used in session",
@@ -155,7 +155,7 @@ impl TerminalTitleItem {
             TerminalTitleItem::ContextUsed => Some(StatusSurfacePreviewItem::ContextUsed),
             TerminalTitleItem::FiveHourLimit => Some(StatusSurfacePreviewItem::FiveHourLimit),
             TerminalTitleItem::WeeklyLimit => Some(StatusSurfacePreviewItem::WeeklyLimit),
-            TerminalTitleItem::GenexVersion => Some(StatusSurfacePreviewItem::GenexVersion),
+            TerminalTitleItem::RuxexVersion => Some(StatusSurfacePreviewItem::RuxexVersion),
             TerminalTitleItem::UsedTokens => Some(StatusSurfacePreviewItem::UsedTokens),
             TerminalTitleItem::TotalInputTokens => Some(StatusSurfacePreviewItem::TotalInputTokens),
             TerminalTitleItem::TotalOutputTokens => {

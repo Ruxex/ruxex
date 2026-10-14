@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use genex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkPolicyDecider;
 use tokio::sync::watch;
 use tracing::trace;
 

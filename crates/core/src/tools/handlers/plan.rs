@@ -6,13 +6,13 @@ use crate::tools::context::boxed_tool_output;
 use crate::tools::handlers::plan_spec::create_update_plan_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::plan_tool::UpdatePlanArgs;
-use genex_protocol::protocol::EventMsg;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::plan_tool::UpdatePlanArgs;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use serde_json::Value as JsonValue;
 
 pub struct PlanHandler;
@@ -54,7 +54,7 @@ impl ToolExecutor<ToolInvocation> for PlanHandler {
         create_update_plan_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

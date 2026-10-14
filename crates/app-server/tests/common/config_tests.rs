@@ -3,12 +3,12 @@ use tempfile::TempDir;
 
 #[test]
 fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
-    let home = TempDir::new().expect("temporary GENEX_HOME");
+    let home = TempDir::new().expect("temporary RUXEX_HOME");
     MockResponsesConfig::new("http://127.0.0.1:1234")
         .with_model("custom-model")
         .with_model_provider("provider-custom")
         .with_provider_name("provider")
-        .with_provider_base_url("http://127.0.0.1:1234/api/genex")
+        .with_provider_base_url("http://127.0.0.1:1234/api/ruxex")
         .with_approval_policy("on-request")
         .with_sandbox_mode("workspace-write")
         .enable_feature(Feature::NetworkProxy)
@@ -28,7 +28,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
         "shell_snapshot = false",
         "network_proxy = true",
         "[model_provider]\nid = \"provider-custom\"\nname = \"provider\"",
-        "base_url = \"http://127.0.0.1:1234/api/genex\"",
+        "base_url = \"http://127.0.0.1:1234/api/ruxex\"",
         "[extra]\nenabled = true",
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
@@ -37,7 +37,7 @@ fn mock_responses_config_composes_model_provider_features_and_extra_tables() {
 
 #[test]
 fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
-    let home = TempDir::new().expect("temporary GENEX_HOME");
+    let home = TempDir::new().expect("temporary RUXEX_HOME");
     write_mock_responses_config_toml(
         home.path(),
         "http://127.0.0.1:1234",

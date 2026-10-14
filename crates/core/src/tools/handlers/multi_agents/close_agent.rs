@@ -1,7 +1,7 @@
 use super::*;
 use crate::tools::handlers::multi_agents_spec::create_close_agent_tool_v1;
-use genex_protocol::error::GenexErrorDetails;
-use genex_tools::ToolSpec;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_tools::ToolSpec;
 
 pub(crate) struct Handler;
 
@@ -21,7 +21,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -70,7 +70,7 @@ async fn handle_close_agent(
     {
         Ok(mut status_rx) => status_rx.borrow_and_update().clone(),
         Err(err)
-            if known_agent && matches!(err.details(), GenexErrorDetails::ThreadNotFound(_)) =>
+            if known_agent && matches!(err.details(), RuxexErrorDetails::ThreadNotFound(_)) =>
         {
             session.services.agent_control.get_status(agent_id).await
         }

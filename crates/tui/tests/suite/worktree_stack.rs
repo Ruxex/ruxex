@@ -1,13 +1,13 @@
 //! Exercises stack-sensitive session transitions through the real TUI event loop.
 
-use super::focus_palette::PtyGenex;
+use super::focus_palette::PtyRuxex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
 use anyhow::ensure;
 use core_test_support::responses;
-use genex_worktree::ManagedWorktree;
-use genex_worktree::WorktreeManager;
-use genex_worktree::WorktreeSettings;
+use ruxex_worktree::ManagedWorktree;
+use ruxex_worktree::WorktreeManager;
+use ruxex_worktree::WorktreeSettings;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -40,7 +40,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
             .arg(&root)
             .args([
                 "-c",
-                "user.name=Genex Test",
+                "user.name=Ruxex Test",
                 "-c",
                 "user.email=test@example.invalid"
             ])
@@ -50,10 +50,10 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
         "commit test repository"
     );
 
-    let genex_home = tempfile::tempdir_in("/tmp")?;
-    write_test_config(genex_home.path(), &root)?;
+    let ruxex_home = tempfile::tempdir_in("/tmp")?;
+    write_test_config(ruxex_home.path(), &root)?;
     let server = responses::start_mock_server().await;
-    let config_path = genex_home.path().join("config.toml");
+    let config_path = ruxex_home.path().join("config.toml");
     let config = fs::read_to_string(&config_path)?.replace(
         "model_provider.id = \"provider\"",
         "model_provider.id = \"test\"",
@@ -74,13 +74,13 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     .await;
 
     let worktrees = WorktreeManager::new(WorktreeSettings::for_cli(
-        genex_home.path(),
+        ruxex_home.path(),
         /*desktop*/ None,
     )?);
-    // The launcher gives genex-main and Tokio workers explicit 16 MiB stacks.
-    let mut terminal = PtyGenex::start(
+    // The launcher gives ruxex-main and Tokio workers explicit 16 MiB stacks.
+    let mut terminal = PtyRuxex::start(
         &root,
-        genex_home,
+        ruxex_home,
         &[
             "-c",
             "features.worktrees=true",
@@ -91,7 +91,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     )?;
     terminal.wait_for_startup()?;
     terminal.wait_for_screen("STACK_SAVED_HISTORY")?;
-    terminal.wait_for_screen("Ask Genex to do anything")?;
+    terminal.wait_for_screen("Ask Ruxex to do anything")?;
 
     submit(&mut terminal, "/side")?;
     terminal.wait_for_screen("Side from main thread")?;
@@ -103,7 +103,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     terminal.wait_for_screen("Resume a previous session")?;
     terminal.ensure_running()?;
     terminal.write_input(b"\x1b")?;
-    terminal.wait_for_screen("Ask Genex to do anything")?;
+    terminal.wait_for_screen("Ask Ruxex to do anything")?;
 
     submit(&mut terminal, "/worktree")?;
     terminal.wait_for_screen("Continue current conversation")?;
@@ -146,7 +146,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     Ok(())
 }
 
-fn submit(terminal: &mut PtyGenex, input: &str) -> Result<()> {
+fn submit(terminal: &mut PtyRuxex, input: &str) -> Result<()> {
     terminal.write_input(input.as_bytes())?;
     terminal.wait_for_screen(input)?;
     // Bulk PTY writes resemble a paste; wait out the Enter suppression window.
@@ -156,7 +156,7 @@ fn submit(terminal: &mut PtyGenex, input: &str) -> Result<()> {
 }
 
 fn wait_for_owned_worktrees(
-    terminal: &mut PtyGenex,
+    terminal: &mut PtyRuxex,
     manager: &WorktreeManager,
     source: &Path,
     count: usize,

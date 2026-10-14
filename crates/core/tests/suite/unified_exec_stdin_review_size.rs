@@ -1,16 +1,16 @@
 //! Stdin approval must cover the complete input before any bytes reach a terminal.
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_protocol::approvals::ExecApprovalKind;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_protocol::approvals::ExecApprovalKind;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
 use core_test_support::responses::mount_sse_sequence;
@@ -19,7 +19,7 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -41,7 +41,7 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::WriteStdinApproval)
@@ -73,7 +73,7 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     }
     sequence.push(sse(vec![ev_completed("done")]));
     let responses = mount_sse_sequence(&server, sequence).await;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "send terminal input".to_string(),
@@ -90,11 +90,11 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
         .await?;
     let mut approvals = Vec::new();
     loop {
-        match wait_for_event(&test.genex, |_| true).await {
+        match wait_for_event(&test.ruxex, |_| true).await {
             EventMsg::ExecApprovalRequest(request) => {
                 let id = request.effective_approval_id();
                 approvals.push((request.kind, id.clone()));
-                test.genex
+                test.ruxex
                     .submit(Op::ExecApproval {
                         id,
                         turn_id: Some(request.turn_id),
@@ -119,8 +119,8 @@ async fn unreviewable_stdin_is_rejected_before_approval_or_execution(
     assert!(rejected.to_string().contains(expected_error), "{rejected}");
     let allowed = last.function_call_output("allowed");
     assert!(allowed.to_string().contains("STDIN_REVIEW_OK"), "{allowed}");
-    test.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;

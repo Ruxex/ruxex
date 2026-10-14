@@ -1,16 +1,16 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use genex_config::ConfigLayerSource;
-use genex_config::LoaderOverrides;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::LoaderOverrides;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
 use pretty_assertions::assert_eq;
 
 async fn test_config() -> Config {
-    let genex_home = tempfile::tempdir().expect("tempdir").keep();
+    let ruxex_home = tempfile::tempdir().expect("tempdir").keep();
     ConfigBuilder::default()
-        .genex_home(genex_home)
+        .ruxex_home(ruxex_home)
         .build()
         .await
         .expect("config")
@@ -125,7 +125,7 @@ async fn selected_custom_provider_and_service_tier_preserve_the_profile_model() 
     )
     .expect("profile");
     let mut actual = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .loader_overrides(LoaderOverrides {
             user_config_path: Some(home.path().join("custom.config.toml").abs()),
             user_config_profile: Some("custom".parse().expect("profile name")),
@@ -157,9 +157,9 @@ async fn managed_defaults_win_when_a_project_setting_shadows_the_selected_profil
         "model = \"profile-model\"\n",
     )
     .expect("profile");
-    std::fs::create_dir(project.path().join(".genex")).expect("project config directory");
+    std::fs::create_dir(project.path().join(".ruxex")).expect("project config directory");
     std::fs::write(
-        project.path().join(".genex/config.toml"),
+        project.path().join(".ruxex/config.toml"),
         "model = \"project-model\"\n",
     )
     .expect("project config");
@@ -170,7 +170,7 @@ async fn managed_defaults_win_when_a_project_setting_shadows_the_selected_profil
     )
     .expect("trusted project");
     let mut actual = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .loader_overrides(LoaderOverrides {
             user_config_path: Some(home.path().join("work.config.toml").abs()),
             user_config_profile: Some("work".parse().expect("profile name")),

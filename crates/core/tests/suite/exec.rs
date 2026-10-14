@@ -1,22 +1,22 @@
 #![cfg(target_os = "macos")]
 
-use genex_core::exec::ExecCapturePolicy;
-use genex_core::exec::ExecParams;
-use genex_core::exec::process_exec_tool_call;
-use genex_core::sandboxing::SandboxPermissions;
-use genex_core::spawn::GENEX_SANDBOX_ENV_VAR;
-use genex_protocol::error::Result;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::get_platform_sandbox;
+use ruxex_core::exec::ExecCapturePolicy;
+use ruxex_core::exec::ExecParams;
+use ruxex_core::exec::process_exec_tool_call;
+use ruxex_core::sandboxing::SandboxPermissions;
+use ruxex_core::spawn::RUXEX_SANDBOX_ENV_VAR;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::get_platform_sandbox;
 use core_test_support::PathExt;
 use std::collections::HashMap;
 use tempfile::TempDir;
 
 fn skip_test() -> bool {
-    if std::env::var(GENEX_SANDBOX_ENV_VAR) == Ok("seatbelt".to_string()) {
-        eprintln!("{GENEX_SANDBOX_ENV_VAR} is set to 'seatbelt', skipping test.");
+    if std::env::var(RUXEX_SANDBOX_ENV_VAR) == Ok("seatbelt".to_string()) {
+        eprintln!("{RUXEX_SANDBOX_ENV_VAR} is set to 'seatbelt', skipping test.");
         return true;
     }
 
@@ -51,7 +51,7 @@ where
         &PermissionProfile::read_only(),
         &cwd,
         &None,
-        /*genex_self_exe*/ &None,
+        /*ruxex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )

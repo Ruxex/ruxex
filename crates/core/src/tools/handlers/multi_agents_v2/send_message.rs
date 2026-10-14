@@ -3,7 +3,7 @@ use super::message_tool::handle_message_string_tool;
 use super::*;
 use crate::agent::control::MessageDeliveryMode;
 use crate::tools::handlers::multi_agents_spec::create_send_message_tool;
-use genex_tools::ToolSpec;
+use ruxex_tools::ToolSpec;
 
 pub(crate) struct Handler;
 
@@ -16,7 +16,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         create_send_message_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

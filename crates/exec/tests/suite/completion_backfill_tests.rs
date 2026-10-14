@@ -1,6 +1,6 @@
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex_exec::test_genex_exec;
+use core_test_support::test_ruxex_exec::test_ruxex_exec;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -79,7 +79,7 @@ async fn ignores_unrelated_turn_completion_before_backfilling_primary_turn() -> 
     )
     .await;
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let mock_provider = format!(
         "model_provider={{name=\"Mock provider for test\",base_url=\"{}/v1\",wire_api=\"responses\",supports_websockets=false}}",
         server.uri()
@@ -88,7 +88,7 @@ async fn ignores_unrelated_turn_completion_before_backfilling_primary_turn() -> 
         .cmd()
         .env(
             "RUST_LOG",
-            "genex_app_server::message_processor=trace,genex_app_server::outgoing_message=trace",
+            "ruxex_app_server::message_processor=trace,ruxex_app_server::outgoing_message=trace",
         )
         .arg("--skip-git-repo-check")
         .arg("--json")

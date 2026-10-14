@@ -1,8 +1,8 @@
 //! OAuth callback identity and authorization-server mix-up protection.
 //!
-//! Genex can authorize against many independent MCP servers. If those servers
+//! Ruxex can authorize against many independent MCP servers. If those servers
 //! share a callback URL and a response does not identify its authorization
-//! server, Genex could associate an authorization code with the wrong server
+//! server, Ruxex could associate an authorization code with the wrong server
 //! and send that code to an attacker-controlled token endpoint. RFC 9700 calls
 //! this an authorization-server mix-up attack:
 //! https://www.rfc-editor.org/rfc/rfc9700#section-4.4
@@ -88,7 +88,7 @@ pub fn resolve_mcp_oauth_callback_url(
 }
 
 pub(crate) fn callback_id_from_server_url(server_url: &str) -> Result<String> {
-    // Native Genex callback IDs intentionally hash the complete MCP URL (minus its fragment)
+    // Native Ruxex callback IDs intentionally hash the complete MCP URL (minus its fragment)
     // with SHA-256. Python connector callback IDs use SHAKE-256 over the origin and are distinct.
     let mut parsed =
         Url::parse(server_url).with_context(|| format!("invalid MCP server URL `{server_url}`"))?;

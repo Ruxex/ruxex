@@ -292,13 +292,13 @@ mod tests {
     fn render_replaces_placeholders_with_and_without_whitespace() {
         let rendered = render(
             "Hello, {{ name }}. You are in {{place}}. {{ name }} is repeated.",
-            [("name", "Genex"), ("place", "genex-rs")],
+            [("name", "Ruxex"), ("place", "ruxex-rs")],
         )
         .unwrap();
 
         assert_eq!(
             rendered,
-            "Hello, Genex. You are in genex-rs. Genex is repeated."
+            "Hello, Ruxex. You are in ruxex-rs. Ruxex is repeated."
         );
     }
 
@@ -307,8 +307,8 @@ mod tests {
         let template = Template::parse("{{greeting}}, {{ name }}!").unwrap();
 
         assert_eq!(
-            template.render([("greeting", "Hello"), ("name", "Genex")]),
-            Ok("Hello, Genex!".to_string())
+            template.render([("greeting", "Hello"), ("name", "Ruxex")]),
+            Ok("Hello, Ruxex!".to_string())
         );
         assert_eq!(
             template.render([("greeting", "Hi"), ("name", "builder")]),
@@ -338,13 +338,13 @@ mod tests {
     fn render_supports_literal_delimiter_escapes() {
         let rendered = render(
             "literal open: {{{{, literal close: }}}}, value: {{ name }}",
-            [("name", "Genex")],
+            [("name", "Ruxex")],
         )
         .unwrap();
 
         assert_eq!(
             rendered,
-            "literal open: {{, literal close: }}, value: Genex"
+            "literal open: {{, literal close: }}, value: Ruxex"
         );
     }
 
@@ -399,7 +399,7 @@ mod tests {
         let template = Template::parse("Hello, {{ name }}.").unwrap();
 
         assert_eq!(
-            template.render([("name", "Genex"), ("unused", "extra")]),
+            template.render([("name", "Ruxex"), ("unused", "extra")]),
             Err(TemplateRenderError::ExtraValue {
                 name: "unused".to_string()
             })
@@ -411,7 +411,7 @@ mod tests {
         let template = Template::parse("Hello, {{ name }}.").unwrap();
 
         assert_eq!(
-            template.render([("name", "Genex"), ("name", "other")]),
+            template.render([("name", "Ruxex"), ("name", "other")]),
             Err(TemplateRenderError::DuplicateValue {
                 name: "name".to_string()
             })
@@ -420,7 +420,7 @@ mod tests {
 
     #[test]
     fn render_function_wraps_parse_errors() {
-        let err = render("Hello, }} world.", [("name", "Genex")]).unwrap_err();
+        let err = render("Hello, }} world.", [("name", "Ruxex")]).unwrap_err();
 
         assert_eq!(
             err,
@@ -430,7 +430,7 @@ mod tests {
 
     #[test]
     fn render_function_wraps_render_errors() {
-        let err = render("Hello, {{ name }}.", [("extra", "Genex")]).unwrap_err();
+        let err = render("Hello, {{ name }}.", [("extra", "Ruxex")]).unwrap_err();
 
         assert_eq!(
             err,

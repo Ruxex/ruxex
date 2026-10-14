@@ -1,8 +1,8 @@
-use genex_config::HooksFile;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
-use genex_utils_plugins::find_plugin_manifest_path;
+use ruxex_config::HooksFile;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
+use ruxex_utils_plugins::find_plugin_manifest_path;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::fs;
@@ -21,14 +21,14 @@ mod agent_plugin_manifest_tests;
 
 use agent_plugin_manifest::parse_agent_plugin_manifest_uri;
 
-pub type PluginManifest = genex_plugin::manifest::PluginManifest<AbsolutePathBuf>;
-pub type PluginManifestHooks = genex_plugin::manifest::PluginManifestHooks<AbsolutePathBuf>;
-pub type PluginManifestInterface = genex_plugin::manifest::PluginManifestInterface<AbsolutePathBuf>;
+pub type PluginManifest = ruxex_plugin::manifest::PluginManifest<AbsolutePathBuf>;
+pub type PluginManifestHooks = ruxex_plugin::manifest::PluginManifestHooks<AbsolutePathBuf>;
+pub type PluginManifestInterface = ruxex_plugin::manifest::PluginManifestInterface<AbsolutePathBuf>;
 pub type PluginManifestMcpServers =
-    genex_plugin::manifest::PluginManifestMcpServers<AbsolutePathBuf>;
-pub type PluginManifestPaths = genex_plugin::manifest::PluginManifestPaths<AbsolutePathBuf>;
+    ruxex_plugin::manifest::PluginManifestMcpServers<AbsolutePathBuf>;
+pub type PluginManifestPaths = ruxex_plugin::manifest::PluginManifestPaths<AbsolutePathBuf>;
 
-pub type UriPluginManifest = genex_plugin::manifest::PluginManifest<PathUri>;
+pub type UriPluginManifest = ruxex_plugin::manifest::PluginManifest<PathUri>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum PluginManifestFormat {
@@ -159,7 +159,7 @@ pub(crate) fn load_plugin_manifest_with_format(plugin_root: &Path) -> Option<Loa
     let contents = fs::read_to_string(&manifest_path).ok()?;
     let is_agent_plugin = manifest_path == plugin_root.join(AGENT_PLUGIN_MANIFEST_RELATIVE_PATH);
     let overlay = if is_agent_plugin {
-        let overlay_path = plugin_root.join(".genex-plugin/plugin.json");
+        let overlay_path = plugin_root.join(".ruxex-plugin/plugin.json");
         fs::read_to_string(&overlay_path)
             .ok()
             .map(|contents| (overlay_path, contents))
@@ -322,7 +322,7 @@ fn resolve_raw_plugin_manifest(
             screenshots,
         } = interface;
 
-        let interface = genex_plugin::manifest::PluginManifestInterface {
+        let interface = ruxex_plugin::manifest::PluginManifestInterface {
             display_name,
             short_description,
             long_description,
@@ -378,12 +378,12 @@ fn resolve_raw_plugin_manifest(
 
         has_fields.then_some(interface)
     });
-    Ok(genex_plugin::manifest::PluginManifest {
+    Ok(ruxex_plugin::manifest::PluginManifest {
         name,
         version,
         description,
         keywords,
-        paths: genex_plugin::manifest::PluginManifestPaths {
+        paths: ruxex_plugin::manifest::PluginManifestPaths {
             skills: resolve_manifest_paths(plugin_root, "skills", skills.as_ref()),
             mcp_servers: resolve_manifest_mcp_servers(plugin_root, mcp_servers),
             hooks: resolve_manifest_hooks(plugin_root, hooks),
@@ -403,26 +403,26 @@ fn path_uri_json_error(error: impl std::fmt::Display) -> serde_json::Error {
 fn resolve_manifest_hooks(
     plugin_root: &PathUri,
     hooks: Option<RawPluginManifestHooks>,
-) -> Option<genex_plugin::manifest::PluginManifestHooks<PathUri>> {
+) -> Option<ruxex_plugin::manifest::PluginManifestHooks<PathUri>> {
     match hooks? {
         RawPluginManifestHooks::Path(path) => {
             resolve_manifest_path(plugin_root, "hooks", Some(&path))
-                .map(|path| genex_plugin::manifest::PluginManifestHooks::Paths(vec![path]))
+                .map(|path| ruxex_plugin::manifest::PluginManifestHooks::Paths(vec![path]))
         }
         RawPluginManifestHooks::Paths(paths) => {
             let hooks = paths
                 .iter()
                 .filter_map(|path| resolve_manifest_path(plugin_root, "hooks", Some(path)))
                 .collect::<Vec<_>>();
-            (!hooks.is_empty()).then_some(genex_plugin::manifest::PluginManifestHooks::Paths(hooks))
+            (!hooks.is_empty()).then_some(ruxex_plugin::manifest::PluginManifestHooks::Paths(hooks))
         }
         RawPluginManifestHooks::Inline(hooks) => {
-            Some(genex_plugin::manifest::PluginManifestHooks::Inline(vec![
+            Some(ruxex_plugin::manifest::PluginManifestHooks::Inline(vec![
                 *hooks,
             ]))
         }
         RawPluginManifestHooks::InlineList(hooks) => (!hooks.is_empty())
-            .then_some(genex_plugin::manifest::PluginManifestHooks::Inline(hooks)),
+            .then_some(ruxex_plugin::manifest::PluginManifestHooks::Inline(hooks)),
         RawPluginManifestHooks::Invalid(value) => {
             tracing::warn!(
                 "ignoring hooks: expected a string, string array, object, or object array; found {}",
@@ -436,14 +436,14 @@ fn resolve_manifest_hooks(
 fn resolve_manifest_mcp_servers(
     plugin_root: &PathUri,
     mcp_servers: Option<RawPluginManifestMcpServers>,
-) -> Option<genex_plugin::manifest::PluginManifestMcpServers<PathUri>> {
+) -> Option<ruxex_plugin::manifest::PluginManifestMcpServers<PathUri>> {
     match mcp_servers? {
         RawPluginManifestMcpServers::Path(path) => {
             resolve_manifest_path(plugin_root, "mcpServers", Some(&path))
-                .map(genex_plugin::manifest::PluginManifestMcpServers::Path)
+                .map(ruxex_plugin::manifest::PluginManifestMcpServers::Path)
         }
         RawPluginManifestMcpServers::Object(servers) => match serde_json::to_string(&servers) {
-            Ok(servers) => Some(genex_plugin::manifest::PluginManifestMcpServers::Object(
+            Ok(servers) => Some(ruxex_plugin::manifest::PluginManifestMcpServers::Object(
                 servers,
             )),
             Err(err) => {
@@ -632,19 +632,19 @@ mod tests {
     use super::MAX_DEFAULT_PROMPT_LEN;
     use super::PluginManifest;
     use super::load_plugin_manifest;
-    use genex_exec_server::EnvironmentManager;
-    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use genex_plugin::PluginProvider;
-    use genex_plugin::ResolvedPlugin;
-    use genex_plugin::manifest::PluginManifest as GenericPluginManifest;
-    use genex_plugin::manifest::PluginManifestHooks;
-    use genex_plugin::manifest::PluginManifestInterface;
-    use genex_plugin::manifest::PluginManifestMcpServers;
-    use genex_plugin::manifest::PluginManifestPaths;
-    use genex_protocol::capabilities::CapabilityRootLocation;
-    use genex_protocol::capabilities::SelectedCapabilityRoot;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_exec_server::EnvironmentManager;
+    use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use ruxex_plugin::PluginProvider;
+    use ruxex_plugin::ResolvedPlugin;
+    use ruxex_plugin::manifest::PluginManifest as GenericPluginManifest;
+    use ruxex_plugin::manifest::PluginManifestHooks;
+    use ruxex_plugin::manifest::PluginManifestInterface;
+    use ruxex_plugin::manifest::PluginManifestMcpServers;
+    use ruxex_plugin::manifest::PluginManifestPaths;
+    use ruxex_protocol::capabilities::CapabilityRootLocation;
+    use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::path::Path;
@@ -655,12 +655,12 @@ mod tests {
     const ALTERNATE_PLUGIN_MANIFEST_RELATIVE_PATH: &str = ".claude-plugin/plugin.json";
 
     fn write_manifest(plugin_root: &Path, version: Option<&str>, interface: &str) {
-        fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create manifest dir");
+        fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("create manifest dir");
         let version = version
             .map(|version| format!("  \"version\": \"{version}\",\n"))
             .unwrap_or_default();
         fs::write(
-            plugin_root.join(".genex-plugin/plugin.json"),
+            plugin_root.join(".ruxex-plugin/plugin.json"),
             format!(
                 r#"{{
   "name": "demo-plugin",
@@ -808,9 +808,9 @@ mod tests {
     fn plugin_manifest_reads_keywords() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("demo-plugin");
-        fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create manifest dir");
+        fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("create manifest dir");
         fs::write(
-            plugin_root.join(".genex-plugin/plugin.json"),
+            plugin_root.join(".ruxex-plugin/plugin.json"),
             r#"{
   "name": "demo-plugin",
   "keywords": ["api-key", "developer tools"]
@@ -871,7 +871,7 @@ mod tests {
 
     fn parse_uri_composer_icon(plugin_root: &PathUri, composer_icon: &str) -> Option<PathUri> {
         let manifest_path = plugin_root
-            .join(".genex-plugin/plugin.json")
+            .join(".ruxex-plugin/plugin.json")
             .expect("manifest URI");
         let composer_icon_json =
             serde_json::to_string(composer_icon).expect("serialize composer icon");
@@ -921,10 +921,10 @@ mod tests {
             .expect("resolve executor plugin")
             .expect("plugin descriptor");
         let manifest_path = plugin_root_uri
-            .join(".genex-plugin/plugin.json")
+            .join(".ruxex-plugin/plugin.json")
             .expect("manifest URI");
         let manifest_contents =
-            fs::read_to_string(plugin_root.join(".genex-plugin/plugin.json")).expect("manifest");
+            fs::read_to_string(plugin_root.join(".ruxex-plugin/plugin.json")).expect("manifest");
         let expected_manifest =
             super::parse_plugin_manifest_uri(&plugin_root_uri, &manifest_path, &manifest_contents)
                 .expect("URI manifest");
@@ -945,7 +945,7 @@ mod tests {
         let plugin_root =
             PathUri::parse("file:///C:/plugins/demo-plugin").expect("plugin root URI");
         let manifest_path = plugin_root
-            .join(".genex-plugin/plugin.json")
+            .join(".ruxex-plugin/plugin.json")
             .expect("manifest URI");
         let manifest = super::parse_plugin_manifest_uri(
             &plugin_root,

@@ -1,9 +1,9 @@
 use super::invalid_request;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_core::GenexThread;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_core::RuxexThread;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
 
 pub(super) const DIRECT_INPUT_TO_MULTI_AGENT_V2_SUBAGENT_ERROR: &str =
     "direct app-server input is not allowed for multi-agent v2 sub-agents";
@@ -21,7 +21,7 @@ pub(super) fn can_accept_direct_input(
 }
 
 pub(super) async fn ensure_direct_input_allowed(
-    thread: &GenexThread,
+    thread: &RuxexThread,
 ) -> Result<(), JSONRPCErrorError> {
     let config_snapshot = thread.config_snapshot().await;
     if !can_accept_direct_input(

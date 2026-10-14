@@ -17,7 +17,7 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_config::types::ResumeCwdMode;
+use ruxex_config::types::ResumeCwdMode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
@@ -416,7 +416,7 @@ mod tests {
     async fn cwd_prompt_remembered_choices_select_and_persist_matching_directory() -> Result<()> {
         let temp_dir = TempDir::new()?;
         let config = ConfigBuilder::default()
-            .genex_home(temp_dir.path().to_path_buf())
+            .ruxex_home(temp_dir.path().to_path_buf())
             .build()
             .await?;
         let current_cwd = Path::new("/Users/example/current");

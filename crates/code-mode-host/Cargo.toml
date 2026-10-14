@@ -1,16 +1,16 @@
 [package]
-name = "genex-code-mode-host"
+name = "ruxex-code-mode-host"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "genex-code-mode-host"
+name = "ruxex-code-mode-host"
 path = "src/main.rs"
 
 [lib]
 doctest = false
-name = "genex_code_mode_host"
+name = "ruxex_code_mode_host"
 path = "src/lib.rs"
 
 [lints]
@@ -20,11 +20,11 @@ workspace = true
 anyhow = { workspace = true }
 axum = { workspace = true, features = ["http1", "tokio", "ws"] }
 clap = { workspace = true, features = ["derive"] }
-genex-code-mode-protocol = { workspace = true }
-genex-code-mode-runtime = { workspace = true }
-genex-otel = { workspace = true }
-genex-otel-trace-websocket = { workspace = true }
-genex-protocol = { workspace = true }
+ruxex-code-mode-protocol = { workspace = true }
+ruxex-code-mode-runtime = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-otel-trace-websocket = { workspace = true }
+ruxex-protocol = { workspace = true }
 futures = { workspace = true }
 prost = "0.14.3"
 serde_json = { workspace = true }
@@ -37,7 +37,7 @@ tracing-subscriber = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
-genex-code-mode = { workspace = true }
-genex-utils-cargo-bin = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

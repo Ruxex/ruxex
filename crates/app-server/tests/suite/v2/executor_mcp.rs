@@ -7,24 +7,24 @@ use axum::body::Bytes;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::routing::post;
-use genex_app_server_protocol::CapabilityRootLocation;
-use genex_app_server_protocol::ListMcpServerStatusParams;
-use genex_app_server_protocol::ListMcpServerStatusResponse;
-use genex_app_server_protocol::McpServerOauthLoginCompletedNotification;
-use genex_app_server_protocol::McpServerOauthLoginResponse;
-use genex_app_server_protocol::McpServerStatus;
-use genex_app_server_protocol::McpServerToolCallParams;
-use genex_app_server_protocol::McpServerToolCallResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SelectedCapabilityRoot;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
-use genex_http_client::HttpClientBuilder;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::CapabilityRootLocation;
+use ruxex_app_server_protocol::ListMcpServerStatusParams;
+use ruxex_app_server_protocol::ListMcpServerStatusResponse;
+use ruxex_app_server_protocol::McpServerOauthLoginCompletedNotification;
+use ruxex_app_server_protocol::McpServerOauthLoginResponse;
+use ruxex_app_server_protocol::McpServerStatus;
+use ruxex_app_server_protocol::McpServerToolCallParams;
+use ruxex_app_server_protocol::McpServerToolCallResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SelectedCapabilityRoot;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
+use ruxex_http_client::HttpClientBuilder;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::responses;
 use core_test_support::stdio_server_bin;
 use futures::SinkExt;
@@ -123,13 +123,13 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
     let http_server_handle = tokio::spawn(async move {
         let _ = axum::serve(http_listener, http_router).await;
     });
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let executor_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_sandbox_mode("danger-full-access")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         format!(
             "[mcp_servers.{PROJECT_MCP_SERVER_NAME}.identity]\nurl = \"{EXECUTOR_HTTP_MCP_URL}\"\n"
         ),
@@ -142,11 +142,11 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
     )?;
     // Browser auth tokens are not inherited by spawned executors, so use the production
     // WebSocket connection and put the token directly in the executor's environment.
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+    let mut executor = Command::new(ruxex_utils_cargo_bin::cargo_bin("exec-server")?)
         .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
-        .env("GENEX_HOME", executor_home.path())
+        .env("RUXEX_HOME", executor_home.path())
         .env(PROJECT_MCP_BEARER_ENV_NAME, PROJECT_MCP_BEARER_TOKEN)
         .env("HTTP_PROXY", format!("http://{http_addr}"))
         .spawn()?;
@@ -156,14 +156,14 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
         .await??
         .expect("executor emits its websocket URL");
     std::fs::write(
-        genex_home.path().join("environments.toml"),
+        ruxex_home.path().join("environments.toml"),
         format!(
             "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nurl = \"{executor_url}\"\n"
         ),
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -241,7 +241,7 @@ async fn selected_executor_discovers_browser_mcp_with_executor_only_bearer_token
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Result<()> {
     let responses_server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let executor_home = TempDir::new()?;
 
     let http_listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -277,7 +277,7 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
     MockResponsesConfig::new(&responses_server.uri())
         .with_sandbox_mode("danger-full-access")
         .with_extra_config(&root_config)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     std::fs::write(
         executor_home.path().join("config.toml"),
         format!(
@@ -285,11 +285,11 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
         ),
     )?;
 
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+    let mut executor = Command::new(ruxex_utils_cargo_bin::cargo_bin("exec-server")?)
         .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
-        .env("GENEX_HOME", executor_home.path())
+        .env("RUXEX_HOME", executor_home.path())
         .spawn()?;
     let stdout = executor.stdout.take().expect("executor stdout is piped");
     let mut lines = BufReader::new(stdout).lines();
@@ -356,14 +356,14 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
         }
     });
     std::fs::write(
-        genex_home.path().join("environments.toml"),
+        ruxex_home.path().join("environments.toml"),
         format!(
             "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nurl = \"{proxy_url}\"\n"
         ),
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[("HOST_MCP_TEST_TOKEN", Some("host-only-token"))])
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -419,29 +419,29 @@ async fn legacy_executor_skips_required_browser_and_keeps_host_owned_mcp() -> Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn guardian_review_does_not_discover_executor_mcp() -> Result<()> {
     let responses_server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let executor_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_approval_policy("on-request")
         .with_root_config("approvals_reviewer = \"auto_review\"")
         .enable_feature(Feature::GuardianApproval)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     std::fs::write(executor_home.path().join("config.toml"), "")?;
-    let genex_bin = toml::Value::String(
-        genex_utils_cargo_bin::cargo_bin("exec-server")?
+    let ruxex_bin = toml::Value::String(
+        ruxex_utils_cargo_bin::cargo_bin("exec-server")?
             .to_string_lossy()
             .into_owned(),
     );
     let executor_home_value =
         toml::Value::String(executor_home.path().to_string_lossy().into_owned());
     std::fs::write(
-        genex_home.path().join("environments.toml"),
+        ruxex_home.path().join("environments.toml"),
         format!(
-            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {genex_bin}\nargs = [\"--listen\", \"stdio\"]\n[environments.env]\nGENEX_HOME = {executor_home_value}\n"
+            "default = \"{EXECUTOR_ID}\"\ninclude_local = false\n\n[[environments]]\nid = \"{EXECUTOR_ID}\"\nprogram = {ruxex_bin}\nargs = [\"--listen\", \"stdio\"]\n[environments.env]\nRUXEX_HOME = {executor_home_value}\n"
         ),
     )?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -635,7 +635,7 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
     let global_callback_listener = TcpListener::bind("127.0.0.1:0").await?;
     let global_callback_port = global_callback_listener.local_addr()?.port();
     drop(plugin_callback_listener);
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let executor_home = TempDir::new()?;
     std::fs::write(
         executor_home.path().join("config.toml"),
@@ -649,8 +649,8 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
     MockResponsesConfig::new(&responses_server.uri())
         .with_root_config(&root_config)
         .with_provider_config("supports_websockets = false")
-        .write(genex_home.path())?;
-    let executor_config: genex_config::types::McpServerConfig = serde_json::from_value(json!({
+        .write(ruxex_home.path())?;
+    let executor_config: ruxex_config::types::McpServerConfig = serde_json::from_value(json!({
         "url": EXECUTOR_OAUTH_MCP_URL,
         "environment_id": EXECUTOR_ID,
     }))?;
@@ -663,16 +663,16 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
         "refresh_token": null,
         "scopes": [],
     });
-    let oauth_credentials_path = genex_home.path().join(".credentials.json");
+    let oauth_credentials_path = ruxex_home.path().join(".credentials.json");
     std::fs::write(
         &oauth_credentials_path,
         serde_json::to_vec(&json!({"host": host_oauth_credential.clone()}))?,
     )?;
-    let mut executor = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+    let mut executor = Command::new(ruxex_utils_cargo_bin::cargo_bin("exec-server")?)
         .args(["--listen", "ws://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .kill_on_drop(true)
-        .env("GENEX_HOME", executor_home.path())
+        .env("RUXEX_HOME", executor_home.path())
         .env(EXECUTOR_ENV_NAME, EXECUTOR_ENV_VALUE)
         .env(EXECUTOR_HTTP_AUTH_ENV_NAME, EXECUTOR_HTTP_AUTH_ENV_VALUE)
         .env("HTTP_PROXY", format!("http://{http_addr}"))
@@ -683,7 +683,7 @@ async fn selected_executor_plugin_exposes_its_mcps_only_to_that_thread() -> Resu
         .await??
         .expect("executor emits its websocket URL");
     std::fs::write(
-        genex_home.path().join("environments.toml"),
+        ruxex_home.path().join("environments.toml"),
         format!(
             r#"
 include_local = true
@@ -696,9 +696,9 @@ url = "{executor_url}"
     )?;
 
     let plugin = TempDir::new()?;
-    std::fs::create_dir_all(plugin.path().join(".genex-plugin"))?;
+    std::fs::create_dir_all(plugin.path().join(".ruxex-plugin"))?;
     std::fs::write(
-        plugin.path().join(".genex-plugin/plugin.json"),
+        plugin.path().join(".ruxex-plugin/plugin.json"),
         r#"{"name":"executor-demo"}"#,
     )?;
     std::fs::write(
@@ -741,7 +741,7 @@ url = "{executor_url}"
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         // This suite owns environments.toml to exercise explicit executor selection.
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -759,7 +759,7 @@ url = "{executor_url}"
     )
     .await?;
 
-    let config_path = genex_home.path().join("config.toml");
+    let config_path = ruxex_home.path().join("config.toml");
     let mut config = std::fs::read_to_string(&config_path)?;
     config.push_str(&format!(
         r#"

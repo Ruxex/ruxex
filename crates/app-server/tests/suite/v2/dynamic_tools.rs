@@ -6,32 +6,32 @@ use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
 use app_test_support::write_models_cache_with_models;
-use genex_app_server_protocol::DynamicToolCallOutputContentItem;
-use genex_app_server_protocol::DynamicToolCallParams;
-use genex_app_server_protocol::DynamicToolCallResponse;
-use genex_app_server_protocol::DynamicToolCallStatus;
-use genex_app_server_protocol::DynamicToolFunctionSpec;
-use genex_app_server_protocol::DynamicToolNamespaceSpec;
-use genex_app_server_protocol::DynamicToolNamespaceTool;
-use genex_app_server_protocol::DynamicToolSpec;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageReference;
-use genex_protocol::model_types::InputModality;
+use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
+use ruxex_app_server_protocol::DynamicToolCallParams;
+use ruxex_app_server_protocol::DynamicToolCallResponse;
+use ruxex_app_server_protocol::DynamicToolCallStatus;
+use ruxex_app_server_protocol::DynamicToolFunctionSpec;
+use ruxex_app_server_protocol::DynamicToolNamespaceSpec;
+use ruxex_app_server_protocol::DynamicToolNamespaceTool;
+use ruxex_app_server_protocol::DynamicToolSpec;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::model_types::InputModality;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
@@ -60,11 +60,11 @@ async fn thread_start_normalizes_legacy_dynamic_tools_into_model_request() -> Re
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -178,11 +178,11 @@ async fn thread_start_normalizes_legacy_dynamic_tools_into_model_request() -> Re
 async fn thread_start_rejects_hidden_dynamic_tools_without_namespace() -> Result<()> {
     let server = MockServer::start().await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -220,11 +220,11 @@ async fn thread_start_rejects_hidden_dynamic_tools_without_namespace() -> Result
 async fn thread_start_rejects_invalid_dynamic_tool_inputs() -> Result<()> {
     let server = MockServer::start().await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -341,7 +341,7 @@ async fn thread_start_rejects_invalid_dynamic_tool_inputs() -> Result<()> {
 #[tokio::test]
 async fn dynamic_tool_call_round_trip_sends_text_content_items_to_model() -> Result<()> {
     let call_id = "dyn-call-1";
-    let tool_namespace = "genex_app";
+    let tool_namespace = "ruxex_app";
     let tool_name = "demo_tool";
     let tool_args = json!({ "city": "Paris" });
     let tool_call_arguments = serde_json::to_string(&tool_args)?;
@@ -366,11 +366,11 @@ async fn dynamic_tool_call_round_trip_sends_text_content_items_to_model() -> Res
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -596,16 +596,16 @@ async fn start_function_dynamic_tool_call(call_id: &str) -> Result<PendingDynami
     ];
     let server = create_mock_responses_server_sequence_unchecked(response_sequence).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
-    let config = load_default_config_for_test(&genex_home).await;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
+    let config = load_default_config_for_test(&ruxex_home).await;
     let mut model_info =
-        genex_core::test_support::construct_model_info_offline("mock-model", &config);
+        ruxex_core::test_support::construct_model_info_offline("mock-model", &config);
     model_info.input_modalities.push(InputModality::Audio);
-    write_models_cache_with_models(genex_home.path(), vec![model_info]).await?;
+    write_models_cache_with_models(ruxex_home.path(), vec![model_info]).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;

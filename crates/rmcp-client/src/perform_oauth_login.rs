@@ -8,7 +8,7 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use genex_exec_server::HttpClient;
+use ruxex_exec_server::HttpClient;
 use rmcp::transport::AuthorizationManager;
 use rmcp::transport::AuthorizationSession;
 use rmcp::transport::auth::AuthorizationMetadata;
@@ -42,8 +42,8 @@ use crate::oauth_client_registration::start_authorization as start_client_regist
 use crate::oauth_http_client::OAuthHttpClientAdapter;
 use crate::save_oauth_tokens;
 use crate::utils::build_default_headers;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
 
 #[path = "oauth_callback_input.rs"]
 mod callback_input;
@@ -904,16 +904,16 @@ mod tests {
     use axum::routing::get;
     use axum::routing::post;
     use futures::future::BoxFuture;
-    use genex_config::types::AuthKeyringBackendKind;
-    use genex_config::types::OAuthCredentialsStoreMode;
-    use genex_exec_server::ExecServerError;
-    use genex_exec_server::HttpClient;
-    use genex_exec_server::HttpRequestParams;
-    use genex_exec_server::HttpRequestResponse;
-    use genex_exec_server::HttpResponseBodyStream;
-    use genex_exec_server::RouteAwareHttpClient;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
+    use ruxex_config::types::AuthKeyringBackendKind;
+    use ruxex_config::types::OAuthCredentialsStoreMode;
+    use ruxex_exec_server::ExecServerError;
+    use ruxex_exec_server::HttpClient;
+    use ruxex_exec_server::HttpRequestParams;
+    use ruxex_exec_server::HttpRequestResponse;
+    use ruxex_exec_server::HttpResponseBodyStream;
+    use ruxex_exec_server::RouteAwareHttpClient;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
     use http::HeaderMap;
     use oauth2::TokenResponse;
     use pretty_assertions::assert_eq;
@@ -939,7 +939,7 @@ mod tests {
     use super::resolve_authorization_manager;
     use super::start_authorization;
     use crate::oauth::stored_oauth_credentials;
-    use crate::oauth::test_support::TempGenexHome;
+    use crate::oauth::test_support::TempRuxexHome;
 
     #[derive(Default)]
     struct RecordingHttpClient {
@@ -1063,7 +1063,7 @@ mod tests {
 
     #[tokio::test]
     async fn ordinary_oauth_login_persists_issuer_without_a_refresh_token() -> anyhow::Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let (base_url, _registration_requests) = spawn_oauth_metadata_server().await;
         let server_url = format!("{base_url}/mcp");
         let flow = OauthLoginFlow::new(

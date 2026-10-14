@@ -12,10 +12,10 @@ use std::time::Duration;
 
 use anyhow::Result;
 use futures::FutureExt as _;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::RmcpClient;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;

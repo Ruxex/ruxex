@@ -5,13 +5,13 @@ use std::sync::Mutex;
 use std::sync::PoisonError;
 use std::sync::Weak;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadGoal;
-use genex_protocol::protocol::ThreadGoalStatus;
-use genex_protocol::protocol::ThreadGoalUpdatedEvent;
-use genex_protocol::protocol::validate_thread_goal_objective;
-use genex_rollout::RolloutItem;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadGoal;
+use ruxex_protocol::protocol::ThreadGoalStatus;
+use ruxex_protocol::protocol::ThreadGoalUpdatedEvent;
+use ruxex_protocol::protocol::validate_thread_goal_objective;
+use ruxex_rollout::RolloutItem;
 
 use crate::runtime::GoalRuntimeHandle;
 use crate::runtime::PreviousGoalSnapshot;
@@ -60,7 +60,7 @@ pub struct GoalSetRequest<'a> {
 #[derive(Clone, Debug)]
 pub struct GoalSetOutcome {
     pub goal: ThreadGoal,
-    state_goal: genex_state::ThreadGoal,
+    state_goal: ruxex_state::ThreadGoal,
     previous_goal: Option<PreviousGoalSnapshot>,
 }
 
@@ -130,7 +130,7 @@ impl GoalService {
 
     pub async fn get_thread_goal(
         &self,
-        state_db: &genex_state::StateRuntime,
+        state_db: &ruxex_state::StateRuntime,
         thread_id: ThreadId,
     ) -> Result<Option<ThreadGoal>, GoalServiceError> {
         state_db
@@ -143,7 +143,7 @@ impl GoalService {
 
     pub async fn set_thread_goal(
         &self,
-        state_db: &genex_state::StateRuntime,
+        state_db: &ruxex_state::StateRuntime,
         request: GoalSetRequest<'_>,
     ) -> Result<GoalSetOutcome, GoalServiceError> {
         let GoalSetRequest {
@@ -205,7 +205,7 @@ impl GoalService {
                     .thread_goals()
                     .update_thread_goal(
                         thread_id,
-                        genex_state::GoalUpdate {
+                        ruxex_state::GoalUpdate {
                             objective: Some(objective.to_string()),
                             status,
                             token_budget,
@@ -228,7 +228,7 @@ impl GoalService {
                     .replace_thread_goal(
                         thread_id,
                         objective,
-                        status.unwrap_or(genex_state::ThreadGoalStatus::Active),
+                        status.unwrap_or(ruxex_state::ThreadGoalStatus::Active),
                         token_budget.flatten().or(max_goal_token_budget),
                     )
                     .await
@@ -256,7 +256,7 @@ impl GoalService {
                 .thread_goals()
                 .update_thread_goal(
                     thread_id,
-                    genex_state::GoalUpdate {
+                    ruxex_state::GoalUpdate {
                         objective: None,
                         status,
                         token_budget,
@@ -291,7 +291,7 @@ impl GoalService {
 
     pub async fn clear_thread_goal(
         &self,
-        state_db: &genex_state::StateRuntime,
+        state_db: &ruxex_state::StateRuntime,
         thread_id: ThreadId,
     ) -> Result<bool, GoalServiceError> {
         let runtime = self.runtime_for_thread(thread_id);

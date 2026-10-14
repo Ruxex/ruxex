@@ -6,15 +6,15 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StoredOAuthTokens;
-use genex_rmcp_client::WrappedOAuthTokenResponse;
-use genex_rmcp_client::is_authentication_required_error;
-use genex_rmcp_client::save_oauth_tokens;
-use genex_rmcp_client::stored_oauth_credentials;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StoredOAuthTokens;
+use ruxex_rmcp_client::WrappedOAuthTokenResponse;
+use ruxex_rmcp_client::is_authentication_required_error;
+use ruxex_rmcp_client::save_oauth_tokens;
+use ruxex_rmcp_client::stored_oauth_credentials;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::basic::BasicTokenType;
@@ -72,7 +72,7 @@ async fn run_scenarios(scenarios: &[&str]) -> anyhow::Result<()> {
         let home = TempDir::new()?;
         let output = Command::new(std::env::current_exe()?)
             .args(["runtime_oauth_child", "--exact", "--ignored", "--nocapture"])
-            .env("GENEX_HOME", home.path())
+            .env("RUXEX_HOME", home.path())
             .env(SCENARIO_ENV, scenario)
             .output()
             .await?;
@@ -87,7 +87,7 @@ async fn run_scenarios(scenarios: &[&str]) -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "spawned by OAuth recovery tests with an isolated GENEX_HOME"]
+#[ignore = "spawned by OAuth recovery tests with an isolated RUXEX_HOME"]
 async fn runtime_oauth_child() -> anyhow::Result<()> {
     let scenario = std::env::var(SCENARIO_ENV)?;
     let mcp = MockServer::start().await;

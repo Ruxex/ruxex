@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_features::Feature;
-use genex_login::GenexAuth;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call_with_namespace;
@@ -11,7 +11,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -85,8 +85,8 @@ async fn api_key_subagent_uses_session_id_as_prompt_cache_key() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("dummy"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("dummy"))
         .with_config(|config| {
             config
                 .features
@@ -161,8 +161,8 @@ async fn api_key_subagent_uses_session_id_as_prompt_cache_key() -> Result<()> {
 
 #[tokio::test]
 async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Result<()> {
-    use genex_core::ForkSnapshot;
-    use genex_core::StartThreadOptions;
+    use ruxex_core::ForkSnapshot;
+    use ruxex_core::StartThreadOptions;
     use core_test_support::responses::mount_sse_sequence;
 
     let server = start_mock_server().await;
@@ -174,9 +174,9 @@ async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Res
         ],
     )
     .await;
-    let mut test = test_genex().build_with_auto_env(&server).await?;
+    let mut test = test_ruxex().build_with_auto_env(&server).await?;
     test.submit_text_turn("parent").await?;
-    test.genex.flush_rollout().await?;
+    test.ruxex.flush_rollout().await?;
     let parent_session = test.session_configured.session_id.to_string();
     let mut config = test.config.clone();
     config.ephemeral = true;
@@ -185,20 +185,20 @@ async fn ephemeral_fork_shares_cache_routing_but_keeps_session_identity() -> Res
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(usize::MAX),
             StartThreadOptions {
-                environments: Some(test.genex.environment_selections().await),
+                environments: Some(test.ruxex.environment_selections().await),
                 ..StartThreadOptions::new(config)
             },
-            test.genex.rollout_path().expect("parent rollout"),
+            test.ruxex.rollout_path().expect("parent rollout"),
         )
         .await?;
     let fork_session = fork.session_configured.session_id.to_string();
     assert_ne!(fork_session, parent_session);
-    test.genex = fork.thread;
+    test.ruxex = fork.thread;
     test.submit_text_turn("side").await?;
     let requests = requests.requests();
     let body = requests[1].body_json();
     let metadata: Value = serde_json::from_str(
-        body["client_metadata"]["x-genex-turn-metadata"]
+        body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )?;

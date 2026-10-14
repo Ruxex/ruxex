@@ -6,13 +6,13 @@ use std::path::PathBuf;
 use crate::contract::ProviderDescriptor;
 use uuid::Uuid;
 
-/// File written at the root of a provider-scoped Genex home.
-pub const PROVIDER_HOME_MARKER_FILE: &str = "genex-home.json";
+/// File written at the root of a provider-scoped Ruxex home.
+pub const PROVIDER_HOME_MARKER_FILE: &str = "ruxex-home.json";
 
 /// Version of the marker file format.
 pub const PROVIDER_HOME_FORMAT_VERSION: u32 = 2;
 
-/// Non-secret identity stored in a provider-scoped Genex home.
+/// Non-secret identity stored in a provider-scoped Ruxex home.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProviderHomeMarker {

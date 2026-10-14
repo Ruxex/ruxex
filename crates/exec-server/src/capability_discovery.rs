@@ -2,19 +2,19 @@ use std::collections::HashSet;
 use std::io;
 
 use futures::StreamExt;
-use genex_exec_server_protocol::CapabilityRootDiscoverRequest;
-use genex_exec_server_protocol::CapabilityRootDiscovery;
-use genex_exec_server_protocol::CapabilityRootsDiscoverParams;
-use genex_exec_server_protocol::CapabilityRootsDiscoverResponse;
-use genex_exec_server_protocol::CapabilityTextFile;
-use genex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
-use genex_exec_server_protocol::DiscoveredPluginFiles;
-use genex_exec_server_protocol::DiscoveredSkillFiles;
-use genex_file_system::ExecutorFileSystem;
-use genex_file_system::FileSystemSandboxContext;
-use genex_file_system::WalkEntryKind;
-use genex_file_system::WalkOptions;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::CapabilityRootDiscoverRequest;
+use ruxex_exec_server_protocol::CapabilityRootDiscovery;
+use ruxex_exec_server_protocol::CapabilityRootsDiscoverParams;
+use ruxex_exec_server_protocol::CapabilityRootsDiscoverResponse;
+use ruxex_exec_server_protocol::CapabilityTextFile;
+use ruxex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+use ruxex_exec_server_protocol::DiscoveredPluginFiles;
+use ruxex_exec_server_protocol::DiscoveredSkillFiles;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_file_system::WalkEntryKind;
+use ruxex_file_system::WalkOptions;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -26,7 +26,7 @@ const MAX_FILE_BYTES: usize = 1024 * 1024;
 const MAX_BUNDLE_BYTES_PER_ROOT: usize = 16 * 1024 * 1024;
 const MAX_CONCURRENT_ROOTS: usize = 8;
 const SKILL_FILE_NAME: &str = "SKILL.md";
-const SKILL_METADATA_PATH: &str = "agents/genex.yaml";
+const SKILL_METADATA_PATH: &str = "agents/ruxex.yaml";
 const DEFAULT_MCP_CONFIG_PATH: &str = ".mcp.json";
 
 #[derive(Debug, thiserror::Error)]

@@ -6,26 +6,26 @@ use crate::RolloutItem;
 use crate::RolloutLine;
 use crate::config::RolloutConfig;
 use chrono::TimeZone;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AgentMessageEvent;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::RateLimitWindow;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::TokenCountEvent;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_protocol::security_risk::SecurityRiskScore;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AgentMessageEvent;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::RateLimitWindow;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::TokenCountEvent;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_protocol::security_risk::SecurityRiskScore;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::fs;
@@ -37,11 +37,11 @@ use std::time::Duration;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-fn test_config(genex_home: &Path) -> RolloutConfig {
+fn test_config(ruxex_home: &Path) -> RolloutConfig {
     RolloutConfig {
-        genex_home: genex_home.to_path_buf(),
-        sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
-        cwd: genex_home.to_path_buf(),
+        ruxex_home: ruxex_home.to_path_buf(),
+        sqlite: ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs()),
+        cwd: ruxex_home.to_path_buf(),
     }
 }
 
@@ -250,7 +250,7 @@ async fn state_db_init_backfills_before_returning() -> anyhow::Result<()> {
     assert_eq!(metadata.rollout_path, rollout_path);
     assert_eq!(
         runtime.get_backfill_state().await?.status,
-        genex_state::BackfillStatus::Complete
+        ruxex_state::BackfillStatus::Complete
     );
 
     Ok(())
@@ -1004,7 +1004,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         "sessions/2099/01/01/rollout-2099-01-01T00-00-00-{uuid}.jsonl"
     ));
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1017,7 +1017,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         .with_ymd_and_hms(2025, 1, 3, 13, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         stale_path,
         created_at,
@@ -1039,7 +1039,7 @@ async fn list_threads_db_enabled_preserves_metadata_for_missing_rollout_paths()
         .with_ymd_and_hms(2025, 1, 2, 13, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut valid_builder = genex_state::ThreadMetadataBuilder::new(
+    let mut valid_builder = ruxex_state::ThreadMetadataBuilder::new(
         valid_thread_id,
         valid_path.clone(),
         valid_created_at,
@@ -1086,7 +1086,7 @@ async fn list_threads_state_db_only_skips_jsonl_repair_scan() -> std::io::Result
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1182,7 +1182,7 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
     let real_path = write_session_file(home.path(), "2025-01-03T13-00-00", uuid)?;
     let stale_cwd = home.path().join("stale-cwd");
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1195,7 +1195,7 @@ async fn list_threads_default_filter_returns_filesystem_scan_results() -> std::i
         .with_ymd_and_hms(2025, 1, 3, 13, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         real_path,
         created_at,
@@ -1264,7 +1264,7 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
     let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
     let rollout_path = write_session_file(home.path(), "2025-01-03T16-00-00", uuid)?;
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1277,7 +1277,7 @@ async fn list_threads_metadata_filter_overlays_state_db_list_metadata() -> std::
         .with_ymd_and_hms(2025, 1, 3, 16, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path,
         created_at,
@@ -1362,9 +1362,9 @@ fn fill_missing_thread_item_metadata_preserves_identity_and_prefers_state_git_fi
         preview: Some("state preview".to_string()),
         project_id: None,
         daybreak_enabled: Some(true),
-        section: Some(genex_state::ThreadSection {
-            id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-            name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+        section: Some(ruxex_state::ThreadSection {
+            id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+            name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
             appearance: None,
         }),
         cwd: Some(PathBuf::from("/tmp/state-cwd")),
@@ -1394,9 +1394,9 @@ fn fill_missing_thread_item_metadata_preserves_identity_and_prefers_state_git_fi
     assert_eq!(item.daybreak_enabled, Some(true));
     assert_eq!(
         item.section,
-        Some(genex_state::ThreadSection {
-            id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-            name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+        Some(ruxex_state::ThreadSection {
+            id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+            name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
             appearance: None,
         })
     );
@@ -1430,7 +1430,7 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
     let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
     let real_path = write_session_file(home.path(), "2025-01-03T15-00-00", uuid)?;
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1443,7 +1443,7 @@ async fn list_threads_search_repairs_stale_state_db_hits_before_returning() -> s
         .with_ymd_and_hms(2025, 1, 3, 15, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         real_path,
         created_at,
@@ -1538,7 +1538,7 @@ async fn resume_candidate_matches_cwd_reads_latest_turn_context() -> std::io::Re
             multi_agent_mode: None,
             cyber_access_program: None,
             effort: None,
-            summary: genex_protocol::config_types::ReasoningSummary::Auto,
+            summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
         }),
     };
     writeln!(file, "{}", serde_json::to_string(&turn_context)?)?;

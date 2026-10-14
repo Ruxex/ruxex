@@ -3,24 +3,24 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkPolicyAuditObserver;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkPolicyAuditObserver;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkProxyConfig;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::NetworkUnixSocketPermission;
+use ruxex_network_proxy::NetworkUnixSocketPermission;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::NetworkUnixSocketPermissions;
-use genex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
-use genex_network_proxy::RemoteNetworkProxyConfig;
-use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use genex_protocol::models::PermissionProfile;
+use ruxex_network_proxy::NetworkUnixSocketPermissions;
+use ruxex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
+use ruxex_network_proxy::RemoteNetworkProxyConfig;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_protocol::models::PermissionProfile;
 #[cfg(target_os = "linux")]
-use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 #[cfg(unix)]
 use tempfile::tempdir;
@@ -34,7 +34,7 @@ use crate::ExecParams;
 use crate::ExecServerRuntimePaths;
 use crate::FileSystemSandboxContext;
 #[cfg(unix)]
-use crate::GENEX_ARG0_EXEC_HELPER_ARG1;
+use crate::RUXEX_ARG0_EXEC_HELPER_ARG1;
 use crate::ProcessId;
 use crate::process_telemetry::ProcessTelemetry;
 
@@ -106,7 +106,7 @@ async fn sandbox_request_wraps_native_argv_on_executor() {
     {
         assert_eq!(
             prepared.command.first(),
-            Some(&runtime_paths.genex_self_exe.to_string_lossy().into_owned())
+            Some(&runtime_paths.ruxex_self_exe.to_string_lossy().into_owned())
         );
         let permission_profile_json = prepared
             .command
@@ -204,13 +204,13 @@ async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
     let helper_mode = prepared
         .command
         .iter()
-        .position(|arg| arg == GENEX_ARG0_EXEC_HELPER_ARG1)
+        .position(|arg| arg == RUXEX_ARG0_EXEC_HELPER_ARG1)
         .expect("sandboxed command should invoke arg0 helper");
 
     assert_eq!(
         prepared.command[helper_mode..],
         [
-            GENEX_ARG0_EXEC_HELPER_ARG1,
+            RUXEX_ARG0_EXEC_HELPER_ARG1,
             "custom-arg0",
             "/bin/sh",
             "-c",
@@ -218,7 +218,7 @@ async fn sandbox_request_routes_custom_arg0_to_inner_helper() {
         ]
     );
     #[cfg(target_os = "linux")]
-    assert_eq!(prepared.arg0, Some(GENEX_LINUX_SANDBOX_ARG0.to_string()));
+    assert_eq!(prepared.arg0, Some(RUXEX_LINUX_SANDBOX_ARG0.to_string()));
     #[cfg(target_os = "macos")]
     assert_eq!(prepared.arg0, None);
 }

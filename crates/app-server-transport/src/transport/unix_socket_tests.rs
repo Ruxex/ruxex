@@ -7,11 +7,11 @@ use super::app_server_control_socket_path;
 use super::start_control_socket_acceptor;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_core::config::find_genex_home;
-use genex_uds::UnixStream;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_uds::UnixStream;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::io::Result as IoResult;
 use std::path::Path;
@@ -36,9 +36,9 @@ fn listen_unix_socket_parses_as_unix_socket_transport() {
 #[test]
 fn listen_unix_socket_accepts_absolute_custom_path() {
     assert_eq!(
-        AppServerTransport::from_listen_url("unix:///tmp/genex.sock"),
+        AppServerTransport::from_listen_url("unix:///tmp/ruxex.sock"),
         Ok(AppServerTransport::UnixSocket {
-            socket_path: absolute_path("/tmp/genex.sock")
+            socket_path: absolute_path("/tmp/ruxex.sock")
         })
     );
 }
@@ -46,9 +46,9 @@ fn listen_unix_socket_accepts_absolute_custom_path() {
 #[test]
 fn listen_unix_socket_accepts_relative_custom_path() {
     assert_eq!(
-        AppServerTransport::from_listen_url("unix://genex.sock"),
+        AppServerTransport::from_listen_url("unix://ruxex.sock"),
         Ok(AppServerTransport::UnixSocket {
-            socket_path: AbsolutePathBuf::relative_to_current_dir("genex.sock")
+            socket_path: AbsolutePathBuf::relative_to_current_dir("ruxex.sock")
                 .expect("relative path should resolve")
         })
     );
@@ -309,7 +309,7 @@ async fn control_socket_file_is_private_after_bind() {
     assert_eq!(
         physical_path.parent(),
         Some(
-            genex_uds::shared_daemon_socket_directory()
+            ruxex_uds::shared_daemon_socket_directory()
                 .unwrap()
                 .as_path()
         )
@@ -385,8 +385,8 @@ fn absolute_path(path: &str) -> AbsolutePathBuf {
 }
 
 fn default_control_socket_path() -> AbsolutePathBuf {
-    let genex_home = find_genex_home().expect("genex home");
-    app_server_control_socket_path(&genex_home).expect("default control socket path")
+    let ruxex_home = find_ruxex_home().expect("ruxex home");
+    app_server_control_socket_path(&ruxex_home).expect("default control socket path")
 }
 
 fn test_socket_path(temp_dir: &Path) -> AbsolutePathBuf {

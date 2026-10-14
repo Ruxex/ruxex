@@ -85,9 +85,9 @@ async fn spawn_inherits_captured_settings_after_a_turn_update(
         .build_with_auto_env(&server)
         .await?;
     let mut created_threads = test.thread_manager.subscribe_thread_created();
-    let request = start_paused_turn(&test.genex).await?;
+    let request = start_paused_turn(&test.ruxex).await?;
     apply_turn_settings(
-        &test.genex,
+        &test.ruxex,
         &request.turn_id,
         TurnSettingsUpdate {
             model: Some(MODEL_B.to_string()),
@@ -97,7 +97,7 @@ async fn spawn_inherits_captured_settings_after_a_turn_update(
         },
     )
     .await?;
-    answer_paused_turn(&test.genex, &request.turn_id).await?;
+    answer_paused_turn(&test.ruxex, &request.turn_id).await?;
 
     let child_thread_id = tokio::time::timeout(
         std::time::Duration::from_secs(/*secs*/ 10),
@@ -105,7 +105,7 @@ async fn spawn_inherits_captured_settings_after_a_turn_update(
     )
     .await??;
     let child_thread = test.thread_manager.get_thread(child_thread_id).await?;
-    for thread in [child_thread.as_ref(), test.genex.as_ref()] {
+    for thread in [child_thread.as_ref(), test.ruxex.as_ref()] {
         wait_for_event(thread, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     }
 

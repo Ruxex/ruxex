@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -14,7 +14,7 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 
 async fn start_server(home: &TempDir) -> Result<TestAppServer> {
     TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await
 }

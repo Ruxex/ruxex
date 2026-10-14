@@ -17,10 +17,10 @@ use anyhow::Result;
 use anyhow::anyhow;
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::McpServerEnvVar;
-use genex_exec_server::HttpClient;
-use genex_keyring_store::DefaultKeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::McpServerEnvVar;
+use ruxex_exec_server::HttpClient;
+use ruxex_keyring_store::DefaultKeyringStore;
 use http::HeaderMap;
 use http::header::AUTHORIZATION;
 use oauth2::TokenResponse;
@@ -96,7 +96,7 @@ use crate::stdio_server_launcher::StdioServerLauncher;
 use crate::stdio_server_launcher::StdioServerProcessHandle;
 use crate::stdio_server_launcher::StdioServerTransport;
 use crate::utils::build_default_headers;
-use genex_config::types::OAuthCredentialsStoreMode;
+use ruxex_config::types::OAuthCredentialsStoreMode;
 
 #[path = "streamable_http_retry.rs"]
 mod streamable_http_retry;
@@ -452,7 +452,7 @@ impl RmcpClient {
             McpProtocolMode::Legacy => None,
             McpProtocolMode::V20260728 => env
                 .as_mut()
-                .and_then(|env| env.remove(OsStr::new("GENEX_MCP_PROTOCOL_VERSION"))),
+                .and_then(|env| env.remove(OsStr::new("RUXEX_MCP_PROTOCOL_VERSION"))),
         };
         let protocol_mode = protocol_mode.stdio_mode(requested_stdio_version.as_deref())?;
         let transport_recipe = TransportRecipe::Stdio {
@@ -1264,7 +1264,7 @@ impl RmcpClient {
             }
         };
 
-        // Preserve Genex's existing snapshot and request-freshness behavior. rmcp 3
+        // Preserve Ruxex's existing snapshot and request-freshness behavior. rmcp 3
         // enables response caching and stale-on-error fallback by default.
         service
             .peer()

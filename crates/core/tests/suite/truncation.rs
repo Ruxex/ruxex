@@ -3,18 +3,18 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_protocol::user_input::UserInput;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::assert_regex_match;
 use core_test_support::responses;
@@ -28,10 +28,10 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::stdio_server_bin;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use serde_json::Value;
@@ -61,7 +61,7 @@ async fn tool_call_output_configured_limit_chars_type() -> Result<()> {
     let server = start_mock_server().await;
 
     // Use a model that exposes the exec_command tool.
-    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
+    let mut builder = test_ruxex().with_model("example-model-2").with_config(|config| {
         config.tool_output_token_limit = Some(100_000);
     });
 
@@ -142,7 +142,7 @@ async fn tool_call_output_exceeds_limit_truncated_chars_limit() -> Result<()> {
     let server = start_mock_server().await;
 
     // Use a model that exposes the exec_command tool.
-    let mut builder = test_genex().with_model("example-model-2");
+    let mut builder = test_ruxex().with_model("example-model-2");
 
     let fixture = builder.build(&server).await?;
 
@@ -219,7 +219,7 @@ async fn tool_call_output_exceeds_limit_truncated_for_model() -> Result<()> {
     let server = start_mock_server().await;
 
     // Use a model that exposes the exec_command tool.
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let fixture = builder.build(&server).await?;
 
     let call_id = "shell-too-large";
@@ -302,7 +302,7 @@ async fn tool_call_output_truncated_only_once() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let fixture = builder.build(&server).await?;
     let call_id = "shell-single-truncation";
     let command = if cfg!(windows) {
@@ -397,13 +397,13 @@ async fn mcp_tool_call_output_exceeds_limit_truncated_for_model() -> Result<()> 
     // Compile the rmcp stdio test server and configure it.
     let rmcp_test_server_bin = stdio_server_bin()?;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         let mut servers = config.mcp_servers.get().clone();
         servers.insert(
             server_name.to_string(),
-            genex_config::types::McpServerConfig {
+            ruxex_config::types::McpServerConfig {
                 auth: Default::default(),
-                transport: genex_config::types::McpServerTransportConfig::Stdio {
+                transport: ruxex_config::types::McpServerTransportConfig::Stdio {
                     command: rmcp_test_server_bin,
                     args: Vec::new(),
                     env: None,
@@ -434,7 +434,7 @@ async fn mcp_tool_call_output_exceeds_limit_truncated_for_model() -> Result<()> 
         config.tool_output_token_limit = Some(500);
     });
     let fixture = builder.build(&server).await?;
-    wait_for_mcp_server(&fixture.genex, server_name).await?;
+    wait_for_mcp_server(&fixture.ruxex, server_name).await?;
 
     fixture
         .submit_turn_with_permission_profile(
@@ -497,7 +497,7 @@ async fn mcp_image_output_preserves_image_and_no_text_summary() -> Result<()> {
     // 1x1 PNG data URL
     let provider_png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         let mut servers = config.mcp_servers.get().clone();
         servers.insert(
             server_name.to_string(),
@@ -536,13 +536,13 @@ async fn mcp_image_output_preserves_image_and_no_text_summary() -> Result<()> {
             .expect("test mcp servers should accept any configuration");
     });
     let fixture = builder.build(&server).await?;
-    wait_for_mcp_server(&fixture.genex, server_name).await?;
+    wait_for_mcp_server(&fixture.ruxex, server_name).await?;
     let session_model = fixture.session_configured.model.clone();
     let permission_profile = PermissionProfile::read_only();
     let sandbox_policy = permission_profile.to_legacy_sandbox_policy(fixture.cwd.path())?;
 
     fixture
-        .genex
+        .ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "call the rmcp image tool".into(),
@@ -567,7 +567,7 @@ async fn mcp_image_output_preserves_image_and_no_text_summary() -> Result<()> {
         .await?;
 
     // Wait for completion to ensure the outbound request is captured.
-    wait_for_event(&fixture.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&fixture.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     let output_item = final_mock.single_request().function_call_output(call_id);
     // Expect exactly the wall-time text and image item; no trailing truncation summary.
     let output = output_item.get("output").expect("output");
@@ -593,7 +593,7 @@ async fn token_policy_marker_reports_tokens() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50); // small budget to force truncation
     });
     let fixture = builder.build(&server).await?;
@@ -646,7 +646,7 @@ async fn byte_policy_marker_reports_bytes() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
+    let mut builder = test_ruxex().with_model("example-model-2").with_config(|config| {
         config.tool_output_token_limit = Some(50); // ~200 byte cap
     });
     let fixture = builder.build(&server).await?;
@@ -699,7 +699,7 @@ async fn exec_command_output_not_truncated_with_custom_limit() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50_000); // ample budget
     });
     let fixture = builder.build(&server).await?;
@@ -755,10 +755,10 @@ async fn exec_command_output_not_truncated_with_custom_limit() -> Result<()> {
 
 async fn call_mcp_echo(
     server: &MockServer,
-    builder: TestGenexBuilder,
+    builder: TestRuxexBuilder,
     output_token_limit: Option<usize>,
     message_bytes: usize,
-) -> Result<(TestGenex, String)> {
+) -> Result<(TestRuxex, String)> {
     let call_id = "rmcp-output";
     let server_name = "rmcp";
     let namespace = format!("mcp__{server_name}");
@@ -803,7 +803,7 @@ async fn call_mcp_echo(
             .expect("test mcp servers should accept any configuration");
     });
     let fixture = builder.build_with_auto_env(server).await?;
-    wait_for_mcp_server(&fixture.genex, server_name).await?;
+    wait_for_mcp_server(&fixture.ruxex, server_name).await?;
     fixture.submit_text_turn("call the MCP echo tool").await?;
 
     let output = response
@@ -824,7 +824,7 @@ async fn mcp_tool_output_limit_preserves_output_that_fits(
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
 
     let server = start_mock_server().await;
-    let builder = test_genex().with_config(|config| config.tool_output_token_limit = Some(50));
+    let builder = test_ruxex().with_config(|config| config.tool_output_token_limit = Some(50));
     let (_fixture, output) =
         call_mcp_echo(&server, builder, Some(output_token_limit), message_bytes).await?;
 
@@ -838,7 +838,7 @@ async fn mcp_tool_output_limit_truncates_oversized_output() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
 
     let server = start_mock_server().await;
-    let builder = test_genex().with_config(|config| config.tool_output_token_limit = Some(50));
+    let builder = test_ruxex().with_config(|config| config.tool_output_token_limit = Some(50));
     let (_fixture, output) = call_mcp_echo(
         &server,
         builder,
@@ -859,7 +859,7 @@ async fn mcp_tool_output_limit_applies_to_hook_feedback() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
 
     let server = start_mock_server().await;
-    let builder = test_genex()
+    let builder = test_ruxex()
         .with_pre_build_hook(|home| {
             super::hooks_mcp::write_mcp_tool_hook(
                 home,
@@ -893,7 +893,7 @@ async fn mcp_tool_output_limit_survives_resume(output_token_limit: Option<usize>
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
 
     let server = start_mock_server().await;
-    let builder = test_genex().with_config(|config| config.tool_output_token_limit = Some(50_000));
+    let builder = test_ruxex().with_config(|config| config.tool_output_token_limit = Some(50_000));
     let (fixture, output) = call_mcp_echo(
         &server,
         builder,
@@ -902,8 +902,8 @@ async fn mcp_tool_output_limit_survives_resume(output_token_limit: Option<usize>
     )
     .await?;
 
-    fixture.genex.ensure_rollout_materialized().await;
-    fixture.genex.flush_rollout().await?;
+    fixture.ruxex.ensure_rollout_materialized().await;
+    fixture.ruxex.flush_rollout().await?;
     let resumed_response = mount_sse_once(
         &server,
         sse(vec![
@@ -912,7 +912,7 @@ async fn mcp_tool_output_limit_survives_resume(output_token_limit: Option<usize>
         ]),
     )
     .await;
-    let mut resume_builder = test_genex().with_config(|config| {
+    let mut resume_builder = test_ruxex().with_config(|config| {
         config.tool_output_token_limit = Some(50);
     });
     let resumed = resume_builder.restart(&server, &fixture).await?;

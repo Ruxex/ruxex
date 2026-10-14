@@ -8,9 +8,9 @@ use std::sync::atomic::Ordering;
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use genex_exec_server::RouteAwareHttpClient;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
+use ruxex_exec_server::RouteAwareHttpClient;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 use keyring::credential::Credential;
 use keyring::credential::CredentialApi;
 use keyring::credential::CredentialBuilderApi;
@@ -38,7 +38,7 @@ const CREDENTIAL_NAME: &str = "ema-idp:enterprise-secret-sentinel";
 mod logout;
 
 async fn isolated_process(test_name: &str) -> Result<bool> {
-    const CHILD: &str = "GENEX_ENTERPRISE_LOGIN_TEST_CHILD";
+    const CHILD: &str = "RUXEX_ENTERPRISE_LOGIN_TEST_CHILD";
     if std::env::var_os(CHILD).is_some() {
         return Ok(false);
     }
@@ -46,7 +46,7 @@ async fn isolated_process(test_name: &str) -> Result<bool> {
     let output = tokio::process::Command::new(std::env::current_exe()?)
         .args(["--exact", test_name, "--nocapture"])
         .env(CHILD, "1")
-        .env("GENEX_HOME", home.path())
+        .env("RUXEX_HOME", home.path())
         .current_dir(home.path())
         .output()
         .await?;
@@ -412,7 +412,7 @@ async fn enterprise_public_api_storage_and_privacy() -> Result<()> {
         assert!(!format!("{error} {error:?} {error:#}").contains(SECRET));
     }
     keyring.fail.store(false, Ordering::SeqCst);
-    let home = std::path::PathBuf::from(std::env::var("GENEX_HOME")?);
+    let home = std::path::PathBuf::from(std::env::var("RUXEX_HOME")?);
     assert!(
         !home.join(".credentials.json").exists(),
         "enterprise storage never falls back to plaintext"

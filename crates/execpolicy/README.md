@@ -1,4 +1,4 @@
-# genex-execpolicy
+# ruxex-execpolicy
 
 ## Overview
 
@@ -45,16 +45,16 @@ host_executable(
 
 ## CLI
 
-- From the Genex CLI, run `genex execpolicy check` subcommand with one or more policy files (for example `src/default.rules`) to check a command:
+- From the Ruxex CLI, run `ruxex execpolicy check` subcommand with one or more policy files (for example `src/default.rules`) to check a command:
 
 ```bash
-genex execpolicy check --rules path/to/policy.rules git status
+ruxex execpolicy check --rules path/to/policy.rules git status
 ```
 
 - To opt into basename fallback for absolute program paths, pass `--resolve-host-executables`:
 
 ```bash
-genex execpolicy check \
+ruxex execpolicy check \
   --rules path/to/policy.rules \
   --resolve-host-executables \
   /usr/bin/git status
@@ -64,7 +64,7 @@ genex execpolicy check \
 - You can also run the standalone dev binary directly during development:
 
 ```bash
-cargo run -p genex-execpolicy -- check --rules path/to/policy.rules git status
+cargo run -p ruxex-execpolicy -- check --rules path/to/policy.rules git status
 ```
 
 - Example outcomes:

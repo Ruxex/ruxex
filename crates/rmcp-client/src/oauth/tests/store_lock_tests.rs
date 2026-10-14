@@ -5,9 +5,9 @@ use std::time::Instant;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_keyring_store::KeyringStore;
-use genex_keyring_store::tests::MockKeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_keyring_store::KeyringStore;
+use ruxex_keyring_store::tests::MockKeyringStore;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::Scope;
@@ -41,10 +41,10 @@ use crate::oauth::save_oauth_tokens_to_secrets_keyring_with_lock_held;
 use crate::oauth::save_oauth_tokens_with_keyring;
 use crate::oauth::save_oauth_tokens_with_keyring_with_fallback_to_file;
 use crate::oauth::stored_oauth_credential_snapshot;
-use crate::oauth::test_support::TempGenexHome;
-use genex_config::types::OAuthCredentialsStoreMode;
+use crate::oauth::test_support::TempRuxexHome;
+use ruxex_config::types::OAuthCredentialsStoreMode;
 
-const STORE_LOCK_CONTENTION_EVENT_TARGET: &str = "genex_rmcp_client::oauth::store_lock::contention";
+const STORE_LOCK_CONTENTION_EVENT_TARGET: &str = "ruxex_rmcp_client::oauth::store_lock::contention";
 // Contention is proven by the tracing event emitted after a real WouldBlock. Keep the timeout
 // generous because it only bounds a failed test; it must not turn worker scheduling latency into
 // a false failure on loaded CI hosts.
@@ -112,8 +112,8 @@ fn sample_tokens() -> StoredOAuthTokens {
 
 #[test]
 fn file_credentials_keep_repeated_local_prefixes_isolated() -> Result<()> {
-    let _env = TempGenexHome::new();
-    let config: genex_config::McpServerConfig = serde_json::from_value(serde_json::json!({
+    let _env = TempRuxexHome::new();
+    let config: ruxex_config::McpServerConfig = serde_json::from_value(serde_json::json!({
         "url": "https://example.test",
     }))?;
     let mut first = sample_tokens();
@@ -144,7 +144,7 @@ fn file_credentials_keep_repeated_local_prefixes_isolated() -> Result<()> {
 
 #[test]
 fn legacy_rmcp_oauth_keyring_credentials_remain_readable() -> Result<()> {
-    let _env = TempGenexHome::new();
+    let _env = TempRuxexHome::new();
     let keyring_store = MockKeyringStore::default();
     let mut expected = sample_tokens();
     expected.expires_at = None;
@@ -185,17 +185,17 @@ fn legacy_rmcp_oauth_keyring_credentials_remain_readable() -> Result<()> {
 
 const LOCK_HOLDER_CHILD_TEST: &str =
     "oauth::store_lock::tests::store_lock_is_released_when_holder_process_exits_child";
-const LOCK_HOLDER_READY_PATH_ENV: &str = "GENEX_OAUTH_STORE_LOCK_CHILD_READY_PATH";
+const LOCK_HOLDER_READY_PATH_ENV: &str = "RUXEX_OAUTH_STORE_LOCK_CHILD_READY_PATH";
 
 #[test]
 fn store_lock_is_released_when_holder_process_exits() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let ready_file = env.path().join("lock-holder-ready");
     let mut child = Command::new(std::env::current_exe()?)
         .arg("--exact")
         .arg(LOCK_HOLDER_CHILD_TEST)
         .arg("--ignored")
-        .env("GENEX_HOME", env.path())
+        .env("RUXEX_HOME", env.path())
         .env(LOCK_HOLDER_READY_PATH_ENV, &ready_file)
         .spawn()
         .context("spawn OAuth store lock holder test process")?;
@@ -262,7 +262,7 @@ fn store_lock_is_released_when_holder_process_exits_child() -> Result<()> {
 
 #[test]
 fn auto_save_secrets_lock_failure_does_not_fall_back_to_file() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let lock_dir = env.path().join("mcp-oauth-locks");
     std::fs::create_dir_all(&lock_dir)?;
     // Break only the Secrets lock path. The distinct File lock remains usable, so Auto would
@@ -291,7 +291,7 @@ fn auto_save_secrets_lock_failure_does_not_fall_back_to_file() -> Result<()> {
 
 #[test]
 fn auto_load_secrets_lock_failure_does_not_fall_back_to_file() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let keyring_store = MockKeyringStore::default();
     let tokens = sample_tokens();
     save_oauth_tokens_to_file(&tokens)?;
@@ -316,7 +316,7 @@ fn auto_load_secrets_lock_failure_does_not_fall_back_to_file() -> Result<()> {
 
 #[test]
 fn oauth_credential_probes_skip_contended_file_and_secrets_stores() -> Result<()> {
-    let _env = TempGenexHome::new();
+    let _env = TempRuxexHome::new();
     let tokens = sample_tokens();
     let file = OAuthCredentialsStoreMode::File;
     let auto = OAuthCredentialsStoreMode::Auto;
@@ -424,7 +424,7 @@ impl Subscriber for LockContentionSubscriber {
 }
 
 fn complete_after_store_lock_contention<T>(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     store: OAuthStore,
     while_locked: impl FnOnce() -> Result<()>,
     operation: impl FnOnce() -> Result<T> + Send + 'static,
@@ -434,7 +434,7 @@ where
 {
     std::thread::scope(|scope| {
         let held_lock = OAuthStoreLock::acquire_in_with_mode(
-            genex_home,
+            ruxex_home,
             store,
             Duration::from_millis(/*millis*/ 100),
             OAuthStoreLockMode::Exclusive,
@@ -459,7 +459,7 @@ where
 
 #[test]
 fn aggregate_store_readers_share_access_while_writers_remain_exclusive() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
 
     for store in [OAuthStore::File, OAuthStore::Secrets] {
         let readers = (0..2)
@@ -500,7 +500,7 @@ fn aggregate_store_readers_share_access_while_writers_remain_exclusive() -> Resu
 
 #[test]
 fn aggregate_store_credential_loads_can_share_an_existing_reader() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let keyring_store = MockKeyringStore::default();
     let tokens = sample_tokens();
     save_oauth_tokens_to_file(&tokens)?;
@@ -543,7 +543,7 @@ fn aggregate_store_credential_loads_can_share_an_existing_reader() -> Result<()>
 
 #[test]
 fn file_store_lock_preserves_updates_for_different_servers() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let first = sample_tokens();
     let mut second = sample_tokens();
     second.server_name = "second-server".to_string();
@@ -568,7 +568,7 @@ fn file_store_lock_preserves_updates_for_different_servers() -> Result<()> {
 
 #[test]
 fn file_store_load_and_delete_observe_aggregate_lock() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let tokens = sample_tokens();
     save_oauth_tokens_to_file(&tokens)?;
 
@@ -597,7 +597,7 @@ fn file_store_load_and_delete_observe_aggregate_lock() -> Result<()> {
 
 #[test]
 fn secrets_store_lock_preserves_updates_for_different_servers() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let keyring_store = MockKeyringStore::default();
     let first = sample_tokens();
     let mut second = sample_tokens();
@@ -649,7 +649,7 @@ fn secrets_store_lock_preserves_updates_for_different_servers() -> Result<()> {
 
 #[test]
 fn secrets_store_load_and_delete_observe_aggregate_lock() -> Result<()> {
-    let env = TempGenexHome::new();
+    let env = TempRuxexHome::new();
     let keyring_store = MockKeyringStore::default();
     let tokens = sample_tokens();
     save_oauth_tokens_with_keyring(

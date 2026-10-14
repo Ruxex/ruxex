@@ -1,6 +1,6 @@
 //! Code-mode tracing for handlers and queued nested dispatch.
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use std::time::Duration;
 use tracing::Span;
 
@@ -16,9 +16,9 @@ pub(super) fn record_code_mode_host_duration(
         return;
     };
     tracing::info!(
-        target: "genex_code_mode::timing",
+        target: "ruxex_code_mode::timing",
         {
-            event.name = "genex.code_mode.host_timing",
+            event.name = "ruxex.code_mode.host_timing",
             conversation_id = thread_id,
             turn_id,
             call_id,
@@ -59,11 +59,11 @@ impl Drop for NestedToolDispatchTrace {
             DispatchInterruption::Abandoned => "abandoned",
         };
         tracing::event!(
-            name: "genex.code_mode.nested_tool_dispatch_interrupted",
-            target: "genex_otel.trace_safe",
+            name: "ruxex.code_mode.nested_tool_dispatch_interrupted",
+            target: "ruxex_otel.trace_safe",
             parent: &self.span,
             tracing::Level::INFO,
-            event.name = "genex.code_mode.nested_tool_dispatch_interrupted",
+            event.name = "ruxex.code_mode.nested_tool_dispatch_interrupted",
             conversation.id = %self.thread_id,
             call_id = self.call_id.as_str(),
             outcome,

@@ -1,8 +1,8 @@
 use crate::config::RolloutBudgetConfig;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::TokenUsage;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
@@ -43,15 +43,15 @@ impl RolloutBudget {
     }
 
     /// Returns true once the configured budget is exhausted, including on later calls.
-    pub(crate) fn record_usage(&self, usage: &TokenUsage) -> GenexResult<bool> {
+    pub(crate) fn record_usage(&self, usage: &TokenUsage) -> RuxexResult<bool> {
         let Some(mut state) = self.lock() else {
             return Ok(false);
         };
-        let units = if let Some(units) = usage.genex_rollout_budget_units.as_ref() {
+        let units = if let Some(units) = usage.ruxex_rollout_budget_units.as_ref() {
             let units = units.as_f64().unwrap_or(f64::NAN);
             if !units.is_finite() || units < 0.0 {
-                return Err(GenexErr::Fatal(
-                    "response.completed usage.genex_rollout_budget_units must be finite and non-negative"
+                return Err(RuxexErr::Fatal(
+                    "response.completed usage.ruxex_rollout_budget_units must be finite and non-negative"
                         .to_string(),
                 ));
             }

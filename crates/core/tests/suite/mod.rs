@@ -1,32 +1,32 @@
 // Aggregates all former standalone integration tests as modules.
-use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
+use ruxex_apply_patch::RUXEX_CORE_APPLY_PATCH_ARG1;
 #[cfg(unix)]
-use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::GENEX_FS_HELPER_ARG1;
-use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
-use genex_test_binary_support::TestBinaryDispatchGuard;
-use genex_test_binary_support::TestBinaryDispatchMode;
-use genex_test_binary_support::configure_test_binary_dispatch;
+use ruxex_exec_server::RUXEX_ARG0_EXEC_HELPER_ARG1;
+use ruxex_exec_server::RUXEX_FS_HELPER_ARG1;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
+use ruxex_test_binary_support::TestBinaryDispatchGuard;
+use ruxex_test_binary_support::TestBinaryDispatchMode;
+use ruxex_test_binary_support::configure_test_binary_dispatch;
 use ctor::ctor;
 
 // This code runs before any other tests are run.
-// It allows the test binary to behave like genex and dispatch to apply_patch and genex-linux-sandbox
+// It allows the test binary to behave like ruxex and dispatch to apply_patch and ruxex-linux-sandbox
 // based on the arg0.
 // NOTE: this doesn't work on ARM
 #[ctor]
-pub static GENEX_ALIASES_TEMP_DIR: Option<TestBinaryDispatchGuard> = {
-    configure_test_binary_dispatch("genex-core-tests", |exe_name, argv1| {
-        if argv1 == Some(GENEX_CORE_APPLY_PATCH_ARG1) {
+pub static RUXEX_ALIASES_TEMP_DIR: Option<TestBinaryDispatchGuard> = {
+    configure_test_binary_dispatch("ruxex-core-tests", |exe_name, argv1| {
+        if argv1 == Some(RUXEX_CORE_APPLY_PATCH_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         #[cfg(unix)]
-        if argv1 == Some(GENEX_ARG0_EXEC_HELPER_ARG1) {
+        if argv1 == Some(RUXEX_ARG0_EXEC_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(GENEX_FS_HELPER_ARG1) {
+        if argv1 == Some(RUXEX_FS_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
+        if exe_name == RUXEX_LINUX_SANDBOX_ARG0 {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         TestBinaryDispatchMode::InstallAliases

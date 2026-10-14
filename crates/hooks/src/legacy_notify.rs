@@ -75,10 +75,10 @@ pub(crate) fn notify_hook(argv: Vec<String>, environment: Arc<Vec<(OsString, OsS
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use genex_protocol::ThreadId;
-    use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::shell_environment::RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::Value;
     use serde_json::json;
@@ -93,7 +93,7 @@ mod tests {
             "thread-id": "b5f6c1c2-1111-2222-3333-444455556666",
             "turn-id": "12345",
             "cwd": cwd.display().to_string(),
-            "client": "genex-tui",
+            "client": "ruxex-tui",
             "input-messages": ["Rename `foo` to `bar` and update the callsites."],
             "last-assistant-message": "Rename complete and verified `cargo build` succeeds.",
         })
@@ -107,7 +107,7 @@ mod tests {
             cwd: test_path_buf("/Users/example/project")
                 .display()
                 .to_string(),
-            client: Some("genex-tui".to_string()),
+            client: Some("ruxex-tui".to_string()),
             input_messages: vec!["Rename `foo` to `bar` and update the callsites.".to_string()],
             last_assistant_message: Some(
                 "Rename complete and verified `cargo build` succeeds.".to_string(),
@@ -124,7 +124,7 @@ mod tests {
         let payload = HookPayload {
             session_id: ThreadId::new(),
             cwd: test_path_buf("/Users/example/project").abs(),
-            client: Some("genex-tui".to_string()),
+            client: Some("ruxex-tui".to_string()),
             triggered_at: chrono::Utc::now(),
             hook_event: HookEvent::AfterAgent {
                 event: HookEventAfterAgent {
@@ -153,11 +153,11 @@ mod tests {
         let argv = vec!["notify-command".to_string()];
         let environment = vec![
             (
-                OsString::from("GENEX_LEGACY_NOTIFY_SNAPSHOT"),
+                OsString::from("RUXEX_LEGACY_NOTIFY_SNAPSHOT"),
                 OsString::from("captured"),
             ),
             (
-                OsString::from(GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
+                OsString::from(RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR),
                 OsString::from("restricted-token"),
             ),
         ];
@@ -175,7 +175,7 @@ mod tests {
         assert_eq!(
             configured_environment,
             vec![(
-                OsString::from("GENEX_LEGACY_NOTIFY_SNAPSHOT"),
+                OsString::from("RUXEX_LEGACY_NOTIFY_SNAPSHOT"),
                 OsString::from("captured"),
             )]
         );

@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutConfig;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::RolloutRecorderParams;
-use genex_rollout::is_persisted_rollout_item;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutConfig;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::RolloutRecorderParams;
+use ruxex_rollout::is_persisted_rollout_item;
 use tracing::warn;
 
 use super::LocalThreadStore;
@@ -19,7 +19,7 @@ use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
 use crate::types::canonical_history_mode_from_rollout_items;
 
-const ROLLOUT_SIZE_BYTES_METRIC: &str = "genex.rollout.size_bytes";
+const ROLLOUT_SIZE_BYTES_METRIC: &str = "ruxex.rollout.size_bytes";
 
 pub(super) async fn create_thread(
     store: &LocalThreadStore,
@@ -93,12 +93,12 @@ pub(super) async fn resume_thread(
             message: "local thread store requires a cwd".to_string(),
         })?;
     let config = RolloutConfig {
-        genex_home: store.config.genex_home.clone(),
+        ruxex_home: store.config.ruxex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd,
     };
     let rollout_id =
-        genex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {
+        ruxex_rollout::rollout_id_from_path(rollout_path.as_path()).ok_or_else(|| {
             ThreadStoreError::InvalidRequest {
                 message: format!(
                     "rollout path `{}` does not have a canonical rollout filename",
@@ -176,7 +176,7 @@ pub(super) async fn shutdown_thread(
         warn!("failed to project durable rollout during shutdown for {thread_id}: {err}");
     }
     sync_materialized_rollout_path(store, thread_id, rollout_path.as_path()).await?;
-    if let Some(metrics) = genex_otel::global()
+    if let Some(metrics) = ruxex_otel::global()
         && let Ok(metadata) = tokio::fs::metadata(&rollout_path).await
     {
         let size_bytes = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
@@ -241,7 +241,7 @@ async fn sync_materialized_rollout_path(
     thread_id: ThreadId,
     rollout_path: &std::path::Path,
 ) -> ThreadStoreResult<()> {
-    if genex_rollout::existing_rollout_path(rollout_path)
+    if ruxex_rollout::existing_rollout_path(rollout_path)
         .await
         .is_none()
     {

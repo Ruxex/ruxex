@@ -7,19 +7,19 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::StartThreadOptions;
-use genex_core::config::Config;
-use genex_core::config::ThreadStoreConfig;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::McpServerContribution;
-use genex_extension_api::McpServerContributionContext;
-use genex_extension_api::McpServerContributor;
-use genex_rollout::RolloutRecorder;
-use genex_thread_store::LocalThreadStore;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::config::Config;
+use ruxex_core::config::ThreadStoreConfig;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::McpServerContribution;
+use ruxex_extension_api::McpServerContributionContext;
+use ruxex_extension_api::McpServerContributor;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_thread_store::LocalThreadStore;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use tokio::sync::Notify;
 use tokio::time::timeout;
@@ -59,16 +59,16 @@ async fn cancelled_resume_releases_writer_while_mcp_startup_is_pending() -> Resu
     });
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.mcp_server_contributor(barrier.clone());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| config.experimental_thread_store = ThreadStoreConfig::Local)
         .build_with_auto_env(&server)
         .await?;
     let thread_id = test.session_configured.thread_id;
-    let environments = test.genex.environment_selections().await;
-    test.genex.ensure_rollout_materialized().await;
-    let rollout_path = test.genex.rollout_path().context("thread rollout")?;
-    test.genex.shutdown_and_wait().await?;
+    let environments = test.ruxex.environment_selections().await;
+    test.ruxex.ensure_rollout_materialized().await;
+    let rollout_path = test.ruxex.rollout_path().context("thread rollout")?;
+    test.ruxex.shutdown_and_wait().await?;
     test.thread_manager.remove_thread(&thread_id).await;
     let history = RolloutRecorder::get_rollout_history(&rollout_path).await?;
     let store = test

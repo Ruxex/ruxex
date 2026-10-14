@@ -24,14 +24,14 @@ use std::borrow::Cow;
 use crate::session::turn_context::TurnContext;
 pub(crate) use approvals::ApprovalContext;
 pub(crate) use executed_tool_calls::ExecutedToolCalls;
-use genex_features::Feature;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ToolMode;
-use genex_tools::ToolName;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::formatted_truncate_text;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_features::Feature;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_tools::ToolName;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::formatted_truncate_text;
+use ruxex_utils_output_truncation::truncate_text;
 pub use router::ToolRouter;
 
 /// Legacy boundaries such as hook payloads, telemetry tags, and Responses tool

@@ -1,12 +1,12 @@
 use crate::ApplicationRequirementsToml;
-pub use genex_model_provider_info::ResidencyRequirement;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_utils_absolute_path::AbsolutePathBuf;
+pub use ruxex_model_provider_info::ResidencyRequirement;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::de::Error as _;
@@ -640,7 +640,7 @@ impl FilesystemDenyReadPattern {
     }
 
     pub fn from_input(input: &str) -> Result<Self, String> {
-        genex_utils_path_uri::PathUri::validate_config_path_text(
+        ruxex_utils_path_uri::PathUri::validate_config_path_text(
             input,
             crate::path_context::convention(),
         )
@@ -667,7 +667,7 @@ impl FilesystemDenyReadPattern {
         } else {
             format!("{normalized_prefix}/{suffix}")
         };
-        genex_utils_path_uri::PathUri::validate_config_path_text(
+        ruxex_utils_path_uri::PathUri::validate_config_path_text(
             &normalized,
             crate::path_context::convention(),
         )
@@ -694,7 +694,7 @@ impl<'de> Deserialize<'de> for FilesystemDenyReadPattern {
 
 fn validate_literal_denial_path(path: &str) -> Result<(), String> {
     let convention = crate::path_context::convention();
-    genex_utils_path_uri::LegacyAppPathString::from_string(path)
+    ruxex_utils_path_uri::LegacyAppPathString::from_string(path)
         .to_path_uri(convention)
         .and_then(|path| path.validate_glob_directory(convention))
         .map_err(|error| error.to_string())
@@ -1593,12 +1593,12 @@ mod tests {
     use crate::McpServerIdentity;
     use crate::McpServerValueMatcher;
     use anyhow::Result;
-    use genex_execpolicy::Decision;
-    use genex_execpolicy::Evaluation;
-    use genex_execpolicy::RuleMatch;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_absolute_path::AbsolutePathBufGuard;
+    use ruxex_execpolicy::Decision;
+    use ruxex_execpolicy::Evaluation;
+    use ruxex_execpolicy::RuleMatch;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::AbsolutePathBufGuard;
     use pretty_assertions::assert_eq;
     use toml::from_str;
 
@@ -1614,7 +1614,7 @@ mod tests {
 
     fn mdm_requirement_source() -> RequirementSource {
         RequirementSource::MdmManagedPreferences {
-            domain: "com.genex.genex".to_string(),
+            domain: "com.ruxex.ruxex".to_string(),
             key: "requirements_toml_base64".to_string(),
         }
     }
@@ -1659,7 +1659,7 @@ mod tests {
     #[test]
     fn composite_requirement_source_flattens_and_deduplicates_sources() {
         let mdm_source = RequirementSource::MdmManagedPreferences {
-            domain: "com.genex.genex".to_string(),
+            domain: "com.ruxex.ruxex".to_string(),
             key: "requirements_toml_base64".to_string(),
         };
         let mdm_source_again = mdm_source.clone();
@@ -2259,7 +2259,7 @@ mod tests {
         )?;
 
         let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.genex".to_string(),
+            domain: "com.ruxex".to_string(),
             key: "allowed_approval_policies".to_string(),
         };
 
@@ -2315,7 +2315,7 @@ mod tests {
             "#,
         )?;
         let source_location = RequirementSource::MdmManagedPreferences {
-            domain: "com.genex".to_string(),
+            domain: "com.ruxex".to_string(),
             key: "allowed_approval_policies".to_string(),
         };
         populated_target.merge_unset_fields(source_location, source);
@@ -2469,7 +2469,7 @@ mod tests {
 
         let source_location = RequirementSource::composite([
             RequirementSource::MdmManagedPreferences {
-                domain: "com.genex.genex".to_string(),
+                domain: "com.ruxex.ruxex".to_string(),
                 key: "requirements_toml_base64".to_string(),
             },
             mdm_requirement_source(),
@@ -3084,7 +3084,7 @@ command = "python3 /enterprise/hooks/pre.py"
             path_prefixes = ["/console/v1"]
 
             [experimental_network.header_injections.headers]
-            "x-statsig-change-source" = "genex"
+            "x-statsig-change-source" = "ruxex"
         "#;
 
         let source = mdm_requirement_source();
@@ -3150,13 +3150,13 @@ command = "python3 /enterprise/hooks/pre.py"
                 path_prefixes: vec!["/console/v1".to_string()],
                 headers: BTreeMap::from([(
                     "x-statsig-change-source".to_string(),
-                    "genex".to_string(),
+                    "ruxex".to_string(),
                 )]),
             }])
         );
         let debug = format!("{:?}", sourced_network.value.header_injections);
         assert!(debug.contains("x-statsig-change-source"));
-        assert!(!debug.contains("genex"));
+        assert!(!debug.contains("ruxex"));
 
         Ok(())
     }
@@ -3330,7 +3330,7 @@ command = "python3 /enterprise/hooks/pre.py"
             description = "ignored legacy field"
 
             [mcp_servers.docs.identity]
-            command = "genex-mcp"
+            command = "ruxex-mcp"
 
             [mcp_servers.remote.identity]
             url = "https://example.com/mcp"
@@ -3346,7 +3346,7 @@ command = "python3 /enterprise/hooks/pre.py"
                         "docs".to_string(),
                         McpServerRequirement::Identity {
                             identity: McpServerIdentity::Command {
-                                command: "genex-mcp".to_string(),
+                                command: "ruxex-mcp".to_string(),
                             },
                         },
                     ),

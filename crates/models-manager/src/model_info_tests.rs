@@ -1,17 +1,17 @@
 use super::*;
 use crate::ModelsManagerConfig;
-use genex_prompts::render_model_instructions;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::CollaborationModeMessages;
-use genex_protocol::model_types::ConfirmationPolicies;
-use genex_protocol::model_types::ModelTokenBudgetConfig;
-use genex_protocol::model_types::MultiAgentMessages;
-use genex_protocol::model_types::MultiAgentModeMessages;
-use genex_protocol::model_types::MultiAgentRoleMessages;
-use genex_protocol::model_types::MultiAgentToolMessages;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::model_types::ToolMessage;
-use genex_protocol::model_types::ToolMessages;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::model_types::ApprovalMessages;
+use ruxex_protocol::model_types::CollaborationModeMessages;
+use ruxex_protocol::model_types::ConfirmationPolicies;
+use ruxex_protocol::model_types::ModelTokenBudgetConfig;
+use ruxex_protocol::model_types::MultiAgentMessages;
+use ruxex_protocol::model_types::MultiAgentModeMessages;
+use ruxex_protocol::model_types::MultiAgentRoleMessages;
+use ruxex_protocol::model_types::MultiAgentToolMessages;
+use ruxex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::model_types::ToolMessage;
+use ruxex_protocol::model_types::ToolMessages;
 use pretty_assertions::assert_eq;
 
 #[test]

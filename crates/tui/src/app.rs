@@ -70,7 +70,7 @@ use crate::token_usage::TokenUsage;
 use crate::transcript_reflow::TranscriptReflowState;
 use crate::tui;
 use crate::tui::TuiEvent;
-use crate::version::GENEX_CLI_VERSION;
+use crate::version::RUXEX_CLI_VERSION;
 use crate::workspace_command::AppServerWorkspaceCommandRunner;
 use crate::workspace_command::WorkspaceCommandRunner;
 use color_eyre::eyre::Result;
@@ -79,64 +79,64 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_ansi_escape::ansi_escape_line;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigReadResponse;
-use genex_app_server_protocol::ConfigValueWriteParams;
-use genex_app_server_protocol::ConfigWriteResponse;
-use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
-use genex_app_server_protocol::HooksListEntry;
-use genex_app_server_protocol::ListMcpServerStatusParams;
-use genex_app_server_protocol::ListMcpServerStatusResponse;
+use ruxex_ansi_escape::ansi_escape_line;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigReadResponse;
+use ruxex_app_server_protocol::ConfigValueWriteParams;
+use ruxex_app_server_protocol::ConfigWriteResponse;
+use ruxex_app_server_protocol::RuxexErrorInfo as AppServerRuxexErrorInfo;
+use ruxex_app_server_protocol::HooksListEntry;
+use ruxex_app_server_protocol::ListMcpServerStatusParams;
+use ruxex_app_server_protocol::ListMcpServerStatusResponse;
 #[cfg(test)]
-use genex_app_server_protocol::McpAuthStatus;
-use genex_app_server_protocol::McpServerStatus;
-use genex_app_server_protocol::McpServerStatusDetail;
-use genex_app_server_protocol::MergeStrategy;
-use genex_app_server_protocol::PluginInstallParams;
-use genex_app_server_protocol::PluginInstallResponse;
-use genex_app_server_protocol::PluginListMarketplaceKind;
-use genex_app_server_protocol::PluginListParams;
-use genex_app_server_protocol::PluginListResponse;
-use genex_app_server_protocol::PluginReadParams;
-use genex_app_server_protocol::PluginReadResponse;
-use genex_app_server_protocol::PluginUninstallParams;
-use genex_app_server_protocol::PluginUninstallResponse;
-use genex_app_server_protocol::SandboxMode as AppServerSandboxMode;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SkillErrorInfo;
-use genex_app_server_protocol::SkillsListParams;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadStartSource;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnError as AppServerTurnError;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::WriteStatus;
-use genex_config::LoaderOverrides;
-use genex_config::types::ModelAvailabilityNuxConfig;
-use genex_exec_server::EnvironmentManager;
-use genex_features::Feature;
-use genex_features::FeaturesToml;
-use genex_otel::SessionTelemetry;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ModelAvailabilityNux;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelUpgrade;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_rollout::StateDbHandle;
-use genex_terminal_detection::user_agent;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_approval_presets::builtin_permission_profile_for_active_permission_profile;
+use ruxex_app_server_protocol::McpAuthStatus;
+use ruxex_app_server_protocol::McpServerStatus;
+use ruxex_app_server_protocol::McpServerStatusDetail;
+use ruxex_app_server_protocol::MergeStrategy;
+use ruxex_app_server_protocol::PluginInstallParams;
+use ruxex_app_server_protocol::PluginInstallResponse;
+use ruxex_app_server_protocol::PluginListMarketplaceKind;
+use ruxex_app_server_protocol::PluginListParams;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::PluginReadParams;
+use ruxex_app_server_protocol::PluginReadResponse;
+use ruxex_app_server_protocol::PluginUninstallParams;
+use ruxex_app_server_protocol::PluginUninstallResponse;
+use ruxex_app_server_protocol::SandboxMode as AppServerSandboxMode;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SkillErrorInfo;
+use ruxex_app_server_protocol::SkillsListParams;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadStartSource;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnError as AppServerTurnError;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::WriteStatus;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::types::ModelAvailabilityNuxConfig;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_features::Feature;
+use ruxex_features::FeaturesToml;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ModelAvailabilityNux;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelUpgrade;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_rollout::StateDbHandle;
+use ruxex_terminal_detection::user_agent;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_approval_presets::builtin_permission_profile_for_active_permission_profile;
 use ratatui::backend::Backend;
 use ratatui::layout::Rect;
 use ratatui::layout::Size;
@@ -296,7 +296,7 @@ fn collab_receiver_is_not_found(
                 agents_states.get(receiver_thread_id).is_some_and(|state| {
                     matches!(
                         &state.status,
-                        genex_app_server_protocol::CollabAgentStatus::NotFound
+                        ruxex_app_server_protocol::CollabAgentStatus::NotFound
                     )
                 })
             }
@@ -307,15 +307,15 @@ fn collab_receiver_is_not_found(
 }
 
 fn default_exec_approval_decisions(
-    network_approval_context: Option<&genex_app_server_protocol::NetworkApprovalContext>,
-    proposed_execpolicy_amendment: Option<&genex_app_server_protocol::ExecPolicyAmendment>,
+    network_approval_context: Option<&ruxex_app_server_protocol::NetworkApprovalContext>,
+    proposed_execpolicy_amendment: Option<&ruxex_app_server_protocol::ExecPolicyAmendment>,
     proposed_network_policy_amendments: Option<
-        &[genex_app_server_protocol::NetworkPolicyAmendment],
+        &[ruxex_app_server_protocol::NetworkPolicyAmendment],
     >,
-    additional_permissions: Option<&genex_app_server_protocol::AdditionalPermissionProfile>,
-) -> Vec<genex_app_server_protocol::CommandExecutionApprovalDecision> {
-    use genex_app_server_protocol::CommandExecutionApprovalDecision;
-    use genex_app_server_protocol::NetworkPolicyRuleAction;
+    additional_permissions: Option<&ruxex_app_server_protocol::AdditionalPermissionProfile>,
+) -> Vec<ruxex_app_server_protocol::CommandExecutionApprovalDecision> {
+    use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+    use ruxex_app_server_protocol::NetworkPolicyRuleAction;
 
     if network_approval_context.is_some() {
         let mut decisions = vec![
@@ -440,7 +440,7 @@ fn resume_hint_for_resumable_thread(
     rollout_path: Option<&Path>,
 ) -> Option<String> {
     let thread = resumable_thread(thread_id, thread_name, rollout_path)?;
-    genex_utils_cli::resume_hint(thread.thread_name.as_deref(), Some(thread.thread_id))
+    ruxex_utils_cli::resume_hint(thread.thread_name.as_deref(), Some(thread.thread_id))
 }
 
 fn rollout_path_is_resumable(rollout_path: &Path) -> bool {
@@ -556,8 +556,8 @@ pub(crate) struct App {
     pending_primary_events: VecDeque<ThreadBufferedEvent>,
     pending_app_server_requests: PendingAppServerRequests,
     dynamic_tool_status_updates:
-        tokio::sync::broadcast::Sender<genex_app_server_protocol::ThreadStatusChangedNotification>,
-    dynamic_tool_tasks: HashMap<genex_app_server_protocol::RequestId, (String, JoinHandle<()>)>,
+        tokio::sync::broadcast::Sender<ruxex_app_server_protocol::ThreadStatusChangedNotification>,
+    dynamic_tool_tasks: HashMap<ruxex_app_server_protocol::RequestId, (String, JoinHandle<()>)>,
     pending_startup_thread_start: bool,
     pending_server_version_notice: Option<crate::status::remote_connection::ServerVersionNotice>,
     /// Opens the session picker after event dispatch returns, with a fresh stack.
@@ -661,8 +661,8 @@ fn active_turn_not_steerable_turn_error(error: &TypedRequestError) -> Option<App
     };
     let turn_error: AppServerTurnError = serde_json::from_value(source.data.clone()?).ok()?;
     matches!(
-        turn_error.genex_error_info,
-        Some(AppServerGenexErrorInfo::ActiveTurnNotSteerable { .. })
+        turn_error.ruxex_error_info,
+        Some(AppServerRuxexErrorInfo::ActiveTurnNotSteerable { .. })
     )
     .then_some(turn_error)
 }
@@ -733,7 +733,7 @@ impl App {
             initial_user_message,
             enhanced_keys_supported: self.enhanced_keys_supported,
             has_managed_account: self.chat_widget.has_managed_account(),
-            has_genex_backend_auth: self.chat_widget.has_genex_backend_auth(),
+            has_ruxex_backend_auth: self.chat_widget.has_ruxex_backend_auth(),
             model_catalog: self.model_catalog.clone(),
             is_first_run: false,
             status_account_display: self.chat_widget.status_account_display().cloned(),

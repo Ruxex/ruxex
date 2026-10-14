@@ -1,4 +1,4 @@
-//! Proxy-aware WebSocket connection setup shared by Genex API clients.
+//! Proxy-aware WebSocket connection setup shared by Ruxex API clients.
 
 mod dialer;
 
@@ -12,11 +12,11 @@ use std::task::Poll;
 use futures::FutureExt;
 use futures::Sink;
 use futures::Stream;
-use genex_http_client::BuildCustomCaTransportError;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::NetworkPermit;
-use genex_http_client::OutboundProxyRoute;
-use genex_http_client::build_rustls_client_config_with_custom_ca;
+use ruxex_http_client::BuildCustomCaTransportError;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::NetworkPermit;
+use ruxex_http_client::OutboundProxyRoute;
+use ruxex_http_client::build_rustls_client_config_with_custom_ca;
 use rustls::ClientConfig;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
@@ -42,11 +42,11 @@ pub struct WebSocketConnector {
     tcp_nodelay: TcpNodelay,
 }
 
-/// Selects whether WebSocket TLS follows Genex custom-CA policy or Tungstenite defaults.
+/// Selects whether WebSocket TLS follows Ruxex custom-CA policy or Tungstenite defaults.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum WebSocketTlsMode {
-    /// Build an explicit TLS configuration from native roots and configured Genex custom CAs.
-    ExplicitGenexTls,
+    /// Build an explicit TLS configuration from native roots and configured Ruxex custom CAs.
+    ExplicitRuxexTls,
     /// Let Tungstenite build its default TLS configuration when the target requires TLS.
     TungsteniteDefault,
 }
@@ -58,23 +58,23 @@ pub(crate) enum TcpNodelay {
 }
 
 impl WebSocketConnector {
-    /// Creates a connector using native roots and any configured Genex custom CA bundle.
+    /// Creates a connector using native roots and any configured Ruxex custom CA bundle.
     pub fn new(
         http_client_factory: &HttpClientFactory,
     ) -> Result<Self, BuildCustomCaTransportError> {
-        Self::new_with_tls_mode(http_client_factory, WebSocketTlsMode::ExplicitGenexTls)
+        Self::new_with_tls_mode(http_client_factory, WebSocketTlsMode::ExplicitRuxexTls)
     }
 
-    /// Creates a connector with explicit Genex TLS or the transport's existing TLS defaults.
+    /// Creates a connector with explicit Ruxex TLS or the transport's existing TLS defaults.
     ///
-    /// HTTPS proxy connections still build Genex TLS configuration when they establish their
+    /// HTTPS proxy connections still build Ruxex TLS configuration when they establish their
     /// proxy tunnel; default-mode target connections otherwise remain entirely with Tungstenite.
     pub fn new_with_tls_mode(
         http_client_factory: &HttpClientFactory,
         tls_mode: WebSocketTlsMode,
     ) -> Result<Self, BuildCustomCaTransportError> {
         let tls_config = match tls_mode {
-            WebSocketTlsMode::ExplicitGenexTls => {
+            WebSocketTlsMode::ExplicitRuxexTls => {
                 Some(build_rustls_client_config_with_custom_ca()?)
             }
             WebSocketTlsMode::TungsteniteDefault => None,
@@ -185,7 +185,7 @@ impl WebSocketConnector {
     }
 }
 
-fn network_policy_error(error: genex_http_client::NetworkPolicyDenied) -> WebSocketError {
+fn network_policy_error(error: ruxex_http_client::NetworkPolicyDenied) -> WebSocketError {
     WebSocketError::Io(io::Error::new(io::ErrorKind::PermissionDenied, error))
 }
 

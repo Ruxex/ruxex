@@ -1,7 +1,7 @@
 //! Task grouping modes share model labels and group membership across rendering and navigation.
 
 use super::AgentsOverviewView;
-use genex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::Thread;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(in super::super) enum AgentsOverviewGrouping {

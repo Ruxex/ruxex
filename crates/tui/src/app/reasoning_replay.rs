@@ -6,10 +6,10 @@
 use super::ThreadBufferedEvent;
 use super::ThreadEventSnapshot;
 use crate::chatwidget::ChatWidget;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::TurnStatus;
 
 pub(super) struct ReasoningReplay {
     started: Option<ItemStartedNotification>,

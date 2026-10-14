@@ -8,51 +8,51 @@ use app_test_support::create_escalated_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::QueuedSubmission;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadQueueAddParams;
-use genex_app_server_protocol::ThreadQueueAddResponse;
-use genex_app_server_protocol::ThreadQueueChangedNotification;
-use genex_app_server_protocol::ThreadQueueDeleteParams;
-use genex_app_server_protocol::ThreadQueueDeleteResponse;
-use genex_app_server_protocol::ThreadQueueListParams;
-use genex_app_server_protocol::ThreadQueueListResponse;
-use genex_app_server_protocol::ThreadQueueReorderParams;
-use genex_app_server_protocol::ThreadQueueReorderResponse;
-use genex_app_server_protocol::ThreadQueueStartParams;
-use genex_app_server_protocol::ThreadQueueStartResponse;
-use genex_app_server_protocol::ThreadQueueUpdateParams;
-use genex_app_server_protocol::ThreadQueueUpdateResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadSettingsUpdateResponse;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::QueuedSubmission;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadQueueAddParams;
+use ruxex_app_server_protocol::ThreadQueueAddResponse;
+use ruxex_app_server_protocol::ThreadQueueChangedNotification;
+use ruxex_app_server_protocol::ThreadQueueDeleteParams;
+use ruxex_app_server_protocol::ThreadQueueDeleteResponse;
+use ruxex_app_server_protocol::ThreadQueueListParams;
+use ruxex_app_server_protocol::ThreadQueueListResponse;
+use ruxex_app_server_protocol::ThreadQueueReorderParams;
+use ruxex_app_server_protocol::ThreadQueueReorderResponse;
+use ruxex_app_server_protocol::ThreadQueueStartParams;
+use ruxex_app_server_protocol::ThreadQueueStartResponse;
+use ruxex_app_server_protocol::ThreadQueueUpdateParams;
+use ruxex_app_server_protocol::ThreadQueueUpdateResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::model_types::ReasoningEffort;
 use core_test_support::skip_if_remote;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -65,14 +65,14 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 10);
 
 #[tokio::test]
 async fn queue_requires_experimental_handshake() -> Result<()> {
-    let (mut app, genex_home, _server) = queue_app(Vec::new()).await?;
+    let (mut app, ruxex_home, _server) = queue_app(Vec::new()).await?;
     let thread = app.start_thread(ThreadStartParams::default()).await?.thread;
     let queue = list_queue(&mut app, &thread.id).await?;
     assert!(queue.data.is_empty());
     drop(app);
 
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build()
         .await?;
@@ -125,7 +125,7 @@ async fn queue_crud_preserves_identity_order_and_notifications() -> Result<()> {
         create_final_assistant_message_sse_response("active done")?,
         create_final_assistant_message_sse_response("queued done")?,
     ];
-    let (mut app, _genex_home, _server) = queue_app(responses).await?;
+    let (mut app, _ruxex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -256,7 +256,7 @@ async fn queue_list_returns_ordered_pages_and_lightweight_notifications() -> Res
         "uses a host-local command and cwd fixture unavailable to remote executors"
     );
 
-    let (mut app, _genex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
+    let (mut app, _ruxex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -331,7 +331,7 @@ async fn queue_rejects_messages_after_reaching_its_capacity() -> Result<()> {
         "uses a host-local command and cwd fixture unavailable to remote executors"
     );
 
-    let (mut app, _genex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
+    let (mut app, _ruxex_home, _server) = queue_app(vec![blocked_turn_response()?]).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -368,7 +368,7 @@ async fn queue_rejects_messages_after_reaching_its_capacity() -> Result<()> {
 #[tokio::test]
 async fn idle_queue_dispatch_preserves_client_id() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("queued done")?];
-    let (mut app, _genex_home, server) = queue_app(responses).await?;
+    let (mut app, _ruxex_home, server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -412,8 +412,8 @@ async fn idle_queue_dispatch_preserves_client_id() -> Result<()> {
     assert!(body["input"].to_string().contains("durable queued message"));
     let metadata_header = request
         .headers
-        .get("x-genex-turn-metadata")
-        .context("queued model request is missing its x-genex-turn-metadata header")?
+        .get("x-ruxex-turn-metadata")
+        .context("queued model request is missing its x-ruxex-turn-metadata header")?
         .to_str()
         .context("queued turn metadata header is not valid ASCII")?;
     let metadata: Value = serde_json::from_str(metadata_header)?;
@@ -432,7 +432,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
         create_final_assistant_message_sse_response("materialized thread")?,
         create_final_assistant_message_sse_response("cold-resumed queued message")?,
     ];
-    let (mut first, genex_home, _server) = queue_app(responses).await?;
+    let (mut first, ruxex_home, _server) = queue_app(responses).await?;
     let thread_id = first
         .start_thread(ThreadStartParams::default())
         .await?
@@ -468,7 +468,7 @@ async fn cold_thread_resume_dispatches_a_persisted_queued_submission() -> Result
     drop(first);
 
     let mut resumed = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -570,7 +570,7 @@ async fn interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item() 
         create_final_assistant_message_sse_response("message added after interruption done")?,
         create_final_assistant_message_sse_response("message added after cold resume done")?,
     ];
-    let (mut app, genex_home, _server) = queue_app(responses).await?;
+    let (mut app, ruxex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -646,7 +646,7 @@ async fn interrupt_preserves_queue_and_queue_start_can_resume_a_non_head_item() 
 
     drop(app);
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -710,7 +710,7 @@ async fn queue_start_while_active_returns_busy_and_preserves_the_queue() -> Resu
         create_final_assistant_message_sse_response("queued message done")?,
     ])
     .await;
-    let (mut app, _genex_home, _server) = queue_app_with_server(server).await?;
+    let (mut app, _ruxex_home, _server) = queue_app_with_server(server).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -783,7 +783,7 @@ async fn queue_start_without_id_starts_the_head_when_idle() -> Result<()> {
         create_final_assistant_message_sse_response("first queued message done")?,
         create_final_assistant_message_sse_response("second queued message done")?,
     ];
-    let (mut app, _genex_home, server) = queue_app(responses).await?;
+    let (mut app, _ruxex_home, server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -846,8 +846,8 @@ async fn queue_start_without_id_starts_the_head_when_idle() -> Result<()> {
     for request in &response_requests[1..] {
         let metadata_header = request
             .headers
-            .get("x-genex-turn-metadata")
-            .context("queued model request is missing its x-genex-turn-metadata header")?
+            .get("x-ruxex-turn-metadata")
+            .context("queued model request is missing its x-ruxex-turn-metadata header")?
             .to_str()
             .context("queued turn metadata header is not valid ASCII")?;
         let metadata: Value = serde_json::from_str(metadata_header)?;
@@ -870,7 +870,7 @@ async fn a_new_turn_preserves_queued_messages_until_it_completes() -> Result<()>
         create_final_assistant_message_sse_response("first queued message done")?,
         create_final_assistant_message_sse_response("second queued message done")?,
     ];
-    let (mut app, _genex_home, _server) = queue_app(responses).await?;
+    let (mut app, _ruxex_home, _server) = queue_app(responses).await?;
     let thread_id = app
         .start_thread(ThreadStartParams::default())
         .await?
@@ -949,17 +949,17 @@ async fn queue_app(responses: Vec<String>) -> Result<(TestAppServer, TempDir, Mo
 }
 
 async fn queue_app_with_server(server: MockServer) -> Result<(TestAppServer, TempDir, MockServer)> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_root_config(r#"approvals_reviewer = "user""#);
-    config.write(genex_home.path())?;
+    config.write(ruxex_home.path())?;
     let app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
-    Ok((app, genex_home, server))
+    Ok((app, ruxex_home, server))
 }
 
 fn blocked_turn_response() -> Result<String> {

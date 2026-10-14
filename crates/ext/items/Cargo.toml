@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-extension-items"
+name = "ruxex-extension-items"
 version.workspace = true
 
 [lib]
-name = "genex_extension_items"
+name = "ruxex_extension_items"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,7 +13,7 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

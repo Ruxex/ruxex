@@ -1,7 +1,7 @@
-use genex_prompts::ResolvedModelMessages;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::model_types::ReasoningEffort;
 
 pub fn builtin_collaboration_mode_presets() -> Vec<CollaborationModeMask> {
     let messages = ResolvedModelMessages::bundled().collaboration_modes();

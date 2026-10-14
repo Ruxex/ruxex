@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use genex_http_client::HttpClientFactory;
-use genex_login::CredentialManager;
-use genex_model_provider_info::ModelProviderInfo;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider_info::ModelProviderInfo;
 
 use crate::ModelProvider;
 use crate::ProviderDescriptor;

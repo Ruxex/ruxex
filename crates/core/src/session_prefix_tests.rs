@@ -1,6 +1,6 @@
-use genex_protocol::AgentPath;
-use genex_protocol::protocol::AgentStatus;
-use genex_utils_output_truncation::approx_token_count;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_utils_output_truncation::approx_token_count;
 
 use super::COMPLETION_MESSAGE_MAX_TOKENS;
 use super::ERROR_NEXT_ACTION;

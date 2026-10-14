@@ -3,8 +3,8 @@
 use std::collections::BTreeMap;
 use std::time::Duration;
 
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;

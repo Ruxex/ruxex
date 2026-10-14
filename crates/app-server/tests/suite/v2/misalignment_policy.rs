@@ -1,19 +1,19 @@
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::MisalignmentErrorDetails;
-use genex_app_server_protocol::MisalignmentSteer;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnError;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::MisalignmentErrorDetails;
+use ruxex_app_server_protocol::MisalignmentSteer;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnError;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -179,11 +179,11 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
     let server = responses::start_mock_server().await;
     let response_mock = responses::mount_response_once(&server, response).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -218,7 +218,7 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
             error: TurnError {
                 misalignment: expected_misalignment.clone(),
                 message: MESSAGE.to_string(),
-                genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
+                ruxex_error_info: Some(RuxexErrorInfo::MisalignmentPolicyViolation),
                 additional_details: None,
             },
             will_retry: false,
@@ -240,7 +240,7 @@ async fn assert_policy_violation_completes_turn_with_typed_terminal_error(
         Some(TurnError {
             misalignment: expected_misalignment,
             message: MESSAGE.to_string(),
-            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
+            ruxex_error_info: Some(RuxexErrorInfo::MisalignmentPolicyViolation),
             additional_details: None,
         })
     );

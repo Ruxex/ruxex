@@ -1,8 +1,8 @@
-use genex_app_server_protocol::ThreadHistoryChangeSet;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::TurnStatus;
-use genex_protocol::ThreadId;
-use genex_protocol::models::MessagePhase;
+use ruxex_app_server_protocol::ThreadHistoryChangeSet;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::MessagePhase;
 
 use super::LocalThreadStore;
 use crate::ThreadStoreError;

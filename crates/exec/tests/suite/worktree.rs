@@ -2,12 +2,12 @@
 //! Observe ownership at the first model request, before the process can finish.
 
 use anyhow::Context;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_worktree::CreateWorktree;
-use genex_worktree::WorktreeManager;
-use genex_worktree::WorktreeSettings;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_worktree::CreateWorktree;
+use ruxex_worktree::WorktreeManager;
+use ruxex_worktree::WorktreeSettings;
 use core_test_support::responses;
-use core_test_support::test_genex_exec::test_genex_exec;
+use core_test_support::test_ruxex_exec::test_ruxex_exec;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::fs;
@@ -56,7 +56,7 @@ fn started_thread(output: Output) -> anyhow::Result<String> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> anyhow::Result<()> {
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let home = AbsolutePathBuf::from_absolute_path(test.home_path())?
         .canonicalize()?
         .into_path_buf();
@@ -114,8 +114,8 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
     seed_mock.single_request();
     legacy_manager.bind_thread(&legacy.root, &legacy_id)?;
     fs::write(source.join("AGENTS.md"), "uncommitted source instructions")?;
-    fs::create_dir(source.join(".genex"))?;
-    fs::write(source.join(".genex/config.toml"), "[invalid source config")?;
+    fs::create_dir(source.join(".ruxex"))?;
+    fs::write(source.join(".ruxex/config.toml"), "[invalid source config")?;
 
     let launcher = tempfile::tempdir()?;
     fs::create_dir(launcher.path().join("extra"))?;
@@ -295,13 +295,13 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
     for args in [vec!["prompt"], vec!["fork", legacy_id.as_str(), "prompt"]] {
         let request_count = if args.first() == Some(&"fork") {
             // The saved checkout can choose file auth even when the launcher does not.
-            fs::remove_file(source.join(".genex/config.toml"))?;
-            fs::create_dir_all(legacy.cwd.join(".genex"))?;
+            fs::remove_file(source.join(".ruxex/config.toml"))?;
+            fs::create_dir_all(legacy.cwd.join(".ruxex"))?;
             fs::write(
-                legacy.cwd.join(".genex/config.toml"),
+                legacy.cwd.join(".ruxex/config.toml"),
                 "cli_auth_credentials_store=\"file\"\n",
             )?;
-            git(&legacy.cwd, &["add", ".genex/config.toml"])?;
+            git(&legacy.cwd, &["add", ".ruxex/config.toml"])?;
             git(
                 &legacy.cwd,
                 &["commit", "--quiet", "--no-gpg-sign", "-m", "file auth"],
@@ -329,9 +329,9 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
             } else {
                 &source
             })
-            .env_remove("GENEX_API_KEY")
+            .env_remove("RUXEX_API_KEY")
             .env_remove("PROVIDER_API_KEY")
-            .env_remove("GENEX_ACCESS_TOKEN")
+            .env_remove("RUXEX_ACCESS_TOKEN")
             .args(["--json", "--worktree", "--strict-config"])
             .args(args)
             .output()?;
@@ -382,10 +382,10 @@ async fn worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume() -> a
 #[test]
 fn worktree_rejects_remote_defaults_before_allocation() -> anyhow::Result<()> {
     for route in ["environment", "file"] {
-        let test = test_genex_exec();
+        let test = test_ruxex_exec();
         let mut command = test.cmd();
         if route == "environment" {
-            command.env("GENEX_EXEC_SERVER_URL", "ws://127.0.0.1:9");
+            command.env("RUXEX_EXEC_SERVER_URL", "ws://127.0.0.1:9");
         } else {
             fs::write(
                 test.home_path().join("environments.toml"),
@@ -430,7 +430,7 @@ fn worktree_rejects_disabled_features_and_ignored_config_before_allocation() -> 
             "--enable worktrees",
         ),
     ] {
-        let test = test_genex_exec();
+        let test = test_ruxex_exec();
         fs::write(test.home_path().join("config.toml"), config)?;
         let output = test.cmd().arg("--worktree").args(args).output()?;
         assert!(!output.status.success());

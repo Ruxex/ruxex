@@ -1,17 +1,17 @@
-//! Default Genex HTTP client: shared `User-Agent`, `originator`, optional residency header, and
+//! Default Ruxex HTTP client: shared `User-Agent`, `originator`, optional residency header, and
 //! `HttpClient` construction.
 //!
-//! Use [`crate::default_client`] or [`genex_login::default_client`] from other crates in this
+//! Use [`crate::default_client`] or [`ruxex_login::default_client`] from other crates in this
 //! workspace.
 
-use genex_http_client::BuildRouteAwareHttpClientError;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClient;
-use genex_http_client::HttpClientBuilder;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-pub use genex_http_client::RequestBuilder as GenexRequestBuilder;
-use genex_terminal_detection::user_agent;
+use ruxex_http_client::BuildRouteAwareHttpClientError;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClient;
+use ruxex_http_client::HttpClientBuilder;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+pub use ruxex_http_client::RequestBuilder as RuxexRequestBuilder;
+use ruxex_terminal_detection::user_agent;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::header::USER_AGENT;
@@ -33,14 +33,14 @@ use std::sync::RwLock;
 ///
 /// A space is automatically added between the suffix and the rest of the User-Agent string.
 /// The full user agent string is returned from the mcp initialize response.
-/// Parenthesis will be added by Genex. This should only specify what goes inside of the parenthesis.
+/// Parenthesis will be added by Ruxex. This should only specify what goes inside of the parenthesis.
 pub static USER_AGENT_SUFFIX: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
-pub const DEFAULT_ORIGINATOR: &str = "genex_cli_rs";
-pub const INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "GENEX_INTERNAL_ORIGINATOR_OVERRIDE";
-pub use genex_model_provider_info::RESIDENCY_HEADER_NAME;
-pub use genex_model_provider_info::ResidencyRequirement;
-pub use genex_model_provider_info::read_managed_residency_requirement as read_default_client_residency_requirement;
-pub use genex_model_provider_info::set_managed_residency_requirement as set_default_client_residency_requirement;
+pub const DEFAULT_ORIGINATOR: &str = "ruxex_cli_rs";
+pub const INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "RUXEX_INTERNAL_ORIGINATOR_OVERRIDE";
+pub use ruxex_model_provider_info::RESIDENCY_HEADER_NAME;
+pub use ruxex_model_provider_info::ResidencyRequirement;
+pub use ruxex_model_provider_info::read_managed_residency_requirement as read_default_client_residency_requirement;
+pub use ruxex_model_provider_info::set_managed_residency_requirement as set_default_client_residency_requirement;
 
 #[derive(Debug, Clone)]
 pub struct Originator {
@@ -136,7 +136,7 @@ pub fn add_originator_header(headers: &mut HeaderMap, originator_value: &str) {
 
 pub fn is_first_party_originator(originator_value: &str) -> bool {
     originator_value == DEFAULT_ORIGINATOR
-        || originator_value == "genex-tui"
+        || originator_value == "ruxex-tui"
         || originator_value == "codex_vscode"
         || originator_value.starts_with("Codex ")
 }
@@ -183,17 +183,17 @@ fn sanitize_user_agent(candidate: String, fallback: &str) -> String {
         .collect();
     if !sanitized.is_empty() && HeaderValue::from_str(sanitized.as_str()).is_ok() {
         tracing::warn!(
-            "Sanitized Genex user agent because provided suffix contained invalid header characters"
+            "Sanitized Ruxex user agent because provided suffix contained invalid header characters"
         );
         sanitized
     } else if HeaderValue::from_str(fallback).is_ok() {
         tracing::warn!(
-            "Falling back to base Genex user agent because provided suffix could not be sanitized"
+            "Falling back to base Ruxex user agent because provided suffix could not be sanitized"
         );
         fallback.to_string()
     } else {
         tracing::warn!(
-            "Falling back to default Genex originator because base user agent string is invalid"
+            "Falling back to default Ruxex originator because base user agent string is invalid"
         );
         originator().value
     }
@@ -202,7 +202,7 @@ fn sanitize_user_agent(candidate: String, fallback: &str) -> String {
 /// Create an HTTP client with default `originator` and `User-Agent` headers set.
 ///
 /// This supported default path preserves the transport's existing proxy behavior and does not opt into
-/// Genex's route-aware system/PAC resolution.
+/// Ruxex's route-aware system/PAC resolution.
 pub fn create_client() -> HttpClient {
     build_default_client(default_http_client_builder())
 }
@@ -215,9 +215,9 @@ pub fn create_client_without_request_logging() -> HttpClient {
     build_default_client(default_http_client_builder().without_request_logging())
 }
 
-/// Builds the default Genex HTTP client for a concrete outbound route.
+/// Builds the default Ruxex HTTP client for a concrete outbound route.
 ///
-/// When route-aware proxy handling is disabled, or the client is running inside the Genex
+/// When route-aware proxy handling is disabled, or the client is running inside the Ruxex
 /// sandbox, this preserves the default client's existing proxy behavior. Otherwise it resolves
 /// the destination through the shared system/PAC-aware routing policy.
 pub fn create_client_for_route(
@@ -252,7 +252,7 @@ pub enum ClientRedirectPolicy {
     Reject,
 }
 
-/// Builds the default Genex HTTP client for a concrete outbound route without blocking the
+/// Builds the default Ruxex HTTP client for a concrete outbound route without blocking the
 /// async runtime worker that initiated the request.
 pub async fn create_client_for_route_async(
     http_client_factory: HttpClientFactory,
@@ -306,5 +306,5 @@ pub fn default_headers() -> HeaderMap {
 }
 
 fn is_sandboxed() -> bool {
-    std::env::var("GENEX_SANDBOX").as_deref() == Ok("seatbelt")
+    std::env::var("RUXEX_SANDBOX").as_deref() == Ok("seatbelt")
 }

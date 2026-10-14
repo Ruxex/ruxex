@@ -3,13 +3,13 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
 use tempfile::TempDir;
 
 use super::*;
@@ -114,7 +114,7 @@ fn disabled_thread_context_accepts_trace_calls_without_writing() -> anyhow::Resu
 
     thread_trace.record_ended(RolloutStatus::Completed);
     thread_trace.record_protocol_event(&EventMsg::ShutdownComplete);
-    thread_trace.record_genex_turn_event("turn-1", &EventMsg::ShutdownComplete);
+    thread_trace.record_ruxex_turn_event("turn-1", &EventMsg::ShutdownComplete);
     thread_trace.record_tool_call_event("turn-1", &EventMsg::ShutdownComplete);
     thread_trace.record_agent_result_interaction(
         "turn-1",
@@ -129,7 +129,7 @@ fn disabled_thread_context_accepts_trace_calls_without_writing() -> anyhow::Resu
     let inference_trace = thread_trace.inference_trace_context("turn-1", "model-test");
     let inference_attempt = inference_trace.start_attempt();
     inference_attempt.record_started(&serde_json::json!({ "kind": "inference" }));
-    let token_usage: Option<genex_protocol::protocol::TokenUsage> = None;
+    let token_usage: Option<ruxex_protocol::protocol::TokenUsage> = None;
     inference_attempt.record_completed("response-1", Some("req-1"), &token_usage, &[]);
     inference_attempt.record_failed("inference failed", /*upstream_request_id*/ None, &[]);
 
@@ -164,7 +164,7 @@ fn compaction_contexts_share_identity_across_models() -> anyhow::Result<()> {
     let thread_id = ThreadId::new();
     let thread_trace =
         ThreadTraceContext::start_root_in_root_for_test(temp.path(), minimal_metadata(thread_id))?;
-    thread_trace.record_genex_turn_started("turn-1");
+    thread_trace.record_ruxex_turn_started("turn-1");
 
     for model in ["model-previous", "model-selected"] {
         let compaction_trace =

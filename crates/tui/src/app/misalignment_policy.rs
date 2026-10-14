@@ -5,10 +5,10 @@ use super::*;
 use crate::app_server_session::turn_permissions_overrides;
 use crate::chatwidget::MisalignmentReview;
 use crate::chatwidget::MisalignmentTurnSource;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
 
 impl App {
     pub(super) fn open_misalignment_review(
@@ -74,9 +74,9 @@ impl App {
                     ServerNotification::Error(n)
                         if !n.will_retry
                             && (n.turn_id == review.turn_id
-                                || n.error.genex_error_info
+                                || n.error.ruxex_error_info
                                     == Some(
-                                        AppServerGenexErrorInfo::MisalignmentPolicyViolation,
+                                        AppServerRuxexErrorInfo::MisalignmentPolicyViolation,
                                     )) =>
                     {
                         (&n.turn_id, Some(&n.error))
@@ -87,8 +87,8 @@ impl App {
                     return Some(false);
                 };
                 if turn_id != &review.turn_id
-                    || error.genex_error_info
-                        != Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation)
+                    || error.ruxex_error_info
+                        != Some(AppServerRuxexErrorInfo::MisalignmentPolicyViolation)
                 {
                     return Some(false);
                 }
@@ -167,7 +167,7 @@ impl App {
                 );
                 self.chat_widget.handle_server_notification(
                     ServerNotification::TurnStarted(
-                        genex_app_server_protocol::TurnStartedNotification {
+                        ruxex_app_server_protocol::TurnStartedNotification {
                             thread_id: review.thread_id.to_string(),
                             turn: response.turn,
                         },

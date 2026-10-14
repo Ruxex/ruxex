@@ -14,12 +14,12 @@ use chrono::DateTime;
 use chrono::Duration as ChronoDuration;
 use chrono::Local;
 use chrono::Utc;
-use genex_app_server_protocol::CreditsSnapshot as CoreCreditsSnapshot;
-use genex_app_server_protocol::RateLimitSnapshot;
-use genex_app_server_protocol::RateLimitWindow;
-use genex_app_server_protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
-use genex_protocol::num_format::format_with_separators;
-use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
+use ruxex_app_server_protocol::CreditsSnapshot as CoreCreditsSnapshot;
+use ruxex_app_server_protocol::RateLimitSnapshot;
+use ruxex_app_server_protocol::RateLimitWindow;
+use ruxex_app_server_protocol::SpendControlLimitSnapshot as CoreSpendControlLimitSnapshot;
+use ruxex_protocol::num_format::format_with_separators;
+use ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 
 const STATUS_LIMIT_BAR_SEGMENTS: usize = 20;
 const STATUS_LIMIT_BAR_FILLED: &str = "█";
@@ -94,7 +94,7 @@ impl RateLimitWindowDisplay {
 
 #[derive(Debug, Clone)]
 pub(crate) struct RateLimitSnapshotDisplay {
-    /// Canonical limit identifier (for example: `default` or `genex_other`).
+    /// Canonical limit identifier (for example: `default` or `ruxex_other`).
     pub limit_name: String,
     /// Optional normal model associated with this account-read quota alias.
     pub normal_model_slug: Option<String>,
@@ -264,9 +264,9 @@ pub(crate) fn compose_rate_limit_data_many(
             .map(|label| capitalize_first(&label));
         let window_count =
             usize::from(snapshot.primary.is_some()) + usize::from(snapshot.secondary.is_some());
-        let combine_non_genex_single_limit = show_limit_prefix && window_count == 1;
+        let combine_non_ruxex_single_limit = show_limit_prefix && window_count == 1;
 
-        if show_limit_prefix && !combine_non_genex_single_limit {
+        if show_limit_prefix && !combine_non_ruxex_single_limit {
             rows.push(StatusRateLimitRow {
                 label: format!("{limit_bucket_label} limit"),
                 value: StatusRateLimitValue::Text(String::new()),
@@ -274,7 +274,7 @@ pub(crate) fn compose_rate_limit_data_many(
         }
 
         if let Some(primary) = snapshot.primary.as_ref() {
-            let label = if combine_non_genex_single_limit {
+            let label = if combine_non_ruxex_single_limit {
                 format!(
                     "{} {} limit",
                     limit_bucket_label,
@@ -301,7 +301,7 @@ pub(crate) fn compose_rate_limit_data_many(
         }
 
         if let Some(secondary) = snapshot.secondary.as_ref() {
-            let label = if combine_non_genex_single_limit {
+            let label = if combine_non_ruxex_single_limit {
                 format!(
                     "{} {} limit",
                     limit_bucket_label,

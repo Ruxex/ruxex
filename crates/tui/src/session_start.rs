@@ -136,7 +136,7 @@ fn session_start_error(
 fn archived_session_guidance(err: &color_eyre::Report) -> Option<String> {
     let err = err.to_string();
     let message = &err[err.find("session ")?..];
-    if !message.contains(" is archived. Run `genex unarchive ") {
+    if !message.contains(" is archived. Run `ruxex unarchive ") {
         return None;
     }
     let message = message

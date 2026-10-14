@@ -8,20 +8,20 @@ use std::time::SystemTime;
 
 use chrono::DateTime;
 use chrono::Utc;
-use genex_git_utils::GitSha;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GitInfo;
-use genex_protocol::protocol::NetworkAccess;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::ARCHIVED_SESSIONS_SUBDIR;
-use genex_rollout::RolloutReferenceIndex;
-use genex_rollout::ThreadItem;
-use genex_state::ThreadMetadata;
+use ruxex_git_utils::GitSha;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::GitInfo;
+use ruxex_protocol::protocol::NetworkAccess;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+use ruxex_rollout::RolloutReferenceIndex;
+use ruxex_rollout::ThreadItem;
+use ruxex_state::ThreadMetadata;
 
 use super::LocalThreadStore;
 use crate::StoredThread;
@@ -59,8 +59,8 @@ pub(super) fn scoped_rollout_path(
     }
 }
 
-pub(super) fn rollout_path_is_archived(genex_home: &Path, path: &Path) -> bool {
-    path.starts_with(genex_home.join(ARCHIVED_SESSIONS_SUBDIR))
+pub(super) fn rollout_path_is_archived(ruxex_home: &Path, path: &Path) -> bool {
+    path.starts_with(ruxex_home.join(ARCHIVED_SESSIONS_SUBDIR))
         || path
             .components()
             .any(|component| component.as_os_str() == OsStr::new(ARCHIVED_SESSIONS_SUBDIR))
@@ -71,7 +71,7 @@ pub(super) async fn owned_rollout_paths(
     store: &LocalThreadStore,
     thread_id: ThreadId,
 ) -> ThreadStoreResult<Vec<PathBuf>> {
-    RolloutReferenceIndex::scan(store.config.genex_home.as_path())
+    RolloutReferenceIndex::scan(store.config.ruxex_home.as_path())
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to scan thread rollout files: {err}"),
@@ -101,7 +101,7 @@ pub(super) fn validated_rollout_file_name(
             ),
         });
     };
-    if genex_rollout::rollout_id_from_path(rollout_path).is_some() {
+    if ruxex_rollout::rollout_id_from_path(rollout_path).is_some() {
         Ok(file_name)
     } else {
         Err(ThreadStoreError::InvalidRequest {
@@ -147,7 +147,7 @@ pub(super) fn stored_thread_from_rollout_item(
         .clone()
         .or_else(|| item.first_user_message.clone())
         .unwrap_or_default();
-    let rollout_path = genex_rollout::plain_rollout_path(item.path.as_path());
+    let rollout_path = ruxex_rollout::plain_rollout_path(item.path.as_path());
 
     Some(StoredThread {
         thread_id,
@@ -217,7 +217,7 @@ pub(super) fn sqlite_thread_name(metadata: &ThreadMetadata) -> Option<String> {
 }
 
 pub(super) async fn resolve_thread_section_metadata(
-    state_db: &genex_state::StateRuntime,
+    state_db: &ruxex_state::StateRuntime,
     thread_ids: &[ThreadId],
 ) -> HashMap<ThreadId, (Option<i64>, Option<DateTime<Utc>>)> {
     if thread_ids.is_empty() {
@@ -303,7 +303,7 @@ fn thread_id_from_rollout_path(path: &Path) -> Option<ThreadId> {
 
 #[cfg(test)]
 mod tests {
-    use genex_rollout::ThreadItem;
+    use ruxex_rollout::ThreadItem;
     use pretty_assertions::assert_eq;
     use uuid::Uuid;
 

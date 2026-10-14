@@ -3,7 +3,7 @@
 use std::fmt;
 use std::sync::OnceLock;
 
-use genex_install_context::InstallContext;
+use ruxex_install_context::InstallContext;
 use semver::Version;
 use serde::Deserialize;
 use serde::Serialize;
@@ -34,7 +34,7 @@ pub struct BuildInfo {
 }
 
 impl BuildInfo {
-    /// Return build information for the current Genex runtime.
+    /// Return build information for the current Ruxex runtime.
     pub fn get() -> Self {
         BUILD_INFO
             .get_or_init(|| Self::resolve(InstallContext::current(), "dev"))
@@ -99,14 +99,14 @@ impl BuildInfo {
             return Self {
                 version: manifest.version,
                 build_commit: build_commit.to_owned(),
-                target: Some(env!("GENEX_BUILD_TARGET").to_owned()),
+                target: Some(env!("RUXEX_BUILD_TARGET").to_owned()),
             };
         }
 
         Self {
             version: Version::new(0, 0, 0),
             build_commit: build_commit.to_owned(),
-            target: Some(env!("GENEX_BUILD_TARGET").to_owned()),
+            target: Some(env!("RUXEX_BUILD_TARGET").to_owned()),
         }
     }
 }

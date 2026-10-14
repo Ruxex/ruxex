@@ -4,14 +4,14 @@
 //! does not expose its configured screen buffer through terminal metadata, so it usually lands in
 //! the fallback bucket.
 //!
-//! These caps are deliberately conservative: Genex is rebuilding normal terminal scrollback, not an
+//! These caps are deliberately conservative: Ruxex is rebuilding normal terminal scrollback, not an
 //! internal virtual transcript. Replaying more rows than the terminal retains wastes work and can
 //! make interactive resize feel worse without giving the user more usable history.
 
-use genex_config::types::DEFAULT_TERMINAL_RESIZE_REFLOW_FALLBACK_MAX_ROWS;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
+use ruxex_config::types::DEFAULT_TERMINAL_RESIZE_REFLOW_FALLBACK_MAX_ROWS;
+use ruxex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
 
 use crate::legacy_core::config::TerminalResizeReflowConfig;
 use crate::legacy_core::config::TerminalResizeReflowMaxRows;
@@ -76,7 +76,7 @@ fn auto_resize_reflow_max_rows(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_terminal_detection::Multiplexer;
+    use ruxex_terminal_detection::Multiplexer;
 
     fn test_terminal(name: TerminalName) -> TerminalInfo {
         TerminalInfo {

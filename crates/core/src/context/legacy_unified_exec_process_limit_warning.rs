@@ -1,5 +1,5 @@
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 // This warning is not produced anymore but fragment definition is used to filter messaged from old sessions
 #[derive(Debug, Clone, PartialEq)]

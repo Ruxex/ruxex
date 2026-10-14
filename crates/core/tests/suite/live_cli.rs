@@ -1,6 +1,6 @@
 //! Optional smoke tests that hit the real provider /v1/responses endpoint. They are `#[ignore]` by
 //! default so CI stays deterministic and free. Developers can run them locally with
-//! `just test -p genex-core --test all --run-ignored only live_cli` provided they set a valid
+//! `just test -p ruxex-core --test all --run-ignored only live_cli` provided they set a valid
 //! `PROVIDER_API_KEY`.
 
 use assert_cmd::prelude::*;
@@ -23,8 +23,8 @@ fn run_live(prompt: &str) -> (assert_cmd::assert::Assert, TempDir) {
 
     let dir = TempDir::new().unwrap();
     let home = TempDir::new().unwrap();
-    let genex_home = home.path().join(".genex");
-    std::fs::create_dir_all(&genex_home).unwrap();
+    let ruxex_home = home.path().join(".ruxex");
+    std::fs::create_dir_all(&ruxex_home).unwrap();
 
     // Build a plain `std::process::Command` so we have full control over the underlying stdio
     // handles. `assert_cmd`’s own `Command` wrapper always forces stdout/stderr to be piped
@@ -32,11 +32,11 @@ fn run_live(prompt: &str) -> (assert_cmd::assert::Assert, TempDir) {
     // implementation). Instead we configure the std `Command` ourselves, then later hand the
     // resulting `Output` to `assert_cmd` for the familiar assertions.
 
-    let mut cmd = Command::new(genex_utils_cargo_bin::cargo_bin("genex-rs").unwrap());
+    let mut cmd = Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-rs").unwrap());
     cmd.current_dir(dir.path());
     cmd.env("PROVIDER_API_KEY", require_api_key());
     cmd.env("HOME", home.path());
-    cmd.env("GENEX_HOME", &genex_home);
+    cmd.env("RUXEX_HOME", &ruxex_home);
 
     // We want three things at once:
     //   1. live streaming of the child’s stdout/stderr while the test is running
@@ -59,7 +59,7 @@ fn run_live(prompt: &str) -> (assert_cmd::assert::Assert, TempDir) {
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().expect("failed to spawn genex-rs");
+    let mut child = cmd.spawn().expect("failed to spawn ruxex-rs");
 
     // Send the terminating newline so Session::run exits after the first turn.
     child

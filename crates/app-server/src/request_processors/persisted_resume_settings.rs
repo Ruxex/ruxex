@@ -1,7 +1,7 @@
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_rollout::RolloutItem;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_rollout::RolloutItem;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct PersistedResumeSettings {

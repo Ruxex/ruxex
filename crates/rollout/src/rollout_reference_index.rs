@@ -7,9 +7,9 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_protocol::RolloutId;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::RolloutId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HistoryPosition;
 
 use crate::ARCHIVED_SESSIONS_SUBDIR;
 use crate::SESSIONS_SUBDIR;
@@ -35,11 +35,11 @@ struct IndexedRollout {
 
 impl RolloutReferenceIndex {
     /// Scans active and archived local rollout metadata.
-    pub async fn scan(genex_home: &Path) -> io::Result<Self> {
+    pub async fn scan(ruxex_home: &Path) -> io::Result<Self> {
         Self::scan_paths(
             vec![
-                genex_home.join(ARCHIVED_SESSIONS_SUBDIR),
-                genex_home.join(SESSIONS_SUBDIR),
+                ruxex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+                ruxex_home.join(SESSIONS_SUBDIR),
             ],
             /*thread_ids*/ None,
         )
@@ -50,9 +50,9 @@ impl RolloutReferenceIndex {
     ///
     /// Reference counts exclude archived history and must not be used to decide whether a
     /// rollout can be deleted or compressed.
-    pub async fn scan_unarchived(genex_home: &Path) -> io::Result<Self> {
+    pub async fn scan_unarchived(ruxex_home: &Path) -> io::Result<Self> {
         Self::scan_paths(
-            vec![genex_home.join(SESSIONS_SUBDIR)],
+            vec![ruxex_home.join(SESSIONS_SUBDIR)],
             /*thread_ids*/ None,
         )
         .await
@@ -64,11 +64,11 @@ impl RolloutReferenceIndex {
     /// ownership among the candidates. Reference counts are partial and must not be used to
     /// decide whether a rollout can be deleted or compressed.
     pub async fn scan_unarchived_threads(
-        genex_home: &Path,
+        ruxex_home: &Path,
         thread_ids: &[ThreadId],
     ) -> io::Result<Self> {
         let thread_ids = thread_ids.iter().copied().collect();
-        Self::scan_paths(vec![genex_home.join(SESSIONS_SUBDIR)], Some(&thread_ids)).await
+        Self::scan_paths(vec![ruxex_home.join(SESSIONS_SUBDIR)], Some(&thread_ids)).await
     }
 
     async fn scan_paths(

@@ -1,7 +1,7 @@
-use genex_protocol::models::VIEW_IMAGE_TOOL_NAME;
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_protocol::models::VIEW_IMAGE_TOOL_NAME;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use serde_json::Value;
 use serde_json::json;
 use std::collections::BTreeMap;

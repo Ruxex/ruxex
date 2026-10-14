@@ -5,9 +5,9 @@
 //! thread-local event methods here avoids repeatedly plumbing `thread_id`
 //! through session code.
 
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
 use serde::Serialize;
 use std::path::Path;
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ use crate::AgentThreadId;
 use crate::CodeCellTraceContext;
 use crate::CompactionId;
 use crate::CompactionTraceContext;
-use crate::GenexTurnId;
+use crate::RuxexTurnId;
 use crate::InferenceTraceContext;
 use crate::McpCallTraceContext;
 use crate::RawPayloadKind;
@@ -32,7 +32,7 @@ use crate::ToolCallId;
 use crate::ToolDispatchInvocation;
 use crate::ToolDispatchTraceContext;
 use crate::TraceWriter;
-use crate::protocol_event::genex_turn_trace_event;
+use crate::protocol_event::ruxex_turn_trace_event;
 use crate::protocol_event::tool_runtime_trace_event;
 use crate::protocol_event::wrapped_protocol_event_type;
 
@@ -41,7 +41,7 @@ use crate::protocol_event::wrapped_protocol_event_type;
 /// The value is a root directory. Each independent root session gets one child
 /// bundle directory. Spawned child threads share their root session's bundle so
 /// one reduced `state.json` describes the whole multi-agent rollout tree.
-pub const GENEX_ROLLOUT_TRACE_ROOT_ENV: &str = "GENEX_ROLLOUT_TRACE_ROOT";
+pub const RUXEX_ROLLOUT_TRACE_ROOT_ENV: &str = "RUXEX_ROLLOUT_TRACE_ROOT";
 
 /// Metadata captured once at thread/session start.
 ///
@@ -97,13 +97,13 @@ impl ThreadTraceContext {
         }
     }
 
-    /// Starts a root thread trace from `GENEX_ROLLOUT_TRACE_ROOT`, or disables tracing.
+    /// Starts a root thread trace from `RUXEX_ROLLOUT_TRACE_ROOT`, or disables tracing.
     ///
-    /// Trace startup is best-effort. A tracing failure must not make the Genex
+    /// Trace startup is best-effort. A tracing failure must not make the Ruxex
     /// session unusable, because traces are diagnostic and can be enabled while
     /// debugging unrelated production failures.
     pub fn start_root_or_disabled(metadata: ThreadStartedTraceMetadata) -> Self {
-        let Some(root) = std::env::var_os(GENEX_ROLLOUT_TRACE_ROOT_ENV) else {
+        let Some(root) = std::env::var_os(RUXEX_ROLLOUT_TRACE_ROOT_ENV) else {
             return Self::disabled();
         };
         let root = PathBuf::from(root);
@@ -212,13 +212,13 @@ impl ThreadTraceContext {
         });
     }
 
-    /// Emits typed Genex turn lifecycle events from protocol lifecycle events.
-    pub fn record_genex_turn_event(&self, default_turn_id: &str, event: &EventMsg) {
+    /// Emits typed Ruxex turn lifecycle events from protocol lifecycle events.
+    pub fn record_ruxex_turn_event(&self, default_turn_id: &str, event: &EventMsg) {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return;
         };
         let Some(trace_event) =
-            genex_turn_trace_event(context.thread_id.clone(), default_turn_id, event)
+            ruxex_turn_trace_event(context.thread_id.clone(), default_turn_id, event)
         else {
             return;
         };
@@ -232,8 +232,8 @@ impl ThreadTraceContext {
     ///
     /// These events are runtime observations on an already-dispatched tool. The
     /// dispatch trace records the caller-facing boundary; these payloads explain
-    /// what Genex did while executing that boundary.
-    pub fn record_tool_call_event(&self, genex_turn_id: impl Into<GenexTurnId>, event: &EventMsg) {
+    /// what Ruxex did while executing that boundary.
+    pub fn record_tool_call_event(&self, ruxex_turn_id: impl Into<RuxexTurnId>, event: &EventMsg) {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return;
         };
@@ -243,7 +243,7 @@ impl ThreadTraceContext {
         let Some(payload) = context.raw_tool_runtime_payload(trace_event) else {
             return;
         };
-        context.append_with_context_best_effort(genex_turn_id.into(), payload);
+        context.append_with_context_best_effort(ruxex_turn_id.into(), payload);
     }
 
     /// Emits the v2 child-to-parent completion message as an explicit graph edge.
@@ -254,26 +254,26 @@ impl ThreadTraceContext {
     /// the edge from a later parent prompt snapshot.
     pub fn record_agent_result_interaction(
         &self,
-        child_genex_turn_id: impl Into<GenexTurnId>,
+        child_ruxex_turn_id: impl Into<RuxexTurnId>,
         parent_thread_id: impl Into<AgentThreadId>,
         payload: &AgentResultTracePayload<'_>,
     ) {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return;
         };
-        let child_genex_turn_id = child_genex_turn_id.into();
+        let child_ruxex_turn_id = child_ruxex_turn_id.into();
         let parent_thread_id = parent_thread_id.into();
         let carried_payload =
             context.write_json_payload_best_effort(RawPayloadKind::AgentResult, payload);
         context.append_with_context_best_effort(
-            child_genex_turn_id.clone(),
+            child_ruxex_turn_id.clone(),
             RawTraceEventPayload::AgentResultObserved {
                 edge_id: format!(
-                    "edge:agent_result:{}:{child_genex_turn_id}:{parent_thread_id}",
+                    "edge:agent_result:{}:{child_ruxex_turn_id}:{parent_thread_id}",
                     context.thread_id
                 ),
                 child_thread_id: context.thread_id.clone(),
-                child_genex_turn_id,
+                child_ruxex_turn_id,
                 parent_thread_id,
                 message: payload.message.to_string(),
                 carried_payload,
@@ -286,15 +286,15 @@ impl ThreadTraceContext {
     /// Most production turn lifecycle wiring lives outside this PR layer, but
     /// trace-focused integration tests need a small explicit hook so reducer
     /// inputs remain valid without exercising the full session loop.
-    pub fn record_genex_turn_started(&self, genex_turn_id: impl Into<GenexTurnId>) {
+    pub fn record_ruxex_turn_started(&self, ruxex_turn_id: impl Into<RuxexTurnId>) {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
             return;
         };
-        let genex_turn_id = genex_turn_id.into();
+        let ruxex_turn_id = ruxex_turn_id.into();
         context.append_with_context_best_effort(
-            genex_turn_id.clone(),
-            RawTraceEventPayload::GenexTurnStarted {
-                genex_turn_id,
+            ruxex_turn_id.clone(),
+            RawTraceEventPayload::RuxexTurnStarted {
+                ruxex_turn_id,
                 thread_id: context.thread_id.clone(),
             },
         );
@@ -303,12 +303,12 @@ impl ThreadTraceContext {
     /// Starts a first-class code-mode cell lifecycle and returns its trace handle.
     pub fn start_code_cell_trace(
         &self,
-        genex_turn_id: impl Into<GenexTurnId>,
+        ruxex_turn_id: impl Into<RuxexTurnId>,
         runtime_cell_id: impl Into<String>,
         model_visible_call_id: impl Into<String>,
         source_js: impl Into<String>,
     ) -> CodeCellTraceContext {
-        let context = self.code_cell_trace_context(genex_turn_id, runtime_cell_id);
+        let context = self.code_cell_trace_context(ruxex_turn_id, runtime_cell_id);
         context.record_started(model_visible_call_id, source_js);
         context
     }
@@ -316,7 +316,7 @@ impl ThreadTraceContext {
     /// Builds a trace handle for an already-started code-mode runtime cell.
     pub fn code_cell_trace_context(
         &self,
-        genex_turn_id: impl Into<GenexTurnId>,
+        ruxex_turn_id: impl Into<RuxexTurnId>,
         runtime_cell_id: impl Into<String>,
     ) -> CodeCellTraceContext {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
@@ -325,7 +325,7 @@ impl ThreadTraceContext {
         CodeCellTraceContext::enabled(
             Arc::clone(&context.writer),
             context.thread_id.clone(),
-            genex_turn_id,
+            ruxex_turn_id,
             runtime_cell_id,
         )
     }
@@ -348,14 +348,14 @@ impl ThreadTraceContext {
         ToolDispatchTraceContext::start(Arc::clone(&context.writer), invocation)
     }
 
-    /// Builds reusable inference trace context for one Genex turn.
+    /// Builds reusable inference trace context for one Ruxex turn.
     ///
     /// The returned context is intentionally not "an inference call" yet.
     /// Transport code owns retry/fallback attempts and calls `start_attempt`
     /// only after it has built the concrete request payload for that attempt.
     pub fn inference_trace_context(
         &self,
-        genex_turn_id: impl Into<GenexTurnId>,
+        ruxex_turn_id: impl Into<RuxexTurnId>,
         model: impl Into<String>,
     ) -> InferenceTraceContext {
         let ThreadTraceContextState::Enabled(context) = &self.state else {
@@ -364,7 +364,7 @@ impl ThreadTraceContext {
         InferenceTraceContext::enabled(
             Arc::clone(&context.writer),
             context.thread_id.clone(),
-            genex_turn_id.into(),
+            ruxex_turn_id.into(),
             model.into(),
         )
     }
@@ -377,7 +377,7 @@ impl ThreadTraceContext {
     /// replacement history is installed.
     pub fn compaction_trace_context(
         &self,
-        genex_turn_id: impl Into<GenexTurnId>,
+        ruxex_turn_id: impl Into<RuxexTurnId>,
         compaction_id: impl Into<CompactionId>,
         model: impl Into<String>,
     ) -> CompactionTraceContext {
@@ -387,7 +387,7 @@ impl ThreadTraceContext {
         CompactionTraceContext::enabled(
             Arc::clone(&context.writer),
             context.thread_id.clone(),
-            genex_turn_id.into(),
+            ruxex_turn_id.into(),
             compaction_id.into(),
             model.into(),
         )
@@ -506,12 +506,12 @@ impl EnabledThreadTraceContext {
 
     fn append_with_context_best_effort(
         &self,
-        genex_turn_id: GenexTurnId,
+        ruxex_turn_id: RuxexTurnId,
         payload: RawTraceEventPayload,
     ) {
         let event_context = RawTraceEventContext {
             thread_id: Some(self.thread_id.clone()),
-            genex_turn_id: Some(genex_turn_id),
+            ruxex_turn_id: Some(ruxex_turn_id),
         };
         if let Err(err) = self.writer.append_with_context(event_context, payload) {
             warn!("failed to append rollout trace event: {err:#}");

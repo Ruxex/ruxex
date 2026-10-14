@@ -1,10 +1,10 @@
 use crate::ResponseItemEnvelope;
 use crate::RolloutItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::SessionMetaLine;
 
 /// Whether a reverse model-context scan needs more rollout items.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

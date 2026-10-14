@@ -1,23 +1,23 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-code-mode"
+name = "ruxex-code-mode"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_code_mode"
+name = "ruxex_code_mode"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-code-mode-protocol = { workspace = true }
-genex-http-client = { workspace = true }
-genex-install-context = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
+ruxex-code-mode-protocol = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
 futures = { workspace = true }
 http-body-util = "0.1.3"
 prost = "0.14.3"

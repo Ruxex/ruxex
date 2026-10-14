@@ -7,27 +7,27 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 use anyhow::Context as _;
-use genex_config::LoaderOverrides;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_core::config::NetworkProxyAuditMetadata;
-use genex_core::exec_env::create_env;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_core::config::NetworkProxyAuditMetadata;
+use ruxex_core::exec_env::create_env;
 #[cfg(target_os = "macos")]
-use genex_core::spawn::GENEX_SANDBOX_ENV_VAR;
-use genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::SandboxEnforcement;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_sandboxing::landlock::create_linux_sandbox_command_args_for_permission_profile;
+use ruxex_core::spawn::RUXEX_SANDBOX_ENV_VAR;
+use ruxex_core::spawn::RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::SandboxEnforcement;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_sandboxing::landlock::create_linux_sandbox_command_args_for_permission_profile;
 #[cfg(target_os = "macos")]
-use genex_sandboxing::seatbelt::CreateSeatbeltCommandArgsParams;
+use ruxex_sandboxing::seatbelt::CreateSeatbeltCommandArgsParams;
 #[cfg(target_os = "macos")]
-use genex_sandboxing::seatbelt::create_seatbelt_command_args;
-use genex_sandboxing::with_managed_mitm_ca_readable_root;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_sandboxing::seatbelt::create_seatbelt_command_args;
+use ruxex_sandboxing::with_managed_mitm_ca_readable_root;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
 use tokio::process::Child;
 use tokio::process::Command as TokioCommand;
 use toml::Value as TomlValue;
@@ -42,7 +42,7 @@ use seatbelt::DenialLogger;
 #[cfg(target_os = "macos")]
 pub async fn run_command_under_seatbelt(
     command: SeatbeltCommand,
-    genex_linux_sandbox_exe: Option<PathBuf>,
+    ruxex_linux_sandbox_exe: Option<PathBuf>,
     loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     let SeatbeltCommand {
@@ -70,7 +70,7 @@ pub async fn run_command_under_seatbelt(
         },
         command,
         config_overrides,
-        genex_linux_sandbox_exe,
+        ruxex_linux_sandbox_exe,
         SandboxType::Seatbelt,
         log_denials,
         &allow_unix_sockets,
@@ -81,7 +81,7 @@ pub async fn run_command_under_seatbelt(
 #[cfg(not(target_os = "macos"))]
 pub async fn run_command_under_seatbelt(
     _command: SeatbeltCommand,
-    _genex_linux_sandbox_exe: Option<PathBuf>,
+    _ruxex_linux_sandbox_exe: Option<PathBuf>,
     _loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     anyhow::bail!("Seatbelt sandbox is only available on macOS");
@@ -89,7 +89,7 @@ pub async fn run_command_under_seatbelt(
 
 pub async fn run_command_under_landlock(
     command: LandlockCommand,
-    genex_linux_sandbox_exe: Option<PathBuf>,
+    ruxex_linux_sandbox_exe: Option<PathBuf>,
     loader_overrides: LoaderOverrides,
 ) -> anyhow::Result<()> {
     let LandlockCommand {
@@ -115,7 +115,7 @@ pub async fn run_command_under_landlock(
         },
         command,
         config_overrides,
-        genex_linux_sandbox_exe,
+        ruxex_linux_sandbox_exe,
         SandboxType::Landlock,
         /*log_denials*/ false,
         &[],
@@ -161,7 +161,7 @@ async fn run_command_under_sandbox(
     mut config_options: DebugSandboxConfigOptions,
     command: Vec<String>,
     config_overrides: CliConfigOverrides,
-    genex_linux_sandbox_exe: Option<PathBuf>,
+    ruxex_linux_sandbox_exe: Option<PathBuf>,
     sandbox_type: SandboxType,
     log_denials: bool,
     #[cfg_attr(not(target_os = "macos"), allow(unused_variables))]
@@ -171,7 +171,7 @@ async fn run_command_under_sandbox(
         .sandbox_state
         .sandbox_state_json
         .as_deref()
-        .map(serde_json::from_str::<genex_mcp::SandboxState>)
+        .map(serde_json::from_str::<ruxex_mcp::SandboxState>)
         .transpose()
         .map_err(|err| anyhow::anyhow!("invalid --sandbox-state-json value: {err}"))?;
     let sandbox_state_readable_root = config_options
@@ -179,7 +179,7 @@ async fn run_command_under_sandbox(
         .sandbox_state_readable_root
         .clone();
     let sandbox_state_disable_network = config_options.sandbox_state.sandbox_state_disable_network;
-    let genex_linux_sandbox_exe = match sandbox_state.as_ref() {
+    let ruxex_linux_sandbox_exe = match sandbox_state.as_ref() {
         Some(state) => {
             config_options.cwd = Some(
                 state
@@ -189,17 +189,17 @@ async fn run_command_under_sandbox(
                     .to_path_buf(),
             );
             state
-                .genex_linux_sandbox_exe
+                .ruxex_linux_sandbox_exe
                 .clone()
-                .or(genex_linux_sandbox_exe)
+                .or(ruxex_linux_sandbox_exe)
         }
-        None => genex_linux_sandbox_exe,
+        None => ruxex_linux_sandbox_exe,
     };
     let config = load_debug_sandbox_config(
         config_overrides
             .parse_overrides()
             .map_err(anyhow::Error::msg)?,
-        genex_linux_sandbox_exe,
+        ruxex_linux_sandbox_exe,
         config_options,
         /*strict_config*/ false,
     )
@@ -281,7 +281,7 @@ async fn run_command_under_sandbox(
         Some(spec) => Some(
             spec.start_proxy(
                 &permission_profile,
-                genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
+                ruxex_network_proxy::ManagedProxyRouting::DedicatedListeners,
                 /*policy_decider*/ None,
                 /*blocked_request_observer*/ None,
                 managed_network_requirements_enabled,
@@ -294,7 +294,7 @@ async fn run_command_under_sandbox(
     };
     let network = network_proxy
         .as_ref()
-        .map(genex_core::config::StartedNetworkProxy::proxy);
+        .map(ruxex_core::config::StartedNetworkProxy::proxy);
     // Proxy containment depends on whether a proxy is active, not whether its
     // policy came from managed requirements.
     #[cfg(target_os = "macos")]
@@ -328,7 +328,7 @@ async fn run_command_under_sandbox(
             .map_err(|err| anyhow::anyhow!(err))?;
             // This CLI inherits the user's controlling terminal. Keep this deny
             // after every shared policy allowance so the child cannot queue input
-            // for the unsandboxed shell that resumes when Genex exits.
+            // for the unsandboxed shell that resumes when Ruxex exits.
             match args.as_mut_slice() {
                 [flag, policy, ..] if flag.as_str() == "-p" => {
                     // Older macOS policy compilers do not define the TIOCSTI symbol.
@@ -347,7 +347,7 @@ async fn run_command_under_sandbox(
                 network_sandbox_policy,
                 env,
                 |env_map| {
-                    env_map.insert(GENEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
+                    env_map.insert(RUXEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
                     if let Some(network) = network.as_ref() {
                         network.apply_to_env(env_map);
                     }
@@ -357,9 +357,9 @@ async fn run_command_under_sandbox(
         }
         SandboxType::Landlock => {
             #[expect(clippy::expect_used)]
-            let genex_linux_sandbox_exe = config
-                .genex_linux_sandbox_exe
-                .expect("genex-linux-sandbox executable not found");
+            let ruxex_linux_sandbox_exe = config
+                .ruxex_linux_sandbox_exe
+                .expect("ruxex-linux-sandbox executable not found");
             let network_sandbox_policy = runtime_permission_profile.network_sandbox_policy();
             let (env, managed_network) = if let Some(network) = network.as_ref() {
                 let prepared =
@@ -377,9 +377,9 @@ async fn run_command_under_sandbox(
                 managed_network.as_ref(),
             );
             spawn_debug_sandbox_child(
-                genex_linux_sandbox_exe,
+                ruxex_linux_sandbox_exe,
                 args,
-                Some("genex-linux-sandbox"),
+                Some("ruxex-linux-sandbox"),
                 cwd.to_path_buf(),
                 network_sandbox_policy,
                 env,
@@ -433,7 +433,7 @@ async fn spawn_debug_sandbox_child(
     cmd.envs(env);
 
     if !network_sandbox_policy.is_enabled() {
-        cmd.env(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
+        cmd.env(RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
     }
 
     cmd.stdin(Stdio::inherit())
@@ -445,25 +445,25 @@ async fn spawn_debug_sandbox_child(
 
 async fn load_debug_sandbox_config(
     cli_overrides: Vec<(String, TomlValue)>,
-    genex_linux_sandbox_exe: Option<PathBuf>,
+    ruxex_linux_sandbox_exe: Option<PathBuf>,
     options: DebugSandboxConfigOptions,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
-    load_debug_sandbox_config_with_genex_home(
+    load_debug_sandbox_config_with_ruxex_home(
         cli_overrides,
-        genex_linux_sandbox_exe,
+        ruxex_linux_sandbox_exe,
         options,
-        /*genex_home*/ None,
+        /*ruxex_home*/ None,
         strict_config,
     )
     .await
 }
 
-async fn load_debug_sandbox_config_with_genex_home(
+async fn load_debug_sandbox_config_with_ruxex_home(
     cli_overrides: Vec<(String, TomlValue)>,
-    genex_linux_sandbox_exe: Option<PathBuf>,
+    ruxex_linux_sandbox_exe: Option<PathBuf>,
     options: DebugSandboxConfigOptions,
-    genex_home: Option<PathBuf>,
+    ruxex_home: Option<PathBuf>,
     strict_config: bool,
 ) -> anyhow::Result<Config> {
     let DebugSandboxConfigOptions {
@@ -482,7 +482,7 @@ async fn load_debug_sandbox_config_with_genex_home(
         ));
     }
 
-    // For legacy configs, `genex sandbox` historically defaulted to read-only
+    // For legacy configs, `ruxex sandbox` historically defaulted to read-only
     // instead of inheriting ambient `sandbox_mode` settings from user/system
     // config. Keep that behavior unless this invocation explicitly passes a
     // legacy `sandbox_mode` CLI override for compatibility with older callers.
@@ -491,10 +491,10 @@ async fn load_debug_sandbox_config_with_genex_home(
         cli_overrides.clone(),
         ConfigOverrides {
             cwd: cwd.clone(),
-            genex_linux_sandbox_exe: genex_linux_sandbox_exe.clone(),
+            ruxex_linux_sandbox_exe: ruxex_linux_sandbox_exe.clone(),
             ..Default::default()
         },
-        genex_home.clone(),
+        ruxex_home.clone(),
         managed_requirements_mode,
         loader_overrides.clone(),
         strict_config,
@@ -510,10 +510,10 @@ async fn load_debug_sandbox_config_with_genex_home(
         ConfigOverrides {
             sandbox_mode: Some(SandboxMode::ReadOnly),
             cwd,
-            genex_linux_sandbox_exe,
+            ruxex_linux_sandbox_exe,
             ..Default::default()
         },
-        genex_home,
+        ruxex_home,
         managed_requirements_mode,
         loader_overrides,
         strict_config,
@@ -525,7 +525,7 @@ async fn load_debug_sandbox_config_with_genex_home(
 async fn build_debug_sandbox_config_with_loader_overrides(
     cli_overrides: Vec<(String, TomlValue)>,
     harness_overrides: ConfigOverrides,
-    genex_home: Option<PathBuf>,
+    ruxex_home: Option<PathBuf>,
     managed_requirements_mode: ManagedRequirementsMode,
     mut loader_overrides: LoaderOverrides,
     strict_config: bool,
@@ -538,10 +538,10 @@ async fn build_debug_sandbox_config_with_loader_overrides(
         loader_overrides.ignore_managed_requirements = true;
     }
     builder = builder.loader_overrides(loader_overrides);
-    if let Some(genex_home) = genex_home {
+    if let Some(ruxex_home) = ruxex_home {
         builder = builder
-            .genex_home(genex_home.clone())
-            .fallback_cwd(Some(genex_home));
+            .ruxex_home(ruxex_home.clone())
+            .fallback_cwd(Some(ruxex_home));
     }
     builder.build().await
 }

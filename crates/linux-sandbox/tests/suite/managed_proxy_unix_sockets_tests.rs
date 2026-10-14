@@ -1,14 +1,14 @@
 //! Explicit Unix-socket grants preserve managed-proxy network isolation.
 
 use super::*;
-use genex_network_proxy::ConfigReloader;
-use genex_network_proxy::ConfigReloaderFuture;
-use genex_network_proxy::ConfigState;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkProxyConstraints;
-use genex_network_proxy::NetworkProxyState;
-use genex_network_proxy::build_config_state;
+use ruxex_network_proxy::ConfigReloader;
+use ruxex_network_proxy::ConfigReloaderFuture;
+use ruxex_network_proxy::ConfigState;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConstraints;
+use ruxex_network_proxy::NetworkProxyState;
+use ruxex_network_proxy::build_config_state;
 use pretty_assertions::assert_eq;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;
@@ -147,14 +147,14 @@ for family in (socket.AF_NETLINK, getattr(socket, 'AF_VSOCK', 40)):
                 state.clone(),
                 Arc::new(TestConfigReloader(state)),
             )))
-            .managed_by_genex(/*managed_by_genex*/ false)
+            .managed_by_ruxex(/*managed_by_ruxex*/ false)
             .build()
             .await
             .expect("build managed network proxy");
         let prepared = network
             .prepare_for_optional_environment(env, /*environment_id*/ None)
             .expect("prepare managed network policy");
-        let mut command = Command::new(env!("CARGO_BIN_EXE_genex-linux-sandbox"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_ruxex-linux-sandbox"));
         command
             .arg("--sandbox-policy-cwd")
             .arg(&cwd)

@@ -1,7 +1,7 @@
 use crate::config_manager::ConfigManager;
-use genex_core::GenexThread;
-use genex_core::ThreadManager;
-use genex_core::config::Config;
+use ruxex_core::RuxexThread;
+use ruxex_core::ThreadManager;
+use ruxex_core::config::Config;
 use std::io;
 use std::sync::Arc;
 use tracing::warn;
@@ -70,7 +70,7 @@ pub(crate) async fn reload_mcp_config_best_effort(
 }
 
 async fn load_refresh_config(
-    thread: &GenexThread,
+    thread: &RuxexThread,
     config_manager: &ConfigManager,
 ) -> io::Result<Config> {
     let thread_config = thread.config().await;

@@ -14,7 +14,7 @@ use crate::export::write_json_schema;
 use crate::protocol::v1;
 use crate::protocol::v2;
 use crate::protocol::v2::McpServerRefreshParams;
-use genex_experimental_api_macros::ExperimentalApi;
+use ruxex_experimental_api_macros::ExperimentalApi;
 use serde::Deserialize;
 use serde::Serialize;
 use strum_macros::Display;
@@ -23,7 +23,7 @@ use strum_macros::Display;
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
-    /// API key provided by the caller and stored by Genex.
+    /// API key provided by the caller and stored by Ruxex.
     ApiKey,
     /// Backend auth supplied as request headers.
     #[serde(rename = "headers")]
@@ -1051,7 +1051,7 @@ client_request_definitions! {
         response: v2::CommandExecResizeResponse,
     },
     #[experimental("process/spawn")]
-    /// Spawn a standalone process (argv vector) without a Genex sandbox.
+    /// Spawn a standalone process (argv vector) without a Ruxex sandbox.
     ProcessSpawn => "process/spawn" {
         params: v2::ProcessSpawnParams,
         serialization: process_handle(params.process_handle),
@@ -1469,7 +1469,7 @@ pub struct FuzzyFileSearchParams {
     pub cancellation_token: Option<String>,
 }
 
-/// Superset of [`genex_file_search::FileMatch`]
+/// Superset of [`ruxex_file_search::FileMatch`]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 pub struct FuzzyFileSearchResult {
     pub root: String,
@@ -1653,11 +1653,11 @@ client_notification_definitions! {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use genex_protocol::ThreadId;
-    use genex_protocol::config_types::MultiAgentMode;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::config_types::MultiAgentMode;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -1691,7 +1691,7 @@ mod tests {
                 id: RequestId::Integer(1),
                 method: "thread/archive".to_string(),
                 params: Some(json!({"threadId": "thread-1"})),
-                trace: Some(genex_protocol::protocol::W3cTraceContext {
+                trace: Some(ruxex_protocol::protocol::W3cTraceContext {
                     traceparent: Some("traceparent".to_string()),
                     tracestate: Some("tracestate".to_string()),
                 }),
@@ -2509,7 +2509,7 @@ mod tests {
                 cwd,
                 runtime_workspace_roots: Vec::new(),
                 instruction_sources: vec![
-                    genex_utils_path_uri::LegacyAppPathString::from_abs_path(&absolute_path(
+                    ruxex_utils_path_uri::LegacyAppPathString::from_abs_path(&absolute_path(
                         "/tmp/AGENTS.md",
                     )),
                 ],

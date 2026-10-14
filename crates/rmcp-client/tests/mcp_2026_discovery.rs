@@ -5,14 +5,14 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
@@ -37,7 +37,7 @@ const MAX_MCP_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
 fn initialize_params() -> InitializeRequestParams {
     InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("genex-discovery-test", "0.0.0"),
+        Implementation::new("ruxex-discovery-test", "0.0.0"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }
@@ -206,7 +206,7 @@ async fn modern_mode_uses_sdk_discovery_and_self_contained_request_metadata() ->
                     );
                     assert_eq!(
                         body.pointer("/params/_meta/io.modelcontextprotocol~1clientInfo/name"),
-                        Some(&json!("genex-discovery-test"))
+                        Some(&json!("ruxex-discovery-test"))
                     );
                     modern_discover_response(&body)
                 }
@@ -217,7 +217,7 @@ async fn modern_mode_uses_sdk_discovery_and_self_contained_request_metadata() ->
                     );
                     assert_eq!(
                         body.pointer("/params/_meta/io.modelcontextprotocol~1clientInfo/name"),
-                        Some(&json!("genex-discovery-test"))
+                        Some(&json!("ruxex-discovery-test"))
                     );
                     ResponseTemplate::new(200).set_body_json(json!({
                         "jsonrpc": "2.0",
@@ -926,7 +926,7 @@ async fn modern_legacy_fallback_preserves_authentication_required_error() -> any
         .await
         .expect_err("legacy fallback should surface the authentication challenge");
     assert!(
-        genex_rmcp_client::is_authentication_required_error(&error),
+        ruxex_rmcp_client::is_authentication_required_error(&error),
         "legacy fallback must preserve the authentication-required classification: {error:#}"
     );
     assert_eq!(
@@ -1528,7 +1528,7 @@ async fn modern_discovery_rejection_does_not_downgrade_to_legacy() -> anyhow::Re
 #[tokio::test]
 async fn stdio_protocol_marker_rejects_unknown_versions_before_launch() -> anyhow::Result<()> {
     let env = HashMap::from([(
-        OsString::from("GENEX_MCP_PROTOCOL_VERSION"),
+        OsString::from("RUXEX_MCP_PROTOCOL_VERSION"),
         OsString::from("1999-01-01"),
     )]);
     let error = RmcpClient::new_stdio_client_with_protocol_mode(

@@ -1,16 +1,16 @@
 //! Configured MCP servers cannot activate verification or hold a turn waiting for proof.
 
 use anyhow::Result;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::mcp::provider_ELICITATION_EXTENSION_ID;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::mcp::provider_ELICITATION_EXTENSION_ID;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -72,13 +72,13 @@ async fn mcp_user_verification_rejects_configured_servers(source: CapabilitySour
     skip_if_no_network!(Ok(()));
     skip_if_wine_exec!(Ok(()), "the MCP fixture requires a host Python interpreter");
     let server = responses::start_mock_server().await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
     let declarations = HashMap::from([(
         provider_ELICITATION_EXTENSION_ID.to_string(),
         json!({"userVerification": {}}),
     )]);
     let client_mcp_extensions = match source {
-        CapabilitySource::HostProjection => genex_mcp::client_mcp_extensions(
+        CapabilitySource::HostProjection => ruxex_mcp::client_mcp_extensions(
             Some(&declarations),
             /*legacy_provider_form_elicitation*/ false,
         ),
@@ -155,6 +155,6 @@ async fn mcp_user_verification_rejects_configured_servers(source: CapabilitySour
         json!({"code": -32601, "message": "provider/elicitation/create"})
     );
     thread.shutdown_and_wait().await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     Ok(())
 }

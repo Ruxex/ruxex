@@ -1,7 +1,7 @@
 //! Emits bounded process lifecycle telemetry using identity captured at launch.
 //! Reconnects and later process operations must not replace that identity.
 
-use genex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxType;
 use opentelemetry::trace::SpanContext;
 
 /// Log fields captured at launch, never refreshed from a resumed session.
@@ -26,12 +26,12 @@ pub(crate) enum ProcessTelemetryEvent {
 impl ProcessTelemetry {
     pub(crate) fn log(&self, event: ProcessTelemetryEvent, sandbox: SandboxType) {
         let (event_name, exit_code, termination_requested, reason) = match event {
-            ProcessTelemetryEvent::Start => ("genex.exec_server.process_start", None, None, None),
+            ProcessTelemetryEvent::Start => ("ruxex.exec_server.process_start", None, None, None),
             ProcessTelemetryEvent::SpawnFailed => {
-                ("genex.exec_server.process_spawn_failed", None, None, None)
+                ("ruxex.exec_server.process_spawn_failed", None, None, None)
             }
             ProcessTelemetryEvent::SandboxDenied => (
-                "genex.exec_server.sandbox_denied",
+                "ruxex.exec_server.sandbox_denied",
                 None,
                 None,
                 Some("inferred_denial"),
@@ -40,7 +40,7 @@ impl ProcessTelemetry {
                 exit_code,
                 termination_requested,
             } => (
-                "genex.exec_server.process_exit",
+                "ruxex.exec_server.process_exit",
                 Some(exit_code),
                 Some(termination_requested),
                 None,
@@ -55,7 +55,7 @@ impl ProcessTelemetry {
             .as_ref()
             .map(|span| span.span_id().to_string());
         tracing::event!(
-            target: "genex_otel.log_only",
+            target: "ruxex_otel.log_only",
             tracing::Level::INFO,
             event.name = event_name,
             launch.trace_id = trace_id.as_deref(),

@@ -1,10 +1,10 @@
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseInputItem;
-use genex_tools::ToolOutput;
-use genex_tools::ToolPayload;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_tools::ToolOutput;
+use ruxex_tools::ToolPayload;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -147,7 +147,7 @@ fn rejects_malformed_attachments_instead_of_silently_dropping_them() {
         let result = HistoryNotesToolOutput::new(
             json!({"encrypted_output": "enc_payload", "images": images}),
         );
-        let Err(genex_extension_api::FunctionCallError::RespondToModel(message)) = result else {
+        let Err(ruxex_extension_api::FunctionCallError::RespondToModel(message)) = result else {
             panic!("expected a model-facing image error");
         };
         assert_eq!(message, "History backend returned invalid image content.");

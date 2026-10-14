@@ -5,11 +5,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Stdio;
 
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::strip_user_message_prefix;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::strip_user_message_prefix;
 use regex::Regex;
 use regex::RegexBuilder;
 use tokio::process::Command;
@@ -28,12 +28,12 @@ pub type RolloutSearchMatches = HashMap<PathBuf, Option<String>>;
 
 pub async fn search_rollout_paths(
     rg_command: &Path,
-    genex_home: &Path,
+    ruxex_home: &Path,
     archived: bool,
     search_term: &str,
 ) -> io::Result<HashSet<PathBuf>> {
     Ok(
-        search_rollout_matches(rg_command, genex_home, archived, search_term)
+        search_rollout_matches(rg_command, ruxex_home, archived, search_term)
             .await?
             .into_keys()
             .collect(),
@@ -42,11 +42,11 @@ pub async fn search_rollout_paths(
 
 pub async fn search_rollout_matches(
     rg_command: &Path,
-    genex_home: &Path,
+    ruxex_home: &Path,
     archived: bool,
     search_term: &str,
 ) -> io::Result<RolloutSearchMatches> {
-    let root = genex_home.join(if archived {
+    let root = ruxex_home.join(if archived {
         ARCHIVED_SESSIONS_SUBDIR
     } else {
         SESSIONS_SUBDIR

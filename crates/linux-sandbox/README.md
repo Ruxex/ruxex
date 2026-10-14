@@ -1,24 +1,24 @@
-# genex-linux-sandbox
+# ruxex-linux-sandbox
 
 This crate is responsible for producing:
 
-- a `genex-linux-sandbox` standalone executable for Linux that is bundled with the Node.js version of the Genex CLI
+- a `ruxex-linux-sandbox` standalone executable for Linux that is bundled with the Node.js version of the Ruxex CLI
 - a lib crate that exposes the business logic of the executable as `run_main()` so that
-  - the `genex-exec` CLI can check if its arg0 is `genex-linux-sandbox` and, if so, execute as if it were `genex-linux-sandbox`
-  - this should also be true of the `genex` multitool CLI
+  - the `ruxex-exec` CLI can check if its arg0 is `ruxex-linux-sandbox` and, if so, execute as if it were `ruxex-linux-sandbox`
+  - this should also be true of the `ruxex` multitool CLI
 
-On Linux, Genex prefers the first `bwrap` found on `PATH`
+On Linux, Ruxex prefers the first `bwrap` found on `PATH`
 outside the current working directory whenever it is available. If `bwrap` is
 present but too old to support
 `--argv0`, the helper keeps using system bubblewrap and switches to a
 no-`--argv0` compatibility path for the inner re-exec. If `bwrap` is missing,
-the helper falls back to the bundled `genex-resources/bwrap` binary shipped
-with Genex.
-Genex also surfaces a startup warning when `bwrap` is missing so users know it
-is falling back to the bundled helper. Genex surfaces the same startup warning
+the helper falls back to the bundled `ruxex-resources/bwrap` binary shipped
+with Ruxex.
+Ruxex also surfaces a startup warning when `bwrap` is missing so users know it
+is falling back to the bundled helper. Ruxex surfaces the same startup warning
 path when bubblewrap cannot create user namespaces. WSL2 follows the normal
 Linux bubblewrap path. WSL1 is not supported for bubblewrap sandboxing because
-it cannot create the required user namespaces, so Genex rejects sandboxed shell
+it cannot create the required user namespaces, so Ruxex rejects sandboxed shell
 commands that would enter the bubblewrap path.
 
 **Current Behavior**
@@ -29,13 +29,13 @@ commands that would enter the bubblewrap path.
 - If `bwrap` is present but too old to support `--argv0`, the helper uses a
   no-`--argv0` compatibility path for the inner re-exec.
 - If `bwrap` is missing, the helper falls back to the bundled
-  `genex-resources/bwrap` path.
-- If `bwrap` is missing, Genex also surfaces a startup warning instead of
+  `ruxex-resources/bwrap` path.
+- If `bwrap` is missing, Ruxex also surfaces a startup warning instead of
   printing directly from the sandbox helper.
-- If bubblewrap cannot create user namespaces, Genex surfaces a startup warning
+- If bubblewrap cannot create user namespaces, Ruxex surfaces a startup warning
   instead of waiting for a runtime sandbox failure.
 - WSL2 uses the normal Linux bubblewrap path.
-- WSL1 is not supported for bubblewrap sandboxing; Genex rejects sandboxed
+- WSL1 is not supported for bubblewrap sandboxing; Ruxex rejects sandboxed
   shell commands that would require the bubblewrap path before invoking `bwrap`.
 - Filesystem-restricted execution requires bubblewrap. The legacy Landlock
   option is rejected for these policies because it cannot isolate app-server
@@ -49,7 +49,7 @@ commands that would enter the bubblewrap path.
 - When bubblewrap is active, writable roots are layered with `--bind <root> <root>`.
 - When bubblewrap is active, protected subpaths under writable roots (for
   example `.git`,
-  resolved `gitdir:`, and `.genex`) are re-applied as read-only via `--ro-bind`.
+  resolved `gitdir:`, and `.ruxex`) are re-applied as read-only via `--ro-bind`.
 - When bubblewrap is active, overlapping split-policy
   entries are applied in path-specificity order so narrower writable children
   can reopen broader read-only or denied parents while narrower denied subpaths
@@ -91,4 +91,4 @@ commands that would enter the bubblewrap path.
   you can skip this in restrictive container environments with `--no-proc`.
 
 **Notes**
-- The CLI surface is `genex sandbox`; the host OS selects the sandbox backend.
+- The CLI surface is `ruxex sandbox`; the host OS selects the sandbox backend.

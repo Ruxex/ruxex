@@ -4,11 +4,11 @@ use super::*;
 
 #[test]
 fn cache_identity_tracks_provider_routing_and_effective_api_credentials() {
-    let auth = GenexAuth::from_api_key("first-key");
+    let auth = RuxexAuth::from_api_key("first-key");
     let provider =
         ModelProviderInfo::create_responses_provider(Some("https://one.example/v1".into()));
     let key = identity(Some("provider-a"), &provider, Some(&auth)).unwrap();
-    let other_key = GenexAuth::from_api_key("second-key");
+    let other_key = RuxexAuth::from_api_key("second-key");
     assert_ne!(
         identity(Some("provider-a"), &provider, Some(&other_key)).unwrap(),
         key

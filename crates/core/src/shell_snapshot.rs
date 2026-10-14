@@ -14,25 +14,25 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use genex_exec_server::Environment;
-use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use genex_network_proxy::CredentialBrokerContext;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::brokered_credential_marker_env_keys;
-use genex_network_proxy::brokered_credential_value_env_keys;
-use genex_otel::SessionTelemetry;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::shell_environment::create_env_from_vars;
-use genex_shell_command::shell_snapshot::CapturedSnapshot;
-use genex_shell_command::shell_snapshot::PreparedSnapshot;
-use genex_shell_command::shell_snapshot::SnapshotCaptureOptions;
-use genex_shell_command::shell_snapshot::SnapshotCredentialEnvironment;
-use genex_shell_command::shell_snapshot::SnapshotStartup;
-use genex_shell_command::shell_snapshot::prepare_snapshot_credentials;
-use genex_shell_command::shell_snapshot::snapshot_capture_script;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::Environment;
+use ruxex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::CredentialBrokerContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::brokered_credential_marker_env_keys;
+use ruxex_network_proxy::brokered_credential_value_env_keys;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::shell_environment::create_env_from_vars;
+use ruxex_shell_command::shell_snapshot::CapturedSnapshot;
+use ruxex_shell_command::shell_snapshot::PreparedSnapshot;
+use ruxex_shell_command::shell_snapshot::SnapshotCaptureOptions;
+use ruxex_shell_command::shell_snapshot::SnapshotCredentialEnvironment;
+use ruxex_shell_command::shell_snapshot::SnapshotStartup;
+use ruxex_shell_command::shell_snapshot::prepare_snapshot_credentials;
+use ruxex_shell_command::shell_snapshot::snapshot_capture_script;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use tokio::fs;
 use tokio::process::Command;
 use tokio::sync::watch;
@@ -53,7 +53,7 @@ pub(crate) struct ShellSnapshot {
 }
 
 struct ShellSnapshotConfig {
-    genex_home: AbsolutePathBuf,
+    ruxex_home: AbsolutePathBuf,
     session_id: ThreadId,
     session_telemetry: SessionTelemetry,
     state_db: Option<StateDbHandle>,
@@ -107,7 +107,7 @@ const SNAPSHOT_DIR: &str = "shell_snapshots";
 
 impl ShellSnapshot {
     pub(crate) fn new(
-        genex_home: AbsolutePathBuf,
+        ruxex_home: AbsolutePathBuf,
         session_id: ThreadId,
         session_telemetry: SessionTelemetry,
         state_db: Option<StateDbHandle>,
@@ -116,7 +116,7 @@ impl ShellSnapshot {
     ) -> Self {
         Self {
             config: Some(Arc::new(ShellSnapshotConfig {
-                genex_home,
+                ruxex_home,
                 session_id,
                 session_telemetry,
                 state_db,
@@ -216,9 +216,9 @@ impl ShellSnapshot {
             };
             let timer = config
                 .session_telemetry
-                .start_timer("genex.shell_snapshot.duration_ms", &[("version", "v1")]);
+                .start_timer("ruxex.shell_snapshot.duration_ms", &[("version", "v1")]);
             let snapshot = ShellSnapshot::try_create(
-                &config.genex_home,
+                &config.ruxex_home,
                 config.session_id,
                 &cwd,
                 &shell,
@@ -235,7 +235,7 @@ impl ShellSnapshot {
             }
             config
                 .session_telemetry
-                .counter("genex.shell_snapshot", /*inc*/ 1, &counter_tags);
+                .counter("ruxex.shell_snapshot", /*inc*/ 1, &counter_tags);
             snapshot.ok().map(Arc::new)
         }
         .instrument(snapshot_span)
@@ -243,7 +243,7 @@ impl ShellSnapshot {
     }
 
     async fn try_create(
-        genex_home: &AbsolutePathBuf,
+        ruxex_home: &AbsolutePathBuf,
         session_id: ThreadId,
         session_cwd: &AbsolutePathBuf,
         shell: &Shell,
@@ -257,19 +257,19 @@ impl ShellSnapshot {
             .duration_since(SystemTime::UNIX_EPOCH)
             .map(|duration| duration.as_nanos())
             .unwrap_or(0);
-        let path = genex_home
+        let path = ruxex_home
             .join(SNAPSHOT_DIR)
             .join(format!("{session_id}.{nonce}.{extension}"));
-        let temp_path = genex_home
+        let temp_path = ruxex_home
             .join(SNAPSHOT_DIR)
             .join(format!("{session_id}.tmp-{nonce}"));
 
         // Clean the (unlikely) leaked snapshot files.
-        let genex_home = genex_home.clone();
+        let ruxex_home = ruxex_home.clone();
         let cleanup_session_id = session_id;
         tokio::spawn(async move {
             if let Err(err) =
-                cleanup_stale_snapshots(&genex_home, cleanup_session_id, state_db).await
+                cleanup_stale_snapshots(&ruxex_home, cleanup_session_id, state_db).await
             {
                 tracing::warn!("Failed to clean up shell snapshots: {err:?}");
             }
@@ -666,7 +666,7 @@ async fn capture_snapshot(
         .apply_to_env_for_snapshot(&mut env);
     let mut snapshot_allowed_env = env.clone();
     // The live broker regenerates this marker; captured dummies can belong to another scope.
-    snapshot_allowed_env.remove("GENEX_NETWORK_PROXY_BROKERED_CREDENTIALS");
+    snapshot_allowed_env.remove("RUXEX_NETWORK_PROXY_BROKERED_CREDENTIALS");
     for key in &provider_context_keys {
         if env_value(&original_env, key) != env_value(&env, key) {
             remove_env_value(&mut snapshot_allowed_env, key);
@@ -1041,11 +1041,11 @@ async fn run_script_with_timeout(
         handler.env_clear();
         handler.envs(env);
     }
-    genex_protocol::shell_environment::scrub_non_inheritable_env_vars(handler.as_std_mut());
+    ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars(handler.as_std_mut());
     #[cfg(unix)]
     unsafe {
         handler.pre_exec(|| {
-            genex_utils_pty::process_group::detach_from_tty()?;
+            ruxex_utils_pty::process_group::detach_from_tty()?;
             Ok(())
         });
     }
@@ -1068,11 +1068,11 @@ async fn run_script_with_timeout(
 /// whose rollouts have not been updated within the retention window.
 /// The active session id is exempt from cleanup.
 pub async fn cleanup_stale_snapshots(
-    genex_home: &AbsolutePathBuf,
+    ruxex_home: &AbsolutePathBuf,
     active_session_id: ThreadId,
     state_db: Option<StateDbHandle>,
 ) -> Result<()> {
-    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
+    let snapshot_dir = ruxex_home.join(SNAPSHOT_DIR);
 
     let mut entries = match fs::read_dir(&snapshot_dir).await {
         Ok(entries) => entries,
@@ -1101,7 +1101,7 @@ pub async fn cleanup_stale_snapshots(
         }
 
         let rollout_path =
-            find_thread_path_by_id_str(genex_home, session_id, state_db.as_deref()).await?;
+            find_thread_path_by_id_str(ruxex_home, session_id, state_db.as_deref()).await?;
         let Some(rollout_path) = rollout_path else {
             remove_snapshot_file(&path).await;
             continue;

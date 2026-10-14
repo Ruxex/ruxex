@@ -7,17 +7,17 @@ use crate::tools::context::boxed_tool_output;
 use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_extension_items::ExtensionItem;
-use genex_extension_items::sleep::SleepItem;
-use genex_features::Feature;
-use genex_protocol::items::TurnItem;
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolExposure;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_extension_items::ExtensionItem;
+use ruxex_extension_items::sleep::SleepItem;
+use ruxex_features::Feature;
+use ruxex_protocol::items::TurnItem;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolExposure;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -75,7 +75,7 @@ impl ToolExecutor<ToolInvocation> for SleepHandler {
         ToolExposure::DirectModelOnly
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

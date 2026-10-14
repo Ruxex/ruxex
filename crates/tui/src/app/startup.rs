@@ -275,8 +275,8 @@ impl App {
                 crate::status::remote_connection::pending_server_version_notice(
                     &local_settings.tui,
                     &app_server_target,
-                    app_server.server_genex_home(),
-                    GENEX_CLI_VERSION,
+                    app_server.server_ruxex_home(),
+                    RUXEX_CLI_VERSION,
                     app_server.server_version(),
                     /*last_shown*/ None,
                 )
@@ -336,7 +336,7 @@ impl App {
         );
         let auth_mode = bootstrap.auth_mode;
         let has_managed_account = bootstrap.has_managed_account;
-        let has_genex_backend_auth = false;
+        let has_ruxex_backend_auth = false;
         let status_account_display = bootstrap.status_account_display.clone();
         let initial_plan_type = bootstrap.plan_type;
         let session_telemetry = SessionTelemetry::new(
@@ -346,7 +346,7 @@ impl App {
             /*account_id*/ None,
             bootstrap.account_email.clone(),
             auth_mode,
-            genex_login::default_client::originator().value,
+            ruxex_login::default_client::originator().value,
             config.otel.log_user_prompt,
             user_agent(),
             serde_json::from_value(serde_json::json!("cli"))
@@ -358,7 +358,7 @@ impl App {
             .as_ref()
             .is_some_and(|cmd| !cmd.is_empty())
         {
-            session_telemetry.counter("genex.status_line", /*inc*/ 1, &[]);
+            session_telemetry.counter("ruxex.status_line", /*inc*/ 1, &[]);
         }
 
         let status_line_invalid_items_warned = Arc::new(AtomicBool::new(false));
@@ -430,7 +430,7 @@ impl App {
                     ),
                     enhanced_keys_supported,
                     has_managed_account,
-                    has_genex_backend_auth,
+                    has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
                     status_account_display: status_account_display.clone(),
@@ -550,7 +550,7 @@ impl App {
                     .filter(|_| resumed.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    has_genex_backend_auth,
+                    has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
                     status_account_display: status_account_display.clone(),
@@ -588,7 +588,7 @@ impl App {
                     crate::app_server_session::ForkPermissionMode::InheritSaved
                 };
                 session_telemetry.counter(
-                    "genex.thread.fork",
+                    "ruxex.thread.fork",
                     /*inc*/ 1,
                     &[("source", "cli_subcommand")],
                 );
@@ -653,7 +653,7 @@ impl App {
                     .filter(|_| forked.is_some()),
                     enhanced_keys_supported,
                     has_managed_account,
-                    has_genex_backend_auth,
+                    has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
                     is_first_run,
                     status_account_display: status_account_display.clone(),
@@ -702,7 +702,7 @@ impl App {
                 color_eyre::eyre::eyre!(
                     "Invalid `tui.keymap` configuration: {err}\n\
 Fix the config and retry.\n\
-See the Genex keymap documentation for supported actions and examples."
+See the Ruxex keymap documentation for supported actions and examples."
                 )
             })?;
         let mut app = Self {
@@ -794,10 +794,10 @@ See the Genex keymap documentation for supported actions and examples."
             app.recap.note_focus_lost(Instant::now());
         }
         let _ =
-            app.initialize_server_version_notice(GENEX_CLI_VERSION, app_server.server_version());
+            app.initialize_server_version_notice(RUXEX_CLI_VERSION, app_server.server_version());
         if initial_server_version_notice.is_none() {
             app.update_server_version_overview_notice(
-                GENEX_CLI_VERSION,
+                RUXEX_CLI_VERSION,
                 /*older_server*/ None,
             );
         }
@@ -1083,7 +1083,7 @@ See the Genex keymap documentation for supported actions and examples."
                         reconnect = None;
                         match result {
                             Ok(connected) => {
-                                app.finish_reconnect(tui, &mut app_server, &mut app_event_rx, connected, GENEX_CLI_VERSION).await?;
+                                app.finish_reconnect(tui, &mut app_server, &mut app_event_rx, connected, RUXEX_CLI_VERSION).await?;
                                 listen_for_app_server_events = true;
                                 waiting_for_initial_session_configured = false;
                             }

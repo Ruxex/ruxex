@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use genex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerNotification;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -55,7 +55,7 @@ stream_max_retries = 0
             ),
         )?;
         let config = ConfigBuilder::default()
-            .genex_home(home.path().to_path_buf())
+            .ruxex_home(home.path().to_path_buf())
             .build()
             .await?;
         let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
@@ -82,7 +82,7 @@ stream_max_retries = 0
                 {
                     assert_eq!(
                         completed.turn.status,
-                        genex_app_server_protocol::TurnStatus::Completed
+                        ruxex_app_server_protocol::TurnStatus::Completed
                     );
                     return;
                 }
@@ -125,7 +125,7 @@ async fn new_tui_threads_request_summaries_unless_explicitly_disabled() {
     ] {
         std::fs::write(temp_dir.path().join("config.toml"), config_text).expect("config");
         let config = ConfigBuilder::default()
-            .genex_home(temp_dir.path().to_path_buf())
+            .ruxex_home(temp_dir.path().to_path_buf())
             .build()
             .await
             .expect("config should build");
@@ -151,7 +151,7 @@ async fn new_tui_threads_request_summaries_unless_explicitly_disabled() {
     )
     .expect("config");
     let config = ConfigBuilder::default()
-        .genex_home(temp_dir.path().to_path_buf())
+        .ruxex_home(temp_dir.path().to_path_buf())
         .cli_overrides(vec![(
             "model_reasoning_summary".to_string(),
             toml::Value::String("none".to_string()),

@@ -1,19 +1,19 @@
 use super::*;
 use crate::ConfigRequirementsToml;
-use genex_file_system::CopyOptions;
-use genex_file_system::CreateDirectoryOptions;
-use genex_file_system::ExecutorFileSystemFuture;
-use genex_file_system::FileMetadata;
-use genex_file_system::FileSystemReadStream;
-use genex_file_system::FileSystemSandboxContext;
-use genex_file_system::GetMetadataOptions;
-use genex_file_system::ReadDirectoryEntry;
-use genex_file_system::ReadFileOptions;
-use genex_file_system::RemoveOptions;
-use genex_file_system::WalkOptions;
-use genex_file_system::WalkOutcome;
-use genex_file_system::WriteFileOptions;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::CopyOptions;
+use ruxex_file_system::CreateDirectoryOptions;
+use ruxex_file_system::ExecutorFileSystemFuture;
+use ruxex_file_system::FileMetadata;
+use ruxex_file_system::FileSystemReadStream;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_file_system::GetMetadataOptions;
+use ruxex_file_system::ReadDirectoryEntry;
+use ruxex_file_system::ReadFileOptions;
+use ruxex_file_system::RemoveOptions;
+use ruxex_file_system::WalkOptions;
+use ruxex_file_system::WalkOutcome;
+use ruxex_file_system::WriteFileOptions;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use tempfile::tempdir;
@@ -221,7 +221,7 @@ fn project_environment_filters_keep_excluded_hosts_out_of_children() {
             .clone()
             .try_into()
             .expect("valid shell environment policy");
-        let actual = genex_protocol::shell_environment::populate_env(
+        let actual = ruxex_protocol::shell_environment::populate_env(
             [
                 ("GH_HOST", host),
                 ("AWS_SECRET_ACCESS_KEY", "unrelated_secret"),
@@ -736,7 +736,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 ),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.genex.genex".to_string(),
+                        domain: "com.ruxex.ruxex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]\nunrequested=true",
@@ -779,7 +779,7 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
                 layer(ConfigLayerSource::SessionFlags, "a=2"),
                 layer(
                     ConfigLayerSource::Mdm {
-                        domain: "com.genex.genex".to_string(),
+                        domain: "com.ruxex.ruxex".to_string(),
                         key: "config".to_string(),
                     },
                     "[a]",
@@ -802,12 +802,12 @@ fn local_layer_projection_preserves_override_blockers_and_cloud_position() {
 #[tokio::test]
 async fn local_layers_keep_raw_paths_order_and_requirements() {
     let tmp = tempdir().expect("tempdir");
-    let genex_home = tmp.path().join("genex-home");
+    let ruxex_home = tmp.path().join("ruxex-home");
     let project = tmp.path().join("project");
-    let dot_genex = project.join(".genex");
+    let dot_ruxex = project.join(".ruxex");
     let system_dir = tmp.path().join("system");
     let managed_dir = tmp.path().join("managed");
-    for dir in [&genex_home, &dot_genex, &system_dir, &managed_dir] {
+    for dir in [&ruxex_home, &dot_ruxex, &system_dir, &managed_dir] {
         std::fs::create_dir_all(dir).expect("create fixture directory");
     }
     std::fs::create_dir(project.join(".git")).expect("write project marker");
@@ -819,7 +819,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             "model_instructions_file=\"./user.md\"\n[projects.{project_key}]\ntrust_level=\"{trust_level}\""
         )
     };
-    let user_file = genex_home.join(CONFIG_TOML_FILE);
+    let user_file = ruxex_home.join(CONFIG_TOML_FILE);
     std::fs::write(
         &user_file,
         format!(
@@ -832,7 +832,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     std::fs::write(&system_file, "model_instructions_file = \"./system.md\"")
         .expect("write system config");
     std::fs::write(
-        dot_genex.join(CONFIG_TOML_FILE),
+        dot_ruxex.join(CONFIG_TOML_FILE),
         "model_instructions_file = \"./project.md\"\nmanaged_auth_base_url = \"https://ignored\"",
     )
     .expect("write project config");
@@ -849,7 +849,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     let cwd = AbsolutePathBuf::from_absolute_path(&project).expect("absolute cwd");
     let layers = local::load_local_config_layers_with_overrides(
         &TestFileSystem,
-        &genex_home,
+        &ruxex_home,
         &cwd,
         &overrides,
     )
@@ -863,7 +863,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
             .iter()
             .map(|layer| layer.base_dir.to_path_buf())
             .collect::<Vec<_>>(),
-        vec![system_dir.clone(), genex_home.clone(), dot_genex.clone(),]
+        vec![system_dir.clone(), ruxex_home.clone(), dot_ruxex.clone(),]
     );
     assert_eq!(layers.config.cloud_insertion_index, 1);
     assert_eq!(layers.requirements.cloud_insertion_index, 1);
@@ -898,13 +898,13 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
         )
         .expect("write lowercase trusted GitHub host");
         std::fs::write(
-            dot_genex.join(CONFIG_TOML_FILE),
+            dot_ruxex.join(CONFIG_TOML_FILE),
             "[shell_environment_policy]\ninherit='none'\n",
         )
         .expect("write project environment policy");
         let layers = local::load_local_config_layers_with_overrides(
             &TestFileSystem,
-            &genex_home,
+            &ruxex_home,
             &cwd,
             &overrides,
         )
@@ -920,7 +920,7 @@ async fn local_layers_keep_raw_paths_order_and_requirements() {
     std::fs::write(&user_file, user_config("untrusted")).expect("write user config");
     let layers = local::load_local_config_layers_with_overrides(
         &TestFileSystem,
-        &genex_home,
+        &ruxex_home,
         &cwd,
         &overrides,
     )

@@ -5,13 +5,13 @@ use futures::stream::FuturesUnordered;
 use serde_json::Map;
 use serde_json::Value;
 
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookExecutionMode;
-use genex_protocol::protocol::HookHandlerType;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookRunSummary;
-use genex_protocol::protocol::HookScope;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookExecutionMode;
+use ruxex_protocol::protocol::HookHandlerType;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookRunSummary;
+use ruxex_protocol::protocol::HookScope;
 
 use super::ClaudeHooksEngine;
 use super::ConfiguredHandler;
@@ -229,7 +229,7 @@ pub(crate) fn completed_summary(
     handler: &ConfiguredHandler,
     run_result: &HandlerRunResult,
     status: HookRunStatus,
-    entries: Vec<genex_protocol::protocol::HookOutputEntry>,
+    entries: Vec<ruxex_protocol::protocol::HookOutputEntry>,
 ) -> HookRunSummary {
     let HandlerSourcePath::Local(source_path) = &handler.source_path else {
         unreachable!("executor-scoped hooks do not produce public hook summaries");
@@ -312,26 +312,26 @@ pub(crate) fn hook_scope_label(scope: HookScope) -> &'static str {
     }
 }
 
-pub(crate) fn hook_source_label(source: genex_protocol::protocol::HookSource) -> &'static str {
+pub(crate) fn hook_source_label(source: ruxex_protocol::protocol::HookSource) -> &'static str {
     match source {
-        genex_protocol::protocol::HookSource::System => "system",
-        genex_protocol::protocol::HookSource::User => "user",
-        genex_protocol::protocol::HookSource::Project => "project",
-        genex_protocol::protocol::HookSource::Mdm => "mdm",
-        genex_protocol::protocol::HookSource::SessionFlags => "session_flags",
-        genex_protocol::protocol::HookSource::Plugin => "plugin",
-        genex_protocol::protocol::HookSource::CloudRequirements => "cloud_requirements",
-        genex_protocol::protocol::HookSource::CloudManagedConfig => "cloud_managed_config",
-        genex_protocol::protocol::HookSource::Unknown => "unknown",
+        ruxex_protocol::protocol::HookSource::System => "system",
+        ruxex_protocol::protocol::HookSource::User => "user",
+        ruxex_protocol::protocol::HookSource::Project => "project",
+        ruxex_protocol::protocol::HookSource::Mdm => "mdm",
+        ruxex_protocol::protocol::HookSource::SessionFlags => "session_flags",
+        ruxex_protocol::protocol::HookSource::Plugin => "plugin",
+        ruxex_protocol::protocol::HookSource::CloudRequirements => "cloud_requirements",
+        ruxex_protocol::protocol::HookSource::CloudManagedConfig => "cloud_managed_config",
+        ruxex_protocol::protocol::HookSource::Unknown => "unknown",
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use genex_protocol::protocol::HookEventName;
-    use genex_protocol::protocol::HookSource;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_protocol::protocol::HookEventName;
+    use ruxex_protocol::protocol::HookSource;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
 
     use super::ConfiguredHandler;

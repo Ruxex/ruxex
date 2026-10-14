@@ -6,96 +6,96 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::StreamExt;
-use genex_api::ApiError;
-use genex_api::ChatClient;
-use genex_api::ChatCompletionApi;
-use genex_api::ChatRequestInput;
-use genex_api::Provider;
-use genex_api::ResponsesClient;
-use genex_api::ResponsesWebsocketClient;
-use genex_api::ResponsesWebsocketConnection;
-use genex_api::SearchClient;
-use genex_api::SearchCommands;
-use genex_api::SearchInput;
-use genex_api::SearchRequest;
-use genex_api::SearchSettings;
-use genex_api::SharedAuthProvider;
-use genex_api::StandardChatCompletionApi;
-use genex_api::TransportError;
-use genex_api::WebsocketTelemetry;
-use genex_api::auth_header_telemetry;
-use genex_api::is_azure_responses_provider;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::HttpTransport;
-use genex_http_client::OutboundProxyPolicy;
-use genex_http_client::RequestBody;
-use genex_login::CredentialManager;
-use genex_login::GENEX_API_KEY_ENV_VAR;
-use genex_login::GenexAuth;
-use genex_login::ProviderAuth;
-use genex_login::default_client::ClientRedirectPolicy;
-use genex_login::default_client::create_client_for_route;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::ProviderAuthField;
-use genex_model_provider_info::WireApi;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_protocol::account::ProviderAccount;
-use genex_protocol::account::ProviderAuthStatus;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::protocol::RateLimitSnapshot;
+use ruxex_api::ApiError;
+use ruxex_api::ChatClient;
+use ruxex_api::ChatCompletionApi;
+use ruxex_api::ChatRequestInput;
+use ruxex_api::Provider;
+use ruxex_api::ResponsesClient;
+use ruxex_api::ResponsesWebsocketClient;
+use ruxex_api::ResponsesWebsocketConnection;
+use ruxex_api::SearchClient;
+use ruxex_api::SearchCommands;
+use ruxex_api::SearchInput;
+use ruxex_api::SearchRequest;
+use ruxex_api::SearchSettings;
+use ruxex_api::SharedAuthProvider;
+use ruxex_api::StandardChatCompletionApi;
+use ruxex_api::TransportError;
+use ruxex_api::WebsocketTelemetry;
+use ruxex_api::auth_header_telemetry;
+use ruxex_api::is_azure_responses_provider;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpTransport;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_http_client::RequestBody;
+use ruxex_login::CredentialManager;
+use ruxex_login::RUXEX_API_KEY_ENV_VAR;
+use ruxex_login::RuxexAuth;
+use ruxex_login::ProviderAuth;
+use ruxex_login::default_client::ClientRedirectPolicy;
+use ruxex_login::default_client::create_client_for_route;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider_info::ProviderAuthField;
+use ruxex_model_provider_info::WireApi;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_protocol::account::ProviderAccount;
+use ruxex_protocol::account::ProviderAuthStatus;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::protocol::RateLimitSnapshot;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::cloudflare::CloudflareModelProvider;
-use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use genex_model_provider::ModelsEndpoint;
-use genex_model_provider::ProviderAuthEnvironment;
-use genex_model_provider::ProviderAuthRecoveryMessages;
-use genex_model_provider::ProviderCapabilities;
-use genex_model_provider::ProviderConnectionKey;
-use genex_model_provider::ProviderCredentialSnapshot;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::ProviderRequestAuth;
-use genex_model_provider::ProviderRequestFormat;
-use genex_model_provider::ProviderRequestSnapshot;
-use genex_model_provider::ProviderStreamConnectRequest;
-use genex_model_provider::ProviderStreamEvent;
-use genex_model_provider::ProviderStreamOutcome;
-use genex_model_provider::ProviderStreamRequest;
-use genex_model_provider::ProviderStreamSession;
-use genex_model_provider::ProviderStreamTelemetry;
-use genex_model_provider::ProviderUnauthorizedRecovery;
-use genex_model_provider::ProviderUsage;
-use genex_model_provider::ProviderUsageResult;
-use genex_model_provider::ProviderWebsocketConnectRequest;
-use genex_model_provider::ProviderWebsocketEvent;
-use genex_model_provider::ProviderWebsocketPayloadRequest;
-use genex_model_provider::ProviderWebsocketRequest;
-use genex_model_provider::ProviderWireApi;
-use genex_model_provider::RemoteCompactionSupport;
-use genex_model_provider::SharedProviderCredentialSnapshot;
-use genex_model_provider::SharedProviderStreamSession;
-use genex_model_provider::SharedProviderWebsocketConnection;
-use genex_model_provider::cached_provider_auth;
-use genex_model_provider::credential_manager_for_provider;
-use genex_model_provider::headers_to_http;
-use genex_model_provider::provider_auth;
-use genex_model_provider::resolve_provider_auth;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::ModelsEndpoint;
+use ruxex_model_provider::ProviderAuthEnvironment;
+use ruxex_model_provider::ProviderAuthRecoveryMessages;
+use ruxex_model_provider::ProviderCapabilities;
+use ruxex_model_provider::ProviderConnectionKey;
+use ruxex_model_provider::ProviderCredentialSnapshot;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderRequestAuth;
+use ruxex_model_provider::ProviderRequestFormat;
+use ruxex_model_provider::ProviderRequestSnapshot;
+use ruxex_model_provider::ProviderStreamConnectRequest;
+use ruxex_model_provider::ProviderStreamEvent;
+use ruxex_model_provider::ProviderStreamOutcome;
+use ruxex_model_provider::ProviderStreamRequest;
+use ruxex_model_provider::ProviderStreamSession;
+use ruxex_model_provider::ProviderStreamTelemetry;
+use ruxex_model_provider::ProviderUnauthorizedRecovery;
+use ruxex_model_provider::ProviderUsage;
+use ruxex_model_provider::ProviderUsageResult;
+use ruxex_model_provider::ProviderWebsocketConnectRequest;
+use ruxex_model_provider::ProviderWebsocketEvent;
+use ruxex_model_provider::ProviderWebsocketPayloadRequest;
+use ruxex_model_provider::ProviderWebsocketRequest;
+use ruxex_model_provider::ProviderWireApi;
+use ruxex_model_provider::RemoteCompactionSupport;
+use ruxex_model_provider::SharedProviderCredentialSnapshot;
+use ruxex_model_provider::SharedProviderStreamSession;
+use ruxex_model_provider::SharedProviderWebsocketConnection;
+use ruxex_model_provider::cached_provider_auth;
+use ruxex_model_provider::credential_manager_for_provider;
+use ruxex_model_provider::headers_to_http;
+use ruxex_model_provider::provider_auth;
+use ruxex_model_provider::resolve_provider_auth;
 
 fn provider_chat_event_from_api(
-    event: genex_api::ResponseEvent,
-) -> genex_model_provider::ProviderChatEvent {
+    event: ruxex_api::ResponseEvent,
+) -> ruxex_model_provider::ProviderChatEvent {
     match event {
-        genex_api::ResponseEvent::Created { response_id } => {
-            genex_model_provider::ProviderChatEvent::Created { response_id }
+        ruxex_api::ResponseEvent::Created { response_id } => {
+            ruxex_model_provider::ProviderChatEvent::Created { response_id }
         }
-        genex_api::ResponseEvent::SafetyBuffering(buffering) => {
-            genex_model_provider::ProviderChatEvent::SafetyBuffering(
-                genex_model_provider::ProviderSafetyBuffering {
+        ruxex_api::ResponseEvent::SafetyBuffering(buffering) => {
+            ruxex_model_provider::ProviderChatEvent::SafetyBuffering(
+                ruxex_model_provider::ProviderSafetyBuffering {
                     use_cases: buffering.use_cases,
                     reasons: buffering.reasons,
                     show_buffering_ui: buffering.show_buffering_ui,
@@ -103,75 +103,75 @@ fn provider_chat_event_from_api(
                 },
             )
         }
-        genex_api::ResponseEvent::OutputItemDone(item) => {
-            genex_model_provider::ProviderChatEvent::OutputItemDone(item)
+        ruxex_api::ResponseEvent::OutputItemDone(item) => {
+            ruxex_model_provider::ProviderChatEvent::OutputItemDone(item)
         }
-        genex_api::ResponseEvent::OutputItemAdded(item) => {
-            genex_model_provider::ProviderChatEvent::OutputItemAdded(item)
+        ruxex_api::ResponseEvent::OutputItemAdded(item) => {
+            ruxex_model_provider::ProviderChatEvent::OutputItemAdded(item)
         }
-        genex_api::ResponseEvent::ServerModel(model) => {
-            genex_model_provider::ProviderChatEvent::ServerModel(model)
+        ruxex_api::ResponseEvent::ServerModel(model) => {
+            ruxex_model_provider::ProviderChatEvent::ServerModel(model)
         }
-        genex_api::ResponseEvent::ModelVerifications(verifications) => {
-            genex_model_provider::ProviderChatEvent::ModelVerifications(verifications)
+        ruxex_api::ResponseEvent::ModelVerifications(verifications) => {
+            ruxex_model_provider::ProviderChatEvent::ModelVerifications(verifications)
         }
-        genex_api::ResponseEvent::ServerReasoningIncluded(included) => {
-            genex_model_provider::ProviderChatEvent::ServerReasoningIncluded(included)
+        ruxex_api::ResponseEvent::ServerReasoningIncluded(included) => {
+            ruxex_model_provider::ProviderChatEvent::ServerReasoningIncluded(included)
         }
-        genex_api::ResponseEvent::Completed {
+        ruxex_api::ResponseEvent::Completed {
             response_id,
             token_usage,
             usage_metadata,
             end_turn,
-        } => genex_model_provider::ProviderChatEvent::Completed {
+        } => ruxex_model_provider::ProviderChatEvent::Completed {
             response_id,
             token_usage,
             usage_metadata,
             end_turn,
         },
-        genex_api::ResponseEvent::OutputTextDelta(delta) => {
-            genex_model_provider::ProviderChatEvent::OutputTextDelta(delta)
+        ruxex_api::ResponseEvent::OutputTextDelta(delta) => {
+            ruxex_model_provider::ProviderChatEvent::OutputTextDelta(delta)
         }
-        genex_api::ResponseEvent::ToolCallInputDelta {
+        ruxex_api::ResponseEvent::ToolCallInputDelta {
             item_id,
             call_id,
             delta,
-        } => genex_model_provider::ProviderChatEvent::ToolCallInputDelta {
+        } => ruxex_model_provider::ProviderChatEvent::ToolCallInputDelta {
             item_id,
             call_id,
             delta,
         },
-        genex_api::ResponseEvent::ReasoningSummaryDelta {
+        ruxex_api::ResponseEvent::ReasoningSummaryDelta {
             delta,
             summary_index,
-        } => genex_model_provider::ProviderChatEvent::ReasoningSummaryDelta {
+        } => ruxex_model_provider::ProviderChatEvent::ReasoningSummaryDelta {
             delta,
             summary_index,
         },
-        genex_api::ResponseEvent::ReasoningSummaryDone {
+        ruxex_api::ResponseEvent::ReasoningSummaryDone {
             item_id,
             text,
             summary_index,
-        } => genex_model_provider::ProviderChatEvent::ReasoningSummaryDone {
+        } => ruxex_model_provider::ProviderChatEvent::ReasoningSummaryDone {
             item_id,
             text,
             summary_index,
         },
-        genex_api::ResponseEvent::ReasoningContentDelta {
+        ruxex_api::ResponseEvent::ReasoningContentDelta {
             delta,
             content_index,
-        } => genex_model_provider::ProviderChatEvent::ReasoningContentDelta {
+        } => ruxex_model_provider::ProviderChatEvent::ReasoningContentDelta {
             delta,
             content_index,
         },
-        genex_api::ResponseEvent::ReasoningSummaryPartAdded { summary_index } => {
-            genex_model_provider::ProviderChatEvent::ReasoningSummaryPartAdded { summary_index }
+        ruxex_api::ResponseEvent::ReasoningSummaryPartAdded { summary_index } => {
+            ruxex_model_provider::ProviderChatEvent::ReasoningSummaryPartAdded { summary_index }
         }
-        genex_api::ResponseEvent::RateLimits(snapshot) => {
-            genex_model_provider::ProviderChatEvent::RateLimits(snapshot)
+        ruxex_api::ResponseEvent::RateLimits(snapshot) => {
+            ruxex_model_provider::ProviderChatEvent::RateLimits(snapshot)
         }
-        genex_api::ResponseEvent::ModelsEtag(etag) => {
-            genex_model_provider::ProviderChatEvent::ModelsEtag(etag)
+        ruxex_api::ResponseEvent::ModelsEtag(etag) => {
+            ruxex_model_provider::ProviderChatEvent::ModelsEtag(etag)
         }
     }
 }
@@ -256,31 +256,31 @@ struct ResponsesPayload {
     model: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     instructions: String,
-    input: Vec<genex_protocol::models::ResponseItem>,
+    input: Vec<ruxex_protocol::models::ResponseItem>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tools: Option<Value>,
     tool_choice: String,
     parallel_tool_calls: bool,
-    reasoning: Option<genex_model_provider::ProviderReasoning>,
+    reasoning: Option<ruxex_model_provider::ProviderReasoning>,
     store: bool,
     stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    stream_options: Option<genex_model_provider::ProviderStreamOptions>,
+    stream_options: Option<ruxex_model_provider::ProviderStreamOptions>,
     include: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     service_tier: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     prompt_cache_key: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    text: Option<genex_model_provider::ProviderTextControls>,
+    text: Option<ruxex_model_provider::ProviderTextControls>,
     #[serde(skip_serializing_if = "Option::is_none")]
     client_metadata: Option<BTreeMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     access_programs: Option<Value>,
 }
 
-impl From<&genex_model_provider::ChatRequest> for ResponsesPayload {
-    fn from(request: &genex_model_provider::ChatRequest) -> Self {
+impl From<&ruxex_model_provider::ChatRequest> for ResponsesPayload {
+    fn from(request: &ruxex_model_provider::ChatRequest) -> Self {
         Self {
             model: request.model.clone(),
             instructions: request.instructions.clone(),
@@ -302,48 +302,48 @@ impl From<&genex_model_provider::ChatRequest> for ResponsesPayload {
     }
 }
 
-fn map_api_error_to_provider_error(error: ApiError) -> genex_model_provider::ProviderError {
+fn map_api_error_to_provider_error(error: ApiError) -> ruxex_model_provider::ProviderError {
     match error {
         ApiError::Transport(TransportError::Http { status, .. })
             if status == http::StatusCode::UNAUTHORIZED =>
         {
-            genex_model_provider::ProviderError::Unauthorized
+            ruxex_model_provider::ProviderError::Unauthorized
         }
         ApiError::Transport(TransportError::Http { status, .. })
             if status == http::StatusCode::UPGRADE_REQUIRED =>
         {
-            genex_model_provider::ProviderError::UpgradeRequired
+            ruxex_model_provider::ProviderError::UpgradeRequired
         }
         ApiError::InvalidRequest { message } => {
-            genex_model_provider::ProviderError::InvalidRequest(message)
+            ruxex_model_provider::ProviderError::InvalidRequest(message)
         }
         ApiError::RateLimitExceeded { delay, .. } => {
-            genex_model_provider::ProviderError::RateLimited {
+            ruxex_model_provider::ProviderError::RateLimited {
                 retry_after_seconds: delay.map(|delay| delay.as_secs()),
             }
         }
         ApiError::Retryable { message, .. } => {
-            genex_model_provider::ProviderError::Transient(message_or_default(message))
+            ruxex_model_provider::ProviderError::Transient(message_or_default(message))
         }
         ApiError::ServerOverloaded => {
-            genex_model_provider::ProviderError::Transient("server overloaded".to_string())
+            ruxex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(error) => map_transport_error_to_provider_error(error),
-        other => genex_model_provider::ProviderError::Provider(other.to_string()),
+        other => ruxex_model_provider::ProviderError::Provider(other.to_string()),
     }
 }
 
 fn map_transport_error_to_provider_error(
     error: TransportError,
-) -> genex_model_provider::ProviderError {
+) -> ruxex_model_provider::ProviderError {
     match error {
         TransportError::Http { status, .. } if status == http::StatusCode::UNAUTHORIZED => {
-            genex_model_provider::ProviderError::Unauthorized
+            ruxex_model_provider::ProviderError::Unauthorized
         }
         TransportError::Timeout => {
-            genex_model_provider::ProviderError::Transient("provider request timed out".to_string())
+            ruxex_model_provider::ProviderError::Transient("provider request timed out".to_string())
         }
-        other => genex_model_provider::ProviderError::Transport(other.to_string()),
+        other => ruxex_model_provider::ProviderError::Transport(other.to_string()),
     }
 }
 
@@ -355,44 +355,44 @@ fn message_or_default(message: String) -> String {
     }
 }
 
-fn classify_api_error(error: &ApiError) -> genex_model_provider::ProviderError {
+fn classify_api_error(error: &ApiError) -> ruxex_model_provider::ProviderError {
     match error {
         ApiError::Transport(TransportError::Http { status, .. })
             if *status == http::StatusCode::UNAUTHORIZED =>
         {
-            genex_model_provider::ProviderError::Unauthorized
+            ruxex_model_provider::ProviderError::Unauthorized
         }
         ApiError::Transport(TransportError::Http { status, .. })
             if *status == http::StatusCode::UPGRADE_REQUIRED =>
         {
-            genex_model_provider::ProviderError::UpgradeRequired
+            ruxex_model_provider::ProviderError::UpgradeRequired
         }
         ApiError::InvalidRequest { message } => {
-            genex_model_provider::ProviderError::InvalidRequest(message.clone())
+            ruxex_model_provider::ProviderError::InvalidRequest(message.clone())
         }
         ApiError::RateLimitExceeded { delay, .. } => {
-            genex_model_provider::ProviderError::RateLimited {
+            ruxex_model_provider::ProviderError::RateLimited {
                 retry_after_seconds: delay.map(|delay| delay.as_secs()),
             }
         }
         ApiError::Retryable { message, .. } => {
-            genex_model_provider::ProviderError::Transient(message_or_default(message.clone()))
+            ruxex_model_provider::ProviderError::Transient(message_or_default(message.clone()))
         }
         ApiError::ServerOverloaded => {
-            genex_model_provider::ProviderError::Transient("server overloaded".to_string())
+            ruxex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(TransportError::Timeout) => {
-            genex_model_provider::ProviderError::Transient("provider request timed out".to_string())
+            ruxex_model_provider::ProviderError::Transient("provider request timed out".to_string())
         }
         ApiError::Transport(error) => {
-            genex_model_provider::ProviderError::Transport(error.to_string())
+            ruxex_model_provider::ProviderError::Transport(error.to_string())
         }
-        other => genex_model_provider::ProviderError::Provider(other.to_string()),
+        other => ruxex_model_provider::ProviderError::Provider(other.to_string()),
     }
 }
 
 struct ProviderWebsocketTelemetryAdapter {
-    telemetry: Arc<dyn genex_model_provider::ProviderWebsocketTelemetry>,
+    telemetry: Arc<dyn ruxex_model_provider::ProviderWebsocketTelemetry>,
 }
 
 impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
@@ -422,12 +422,12 @@ impl WebsocketTelemetry for ProviderWebsocketTelemetryAdapter {
             Ok(Some(Ok(Message::Binary(_))))
             | Ok(Some(Ok(Message::Close(_))))
             | Ok(Some(Ok(Message::Frame(_)))) => {
-                ProviderWebsocketEvent::Error(genex_model_provider::ProviderError::Transport(
+                ProviderWebsocketEvent::Error(ruxex_model_provider::ProviderError::Transport(
                     "unexpected websocket message".to_string(),
                 ))
             }
             Ok(Some(Err(error))) => ProviderWebsocketEvent::Error(
-                genex_model_provider::ProviderError::Transport(error.to_string()),
+                ruxex_model_provider::ProviderError::Transport(error.to_string()),
             ),
             Ok(None) => ProviderWebsocketEvent::Closed,
             Err(error) => ProviderWebsocketEvent::Error(classify_api_error(error)),
@@ -445,11 +445,11 @@ struct StreamTelemetryAdapter {
     telemetry: Arc<dyn ProviderStreamTelemetry>,
 }
 
-impl genex_model_provider::ProviderWebsocketTelemetry for StreamTelemetryAdapter {
+impl ruxex_model_provider::ProviderWebsocketTelemetry for StreamTelemetryAdapter {
     fn on_request(
         &self,
         duration: Duration,
-        error: Option<&genex_model_provider::ProviderError>,
+        error: Option<&ruxex_model_provider::ProviderError>,
         connection_reused: bool,
     ) {
         self.telemetry
@@ -493,7 +493,7 @@ impl RuntimeStreamSession {
         &self,
         request: &ProviderStreamConnectRequest,
         telemetry: Option<Arc<dyn ProviderStreamTelemetry>>,
-    ) -> genex_model_provider::ProviderResult<(SharedProviderWebsocketConnection, bool)> {
+    ) -> ruxex_model_provider::ProviderResult<(SharedProviderWebsocketConnection, bool)> {
         let mut state = self.state.lock().await;
         if let Some(connection) = state.connection.clone() {
             let same_route = state.connection_key.as_ref() == Some(&request.connection_key)
@@ -506,7 +506,7 @@ impl RuntimeStreamSession {
 
         let telemetry = telemetry.map(|telemetry| {
             Arc::new(StreamTelemetryAdapter { telemetry })
-                as Arc<dyn genex_model_provider::ProviderWebsocketTelemetry>
+                as Arc<dyn ruxex_model_provider::ProviderWebsocketTelemetry>
         });
         let connection = ProviderRuntime::connect_websocket(
             self.runtime.as_ref(),
@@ -531,7 +531,7 @@ impl ProviderStreamSession for RuntimeStreamSession {
     fn preconnect(
         &self,
         request: ProviderStreamConnectRequest,
-    ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
+    ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<()>> {
         Box::pin(async move {
             self.ensure_connection(&request, request.telemetry.clone())
                 .await
@@ -542,9 +542,9 @@ impl ProviderStreamSession for RuntimeStreamSession {
     fn stream_request(
         &self,
         request: ProviderStreamRequest,
-    ) -> genex_model_provider::ProviderFuture<
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<ProviderStreamOutcome>,
+        ruxex_model_provider::ProviderResult<ProviderStreamOutcome>,
     > {
         Box::pin(async move {
             if ProviderRuntime::wire_api(self.runtime.as_ref()) != ProviderWireApi::Responses {
@@ -553,14 +553,14 @@ impl ProviderStreamSession for RuntimeStreamSession {
 
             let transport = &request.request.transport;
             let connection_key = transport.connection_key.clone().ok_or_else(|| {
-                genex_model_provider::ProviderError::InvalidRequest(
+                ruxex_model_provider::ProviderError::InvalidRequest(
                     "provider stream request is missing a connection key".to_string(),
                 )
             })?;
             let credential_snapshot = transport
                 .credential_snapshot
                 .clone()
-                .ok_or_else(|| genex_model_provider::ProviderError::Unauthenticated)?;
+                .ok_or_else(|| ruxex_model_provider::ProviderError::Unauthenticated)?;
             let connect_request = ProviderStreamConnectRequest {
                 session_id: transport.session_id.clone(),
                 thread_id: transport.thread_id.clone(),
@@ -574,7 +574,7 @@ impl ProviderStreamSession for RuntimeStreamSession {
                 .ensure_connection(&connect_request, request.telemetry.clone())
                 .await?;
             let continuation = request.continuation.unwrap_or_else(|| {
-                genex_model_provider::ProviderStreamContinuation {
+                ruxex_model_provider::ProviderStreamContinuation {
                     previous_response_id: None,
                     input: request.request.input.clone(),
                     generate: None,
@@ -625,9 +625,9 @@ impl ProviderCredentialSnapshot for RuntimeCredentialSnapshot {
 
 fn runtime_credentials(
     snapshot: Option<&SharedProviderCredentialSnapshot>,
-) -> genex_model_provider::ProviderResult<(Provider, SharedAuthProvider)> {
+) -> ruxex_model_provider::ProviderResult<(Provider, SharedAuthProvider)> {
     let snapshot = snapshot.ok_or_else(|| {
-        genex_model_provider::ProviderError::Provider(
+        ruxex_model_provider::ProviderError::Provider(
             "provider request is missing its credential snapshot".to_string(),
         )
     })?;
@@ -635,26 +635,26 @@ fn runtime_credentials(
         .as_any()
         .downcast_ref::<RuntimeCredentialSnapshot>()
         .ok_or_else(|| {
-            genex_model_provider::ProviderError::Provider(
+            ruxex_model_provider::ProviderError::Provider(
                 "provider request credential snapshot belongs to another provider".to_string(),
             )
         })?;
     Ok((snapshot.provider.clone(), Arc::clone(&snapshot.auth)))
 }
 
-impl genex_model_provider::ProviderWebsocketConnection for RuntimeWebsocketConnection {
+impl ruxex_model_provider::ProviderWebsocketConnection for RuntimeWebsocketConnection {
     fn is_closed(
         &self,
-    ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<bool>> {
+    ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<bool>> {
         Box::pin(async move { Ok(self.connection.is_closed().await) })
     }
 
     fn stream_request(
         &self,
         request: ProviderWebsocketRequest,
-    ) -> genex_model_provider::ProviderFuture<
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
+        ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderChatStream>,
     > {
         Box::pin(async move {
             let stream = self
@@ -670,7 +670,7 @@ impl genex_model_provider::ProviderWebsocketConnection for RuntimeWebsocketConne
                 event
                     .map(provider_chat_event_from_api)
                     .map_err(map_api_error_to_provider_error)
-            })) as genex_model_provider::ProviderChatStream)
+            })) as ruxex_model_provider::ProviderChatStream)
         })
     }
 }
@@ -709,7 +709,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// Returns non-secret environment metadata for host-owned telemetry.
     fn auth_environment(&self) -> ProviderAuthEnvironment {
         ProviderAuthEnvironment {
-            host_api_key_env_present: environment_variable_present(GENEX_API_KEY_ENV_VAR),
+            host_api_key_env_present: environment_variable_present(RUXEX_API_KEY_ENV_VAR),
             host_api_key_env_enabled: self
                 .credential_manager()
                 .is_some_and(|manager| manager.api_key_env_enabled()),
@@ -748,9 +748,9 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     fn connect_websocket(
         &self,
         request: ProviderWebsocketConnectRequest,
-    ) -> genex_model_provider::ProviderFuture<
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<SharedProviderWebsocketConnection>,
+        ruxex_model_provider::ProviderResult<SharedProviderWebsocketConnection>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
@@ -761,7 +761,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                     as Arc<dyn WebsocketTelemetry>
             });
             let mut extra_headers = headers_to_http(request.extra_headers)?;
-            extra_headers.extend(genex_api::build_session_headers(
+            extra_headers.extend(ruxex_api::build_session_headers(
                 request.session_id,
                 request.thread_id,
             ));
@@ -783,15 +783,15 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     fn build_websocket_payload(
         &self,
         request: ProviderWebsocketPayloadRequest,
-    ) -> genex_model_provider::ProviderResult<Value> {
+    ) -> ruxex_model_provider::ProviderResult<Value> {
         let mut payload =
             serde_json::to_value(ResponsesPayload::from(&request.request)).map_err(|error| {
-                genex_model_provider::ProviderError::InvalidRequest(format!(
+                ruxex_model_provider::ProviderError::InvalidRequest(format!(
                     "failed to encode provider websocket request: {error}"
                 ))
             })?;
         let object = payload.as_object_mut().ok_or_else(|| {
-            genex_model_provider::ProviderError::InvalidRequest(
+            ruxex_model_provider::ProviderError::InvalidRequest(
                 "provider websocket request must be an object".to_string(),
             )
         })?;
@@ -802,7 +802,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         object.insert(
             "input".to_string(),
             serde_json::to_value(request.input).map_err(|error| {
-                genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
             })?,
         );
         if let Some(previous_response_id) = request.previous_response_id {
@@ -818,7 +818,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             object.insert(
                 "client_metadata".to_string(),
                 serde_json::to_value(client_metadata).map_err(|error| {
-                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                    ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?,
             );
         }
@@ -832,10 +832,10 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// recovery/continuation and WebSocket policy.
     fn chat(
         &self,
-        request: genex_model_provider::ChatRequest,
-    ) -> genex_model_provider::ProviderFuture<
+        request: ruxex_model_provider::ChatRequest,
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
+        ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderChatStream>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
@@ -850,9 +850,9 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         ClientRedirectPolicy::Default,
                     )
                     .map_err(|error| {
-                        genex_model_provider::ProviderError::Transport(error.to_string())
+                        ruxex_model_provider::ProviderError::Transport(error.to_string())
                     })?;
-                    let transport = genex_api::ReqwestTransport::from_http_client(client);
+                    let transport = ruxex_api::ReqwestTransport::from_http_client(client);
                     let chat_request = chat_api
                         .build_request(ChatRequestInput {
                             provider: &api_provider,
@@ -864,7 +864,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             session_source: request.session_source,
                         })
                         .map_err(|error| {
-                            genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                            ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
                         })?;
                     let stream = ChatClient::with_api(transport, api_provider, api_auth, chat_api)
                         .stream_request(chat_request)
@@ -875,7 +875,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             .map(provider_chat_event_from_api)
                             .map_err(map_api_error_to_provider_error)
                     }))
-                        as genex_model_provider::ProviderChatStream)
+                        as ruxex_model_provider::ProviderChatStream)
                 }
                 ProviderApi::Responses => {
                     let payload = ResponsesPayload::from(&request);
@@ -886,19 +886,19 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         ClientRedirectPolicy::Default,
                     )
                     .map_err(|error| {
-                        genex_model_provider::ProviderError::Transport(error.to_string())
+                        ruxex_model_provider::ProviderError::Transport(error.to_string())
                     })?;
-                    let transport = genex_api::ReqwestTransport::from_http_client(client);
+                    let transport = ruxex_api::ReqwestTransport::from_http_client(client);
                     let compression = match request.transport.compression {
-                        genex_model_provider::ProviderRequestCompression::None => {
-                            genex_api::Compression::None
+                        ruxex_model_provider::ProviderRequestCompression::None => {
+                            ruxex_api::Compression::None
                         }
-                        genex_model_provider::ProviderRequestCompression::Zstd => {
-                            genex_api::Compression::Zstd
+                        ruxex_model_provider::ProviderRequestCompression::Zstd => {
+                            ruxex_api::Compression::Zstd
                         }
                     };
                     let mut headers = headers_to_http(request.transport.extra_headers)?;
-                    headers.extend(genex_api::build_session_headers(
+                    headers.extend(ruxex_api::build_session_headers(
                         request.transport.session_id,
                         request.transport.thread_id.clone(),
                     ));
@@ -911,7 +911,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                         }
                     }
                     let payload = serde_json::to_value(payload).map_err(|error| {
-                        genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                        ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
                     })?;
                     let stream = ResponsesClient::new(transport, api_provider, api_auth)
                         .stream(payload, headers, compression, request.transport.turn_state)
@@ -922,7 +922,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                             .map(provider_chat_event_from_api)
                             .map_err(map_api_error_to_provider_error)
                     }))
-                        as genex_model_provider::ProviderChatStream)
+                        as ruxex_model_provider::ProviderChatStream)
                 }
             }
         })
@@ -930,18 +930,18 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
     fn search(
         &self,
-        request: genex_model_provider::ProviderSearchRequest,
-    ) -> genex_model_provider::ProviderFuture<
+        request: ruxex_model_provider::ProviderSearchRequest,
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<genex_model_provider::ProviderSearchResponse>,
+        ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderSearchResponse>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self.api_provider().await.map_err(|error| {
-                genex_model_provider::ProviderError::Provider(error.to_string())
+                ruxex_model_provider::ProviderError::Provider(error.to_string())
             })?;
             let api_auth = self.api_auth().await.map_err(|error| {
-                genex_model_provider::ProviderError::Provider(error.to_string())
+                ruxex_model_provider::ProviderError::Provider(error.to_string())
             })?;
             let client = create_client_for_route(
                 &http_client_factory,
@@ -949,14 +949,14 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
             )
-            .map_err(|error| genex_model_provider::ProviderError::Transport(error.to_string()))?;
+            .map_err(|error| ruxex_model_provider::ProviderError::Transport(error.to_string()))?;
             let commands: SearchCommands =
                 serde_json::from_value(request.commands).map_err(|error| {
-                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                    ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?;
             let settings: SearchSettings =
                 serde_json::from_value(request.settings).map_err(|error| {
-                    genex_model_provider::ProviderError::InvalidRequest(error.to_string())
+                    ruxex_model_provider::ProviderError::InvalidRequest(error.to_string())
                 })?;
             let search_request = SearchRequest {
                 id: request.id,
@@ -968,14 +968,14 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 max_output_tokens: request.max_output_tokens,
             };
             let response = SearchClient::new(
-                genex_api::ReqwestTransport::from_http_client(client),
+                ruxex_api::ReqwestTransport::from_http_client(client),
                 api_provider,
                 api_auth,
             )
             .search(&search_request, headers_to_http(request.extra_headers)?)
             .await
             .map_err(map_api_error_to_provider_error)?;
-            Ok(genex_model_provider::ProviderSearchResponse {
+            Ok(ruxex_model_provider::ProviderSearchResponse {
                 output: response.output,
                 results: response.results,
             })
@@ -989,18 +989,18 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// transport stay inside the runtime provider.
     fn backend(
         &self,
-        request: genex_model_provider::ProviderBackendRequest,
-    ) -> genex_model_provider::ProviderFuture<
+        request: ruxex_model_provider::ProviderBackendRequest,
+    ) -> ruxex_model_provider::ProviderFuture<
         '_,
-        genex_model_provider::ProviderResult<genex_model_provider::ProviderBackendResponse>,
+        ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderBackendResponse>,
     > {
         let http_client_factory = self.http_client_factory();
         Box::pin(async move {
             let api_provider = self.api_provider().await.map_err(|error| {
-                genex_model_provider::ProviderError::Provider(error.to_string())
+                ruxex_model_provider::ProviderError::Provider(error.to_string())
             })?;
             let api_auth = self.api_auth().await.map_err(|error| {
-                genex_model_provider::ProviderError::Provider(error.to_string())
+                ruxex_model_provider::ProviderError::Provider(error.to_string())
             })?;
             let client = create_client_for_route(
                 &http_client_factory,
@@ -1008,7 +1008,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 ClientRouteClass::Api,
                 ClientRedirectPolicy::Default,
             )
-            .map_err(|error| genex_model_provider::ProviderError::Transport(error.to_string()))?;
+            .map_err(|error| ruxex_model_provider::ProviderError::Transport(error.to_string()))?;
             let mut backend_request = api_provider.build_request(http::Method::POST, &request.path);
             backend_request
                 .headers
@@ -1019,18 +1019,18 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .apply_auth(backend_request)
                 .await
                 .map_err(|error| {
-                    genex_model_provider::ProviderError::Provider(error.to_string())
+                    ruxex_model_provider::ProviderError::Provider(error.to_string())
                 })?;
-            let response = genex_api::ReqwestTransport::from_http_client(client)
+            let response = ruxex_api::ReqwestTransport::from_http_client(client)
                 .execute(backend_request)
                 .await
                 .map_err(map_transport_error_to_provider_error)?;
             let body = serde_json::from_slice(&response.body).map_err(|error| {
-                genex_model_provider::ProviderError::Provider(format!(
+                ruxex_model_provider::ProviderError::Provider(format!(
                     "provider backend returned invalid JSON: {error}"
                 ))
             })?;
-            Ok(genex_model_provider::ProviderBackendResponse { body })
+            Ok(ruxex_model_provider::ProviderBackendResponse { body })
         })
     }
 
@@ -1067,20 +1067,20 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
         ProviderCapabilities::default()
     }
 
-    fn model_catalog_auth(&self) -> genex_model_provider::ProviderModelCatalogAuth {
+    fn model_catalog_auth(&self) -> ruxex_model_provider::ProviderModelCatalogAuth {
         match self
             .credential_manager()
             .and_then(|manager| manager.auth_mode())
         {
-            Some(AuthMode::Headers) => genex_model_provider::ProviderModelCatalogAuth {
+            Some(AuthMode::Headers) => ruxex_model_provider::ProviderModelCatalogAuth {
                 uses_managed_auth: true,
                 has_api_key_auth: false,
             },
-            Some(AuthMode::ApiKey) => genex_model_provider::ProviderModelCatalogAuth {
+            Some(AuthMode::ApiKey) => ruxex_model_provider::ProviderModelCatalogAuth {
                 uses_managed_auth: false,
                 has_api_key_auth: true,
             },
-            None => genex_model_provider::ProviderModelCatalogAuth::default(),
+            None => ruxex_model_provider::ProviderModelCatalogAuth::default(),
         }
     }
 
@@ -1123,7 +1123,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     /// to know which credential source or refresh protocol the provider uses.
     fn recover_from_unauthorized(
         &self,
-    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<ProviderUnauthorizedRecovery>> {
+    ) -> ModelProviderFuture<'_, ruxex_protocol::error::Result<ProviderUnauthorizedRecovery>> {
         let credential_manager = self.credential_manager();
         Box::pin(async move {
             let Some(credential_manager) = credential_manager else {
@@ -1137,12 +1137,12 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
                 .next()
                 .await
                 .map(|_| ProviderUnauthorizedRecovery::Recovered)
-                .map_err(|error| GenexErr::Fatal(error.to_string()))
+                .map_err(|error| RuxexErr::Fatal(error.to_string()))
         })
     }
 
     /// Returns the current provider-scoped auth value, if one is configured.
-    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>>;
+    fn auth(&self) -> ModelProviderFuture<'_, Option<RuxexAuth>>;
 
     /// Returns the current app-visible account state for this provider.
     fn account_state(&self) -> ProviderAccountResult;
@@ -1195,18 +1195,18 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     }
 
     /// Returns provider configuration adapted for the API client.
-    fn api_provider(&self) -> ModelProviderFuture<'_, genex_protocol::error::Result<Provider>> {
+    fn api_provider(&self) -> ModelProviderFuture<'_, ruxex_protocol::error::Result<Provider>> {
         Box::pin(async move {
             let auth = self.auth().await;
             self.info()
-                .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))
+                .to_api_provider(auth.as_ref().map(RuxexAuth::auth_mode))
         })
     }
 
     /// Returns the auth provider used to attach request credentials.
     fn api_auth(
         &self,
-    ) -> ModelProviderFuture<'_, genex_protocol::error::Result<SharedAuthProvider>> {
+    ) -> ModelProviderFuture<'_, ruxex_protocol::error::Result<SharedAuthProvider>> {
         Box::pin(async move {
             let auth = self.auth().await;
             resolve_provider_auth(auth.as_ref(), self.info())
@@ -1218,7 +1218,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             let auth = self.auth().await;
             let api_provider = self
                 .info()
-                .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))?;
+                .to_api_provider(auth.as_ref().map(RuxexAuth::auth_mode))?;
             let api_auth = resolve_provider_auth(auth.as_ref(), self.info())?;
             let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
             let (revision, owner_generation) = self
@@ -1235,7 +1235,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             Ok(ProviderRequestSnapshot {
                 auth: ProviderRequestAuth {
                     authenticated: auth.is_some(),
-                    managed_auth: auth.as_ref().is_some_and(GenexAuth::uses_managed_auth),
+                    managed_auth: auth.as_ref().is_some_and(RuxexAuth::uses_managed_auth),
                     auth_header_attached: auth_telemetry.attached,
                     auth_header_name: auth_telemetry.name,
                     revision,
@@ -1256,7 +1256,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
 
 macro_rules! impl_model_provider_for_runtime {
     ($provider:ty) => {
-        impl genex_model_provider::ModelProvider for $provider {
+        impl ruxex_model_provider::ModelProvider for $provider {
             fn descriptor(&self) -> ProviderDescriptor {
                 ProviderRuntime::descriptor(self)
             }
@@ -1276,15 +1276,15 @@ macro_rules! impl_model_provider_for_runtime {
                 ProviderRuntime::stream_max_retries(self)
             }
 
-            fn model_catalog_identity(&self) -> genex_model_provider::ProviderResult<String> {
+            fn model_catalog_identity(&self) -> ruxex_model_provider::ProviderResult<String> {
                 let auth = ProviderRuntime::credential_manager(self)
                     .and_then(|manager| manager.auth_cached());
-                genex_model_provider::provider_models_identity::identity(
+                ruxex_model_provider::provider_models_identity::identity(
                     ProviderRuntime::provider_id(self),
                     ProviderRuntime::info(self),
                     auth.as_ref(),
                 )
-                .map_err(|error| genex_model_provider::ProviderError::Provider(error.to_string()))
+                .map_err(|error| ruxex_model_provider::ProviderError::Provider(error.to_string()))
             }
 
             fn capabilities(&self) -> ProviderCapabilities {
@@ -1297,7 +1297,7 @@ macro_rules! impl_model_provider_for_runtime {
                 capabilities
             }
 
-            fn model_catalog_auth(&self) -> genex_model_provider::ProviderModelCatalogAuth {
+            fn model_catalog_auth(&self) -> ruxex_model_provider::ProviderModelCatalogAuth {
                 ProviderRuntime::model_catalog_auth(self)
             }
 
@@ -1307,24 +1307,24 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn chat(
                 &self,
-                request: genex_model_provider::ChatRequest,
-            ) -> genex_model_provider::ProviderFuture<
+                request: ruxex_model_provider::ChatRequest,
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<genex_model_provider::ProviderChatStream>,
+                ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderChatStream>,
             > {
                 ProviderRuntime::chat(self, request)
             }
 
             fn open_stream_session(
                 &self,
-            ) -> genex_model_provider::ProviderFuture<
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<SharedProviderStreamSession>,
+                ruxex_model_provider::ProviderResult<SharedProviderStreamSession>,
             > {
                 if ProviderRuntime::wire_api(self) != ProviderWireApi::Responses
                     || !ProviderRuntime::capabilities(self).websocket
                 {
-                    return Box::pin(async { Err(genex_model_provider::ProviderError::Unsupported) });
+                    return Box::pin(async { Err(ruxex_model_provider::ProviderError::Unsupported) });
                 }
 
                 let runtime: SharedProviderRuntime = Arc::new(self.clone());
@@ -1335,78 +1335,78 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn search(
                 &self,
-                request: genex_model_provider::ProviderSearchRequest,
-            ) -> genex_model_provider::ProviderFuture<
+                request: ruxex_model_provider::ProviderSearchRequest,
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<genex_model_provider::ProviderSearchResponse>,
+                ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderSearchResponse>,
             > {
                 ProviderRuntime::search(self, request)
             }
 
             fn backend(
                 &self,
-                request: genex_model_provider::ProviderBackendRequest,
-            ) -> genex_model_provider::ProviderFuture<
+                request: ruxex_model_provider::ProviderBackendRequest,
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<genex_model_provider::ProviderBackendResponse>,
+                ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderBackendResponse>,
             > {
                 ProviderRuntime::backend(self, request)
             }
 
             fn auth_recovery_messages(
                 &self,
-            ) -> Option<genex_model_provider::ProviderAuthRecoveryMessages> {
+            ) -> Option<ruxex_model_provider::ProviderAuthRecoveryMessages> {
                 ProviderRuntime::auth_recovery_messages(self)
             }
 
             fn recover_from_unauthorized(
                 &self,
-            ) -> genex_model_provider::ProviderFuture<
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<genex_model_provider::ProviderUnauthorizedRecovery>,
+                ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderUnauthorizedRecovery>,
             > {
                 Box::pin(async move {
                     ProviderRuntime::recover_from_unauthorized(self)
                         .await
                         .map_err(|error| {
-                            genex_model_provider::ProviderError::Provider(error.to_string())
+                            ruxex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
             fn list_models(
                 &self,
-                request: genex_model_provider::ListModelsRequest,
-            ) -> genex_model_provider::ProviderFuture<
+                request: ruxex_model_provider::ListModelsRequest,
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<genex_model_provider::ProviderModelCatalog>,
+                ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderModelCatalog>,
             > {
                 let client_version = request.client_version;
                 let http_client_factory = ProviderRuntime::http_client_factory(self);
                 Box::pin(async move {
                     ProviderRuntime::list_models(self, &client_version, http_client_factory)
                         .await
-                        .map(|snapshot| genex_model_provider::ProviderModelCatalog {
+                        .map(|snapshot| ruxex_model_provider::ProviderModelCatalog {
                             catalog: snapshot.catalog,
                             identity: snapshot.identity,
                             etag: snapshot.etag,
                         })
                         .map_err(|error| {
-                            genex_model_provider::ProviderError::Provider(error.to_string())
+                            ruxex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
-            fn auth_state(&self) -> genex_model_provider::ProviderAuthState {
+            fn auth_state(&self) -> ruxex_model_provider::ProviderAuthState {
                 match ProviderRuntime::account_state(self) {
-                    Ok(state) => genex_model_provider::ProviderAuthState {
+                    Ok(state) => ruxex_model_provider::ProviderAuthState {
                         status: state.auth_status,
                         account_id: state.account_id,
                         display_name: state.display_name,
                         managed_auth: ProviderRuntime::managed_auth(self),
                         revision: ProviderRuntime::auth_revision(self),
                     },
-                    Err(error) => genex_model_provider::ProviderAuthState {
+                    Err(error) => ruxex_model_provider::ProviderAuthState {
                         status: ProviderAuthStatus::Invalid,
                         account_id: None,
                         display_name: Some(error.to_string()),
@@ -1422,33 +1422,33 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn request_snapshot(
                 &self,
-            ) -> genex_model_provider::ProviderFuture<
+            ) -> ruxex_model_provider::ProviderFuture<
                 '_,
-                genex_model_provider::ProviderResult<ProviderRequestSnapshot>,
+                ruxex_model_provider::ProviderResult<ProviderRequestSnapshot>,
             > {
                 Box::pin(async move {
                     ProviderRuntime::request_snapshot(self)
                         .await
                         .map_err(|error| {
-                            genex_model_provider::ProviderError::Provider(error.to_string())
+                            ruxex_model_provider::ProviderError::Provider(error.to_string())
                         })
                 })
             }
 
-            fn auth_fields(&self) -> Vec<genex_model_provider::ProviderAuthField> {
+            fn auth_fields(&self) -> Vec<ruxex_model_provider::ProviderAuthField> {
                 ProviderRuntime::auth_fields(self)
                     .into_iter()
                     .map(|field| {
-                        genex_model_provider::ProviderAuthField::new(field.id, field.label, field.secret)
+                        ruxex_model_provider::ProviderAuthField::new(field.id, field.label, field.secret)
                     })
                     .collect()
             }
 
             fn account_state(
                 &self,
-            ) -> genex_model_provider::ProviderResult<genex_model_provider::ProviderAccountState> {
+            ) -> ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderAccountState> {
                 ProviderRuntime::account_state(self)
-                    .map(|state| genex_model_provider::ProviderAccountState {
+                    .map(|state| ruxex_model_provider::ProviderAccountState {
                         provider_id: state.provider_id,
                         account: state.account,
                         account_id: state.account_id,
@@ -1456,13 +1456,13 @@ macro_rules! impl_model_provider_for_runtime {
                         auth_status: state.auth_status,
                         usage: state.usage,
                     })
-                    .map_err(|error| genex_model_provider::ProviderError::Provider(error.to_string()))
+                    .map_err(|error| ruxex_model_provider::ProviderError::Provider(error.to_string()))
             }
 
             fn login(
                 &self,
                 credentials: BTreeMap<String, String>,
-            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
+            ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<()>> {
                 let api_key = credentials.get("api_key").cloned().unwrap_or_default();
                 Box::pin(async move {
                     ProviderRuntime::login(self, ProviderLoginRequest::new(api_key, credentials))
@@ -1473,7 +1473,7 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn logout(
                 &self,
-            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<()>> {
+            ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<()>> {
                 Box::pin(async move {
                     ProviderRuntime::logout(self)
                         .await
@@ -1484,7 +1484,7 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn delete(
                 &self,
-            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<bool>> {
+            ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<bool>> {
                 Box::pin(async move {
                     ProviderRuntime::delete(self)
                         .await
@@ -1494,8 +1494,8 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn usage(
                 &self,
-                _request: genex_model_provider::UsageRequest,
-            ) -> genex_model_provider::ProviderFuture<'_, genex_model_provider::ProviderResult<ProviderUsage>>
+                _request: ruxex_model_provider::UsageRequest,
+            ) -> ruxex_model_provider::ProviderFuture<'_, ruxex_model_provider::ProviderResult<ProviderUsage>>
             {
                 ProviderRuntime::usage(self)
             }
@@ -1503,11 +1503,11 @@ macro_rules! impl_model_provider_for_runtime {
     };
 }
 
-fn map_provider_auth_error(error: ProviderAuthError) -> genex_model_provider::ProviderError {
+fn map_provider_auth_error(error: ProviderAuthError) -> ruxex_model_provider::ProviderError {
     match error {
-        ProviderAuthError::Unavailable => genex_model_provider::ProviderError::Unsupported,
+        ProviderAuthError::Unavailable => ruxex_model_provider::ProviderError::Unsupported,
         ProviderAuthError::Failed(message) => {
-            genex_model_provider::ProviderError::Provider(message)
+            ruxex_model_provider::ProviderError::Provider(message)
         }
     }
 }
@@ -1532,7 +1532,7 @@ pub(super) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 pub fn create_model_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
-) -> genex_model_provider::SharedModelProvider {
+) -> ruxex_model_provider::SharedModelProvider {
     create_model_provider_with_http_client_factory(
         provider_info,
         credential_manager,
@@ -1545,7 +1545,7 @@ pub fn create_model_provider_with_http_client_factory(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> genex_model_provider::SharedModelProvider {
+) -> ruxex_model_provider::SharedModelProvider {
     create_model_provider_internal(provider_info, credential_manager, http_client_factory)
 }
 
@@ -1580,13 +1580,13 @@ fn create_model_provider_internal(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> genex_model_provider::SharedModelProvider {
+) -> ruxex_model_provider::SharedModelProvider {
     create_provider_instance(
         provider_info,
         credential_manager,
         http_client_factory,
-        |provider| Arc::new(provider) as genex_model_provider::SharedModelProvider,
-        |provider| Arc::new(provider) as genex_model_provider::SharedModelProvider,
+        |provider| Arc::new(provider) as ruxex_model_provider::SharedModelProvider,
+        |provider| Arc::new(provider) as ruxex_model_provider::SharedModelProvider,
     )
 }
 
@@ -1599,7 +1599,7 @@ fn create_provider_instance<T>(
 ) -> T {
     let provider_id = provider_info.id.clone();
     match provider_info.name.as_str() {
-        genex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
+        ruxex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
             cloudflare(CloudflareModelProvider::new(
                 provider_id,
                 provider_info,
@@ -1682,7 +1682,7 @@ impl ProviderRuntime for ConfiguredModelProvider {
         false
     }
 
-    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
+    fn auth(&self) -> ModelProviderFuture<'_, Option<RuxexAuth>> {
         Box::pin(
             async move { provider_auth(self.credential_manager.as_ref(), None, &self.info).await },
         )
@@ -1740,15 +1740,15 @@ impl ProviderRuntime for ConfiguredModelProvider {
 mod tests {
     use std::num::NonZeroU64;
 
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
-    use genex_model_provider_info::WireApi;
-    use genex_models_manager::manager::ModelCatalogSource;
-    use genex_models_manager::manager::RefreshStrategy;
-    use genex_models_manager::manager::build_models_manager;
-    use genex_protocol::config_types::ModelProviderAuthInfo;
-    use genex_protocol::model_types::ModelCatalog;
-    use genex_protocol::model_types::ModelInfo;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_model_provider_info::WireApi;
+    use ruxex_models_manager::manager::ModelCatalogSource;
+    use ruxex_models_manager::manager::RefreshStrategy;
+    use ruxex_models_manager::manager::build_models_manager;
+    use ruxex_protocol::config_types::ModelProviderAuthInfo;
+    use ruxex_protocol::model_types::ModelCatalog;
+    use ruxex_protocol::model_types::ModelInfo;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use wiremock::Mock;
@@ -1759,11 +1759,11 @@ mod tests {
     use wiremock::matchers::path;
 
     use super::*;
-    use genex_model_provider::ProviderModelCatalogSource;
+    use ruxex_model_provider::ProviderModelCatalogSource;
 
     #[test]
     fn factory_returns_provider_neutral_contract() {
-        let _provider: genex_model_provider::SharedModelProvider = create_model_provider(
+        let _provider: ruxex_model_provider::SharedModelProvider = create_model_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1782,14 +1782,14 @@ mod tests {
     fn runtime_credentials_require_the_provider_owned_snapshot() {
         assert!(matches!(
             runtime_credentials(None),
-            Err(genex_model_provider::ProviderError::Provider(message))
+            Err(ruxex_model_provider::ProviderError::Provider(message))
                 if message.contains("missing its credential snapshot")
         ));
 
         let foreign: SharedProviderCredentialSnapshot = Arc::new(ForeignCredentialSnapshot);
         assert!(matches!(
             runtime_credentials(Some(&foreign)),
-            Err(genex_model_provider::ProviderError::Provider(message))
+            Err(ruxex_model_provider::ProviderError::Provider(message))
                 if message.contains("belongs to another provider")
         ));
     }
@@ -1885,7 +1885,7 @@ mod tests {
         assert_eq!(provider.auth_fields()[0].id, "api_key");
         assert!(matches!(
             provider.delete().await,
-            Err(genex_model_provider::ProviderError::Unsupported)
+            Err(ruxex_model_provider::ProviderError::Unsupported)
         ));
     }
 
@@ -1927,13 +1927,13 @@ mod tests {
             .await;
         assert!(matches!(
             result,
-            Err(genex_model_provider::ProviderError::Unsupported)
+            Err(ruxex_model_provider::ProviderError::Unsupported)
         ));
 
         let logout_result = provider.logout().await;
         assert!(matches!(
             logout_result,
-            Err(genex_model_provider::ProviderError::Unsupported)
+            Err(ruxex_model_provider::ProviderError::Unsupported)
         ));
     }
 
@@ -1976,7 +1976,7 @@ mod tests {
         info.env_key = None;
         let provider = create_model_provider(info, /*credential_manager*/ None);
         let catalog = provider
-            .list_models(genex_model_provider::ListModelsRequest::new("test-client"))
+            .list_models(ruxex_model_provider::ListModelsRequest::new("test-client"))
             .await
             .expect("Cloudflare provider should list models");
 
@@ -2004,7 +2004,7 @@ mod tests {
     #[test]
     fn provider_implementation_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
-        info.env_key = Some("GENEX_TEST_PROVIDER_KEY".to_string());
+        info.env_key = Some("RUXEX_TEST_PROVIDER_KEY".to_string());
         let provider = create_model_provider(info, /*credential_manager*/ None);
 
         let environment = provider.auth_environment();
@@ -2030,8 +2030,8 @@ mod tests {
         }
     }
 
-    fn test_genex_home() -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("genex-model-provider-test-{}", std::process::id()))
+    fn test_ruxex_home() -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("ruxex-model-provider-test-{}", std::process::id()))
     }
 
     fn provider_for(base_url: String) -> ModelProviderInfo {
@@ -2087,18 +2087,18 @@ mod tests {
             CredentialManager::new(
                 home.path().to_path_buf(),
                 false,
-                genex_login::AuthCredentialsStoreMode::File,
+                ruxex_login::AuthCredentialsStoreMode::File,
                 None,
                 None,
-                genex_login::AuthKeyringBackendKind::default(),
-                genex_login::AuthRouteConfig::from_http_client_factory(HttpClientFactory::new(
+                ruxex_login::AuthKeyringBackendKind::default(),
+                ruxex_login::AuthRouteConfig::from_http_client_factory(HttpClientFactory::new(
                     OutboundProxyPolicy::ReqwestDefault,
                 )),
             )
             .await,
         );
         credential_manager
-            .login(genex_login::ProviderAuth::api_key("a-secret"))
+            .login(ruxex_login::ProviderAuth::api_key("a-secret"))
             .await
             .expect("provider A login");
 
@@ -2229,7 +2229,7 @@ mod tests {
         let provider = create_runtime_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             Some(CredentialManager::from_auth_for_testing(
-                GenexAuth::from_api_key("provider-api-key"),
+                RuxexAuth::from_api_key("provider-api-key"),
             )),
         );
 
@@ -2255,7 +2255,7 @@ mod tests {
 
         assert_eq!(
             provider
-                .usage(genex_model_provider::UsageRequest { model: None })
+                .usage(ruxex_model_provider::UsageRequest { model: None })
                 .await,
             Ok(ProviderUsage::Unsupported)
         );
@@ -2308,11 +2308,11 @@ mod tests {
         let mut provider_info = provider_for(server.uri());
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let credential_manager =
-            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("ambient-api-key"));
+            CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key("ambient-api-key"));
         let provider = create_model_provider(provider_info, Some(credential_manager.clone()));
 
         let manager = build_models_manager(
-            test_genex_home(),
+            test_ruxex_home(),
             Arc::new(ProviderModelCatalogSource::new(provider)),
             /*config_model_catalog*/ None,
         );

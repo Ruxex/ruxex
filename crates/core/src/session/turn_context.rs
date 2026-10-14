@@ -13,31 +13,31 @@ use arc_swap::ArcSwap;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
-use genex_core_plugins::PluginCommandAttribution;
-use genex_core_plugins::ResolvedPluginMetricsOperation;
-use genex_core_plugins::TrustedPluginRoots;
-use genex_exec_server::ExecutorFileSystem;
-use genex_file_system::FileSystemSandboxContext;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::permissions::RawFileSystemSandboxPolicy;
-use genex_protocol::protocol::EnvironmentConfig;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::turn_input::CyberAccessProgram;
-use genex_sandboxing::policy_transforms::effective_permission_profile;
-use genex_skills_extension::HostSkillsSnapshot;
-use genex_skills_extension::SkillLoadOutcome;
-use genex_utils_path_uri::PathUri;
+use ruxex_core_plugins::PluginCommandAttribution;
+use ruxex_core_plugins::ResolvedPluginMetricsOperation;
+use ruxex_core_plugins::TrustedPluginRoots;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::permissions::RawFileSystemSandboxPolicy;
+use ruxex_protocol::protocol::EnvironmentConfig;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::turn_input::CyberAccessProgram;
+use ruxex_sandboxing::policy_transforms::effective_permission_profile;
+use ruxex_skills_extension::HostSkillsSnapshot;
+use ruxex_skills_extension::SkillLoadOutcome;
+use ruxex_utils_path_uri::PathUri;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -314,7 +314,7 @@ pub struct TurnContext {
     pub(crate) final_output_json_schema: Option<Value>,
     pub(crate) dynamic_tools: Vec<DynamicToolSpec>,
     pub(crate) turn_metadata_state: Arc<TurnMetadataState>,
-    pub(crate) extension_data: Arc<genex_extension_api::ExtensionData>,
+    pub(crate) extension_data: Arc<ruxex_extension_api::ExtensionData>,
     pub(crate) turn_timing_state: Arc<TurnTimingState>,
     pub(crate) terminal_error: Arc<Mutex<Option<ErrorEvent>>>,
     pub(crate) server_model_warning_emitted: AtomicBool,
@@ -445,7 +445,7 @@ impl TurnContext {
 
     pub(crate) fn sandbox_policy(&self) -> SandboxPolicy {
         #[allow(deprecated)]
-        genex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+        ruxex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
             &self.permission_profile(),
             &self.cwd,
         )
@@ -672,12 +672,12 @@ impl TurnContext {
             allowed_domains: network
                 .domains
                 .as_ref()
-                .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains)
+                .and_then(ruxex_config::NetworkDomainPermissionsToml::allowed_domains)
                 .unwrap_or_default(),
             denied_domains: network
                 .domains
                 .as_ref()
-                .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains)
+                .and_then(ruxex_config::NetworkDomainPermissionsToml::denied_domains)
                 .unwrap_or_default(),
         })
     }
@@ -818,7 +818,7 @@ impl Session {
         turn_metadata_state
             .set_responses_api_metadata(per_turn_config.responses_api_metadata.clone());
         let (current_date, timezone) = local_time_context();
-        let extension_data = Arc::new(genex_extension_api::ExtensionData::new(sub_id.clone()));
+        let extension_data = Arc::new(ruxex_extension_api::ExtensionData::new(sub_id.clone()));
         extension_data.insert(skills_snapshot);
         TurnContext {
             sub_id,
@@ -864,7 +864,7 @@ impl Session {
         sub_id: String,
         updates: SessionSettingsUpdate,
         options: NewTurnContextOptions,
-    ) -> GenexResult<(Arc<TurnContext>, ThreadSettingsSnapshot)> {
+    ) -> RuxexResult<(Arc<TurnContext>, ThreadSettingsSnapshot)> {
         let Some((turn_context, snapshot)) = self
             .new_turn_with_sub_id_if(sub_id, updates, options, |_, _| true)
             .await?
@@ -886,23 +886,23 @@ impl Session {
         updates: SessionSettingsUpdate,
         options: NewTurnContextOptions,
         should_start: impl FnOnce(&SessionConfiguration, &SessionConfiguration) -> bool + Send,
-    ) -> GenexResult<Option<(Arc<TurnContext>, ThreadSettingsSnapshot)>> {
+    ) -> RuxexResult<Option<(Arc<TurnContext>, ThreadSettingsSnapshot)>> {
         let service_tier_for_turn = updates.service_tier_for_turn.clone();
         let commit = match self.update_settings_if(updates, should_start).await {
             Ok(Some(commit)) => commit,
             Ok(None) => return Ok(None),
             Err(error) => {
-                let message = GenexErr::InvalidRequest(error.to_string()).to_string();
+                let message = RuxexErr::InvalidRequest(error.to_string()).to_string();
                 self.send_event_raw(Event {
                     id: sub_id,
                     msg: EventMsg::Error(ErrorEvent {
                         misalignment: None,
                         message: message.clone(),
-                        genex_error_info: Some(GenexErrorInfo::BadRequest),
+                        ruxex_error_info: Some(RuxexErrorInfo::BadRequest),
                     }),
                 })
                 .await;
-                return Err(GenexErr::InvalidRequest(message));
+                return Err(RuxexErr::InvalidRequest(message));
             }
         };
         let mut configuration = commit.configuration;
@@ -999,7 +999,7 @@ impl Session {
             .without_plugins(&session_configuration.disabled_plugin_ids);
         let trusted_plugin_roots = TrustedPluginRoots::from_plugin_load_outcome(
             &plugin_outcome,
-            per_turn_config.genex_home.as_path(),
+            per_turn_config.ruxex_home.as_path(),
         );
         let skills_snapshot = if per_turn_config
             .features
@@ -1089,8 +1089,8 @@ impl Session {
         if !tc.code_mode_available
             && matches!(
                 crate::tools::requested_tool_mode(tc, tc.model_info()),
-                genex_protocol::model_types::ToolMode::CodeMode
-                    | genex_protocol::model_types::ToolMode::CodeModeOnly
+                ruxex_protocol::model_types::ToolMode::CodeMode
+                    | ruxex_protocol::model_types::ToolMode::CodeModeOnly
             )
             && let Some(message) = self
                 .services

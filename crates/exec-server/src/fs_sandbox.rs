@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxDirectSpawnTransformRequest;
-use genex_sandboxing::SandboxExecRequest;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxTransformRequest;
-use genex_sandboxing::SandboxType;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxDirectSpawnTransformRequest;
+use ruxex_sandboxing::SandboxExecRequest;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxTransformRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(not(target_os = "linux"))]
-use genex_utils_absolute_path::canonicalize_preserving_symlinks;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::canonicalize_preserving_symlinks;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
@@ -26,7 +26,7 @@ use crate::FileSystemSandboxContext;
 use crate::fs_helper::FsHelperPayload;
 use crate::fs_helper::FsHelperRequest;
 use crate::fs_helper::FsHelperResponse;
-use crate::fs_helper::GENEX_FS_HELPER_ARG1;
+use crate::fs_helper::RUXEX_FS_HELPER_ARG1;
 use crate::rpc::internal_error;
 use crate::rpc::invalid_request;
 
@@ -117,11 +117,11 @@ impl FileSystemSandboxRunner {
         cwd: &SandboxCwd,
         sandbox_context: &FileSystemSandboxContext,
     ) -> Result<SandboxExecRequest, JSONRPCErrorError> {
-        let helper = &self.runtime_paths.genex_self_exe;
+        let helper = &self.runtime_paths.ruxex_self_exe;
         let sandbox_manager = SandboxManager::for_file_system_helpers();
         #[cfg(target_os = "macos")]
-        let sandbox_manager = sandbox_manager.with_allowed_symlinked_genex_home(
-            self.runtime_paths.allowed_symlinked_genex_home.clone(),
+        let sandbox_manager = sandbox_manager.with_allowed_symlinked_ruxex_home(
+            self.runtime_paths.allowed_symlinked_ruxex_home.clone(),
         );
         let sandbox = crate::sandbox_selection::select_sandbox(
             &sandbox_manager,
@@ -142,7 +142,7 @@ impl FileSystemSandboxRunner {
             .ok_or_else(|| invalid_request("filesystem sandbox cwd has no root".to_string()))?;
         let command = SandboxCommand {
             program: helper.as_path().as_os_str().to_owned(),
-            args: vec![GENEX_FS_HELPER_ARG1.to_string()],
+            args: vec![RUXEX_FS_HELPER_ARG1.to_string()],
             cwd: PathUri::from_abs_path(&helper_cwd),
             env: self.helper_env.clone(),
             managed_network: None,
@@ -158,7 +158,7 @@ impl FileSystemSandboxRunner {
                     environment_id: None,
                     network: None,
                     sandbox_policy_cwd: &cwd.uri,
-                    sandbox_exe: self.runtime_paths.genex_linux_sandbox_exe.as_deref(),
+                    sandbox_exe: self.runtime_paths.ruxex_linux_sandbox_exe.as_deref(),
                     use_legacy_landlock: sandbox_context.use_legacy_landlock,
                 },
             })
@@ -187,8 +187,8 @@ fn native_workspace_root(root: &PathUri) -> Result<AbsolutePathBuf, JSONRPCError
 }
 
 fn helper_read_roots(runtime_paths: &ExecServerRuntimePaths) -> Vec<AbsolutePathBuf> {
-    let mut roots = vec![runtime_paths.genex_self_exe.clone()];
-    if let Some(path) = &runtime_paths.genex_linux_sandbox_exe
+    let mut roots = vec![runtime_paths.ruxex_self_exe.clone()];
+    if let Some(path) = &runtime_paths.ruxex_linux_sandbox_exe
         && !roots.contains(path)
     {
         roots.push(path.clone());
@@ -346,7 +346,7 @@ pub(crate) fn spawn_command(
     // TODO(anp): Keep PathUri through the filesystem helper launch boundary.
     let cwd = cwd.to_abs_path().map_err(io_error)?;
     command.current_dir(cwd.as_path());
-    env.retain(|name, _| !genex_protocol::shell_environment::is_non_inheritable_env_var(name));
+    env.retain(|name, _| !ruxex_protocol::shell_environment::is_non_inheritable_env_var(name));
     command.env_clear();
     command.envs(env);
     command.stdin(stdin);
@@ -358,7 +358,7 @@ pub(crate) fn spawn_command(
     // SAFETY: Descriptor cleanup only uses fork-safe system calls.
     unsafe {
         command.pre_exec(|| {
-            genex_utils_pty::pty::close_inherited_fds_except(&[]);
+            ruxex_utils_pty::pty::close_inherited_fds_except(&[]);
             Ok(())
         });
     }
@@ -380,15 +380,15 @@ mod tests {
     use std::collections::HashMap;
     use std::ffi::OsString;
 
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::permissions::FileSystemAccessMode;
-    use genex_protocol::permissions::FileSystemPath;
-    use genex_protocol::permissions::FileSystemSandboxEntry;
-    use genex_protocol::permissions::FileSystemSandboxPolicy;
-    use genex_protocol::permissions::FileSystemSpecialPath;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::permissions::FileSystemAccessMode;
+    use ruxex_protocol::permissions::FileSystemPath;
+    use ruxex_protocol::permissions::FileSystemSandboxEntry;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+    use ruxex_protocol::permissions::FileSystemSpecialPath;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     use crate::ExecServerRuntimePaths;
@@ -429,9 +429,9 @@ mod tests {
 
     #[test]
     fn helper_permissions_preserve_existing_writes() {
-        let genex_self_exe = std::env::current_exe().expect("current exe");
+        let ruxex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
+            ExecServerRuntimePaths::new(ruxex_self_exe, /*ruxex_linux_sandbox_exe*/ None)
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
@@ -440,7 +440,7 @@ mod tests {
             writable.clone(),
             FileSystemAccessMode::Write,
         )]);
-        let readable = runtime_paths.genex_self_exe.clone();
+        let readable = runtime_paths.ruxex_self_exe.clone();
 
         add_helper_runtime_permissions(
             &mut policy,
@@ -472,7 +472,7 @@ mod tests {
         let env = helper_env_from_vars(
             [
                 ("PATH", "/usr/bin:/bin"),
-                ("TMPDIR", "/tmp/genex"),
+                ("TMPDIR", "/tmp/ruxex"),
                 ("TMP", "/tmp"),
                 ("TEMP", "/tmp"),
                 ("HOME", "/home/user"),
@@ -486,7 +486,7 @@ mod tests {
             env,
             HashMap::from([
                 ("PATH".to_string(), "/usr/bin:/bin".to_string()),
-                ("TMPDIR".to_string(), "/tmp/genex".to_string()),
+                ("TMPDIR".to_string(), "/tmp/ruxex".to_string()),
                 ("TMP".to_string(), "/tmp".to_string()),
                 ("TEMP".to_string(), "/tmp".to_string()),
             ])
@@ -523,9 +523,9 @@ mod tests {
         };
         let path_key = path_key.to_string_lossy().into_owned();
         let path = path.to_string_lossy().into_owned();
-        let genex_self_exe = std::env::current_exe().expect("current exe");
+        let ruxex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe.clone(), Some(genex_self_exe))
+            ExecServerRuntimePaths::new(ruxex_self_exe.clone(), Some(ruxex_self_exe))
                 .expect("runtime paths");
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let native_cwd = AbsolutePathBuf::current_dir().expect("cwd");
@@ -552,9 +552,9 @@ mod tests {
     /// Removing the selected directory must not change permission anchoring or prevent launch.
     #[test]
     fn sandbox_exec_request_uses_filesystem_root_and_preserves_policy_cwd() {
-        let genex_self_exe = std::env::current_exe().expect("current exe");
+        let ruxex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe.clone(), Some(genex_self_exe))
+            ExecServerRuntimePaths::new(ruxex_self_exe.clone(), Some(ruxex_self_exe))
                 .expect("runtime paths");
         let runner = FileSystemSandboxRunner::new(runtime_paths);
         let selected = tempfile::tempdir().expect("selected directory");
@@ -623,15 +623,15 @@ mod tests {
 
     #[test]
     fn helper_permissions_include_only_the_helper_executable() {
-        let genex_self_exe = std::env::current_exe().expect("current exe");
+        let ruxex_self_exe = std::env::current_exe().expect("current exe");
         let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe, /*genex_linux_sandbox_exe*/ None)
+            ExecServerRuntimePaths::new(ruxex_self_exe, /*ruxex_linux_sandbox_exe*/ None)
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
         let mut policy = restricted_policy(Vec::new());
         let parent = runtime_paths
-            .genex_self_exe
+            .ruxex_self_exe
             .parent()
             .expect("current exe parent");
         let sibling = parent.join("credentials.json");
@@ -644,7 +644,7 @@ mod tests {
 
         assert!(
             policy.can_read_local_path_with_cwd(
-                runtime_paths.genex_self_exe.as_path(),
+                runtime_paths.ruxex_self_exe.as_path(),
                 cwd.as_path(),
             )
         );
@@ -655,17 +655,17 @@ mod tests {
     #[test]
     fn helper_permissions_include_only_linux_sandbox_alias_executable() {
         let root = tempfile::tempdir().expect("temp dir");
-        let genex_self_exe = root.path().join("bin").join("genex");
-        let genex_linux_sandbox_exe = root.path().join("aliases").join("genex-linux-sandbox");
+        let ruxex_self_exe = root.path().join("bin").join("ruxex");
+        let ruxex_linux_sandbox_exe = root.path().join("aliases").join("ruxex-linux-sandbox");
         let runtime_paths =
-            ExecServerRuntimePaths::new(genex_self_exe, Some(genex_linux_sandbox_exe))
+            ExecServerRuntimePaths::new(ruxex_self_exe, Some(ruxex_linux_sandbox_exe))
                 .expect("runtime paths");
         let cwd = AbsolutePathBuf::from_absolute_path(std::env::temp_dir().as_path())
             .expect("absolute cwd");
         let mut policy = restricted_policy(Vec::new());
-        let genex_parent = runtime_paths.genex_self_exe.parent().expect("genex parent");
+        let ruxex_parent = runtime_paths.ruxex_self_exe.parent().expect("ruxex parent");
         let alias = runtime_paths
-            .genex_linux_sandbox_exe
+            .ruxex_linux_sandbox_exe
             .as_ref()
             .expect("linux sandbox alias");
         let alias_parent = alias.parent().expect("alias parent");
@@ -678,12 +678,12 @@ mod tests {
 
         assert!(
             policy.can_read_local_path_with_cwd(
-                runtime_paths.genex_self_exe.as_path(),
+                runtime_paths.ruxex_self_exe.as_path(),
                 cwd.as_path(),
             )
         );
         assert!(policy.can_read_local_path_with_cwd(alias.as_path(), cwd.as_path()));
-        assert!(!policy.can_read_local_path_with_cwd(genex_parent.as_path(), cwd.as_path()));
+        assert!(!policy.can_read_local_path_with_cwd(ruxex_parent.as_path(), cwd.as_path()));
         assert!(!policy.can_read_local_path_with_cwd(alias_parent.as_path(), cwd.as_path()));
     }
 
@@ -695,7 +695,7 @@ mod tests {
         policy: &FileSystemSandboxPolicy,
         cwd: PathUri,
     ) -> crate::FileSystemSandboxContext {
-        genex_file_system::FileSystemSandboxContext::from_permission_profile(
+        ruxex_file_system::FileSystemSandboxContext::from_permission_profile(
             PermissionProfile::from_runtime_permissions(policy, NetworkSandboxPolicy::Restricted),
             cwd,
         )

@@ -17,18 +17,18 @@ use crate::tools::handlers::multi_agents_spec::MULTI_AGENT_V1_NAMESPACE;
 use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_protocol::ThreadId;
-use genex_protocol::items::CollabAgentTool;
-use genex_protocol::items::CollabAgentToolCallItem;
-use genex_protocol::items::CollabAgentToolCallStatus;
-use genex_protocol::items::TurnItem;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::protocol::CollabAgentRef;
-use genex_protocol::user_input::UserInput;
-use genex_tools::ToolName;
-use genex_tools::ToolSearchInfo;
-use genex_tools::ToolSearchSourceInfo;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::CollabAgentTool;
+use ruxex_protocol::items::CollabAgentToolCallItem;
+use ruxex_protocol::items::CollabAgentToolCallStatus;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::protocol::CollabAgentRef;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSearchInfo;
+use ruxex_tools::ToolSearchSourceInfo;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -59,7 +59,7 @@ pub(crate) fn parse_agent_id_targets(
 
 fn multi_agent_tool_search_info(
     search_text: &str,
-    spec: genex_tools::ToolSpec,
+    spec: ruxex_tools::ToolSpec,
 ) -> Option<ToolSearchInfo> {
     ToolSearchInfo::from_spec(
         search_text.to_string(),

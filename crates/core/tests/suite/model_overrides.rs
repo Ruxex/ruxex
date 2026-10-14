@@ -1,8 +1,8 @@
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
@@ -12,7 +12,7 @@ const CONFIG_TOML: &str = "config.toml";
 async fn thread_settings_update_does_not_persist_when_config_exists() {
     let server = start_mock_server().await;
     let initial_contents = "model = \"legacy-model-4o\"\n";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(move |home| {
             let config_path = home.join(CONFIG_TOML);
             std::fs::write(config_path, initial_contents).expect("seed config.toml");
@@ -21,12 +21,12 @@ async fn thread_settings_update_does_not_persist_when_config_exists() {
             config.model = Some("legacy-model-4o".to_string());
         });
     let test = builder.build(&server).await.expect("create conversation");
-    let genex = test.genex.clone();
+    let ruxex = test.ruxex.clone();
     let config_path = test.home.path().join(CONFIG_TOML);
 
     core_test_support::submit_thread_settings(
-        &genex,
-        genex_protocol::protocol::ThreadSettingsOverrides {
+        &ruxex,
+        ruxex_protocol::protocol::ThreadSettingsOverrides {
             model: Some("o3".to_string()),
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -35,8 +35,8 @@ async fn thread_settings_update_does_not_persist_when_config_exists() {
     .await
     .expect("submit override");
 
-    genex.submit(Op::Shutdown).await.expect("request shutdown");
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    ruxex.submit(Op::Shutdown).await.expect("request shutdown");
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
     let contents = tokio::fs::read_to_string(&config_path)
         .await
@@ -47,9 +47,9 @@ async fn thread_settings_update_does_not_persist_when_config_exists() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn thread_settings_update_does_not_create_config_file() {
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await.expect("create conversation");
-    let genex = test.genex.clone();
+    let ruxex = test.ruxex.clone();
     let config_path = test.home.path().join(CONFIG_TOML);
     assert!(
         !config_path.exists(),
@@ -57,8 +57,8 @@ async fn thread_settings_update_does_not_create_config_file() {
     );
 
     core_test_support::submit_thread_settings(
-        &genex,
-        genex_protocol::protocol::ThreadSettingsOverrides {
+        &ruxex,
+        ruxex_protocol::protocol::ThreadSettingsOverrides {
             model: Some("o3".to_string()),
             effort: Some(Some(ReasoningEffort::Medium)),
             ..Default::default()
@@ -67,8 +67,8 @@ async fn thread_settings_update_does_not_create_config_file() {
     .await
     .expect("submit override");
 
-    genex.submit(Op::Shutdown).await.expect("request shutdown");
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    ruxex.submit(Op::Shutdown).await.expect("request shutdown");
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
     assert!(
         !config_path.exists(),

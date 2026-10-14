@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookSource;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_absolute_path::test_support::test_path_buf;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookSource;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_absolute_path::test_support::test_path_buf;
 use pretty_assertions::assert_eq;
 
 use super::parse_completed;

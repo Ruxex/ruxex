@@ -1,8 +1,8 @@
-use genex_arg0::Arg0DispatchPaths;
-use genex_arg0::arg0_dispatch_or_else;
-use genex_cli::APP_SERVER_DAEMON_MODE_ARG;
-use genex_cli::run_host_app_server_daemon;
-use genex_providers::CloudflareModelProvider;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::arg0_dispatch_or_else;
+use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
+use ruxex_cli::run_host_app_server_daemon;
+use ruxex_providers::CloudflareModelProvider;
 
 fn main() -> anyhow::Result<()> {
     arg0_dispatch_or_else(|arg0_paths: Arg0DispatchPaths| async move {
@@ -14,11 +14,11 @@ fn main() -> anyhow::Result<()> {
                 false,
             )
             .await?;
-            if exit == genex_app_server::AppServerExit::Forced {
+            if exit == ruxex_app_server::AppServerExit::Forced {
                 std::process::exit(0);
             }
         } else {
-            genex_cli::run_with_provider::<CloudflareModelProvider>(arg0_paths).await?;
+            ruxex_cli::run_with_provider::<CloudflareModelProvider>(arg0_paths).await?;
         }
         Ok(())
     })

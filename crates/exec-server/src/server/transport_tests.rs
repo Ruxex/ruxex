@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCNotification;
-use genex_exec_server_protocol::JSONRPCRequest;
-use genex_exec_server_protocol::JSONRPCResponse;
-use genex_exec_server_protocol::RequestId;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCNotification;
+use ruxex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::JSONRPCResponse;
+use ruxex_exec_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
@@ -48,8 +48,8 @@ async fn stdio_listen_transport_serves_initialize() {
         server_writer,
         test_runtime_paths(),
         crate::ExecServerTelemetry::default(),
-        genex_http_client::HttpClientFactory::new(
-            genex_http_client::OutboundProxyPolicy::ReqwestDefault,
+        ruxex_http_client::HttpClientFactory::new(
+            ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
         ),
         RequestDispatchMode::Inline,
     ));
@@ -127,7 +127,7 @@ async fn write_jsonrpc_line(writer: &mut tokio::io::DuplexStream, message: &JSON
 fn test_runtime_paths() -> ExecServerRuntimePaths {
     ExecServerRuntimePaths::new(
         std::env::current_exe().expect("current exe"),
-        /*genex_linux_sandbox_exe*/ None,
+        /*ruxex_linux_sandbox_exe*/ None,
     )
     .expect("runtime paths")
 }

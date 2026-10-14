@@ -1,22 +1,22 @@
 use super::shared::v2_enum_from_core;
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use genex_protocol::items::McpToolCallError as CoreMcpToolCallError;
-use genex_protocol::mcp::CallToolResult as CoreMcpCallToolResult;
-use genex_protocol::mcp::McpServerInfo;
-use genex_protocol::mcp::Resource as McpResource;
-pub use genex_protocol::mcp::ResourceContent as McpResourceContent;
-use genex_protocol::mcp::ResourceTemplate as McpResourceTemplate;
-use genex_protocol::mcp::Tool as McpTool;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
+use ruxex_protocol::items::McpToolCallError as CoreMcpToolCallError;
+use ruxex_protocol::mcp::CallToolResult as CoreMcpCallToolResult;
+use ruxex_protocol::mcp::McpServerInfo;
+use ruxex_protocol::mcp::Resource as McpResource;
+pub use ruxex_protocol::mcp::ResourceContent as McpResourceContent;
+use ruxex_protocol::mcp::ResourceTemplate as McpResourceTemplate;
+use ruxex_protocol::mcp::Tool as McpTool;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::collections::BTreeMap;
 
 v2_enum_from_core!(
-    pub enum McpAuthStatus from genex_protocol::protocol::McpAuthStatus {
+    pub enum McpAuthStatus from ruxex_protocol::protocol::McpAuthStatus {
         Unknown,
         Unsupported,
         NotLoggedIn,
@@ -26,14 +26,14 @@ v2_enum_from_core!(
 );
 
 v2_enum_from_core!(
-    pub enum McpServerStartupFailureReason from genex_protocol::protocol::McpStartupFailureReason {
+    pub enum McpServerStartupFailureReason from ruxex_protocol::protocol::McpStartupFailureReason {
         ReauthenticationRequired
     }
 );
 
 v2_enum_from_core!(
     #[ts(rename_all = "camelCase")]
-    pub enum McpServerConnectionStatus from genex_protocol::mcp::McpServerConnectionStatus {
+    pub enum McpServerConnectionStatus from ruxex_protocol::mcp::McpServerConnectionStatus {
         NotStarted,
         Starting,
         Connected,
@@ -303,11 +303,11 @@ pub enum McpServerElicitationAction {
 }
 
 impl McpServerElicitationAction {
-    pub fn to_core(self) -> genex_protocol::approvals::ElicitationAction {
+    pub fn to_core(self) -> ruxex_protocol::approvals::ElicitationAction {
         match self {
-            Self::Accept => genex_protocol::approvals::ElicitationAction::Accept,
-            Self::Decline => genex_protocol::approvals::ElicitationAction::Decline,
-            Self::Cancel => genex_protocol::approvals::ElicitationAction::Cancel,
+            Self::Accept => ruxex_protocol::approvals::ElicitationAction::Accept,
+            Self::Decline => ruxex_protocol::approvals::ElicitationAction::Decline,
+            Self::Cancel => ruxex_protocol::approvals::ElicitationAction::Cancel,
         }
     }
 }
@@ -338,7 +338,7 @@ impl From<rmcp::model::ElicitationAction> for McpServerElicitationAction {
 #[ts(export_to = "v2/")]
 pub struct McpServerElicitationRequestParams {
     pub thread_id: String,
-    /// Active Genex turn when this elicitation was observed, if app-server could correlate one.
+    /// Active Ruxex turn when this elicitation was observed, if app-server could correlate one.
     ///
     /// This is nullable because MCP models elicitation as a standalone server-to-client request
     /// identified by the MCP server request id. It may be triggered during a turn, but turn

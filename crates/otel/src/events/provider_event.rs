@@ -1,8 +1,8 @@
-use genex_protocol::ResponseUsageMetadata;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::ModelVerification;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::ResponseUsageMetadata;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::ModelVerification;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::TokenUsage;
 
 #[derive(Debug, Clone)]
 pub struct ProviderSafetyBuffering {

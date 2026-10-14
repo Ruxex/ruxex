@@ -3,21 +3,21 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use crate::outgoing_message::OutgoingMessageSender;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::SkillsChangedNotification;
-use genex_core::ThreadManager;
-use genex_core::config::Config;
-use genex_file_watcher::FileWatcher;
-use genex_file_watcher::FileWatcherSubscriber;
-use genex_file_watcher::Receiver;
-use genex_file_watcher::ThrottledWatchReceiver;
-use genex_file_watcher::WatchPath;
-use genex_file_watcher::WatchRegistration;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_skills::system_cache_root_dir;
-use genex_skills_extension::HostSkillsLoadInput;
-use genex_skills_extension::HostSkillsService;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::SkillsChangedNotification;
+use ruxex_core::ThreadManager;
+use ruxex_core::config::Config;
+use ruxex_file_watcher::FileWatcher;
+use ruxex_file_watcher::FileWatcherSubscriber;
+use ruxex_file_watcher::Receiver;
+use ruxex_file_watcher::ThrottledWatchReceiver;
+use ruxex_file_watcher::WatchPath;
+use ruxex_file_watcher::WatchRegistration;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_skills::system_cache_root_dir;
+use ruxex_skills_extension::HostSkillsLoadInput;
+use ruxex_skills_extension::HostSkillsService;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tokio_util::sync::CancellationToken;
 use tokio_util::sync::DropGuard;
 use tracing::warn;
@@ -37,7 +37,7 @@ pub(crate) struct SkillsWatcher {
 impl SkillsWatcher {
     pub(crate) fn new(
         skills_service: Arc<HostSkillsService>,
-        genex_home: &AbsolutePathBuf,
+        ruxex_home: &AbsolutePathBuf,
         outgoing: Arc<OutgoingMessageSender>,
     ) -> Arc<Self> {
         let file_watcher = match FileWatcher::new() {
@@ -50,7 +50,7 @@ impl SkillsWatcher {
         let (subscriber, rx) = file_watcher.add_subscriber();
         let shutdown_token = CancellationToken::new();
         let shutdown_drop_guard = shutdown_token.clone().drop_guard();
-        let system_skills_root = system_cache_root_dir(genex_home);
+        let system_skills_root = system_cache_root_dir(ruxex_home);
         Self::spawn_event_loop(
             rx,
             skills_service,

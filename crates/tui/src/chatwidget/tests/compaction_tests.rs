@@ -136,9 +136,9 @@ async fn compaction_retry_status_returns_to_compacting() {
             thread_id: "thread-1".to_string(),
             turn_id: "turn-1".to_string(),
             will_retry: true,
-            error: genex_app_server_protocol::TurnError {
+            error: ruxex_app_server_protocol::TurnError {
                 message: "Reconnecting".to_string(),
-                genex_error_info: None,
+                ruxex_error_info: None,
                 additional_details: None,
                 misalignment: None,
             },

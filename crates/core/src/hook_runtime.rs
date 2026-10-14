@@ -3,48 +3,48 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::responses_metadata::CompactionTrigger;
-use genex_core_plugins::executor_plugin_hook_sources;
-use genex_hooks::InterruptRequest;
-use genex_hooks::PermissionRequestDecision;
-use genex_hooks::PermissionRequestOutcome;
-use genex_hooks::PermissionRequestRequest;
-use genex_hooks::PostToolUseOutcome;
-use genex_hooks::PostToolUseRequest;
-use genex_hooks::PreToolUseOutcome;
-use genex_hooks::PreToolUseRequest;
-use genex_hooks::SessionStartOutcome;
-use genex_hooks::StartHookTarget;
-use genex_hooks::StopHookTarget;
-use genex_hooks::StopOutcome;
-use genex_hooks::SubagentHookContext;
-use genex_hooks::UserPromptSubmitOutcome;
-use genex_hooks::UserPromptSubmitRequest;
-use genex_hooks::hook_execution_mode_label;
-use genex_hooks::hook_handler_type_label;
-use genex_otel::HOOK_RUN_DURATION_METRIC;
-use genex_otel::HOOK_RUN_METRIC;
-use genex_plugin::ExecutorPluginHookSource;
-use genex_protocol::items::FunctionCallOutputItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookExecutionMode;
-use genex_protocol::protocol::HookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookRunSummary;
-use genex_protocol::protocol::HookSource;
-use genex_protocol::protocol::HookStartedEvent;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::WarningEvent;
-use genex_thread_store::PersistContext;
-use genex_thread_store::ReadThreadParams;
+use ruxex_core_plugins::executor_plugin_hook_sources;
+use ruxex_hooks::InterruptRequest;
+use ruxex_hooks::PermissionRequestDecision;
+use ruxex_hooks::PermissionRequestOutcome;
+use ruxex_hooks::PermissionRequestRequest;
+use ruxex_hooks::PostToolUseOutcome;
+use ruxex_hooks::PostToolUseRequest;
+use ruxex_hooks::PreToolUseOutcome;
+use ruxex_hooks::PreToolUseRequest;
+use ruxex_hooks::SessionStartOutcome;
+use ruxex_hooks::StartHookTarget;
+use ruxex_hooks::StopHookTarget;
+use ruxex_hooks::StopOutcome;
+use ruxex_hooks::SubagentHookContext;
+use ruxex_hooks::UserPromptSubmitOutcome;
+use ruxex_hooks::UserPromptSubmitRequest;
+use ruxex_hooks::hook_execution_mode_label;
+use ruxex_hooks::hook_handler_type_label;
+use ruxex_otel::HOOK_RUN_DURATION_METRIC;
+use ruxex_otel::HOOK_RUN_METRIC;
+use ruxex_plugin::ExecutorPluginHookSource;
+use ruxex_protocol::items::FunctionCallOutputItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookExecutionMode;
+use ruxex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookRunSummary;
+use ruxex_protocol::protocol::HookSource;
+use ruxex_protocol::protocol::HookStartedEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_thread_store::PersistContext;
+use ruxex_thread_store::ReadThreadParams;
 use serde_json::Map;
 use serde_json::Value;
 use tokio::sync::Mutex;
@@ -125,8 +125,8 @@ pub(crate) async fn run_pending_session_start_hooks(
             SessionSource::SubAgent(SubAgentSource::ThreadSpawn { agent_role, .. })
                 if matches!(
                     session_start_source,
-                    genex_hooks::SessionStartSource::Startup
-                        | genex_hooks::SessionStartSource::Fork
+                    ruxex_hooks::SessionStartSource::Startup
+                        | ruxex_hooks::SessionStartSource::Fork
                 ) =>
             {
                 let context = subagent_hook_context(sess, agent_role);
@@ -141,7 +141,7 @@ pub(crate) async fn run_pending_session_start_hooks(
                 source: session_start_source,
             },
         };
-        let request = genex_hooks::SessionStartRequest {
+        let request = ruxex_hooks::SessionStartRequest {
             session_id: sess.session_id().into(),
             #[allow(deprecated)]
             cwd: turn_context.cwd.clone(),
@@ -343,7 +343,7 @@ fn build_request_metadata(
         .current_meta_value_for_mcp_request(ExecutionMetadata::from_settings(settings))
         .map(|turn_metadata| {
             Map::from_iter([(
-                crate::X_GENEX_TURN_METADATA_HEADER.to_string(),
+                crate::X_RUXEX_TURN_METADATA_HEADER.to_string(),
                 turn_metadata,
             )])
         })
@@ -403,7 +403,7 @@ pub(crate) async fn run_turn_stop_hooks(
         _ => (StopHookTarget::Stop, sess.hook_transcript_path().await),
     };
     let request_metadata = build_request_metadata(Some(step_context), turn_context);
-    let request = genex_hooks::StopRequest {
+    let request = ruxex_hooks::StopRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         #[allow(deprecated)]
@@ -441,7 +441,7 @@ pub(crate) async fn run_session_end_hooks(sess: &Arc<Session>) {
         return;
     }
 
-    let request = genex_hooks::SessionEndRequest {
+    let request = ruxex_hooks::SessionEndRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         #[allow(deprecated)]
@@ -504,7 +504,7 @@ pub(crate) async fn run_pre_compact_hooks(
     turn_context: &Arc<TurnContext>,
     trigger: CompactionTrigger,
 ) -> PreCompactHookOutcome {
-    let request = genex_hooks::PreCompactRequest {
+    let request = ruxex_hooks::PreCompactRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         subagent: thread_spawn_subagent_hook_context(sess, turn_context),
@@ -541,7 +541,7 @@ pub(crate) async fn run_post_compact_hooks(
     turn_context: &Arc<TurnContext>,
     trigger: CompactionTrigger,
 ) -> PostCompactHookOutcome {
-    let request = genex_hooks::PostCompactRequest {
+    let request = ruxex_hooks::PostCompactRequest {
         session_id: sess.session_id().into(),
         turn_id: turn_context.sub_id.clone(),
         subagent: thread_spawn_subagent_hook_context(sess, turn_context),
@@ -580,14 +580,14 @@ pub(crate) async fn run_legacy_after_agent_hook(
         .collect();
     let hooks = sess.hooks();
     for hook_outcome in hooks
-        .dispatch(genex_hooks::HookPayload {
+        .dispatch(ruxex_hooks::HookPayload {
             session_id: sess.session_id().into(),
             #[allow(deprecated)]
             cwd: turn_context.cwd.clone(),
             client: turn_context.app_server_client_name.clone(),
             triggered_at: chrono::Utc::now(),
-            hook_event: genex_hooks::HookEvent::AfterAgent {
-                event: genex_hooks::HookEventAfterAgent {
+            hook_event: ruxex_hooks::HookEvent::AfterAgent {
+                event: ruxex_hooks::HookEventAfterAgent {
                     thread_id: sess.thread_id,
                     turn_id: turn_context.sub_id.clone(),
                     input_messages,
@@ -599,9 +599,9 @@ pub(crate) async fn run_legacy_after_agent_hook(
     {
         let hook_name = hook_outcome.hook_name;
         let (error, should_abort) = match hook_outcome.result {
-            genex_hooks::HookResult::Success => continue,
-            genex_hooks::HookResult::FailedContinue(error) => (error, false),
-            genex_hooks::HookResult::FailedAbort(error) => (error, true),
+            ruxex_hooks::HookResult::Success => continue,
+            ruxex_hooks::HookResult::FailedContinue(error) => (error, false),
+            ruxex_hooks::HookResult::FailedAbort(error) => (error, true),
         };
         let action = if should_abort {
             "aborting operation"
@@ -623,10 +623,10 @@ pub(crate) async fn run_legacy_after_agent_hook(
     let Some(message) = abort_message else {
         return false;
     };
-    let event = EventMsg::Error(genex_protocol::protocol::ErrorEvent {
+    let event = EventMsg::Error(ruxex_protocol::protocol::ErrorEvent {
         misalignment: None,
         message,
-        genex_error_info: Some(GenexErrorInfo::Other),
+        ruxex_error_info: Some(RuxexErrorInfo::Other),
     });
     sess.send_event(turn_context, event).await;
     true

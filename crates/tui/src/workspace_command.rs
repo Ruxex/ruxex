@@ -17,11 +17,11 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CommandExecParams;
-use genex_app_server_protocol::CommandExecResponse;
-use genex_app_server_protocol::RequestId;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CommandExecParams;
+use ruxex_app_server_protocol::CommandExecResponse;
+use ruxex_app_server_protocol::RequestId;
 use uuid::Uuid;
 
 /// Shared handle for running workspace commands from TUI components.

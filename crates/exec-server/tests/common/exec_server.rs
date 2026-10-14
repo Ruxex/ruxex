@@ -5,10 +5,10 @@ use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCNotification;
-use genex_exec_server_protocol::JSONRPCRequest;
-use genex_exec_server_protocol::RequestId;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCNotification;
+use ruxex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::RequestId;
 use tempfile::TempDir;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
@@ -25,7 +25,7 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const EVENT_TIMEOUT: Duration = Duration::from_secs(5);
 
 pub(crate) struct ExecServerHarness {
-    genex_home: TempDir,
+    ruxex_home: TempDir,
     child: Child,
     stdin: ChildStdin,
     stdout: Lines<BufReader<ChildStdout>>,
@@ -38,16 +38,16 @@ impl Drop for ExecServerHarness {
     }
 }
 
-pub(crate) struct TestGenexHelperPaths {
-    pub(crate) genex_exe: PathBuf,
-    pub(crate) genex_linux_sandbox_exe: Option<PathBuf>,
+pub(crate) struct TestRuxexHelperPaths {
+    pub(crate) ruxex_exe: PathBuf,
+    pub(crate) ruxex_linux_sandbox_exe: Option<PathBuf>,
 }
 
-pub(crate) fn test_genex_helper_paths() -> anyhow::Result<TestGenexHelperPaths> {
-    let (helper_binary, genex_linux_sandbox_exe) = super::current_test_binary_helper_paths()?;
-    Ok(TestGenexHelperPaths {
-        genex_exe: helper_binary,
-        genex_linux_sandbox_exe,
+pub(crate) fn test_ruxex_helper_paths() -> anyhow::Result<TestRuxexHelperPaths> {
+    let (helper_binary, ruxex_linux_sandbox_exe) = super::current_test_binary_helper_paths()?;
+    Ok(TestRuxexHelperPaths {
+        ruxex_exe: helper_binary,
+        ruxex_linux_sandbox_exe,
     })
 }
 
@@ -64,8 +64,8 @@ where
     K: AsRef<std::ffi::OsStr>,
     V: AsRef<std::ffi::OsStr>,
 {
-    let helper_paths = test_genex_helper_paths()?;
-    let mut child = Command::new(&helper_paths.genex_exe);
+    let helper_paths = test_ruxex_helper_paths()?;
+    let mut child = Command::new(&helper_paths.ruxex_exe);
     child.args(["exec-server", "--listen", "stdio"]);
     child.args(args);
     child.envs(env);
@@ -74,7 +74,7 @@ where
 
 impl ExecServerHarness {
     pub(crate) async fn start(mut command: Command) -> anyhow::Result<Self> {
-        let genex_home = TempDir::new()?;
+        let ruxex_home = TempDir::new()?;
         command.stdin(Stdio::piped());
         command.stdout(Stdio::piped());
         command.stderr(Stdio::inherit());
@@ -82,9 +82,9 @@ impl ExecServerHarness {
         if !command
             .as_std()
             .get_envs()
-            .any(|(key, value)| key == "GENEX_HOME" && value.is_some())
+            .any(|(key, value)| key == "RUXEX_HOME" && value.is_some())
         {
-            command.env("GENEX_HOME", genex_home.path());
+            command.env("RUXEX_HOME", ruxex_home.path());
         }
         let mut child = command.spawn()?;
         let stdin = child
@@ -97,7 +97,7 @@ impl ExecServerHarness {
             .ok_or_else(|| anyhow!("failed to capture exec-server stdout"))?;
 
         Ok(Self {
-            genex_home,
+            ruxex_home,
             child,
             stdin,
             stdout: BufReader::new(stdout).lines(),
@@ -105,8 +105,8 @@ impl ExecServerHarness {
         })
     }
 
-    pub(crate) fn genex_home(&self) -> &std::path::Path {
-        self.genex_home.path()
+    pub(crate) fn ruxex_home(&self) -> &std::path::Path {
+        self.ruxex_home.path()
     }
 
     pub(crate) async fn send_request(

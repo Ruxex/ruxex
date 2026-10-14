@@ -16,13 +16,13 @@ use crate::tools::registry::ToolRegistry;
 #[cfg(test)]
 use crate::tools::spec_plan::finalize_tool_router;
 #[cfg(test)]
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::SearchToolCallParams;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::SearchToolCallParams;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::sync::Arc;

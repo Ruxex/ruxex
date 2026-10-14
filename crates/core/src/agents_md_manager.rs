@@ -5,15 +5,15 @@ use crate::agents_md::LoadedAgentsMd;
 use crate::agents_md::load_project_instructions;
 use crate::config::Config;
 use crate::environment_selection::TurnEnvironmentSnapshot;
-use genex_extension_api::Instructions;
-use genex_extension_api::ThreadInstructionsProvider;
-use genex_extension_api::UserInstructionsProvider;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_utils_string::approx_bytes_for_tokens;
-use genex_utils_string::approx_tokens_from_byte_count;
+use ruxex_extension_api::Instructions;
+use ruxex_extension_api::ThreadInstructionsProvider;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_utils_string::approx_bytes_for_tokens;
+use ruxex_utils_string::approx_tokens_from_byte_count;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::Semaphore;
@@ -66,11 +66,11 @@ impl AgentsMdManager {
         &self,
         config: &Config,
         environments: &TurnEnvironmentSnapshot,
-    ) -> (GenexResult<Option<Arc<LoadedAgentsMd>>>, Vec<String>) {
+    ) -> (RuxexResult<Option<Arc<LoadedAgentsMd>>>, Vec<String>) {
         // Serialize overlapping captures without blocking reads of the applied snapshot.
         let Ok(_refresh_guard) = self.refresh_lock.acquire().await else {
             return (
-                Err(GenexErr::Fatal(
+                Err(RuxexErr::Fatal(
                     "instruction refresh semaphore closed".to_string(),
                 )),
                 Vec::new(),
@@ -162,10 +162,10 @@ impl AgentsMdManager {
 // size policy is unchanged; reject oversized thread input rather than truncate it.
 const MAX_THREAD_INSTRUCTIONS_TOKENS: usize = 10_000;
 
-fn validate_thread_instruction_size(bytes: usize) -> GenexResult<()> {
+fn validate_thread_instruction_size(bytes: usize) -> RuxexResult<()> {
     if bytes > approx_bytes_for_tokens(MAX_THREAD_INSTRUCTIONS_TOKENS) {
         let estimated_tokens = approx_tokens_from_byte_count(bytes);
-        return Err(GenexErr::InvalidRequest(format!(
+        return Err(RuxexErr::InvalidRequest(format!(
             "thread instructions exceed the limit of {MAX_THREAD_INSTRUCTIONS_TOKENS} estimated tokens ({estimated_tokens} estimated tokens provided)"
         )));
     }

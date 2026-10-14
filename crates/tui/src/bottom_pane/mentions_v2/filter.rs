@@ -1,6 +1,6 @@
-use genex_file_search::FileMatch;
-use genex_file_search::MatchType;
-use genex_utils_fuzzy_match::fuzzy_match;
+use ruxex_file_search::FileMatch;
+use ruxex_file_search::MatchType;
+use ruxex_utils_fuzzy_match::fuzzy_match;
 
 use super::candidate::Candidate;
 use super::candidate::MentionType;

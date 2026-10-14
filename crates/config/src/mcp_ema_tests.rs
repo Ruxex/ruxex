@@ -28,7 +28,7 @@ fn local_sources(name: &str) -> (ConfigLayerSource, ConfigLayerSource, ConfigLay
             profile: None,
         },
         ConfigLayerSource::Project {
-            dot_genex_folder: path,
+            dot_ruxex_folder: path,
         },
     )
 }

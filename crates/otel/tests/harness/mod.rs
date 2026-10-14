@@ -1,6 +1,6 @@
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_otel::Result;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
+use ruxex_otel::Result;
 use opentelemetry::KeyValue;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
@@ -15,7 +15,7 @@ pub(crate) fn build_metrics_with_defaults(
     let exporter = InMemoryMetricExporter::default();
     let mut config = MetricsConfig::in_memory(
         "test",
-        "genex-cli",
+        "ruxex-cli",
         env!("CARGO_PKG_VERSION"),
         exporter.clone(),
     );

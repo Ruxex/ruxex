@@ -1,16 +1,16 @@
 use super::*;
 use crate::config::EnvironmentNetworkConfigError;
 use crate::config::validate_environment_network_policy;
-use genex_config::NetworkDomainPermissionToml;
-use genex_config::NetworkDomainPermissionsToml;
-use genex_execpolicy::Decision::Allow;
-use genex_execpolicy::NetworkRuleProtocol::Https;
-use genex_network_proxy::NetworkDomainPermission;
-use genex_network_proxy::NetworkUnixSocketPermission;
-use genex_network_proxy::NetworkUnixSocketPermissions;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_config::NetworkDomainPermissionToml;
+use ruxex_config::NetworkDomainPermissionsToml;
+use ruxex_execpolicy::Decision::Allow;
+use ruxex_execpolicy::NetworkRuleProtocol::Https;
+use ruxex_network_proxy::NetworkDomainPermission;
+use ruxex_network_proxy::NetworkUnixSocketPermission;
+use ruxex_network_proxy::NetworkUnixSocketPermissions;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 fn domain_permissions(
@@ -63,7 +63,7 @@ async fn attachment_socket_grants_respect_configured_restrictions_at_remote_laun
             false,
         ),
     ] {
-        let configured: genex_config::permissions_toml::NetworkToml = toml::from_str(toml)?;
+        let configured: ruxex_config::permissions_toml::NetworkToml = toml::from_str(toml)?;
         let controller = NetworkProxySpec::from_config_and_constraints(
             configured.to_network_proxy_config(),
             Some(NetworkConstraints {
@@ -87,7 +87,7 @@ async fn attachment_socket_grants_respect_configured_restrictions_at_remote_laun
         let state = Arc::new(controller.build_state_with_audit_metadata(Default::default())?);
         let proxy = NetworkProxy::builder()
             .state(Arc::clone(&state))
-            .managed_by_genex(false)
+            .managed_by_ruxex(false)
             .build()
             .await?;
         let scoped = proxy.for_execution(

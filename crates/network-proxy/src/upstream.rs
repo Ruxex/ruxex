@@ -1,7 +1,7 @@
 use crate::connect_policy::TargetCheckedTcpConnector;
 use crate::connect_policy::is_non_public_target;
 use crate::state::NetworkProxyState;
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use rama_core::Layer;
 use rama_core::Service;
 use rama_core::error::BoxError;

@@ -3,7 +3,7 @@ use super::ExecPolicyManager;
 use super::commands_for_exec_policy_for_platform;
 use crate::shell::Shell;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use ruxex_shell_command::is_dangerous_command::DangerousCommandPlatform;
 use std::path::Path;
 
 impl ExecPolicyManager {

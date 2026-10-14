@@ -24,9 +24,9 @@ use crate::protocol::SubAgentActivityKind;
 use crate::user_input::ByteRange;
 use crate::user_input::TextElement;
 use crate::user_input::UserInput;
-use genex_extension_items::ExtensionItem;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_extension_items::ExtensionItem;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use quick_xml::de::from_str as from_xml_str;
 use quick_xml::se::to_string as to_xml_string;
 use schemars::JsonSchema;
@@ -372,9 +372,9 @@ pub struct WebSearchItem {
     pub action: WebSearchAction,
     /// Structured search results returned out-of-band by standalone web search.
     ///
-    /// These stay as opaque JSON at the Genex transport boundary so new result
+    /// These stay as opaque JSON at the Ruxex transport boundary so new result
     /// fields and result types can pass through without changing model-visible
-    /// context or requiring a Genex release.
+    /// context or requiring a Ruxex release.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub results: Option<Vec<JsonValue>>,
@@ -750,7 +750,7 @@ impl TurnItem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_extension_items::sleep::SleepItem;
+    use ruxex_extension_items::sleep::SleepItem;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -802,8 +802,8 @@ mod tests {
 
         for path in [
             "",
-            "/home/user/.genex/plugins/cache/sample/scripts/run.py",
-            "C:/Users/user/.genex/plugins/cache/sample/scripts/run.py",
+            "/home/user/.ruxex/plugins/cache/sample/scripts/run.py",
+            "C:/Users/user/.ruxex/plugins/cache/sample/scripts/run.py",
             "scripts/C:/run.py",
             r"\\server\share\sample\scripts\run.py",
             r"scripts\run.py",

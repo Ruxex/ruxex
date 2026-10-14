@@ -75,7 +75,7 @@ pub(super) fn render_human_report(report: &DoctorReport, options: HumanOutputOpt
     let _ = writeln!(
         out,
         "{} {}",
-        bold("Genex Doctor", options),
+        bold("Ruxex Doctor", options),
         dim(&header_suffix(report), options)
     );
     out.push('\n');
@@ -423,7 +423,7 @@ fn write_footer(out: &mut String, options: HumanOutputOptions) {
             out,
             "{}",
             dim(
-                "Run genex doctor without --summary for detailed diagnostics.",
+                "Run ruxex doctor without --summary for detailed diagnostics.",
                 options
             )
         );
@@ -446,7 +446,7 @@ fn write_footer(out: &mut String, options: HumanOutputOptions) {
 }
 
 fn header_suffix(report: &DoctorReport) -> String {
-    let version = format!("v{}", report.genex_version);
+    let version = format!("v{}", report.ruxex_version);
     report
         .checks
         .iter()
@@ -780,8 +780,8 @@ pub(super) fn redact_detail(detail: &str) -> String {
 
     let secret_keys = [
         "api_key",
-        "genex_api_key",
-        "genex_access_token",
+        "ruxex_api_key",
+        "ruxex_access_token",
         "authorization",
         "bearer_token",
         "token",
@@ -1146,7 +1146,7 @@ mod tests {
             )
             .detail("terminal title source: default")
             .detail("terminal title items: activity, project-name")
-            .detail("terminal title project value: genex"),
+            .detail("terminal title project value: ruxex"),
             DoctorCheck::new(
                 "state.paths",
                 "state",
@@ -1190,7 +1190,7 @@ mod tests {
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Fail,
-            genex_version: "0.0.0".to_string(),
+            ruxex_version: "0.0.0".to_string(),
             checks,
         }
     }
@@ -1200,7 +1200,7 @@ mod tests {
         let rendered = render_human_report(&sample_report(), detailed_no_color_unicode_options());
         let expected = format!(
             "\
-Genex Doctor v0.0.0
+Ruxex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
@@ -1226,10 +1226,10 @@ Environment
       version                  git version 2.54.0
       repo detected            true
   ⚠ terminal     narrow terminal
-  ✓ title        default · project genex
+  ✓ title        default · project ruxex
       title source             default
       title items              activity, project-name
-      project value            genex
+      project value            ruxex
   ✓ state        state paths inspectable
 
 Configuration
@@ -1272,7 +1272,7 @@ Background Server
             .iter_mut()
             .find(|detail| detail.starts_with("exclusion targets: "))
             .expect("endpoint security check should include exclusion targets");
-        *targets = "exclusion targets: verified Genex app and required helpers".into();
+        *targets = "exclusion targets: verified Ruxex app and required helpers".into();
         report.checks.push(security);
         report.checks.extend([
             DoctorCheck::new(
@@ -1283,7 +1283,7 @@ Background Server
             )
             .detail("version: 1.2.3")
             .detail("running: true")
-            .detail("log directory: $HOME/Library/Logs/com.genex.genex"),
+            .detail("log directory: $HOME/Library/Logs/com.ruxex.ruxex"),
             DoctorCheck::new(
                 "desktop.app_server.handshake",
                 "desktop",
@@ -1302,7 +1302,7 @@ Background Server
         let rendered = render_human_report(&sample_report(), summary_no_color_unicode_options());
         let expected = format!(
             "\
-Genex Doctor v0.0.0
+Ruxex Doctor v0.0.0
 
 Notes
    ⚠ terminal     narrow terminal
@@ -1316,7 +1316,7 @@ Environment
   ✓ search       search is OK (bundled)
   ✓ git          git version 2.54.0
   ⚠ terminal     narrow terminal
-  ✓ title        default · project genex
+  ✓ title        default · project ruxex
   ✓ state        state paths inspectable
 
 Configuration
@@ -1333,7 +1333,7 @@ Background Server
 {}
 12 ok · 2 notes · 1 warn · 1 fail failed
 
-Run genex doctor without --summary for detailed diagnostics.
+Run ruxex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
 ",
             "─".repeat(SEPARATOR_WIDTH)
@@ -1376,7 +1376,7 @@ Run genex doctor without --summary for detailed diagnostics.
         );
         let expected = format!(
             "\
-Genex Doctor v0.0.0
+Ruxex Doctor v0.0.0
 
 Notes
    [!!] terminal     narrow terminal
@@ -1390,7 +1390,7 @@ Environment
   [ok] search       search is OK (bundled)
   [ok] git          git version 2.54.0
   [!!] terminal     narrow terminal
-  [ok] title        default | project genex
+  [ok] title        default | project ruxex
   [ok] state        state paths inspectable
 
 Configuration
@@ -1407,7 +1407,7 @@ Background Server
 {}
 12 ok | 2 notes | 1 warn | 1 fail failed
 
-Run genex doctor without --summary for detailed diagnostics.
+Run ruxex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
 ",
             "-".repeat(SEPARATOR_WIDTH)
@@ -1435,7 +1435,7 @@ Run genex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Warning,
-            genex_version: "0.0.0".to_string(),
+            ruxex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new(
                     "terminal.env",
@@ -1474,7 +1474,7 @@ Run genex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Warning,
-            genex_version: "0.0.0".to_string(),
+            ruxex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new(
                     "state.paths",
@@ -1538,7 +1538,7 @@ Run genex doctor without --summary for detailed diagnostics.
             schema_version: 1,
             generated_at: "0s since unix epoch".to_string(),
             overall_status: CheckStatus::Ok,
-            genex_version: "0.0.0".to_string(),
+            ruxex_version: "0.0.0".to_string(),
             checks: vec![
                 DoctorCheck::new("config.load", "config", CheckStatus::Ok, "config loaded")
                     .detail("model: example-model")
@@ -1564,14 +1564,14 @@ Run genex doctor without --summary for detailed diagnostics.
     #[test]
     fn detail_value_colors_inline_statuses_and_low_signal_values() {
         let rendered = detail_value(
-            "npm: no · commit unknown · integrity ok · ~/code/genex/target/debug/genex · <redacted>",
+            "npm: no · commit unknown · integrity ok · ~/code/ruxex/target/debug/ruxex · <redacted>",
             detailed_color_unicode_options(),
         );
 
         assert!(rendered.contains("npm: \u{1b}[38;5;240mno"));
         assert!(rendered.contains("\u{1b}[38;5;240munknown"));
         assert!(rendered.contains("\u{1b}[38;5;10mok"));
-        assert!(rendered.contains("\u{1b}[38;5;117m~/code/genex/target/debug/genex"));
+        assert!(rendered.contains("\u{1b}[38;5;117m~/code/ruxex/target/debug/ruxex"));
         assert!(rendered.contains("\u{1b}[38;5;244m"));
     }
 
@@ -1600,8 +1600,8 @@ Run genex doctor without --summary for detailed diagnostics.
     #[test]
     fn redact_detail_preserves_env_var_names() {
         assert_eq!(
-            redact_detail("auth env vars present: PROVIDER_API_KEY, GENEX_API_KEY"),
-            "auth env vars present: PROVIDER_API_KEY, GENEX_API_KEY"
+            redact_detail("auth env vars present: PROVIDER_API_KEY, RUXEX_API_KEY"),
+            "auth env vars present: PROVIDER_API_KEY, RUXEX_API_KEY"
         );
     }
 

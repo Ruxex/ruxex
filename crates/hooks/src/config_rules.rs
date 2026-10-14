@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::HookStateToml;
-use genex_config::TomlValue;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::HookStateToml;
+use ruxex_config::TomlValue;
 
 /// Build effective hook state from config layers that are allowed to override
 /// user preferences.
@@ -67,10 +67,10 @@ pub fn hook_states_from_stack(
 
 #[cfg(test)]
 mod tests {
-    use genex_config::ConfigLayerEntry;
-    use genex_config::TomlValue;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_config::ConfigLayerEntry;
+    use ruxex_config::TomlValue;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
 
     use super::*;

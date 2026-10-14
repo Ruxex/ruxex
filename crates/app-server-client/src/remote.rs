@@ -23,25 +23,25 @@ use crate::SHUTDOWN_TIMEOUT;
 use crate::TypedRequestError;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_app_server_protocol::AppServerIdentity;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::Result as JsonRpcResult;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_uds::UnixStream;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_app_server_protocol::AppServerIdentity;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::Result as JsonRpcResult;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_uds::UnixStream;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use serde::de::DeserializeOwned;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
@@ -146,7 +146,7 @@ enum RemoteClientCommand {
 #[derive(Default)]
 struct RemoteServerMetadata {
     server_version: Option<String>,
-    genex_home: Option<String>,
+    ruxex_home: Option<String>,
     platform_family: Option<String>,
     platform_os: Option<String>,
     identity: Option<AppServerIdentity>,
@@ -203,8 +203,8 @@ impl RemoteAppServerClient {
         self.metadata.server_version.as_deref()
     }
 
-    pub fn genex_home(&self) -> Option<&str> {
-        self.metadata.genex_home.as_deref()
+    pub fn ruxex_home(&self) -> Option<&str> {
+        self.metadata.ruxex_home.as_deref()
     }
 
     pub fn platform_family(&self) -> Option<&str> {
@@ -872,11 +872,11 @@ where
                                     let (_, rest) = user_agent.split_once('/')?;
                                     rest.split_whitespace().next().map(str::to_string)
                                 });
-                            metadata.genex_home = response
+                            metadata.ruxex_home = response
                                 .result
-                                .get("genexHome")
+                                .get("ruxexHome")
                                 .and_then(serde_json::Value::as_str)
-                                .filter(|genex_home| !genex_home.is_empty())
+                                .filter(|ruxex_home| !ruxex_home.is_empty())
                                 .map(str::to_string);
                             metadata.platform_family = response.result.get("platformFamily")
                                 .and_then(serde_json::Value::as_str).map(str::to_string);

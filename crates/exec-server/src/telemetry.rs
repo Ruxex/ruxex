@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_otel::MetricsClient;
+use ruxex_otel::MetricsClient;
 use tracing::warn;
 
 const CONNECTIONS_ACTIVE_METRIC: &str = "exec_server_connections_active";
@@ -151,7 +151,7 @@ impl ExecServerTelemetry {
             .inner
             .as_ref()
             .map(|inner| inner.metrics.clone())
-            .or_else(genex_otel::global)
+            .or_else(ruxex_otel::global)
         else {
             return;
         };
@@ -161,28 +161,28 @@ impl ExecServerTelemetry {
         if let Err(failure_reason) = result {
             tags.push(("failure_reason", failure_reason));
         }
-        let _ = metrics.record_duration("genex.shell_snapshot.duration_ms", duration, &tags);
-        let _ = metrics.counter("genex.shell_snapshot", /*inc*/ 1, &tags);
+        let _ = metrics.record_duration("ruxex.shell_snapshot.duration_ms", duration, &tags);
+        let _ = metrics.counter("ruxex.shell_snapshot", /*inc*/ 1, &tags);
     }
 
     pub(crate) fn process_started(&self, process_id: &str) -> ProcessMetricGuard {
         self.with_inner(|inner| {
             inner.adjust_process_count(/*delta*/ 1);
         });
-        let parent = genex_otel::current_span_w3c_trace_context();
+        let parent = ruxex_otel::current_span_w3c_trace_context();
         // `parent:` accepts a local tracing span/ID, not a W3C context. A local
         // parent would keep the request span alive until process exit and delay
         // its export. Use `parent: None`, then set the W3C parent below to link
         // the spans without retaining the request span.
         let span = tracing::info_span!(
             parent: None,
-            "genex.exec_server.process",
+            "ruxex.exec_server.process",
             otel.kind = "internal",
             process.id = process_id,
             result = tracing::field::Empty,
         );
         if let Some(parent) = parent {
-            genex_otel::set_parent_from_w3c_trace_context(&span, &parent);
+            ruxex_otel::set_parent_from_w3c_trace_context(&span, &parent);
         }
         ProcessMetricGuard {
             telemetry: self.clone(),

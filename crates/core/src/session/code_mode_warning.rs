@@ -1,6 +1,6 @@
-use genex_features::Feature;
-use genex_features::Features;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_features::Feature;
+use ruxex_features::Features;
+use ruxex_protocol::model_types::ModelInfo;
 
 pub(super) fn unsupported_code_mode_warning(
     model_info: &ModelInfo,

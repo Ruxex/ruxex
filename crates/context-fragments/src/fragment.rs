@@ -1,7 +1,7 @@
 use crate::AnnotatedContent;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::InternalChatMessageMetadataPassthrough;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::InternalChatMessageMetadataPassthrough;
+use ruxex_protocol::models::ResponseItem;
 
 /// A rendered contextual fragment and the role that owns its annotated content.
 #[derive(Clone, Debug, PartialEq)]

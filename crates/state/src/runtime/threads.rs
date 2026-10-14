@@ -1,7 +1,7 @@
 use super::*;
 use crate::SortDirection;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::protocol::SessionSource;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::protocol::SessionSource;
 use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
 
@@ -631,7 +631,7 @@ ON CONFLICT(id) DO NOTHING
             metadata
                 .thread_source
                 .as_ref()
-                .map(genex_protocol::protocol::ThreadSource::as_str),
+                .map(ruxex_protocol::protocol::ThreadSource::as_str),
         )
         .bind(metadata.agent_nickname.as_deref())
         .bind(metadata.agent_role.as_deref())
@@ -941,7 +941,7 @@ ON CONFLICT(id) DO UPDATE SET
             metadata
                 .thread_source
                 .as_ref()
-                .map(genex_protocol::protocol::ThreadSource::as_str),
+                .map(ruxex_protocol::protocol::ThreadSource::as_str),
         )
         .bind(metadata.agent_nickname.as_deref())
         .bind(metadata.agent_role.as_deref())
@@ -1466,21 +1466,21 @@ mod tests {
     use crate::runtime::test_support::test_thread_metadata;
     use crate::runtime::test_support::unique_temp_dir;
     use anyhow::Result;
-    use genex_protocol::protocol::EventMsg;
-    use genex_protocol::protocol::GitInfo;
-    use genex_protocol::protocol::SessionMeta;
-    use genex_protocol::protocol::SessionMetaLine;
-    use genex_protocol::protocol::SessionSource;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_protocol::protocol::EventMsg;
+    use ruxex_protocol::protocol::GitInfo;
+    use ruxex_protocol::protocol::SessionMeta;
+    use ruxex_protocol::protocol::SessionMetaLine;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 
     const CUSTOM_THREAD_SECTION_ID: &str = "01984de2-8f74-7c91-a3b2-5c5e937cf317";
     #[tokio::test]
     async fn list_threads_filters_sections_before_recency_pagination_and_uses_index() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -1505,7 +1505,7 @@ mod tests {
             ),
             (oldest_unpinned, 1_700_000_000, None),
         ] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
             metadata.recency_at = DateTime::<Utc>::from_timestamp(recency_at, 0).unwrap();
             if thread_id == oldest_pinned {
                 metadata.preview = Some(String::new());
@@ -1618,9 +1618,9 @@ mod tests {
 
     #[tokio::test]
     async fn section_position_listing_uses_stable_indexed_keyset_pagination() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -1635,7 +1635,7 @@ mod tests {
         let last = ThreadId::from_string("00000000-0000-0000-0000-000000000063").unwrap();
 
         for (thread_id, position) in [(first, 1_000_000), (tied, 1_000_000), (last, 2_000_000)] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
             if thread_id == tied {
                 metadata.preview = Some(String::new());
                 metadata.first_user_message = None;
@@ -1720,18 +1720,18 @@ mod tests {
 
     #[tokio::test]
     async fn delete_thread_cleans_associated_state() -> Result<()> {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000401")?;
         let child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000402")?;
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await?;
         seed_thread_cleanup_state(&runtime, thread_id, child_thread_id).await?;
@@ -1769,18 +1769,18 @@ mod tests {
 
     #[tokio::test]
     async fn delete_thread_keeps_retry_graph_on_cleanup_failure() -> Result<()> {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await?;
         let thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000405")?;
         let child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000406")?;
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await?;
         seed_thread_cleanup_state(&runtime, thread_id, child_thread_id).await?;
@@ -1855,9 +1855,9 @@ mod tests {
 
     #[tokio::test]
     async fn list_threads_updated_after_returns_oldest_changes_first() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -1877,7 +1877,7 @@ mod tests {
             (newer_id, newer_updated_at),
             (middle_id, newer_updated_at),
         ] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
             metadata.updated_at = updated_at;
             metadata.first_user_message = Some("hello".to_string());
             runtime
@@ -1944,9 +1944,9 @@ mod tests {
 
     #[tokio::test]
     async fn list_threads_filters_by_cwd() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -1956,16 +1956,16 @@ mod tests {
             ThreadId::from_string("00000000-0000-0000-0000-000000000102").expect("valid thread id");
         let other_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000103").expect("valid thread id");
-        let first_cwd = genex_home.join("first");
-        let second_cwd = genex_home.join("second");
-        let other_cwd = genex_home.join("other");
+        let first_cwd = ruxex_home.join("first");
+        let second_cwd = ruxex_home.join("second");
+        let other_cwd = ruxex_home.join("other");
 
         for (thread_id, cwd, updated_at) in [
             (first_id, first_cwd.clone(), 1_700_000_100),
             (second_id, second_cwd.clone(), 1_700_000_300),
             (other_id, other_cwd, 1_700_000_500),
         ] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, cwd);
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, cwd);
             metadata.updated_at =
                 DateTime::<Utc>::from_timestamp(updated_at, 0).expect("valid timestamp");
             runtime
@@ -2057,9 +2057,9 @@ mod tests {
 
     #[tokio::test]
     async fn list_threads_uses_indexes_matching_cwd_filters() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -2145,9 +2145,9 @@ mod tests {
 
     #[tokio::test]
     async fn list_threads_by_relation_filters_spawn_graph_with_keyset_pagination() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -2164,7 +2164,7 @@ mod tests {
             (second_child_id, 1_700_000_200),
             (grandchild_id, 1_700_000_300),
         ] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
             metadata.created_at =
                 DateTime::<Utc>::from_timestamp(created_at, 0).expect("valid timestamp");
             metadata.updated_at = metadata.created_at;
@@ -2353,15 +2353,15 @@ mod tests {
 
     #[tokio::test]
     async fn apply_rollout_items_preserves_existing_git_branch_and_fills_missing_git_fields() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000457").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.git_branch = Some("sqlite-branch".to_string());
 
         runtime
@@ -2403,7 +2403,7 @@ mod tests {
                 context_window: None,
             },
             git: Some(GitInfo {
-                commit_hash: Some(genex_git_utils::GitSha::new("rollout-sha")),
+                commit_hash: Some(ruxex_git_utils::GitSha::new("rollout-sha")),
                 branch: Some("rollout-branch".to_string()),
                 repository_url: Some(
                     SanitizedGitUrl::try_from("git@example.com:owner/repo.git")
@@ -2432,15 +2432,15 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_thread_preserves_existing_git_and_originator_atomically() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000458").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.git_sha = Some("sqlite-sha".to_string());
         metadata.git_branch = Some("sqlite-branch".to_string());
         metadata.git_origin_url = Some(
@@ -2497,15 +2497,15 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_thread_preserves_existing_preview_when_incoming_preview_is_empty() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000459").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.first_user_message = None;
         metadata.preview = Some("migrated goal preview".to_string());
 
@@ -2532,15 +2532,15 @@ mod tests {
 
     #[tokio::test]
     async fn set_thread_preview_if_empty_only_fills_blank_preview() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000460").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.first_user_message = None;
         metadata.preview = None;
 
@@ -2575,15 +2575,15 @@ mod tests {
 
     #[tokio::test]
     async fn update_thread_git_info_preserves_newer_non_git_metadata() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000789").expect("valid thread id");
-        let metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
 
         runtime
             .upsert_thread(&metadata)
@@ -2642,16 +2642,16 @@ mod tests {
 
     #[tokio::test]
     async fn insert_thread_if_absent_preserves_existing_metadata() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000791").expect("valid thread id");
 
-        let mut existing = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut existing = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         existing.tokens_used = 123;
         existing.first_user_message = Some("newer preview".to_string());
         existing.preview = Some("newer preview".to_string());
@@ -2661,7 +2661,7 @@ mod tests {
             .await
             .expect("initial upsert should succeed");
 
-        let mut fallback = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut fallback = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         fallback.tokens_used = 0;
         fallback.first_user_message = None;
         fallback.preview = None;
@@ -2692,15 +2692,15 @@ mod tests {
 
     #[tokio::test]
     async fn update_thread_git_info_can_clear_fields() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000790").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.git_sha = Some("abc123".to_string());
         metadata.git_branch = Some("feature/branch".to_string());
         metadata.git_origin_url = Some(
@@ -2731,15 +2731,15 @@ mod tests {
 
     #[tokio::test]
     async fn touch_thread_updated_at_updates_only_updated_at() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000791").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         metadata.title = "original title".to_string();
         metadata.first_user_message = Some("first-user-message".to_string());
         metadata.preview = None;
@@ -2772,15 +2772,15 @@ mod tests {
 
     #[tokio::test]
     async fn touch_thread_recency_at_is_monotonic_and_survives_stale_upsert() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000792").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
         let original_recency_at = metadata.recency_at;
         runtime
             .upsert_thread(&metadata)
@@ -2833,9 +2833,9 @@ mod tests {
 
     #[tokio::test]
     async fn list_threads_orders_and_pages_by_recency_at() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -2849,7 +2849,7 @@ mod tests {
             DateTime::<Utc>::from_timestamp_millis(1_700_002_000_456).expect("timestamp");
 
         for thread_id in [first_id, second_id, third_id] {
-            let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+            let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
             metadata.recency_at = recency_at;
             runtime
                 .upsert_thread(&metadata)
@@ -2959,9 +2959,9 @@ mod tests {
 
     #[tokio::test]
     async fn thread_updated_at_uses_unique_epoch_millis_and_reads_legacy_seconds() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -2973,10 +2973,10 @@ mod tests {
             ThreadId::from_string("00000000-0000-0000-0000-000000000903").expect("valid thread id");
         let updated_at =
             DateTime::<Utc>::from_timestamp_millis(1_700_001_111_123).expect("timestamp millis");
-        let mut first = test_thread_metadata(&genex_home, first_id, genex_home.clone());
+        let mut first = test_thread_metadata(&ruxex_home, first_id, ruxex_home.clone());
         first.updated_at = updated_at;
         first.recency_at = updated_at;
-        let mut second = test_thread_metadata(&genex_home, second_id, genex_home.clone());
+        let mut second = test_thread_metadata(&ruxex_home, second_id, ruxex_home.clone());
         second.updated_at = updated_at;
         second.recency_at = updated_at;
 
@@ -3034,7 +3034,7 @@ mod tests {
 
         let older_updated_at =
             DateTime::<Utc>::from_timestamp_millis(1_700_001_100_123).expect("timestamp millis");
-        let mut older = test_thread_metadata(&genex_home, older_id, genex_home.clone());
+        let mut older = test_thread_metadata(&ruxex_home, older_id, ruxex_home.clone());
         older.updated_at = older_updated_at;
         runtime
             .upsert_thread(&older)
@@ -3069,15 +3069,15 @@ mod tests {
 
     #[tokio::test]
     async fn apply_rollout_items_uses_override_updated_at_when_provided() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000792").expect("valid thread id");
-        let metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+        let metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
 
         runtime
             .upsert_thread(&metadata)
@@ -3091,18 +3091,18 @@ mod tests {
             SessionSource::Cli,
         );
         let items = vec![RolloutItem::EventMsg(EventMsg::TokenCount(
-            genex_protocol::protocol::TokenCountEvent {
-                info: Some(genex_protocol::protocol::TokenUsageInfo {
-                    total_token_usage: genex_protocol::protocol::TokenUsage {
+            ruxex_protocol::protocol::TokenCountEvent {
+                info: Some(ruxex_protocol::protocol::TokenUsageInfo {
+                    total_token_usage: ruxex_protocol::protocol::TokenUsage {
                         input_tokens: 0,
                         cached_input_tokens: 0,
                         cache_write_input_tokens: 0,
                         output_tokens: 0,
                         reasoning_output_tokens: 0,
                         total_tokens: 321,
-                        genex_rollout_budget_units: None,
+                        ruxex_rollout_budget_units: None,
                     },
-                    last_token_usage: genex_protocol::protocol::TokenUsage::default(),
+                    last_token_usage: ruxex_protocol::protocol::TokenUsage::default(),
                     model_context_window: None,
                 }),
                 rate_limits: None,
@@ -3127,9 +3127,9 @@ mod tests {
 
     #[tokio::test]
     async fn thread_spawn_edges_track_directional_status() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");
@@ -3225,9 +3225,9 @@ mod tests {
 
     #[tokio::test]
     async fn thread_spawn_children_without_status_filter_lists_all_statuses() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("state db should initialize");

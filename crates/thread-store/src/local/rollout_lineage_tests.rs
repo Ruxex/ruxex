@@ -1,13 +1,13 @@
 use std::fs;
 use std::path::Path;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -43,7 +43,7 @@ async fn rejects_reference_lineage_escaping_symlinked_sessions_root() {
         .await
         .expect_err("escaping reference lineage should be rejected");
 
-    assert!(error.to_string().contains("must be in Genex home"));
+    assert!(error.to_string().contains("must be in Ruxex home"));
 }
 
 #[tokio::test]
@@ -294,7 +294,7 @@ fn write_rollout_under(
             .expect("fixture ordinal");
         lines.push(rollout_line(
             ordinal,
-            RolloutItem::EventMsg(genex_protocol::protocol::EventMsg::ShutdownComplete),
+            RolloutItem::EventMsg(ruxex_protocol::protocol::EventMsg::ShutdownComplete),
         ));
     }
     fs::write(path.as_path(), format!("{}\n", lines.join("\n"))).expect("write rollout");
@@ -327,7 +327,7 @@ fn rollout_end_byte_offset(path: &Path, end_ordinal_exclusive: u64) -> u64 {
     let end_byte_offset = bytes
         .split_inclusive(|byte| *byte == b'\n')
         .take_while(|line| {
-            genex_rollout::parse_rollout_line_bytes(line)
+            ruxex_rollout::parse_rollout_line_bytes(line)
                 .expect("parse rollout fixture")
                 .ordinal
                 .expect("paginated rollout ordinal")

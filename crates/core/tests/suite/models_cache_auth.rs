@@ -7,15 +7,15 @@ use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
-use core_test_support::test_genex::test_genex;
-use genex_login::AuthCredentialsStoreMode;
-use genex_login::AuthKeyringBackendKind;
-use genex_login::GenexAuth;
-use genex_login::login_with_api_key;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::test_support::test_models_response;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelVisibility;
+use core_test_support::test_ruxex::test_ruxex;
+use ruxex_login::AuthCredentialsStoreMode;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::RuxexAuth;
+use ruxex_login::login_with_api_key;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelVisibility;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -37,9 +37,9 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let managed = test_genex()
+    let managed = test_ruxex()
         .with_home(home.clone())
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model("example-model")
         .build_with_auto_env(&server)
         .await?;
@@ -58,8 +58,8 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    let credential_manager = genex_core::test_support::credential_manager_from_auth_with_home(
-        GenexAuth::from_api_key("api-key"),
+    let credential_manager = ruxex_core::test_support::credential_manager_from_auth_with_home(
+        RuxexAuth::from_api_key("api-key"),
         home.path().to_path_buf(),
     );
     assert!(credential_manager.reload().await);
@@ -70,7 +70,7 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         manager
             .raw_model_catalog(
                 RefreshStrategy::Offline,
-                genex_core::test_support::default_http_client_factory()
+                ruxex_core::test_support::default_http_client_factory()
             )
             .await
             .models,
@@ -89,13 +89,13 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let api = test_genex()
+    let api = test_ruxex()
         .with_home(home.clone())
-        .with_auth(GenexAuth::from_api_key("api-key"))
+        .with_auth(RuxexAuth::from_api_key("api-key"))
         .with_config(|config| {
             config
                 .features
-                .enable(genex_features::Feature::ApiKeyModelDiscovery)
+                .enable(ruxex_features::Feature::ApiKeyModelDiscovery)
                 .expect("enable API-key model discovery");
         })
         .with_model("example-model")
@@ -142,9 +142,9 @@ async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()>
         },
     )
     .await;
-    let other = test_genex()
+    let other = test_ruxex()
         .with_home(home)
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model("example-model")
         .with_config(|config| {
             config.model_provider_id = "second".into();

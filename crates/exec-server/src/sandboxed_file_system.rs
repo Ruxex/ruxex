@@ -1,7 +1,7 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io;
 use tokio_util::io::ReaderStream;
 

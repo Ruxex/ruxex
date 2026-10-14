@@ -8,7 +8,7 @@
 //!
 //! The important failure mode is accidentally materializing local persistence
 //! while a non-local store is configured. After `thread/start` and a simple turn,
-//! the temporary `genex_home` must not contain rollout session files or sqlite
+//! the temporary `ruxex_home` must not contain rollout session files or sqlite
 //! state files. This does not observe read-only probes that leave no artifact; it
 //! is a stop-gap that prevents additional local persistence writes from slipping
 //! in unnoticed.
@@ -21,50 +21,50 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server::in_process;
-use genex_app_server::in_process::InProcessClientHandle;
-use genex_app_server::in_process::InProcessServerEvent;
-use genex_app_server::in_process::InProcessStartArgs;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadAttachmentAddParams;
-use genex_app_server_protocol::ThreadAttachmentListParams;
-use genex_app_server_protocol::ThreadAttachmentRemoveParams;
-use genex_app_server_protocol::ThreadDeleteParams;
-use genex_app_server_protocol::ThreadDeleteResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadSectionCreateParams;
-use genex_app_server_protocol::ThreadSectionDeleteParams;
-use genex_app_server_protocol::ThreadSectionListParams;
-use genex_app_server_protocol::ThreadSectionUpdateParams;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::CloudConfigBundleLoader;
-use genex_config::LoaderOverrides;
-use genex_config::NoopThreadConfigLoader;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_exec_server::EnvironmentManager;
-use genex_features::Feature;
-use genex_protocol::ThreadId;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::SessionSource;
-use genex_state::PINNED_THREAD_SECTION_ID;
-use genex_thread_store::CreateThreadParams as StoreCreateThreadParams;
-use genex_thread_store::InMemoryThreadStore;
-use genex_thread_store::ThreadPersistenceMetadata;
-use genex_thread_store::ThreadStore;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server::in_process;
+use ruxex_app_server::in_process::InProcessClientHandle;
+use ruxex_app_server::in_process::InProcessServerEvent;
+use ruxex_app_server::in_process::InProcessStartArgs;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadAttachmentAddParams;
+use ruxex_app_server_protocol::ThreadAttachmentListParams;
+use ruxex_app_server_protocol::ThreadAttachmentRemoveParams;
+use ruxex_app_server_protocol::ThreadDeleteParams;
+use ruxex_app_server_protocol::ThreadDeleteResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadSectionCreateParams;
+use ruxex_app_server_protocol::ThreadSectionDeleteParams;
+use ruxex_app_server_protocol::ThreadSectionListParams;
+use ruxex_app_server_protocol::ThreadSectionUpdateParams;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::CloudConfigBundleLoader;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_features::Feature;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_state::PINNED_THREAD_SECTION_ID;
+use ruxex_thread_store::CreateThreadParams as StoreCreateThreadParams;
+use ruxex_thread_store::InMemoryThreadStore;
+use ruxex_thread_store::ThreadPersistenceMetadata;
+use ruxex_thread_store::ThreadStore;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -74,11 +74,11 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 #[tokio::test]
 async fn thread_section_operations_without_sqlite_return_method_not_found() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_thread_store(genex_home.path(), "http://127.0.0.1:1", &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), "http://127.0.0.1:1", &store_id)?;
     let _in_memory_store = InMemoryThreadStoreId { store_id };
-    let client = start_in_process_server(genex_home.path()).await?;
+    let client = start_in_process_server(ruxex_home.path()).await?;
 
     let section_id = Uuid::now_v7().to_string();
 
@@ -164,7 +164,7 @@ async fn thread_section_operations_without_sqlite_return_method_not_found() -> R
     }
 
     client.shutdown().await?;
-    assert_no_local_persistence_artifacts(genex_home.path())?;
+    assert_no_local_persistence_artifacts(ruxex_home.path())?;
 
     Ok(())
 }
@@ -172,13 +172,13 @@ async fn thread_section_operations_without_sqlite_return_method_not_found() -> R
 #[tokio::test]
 async fn thread_start_defaults_to_legacy_without_history_list_support() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_thread_store(genex_home.path(), &server.uri(), &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), &server.uri(), &store_id)?;
 
     let _in_memory_store = InMemoryThreadStoreId { store_id };
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -190,11 +190,11 @@ async fn thread_start_defaults_to_legacy_without_history_list_support() -> Resul
 
 #[tokio::test]
 async fn thread_attachment_operations_without_sqlite_return_method_not_found() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_thread_store(genex_home.path(), "http://127.0.0.1:1", &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), "http://127.0.0.1:1", &store_id)?;
     let _in_memory_store = InMemoryThreadStoreId { store_id };
-    let client = start_in_process_server(genex_home.path()).await?;
+    let client = start_in_process_server(ruxex_home.path()).await?;
 
     for request in [
         ClientRequest::ThreadAttachmentAdd {
@@ -236,26 +236,26 @@ async fn thread_attachment_operations_without_sqlite_return_method_not_found() -
     }
 
     client.shutdown().await?;
-    assert_no_local_persistence_artifacts(genex_home.path())?;
+    assert_no_local_persistence_artifacts(ruxex_home.path())?;
     Ok(())
 }
 
 #[tokio::test]
 async fn thread_start_rejects_paginated_history_without_list_support() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_thread_store(genex_home.path(), &server.uri(), &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), &server.uri(), &store_id)?;
 
     let _in_memory_store = InMemoryThreadStoreId { store_id };
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "genex-app-server-tests".to_string(),
+            name: "ruxex-app-server-tests".to_string(),
             title: None,
             version: "0.1.0".to_string(),
         }),
@@ -286,16 +286,16 @@ async fn thread_start_rejects_paginated_history_without_list_support() -> Result
 async fn thread_delete_with_non_local_thread_store_does_not_create_local_persistence() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    // Plugin startup warmups may create `.tmp` under genex_home. Disable them
+    // Plugin startup warmups may create `.tmp` under ruxex_home. Disable them
     // here so this regression stays focused on thread persistence artifacts.
-    create_config_toml_with_thread_store(genex_home.path(), &server.uri(), &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), &server.uri(), &store_id)?;
 
     let thread_store = InMemoryThreadStore::for_id(store_id.clone());
     let _in_memory_store = InMemoryThreadStoreId { store_id };
 
-    let mut client = start_in_process_server(genex_home.path()).await?;
+    let mut client = start_in_process_server(ruxex_home.path()).await?;
 
     let response = client
         .request(ClientRequest::ThreadStart {
@@ -389,7 +389,7 @@ async fn thread_delete_with_non_local_thread_store_does_not_create_local_persist
             initial_window_id: Uuid::now_v7().to_string(),
             runtime_workspace_roots: None,
             metadata: ThreadPersistenceMetadata {
-                cwd: Some(genex_home.path().to_path_buf()),
+                cwd: Some(ruxex_home.path().to_path_buf()),
             },
         })
         .await?;
@@ -415,7 +415,7 @@ async fn thread_delete_with_non_local_thread_store_does_not_create_local_persist
         "turn completion should flush through the injected store"
     );
 
-    assert_no_local_persistence_artifacts(genex_home.path())?;
+    assert_no_local_persistence_artifacts(ruxex_home.path())?;
 
     Ok(())
 }
@@ -423,15 +423,15 @@ async fn thread_delete_with_non_local_thread_store_does_not_create_local_persist
 #[tokio::test]
 async fn cold_thread_resume_rechecks_non_local_history_after_config_load() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
-    create_config_toml_with_thread_store(genex_home.path(), &server.uri(), &store_id)?;
+    create_config_toml_with_thread_store(ruxex_home.path(), &server.uri(), &store_id)?;
 
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = Arc::new(
         ConfigBuilder::default()
-            .genex_home(genex_home.path().to_path_buf())
-            .fallback_cwd(Some(genex_home.path().to_path_buf()))
+            .ruxex_home(ruxex_home.path().to_path_buf())
+            .fallback_cwd(Some(ruxex_home.path().to_path_buf()))
             .loader_overrides(loader_overrides.clone())
             .build()
             .await?,
@@ -501,12 +501,12 @@ async fn cold_thread_resume_rechecks_non_local_history_after_config_load() -> Re
     Ok(())
 }
 
-async fn start_in_process_server(genex_home: &Path) -> Result<InProcessClientHandle> {
+async fn start_in_process_server(ruxex_home: &Path) -> Result<InProcessClientHandle> {
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = Arc::new(
         ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
-            .fallback_cwd(Some(genex_home.to_path_buf()))
+            .ruxex_home(ruxex_home.to_path_buf())
+            .fallback_cwd(Some(ruxex_home.to_path_buf()))
             .loader_overrides(loader_overrides.clone())
             .build()
             .await?,
@@ -536,7 +536,7 @@ async fn start_in_process_client(
         runtime: None,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "genex-app-server-tests".to_string(),
+                name: "ruxex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },
@@ -563,27 +563,27 @@ async fn delete_thread(
     Ok(())
 }
 
-fn assert_no_local_persistence_artifacts(genex_home: &Path) -> Result<()> {
+fn assert_no_local_persistence_artifacts(ruxex_home: &Path) -> Result<()> {
     // These are the observable tripwires for accidental local persistence. If a
     // future code path constructs a local rollout/session store or opens the
     // local thread sqlite database, it should leave one of these artifacts in
-    // the isolated test genex_home.
+    // the isolated test ruxex_home.
     assert!(
-        !genex_home.join("sessions").exists(),
+        !ruxex_home.join("sessions").exists(),
         "non-local thread persistence should not create local rollout sessions"
     );
     assert!(
-        !genex_home.join("archived_sessions").exists(),
+        !ruxex_home.join("archived_sessions").exists(),
         "non-local thread persistence should not create archived rollout sessions"
     );
     assert!(
-        !genex_state::SqliteConfig::new_for_testing(genex_home.abs())
+        !ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs())
             .state_db_path()
             .exists(),
         "non-local thread persistence should not create local thread sqlite"
     );
 
-    let sqlite_artifacts = std::fs::read_dir(genex_home)?
+    let sqlite_artifacts = std::fs::read_dir(ruxex_home)?
         .filter_map(std::result::Result::ok)
         .map(|entry| entry.path())
         .filter(|path| {
@@ -601,7 +601,7 @@ fn assert_no_local_persistence_artifacts(genex_home: &Path) -> Result<()> {
         sqlite_artifacts.is_empty(),
         "non-local thread persistence should not create sqlite artifacts: {sqlite_artifacts:?}"
     );
-    let mut entries = genex_home_entries(genex_home)?;
+    let mut entries = ruxex_home_entries(ruxex_home)?;
     // Host startup may leave sandbox migration markers, and test runs may
     // initialize shell snapshot storage. Neither is thread persistence.
     entries.remove(".sandbox_migration");
@@ -613,14 +613,14 @@ fn assert_no_local_persistence_artifacts(genex_home: &Path) -> Result<()> {
             "installation_id".to_string(),
             "skills".to_string(),
         ]),
-        "non-local thread persistence should not create unexpected files in genex_home"
+        "non-local thread persistence should not create unexpected files in ruxex_home"
     );
 
     Ok(())
 }
 
-fn genex_home_entries(genex_home: &Path) -> Result<BTreeSet<String>> {
-    Ok(std::fs::read_dir(genex_home)?
+fn ruxex_home_entries(ruxex_home: &Path) -> Result<BTreeSet<String>> {
+    Ok(std::fs::read_dir(ruxex_home)?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             Some(entry.file_name().to_string_lossy().into_owned())
@@ -639,7 +639,7 @@ impl Drop for InMemoryThreadStoreId {
 }
 
 fn create_config_toml_with_thread_store(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     store_id: &str,
 ) -> std::io::Result<()> {
@@ -648,5 +648,5 @@ fn create_config_toml_with_thread_store(
             "experimental_thread_store = {{ type = \"in_memory\", id = \"{store_id}\" }}"
         ))
         .disable_feature(Feature::Plugins)
-        .write(genex_home)
+        .write(ruxex_home)
 }

@@ -1,7 +1,7 @@
 //! Tracks client runtime changes and turn starts admitted before a shutdown drain.
 
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_extension_api::TurnStartAdmission;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_extension_api::TurnStartAdmission;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::sync::watch;

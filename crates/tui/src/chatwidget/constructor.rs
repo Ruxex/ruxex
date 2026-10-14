@@ -4,12 +4,12 @@ use super::*;
 
 impl ChatWidget {
     pub(crate) fn new_with_app_event(common: ChatWidgetInit) -> Self {
-        Self::new_with_op_target(common, GenexOpTarget::AppEvent)
+        Self::new_with_op_target(common, RuxexOpTarget::AppEvent)
     }
 
     pub(super) fn new_with_op_target(
         common: ChatWidgetInit,
-        genex_op_target: GenexOpTarget,
+        ruxex_op_target: RuxexOpTarget,
     ) -> Self {
         let ChatWidgetInit {
             config,
@@ -20,7 +20,7 @@ impl ChatWidget {
             initial_user_message,
             enhanced_keys_supported,
             has_managed_account,
-            has_genex_backend_auth,
+            has_ruxex_backend_auth,
             model_catalog,
             is_first_run,
             status_account_display,
@@ -86,7 +86,7 @@ impl ChatWidget {
             cyber_policy_notice: Default::default(),
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
-            genex_op_target,
+            ruxex_op_target,
             bottom_pane: BottomPane::new(BottomPaneParams {
                 frame_requester,
                 app_event_tx,
@@ -107,7 +107,7 @@ impl ChatWidget {
             current_collaboration_mode,
             active_collaboration_mask,
             has_managed_account,
-            has_genex_backend_auth,
+            has_ruxex_backend_auth,
             model_catalog,
             model_popup_request_id: None,
             permission_popup_request_id: None,
@@ -138,8 +138,8 @@ impl ChatWidget {
             available_rate_limit_reset_credits: None,
             next_rate_limit_reset_request_id: 0,
             plan_type: initial_plan_type,
-            genex_rate_limit_reached_type: None,
-            genex_spend_control_reached: None,
+            ruxex_rate_limit_reached_type: None,
+            ruxex_spend_control_reached: None,
             rate_limit_warnings: RateLimitWarningState::default(),
             warning_display_state: WarningDisplayState::default(),
             rate_limit_switch_prompt: RateLimitSwitchPromptState::default(),
@@ -260,7 +260,7 @@ impl ChatWidget {
 
         widget
             .bottom_pane
-            .set_token_activity_command_enabled(widget.has_genex_backend_auth);
+            .set_token_activity_command_enabled(widget.has_ruxex_backend_auth);
         widget.refresh_status_surfaces();
 
         widget

@@ -1,5 +1,5 @@
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

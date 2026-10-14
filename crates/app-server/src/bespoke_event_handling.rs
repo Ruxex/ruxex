@@ -8,96 +8,96 @@ use crate::thread_state::TurnSummary;
 use crate::thread_state::resolve_server_request_on_thread_listener;
 use crate::thread_status::ThreadWatchActiveGuard;
 use crate::thread_status::ThreadWatchManager;
-use genex_app_server_protocol::AccountRateLimitsUpdatedNotification;
-use genex_app_server_protocol::AdditionalPermissionProfile as V2AdditionalPermissionProfile;
-use genex_app_server_protocol::AuthRecoveryNotification;
-use genex_app_server_protocol::CommandAction as V2ParsedCommand;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionPresentation;
-use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use genex_app_server_protocol::CommandExecutionSource;
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::DeprecationNoticeNotification;
-use genex_app_server_protocol::DynamicToolCallParams;
-use genex_app_server_protocol::EnvironmentConnectionNotification;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::ExecPolicyAmendment as V2ExecPolicyAmendment;
-use genex_app_server_protocol::FileChangeApprovalDecision;
-use genex_app_server_protocol::FileChangeRequestApprovalParams;
-use genex_app_server_protocol::FileChangeRequestApprovalResponse;
-use genex_app_server_protocol::GenexErrorInfo as V2GenexErrorInfo;
-use genex_app_server_protocol::GrantedPermissionProfile as V2GrantedPermissionProfile;
-use genex_app_server_protocol::HookCompletedNotification;
-use genex_app_server_protocol::HookStartedNotification;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::McpServerElicitationAction;
-use genex_app_server_protocol::McpServerElicitationRequestParams;
-use genex_app_server_protocol::McpServerElicitationRequestResponse;
-use genex_app_server_protocol::McpServerStartupState;
-use genex_app_server_protocol::McpServerStatusUpdatedNotification;
-use genex_app_server_protocol::ModelReroutedNotification;
-use genex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
-use genex_app_server_protocol::ModelVerificationNotification;
-use genex_app_server_protocol::NetworkApprovalContext as V2NetworkApprovalContext;
-use genex_app_server_protocol::NetworkPolicyAmendment as V2NetworkPolicyAmendment;
-use genex_app_server_protocol::NetworkPolicyRuleAction as V2NetworkPolicyRuleAction;
-use genex_app_server_protocol::PermissionsRequestApprovalParams;
-use genex_app_server_protocol::PermissionsRequestApprovalResponse;
-use genex_app_server_protocol::RawResponseCompletedNotification;
-use genex_app_server_protocol::RawResponseItemCompletedNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequestPayload;
-use genex_app_server_protocol::ThreadGoalUpdatedNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use genex_app_server_protocol::ToolRequestUserInputOption;
-use genex_app_server_protocol::ToolRequestUserInputParams;
-use genex_app_server_protocol::ToolRequestUserInputQuestion;
-use genex_app_server_protocol::ToolRequestUserInputResponse;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnDiffUpdatedNotification;
-use genex_app_server_protocol::TurnError;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnPlanStep;
-use genex_app_server_protocol::TurnPlanUpdatedNotification;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::WarningNotification;
-use genex_app_server_protocol::item_event_to_server_notification;
-use genex_core::GenexThread;
-use genex_core::ThreadManager;
-use genex_features::Feature;
-use genex_protocol::ThreadId;
-use genex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
-use genex_protocol::items::ModelInvocationContext;
-use genex_protocol::items::TurnItem as CoreTurnItem;
-use genex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
-use genex_protocol::plan_tool::UpdatePlanArgs;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecApprovalRequestEvent;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SubAgentActivityKind;
-use genex_protocol::protocol::TokenCountEvent;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnDiffEvent;
-use genex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse as CoreRequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputAnswer as CoreRequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse as CoreRequestUserInputResponse;
-use genex_shell_command::parse_command::shlex_join;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::AccountRateLimitsUpdatedNotification;
+use ruxex_app_server_protocol::AdditionalPermissionProfile as V2AdditionalPermissionProfile;
+use ruxex_app_server_protocol::AuthRecoveryNotification;
+use ruxex_app_server_protocol::CommandAction as V2ParsedCommand;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionPresentation;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use ruxex_app_server_protocol::CommandExecutionSource;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::DeprecationNoticeNotification;
+use ruxex_app_server_protocol::DynamicToolCallParams;
+use ruxex_app_server_protocol::EnvironmentConnectionNotification;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::ExecPolicyAmendment as V2ExecPolicyAmendment;
+use ruxex_app_server_protocol::FileChangeApprovalDecision;
+use ruxex_app_server_protocol::FileChangeRequestApprovalParams;
+use ruxex_app_server_protocol::FileChangeRequestApprovalResponse;
+use ruxex_app_server_protocol::RuxexErrorInfo as V2RuxexErrorInfo;
+use ruxex_app_server_protocol::GrantedPermissionProfile as V2GrantedPermissionProfile;
+use ruxex_app_server_protocol::HookCompletedNotification;
+use ruxex_app_server_protocol::HookStartedNotification;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::McpServerElicitationAction;
+use ruxex_app_server_protocol::McpServerElicitationRequestParams;
+use ruxex_app_server_protocol::McpServerElicitationRequestResponse;
+use ruxex_app_server_protocol::McpServerStartupState;
+use ruxex_app_server_protocol::McpServerStatusUpdatedNotification;
+use ruxex_app_server_protocol::ModelReroutedNotification;
+use ruxex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
+use ruxex_app_server_protocol::ModelVerificationNotification;
+use ruxex_app_server_protocol::NetworkApprovalContext as V2NetworkApprovalContext;
+use ruxex_app_server_protocol::NetworkPolicyAmendment as V2NetworkPolicyAmendment;
+use ruxex_app_server_protocol::NetworkPolicyRuleAction as V2NetworkPolicyRuleAction;
+use ruxex_app_server_protocol::PermissionsRequestApprovalParams;
+use ruxex_app_server_protocol::PermissionsRequestApprovalResponse;
+use ruxex_app_server_protocol::RawResponseCompletedNotification;
+use ruxex_app_server_protocol::RawResponseItemCompletedNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequestPayload;
+use ruxex_app_server_protocol::ThreadGoalUpdatedNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use ruxex_app_server_protocol::ToolRequestUserInputOption;
+use ruxex_app_server_protocol::ToolRequestUserInputParams;
+use ruxex_app_server_protocol::ToolRequestUserInputQuestion;
+use ruxex_app_server_protocol::ToolRequestUserInputResponse;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnDiffUpdatedNotification;
+use ruxex_app_server_protocol::TurnError;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnPlanStep;
+use ruxex_app_server_protocol::TurnPlanUpdatedNotification;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::WarningNotification;
+use ruxex_app_server_protocol::item_event_to_server_notification;
+use ruxex_core::RuxexThread;
+use ruxex_core::ThreadManager;
+use ruxex_features::Feature;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
+use ruxex_protocol::items::ModelInvocationContext;
+use ruxex_protocol::items::TurnItem as CoreTurnItem;
+use ruxex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
+use ruxex_protocol::plan_tool::UpdatePlanArgs;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecApprovalRequestEvent;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SubAgentActivityKind;
+use ruxex_protocol::protocol::TokenCountEvent;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnDiffEvent;
+use ruxex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse as CoreRequestPermissionsResponse;
+use ruxex_protocol::request_user_input::RequestUserInputAnswer as CoreRequestUserInputAnswer;
+use ruxex_protocol::request_user_input::RequestUserInputResponse as CoreRequestUserInputResponse;
+use ruxex_shell_command::parse_command::shlex_join;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -124,7 +124,7 @@ struct CommandExecutionCompletionItem {
 pub(crate) async fn apply_bespoke_event_handling(
     event: Event,
     conversation_id: ThreadId,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
     thread_manager: Arc<ThreadManager>,
     outgoing: ThreadScopedOutgoingMessageSender,
     thread_state: Arc<tokio::sync::Mutex<ThreadState>>,
@@ -184,18 +184,18 @@ pub(crate) async fn apply_bespoke_event_handling(
         }
         EventMsg::McpStartupUpdate(update) => {
             let (status, error, failure_reason) = match update.status {
-                genex_protocol::protocol::McpStartupStatus::Starting => {
+                ruxex_protocol::protocol::McpStartupStatus::Starting => {
                     (McpServerStartupState::Starting, None, None)
                 }
-                genex_protocol::protocol::McpStartupStatus::Ready => {
+                ruxex_protocol::protocol::McpStartupStatus::Ready => {
                     (McpServerStartupState::Ready, None, None)
                 }
-                genex_protocol::protocol::McpStartupStatus::Failed { error, reason } => (
+                ruxex_protocol::protocol::McpStartupStatus::Failed { error, reason } => (
                     McpServerStartupState::Failed,
                     Some(error),
                     reason.map(Into::into),
                 ),
-                genex_protocol::protocol::McpStartupStatus::Cancelled => {
+                ruxex_protocol::protocol::McpStartupStatus::Cancelled => {
                     (McpServerStartupState::Cancelled, None, None)
                 }
             };
@@ -537,7 +537,7 @@ pub(crate) async fn apply_bespoke_event_handling(
         EventMsg::ElicitationRequest(request) => {
             let user_verification = matches!(
                 &request.request,
-                genex_protocol::approvals::ElicitationRequest::UserVerification { .. }
+                ruxex_protocol::approvals::ElicitationRequest::UserVerification { .. }
             );
             let permission_guard = thread_watch_manager
                 .note_permission_requested(&conversation_id.to_string())
@@ -563,7 +563,7 @@ pub(crate) async fn apply_bespoke_event_handling(
                         .submit(Op::ResolveElicitation {
                             server_name: request.server_name,
                             request_id: request.id,
-                            decision: genex_protocol::approvals::ElicitationAction::Cancel,
+                            decision: ruxex_protocol::approvals::ElicitationAction::Cancel,
                             content: None,
                             meta: None,
                         })
@@ -704,7 +704,7 @@ pub(crate) async fn apply_bespoke_event_handling(
             let turn_error = TurnError {
                 misalignment: ev.misalignment.map(Into::into),
                 message: ev.message,
-                genex_error_info: ev.genex_error_info.map(V2GenexErrorInfo::from),
+                ruxex_error_info: ev.ruxex_error_info.map(V2RuxexErrorInfo::from),
                 additional_details: None,
             };
             handle_error_notification(
@@ -722,7 +722,7 @@ pub(crate) async fn apply_bespoke_event_handling(
             let turn_error = TurnError {
                 misalignment: None,
                 message: ev.message,
-                genex_error_info: ev.genex_error_info.map(V2GenexErrorInfo::from),
+                ruxex_error_info: ev.ruxex_error_info.map(V2RuxexErrorInfo::from),
                 additional_details: ev.additional_details,
             };
             outgoing
@@ -1293,7 +1293,7 @@ async fn on_request_user_input_response(
     event_turn_id: String,
     pending_request_id: RequestId,
     receiver: oneshot::Receiver<ClientRequestResult>,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
     thread_state: Arc<Mutex<ThreadState>>,
     user_input_guard: ThreadWatchActiveGuard,
 ) {
@@ -1377,10 +1377,10 @@ struct PendingMcpElicitationResponse {
 
 async fn on_mcp_server_elicitation_response(
     server_name: String,
-    request_id: genex_protocol::mcp::RequestId,
+    request_id: ruxex_protocol::mcp::RequestId,
     pending_request_id: RequestId,
     pending: PendingMcpElicitationResponse,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
     thread_state: Arc<Mutex<ThreadState>>,
     permission_guard: ThreadWatchActiveGuard,
 ) {
@@ -1448,7 +1448,7 @@ fn mcp_server_elicitation_response_from_client_result(
 
 async fn on_request_permissions_response(
     pending_response: PendingRequestPermissionsResponse,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
     thread_state: Arc<Mutex<ThreadState>>,
 ) {
     let PendingRequestPermissionsResponse {
@@ -1476,7 +1476,7 @@ async fn on_request_permissions_response(
                 TurnError {
                     misalignment: None,
                     message,
-                    genex_error_info: None,
+                    ruxex_error_info: None,
                     additional_details: None,
                 },
                 &outgoing,
@@ -1539,7 +1539,7 @@ fn request_permissions_response_from_client_result(
             error!("failed to deserialize PermissionsRequestApprovalResponse: {err}");
             PermissionsRequestApprovalResponse {
                 permissions: V2GrantedPermissionProfile::default(),
-                scope: genex_app_server_protocol::PermissionGrantScope::Turn,
+                scope: ruxex_app_server_protocol::PermissionGrantScope::Turn,
             }
         });
     let granted_permissions: CoreAdditionalPermissionProfile = response.permissions.try_into()?;
@@ -1564,7 +1564,7 @@ async fn on_file_change_request_approval_response(
     item_id: String,
     pending_request_id: RequestId,
     receiver: oneshot::Receiver<ClientRequestResult>,
-    genex: Arc<GenexThread>,
+    ruxex: Arc<RuxexThread>,
     thread_state: Arc<Mutex<ThreadState>>,
     permission_guard: ThreadWatchActiveGuard,
 ) {
@@ -1590,7 +1590,7 @@ async fn on_file_change_request_approval_response(
         }
     };
 
-    if let Err(err) = genex
+    if let Err(err) = ruxex
         .submit(Op::PatchApproval {
             id: item_id,
             decision,
@@ -1610,7 +1610,7 @@ async fn on_command_execution_request_approval_response(
     completion_item: Option<CommandExecutionCompletionItem>,
     pending_request_id: RequestId,
     receiver: oneshot::Receiver<ClientRequestResult>,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
     outgoing: ThreadScopedOutgoingMessageSender,
     thread_state: Arc<Mutex<ThreadState>>,
     permission_guard: ThreadWatchActiveGuard,

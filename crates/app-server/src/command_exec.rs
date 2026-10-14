@@ -6,27 +6,27 @@ use std::time::Duration;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use genex_app_server_protocol::CommandExecOutputDeltaNotification;
-use genex_app_server_protocol::CommandExecOutputStream;
-use genex_app_server_protocol::CommandExecResizeParams;
-use genex_app_server_protocol::CommandExecResizeResponse;
-use genex_app_server_protocol::CommandExecResponse;
-use genex_app_server_protocol::CommandExecTerminalSize;
-use genex_app_server_protocol::CommandExecTerminateParams;
-use genex_app_server_protocol::CommandExecTerminateResponse;
-use genex_app_server_protocol::CommandExecWriteParams;
-use genex_app_server_protocol::CommandExecWriteResponse;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::ServerNotification;
-use genex_core::config::StartedNetworkProxy;
-use genex_core::exec::ExecExpiration;
-use genex_core::exec::ExecExpirationOutcome;
-use genex_core::exec::IO_DRAIN_TIMEOUT_MS;
-use genex_core::sandboxing::ExecRequest;
-use genex_protocol::exec_output::bytes_to_string_smart;
-use genex_utils_pty::ProcessHandle;
-use genex_utils_pty::SpawnedProcess;
-use genex_utils_pty::TerminalSize;
+use ruxex_app_server_protocol::CommandExecOutputDeltaNotification;
+use ruxex_app_server_protocol::CommandExecOutputStream;
+use ruxex_app_server_protocol::CommandExecResizeParams;
+use ruxex_app_server_protocol::CommandExecResizeResponse;
+use ruxex_app_server_protocol::CommandExecResponse;
+use ruxex_app_server_protocol::CommandExecTerminalSize;
+use ruxex_app_server_protocol::CommandExecTerminateParams;
+use ruxex_app_server_protocol::CommandExecTerminateResponse;
+use ruxex_app_server_protocol::CommandExecWriteParams;
+use ruxex_app_server_protocol::CommandExecWriteResponse;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_core::config::StartedNetworkProxy;
+use ruxex_core::exec::ExecExpiration;
+use ruxex_core::exec::ExecExpirationOutcome;
+use ruxex_core::exec::IO_DRAIN_TIMEOUT_MS;
+use ruxex_core::sandboxing::ExecRequest;
+use ruxex_protocol::exec_output::bytes_to_string_smart;
+use ruxex_utils_pty::ProcessHandle;
+use ruxex_utils_pty::SpawnedProcess;
+use ruxex_utils_pty::TerminalSize;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -212,7 +212,7 @@ impl CommandExecManager {
             );
         }
         let spawned = if tty {
-            genex_utils_pty::spawn_pty_process(
+            ruxex_utils_pty::spawn_pty_process(
                 program,
                 args,
                 cwd.as_path(),
@@ -223,10 +223,10 @@ impl CommandExecManager {
             )
             .await
         } else if stream_stdin {
-            genex_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0, &[])
+            ruxex_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0, &[])
                 .await
         } else {
-            genex_utils_pty::spawn_pipe_process_no_stdin(
+            ruxex_utils_pty::spawn_pipe_process_no_stdin(
                 program,
                 args,
                 cwd.as_path(),
@@ -628,10 +628,10 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::error_code::INVALID_REQUEST_ERROR_CODE;
-    use genex_protocol::models::PermissionProfile;
-    use genex_sandboxing::SandboxType;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_sandboxing::SandboxType;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
     use pretty_assertions::assert_eq;
 
     use tokio::time::Duration;
@@ -652,7 +652,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(8),
-            request_id: genex_app_server_protocol::RequestId::Integer(100),
+            request_id: ruxex_app_server_protocol::RequestId::Integer(100),
         };
         let cwd = AbsolutePathBuf::current_dir().expect("current dir");
 
@@ -668,7 +668,7 @@ mod tests {
                     /*network*/ None,
                     /*network_environment_id*/ None,
                     ExecExpiration::Cancellation(CancellationToken::new()),
-                    genex_core::exec::ExecCapturePolicy::ShellTool,
+                    ruxex_core::exec::ExecCapturePolicy::ShellTool,
                     SandboxType::None,
                     PermissionProfile::read_only(),
                     /*arg0*/ None,
@@ -717,7 +717,7 @@ mod tests {
             panic!("expected execution response after termination");
         };
         assert_eq!(response.id, request_id.request_id);
-        let genex_app_server_protocol::ClientResponsePayload::OneOffCommandExec(response) =
+        let ruxex_app_server_protocol::ClientResponsePayload::OneOffCommandExec(response) =
             *response.result
         else {
             panic!("expected command/exec response");
@@ -734,7 +734,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(9),
-            request_id: genex_app_server_protocol::RequestId::Integer(101),
+            request_id: ruxex_app_server_protocol::RequestId::Integer(101),
         };
         let cancellation = CancellationToken::new();
         let cancel = cancellation.clone();
@@ -755,7 +755,7 @@ mod tests {
                         timeout: Duration::from_secs(30),
                         cancellation,
                     },
-                    genex_core::exec::ExecCapturePolicy::ShellTool,
+                    ruxex_core::exec::ExecCapturePolicy::ShellTool,
                     SandboxType::None,
                     PermissionProfile::read_only(),
                     /*arg0*/ None,
@@ -789,7 +789,7 @@ mod tests {
             panic!("expected execution response after cancellation");
         };
         assert_eq!(response.id, request_id.request_id);
-        let genex_app_server_protocol::ClientResponsePayload::OneOffCommandExec(response) =
+        let ruxex_app_server_protocol::ClientResponsePayload::OneOffCommandExec(response) =
             *response.result
         else {
             panic!("expected command/exec response");
@@ -802,7 +802,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(13),
-            request_id: genex_app_server_protocol::RequestId::Integer(3),
+            request_id: ruxex_app_server_protocol::RequestId::Integer(3),
         };
         let process_id = InternalProcessId::Client("proc-13".to_string());
         let (control_tx, mut control_rx) = mpsc::channel(1);

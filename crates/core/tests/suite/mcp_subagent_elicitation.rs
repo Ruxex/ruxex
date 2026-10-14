@@ -1,23 +1,23 @@
 //! MCP requests keep human input on the root and allow automatic approval in subagents.
 
 use anyhow::Result;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_protocol::approvals::ElicitationAction;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::approvals::ElicitationAction;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_mcp_server;
 use pretty_assertions::assert_eq;
@@ -26,7 +26,7 @@ use serde_json::json;
 use test_case::test_case;
 use wiremock::matchers::body_partial_json;
 
-const ROOT_ONLY_MESSAGE: &str = genex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE;
+const ROOT_ONLY_MESSAGE: &str = ruxex_mcp::MCP_ELICITATION_HANDOFF_MESSAGE;
 
 const SERVER: &str = r#"
 import json
@@ -100,7 +100,7 @@ pub(super) async fn mcp_server_elicitation_scenario(
     request_kind: RequestKind,
 ) -> Result<Vec<ResponsesRequest>> {
     let server = responses::start_mock_server().await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
     let mut elicitation = json!({
         "mode": "form",
         "message": "Provide the requested input.",
@@ -110,7 +110,7 @@ pub(super) async fn mcp_server_elicitation_scenario(
         RequestKind::BrowserAuth => {
             // Browser credentials travel through the browser broker, so the MCP schema is empty.
             elicitation["_meta"] = json!({
-                "genex_approval_kind": "browser_auth",
+                "ruxex_approval_kind": "browser_auth",
                 "browser_auth_challenge_id": "test_browser_auth_challenge_0123456789",
                 "origin": "https://example.com",
                 "reason": "Sign in to continue browsing.",
@@ -119,10 +119,10 @@ pub(super) async fn mcp_server_elicitation_scenario(
         }
         RequestKind::Permission | RequestKind::StrictReview => {
             elicitation["_meta"] = json!({
-                "genex_request_type": "approval_request",
-                "genex_approval_kind": "mcp_tool_call",
-                "genex_strict_auto_review": matches!(request_kind, RequestKind::StrictReview),
-                "genex_sensitive_action": true,
+                "ruxex_request_type": "approval_request",
+                "ruxex_approval_kind": "mcp_tool_call",
+                "ruxex_strict_auto_review": matches!(request_kind, RequestKind::StrictReview),
+                "ruxex_sensitive_action": true,
                 "tool_name": "write_record",
                 "tool_params": {"value": 42}
             });
@@ -283,6 +283,6 @@ pub(super) async fn mcp_server_elicitation_scenario(
     }
     requests.extend(follow_up.requests());
     thread.shutdown_and_wait().await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     Ok(requests)
 }

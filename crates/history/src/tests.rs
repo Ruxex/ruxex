@@ -1,7 +1,7 @@
 use anyhow::Result;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ConfigurationReasoning;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ConfigurationReasoning;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -11,7 +11,7 @@ fn thread_settings_snapshot(disabled_plugin_ids: Vec<String>) -> Result<ThreadSe
     Ok(serde_json::from_value(json!({
         "model": "example-model",
         "approval_policy": "never",
-        "permission_profile": genex_protocol::models::PermissionProfile::read_only(),
+        "permission_profile": ruxex_protocol::models::PermissionProfile::read_only(),
         "cwd": std::env::current_dir()?,
         "collaboration_mode": {
             "mode": "default",
@@ -33,7 +33,7 @@ fn latest_disabled_plugin_ids_preserves_owned_updates_and_clears() -> Result<()>
     let cleared = thread_settings_snapshot(Vec::new())?;
     let item = |thread_id, thread_settings| {
         RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(
-            genex_protocol::protocol::ThreadSettingsAppliedEvent {
+            ruxex_protocol::protocol::ThreadSettingsAppliedEvent {
                 thread_id,
                 thread_settings,
             },
@@ -89,7 +89,7 @@ fn latest_disabled_plugin_ids_falls_back_only_to_latest_turn_context() -> Result
     );
 
     history.push(RolloutItem::EventMsg(EventMsg::ThreadSettingsApplied(
-        genex_protocol::protocol::ThreadSettingsAppliedEvent {
+        ruxex_protocol::protocol::ThreadSettingsAppliedEvent {
             thread_id: Some(ThreadId::new()),
             thread_settings: thread_settings_snapshot(Vec::new())?,
         },
@@ -199,7 +199,7 @@ fn response_item_envelope_stores_metadata_beside_rollout_payload() -> Result<()>
         ordinal: Some(7),
         item: RolloutItem::ResponseItem(ResponseItemEnvelope {
             item: response_item.clone(),
-            metadata: Some(GenexHarnessMetadata {
+            metadata: Some(RuxexHarnessMetadata {
                 client_authored: true,
                 history_truncation_token_limit: Some(20_000),
                 inherited_user_message: true,
@@ -231,7 +231,7 @@ fn response_item_envelope_stores_metadata_beside_rollout_payload() -> Result<()>
     };
     assert_eq!(
         envelope.metadata,
-        Some(GenexHarnessMetadata {
+        Some(RuxexHarnessMetadata {
             client_authored: true,
             history_truncation_token_limit: Some(20_000),
             inherited_user_message: true,
@@ -248,7 +248,7 @@ fn response_item_envelope_preserves_harness_authored_configuration_provenance() 
             effort: ReasoningEffort::High,
         },
     };
-    let metadata = GenexHarnessMetadata {
+    let metadata = RuxexHarnessMetadata {
         harness_authored_configuration: true,
         ..Default::default()
     };
@@ -310,7 +310,7 @@ fn response_item_envelope_ignores_unknown_harness_metadata_fields() -> Result<()
     let RolloutItem::ResponseItem(envelope) = line else {
         panic!("expected response item");
     };
-    assert_eq!(envelope.metadata, Some(GenexHarnessMetadata::default()));
+    assert_eq!(envelope.metadata, Some(RuxexHarnessMetadata::default()));
 
     let compacted = serde_json::from_value::<CompactedItem>(json!({
         "message": "summary",
@@ -319,7 +319,7 @@ fn response_item_envelope_ignores_unknown_harness_metadata_fields() -> Result<()
     }))?;
     assert_eq!(
         compacted.replacement_history.expect("replacement history")[0].metadata,
-        Some(GenexHarnessMetadata::default())
+        Some(RuxexHarnessMetadata::default())
     );
     Ok(())
 }
@@ -370,7 +370,7 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
         replacement_history: Some(vec![
             ResponseItemEnvelope {
                 item: developer_message.clone(),
-                metadata: Some(GenexHarnessMetadata {
+                metadata: Some(RuxexHarnessMetadata {
                     client_authored: true,
                     ..Default::default()
                 }),
@@ -407,14 +407,14 @@ fn compacted_replacement_history_stores_metadata_in_an_aligned_sidecar() -> Resu
         Some(vec![
             ResponseItemEnvelope {
                 item: developer_message,
-                metadata: Some(GenexHarnessMetadata {
+                metadata: Some(RuxexHarnessMetadata {
                     client_authored: true,
                     ..Default::default()
                 }),
             },
             ResponseItemEnvelope {
                 item: compaction_item,
-                metadata: Some(GenexHarnessMetadata::default()),
+                metadata: Some(RuxexHarnessMetadata::default()),
             },
         ])
     );
@@ -469,7 +469,7 @@ fn compacted_metadata_remains_compatible_with_legacy_response_item_readers() -> 
     let response_item = response_message("developer");
     let envelope = ResponseItemEnvelope {
         item: response_item.clone(),
-        metadata: Some(GenexHarnessMetadata {
+        metadata: Some(RuxexHarnessMetadata {
             client_authored: true,
             ..Default::default()
         }),
@@ -654,7 +654,7 @@ fn rollout_item_schema_matches_tagged_payload_and_sibling_metadata() -> Result<(
     );
     assert_eq!(
         compacted["properties"]["replacement_history_metadata"]["items"]["$ref"],
-        json!("#/definitions/GenexHarnessMetadata")
+        json!("#/definitions/RuxexHarnessMetadata")
     );
     let required = compacted["required"].as_array().expect("required fields");
     assert!(!required.contains(&json!("replacement_history")));

@@ -1,12 +1,12 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_otel::ORIGINATOR_TAG;
-use genex_otel::bounded_originator_tag_value;
-use genex_state::DbTelemetry;
-use genex_state::DbTelemetryHandle;
-use genex_state::LOG_WRITE_BYTES_METRIC;
-use genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC;
+use ruxex_otel::ORIGINATOR_TAG;
+use ruxex_otel::bounded_originator_tag_value;
+use ruxex_state::DbTelemetry;
+use ruxex_state::DbTelemetryHandle;
+use ruxex_state::LOG_WRITE_BYTES_METRIC;
+use ruxex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC;
 
 const LOG_WRITE_BYTES_BOUNDARIES: &[f64] = &[
     128.0,
@@ -30,7 +30,7 @@ const LOG_WRITE_BYTES_BOUNDARIES: &[f64] = &[
 ];
 
 struct OtelDbTelemetry {
-    metrics: genex_otel::MetricsClient,
+    metrics: ruxex_otel::MetricsClient,
     originator: &'static str,
 }
 
@@ -56,7 +56,7 @@ impl DbTelemetry for OtelDbTelemetry {
     }
 }
 
-pub(crate) fn recorder(metrics: genex_otel::MetricsClient, originator: &str) -> DbTelemetryHandle {
+pub(crate) fn recorder(metrics: ruxex_otel::MetricsClient, originator: &str) -> DbTelemetryHandle {
     Arc::new(OtelDbTelemetry {
         metrics,
         originator: bounded_originator_tag_value(originator),

@@ -8,7 +8,7 @@ use std::fs;
 fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::Result<()> {
     let home = tempfile::tempdir()?;
     let package = home.path().join("packages/standalone/releases/test");
-    let executable = package.join("GenexCLI.app/Contents/MacOS/genex");
+    let executable = package.join("RuxexCLI.app/Contents/MacOS/ruxex");
     fs::create_dir_all(executable.parent().unwrap())?;
     fs::write(&executable, "")?;
     for directory in [BIN_DIRNAME, RESOURCES_DIRNAME, PATH_DIRNAME] {
@@ -22,11 +22,11 @@ fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::R
     let bin_dir = package.join(BIN_DIRNAME);
     let resources_dir = package.join(RESOURCES_DIRNAME);
     let path_dir = package.join(PATH_DIRNAME);
-    let context = InstallContext::from_exe_with_genex_home(
+    let context = InstallContext::from_exe_with_ruxex_home(
         /*is_macos*/ true,
         /*current_exe*/ Some(&executable),
         /*method_override*/ None,
-        /*genex_home*/ Some(home.path()),
+        /*ruxex_home*/ Some(home.path()),
     );
     assert_eq!(
         context,
@@ -36,7 +36,7 @@ fn bundle_executable_preserves_package_layout_and_install_method() -> std::io::R
                 resources_dir: Some(resources_dir.clone()),
                 platform: standalone_platform(),
             },
-            package_layout: Some(GenexPackageLayout {
+            package_layout: Some(RuxexPackageLayout {
                 package_dir: package,
                 bin_dir,
                 resources_dir: Some(resources_dir),

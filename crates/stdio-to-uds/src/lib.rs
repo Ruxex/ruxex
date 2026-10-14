@@ -4,7 +4,7 @@ use std::io;
 use std::path::Path;
 
 use anyhow::Context;
-use genex_uds::UnixStream;
+use ruxex_uds::UnixStream;
 use tokio::io::AsyncWriteExt;
 
 /// Connects to the Unix Domain Socket at `socket_path` and relays data between

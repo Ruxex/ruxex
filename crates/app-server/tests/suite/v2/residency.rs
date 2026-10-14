@@ -2,12 +2,12 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_login::default_client::RESIDENCY_HEADER_NAME;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_login::default_client::RESIDENCY_HEADER_NAME;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -19,7 +19,7 @@ use test_case::test_case;
 use tokio::time::timeout;
 
 const READ_TIMEOUT: Duration = Duration::from_secs(60);
-const PROVIDER_RESIDENCY_ENV_VAR: &str = "GENEX_TEST_RESIDENCY_HEADER";
+const PROVIDER_RESIDENCY_ENV_VAR: &str = "RUXEX_TEST_RESIDENCY_HEADER";
 
 #[derive(Clone, Copy)]
 enum ModelTransport {
@@ -28,7 +28,7 @@ enum ModelTransport {
 }
 
 async fn write_provider_config(
-    genex_home: &Path,
+    ruxex_home: &Path,
     model_base_url: &str,
     transport: ModelTransport,
 ) -> Result<()> {
@@ -58,8 +58,8 @@ supports_websockets = {supports_websockets}
 "x-provider-internal-codex-residency" = "{PROVIDER_RESIDENCY_ENV_VAR}"
 "#
     );
-    std::fs::write(genex_home.join("config.toml"), config)?;
-    write_models_cache(genex_home).await?;
+    std::fs::write(ruxex_home.join("config.toml"), config)?;
+    write_models_cache(ruxex_home).await?;
     Ok(())
 }
 
@@ -96,18 +96,18 @@ async fn managed_residency_overrides_provider_headers(transport: ModelTransport)
         ModelTransport::Websocket => websocket_server.uri().to_string(),
     };
 
-    let genex_home = TempDir::new()?;
-    write_provider_config(genex_home.path(), &model_base_url, transport).await?;
+    let ruxex_home = TempDir::new()?;
+    write_provider_config(ruxex_home.path(), &model_base_url, transport).await?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         "enforce_residency = \"us\"\n",
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", Some("sk-test")),
-            ("GENEX_ACCESS_TOKEN", None),
+            ("RUXEX_ACCESS_TOKEN", None),
             (PROVIDER_RESIDENCY_ENV_VAR, Some("eu-environment")),
         ])
         .build_initialized_with_timeout(READ_TIMEOUT)

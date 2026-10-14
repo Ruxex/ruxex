@@ -4,15 +4,15 @@ use anyhow::Context;
 use common::TEST_BUILD_COMMIT;
 use common::exec_server::ExecServerHarness;
 use common::exec_server::exec_server_with_env;
-use genex_build_info::BuildInfo;
-use genex_build_info::build_id;
-use genex_exec_server::EnvironmentInfo;
-use genex_exec_server::InitializeParams;
-use genex_exec_server::InitializeResponse;
-use genex_exec_server_protocol::JSONRPCError;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCResponse;
+use ruxex_build_info::BuildInfo;
+use ruxex_build_info::build_id;
+use ruxex_exec_server::EnvironmentInfo;
+use ruxex_exec_server::InitializeParams;
+use ruxex_exec_server::InitializeResponse;
+use ruxex_exec_server_protocol::JSONRPCError;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCResponse;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::process::Command;
@@ -25,9 +25,9 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
     let package = TempDir::new()?;
     let bin_dir = package.path().join("bin");
     std::fs::create_dir(&bin_dir)?;
-    let executable = bin_dir.join(format!("genex{}", std::env::consts::EXE_SUFFIX));
+    let executable = bin_dir.join(format!("ruxex{}", std::env::consts::EXE_SUFFIX));
     std::fs::copy(std::env::current_exe()?, &executable)?;
-    let manifest = package.path().join("genex-package.json");
+    let manifest = package.path().join("ruxex-package.json");
     if let Some(version) = version {
         std::fs::write(
             &manifest,
@@ -44,7 +44,7 @@ async fn exec_server_accepts_initialize(version: Option<&str>) -> anyhow::Result
             "ffffffffffffffffffffffffffffffffffffffff",
         ),
         ("GITHUB_SHA", "ffffffffffffffffffffffffffffffffffffffff"),
-        ("GENEX_BUILD_TARGET", "runtime-override"),
+        ("RUXEX_BUILD_TARGET", "runtime-override"),
     ]);
     let mut server = ExecServerHarness::start(command).await?;
 

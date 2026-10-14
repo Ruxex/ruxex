@@ -3,15 +3,15 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::MarketplaceRemoveParams;
-use genex_app_server_protocol::MarketplaceRemoveResponse;
-use genex_app_server_protocol::RequestId;
-use genex_config::MarketplaceConfigUpdate;
-use genex_config::record_user_marketplace;
-use genex_core::config::set_project_trust_level;
-use genex_core_plugins::installed_marketplaces::marketplace_install_root;
-use genex_protocol::config_types::TrustLevel;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::MarketplaceRemoveParams;
+use ruxex_app_server_protocol::MarketplaceRemoveResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_config::MarketplaceConfigUpdate;
+use ruxex_config::record_user_marketplace;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_core_plugins::installed_marketplaces::marketplace_install_root;
+use ruxex_protocol::config_types::TrustLevel;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -28,8 +28,8 @@ fn configured_marketplace_update() -> MarketplaceConfigUpdate<'static> {
     }
 }
 
-fn write_installed_marketplace(genex_home: &std::path::Path, marketplace_name: &str) -> Result<()> {
-    let root = marketplace_install_root(genex_home).join(marketplace_name);
+fn write_installed_marketplace(ruxex_home: &std::path::Path, marketplace_name: &str) -> Result<()> {
+    let root = marketplace_install_root(ruxex_home).join(marketplace_name);
     std::fs::create_dir_all(root.join(".agents/plugins"))?;
     std::fs::write(root.join(".agents/plugins/marketplace.json"), "{}")?;
     Ok(())
@@ -50,15 +50,15 @@ fn canonicalize_path_with_existing_parent(path: &std::path::Path) -> Result<std:
 #[test_case(true; "user entry and snapshot")]
 #[tokio::test]
 async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     if user_entry {
-        record_user_marketplace(genex_home.path(), "debug", &configured_marketplace_update())?;
+        record_user_marketplace(ruxex_home.path(), "debug", &configured_marketplace_update())?;
     }
-    write_installed_marketplace(genex_home.path(), "debug")?;
-    let installed_root = marketplace_install_root(genex_home.path()).join("debug");
+    write_installed_marketplace(ruxex_home.path(), "debug")?;
+    let installed_root = marketplace_install_root(ruxex_home.path()).join("debug");
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let response: MarketplaceRemoveResponse = mcp
@@ -78,7 +78,7 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
         canonicalize_path_with_existing_parent(&installed_root)?,
     );
 
-    let config_path = genex_home.path().join("config.toml");
+    let config_path = ruxex_home.path().join("config.toml");
     if user_entry {
         let config = std::fs::read_to_string(config_path)?;
         assert!(!config.contains("[marketplaces.debug]"));
@@ -86,7 +86,7 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
         assert!(!config_path.exists());
     }
     assert!(
-        !marketplace_install_root(genex_home.path())
+        !marketplace_install_root(ruxex_home.path())
             .join("debug")
             .exists()
     );
@@ -95,10 +95,10 @@ async fn marketplace_remove_deletes_config_and_installed_root(user_entry: bool) 
 
 #[tokio::test]
 async fn marketplace_remove_rejects_unknown_marketplace() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -127,24 +127,24 @@ async fn marketplace_remove_rejects_unknown_marketplace() -> Result<()> {
 #[test_case(true; "project and user")]
 #[tokio::test]
 async fn marketplace_remove_preserves_project_marketplace(user_entry: bool) -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     if user_entry {
-        record_user_marketplace(genex_home.path(), "debug", &configured_marketplace_update())?;
+        record_user_marketplace(ruxex_home.path(), "debug", &configured_marketplace_update())?;
     }
-    // TestAppServer starts in GENEX_HOME, so make it a trusted project as well.
-    std::fs::create_dir_all(genex_home.path().join(".git"))?;
-    std::fs::create_dir_all(genex_home.path().join(".genex"))?;
-    let project_config_path = genex_home.path().join(".genex/config.toml");
+    // TestAppServer starts in RUXEX_HOME, so make it a trusted project as well.
+    std::fs::create_dir_all(ruxex_home.path().join(".git"))?;
+    std::fs::create_dir_all(ruxex_home.path().join(".ruxex"))?;
+    let project_config_path = ruxex_home.path().join(".ruxex/config.toml");
     let project_config = "[marketplaces.debug]\nsource_type = \"git\"\nsource = \"https://github.com/owner/repo.git\"\n";
     std::fs::write(&project_config_path, project_config)?;
-    set_project_trust_level(genex_home.path(), genex_home.path(), TrustLevel::Trusted)?;
-    write_installed_marketplace(genex_home.path(), "debug")?;
+    set_project_trust_level(ruxex_home.path(), ruxex_home.path(), TrustLevel::Trusted)?;
+    write_installed_marketplace(ruxex_home.path(), "debug")?;
     let snapshot_path =
-        marketplace_install_root(genex_home.path()).join("debug/.agents/plugins/marketplace.json");
-    let user_config_path = genex_home.path().join("config.toml");
+        marketplace_install_root(ruxex_home.path()).join("debug/.agents/plugins/marketplace.json");
+    let user_config_path = ruxex_home.path().join("config.toml");
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let user_config = std::fs::read_to_string(&user_config_path)?;

@@ -1,28 +1,28 @@
 use anyhow::Result;
-use genex_core::StartIfIdleSubmission;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::config::Config;
-use genex_extension_api::ConfigContributor;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_history::RolloutItem;
-use genex_history::RolloutLine;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_protocol::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::config::Config;
+use ruxex_extension_api::ConfigContributor;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_history::RolloutItem;
+use ruxex_history::RolloutLine;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -38,11 +38,11 @@ const INITIAL_MODEL: &str = "legacy-model";
 const COMMITTED_MODEL: &str = "example-model-2";
 const TIMEOUT: Duration = Duration::from_secs(10);
 
-fn assert_checkpoints(test: &TestGenex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+fn assert_checkpoints(test: &TestRuxex, expected: &[ThreadSettingsSnapshot]) -> Result<()> {
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<_, _>>()?;
     let snapshots: Vec<_> = rollout
         .into_iter()
@@ -67,13 +67,13 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_history_mode(history_mode)
         .build_with_auto_env(&server)
         .await?;
     let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(selected.clone()),
             ..Default::default()
@@ -82,22 +82,22 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     .await?;
     let response = responses::mount_sse_once(&server, responses::sse_completed("first turn")).await;
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::user_input(Vec::new()))
         .await?;
     let StartIfIdleSubmission::Started { turn_id } = submission else {
         panic!("expected an accepted first turn, got {submission:?}");
     };
     wait_for_event(
-        &test.genex,
+        &test.ruxex,
         |event| matches!(event, EventMsg::TurnComplete(completed) if completed.turn_id == turn_id),
     )
     .await;
-    test.genex.flush_rollout().await?;
+    test.ruxex.flush_rollout().await?;
     assert_checkpoints(&test, &[])?;
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let (items, _, parse_errors) =
-        genex_rollout::RolloutRecorder::load_rollout_items(&rollout_path).await?;
+        ruxex_rollout::RolloutRecorder::load_rollout_items(&rollout_path).await?;
     assert_eq!(parse_errors, 0);
     let context = items.iter().find_map(|item| match item {
         RolloutItem::TurnContext(context)
@@ -116,24 +116,24 @@ async fn initial_plugin_ids_use_turn_context_without_extra_settings_checkpoints(
     assert_eq!(response.requests().len(), 1);
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(vec![]),
             ..Default::default()
         },
     )
     .await?;
-    let expected = vec![test.genex.thread_settings_snapshot().await];
+    let expected = vec![test.ruxex.thread_settings_snapshot().await];
     assert!(expected[0].disabled_plugin_ids.is_empty());
-    test.genex.flush_rollout().await?;
+    test.ruxex.flush_rollout().await?;
     assert_checkpoints(&test, &expected)?;
     let response =
         responses::mount_sse_once(&server, responses::sse_completed("second turn")).await;
     test.submit_text_turn("second turn").await?;
-    test.genex.flush_rollout().await?;
+    test.ruxex.flush_rollout().await?;
     assert_eq!(response.requests().len(), 1);
     assert_checkpoints(&test, &expected)?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -192,12 +192,12 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
     extensions.config_contributor(Arc::new(PauseAfterCommit {
         gate: Mutex::new(Some((entered_tx, release_rx))),
     }));
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model(INITIAL_MODEL)
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
-    let mut initial = test.genex.restorable_thread_settings().await;
+    let mut initial = test.ruxex.restorable_thread_settings().await;
     // Restore only runtime model settings, without overwriting the committed plugin selection.
     initial.disabled_plugin_ids = None;
     let thread_settings = ThreadSettingsOverrides {
@@ -206,11 +206,11 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         ..Default::default()
     };
     let submission = tokio::spawn({
-        let genex = Arc::clone(&test.genex);
+        let ruxex = Arc::clone(&test.ruxex);
         async move {
             match operation {
                 SettingsOperation::TurnStart => {
-                    let result = genex
+                    let result = ruxex
                         .start_or_steer_turn(
                             TurnInputRequest::user_input(vec![UserInput::Text {
                                 text: "use the committed model".to_string(),
@@ -225,20 +225,20 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
                     Ok(turn_id)
                 }
                 SettingsOperation::Standalone => {
-                    genex.submit(Op::ThreadSettings { thread_settings }).await
+                    ruxex.submit(Op::ThreadSettings { thread_settings }).await
                 }
             }
         }
     });
 
     timeout(TIMEOUT, entered_rx).await??;
-    let expected = test.genex.thread_settings_snapshot().await;
+    let expected = test.ruxex.thread_settings_snapshot().await;
     assert_eq!(expected.model, COMMITTED_MODEL);
     assert_eq!(expected.disabled_plugin_ids, vec!["slack@provider"]);
     // Submitted operations are serialized. Runtime restoration is an existing
     // direct writer, so it can overlap the first operation's post-commit work.
-    timeout(TIMEOUT, test.genex.restore_thread_settings(initial)).await??;
-    let restored = test.genex.thread_settings_snapshot().await;
+    timeout(TIMEOUT, test.ruxex.restore_thread_settings(initial)).await??;
+    let restored = test.ruxex.thread_settings_snapshot().await;
     assert_eq!(restored.model, INITIAL_MODEL);
     assert_eq!(restored.disabled_plugin_ids, vec!["slack@provider"]);
     release_tx.send(())?;
@@ -246,7 +246,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
 
     let applied = timeout(TIMEOUT, async {
         loop {
-            let event = test.genex.next_event().await?;
+            let event = test.ruxex.next_event().await?;
             match event.msg {
                 EventMsg::ThreadSettingsApplied(applied) if event.id == submission_id => {
                     return Ok::<_, anyhow::Error>((applied.thread_id, applied.thread_settings));
@@ -265,7 +265,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         SettingsOperation::TurnStart => COMMITTED_MODEL,
         SettingsOperation::Standalone => {
             assert!(response.requests().is_empty());
-            test.genex
+            test.ruxex
                 .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "use the restored settings".to_string(),
                     text_elements: Vec::new(),
@@ -274,7 +274,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
             INITIAL_MODEL
         }
     };
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -282,7 +282,7 @@ async fn settings_notifications_keep_their_commit_across_postcommit_work(
         response.single_request().body_json()["model"],
         expected_request_model
     );
-    assert_eq!(test.genex.thread_settings_snapshot().await, restored);
+    assert_eq!(test.ruxex.thread_settings_snapshot().await, restored);
     Ok(())
 }
 
@@ -309,7 +309,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         }],
     ])
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model(INITIAL_MODEL)
         .with_config(|config| {
             // Local compaction lets the SSE gate hold its response in flight.
@@ -318,7 +318,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         .build_with_streaming_server(&server)
         .await?;
     test.submit_text_turn("before compaction").await?;
-    test.genex.submit(Op::Compact).await?;
+    test.ruxex.submit(Op::Compact).await?;
     timeout(TIMEOUT, server.wait_for_request_count(/*count*/ 2)).await?;
 
     let request: serde_json::Value = serde_json::from_slice(&server.requests().await[1])?;
@@ -326,7 +326,7 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
     let updated_cwd = TempDir::new()?;
     let updated_cwd_path = AbsolutePathBuf::try_from(updated_cwd.path())?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(updated_cwd_path.clone())),
             model: Some(COMMITTED_MODEL.to_string()),
@@ -335,22 +335,22 @@ async fn compaction_checkpoints_settings_changed_during_its_model_request() -> R
         },
     )
     .await?;
-    let expected = test.genex.thread_settings_snapshot().await;
+    let expected = test.ruxex.thread_settings_snapshot().await;
     assert_eq!(
         (&expected.cwd, expected.model.as_str()),
         (&updated_cwd_path, COMMITTED_MODEL)
     );
     release_compaction.send(()).expect("compaction is waiting");
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     let rollout_path = test.session_configured.rollout_path.expect("rollout path");
     let rollout: Vec<RolloutLine> = std::fs::read_to_string(rollout_path)?
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<_, _>>()?;
     let checkpoint = rollout
         .iter()

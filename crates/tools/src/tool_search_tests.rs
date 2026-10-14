@@ -166,8 +166,8 @@ fn default_search_text_uses_model_visible_namespace_metadata_once() {
     );
     parameters.description = Some("Automation options.".to_string());
     let spec = ToolSpec::Namespace(crate::ResponsesApiNamespace {
-        name: "genex_app".to_string(),
-        description: "Manage Genex automations.".to_string(),
+        name: "ruxex_app".to_string(),
+        description: "Manage Ruxex automations.".to_string(),
         tools: vec![ResponsesApiNamespaceTool::Function(ResponsesApiTool {
             name: "automation_update".to_string(),
             description: "Create or update automations.".to_string(),
@@ -183,7 +183,7 @@ fn default_search_text_uses_model_visible_namespace_metadata_once() {
 
     assert_eq!(
         search_info.entry.search_text,
-        "genex_app Manage Genex automations. automation_update automation update Create or update automations. Automation options. mode Update mode. schedule Schedule settings. timezone IANA timezone."
+        "ruxex_app Manage Ruxex automations. automation_update automation update Create or update automations. Automation options. mode Update mode. schedule Schedule settings. timezone IANA timezone."
     );
 }
 

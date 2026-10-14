@@ -1,6 +1,6 @@
 use crate::plugin_bundle_archive::PluginBundlePackError;
 use crate::plugin_bundle_archive::pack_plugin_bundle_tar_gz;
-use genex_http_client::RouteAwareClientPool;
+use ruxex_http_client::RouteAwareClientPool;
 use http::Method;
 use http::StatusCode;
 use serde::Deserialize;
@@ -52,7 +52,7 @@ pub enum PluginPublishError {
     Request {
         url: String,
         #[source]
-        source: genex_http_client::RouteAwareRequestError,
+        source: ruxex_http_client::RouteAwareRequestError,
     },
 
     #[error("unexpected response from '{url}': HTTP {status}: {body}")]
@@ -267,7 +267,7 @@ where
         .await
         .map_err(|source| PluginPublishError::Request {
             url: url.to_string(),
-            source: genex_http_client::RouteAwareRequestError::Request(source),
+            source: ruxex_http_client::RouteAwareRequestError::Request(source),
         })?;
     if !status.is_success() {
         return Err(PluginPublishError::UnexpectedStatus {
@@ -293,8 +293,8 @@ fn truncate_body(mut body: String) -> String {
 #[cfg(test)]
 mod tests {
     use super::super::test_support::test_http_client_factory;
-    use genex_http_client::ClientRouteClass;
-    use genex_http_client::RouteAwareClientPool;
+    use ruxex_http_client::ClientRouteClass;
+    use ruxex_http_client::RouteAwareClientPool;
     use serde_json::Value;
     use serde_json::json;
     use std::fs;
@@ -418,7 +418,7 @@ mod tests {
 
     fn plugin_dir() -> TempDir {
         let dir = tempfile::tempdir().expect("create plugin directory");
-        let manifest = dir.path().join(".genex-plugin/plugin.json");
+        let manifest = dir.path().join(".ruxex-plugin/plugin.json");
         fs::create_dir_all(manifest.parent().expect("manifest parent"))
             .expect("create manifest directory");
         fs::write(manifest, r#"{"name":"demo","description":"demo plugin"}"#)

@@ -151,7 +151,7 @@ impl ChatWidget {
                         thread_id,
                         params.server_name,
                         request_id,
-                        genex_app_server_protocol::McpServerElicitationAction::Decline,
+                        ruxex_app_server_protocol::McpServerElicitationAction::Decline,
                         /*content*/ None,
                         /*meta*/ None,
                     );

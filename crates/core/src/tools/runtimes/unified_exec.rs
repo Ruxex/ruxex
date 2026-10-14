@@ -35,17 +35,17 @@ use crate::unified_exec::TerminalPermissions;
 use crate::unified_exec::TerminalSandboxSource;
 use crate::unified_exec::UnifiedExecProcess;
 use crate::unified_exec::UnifiedExecProcessManager;
-use genex_core_plugins::PluginMetricsSidecar;
-use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::error::GenexErr;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxablePreference;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_tools::UnifiedExecShellMode;
-use genex_utils_path_uri::PathUri;
+use ruxex_core_plugins::PluginMetricsSidecar;
+use ruxex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxablePreference;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_tools::UnifiedExecShellMode;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
@@ -68,7 +68,7 @@ pub struct UnifiedExecRequest {
     pub turn_environment: TurnEnvironment,
     pub env: HashMap<String, String>,
     pub exec_server_env_config: Option<ExecServerEnvConfig>,
-    pub shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
+    pub shell_snapshot: Option<ruxex_exec_server::ShellSnapshotRequest>,
     pub explicit_env_overrides: HashMap<String, String>,
     pub network: Option<NetworkProxy>,
     pub tty: bool,
@@ -334,7 +334,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let (mut env, managed_network_context, network_proxy_launch) = match managed_network {
             Some(network) if environment_is_remote => {
                 let launch = network.remote_launch_config().await.map_err(|err| {
-                    ToolError::Genex(GenexErr::Io(io::Error::other(err.to_string())))
+                    ToolError::Ruxex(RuxexErr::Io(io::Error::other(err.to_string())))
                 })?;
                 if !launch.proxy.enabled {
                     (env, None, None)
@@ -345,7 +345,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                             .info()
                             .await
                             .map_err(|err| {
-                                ToolError::Genex(GenexErr::Io(io::Error::other(format!(
+                                ToolError::Ruxex(RuxexErr::Io(io::Error::other(format!(
                                     "failed to query exec-server capabilities: {err}"
                                 ))))
                             })?;
@@ -367,7 +367,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                         Some(&req.turn_environment.selection.environment_id),
                     )
                     .map_err(|err| {
-                        ToolError::Genex(GenexErr::Io(io::Error::other(format!(
+                        ToolError::Ruxex(RuxexErr::Io(io::Error::other(format!(
                             "failed to prepare network proxy for environment `{}`: {err}",
                             req.turn_environment.selection.environment_id
                         ))))
@@ -428,7 +428,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
                 .into_iter()
                 .chain(broker.context_keys)
             {
-                if !genex_network_proxy::is_credential_broker_provider_env_key(&key)
+                if !ruxex_network_proxy::is_credential_broker_provider_env_key(&key)
                     && let Some(value) = env.get(&key)
                 {
                     explicit_env_overrides.insert(key, value.clone());
@@ -473,7 +473,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let brokered_shell_snapshot_missing = !environment_is_remote
             && managed_network.is_some()
             && env
-                .get(genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
+                .get(ruxex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
                 .is_some_and(|active| active == "1")
             && command
                 .get(1)
@@ -509,7 +509,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
         let snapshot_permissions = shell_snapshot_location
             .as_ref()
             .filter(|_| {
-                env.get(genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
+                env.get(ruxex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
                     .is_some_and(|active| active == "1")
             })
             .and_then(|path| {
@@ -554,7 +554,7 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
             ToolError::Rejected(_) => {
                 ToolError::Rejected("missing command line for PTY".to_string())
             }
-            error @ ToolError::Genex(_) => error,
+            error @ ToolError::Ruxex(_) => error,
         })?;
         let options = unified_exec_options(attempt.network_denial_cancellation_token.clone());
         let mut process = self
@@ -591,14 +591,14 @@ mod tests {
     use crate::environment_selection::EnvironmentConfigOrigin;
     use crate::exec::DEFAULT_EXEC_COMMAND_TIMEOUT_MS;
     use crate::tools::sandboxing::ToolRuntime;
-    use genex_exec_server::Environment;
-    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::protocol::EnvironmentConfig;
-    use genex_protocol::protocol::EnvironmentConfigState;
-    use genex_protocol::protocol::TurnEnvironmentSelection;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_exec_server::Environment;
+    use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::protocol::EnvironmentConfig;
+    use ruxex_protocol::protocol::EnvironmentConfigState;
+    use ruxex_protocol::protocol::TurnEnvironmentSelection;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
     use std::time::Duration;

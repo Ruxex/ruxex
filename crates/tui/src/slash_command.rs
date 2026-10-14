@@ -68,7 +68,7 @@ impl SlashCommand {
     pub fn description(self) -> &'static str {
         match self {
             SlashCommand::New => "start a new chat during a conversation",
-            SlashCommand::Init => "create an AGENTS.md file with instructions for Genex",
+            SlashCommand::Init => "create an AGENTS.md file with instructions for Ruxex",
             SlashCommand::Compact => "summarize conversation to prevent hitting the context limit",
             SlashCommand::Recap => "summarize the current conversation now",
             SlashCommand::Review => "review my current changes and find issues",
@@ -79,13 +79,13 @@ impl SlashCommand {
             SlashCommand::Clear => "clear the terminal and start a new chat",
             SlashCommand::Fork => "fork the current chat",
             SlashCommand::Worktree => "start or continue a conversation in a new worktree",
-            SlashCommand::Quit | SlashCommand::Exit => "exit Genex",
+            SlashCommand::Quit | SlashCommand::Exit => "exit Ruxex",
             SlashCommand::Copy => "copy the last response or part of it",
             SlashCommand::Export => "export the conversation as markdown",
             SlashCommand::Raw => "toggle raw scrollback mode for copy-friendly terminal selection",
             SlashCommand::Diff => "show git diff (including untracked files)",
             SlashCommand::Mention => "mention a file",
-            SlashCommand::Skills => "use skills to improve how Genex performs specific tasks",
+            SlashCommand::Skills => "use skills to improve how Ruxex performs specific tasks",
             SlashCommand::Hooks => "view and manage lifecycle hooks",
             SlashCommand::Daemon => "Manage the local background server.",
             SlashCommand::Status => "show current session configuration and token usage",
@@ -108,12 +108,12 @@ impl SlashCommand {
             SlashCommand::Side | SlashCommand::Btw => {
                 "start a side conversation in an ephemeral fork"
             }
-            SlashCommand::Permissions => "choose what Genex is allowed to do",
+            SlashCommand::Permissions => "choose what Ruxex is allowed to do",
             SlashCommand::Keymap => "remap TUI shortcuts",
             SlashCommand::Vim => "toggle Vim mode for the composer",
             SlashCommand::Mcp => "list configured MCP tools; use /mcp verbose for details",
             SlashCommand::Plugins => "browse plugins",
-            SlashCommand::Logout => "log out of Genex",
+            SlashCommand::Logout => "log out of Ruxex",
         }
     }
 

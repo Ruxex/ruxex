@@ -3,9 +3,9 @@
 /// MCP OAuth policy pinned for the lifetime of a connection.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum McpOAuthRefreshMode {
-    /// Keep Genex's existing refresh and persistence path.
+    /// Keep Ruxex's existing refresh and persistence path.
     #[default]
     Legacy,
-    /// Let RMCP coordinate refresh through Genex's credential store.
+    /// Let RMCP coordinate refresh through Ruxex's credential store.
     Coordinated,
 }

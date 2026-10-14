@@ -1,18 +1,18 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ModelRerouteReason;
-use genex_protocol::protocol::ModelVerification;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ModelRerouteReason;
+use ruxex_protocol::protocol::ModelVerification;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_function_call;
 use core_test_support::responses::ev_model_verification_metadata;
@@ -24,10 +24,10 @@ use core_test_support::responses::sse_completed;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use wiremock::ResponseTemplate;
@@ -39,7 +39,7 @@ const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION: &str = "trusted_access_for_cyber";
 const CYBER_POLICY_MESSAGE: &str =
     "This request has been flagged for potentially high-risk cyber activity.";
 
-fn disabled_text_turn(test: &TestGenex, text: &str) -> TurnInputRequest {
+fn disabled_text_turn(test: &TestRuxex, text: &str) -> TurnInputRequest {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.cwd_path());
     TurnInputRequest::user_input(vec![UserInput::Text {
@@ -72,14 +72,14 @@ async fn provider_model_header_mismatch_emits_warning_event() -> Result<()> {
         sse_response(sse_completed("resp-1")).insert_header("provider-Model", SERVER_MODEL);
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model(REQUESTED_MODEL);
+    let mut builder = test_ruxex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger safety check"))
         .await?;
 
-    let reroute = wait_for_event(&test.genex, |event| {
+    let reroute = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ModelReroute(_))
     })
     .await;
@@ -90,14 +90,14 @@ async fn provider_model_header_mismatch_emits_warning_event() -> Result<()> {
     assert_eq!(reroute.to_model, SERVER_MODEL);
     assert_eq!(reroute.reason, ModelRerouteReason::HighRiskCyberActivity);
 
-    let warning = wait_for_event(&test.genex, |event| matches!(event, EventMsg::Warning(_))).await;
+    let warning = wait_for_event(&test.ruxex, |event| matches!(event, EventMsg::Warning(_))).await;
     let EventMsg::Warning(warning) = warning else {
         panic!("expected warning event");
     };
     assert!(warning.message.contains(REQUESTED_MODEL));
     assert!(warning.message.contains(SERVER_MODEL));
 
-    let _ = wait_for_event(&test.genex, |event| {
+    let _ = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -120,19 +120,19 @@ async fn cyber_policy_response_emits_typed_error_without_retry() -> Result<()> {
     }));
     let mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model(REQUESTED_MODEL);
+    let mut builder = test_ruxex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger cyber policy error"))
         .await?;
 
-    let error = wait_for_event(&test.genex, |event| matches!(event, EventMsg::Error(_))).await;
+    let error = wait_for_event(&test.ruxex, |event| matches!(event, EventMsg::Error(_))).await;
     let EventMsg::Error(error) = error else {
         panic!("expected error event");
     };
     assert_eq!(error.message, CYBER_POLICY_MESSAGE);
-    assert_eq!(error.genex_error_info, Some(GenexErrorInfo::CyberPolicy));
+    assert_eq!(error.ruxex_error_info, Some(RuxexErrorInfo::CyberPolicy));
 
     mock.single_request();
 
@@ -159,14 +159,14 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     .insert_header("provider-Model", REQUESTED_MODEL);
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model(REQUESTED_MODEL);
+    let mut builder = test_ruxex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger response model check"))
         .await?;
 
-    let reroute = wait_for_event(&test.genex, |event| {
+    let reroute = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ModelReroute(_))
     })
     .await;
@@ -177,7 +177,7 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     assert_eq!(reroute.to_model, SERVER_MODEL);
     assert_eq!(reroute.reason, ModelRerouteReason::HighRiskCyberActivity);
 
-    let warning = wait_for_event(&test.genex, |event| {
+    let warning = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::Warning(warning)
@@ -193,7 +193,7 @@ async fn response_model_field_mismatch_emits_warning_when_header_matches_request
     assert!(warning.message.contains(REQUESTED_MODEL));
     assert!(warning.message.contains(SERVER_MODEL));
 
-    let _ = wait_for_event(&test.genex, |event| {
+    let _ = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -229,16 +229,16 @@ async fn provider_model_header_mismatch_only_emits_one_warning_per_turn() -> Res
     .insert_header("provider-Model", SERVER_MODEL);
     let _mock = mount_response_sequence(&server, vec![first_response, second_response]).await;
 
-    let mut builder = test_genex().with_model(REQUESTED_MODEL);
+    let mut builder = test_ruxex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger follow-up turn"))
         .await?;
 
     let mut warning_count = 0;
     loop {
-        let event = wait_for_event(&test.genex, |_| true).await;
+        let event = wait_for_event(&test.ruxex, |_| true).await;
         match event {
             EventMsg::Warning(warning)
                 if warning
@@ -267,17 +267,17 @@ async fn provider_model_header_casing_only_mismatch_does_not_warn() -> Result<()
         .insert_header("provider-Model", requested_header.as_str());
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model(REQUESTED_MODEL);
+    let mut builder = test_ruxex().with_model(REQUESTED_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger casing check"))
         .await?;
 
     let mut reroute_count = 0;
     let mut warning_count = 0;
     loop {
-        let event = wait_for_event(&test.genex, |_| true).await;
+        let event = wait_for_event(&test.ruxex, |_| true).await;
         match event {
             EventMsg::ModelReroute(_) => reroute_count += 1,
             EventMsg::Warning(warning)
@@ -310,10 +310,10 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     ]));
     let _mock = mount_response_once(&server, response).await;
 
-    let mut builder = test_genex().with_model("example-model");
+    let mut builder = test_ruxex().with_model("example-model");
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(&test, "trigger model verification"))
         .await?;
 
@@ -322,7 +322,7 @@ async fn model_verification_emits_structured_event_without_reroute_or_warning() 
     let mut warning_count = 0;
     let mut warning_item_count = 0;
     loop {
-        let event = wait_for_event(&test.genex, |_| true).await;
+        let event = wait_for_event(&test.ruxex, |_| true).await;
         match event {
             EventMsg::ModelVerification(event) => {
                 assert_eq!(
@@ -386,10 +386,10 @@ async fn model_verification_only_emits_once_per_turn() -> Result<()> {
     ]));
     let _mock = mount_response_sequence(&server, vec![first_response, second_response]).await;
 
-    let mut builder = test_genex().with_model(SERVER_MODEL);
+    let mut builder = test_ruxex().with_model(SERVER_MODEL);
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(disabled_text_turn(
             &test,
             "trigger follow-up model verification",
@@ -398,7 +398,7 @@ async fn model_verification_only_emits_once_per_turn() -> Result<()> {
 
     let mut verification_count = 0;
     loop {
-        let event = wait_for_event(&test.genex, |_| true).await;
+        let event = wait_for_event(&test.ruxex, |_| true).await;
         match event {
             EventMsg::ModelVerification(_) => verification_count += 1,
             EventMsg::Warning(warning) if warning.message.contains("high-risk cyber activity") => {

@@ -3,13 +3,13 @@ use crate::harness::build_metrics_with_defaults;
 use crate::harness::find_metric;
 use crate::harness::histogram_data;
 use crate::harness::latest_metrics;
-use genex_otel::PLUGIN_INSTALL_ELICITATION_SENT_METRIC;
-use genex_otel::PLUGIN_INSTALL_SUGGESTION_METRIC;
-use genex_otel::Result;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
+use ruxex_otel::PLUGIN_INSTALL_ELICITATION_SENT_METRIC;
+use ruxex_otel::PLUGIN_INSTALL_SUGGESTION_METRIC;
+use ruxex_otel::Result;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;
 use pretty_assertions::assert_eq;
@@ -18,7 +18,7 @@ use std::collections::BTreeMap;
 // Ensures SessionTelemetry attaches metadata tags when forwarding metrics.
 #[test]
 fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
-    let (metrics, exporter) = build_metrics_with_defaults(&[("service", "genex-cli")])?;
+    let (metrics, exporter) = build_metrics_with_defaults(&[("service", "ruxex-cli")])?;
     let manager = SessionTelemetry::new(
         ThreadId::new(),
         "example-model-1",
@@ -34,13 +34,13 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
     .with_metrics(metrics);
 
     manager.counter(
-        "genex.session_started",
+        "ruxex.session_started",
         /*inc*/ 1,
         &[("source", "tui")],
     );
     for tokens in [32_000, 256_000] {
         manager.histogram_with_boundaries(
-            "genex.request_tokens",
+            "ruxex.request_tokens",
             tokens,
             &[16_000.0, 128_000.0, 512_000.0],
             &[("source", "tui")],
@@ -50,7 +50,7 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
 
     let resource_metrics = latest_metrics(&exporter);
     assert_eq!(
-        histogram_data(&resource_metrics, "genex.request_tokens"),
+        histogram_data(&resource_metrics, "ruxex.request_tokens"),
         (
             vec![16_000.0, 128_000.0, 512_000.0],
             vec![0, 1, 1, 0],
@@ -59,7 +59,7 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
         )
     );
     let metric =
-        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "ruxex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -83,7 +83,7 @@ fn manager_attaches_metadata_tags_to_metrics() -> Result<()> {
         ),
         ("model".to_string(), "example-model-1".to_string()),
         ("originator".to_string(), "test_originator".to_string()),
-        ("service".to_string(), "genex-cli".to_string()),
+        ("service".to_string(), "ruxex-cli".to_string()),
         ("session_source".to_string(), "cli".to_string()),
         ("source".to_string(), "tui".to_string()),
     ]);
@@ -111,7 +111,7 @@ fn manager_allows_disabling_metadata_tags() -> Result<()> {
     .with_metrics_without_metadata_tags(metrics);
 
     manager.counter(
-        "genex.session_started",
+        "ruxex.session_started",
         /*inc*/ 1,
         &[("source", "tui")],
     );
@@ -119,7 +119,7 @@ fn manager_allows_disabling_metadata_tags() -> Result<()> {
 
     let resource_metrics = latest_metrics(&exporter);
     let metric =
-        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "ruxex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {
@@ -156,12 +156,12 @@ fn manager_attaches_optional_service_name_tag() -> Result<()> {
     .with_metrics_service_name("my_app_server_client")
     .with_metrics(metrics);
 
-    manager.counter("genex.session_started", /*inc*/ 1, &[]);
+    manager.counter("ruxex.session_started", /*inc*/ 1, &[]);
     manager.shutdown_metrics()?;
 
     let resource_metrics = latest_metrics(&exporter);
     let metric =
-        find_metric(&resource_metrics, "genex.session_started").expect("counter metric missing");
+        find_metric(&resource_metrics, "ruxex.session_started").expect("counter metric missing");
     let attrs = match metric.data() {
         AggregatedMetrics::U64(data) => match data {
             MetricData::Sum(sum) => {

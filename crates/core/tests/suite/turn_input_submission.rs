@@ -1,39 +1,39 @@
-use genex_core::NotSubmittedReason;
-use genex_core::RecoverTurnRequest;
-use genex_core::StartIfIdleSubmission;
-use genex_core::StartThreadOptions;
-use genex_core::SteerSubmission;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::TurnStartOptions;
-use genex_core::config::Constrained;
-use genex_core::context::ContextualUserFragment;
-use genex_core::context::InternalContextSource;
-use genex_core::context::InternalModelContextFragment;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::TurnStartAdmission;
-use genex_protocol::AgentPath;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::NotSubmittedReason;
+use ruxex_core::RecoverTurnRequest;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::SteerSubmission;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::TurnStartOptions;
+use ruxex_core::config::Constrained;
+use ruxex_core::context::ContextualUserFragment;
+use ruxex_core::context::InternalContextSource;
+use ruxex_core::context::InternalModelContextFragment;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::TurnStartAdmission;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::local;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -66,12 +66,12 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
     let admission = Arc::new(TestAdmission(AtomicBool::new(true)));
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(admission.clone());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
     assert_eq!(
-        test.genex
+        test.ruxex
             .start_or_steer_turn(user_message_request("rejected direct input"))
             .await?,
         TurnInputSubmission::NotSubmitted {
@@ -86,7 +86,7 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
         ))),
     ] {
         assert_eq!(
-            test.genex.start_turn_if_idle(request).await?,
+            test.ruxex.start_turn_if_idle(request).await?,
             StartIfIdleSubmission::NotSubmitted {
                 reason: NotSubmittedReason::ServerDraining
             },
@@ -94,10 +94,10 @@ async fn host_drain_rejects_turn_start_paths_without_recording_input() -> anyhow
     }
     assert!(response.requests().is_empty());
     admission.0.store(false, Ordering::SeqCst);
-    test.genex
+    test.ruxex
         .start_turn_if_idle(user_message_request("allowed input"))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -115,7 +115,7 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
     let response = responses::mount_sse_once(&server, responses::sse_completed("child")).await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
@@ -129,7 +129,7 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
                 agent_nickname: None,
                 agent_role: None,
             })),
-            environments: Some(test.genex.environment_selections().await),
+            environments: Some(test.ruxex.environment_selections().await),
             ..StartThreadOptions::new(test.config.clone())
         })
         .await?
@@ -175,9 +175,9 @@ async fn host_drain_allows_spawned_agent_input_but_not_automatic_work() -> anyho
 
 #[tokio::test]
 async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Result<()> {
-    use genex_protocol::protocol::ReviewOutputEvent;
-    use genex_protocol::protocol::ReviewRequest;
-    use genex_protocol::protocol::ReviewTarget;
+    use ruxex_protocol::protocol::ReviewOutputEvent;
+    use ruxex_protocol::protocol::ReviewRequest;
+    use ruxex_protocol::protocol::ReviewTarget;
 
     let server = responses::start_mock_server().await;
     let expected = ReviewOutputEvent {
@@ -195,12 +195,12 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
     .await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
     // The host already admitted the parent review; only its child start hits Core admission.
-    test.genex
+    test.ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -210,7 +210,7 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
             },
         })
         .await?;
-    let event = wait_for_event(&test.genex, |event| {
+    let event = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ExitedReviewMode(_))
     })
     .await;
@@ -224,12 +224,12 @@ async fn host_drain_allows_running_review_to_finish_its_delegate() -> anyhow::Re
 
 #[tokio::test]
 async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> {
-    use genex_protocol::protocol::ConversationStartParams;
-    use genex_protocol::protocol::RealtimeConversationClosedEvent;
-    use genex_protocol::protocol::RealtimeConversationRealtimeEvent;
-    use genex_protocol::protocol::RealtimeEvent;
-    use genex_protocol::protocol::RealtimeHandoffRequested;
-    use genex_protocol::protocol::RealtimeTranscriptEntry;
+    use ruxex_protocol::protocol::ConversationStartParams;
+    use ruxex_protocol::protocol::RealtimeConversationClosedEvent;
+    use ruxex_protocol::protocol::RealtimeConversationRealtimeEvent;
+    use ruxex_protocol::protocol::RealtimeEvent;
+    use ruxex_protocol::protocol::RealtimeHandoffRequested;
+    use ruxex_protocol::protocol::RealtimeTranscriptEntry;
 
     let server = responses::start_mock_server().await;
     let response = responses::mount_sse_once(&server, responses::sse_completed("unexpected")).await;
@@ -248,29 +248,29 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
     .await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config({
             let realtime_url = realtime.uri().to_string();
             move |config| {
                 config.experimental_realtime_ws_base_url = Some(realtime_url);
-                config.realtime.version = genex_config::config_toml::RealtimeWsVersion::V1;
+                config.realtime.version = ruxex_config::config_toml::RealtimeWsVersion::V1;
             }
         })
         .build_with_auto_env(&server)
         .await?;
-    test.genex
+    test.ruxex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
             delegation_ack_filler: None,
             flush_transcript_tail_on_session_end: false,
-            genex_responses_as_items: false,
-            genex_response_item_prefix: None,
-            genex_response_handoff_mode:
-                genex_protocol::protocol::GenexResponseHandoffMode::Thinking,
-            genex_response_handoff_channel_prefixes: None,
+            ruxex_responses_as_items: false,
+            ruxex_response_item_prefix: None,
+            ruxex_response_handoff_mode:
+                ruxex_protocol::protocol::RuxexResponseHandoffMode::Thinking,
+            ruxex_response_handoff_channel_prefixes: None,
             model: None,
-            output_modality: genex_protocol::protocol::RealtimeOutputModality::Audio,
+            output_modality: ruxex_protocol::protocol::RealtimeOutputModality::Audio,
             include_startup_context: false,
             initial_items: Vec::new(),
             realtime_start_instructions: None,
@@ -303,7 +303,7 @@ async fn host_drain_closes_realtime_after_handoff_error() -> anyhow::Result<()> 
             reason: Some("error".to_string()),
         }),
     ] {
-        let event = wait_for_event(&test.genex, |event| match event {
+        let event = wait_for_event(&test.ruxex, |event| match event {
             EventMsg::RealtimeConversationRealtime(RealtimeConversationRealtimeEvent {
                 payload: RealtimeEvent::HandoffRequested(_) | RealtimeEvent::Error(_),
             })
@@ -328,12 +328,12 @@ async fn host_drain_allows_mailbox_work_to_start_a_turn() -> anyhow::Result<()> 
     let response = responses::mount_sse_once(&server, responses::sse_completed("mailbox")).await;
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.turn_start_admission(Arc::new(TestAdmission(AtomicBool::new(true))));
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await?;
     // Mailbox input is memory-only and must be processed before the host exits.
-    test.genex
+    test.ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::try_from("/root/worker").expect("valid agent path"),
@@ -345,7 +345,7 @@ async fn host_drain_allows_mailbox_work_to_start_a_turn() -> anyhow::Result<()> 
             start_options: Default::default(),
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -365,10 +365,10 @@ fn user_message_request(text: &str) -> TurnInputRequest {
 }
 
 async fn submit_user_message(
-    genex: &genex_core::GenexThread,
+    ruxex: &ruxex_core::RuxexThread,
     text: &str,
-) -> genex_protocol::error::Result<TurnInputSubmission> {
-    genex.start_or_steer_turn(user_message_request(text)).await
+) -> ruxex_protocol::error::Result<TurnInputSubmission> {
+    ruxex.start_or_steer_turn(user_message_request(text)).await
 }
 
 #[test_case(ModeKind::Default, ModeKind::Plan; "automatic input cannot enter Plan")]
@@ -379,14 +379,14 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     proposed_mode: ModeKind,
 ) {
     let server = responses::start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .build_with_auto_env(&server)
         .await
         .expect("build turn-input submission session");
-    let mut collaboration_mode = test.genex.config_snapshot().await.collaboration_mode;
+    let mut collaboration_mode = test.ruxex.config_snapshot().await.collaboration_mode;
     collaboration_mode.mode = current_mode;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             collaboration_mode: Some(collaboration_mode.clone()),
             ..Default::default()
@@ -394,14 +394,14 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     )
     .await
     .expect("set the current collaboration mode");
-    let current_settings = test.genex.thread_settings_snapshot().await;
+    let current_settings = test.ruxex.thread_settings_snapshot().await;
     collaboration_mode.mode = proposed_mode;
     let overrides = ThreadSettingsOverrides {
         collaboration_mode: Some(collaboration_mode.clone()),
         ..Default::default()
     };
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(
             TurnInputRequest::new(TurnInput::ResponseItem(responses::user_message_item(
                 "rejected automatic input",
@@ -417,7 +417,7 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
         }
     );
     assert_eq!(
-        test.genex.thread_settings_snapshot().await,
+        test.ruxex.thread_settings_snapshot().await,
         current_settings
     );
 
@@ -429,19 +429,19 @@ async fn start_turn_if_idle_keeps_automatic_plan_rejections_atomic(
     )
     .await;
     let started = test
-        .genex
+        .ruxex
         .start_turn_if_idle(
             user_message_request("explicit user input").with_thread_settings(overrides),
         )
         .await
         .expect("rejection must release the idle reservation for explicit user input");
     assert!(matches!(started, StartIfIdleSubmission::Started { .. }));
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     assert_eq!(
-        test.genex.config_snapshot().await.collaboration_mode,
+        test.ruxex.config_snapshot().await.collaboration_mode,
         collaboration_mode
     );
     let request = response_mock.single_request();
@@ -454,14 +454,14 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
     let server = responses::start_mock_server().await;
     let response_mock =
         responses::mount_sse_once(&server, responses::sse_completed("resp-1")).await;
-    let test = test_genex()
+    let test = test_ruxex()
         .build_with_auto_env(&server)
         .await
         .expect("build recovered turn session");
     let turn_id = "durable-recovered-turn";
 
     let submission = test
-        .genex
+        .ruxex
         .recover_turn_if_idle(RecoverTurnRequest {
             turn_id: turn_id.to_string(),
             thread_settings: ThreadSettingsOverrides {
@@ -487,11 +487,11 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
         }
     );
     assert_eq!(
-        test.genex.config_snapshot().await.collaboration_mode.mode,
+        test.ruxex.config_snapshot().await.collaboration_mode.mode,
         ModeKind::Plan
     );
 
-    let started = wait_for_event(&test.genex, |event| {
+    let started = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnStarted(_))
     })
     .await;
@@ -499,7 +499,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
         unreachable!("wait_for_event returned unexpected event");
     };
     assert_eq!(started.turn_id, turn_id);
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -507,7 +507,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
     let request = response_mock.single_request();
     let turn_metadata: Value = serde_json::from_str(
         request
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .as_deref()
             .expect("recovered turn should include turn metadata"),
     )
@@ -523,7 +523,7 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
 #[tokio::test]
 async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let server = responses::start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("provider-model-b")
         .build_with_auto_env(&server)
         .await
@@ -532,7 +532,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let TurnInputSubmission::Started {
         turn_id: previous_turn_id,
     } = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Do the work".to_string(),
             text_elements: Vec::new(),
@@ -542,7 +542,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     else {
         panic!("original turn did not start")
     };
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -553,7 +553,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     ));
     let schema = serde_json::json!({"type":"object","properties":{},"additionalProperties":false});
     let submission = test
-        .genex
+        .ruxex
         .continue_turn_if_idle(
             TurnInputRequest::new(TurnInput::ResponseItem(input.clone())).on_start(
                 TurnStartOptions {
@@ -570,10 +570,10 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("continuation did not start")
     };
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         assert!(!matches!(event, EventMsg::UserMessage(_)));
         assert!(!matches!(event, EventMsg::ItemCompleted(event)
-            if matches!(event.item, genex_protocol::items::TurnItem::UserMessage(_))));
+            if matches!(event.item, ruxex_protocol::items::TurnItem::UserMessage(_))));
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -581,7 +581,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     assert!(request.has_content_kinds(&["daemon_recovery.internal_context"]));
     let metadata: Value = serde_json::from_str(
         &request
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("turn metadata"),
     )
     .unwrap();
@@ -591,7 +591,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     assert_eq!(body["service_tier"], "flex");
     // The continuation has completed, but the saved previous ID is still stale.
     assert_eq!(
-        test.genex
+        test.ruxex
             .continue_turn_if_idle(
                 TurnInputRequest::new(TurnInput::ResponseItem(ContextualUserFragment::into(
                     InternalModelContextFragment::new(
@@ -609,7 +609,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     );
     assert_eq!(mock.requests().len(), 1);
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::OnRequest),
             ..Default::default()
@@ -618,7 +618,7 @@ async fn continue_turn_if_idle_starts_new_turn_with_internal_input() {
     .await
     .expect("update permissions before continuation admission");
     assert_eq!(
-        test.genex
+        test.ruxex
             .continue_turn_if_idle(
                 TurnInputRequest::new(TurnInput::ResponseItem(input)),
                 turn_id,
@@ -653,28 +653,28 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         }],
     ])
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("legacy-model")
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let genex = Arc::clone(&test.genex);
+    let ruxex = Arc::clone(&test.ruxex);
     let barrier = Arc::new(Barrier::new(3));
 
     let first_submission = tokio::spawn({
-        let genex = Arc::clone(&genex);
+        let ruxex = Arc::clone(&ruxex);
         let barrier = Arc::clone(&barrier);
         async move {
             barrier.wait().await;
-            submit_user_message(genex.as_ref(), "first message").await
+            submit_user_message(ruxex.as_ref(), "first message").await
         }
     });
     let second_submission = tokio::spawn({
-        let genex = Arc::clone(&genex);
+        let ruxex = Arc::clone(&ruxex);
         let barrier = Arc::clone(&barrier);
         async move {
             barrier.wait().await;
-            submit_user_message(genex.as_ref(), "second message").await
+            submit_user_message(ruxex.as_ref(), "second message").await
         }
     });
     barrier.wait().await;
@@ -717,7 +717,7 @@ async fn turn_input_submission_reports_started_and_steered_for_concurrent_submis
         };
     assert_eq!(started_turn_id, steered_turn_id);
 
-    wait_for_event(genex.as_ref(), |event| {
+    wait_for_event(ruxex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -755,7 +755,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         }],
     ])
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -763,9 +763,9 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         .build_with_streaming_server(&server)
         .await
         .expect("build approval-constrained turn-input submission session");
-    let genex = &test.genex;
+    let ruxex = &test.ruxex;
 
-    let started = submit_user_message(genex, "start turn")
+    let started = submit_user_message(ruxex, "start turn")
         .await
         .expect("first message should start a turn");
     let TurnInputSubmission::Started { turn_id } = started else {
@@ -781,7 +781,7 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
     let steered_cwd = test.config.cwd.join("steered-environment");
     let steered_environments =
         TurnEnvironmentSelections::new(steered_cwd.clone(), vec![local(steered_cwd)]);
-    let steered = genex
+    let steered = ruxex
         .start_or_steer_turn(
             user_message_request("steer active turn").with_thread_settings(
                 ThreadSettingsOverrides {
@@ -795,21 +795,21 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         .expect("persistent settings should not reject a steer");
     assert_eq!(steered, TurnInputSubmission::Steered { turn_id });
     assert_eq!(
-        genex.config_snapshot().await.approval_policy,
+        ruxex.config_snapshot().await.approval_policy,
         AskForApproval::Never
     );
     assert_eq!(
-        genex.environment_selections().await,
+        ruxex.environment_selections().await,
         steered_environments.environments
     );
 
     release_response
         .send(())
         .expect("response gate should remain open");
-    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let rejected_cwd = test.config.cwd.join("rejected-environment");
-    let rejected = genex
+    let rejected = ruxex
         .steer_turn(
             user_message_request("no active turn").with_thread_settings(ThreadSettingsOverrides {
                 approval_policy: Some(AskForApproval::OnRequest),
@@ -830,11 +830,11 @@ async fn turn_input_submission_applies_thread_settings_only_after_accepted_input
         }
     );
     assert_eq!(
-        genex.config_snapshot().await.approval_policy,
+        ruxex.config_snapshot().await.approval_policy,
         AskForApproval::Never
     );
     assert_eq!(
-        genex.environment_selections().await,
+        ruxex.environment_selections().await,
         steered_environments.environments
     );
     server.shutdown().await;
@@ -860,14 +860,14 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         }],
     ])
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         })
         .build_with_streaming_server(&server)
         .await
         .expect("build turn-input submission session");
-    let genex = &test.genex;
+    let ruxex = &test.ruxex;
     let active_schema: Value = serde_json::from_str(
         r#"{"type":"object","properties":{"answer":{"type":"string"},"count":{"type":"number"}},"required":["answer","count"]}"#,
     )
@@ -881,7 +881,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     )
     .expect("parse different schema");
 
-    let started = genex
+    let started = ruxex
         .start_or_steer_turn(
             user_message_request("start turn").on_start(TurnStartOptions {
                 final_output_json_schema: Some(active_schema),
@@ -900,7 +900,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     .await
     .expect("started turn should reach its first model request");
 
-    let rejected = genex
+    let rejected = ruxex
         .start_or_steer_turn(
             user_message_request("rejected steer")
                 .with_thread_settings(ThreadSettingsOverrides {
@@ -921,11 +921,11 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
         }
     );
     assert_eq!(
-        genex.config_snapshot().await.approval_policy,
+        ruxex.config_snapshot().await.approval_policy,
         AskForApproval::OnRequest
     );
 
-    let steered = genex
+    let steered = ruxex
         .start_or_steer_turn(
             user_message_request("accepted steer").on_start(TurnStartOptions {
                 final_output_json_schema: Some(matching_schema_with_different_object_order),
@@ -939,7 +939,7 @@ async fn start_or_steer_turn_requires_matching_active_output_schema() {
     release_response
         .send(())
         .expect("response gate should remain open");
-    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -969,14 +969,14 @@ async fn sampling_is_ready_for_daemon_recovery(
     } else {
         None
     };
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     #[cfg(unix)]
     if let Some(remote) = &remote {
         builder = builder.with_exec_server_url(&remote.websocket_url);
     }
     let test = builder.build_with_streaming_server(&server).await?;
     let StartIfIdleSubmission::Started { turn_id } = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::user_input(input))
         .await?
     else {
@@ -987,13 +987,13 @@ async fn sampling_is_ready_for_daemon_recovery(
         server.wait_for_request_count(/*count*/ 1),
     )
     .await?;
-    let active = test.genex.interrupted_turn().await;
+    let active = test.ruxex.interrupted_turn().await;
     assert_eq!(
         active.map(|(id, _, _)| id),
         (executor == "local").then_some(turn_id)
     );
     release.send(()).expect("sampling is waiting");
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

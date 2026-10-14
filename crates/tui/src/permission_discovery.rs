@@ -6,18 +6,18 @@ use crate::app_event_sender::AppEventSender;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::ThreadParamsMode;
 use crate::legacy_core::config::Config;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigReadParams;
-use genex_app_server_protocol::ConfigReadResponse;
-use genex_app_server_protocol::ConfigRequirements;
-use genex_app_server_protocol::ConfigRequirementsReadResponse;
-use genex_app_server_protocol::PermissionProfileListParams;
-use genex_app_server_protocol::PermissionProfileListResponse;
-use genex_app_server_protocol::PermissionProfileSummary;
-use genex_app_server_protocol::RequestId;
-use genex_utils_approval_presets::builtin_approval_presets;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigReadParams;
+use ruxex_app_server_protocol::ConfigReadResponse;
+use ruxex_app_server_protocol::ConfigRequirements;
+use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+use ruxex_app_server_protocol::PermissionProfileListParams;
+use ruxex_app_server_protocol::PermissionProfileListResponse;
+use ruxex_app_server_protocol::PermissionProfileSummary;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_utils_approval_presets::builtin_approval_presets;
 use std::collections::HashSet;
 use std::time::Duration;
 use uuid::Uuid;
@@ -95,7 +95,7 @@ pub(crate) fn fetch(
     let local_discovery = (!app_server.uses_embedded_app_server()
         && mode == ThreadParamsMode::Embedded
         && config.config_layer_stack.layers_low_to_high().any(|layer| {
-            matches!(layer.name, genex_config::ConfigLayerSource::SessionFlags)
+            matches!(layer.name, ruxex_config::ConfigLayerSource::SessionFlags)
                 && layer.config.get("permissions").is_some()
         }))
     .then(|| PermissionDiscovery::local(config));
@@ -198,7 +198,7 @@ fn discovery_error(error: TypedRequestError) -> String {
                     || source.message.contains("configRequirements/read")
                     || source.message.contains("config/read"))))
     {
-        return "This server does not support permission discovery. Upgrade the Genex server to use this menu.".to_string();
+        return "This server does not support permission discovery. Upgrade the Ruxex server to use this menu.".to_string();
     }
     format!("Failed to load permissions: {error}")
 }

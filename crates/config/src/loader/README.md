@@ -1,6 +1,6 @@
-# `genex-config` loader
+# `ruxex-config` loader
 
-This module is the canonical place to **load and describe Genex configuration layers** (user config, CLI/session overrides, cloud-managed config, system config, and MDM-managed preferences) and to produce:
+This module is the canonical place to **load and describe Ruxex configuration layers** (user config, CLI/session overrides, cloud-managed config, system config, and MDM-managed preferences) and to produce:
 
 - An **effective merged** TOML config.
 - **Per-key origins** metadata (which layer “wins” for a given key).
@@ -8,9 +8,9 @@ This module is the canonical place to **load and describe Genex configuration la
 
 ## Public surface
 
-Exported from `genex_config::loader`:
+Exported from `ruxex_config::loader`:
 
-- `load_config_layers_state(fs, genex_home, cwd_opt, cli_overrides, options, thread_config_loader) -> ConfigLayerStack`
+- `load_config_layers_state(fs, ruxex_home, cwd_opt, cli_overrides, options, thread_config_loader) -> ConfigLayerStack`
 - `ConfigLayerStack`
   - `effective_config() -> toml::Value`
   - `origins() -> HashMap<String, ConfigLayerMetadata>`
@@ -27,11 +27,11 @@ Precedence is **top overrides bottom**:
 
 1. Current forced MDM preferences (`config_toml_base64`)
 2. `SessionFlags` (CLI overrides, applied as dotted-path TOML writes)
-4. `Project` config (`.genex/config.toml`)
+4. `Project` config (`.ruxex/config.toml`)
 5. `User` profile config, when present
 6. `User` config (`config.toml`)
 7. `EnterpriseManaged` cloud-managed config bundle layers
-8. `System` config (`/etc/genex/config.toml`)
+8. `System` config (`/etc/ruxex/config.toml`)
 
 `ConfigLayerStack` stores layers in the opposite order internally: lowest
 precedence first, highest precedence last, so later layers override earlier
@@ -53,18 +53,18 @@ computing the effective config and origins metadata. This is what
 Most callers want the effective config plus metadata:
 
 ```rust
-use genex_config::LoaderOverrides;
-use genex_config::NoopThreadConfigLoader;
-use genex_config::loader::load_config_layers_state;
-use genex_exec_server::LOCAL_FS;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_config::loader::load_config_layers_state;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use toml::Value as TomlValue;
 
 let cli_overrides: Vec<(String, TomlValue)> = Vec::new();
 let cwd = AbsolutePathBuf::current_dir()?;
 let layers = load_config_layers_state(
     LOCAL_FS.as_ref(),
-    &genex_home,
+    &ruxex_home,
     Some(cwd),
     &cli_overrides,
     LoaderOverrides::default(),

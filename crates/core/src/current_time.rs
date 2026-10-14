@@ -7,8 +7,8 @@ use anyhow::Result;
 use anyhow::anyhow;
 use chrono::DateTime;
 use chrono::Utc;
-use genex_features::CurrentTimeSource;
-use genex_protocol::ThreadId;
+use ruxex_features::CurrentTimeSource;
+use ruxex_protocol::ThreadId;
 
 use crate::config::CurrentTimeReminderConfig;
 

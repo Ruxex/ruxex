@@ -1,8 +1,8 @@
-//! Rollout persistence and discovery for Genex session files.
+//! Rollout persistence and discovery for Ruxex session files.
 
 use std::sync::LazyLock;
 
-use genex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SessionSource;
 use serde::de::Error as _;
 use serde_json::Value;
 
@@ -26,16 +26,16 @@ mod sqlite_metrics;
 pub mod state_db;
 mod writer_lock;
 
-pub use genex_history::CompactedItem;
-pub use genex_history::InitialHistory;
-pub use genex_history::ResponseItemEnvelope;
-pub use genex_history::ResumedHistory;
-pub use genex_history::RetainedContextEntry;
-pub use genex_history::RetainedContextEvent;
-pub use genex_history::RetainedInputSource;
-pub use genex_history::RolloutItem;
-pub use genex_history::RolloutLine;
-pub(crate) use genex_protocol::protocol;
+pub use ruxex_history::CompactedItem;
+pub use ruxex_history::InitialHistory;
+pub use ruxex_history::ResponseItemEnvelope;
+pub use ruxex_history::ResumedHistory;
+pub use ruxex_history::RetainedContextEntry;
+pub use ruxex_history::RetainedContextEvent;
+pub use ruxex_history::RetainedInputSource;
+pub use ruxex_history::RolloutItem;
+pub use ruxex_history::RolloutLine;
+pub(crate) use ruxex_protocol::protocol;
 
 /// Decodes a persisted rollout record without Serde's flattened-envelope buffering.
 ///
@@ -92,7 +92,7 @@ pub use compression::existing_rollout_path;
 pub use compression::open_rollout_line_reader;
 pub use compression::plain_rollout_path;
 pub use compression::spawn_rollout_compression_worker;
-pub use genex_protocol::protocol::SessionMeta;
+pub use ruxex_protocol::protocol::SessionMeta;
 pub use seekable_reader::open_rollout_seekable_reader;
 pub use seekable_reader::read_rollout_prefix;
 pub use seekable_reader::rollout_contains_prefix;

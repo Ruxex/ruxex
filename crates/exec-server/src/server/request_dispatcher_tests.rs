@@ -3,13 +3,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCRequest;
-use genex_exec_server_protocol::RequestId;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::RequestId;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
 use opentelemetry::trace::SpanId;
 use opentelemetry::trace::TraceId;
 use opentelemetry::trace::TracerProvider as _;
@@ -92,11 +92,11 @@ fn request_span_uses_bounded_name_wire_method_and_inbound_trace_parent() {
     let subscriber = tracing_subscriber::registry().with(
         tracing_opentelemetry::layer()
             .with_tracer(tracer)
-            .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
+            .with_filter(filter_fn(ruxex_otel::OtelProvider::trace_export_filter)),
     );
     let trace_id = TraceId::from_hex("00000000000000000000000000000001").expect("trace id");
     let parent_span_id = SpanId::from_hex("0000000000000002").expect("span id");
-    let trace = genex_protocol::protocol::W3cTraceContext {
+    let trace = ruxex_protocol::protocol::W3cTraceContext {
         traceparent: Some(format!("00-{trace_id}-{parent_span_id}-01")),
         tracestate: None,
     };
@@ -156,7 +156,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
     let subscriber = tracing_subscriber::registry().with(
         tracing_opentelemetry::layer()
             .with_tracer(tracer_provider.tracer("exec-server-test"))
-            .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
+            .with_filter(filter_fn(ruxex_otel::OtelProvider::trace_export_filter)),
     );
     let _subscriber = tracing::subscriber::set_default(subscriber);
     tracing::callsite::rebuild_interest_cache();
@@ -164,7 +164,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "genex-exec-server",
+            "ruxex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -180,7 +180,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
         notifications,
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current executable"),
-            /*genex_linux_sandbox_exe*/ None,
+            /*ruxex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths"),
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
@@ -200,7 +200,7 @@ async fn request_queue_waits_for_dispatcher_admission_before_recording_telemetry
             async move {
                 execution_started.notify_one();
                 release_execution.notified().await;
-                Ok::<_, genex_exec_server_protocol::JSONRPCErrorError>(())
+                Ok::<_, ruxex_exec_server_protocol::JSONRPCErrorError>(())
             }
         },
     );
@@ -373,7 +373,7 @@ fn request_telemetry_fixture(router: RpcRouter<ExecServerHandler>) -> RequestTel
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "genex-exec-server",
+            "ruxex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -389,7 +389,7 @@ fn request_telemetry_fixture(router: RpcRouter<ExecServerHandler>) -> RequestTel
         notifications,
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current executable"),
-            /*genex_linux_sandbox_exe*/ None,
+            /*ruxex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths"),
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
@@ -477,7 +477,7 @@ async fn total_duration_preserves_dispatch_duration_and_completion_results() {
         router.request(
             "test/success",
             |_handler: Arc<ExecServerHandler>, _params: ()| async {
-                Ok::<_, genex_exec_server_protocol::JSONRPCErrorError>(())
+                Ok::<_, ruxex_exec_server_protocol::JSONRPCErrorError>(())
             },
         );
         router.request(
@@ -528,7 +528,7 @@ async fn total_duration_records_disconnection_during_execution() {
             let execution_started = Arc::clone(&notify_execution_started);
             async move {
                 execution_started.notify_one();
-                std::future::pending::<Result<(), genex_exec_server_protocol::JSONRPCErrorError>>()
+                std::future::pending::<Result<(), ruxex_exec_server_protocol::JSONRPCErrorError>>()
                     .await
             }
         },

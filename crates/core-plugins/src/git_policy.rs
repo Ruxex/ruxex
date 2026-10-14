@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::path::Path;
 use std::process::Command;
 use tempfile::TempDir;
@@ -38,7 +38,7 @@ impl PluginGitMode {
     /// Automatic remote lookups and initial clones must also select a trusted repository.
     pub(crate) fn command(self, git_binary: &Path) -> Command {
         let mut command = Command::new(git_binary);
-        command.args(["-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]);
+        command.args(["-c", ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]);
         if matches!(self, Self::Automatic) {
             command.env("GIT_OPTIONAL_LOCKS", "0");
             for name in REPOSITORY_LOCAL_GIT_ENVIRONMENT_VARIABLES {
@@ -55,11 +55,11 @@ impl PluginGitMode {
 /// returned guard alive until the Git process exits because it owns the selected repository.
 pub(crate) fn configure_trusted_git_repository(
     command: &mut Command,
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> Result<TempDir, String> {
-    let canonical_home = AbsolutePathBuf::from_absolute_path(genex_home)
+    let canonical_home = AbsolutePathBuf::from_absolute_path(ruxex_home)
         .and_then(|path| path.canonicalize())
-        .map_err(|err| format!("failed to resolve trusted Genex home: {err}"))?;
+        .map_err(|err| format!("failed to resolve trusted Ruxex home: {err}"))?;
     let staging_root = canonical_home.join(".tmp");
     std::fs::create_dir_all(staging_root.as_path())
         .map_err(|err| format!("failed to create trusted Git repository root: {err}"))?;
@@ -67,7 +67,7 @@ pub(crate) fn configure_trusted_git_repository(
         .canonicalize()
         .map_err(|err| format!("failed to resolve trusted Git repository root: {err}"))?;
     if !staging_root.as_path().starts_with(canonical_home.as_path()) {
-        return Err("trusted Git repository root escapes Genex home".to_string());
+        return Err("trusted Git repository root escapes Ruxex home".to_string());
     }
 
     let repository = tempfile::Builder::new()

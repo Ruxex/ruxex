@@ -3,9 +3,9 @@ use std::io;
 use std::num::NonZeroUsize;
 use std::path::Path;
 
-use genex_utils_image::PromptImageMode;
-use genex_utils_image::data_url_from_bytes;
-use genex_utils_image::load_for_prompt_bytes;
+use ruxex_utils_image::PromptImageMode;
+use ruxex_utils_image::data_url_from_bytes;
+use ruxex_utils_image::load_for_prompt_bytes;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -24,13 +24,13 @@ use crate::permissions::NetworkSandboxPolicy;
 use crate::permissions::RawFileSystemSandboxEntry;
 use crate::protocol::SandboxPolicy;
 use crate::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_image::ImageProcessingError;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_image::ImageProcessingError;
 use schemars::JsonSchema;
 
 use crate::ResponseItemId;
 use crate::mcp::CallToolResult;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 
 mod configuration_update;
 mod executed_tool_calls;
@@ -273,7 +273,7 @@ impl AdditionalPermissionProfile {
 )]
 #[serde(rename_all = "snake_case")]
 pub enum SandboxEnforcement {
-    /// Genex owns sandbox construction for this profile.
+    /// Ruxex owns sandbox construction for this profile.
     #[default]
     Managed,
     /// No outer filesystem sandbox should be applied.
@@ -292,7 +292,7 @@ impl SandboxEnforcement {
     }
 }
 
-/// Filesystem permissions for profiles where Genex owns sandbox construction.
+/// Filesystem permissions for profiles where Ruxex owns sandbox construction.
 #[derive(Debug, Clone, Eq, PartialEq, JsonSchema, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(tag = "type")]
@@ -419,7 +419,7 @@ pub const BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS: &str = ":danger-full-a
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(tag = "type")]
 pub enum PermissionProfile {
-    /// Genex owns sandbox construction for this profile.
+    /// Ruxex owns sandbox construction for this profile.
     #[serde(rename_all = "snake_case")]
     #[ts(rename_all = "snake_case")]
     Managed {
@@ -1652,7 +1652,7 @@ fn local_media_error_placeholder(
     let media_name = media_kind.name();
     let path = path.display();
     ContentItem::InputText {
-        text: format!("Genex could not read the local {media_name} at `{path}`: {error}"),
+        text: format!("Ruxex could not read the local {media_name} at `{path}`: {error}"),
     }
 }
 
@@ -1755,7 +1755,7 @@ fn invalid_image_error_placeholder(
 fn unsupported_image_error_placeholder(path: &std::path::Path, mime: &str) -> ContentItem {
     ContentItem::InputText {
         text: format!(
-            "Genex cannot attach image at `{}`: unsupported image `{}`.",
+            "Ruxex cannot attach image at `{}`: unsupported image `{}`.",
             path.display(),
             mime
         ),
@@ -1812,7 +1812,7 @@ pub enum LocalImagePreparation {
 fn unsupported_audio_error_placeholder(path: &std::path::Path) -> ContentItem {
     ContentItem::InputText {
         text: format!(
-            "Genex cannot attach audio at `{}`: unsupported audio format; use wav, mp3, m4a, webm, or ogg.",
+            "Ruxex cannot attach audio at `{}`: unsupported audio format; use wav, mp3, m4a, webm, or ogg.",
             path.display()
         ),
     }
@@ -2330,8 +2330,8 @@ impl CallToolResult {
 fn convert_mcp_content_to_items(
     contents: &[serde_json::Value],
 ) -> Vec<FunctionCallOutputContentItem> {
-    const GENEX_ENCRYPTED_CONTENT_META_KEY: &str = "genex/encryptedContent";
-    const GENEX_IMAGE_DETAIL_META_KEY: &str = "genex/imageDetail";
+    const RUXEX_ENCRYPTED_CONTENT_META_KEY: &str = "ruxex/encryptedContent";
+    const RUXEX_IMAGE_DETAIL_META_KEY: &str = "ruxex/imageDetail";
 
     #[derive(serde::Deserialize)]
     #[serde(tag = "type")]
@@ -2369,7 +2369,7 @@ fn convert_mcp_content_to_items(
             Ok(McpContent::Text { text, meta }) => {
                 if meta
                     .as_ref()
-                    .and_then(|meta| meta.get(GENEX_ENCRYPTED_CONTENT_META_KEY))
+                    .and_then(|meta| meta.get(RUXEX_ENCRYPTED_CONTENT_META_KEY))
                     .and_then(serde_json::Value::as_bool)
                     == Some(true)
                 {
@@ -2396,7 +2396,7 @@ fn convert_mcp_content_to_items(
                     detail: meta
                         .as_ref()
                         .and_then(serde_json::Value::as_object)
-                        .and_then(|meta| meta.get(GENEX_IMAGE_DETAIL_META_KEY))
+                        .and_then(|meta| meta.get(RUXEX_IMAGE_DETAIL_META_KEY))
                         .and_then(serde_json::Value::as_str)
                         .and_then(|detail| match detail {
                             "auto" => Some(ImageDetail::Auto),
@@ -2445,13 +2445,13 @@ impl std::fmt::Display for FunctionCallOutputPayload {
     }
 }
 
-// (Moved event mapping logic into genex-core to avoid coupling protocol to UI-facing events.)
+// (Moved event mapping logic into ruxex-core to avoid coupling protocol to UI-facing events.)
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use anyhow::Result;
-    use genex_execpolicy::Policy;
+    use ruxex_execpolicy::Policy;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use tempfile::tempdir;
@@ -3306,7 +3306,7 @@ mod tests {
             exec_policy
                 .add_prefix_rule(
                     &[format!("tool-{i:03}"), "x".repeat(500)],
-                    genex_execpolicy::Decision::Allow,
+                    ruxex_execpolicy::Decision::Allow,
                 )
                 .expect("add rule");
         }
@@ -3601,7 +3601,7 @@ mod tests {
                 "data": "BASE64",
                 "mimeType": "image/png",
                 "_meta": {
-                    "genex/imageDetail": "original",
+                    "ruxex/imageDetail": "original",
                 },
             })],
             structured_content: None,
@@ -3635,7 +3635,7 @@ mod tests {
                 "data": "BASE64",
                 "mimeType": "image/png",
                 "_meta": {
-                    "genex/imageDetail": "high",
+                    "ruxex/imageDetail": "high",
                 },
             })],
             structured_content: None,
@@ -4011,7 +4011,7 @@ mod tests {
                 role: "user".to_string(),
                 content: vec![ContentItem::InputText {
                     text: format!(
-                        "Genex cannot attach audio at `{}`: unsupported audio format; use wav, mp3, m4a, webm, or ogg.",
+                        "Ruxex cannot attach audio at `{}`: unsupported audio format; use wav, mp3, m4a, webm, or ogg.",
                         audio_path.display()
                     ),
                 }],
@@ -4035,7 +4035,7 @@ mod tests {
             panic!("expected local audio error placeholder");
         };
         assert!(
-            text.starts_with("Genex could not read the local audio at `missing.wav`: "),
+            text.starts_with("Ruxex could not read the local audio at `missing.wav`: "),
             "unexpected placeholder: {text}"
         );
     }
@@ -4458,7 +4458,7 @@ mod tests {
             ResponseInputItem::Message { content, .. } => {
                 assert_eq!(content.len(), 1);
                 let expected = format!(
-                    "Genex cannot attach image at `{}`: unsupported image `image/svg+xml`.",
+                    "Ruxex cannot attach image at `{}`: unsupported image `image/svg+xml`.",
                     svg_path.display()
                 );
                 match &content[0] {

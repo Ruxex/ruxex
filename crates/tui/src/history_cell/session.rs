@@ -141,7 +141,7 @@ pub(crate) fn new_session_info(
         session.model.clone(),
         session.reasoning_effort.clone(),
         config.cwd.to_path_buf(),
-        GENEX_CLI_VERSION,
+        RUXEX_CLI_VERSION,
     )
     .with_provider_name(provider_name.to_string())
     .with_yolo_mode(has_yolo_permissions(
@@ -160,7 +160,7 @@ pub(crate) fn new_session_info(
             Line::from(vec![
                 "  ".into(),
                 "/init".into(),
-                " - create an AGENTS.md file with instructions for Genex".dim(),
+                " - create an AGENTS.md file with instructions for Ruxex".dim(),
             ]),
             Line::from(vec![
                 "  ".into(),
@@ -170,7 +170,7 @@ pub(crate) fn new_session_info(
             Line::from(vec![
                 "  ".into(),
                 "/permissions".into(),
-                " - choose what Genex is allowed to do".dim(),
+                " - choose what Ruxex is allowed to do".dim(),
             ]),
             Line::from(vec![
                 "  ".into(),

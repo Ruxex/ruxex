@@ -3,24 +3,24 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_request_permissions_sse_response;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::PermissionGrantScope;
-use genex_app_server_protocol::PermissionsRequestApprovalResponse;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ServerRequestResolvedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_features::Feature;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::PermissionGrantScope;
+use ruxex_app_server_protocol::PermissionsRequestApprovalResponse;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ServerRequestResolvedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_features::Feature;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -30,7 +30,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn request_permissions_round_trip() -> Result<()> {
-    let genex_home = tempfile::TempDir::new()?;
+    let ruxex_home = tempfile::TempDir::new()?;
     let project_root_entry = json!({
         "path": {
             "type": "special",
@@ -59,10 +59,10 @@ async fn request_permissions_round_trip() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .enable_feature(Feature::RequestPermissionsTool)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let cwd = mcp.auto_env()?.selection().cwd.clone();
@@ -126,26 +126,26 @@ async fn request_permissions_round_trip() -> Result<()> {
     assert_eq!(
         requested_file_system.entries,
         Some(vec![
-            genex_app_server_protocol::FileSystemSandboxEntry {
-                path: genex_app_server_protocol::FileSystemPath::Path {
+            ruxex_app_server_protocol::FileSystemSandboxEntry {
+                path: ruxex_app_server_protocol::FileSystemPath::Path {
                     path: requested_writes[0].clone(),
                 },
-                access: genex_app_server_protocol::FileSystemAccessMode::Write,
+                access: ruxex_app_server_protocol::FileSystemAccessMode::Write,
             },
-            genex_app_server_protocol::FileSystemSandboxEntry {
-                path: genex_app_server_protocol::FileSystemPath::Path {
+            ruxex_app_server_protocol::FileSystemSandboxEntry {
+                path: ruxex_app_server_protocol::FileSystemPath::Path {
                     path: requested_writes[1].clone(),
                 },
-                access: genex_app_server_protocol::FileSystemAccessMode::Write,
+                access: ruxex_app_server_protocol::FileSystemAccessMode::Write,
             },
         ])
     );
     mcp.send_response(
         request_id,
         serde_json::to_value(PermissionsRequestApprovalResponse {
-            permissions: genex_app_server_protocol::GrantedPermissionProfile {
+            permissions: ruxex_app_server_protocol::GrantedPermissionProfile {
                 network: None,
-                file_system: Some(genex_app_server_protocol::AdditionalFileSystemPermissions {
+                file_system: Some(ruxex_app_server_protocol::AdditionalFileSystemPermissions {
                     read: None,
                     write: Some(vec![requested_writes[0].clone()]),
                     glob_scan_max_depth: None,

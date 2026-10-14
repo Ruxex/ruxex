@@ -7,8 +7,8 @@ use super::step_settings::StepSettingsConstraints;
 use super::step_settings::StepSettingsUpdate;
 use super::turn_context::TurnContext;
 use crate::config::ConstraintResult;
-use genex_protocol::protocol::TurnSettingsUpdate;
-use genex_protocol::protocol::TurnSettingsUpdateOutcome;
+use ruxex_protocol::protocol::TurnSettingsUpdate;
+use ruxex_protocol::protocol::TurnSettingsUpdateOutcome;
 use std::sync::Arc;
 
 impl Session {
@@ -29,7 +29,7 @@ impl Session {
     ) -> TurnSettingsUpdateOutcome {
         if !self
             .features
-            .enabled(genex_features::Feature::StepModelSwitching)
+            .enabled(ruxex_features::Feature::StepModelSwitching)
         {
             return TurnSettingsUpdateOutcome::Rejected {
                 reason: "turn settings updates require the step_model_switching feature"

@@ -267,16 +267,16 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "core_test_support",
- "genex-app-server-protocol",
- "genex-config",
- "genex-core",
- "genex-exec-server",
- "genex-features",
- "genex-login",
- "genex-model-provider",
- "genex-protocol",
- "genex-utils-cargo-bin",
  "pretty_assertions",
+ "ruxex-app-server-protocol",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-exec-server",
+ "ruxex-features",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-protocol",
+ "ruxex-utils-cargo-bin",
  "serde",
  "serde_json",
  "shlex",
@@ -1706,31 +1706,31 @@ dependencies = [
  "base64 0.22.1",
  "ctor 0.6.3",
  "futures",
- "genex-arg0",
- "genex-attachment-store",
- "genex-config",
- "genex-core",
- "genex-exec-server",
- "genex-extension-api",
- "genex-features",
- "genex-home",
- "genex-hooks",
- "genex-http-client",
- "genex-login",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-protocol",
- "genex-providers",
- "genex-thread-store",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-path-uri",
  "notify",
  "opentelemetry",
  "opentelemetry_sdk",
  "pretty_assertions",
  "regex-lite",
+ "ruxex-arg0",
+ "ruxex-attachment-store",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-exec-server",
+ "ruxex-extension-api",
+ "ruxex-features",
+ "ruxex-home",
+ "ruxex-hooks",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-protocol",
+ "ruxex-providers",
+ "ruxex-thread-store",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-path-uri",
  "serde_json",
  "shlex",
  "tempfile",
@@ -3598,2560 +3598,6 @@ dependencies = [
  "typenum",
  "version_check",
  "zeroize",
-]
-
-[[package]]
-name = "genex-agent-extension"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "core_test_support",
- "genex-core",
- "genex-protocol",
- "pretty_assertions",
- "tokio",
-]
-
-[[package]]
-name = "genex-agent-graph-store"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "genex-state",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
-]
-
-[[package]]
-name = "genex-agent-roles"
-version = "0.0.0"
-dependencies = [
- "genex-config",
- "genex-file-system",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "serde",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
-]
-
-[[package]]
-name = "genex-ansi-escape"
-version = "0.0.0"
-dependencies = [
- "ansi-to-tui",
- "ratatui",
- "tracing",
-]
-
-[[package]]
-name = "genex-api"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "async-channel",
- "base64 0.22.1",
- "bytes",
- "chrono",
- "eventsource-stream",
- "futures",
- "genex-client",
- "genex-http-client",
- "genex-protocol",
- "genex-utils-rustls-provider",
- "genex-websocket-client",
- "http",
- "pretty_assertions",
- "rcgen",
- "regex-lite",
- "rustls",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-test",
- "tokio-tungstenite",
- "tokio-util",
- "tracing",
- "tungstenite",
- "url",
- "uuid",
- "wiremock",
-]
-
-[[package]]
-name = "genex-app-server"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "app_test_support",
- "axum",
- "base64 0.22.1",
- "chrono",
- "clap",
- "core_test_support",
- "flate2",
- "futures",
- "genex-agent-extension",
- "genex-app-server-protocol",
- "genex-app-server-transport",
- "genex-arg0",
- "genex-code-mode",
- "genex-config",
- "genex-core",
- "genex-core-plugins",
- "genex-diagnostics",
- "genex-exec-server",
- "genex-extension-api",
- "genex-features",
- "genex-file-search",
- "genex-file-watcher",
- "genex-git-utils",
- "genex-goal-extension",
- "genex-history-notes-extension",
- "genex-home",
- "genex-hooks",
- "genex-http-client",
- "genex-login",
- "genex-mcp",
- "genex-mcp-extension",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-network-proxy",
- "genex-otel",
- "genex-plugin",
- "genex-prompts",
- "genex-protocol",
- "genex-providers",
- "genex-queue-extension",
- "genex-rmcp-client",
- "genex-rollout",
- "genex-sandboxing",
- "genex-shell-command",
- "genex-skills",
- "genex-skills-extension",
- "genex-state",
- "genex-thread-store",
- "genex-tools",
- "genex-uds",
- "genex-user-verification",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-cli",
- "genex-utils-json-to-toml",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "genex-web-search-extension",
- "hmac 0.12.1",
- "http",
- "opentelemetry",
- "opentelemetry_sdk",
- "pretty_assertions",
- "rmcp",
- "serde",
- "serde_json",
- "serial_test",
- "sha2 0.10.9",
- "shlex",
- "sqlx",
- "tar",
- "tempfile",
- "test-case",
- "thiserror 2.0.18",
- "tikv-jemallocator",
- "time",
- "tokio",
- "tokio-tungstenite",
- "tokio-util",
- "toml 0.9.11+spec-1.1.0",
- "toml_edit 0.24.0+spec-1.1.0",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "url",
- "uuid",
- "wiremock",
-]
-
-[[package]]
-name = "genex-app-server-client"
-version = "0.0.0"
-dependencies = [
- "futures",
- "genex-app-server",
- "genex-app-server-protocol",
- "genex-arg0",
- "genex-config",
- "genex-core",
- "genex-exec-server",
- "genex-protocol",
- "genex-uds",
- "genex-utils-absolute-path",
- "genex-utils-rustls-provider",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tokio-tungstenite",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "genex-app-server-daemon"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "blake3",
- "futures",
- "genex-app-server-protocol",
- "genex-app-server-transport",
- "genex-http-client",
- "genex-install-context",
- "genex-uds",
- "genex-utils-home-dir",
- "libc",
- "pretty_assertions",
- "semver",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tokio-tungstenite",
- "tracing",
-]
-
-[[package]]
-name = "genex-app-server-protocol"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-app-server-protocol-noop-macros",
- "genex-experimental-api-macros",
- "genex-extension-items",
- "genex-history",
- "genex-protocol",
- "genex-rollout",
- "genex-secrets",
- "genex-shell-command",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-path-uri",
- "genex-utils-redacted-string",
- "inventory",
- "pretty_assertions",
- "rmcp",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "serde_with",
- "similar",
- "strum_macros 0.28.0",
- "tempfile",
- "thiserror 2.0.18",
- "tracing",
- "ts-rs",
- "uuid",
- "zstd",
-]
-
-[[package]]
-name = "genex-app-server-protocol-noop-macros"
-version = "0.0.0"
-
-[[package]]
-name = "genex-app-server-test-client"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "genex-app-server-protocol",
- "genex-core",
- "genex-otel",
- "genex-protocol",
- "genex-utils-cli",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "tungstenite",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "genex-app-server-transport"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "base64 0.22.1",
- "chrono",
- "clap",
- "constant_time_eq",
- "futures",
- "genex-api",
- "genex-app-server-protocol",
- "genex-config",
- "genex-core",
- "genex-login",
- "genex-model-provider",
- "genex-protocol",
- "genex-state",
- "genex-uds",
- "genex-utils-absolute-path",
- "genex-utils-rustls-provider",
- "gethostname",
- "hmac 0.12.1",
- "httpdate",
- "jsonwebtoken",
- "libc",
- "owo-colors",
- "pretty_assertions",
- "rand 0.9.3",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "signal-hook",
- "tempfile",
- "time",
- "tokio",
- "tokio-tungstenite",
- "tokio-util",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "genex-apply-patch"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "assert_matches",
- "genex-exec-server",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-path-uri",
- "pretty_assertions",
- "similar",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tree-sitter",
- "tree-sitter-bash",
-]
-
-[[package]]
-name = "genex-arg0"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "dotenvy",
- "genex-apply-patch",
- "genex-async-utils",
- "genex-exec-server",
- "genex-install-context",
- "genex-linux-sandbox",
- "genex-sandboxing",
- "genex-utils-absolute-path",
- "genex-utils-home-dir",
- "pretty_assertions",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "genex-async-utils"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "genex-attachment-store"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
- "serde",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-build-info"
-version = "0.0.0"
-dependencies = [
- "genex-install-context",
- "pretty_assertions",
- "semver",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
-]
-
-[[package]]
-name = "genex-bwrap"
-version = "0.0.0"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
-]
-
-[[package]]
-name = "genex-cli"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "app_test_support",
- "assert_cmd",
- "assert_matches",
- "chrono",
- "clap",
- "clap_complete",
- "crossterm",
- "flate2",
- "futures",
- "genex-api",
- "genex-app-server",
- "genex-app-server-daemon",
- "genex-app-server-protocol",
- "genex-app-server-test-client",
- "genex-arg0",
- "genex-build-info",
- "genex-config",
- "genex-core",
- "genex-core-plugins",
- "genex-credential-broker",
- "genex-exec",
- "genex-exec-server",
- "genex-execpolicy",
- "genex-extension-api",
- "genex-features",
- "genex-git-utils",
- "genex-history",
- "genex-home",
- "genex-http-client",
- "genex-install-context",
- "genex-login",
- "genex-mcp",
- "genex-model-provider",
- "genex-models-manager",
- "genex-network-proxy",
- "genex-plugin",
- "genex-protocol",
- "genex-rmcp-client",
- "genex-rollout",
- "genex-rollout-trace",
- "genex-sandboxing",
- "genex-skills-extension",
- "genex-state",
- "genex-stdio-to-uds",
- "genex-tcp-tunnel",
- "genex-terminal-detection",
- "genex-thread-store",
- "genex-tui",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-cli",
- "genex-utils-path",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "http",
- "insta",
- "libc",
- "os_info",
- "owo-colors",
- "predicates",
- "pretty_assertions",
- "regex-lite",
- "serde",
- "serde_json",
- "sqlx",
- "supports-color 3.0.2",
- "sys-locale",
- "tar",
- "tempfile",
- "tikv-jemallocator",
- "tokio",
- "tokio-tungstenite",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "tracing-subscriber",
- "unicode-segmentation",
- "url",
- "vt100",
- "which 8.0.0",
- "wiremock",
- "zstd",
-]
-
-[[package]]
-name = "genex-client"
-version = "0.0.0"
-dependencies = [
- "futures",
- "genex-http-client",
- "http",
- "rand 0.9.3",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-code-mode"
-version = "0.0.0"
-dependencies = [
- "futures",
- "genex-code-mode-protocol",
- "genex-http-client",
- "genex-install-context",
- "genex-otel",
- "genex-protocol",
- "http-body-util",
- "pretty_assertions",
- "prost",
- "reqwest 0.12.28",
- "serde_json",
- "tokio",
- "tokio-util",
- "tonic",
- "tower",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "genex-code-mode-host"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "clap",
- "futures",
- "genex-code-mode",
- "genex-code-mode-protocol",
- "genex-code-mode-runtime",
- "genex-otel",
- "genex-otel-trace-websocket",
- "genex-protocol",
- "genex-utils-cargo-bin",
- "pretty_assertions",
- "prost",
- "serde_json",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "genex-code-mode-protocol"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "glob",
- "pretty_assertions",
- "prost",
- "protoc-bin-vendored",
- "serde",
- "serde_json",
- "tokio",
- "tokio-util",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
-]
-
-[[package]]
-name = "genex-code-mode-runtime"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "deno_core_icudata",
- "futures",
- "genex-code-mode-protocol",
- "genex-protocol",
- "opentelemetry",
- "pretty_assertions",
- "serde_json",
- "tokio",
- "tokio-util",
- "tracing",
- "v8",
-]
-
-[[package]]
-name = "genex-collaboration-mode-templates"
-version = "0.0.0"
-
-[[package]]
-name = "genex-config"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "core-foundation 0.9.4",
- "dns-lookup",
- "dunce",
- "futures",
- "genex-execpolicy",
- "genex-features",
- "genex-file-system",
- "genex-git-utils",
- "genex-model-provider-info",
- "genex-network-proxy",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path",
- "genex-utils-path-uri",
- "gethostname",
- "indexmap 2.14.0",
- "libc",
- "multimap",
- "pretty_assertions",
- "regex-lite",
- "schemars 0.8.22",
- "serde",
- "serde_ignored",
- "serde_json",
- "serde_path_to_error",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 0.9.11+spec-1.1.0",
- "toml_edit 0.24.0+spec-1.1.0",
- "tracing",
- "wildmatch",
-]
-
-[[package]]
-name = "genex-config-schema"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "genex-config",
-]
-
-[[package]]
-name = "genex-context-fragments"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "genex-utils-string",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-core"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "assert_cmd",
- "assert_matches",
- "async-channel",
- "base64 0.22.1",
- "bm25",
- "chrono",
- "core_test_support",
- "ctor 0.6.3",
- "dirs 6.0.0",
- "dunce",
- "eventsource-stream",
- "futures",
- "genex-agent-graph-store",
- "genex-agent-roles",
- "genex-app-server-protocol",
- "genex-apply-patch",
- "genex-async-utils",
- "genex-attachment-store",
- "genex-client",
- "genex-code-mode",
- "genex-config",
- "genex-context-fragments",
- "genex-core-plugins",
- "genex-credential-broker",
- "genex-diagnostics",
- "genex-exec-server",
- "genex-exec-server-test-support",
- "genex-execpolicy",
- "genex-extension-api",
- "genex-extension-items",
- "genex-features",
- "genex-file-system",
- "genex-git-utils",
- "genex-history",
- "genex-home",
- "genex-hooks",
- "genex-http-client",
- "genex-install-context",
- "genex-login",
- "genex-mcp",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-network-proxy",
- "genex-otel",
- "genex-plugin",
- "genex-prompts",
- "genex-protocol",
- "genex-providers",
- "genex-response-debug-context",
- "genex-rmcp-client",
- "genex-rollout",
- "genex-rollout-trace",
- "genex-sandboxing",
- "genex-shell-command",
- "genex-skills",
- "genex-skills-extension",
- "genex-state",
- "genex-terminal-detection",
- "genex-test-binary-support",
- "genex-thread-store",
- "genex-tools",
- "genex-utils-absolute-path",
- "genex-utils-audio",
- "genex-utils-cache",
- "genex-utils-cargo-bin",
- "genex-utils-git-discovery",
- "genex-utils-home-dir",
- "genex-utils-image",
- "genex-utils-output-truncation",
- "genex-utils-path",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "genex-utils-pty",
- "genex-utils-redacted-string",
- "genex-utils-stream-parser",
- "genex-utils-string",
- "genex-web-search-extension",
- "http",
- "iana-time-zone",
- "image",
- "indexmap 2.14.0",
- "insta",
- "libc",
- "maplit",
- "once_cell",
- "openssl-sys",
- "opentelemetry",
- "opentelemetry_sdk",
- "predicates",
- "pretty_assertions",
- "rand 0.9.3",
- "regex-lite",
- "rmcp",
- "serde",
- "serde_json",
- "serial_test",
- "sha1 0.10.6",
- "shlex",
- "similar",
- "tempfile",
- "test-case",
- "test-log",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite",
- "tokio-util",
- "toml 0.9.11+spec-1.1.0",
- "toml_edit 0.24.0+spec-1.1.0",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "tracing-test",
- "url",
- "uuid",
- "walkdir",
- "which 8.0.0",
- "whoami 1.6.1",
- "wiremock",
- "zstd",
-]
-
-[[package]]
-name = "genex-core-api"
-version = "0.0.0"
-dependencies = [
- "genex-app-server-protocol",
- "genex-arg0",
- "genex-config",
- "genex-core",
- "genex-exec-server",
- "genex-extension-api",
- "genex-features",
- "genex-history",
- "genex-home",
- "genex-login",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-protocol",
- "genex-state",
- "genex-utils-absolute-path",
-]
-
-[[package]]
-name = "genex-core-plugins"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "dirs 6.0.0",
- "flate2",
- "futures",
- "genex-app-server-protocol",
- "genex-config",
- "genex-credential-broker",
- "genex-exec-server",
- "genex-exec-server-test-support",
- "genex-git-utils",
- "genex-hooks",
- "genex-http-client",
- "genex-mcp",
- "genex-model-provider",
- "genex-otel",
- "genex-plugin",
- "genex-protocol",
- "genex-shell-command",
- "genex-skills",
- "genex-tools",
- "genex-utils-absolute-path",
- "genex-utils-path",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "http",
- "libc",
- "pretty_assertions",
- "regex",
- "semver",
- "serde",
- "serde_json",
- "serde_with",
- "serde_yaml",
- "sha2 0.10.9",
- "tar",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "tracing-subscriber",
- "tracing-test",
- "url",
- "uuid",
- "wiremock",
- "zip",
-]
-
-[[package]]
-name = "genex-credential-broker"
-version = "0.0.0"
-dependencies = [
- "tokio",
-]
-
-[[package]]
-name = "genex-desktop"
-version = "0.1.0"
-dependencies = [
- "dirs 6.0.0",
- "genex-app-server-client",
- "genex-app-server-daemon",
- "genex-app-server-protocol",
- "genex-utils-absolute-path",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-macros",
- "tauri-runtime",
-]
-
-[[package]]
-name = "genex-diagnostics"
-version = "0.0.0"
-dependencies = [
- "libc",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-exec"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "clap",
- "core_test_support",
- "genex-app-server-client",
- "genex-app-server-protocol",
- "genex-apply-patch",
- "genex-arg0",
- "genex-config",
- "genex-core",
- "genex-features",
- "genex-git-utils",
- "genex-history",
- "genex-login",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-otel",
- "genex-protocol",
- "genex-rollout",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-cli",
- "genex-utils-path-uri",
- "genex-utils-sandbox-summary",
- "genex-worktree",
- "libc",
- "opentelemetry",
- "opentelemetry_sdk",
- "owo-colors",
- "predicates",
- "pretty_assertions",
- "serde",
- "serde_json",
- "supports-color 3.0.2",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "ts-rs",
- "uuid",
- "walkdir",
- "wiremock",
- "zstd",
-]
-
-[[package]]
-name = "genex-exec-server"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "base64 0.22.1",
- "bytes",
- "clatter",
- "ctor 0.6.3",
- "dirs 6.0.0",
- "futures",
- "genex-build-info",
- "genex-config",
- "genex-exec-server-protocol",
- "genex-exec-server-test-support",
- "genex-file-system",
- "genex-http-client",
- "genex-network-proxy",
- "genex-otel",
- "genex-protocol",
- "genex-sandboxing",
- "genex-shell-command",
- "genex-test-binary-support",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-home-dir",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "http",
- "libc",
- "opentelemetry",
- "opentelemetry_sdk",
- "pretty_assertions",
- "prost",
- "rcgen",
- "rustix 1.1.4",
- "rustls",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "test-case",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "url",
- "uuid",
- "wiremock",
-]
-
-[[package]]
-name = "genex-exec-server-protocol"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "genex-file-system",
- "genex-network-proxy",
- "genex-protocol",
- "genex-shell-command",
- "genex-utils-path-uri",
- "pretty_assertions",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "genex-exec-server-test-support"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "futures",
- "genex-exec-server",
- "genex-http-client",
- "prost",
- "serde_json",
- "tokio",
- "tokio-tungstenite",
- "wiremock",
-]
-
-[[package]]
-name = "genex-execpolicy"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "genex-utils-absolute-path",
- "multimap",
- "pretty_assertions",
- "serde",
- "serde_json",
- "shlex",
- "starlark",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
-]
-
-[[package]]
-name = "genex-experimental-api-macros"
-version = "0.0.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
-name = "genex-extension-api"
-version = "0.0.0"
-dependencies = [
- "genex-config",
- "genex-context-fragments",
- "genex-exec-server-protocol",
- "genex-history",
- "genex-mcp",
- "genex-protocol",
- "genex-tools",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "pretty_assertions",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "genex-extension-items"
-version = "0.0.0"
-dependencies = [
- "genex-utils-absolute-path",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "ts-rs",
-]
-
-[[package]]
-name = "genex-features"
-version = "0.0.0"
-dependencies = [
- "genex-network-proxy",
- "genex-otel",
- "genex-protocol",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
-]
-
-[[package]]
-name = "genex-file-search"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "crossbeam-channel",
- "ignore",
- "nucleo",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "genex-file-system"
-version = "0.0.0"
-dependencies = [
- "bytes",
- "futures",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "serde",
-]
-
-[[package]]
-name = "genex-file-watcher"
-version = "0.0.0"
-dependencies = [
- "notify",
- "pretty_assertions",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-git-utils"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "futures",
- "genex-file-system",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "gix",
- "once_cell",
- "pretty_assertions",
- "regex",
- "schemars 0.8.22",
- "serde",
- "similar",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "ts-rs",
- "walkdir",
-]
-
-[[package]]
-name = "genex-goal-extension"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "genex-core",
- "genex-extension-api",
- "genex-otel",
- "genex-prompts",
- "genex-protocol",
- "genex-rollout",
- "genex-state",
- "genex-tools",
- "genex-utils-absolute-path",
- "genex-utils-template",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-history"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-protocol",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "genex-history-notes-extension"
-version = "0.0.0"
-dependencies = [
- "core_test_support",
- "genex-config",
- "genex-core",
- "genex-extension-api",
- "genex-http-client",
- "genex-login",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-protocol",
- "genex-providers",
- "genex-tools",
- "genex-utils-output-truncation",
- "http",
- "pretty_assertions",
- "serde_json",
- "tempfile",
- "tokio",
- "wiremock",
-]
-
-[[package]]
-name = "genex-home"
-version = "0.0.0"
-dependencies = [
- "genex-extension-api",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-hooks"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "chrono",
- "futures",
- "genex-config",
- "genex-plugin",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-output-truncation",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "pretty_assertions",
- "regex",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "genex-http-client"
-version = "0.0.0"
-dependencies = [
- "bytes",
- "futures",
- "genex-utils-cargo-bin",
- "genex-utils-rustls-provider",
- "http",
- "native-tls",
- "opentelemetry",
- "opentelemetry_sdk",
- "pretty_assertions",
- "rcgen",
- "reqwest 0.12.28",
- "rustls",
- "rustls-native-certs",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "system-configuration",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "zstd",
-]
-
-[[package]]
-name = "genex-install-context"
-version = "0.0.0"
-dependencies = [
- "genex-utils-absolute-path",
- "genex-utils-home-dir",
- "pretty_assertions",
- "semver",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "genex-keyring-store"
-version = "0.0.0"
-dependencies = [
- "keyring",
- "tracing",
-]
-
-[[package]]
-name = "genex-linux-sandbox"
-version = "0.0.0"
-dependencies = [
- "clap",
- "genex-core",
- "genex-install-context",
- "genex-network-proxy",
- "genex-process-hardening",
- "genex-protocol",
- "genex-sandboxing",
- "genex-uds",
- "genex-utils-absolute-path",
- "globset",
- "landlock",
- "libc",
- "pretty_assertions",
- "rustix 1.1.4",
- "seccompiler",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "test-case",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "genex-login"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "chrono",
- "core_test_support",
- "genex-config",
- "genex-http-client",
- "genex-keyring-store",
- "genex-model-provider-info",
- "genex-otel",
- "genex-protocol",
- "genex-secrets",
- "genex-terminal-detection",
- "genex-utils-template",
- "http",
- "keyring",
- "once_cell",
- "os_info",
- "pretty_assertions",
- "rand 0.9.3",
- "regex-lite",
- "serde",
- "serde_json",
- "serial_test",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "tiny_http",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
- "urlencoding",
- "webbrowser",
- "wiremock",
-]
-
-[[package]]
-name = "genex-mcp"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "assert_matches",
- "async-channel",
- "futures",
- "genex-api",
- "genex-async-utils",
- "genex-config",
- "genex-diagnostics",
- "genex-exec-server",
- "genex-exec-server-test-support",
- "genex-login",
- "genex-model-provider",
- "genex-otel",
- "genex-plugin",
- "genex-protocol",
- "genex-rmcp-client",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "insta",
- "lru",
- "pretty_assertions",
- "regex-lite",
- "rmcp",
- "serde",
- "serde_json",
- "sha1 0.10.6",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "genex-mcp-extension"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "futures",
- "genex-config",
- "genex-core",
- "genex-core-plugins",
- "genex-exec-server",
- "genex-exec-server-test-support",
- "genex-extension-api",
- "genex-features",
- "genex-login",
- "genex-mcp",
- "genex-plugin",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "pretty_assertions",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "genex-mermaid"
-version = "0.0.0"
-dependencies = [
- "insta",
- "pretty_assertions",
- "unicode-width 0.2.1",
-]
-
-[[package]]
-name = "genex-message-history"
-version = "0.0.0"
-dependencies = [
- "genex-config",
- "memchr",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-model-provider"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "futures",
- "genex-api",
- "genex-http-client",
- "genex-login",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-otel",
- "genex-protocol",
- "genex-response-debug-context",
- "genex-utils-redacted-string",
- "http",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "url",
- "uuid",
- "wiremock",
-]
-
-[[package]]
-name = "genex-model-provider-info"
-version = "0.0.0"
-dependencies = [
- "genex-api",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-redacted-string",
- "http",
- "maplit",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "tempfile",
- "toml 0.9.11+spec-1.1.0",
-]
-
-[[package]]
-name = "genex-models-manager"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "genex-http-client",
- "genex-otel",
- "genex-prompts",
- "genex-protocol",
- "genex-utils-output-truncation",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-network-proxy"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "chrono",
- "clap",
- "genex-utils-absolute-path",
- "genex-utils-home-dir",
- "genex-utils-rustls-provider",
- "globset",
- "libc",
- "opentelemetry",
- "pretty_assertions",
- "rama-core",
- "rama-dns",
- "rama-http",
- "rama-http-backend",
- "rama-net",
- "rama-socks5",
- "rama-tcp",
- "rama-tls-rustls",
- "rama-unix",
- "rand 0.9.3",
- "rand_regex",
- "regex",
- "regex-automata",
- "regex-syntax",
- "rustls-native-certs",
- "schemars 0.8.22",
- "security-framework 3.5.1",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "time",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "genex-otel"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "eventsource-stream",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-string",
- "gethostname",
- "http",
- "libc",
- "opentelemetry",
- "opentelemetry-appender-tracing",
- "opentelemetry-otlp",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
- "os_info",
- "pretty_assertions",
- "reqwest 0.12.28",
- "seccompiler",
- "serde",
- "serde_json",
- "strum_macros 0.28.0",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "genex-otel-trace-websocket"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "futures",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-plugin"
-version = "0.0.0"
-dependencies = [
- "genex-config",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "pretty_assertions",
- "serde_json",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "genex-process-hardening"
-version = "0.0.0"
-dependencies = [
- "libc",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-prompts"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-collaboration-mode-templates",
- "genex-context-fragments",
- "genex-execpolicy",
- "genex-git-utils",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-template",
- "pretty_assertions",
- "tracing",
-]
-
-[[package]]
-name = "genex-protocol"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chardetng",
- "chrono",
- "encoding_rs",
- "genex-async-utils",
- "genex-execpolicy",
- "genex-extension-items",
- "genex-http-client",
- "genex-network-proxy",
- "genex-utils-absolute-path",
- "genex-utils-image",
- "genex-utils-path-uri",
- "genex-utils-redacted-string",
- "genex-utils-string",
- "gix-url",
- "globset",
- "http",
- "icu_decimal",
- "icu_locale_core",
- "icu_provider",
- "landlock",
- "pretty_assertions",
- "quick-xml 0.41.0",
- "schemars 0.8.22",
- "seccompiler",
- "serde",
- "serde_json",
- "serde_with",
- "strum 0.27.2",
- "strum_macros 0.28.0",
- "sys-locale",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "ts-rs",
- "uuid",
- "wildmatch",
-]
-
-[[package]]
-name = "genex-provider-host-example"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-app-server",
- "genex-arg0",
- "genex-cli",
- "genex-providers",
-]
-
-[[package]]
-name = "genex-providers"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "futures",
- "genex-api",
- "genex-http-client",
- "genex-login",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-otel",
- "genex-protocol",
- "genex-response-debug-context",
- "genex-utils-redacted-string",
- "http",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "url",
- "uuid",
- "wiremock",
-]
-
-[[package]]
-name = "genex-queue-extension"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "core_test_support",
- "genex-core",
- "genex-extension-api",
- "genex-protocol",
- "genex-state",
- "genex-thread-store",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "genex-response-debug-context"
-version = "0.0.0"
-dependencies = [
- "genex-api",
- "http",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-rmcp-client"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "axum",
- "base64 0.22.1",
- "bytes",
- "futures",
- "genex-api",
- "genex-config",
- "genex-exec-server",
- "genex-http-client",
- "genex-keyring-store",
- "genex-network-proxy",
- "genex-protocol",
- "genex-secrets",
- "genex-utils-cargo-bin",
- "genex-utils-home-dir",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "http",
- "keyring",
- "libc",
- "memchr",
- "oauth2",
- "pretty_assertions",
- "rmcp",
- "serde",
- "serde_json",
- "serial_test",
- "sha2 0.10.9",
- "sse-stream",
- "tempfile",
- "thiserror 2.0.18",
- "tiny_http",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "tracing-test",
- "url",
- "urlencoding",
- "webbrowser",
- "which 8.0.0",
- "wiremock",
-]
-
-[[package]]
-name = "genex-rollout"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "genex-extension-items",
- "genex-file-search",
- "genex-git-utils",
- "genex-history",
- "genex-otel",
- "genex-protocol",
- "genex-state",
- "genex-utils-absolute-path",
- "genex-utils-path",
- "pretty_assertions",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "time",
- "tokio",
- "tracing",
- "uuid",
- "zstd",
-]
-
-[[package]]
-name = "genex-rollout-trace"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-code-mode",
- "genex-protocol",
- "http",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "genex-sandboxing"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "dunce",
- "genex-network-proxy",
- "genex-protocol",
- "genex-uds",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "genex-utils-pty",
- "libc",
- "pretty_assertions",
- "regex-lite",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "url",
- "which 8.0.0",
-]
-
-[[package]]
-name = "genex-secrets"
-version = "0.0.0"
-dependencies = [
- "age",
- "anyhow",
- "base64 0.22.1",
- "genex-git-utils",
- "genex-keyring-store",
- "keyring",
- "pretty_assertions",
- "rand 0.9.3",
- "regex",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "tracing",
-]
-
-[[package]]
-name = "genex-shell-command"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "genex-protocol",
- "genex-utils-absolute-path",
- "libc",
- "once_cell",
- "pretty_assertions",
- "regex",
- "serde",
- "serde_json",
- "shlex",
- "tempfile",
- "tree-sitter",
- "tree-sitter-bash",
- "url",
- "which 8.0.0",
-]
-
-[[package]]
-name = "genex-skills"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "genex-shell-command",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "include_dir",
- "pretty_assertions",
- "serde",
- "serde_yaml",
- "shlex",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
-name = "genex-skills-extension"
-version = "0.0.0"
-dependencies = [
- "assert_matches",
- "dirs 6.0.0",
- "dunce",
- "futures",
- "genex-config",
- "genex-exec-server",
- "genex-extension-api",
- "genex-mcp",
- "genex-models-manager",
- "genex-otel",
- "genex-protocol",
- "genex-skills",
- "genex-tools",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "genex-utils-string",
- "insta",
- "opentelemetry_sdk",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "tokio",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "genex-state"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "genex-git-utils",
- "genex-history",
- "genex-protocol",
- "genex-utils-absolute-path",
- "libsqlite3-sys",
- "log",
- "pretty_assertions",
- "scopeguard",
- "serde",
- "serde_json",
- "sqlx",
- "strum 0.27.2",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "genex-stdio-to-uds"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "genex-uds",
- "genex-utils-cargo-bin",
- "pretty_assertions",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "genex-tcp-tunnel"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "bytes",
- "clap",
- "h3",
- "h3-quinn",
- "http",
- "pretty_assertions",
- "quinn",
- "rand 0.9.3",
- "rcgen",
- "rustls",
- "rustls-native-certs",
- "serde_json",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "genex-terminal-detection"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
- "tracing",
-]
-
-[[package]]
-name = "genex-test-binary-support"
-version = "0.0.0"
-dependencies = [
- "genex-arg0",
- "tempfile",
-]
-
-[[package]]
-name = "genex-thread-store"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "futures",
- "genex-app-server-protocol",
- "genex-extension-items",
- "genex-git-utils",
- "genex-install-context",
- "genex-otel",
- "genex-protocol",
- "genex-rollout",
- "genex-state",
- "genex-utils-absolute-path",
- "genex-utils-path",
- "genex-utils-path-uri",
- "pretty_assertions",
- "pulldown-cmark",
- "serde",
- "serde_json",
- "sqlx",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
- "zstd",
-]
-
-[[package]]
-name = "genex-tools"
-version = "0.0.0"
-dependencies = [
- "bitflags 2.13.1",
- "genex-code-mode",
- "genex-extension-items",
- "genex-features",
- "genex-file-system",
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-cargo-bin",
- "genex-utils-output-truncation",
- "genex-utils-string",
- "jsonptr",
- "pretty_assertions",
- "rmcp",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tracing",
- "urlencoding",
-]
-
-[[package]]
-name = "genex-tui"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "app_test_support",
- "arboard",
- "assert_matches",
- "axum",
- "base64 0.22.1",
- "chrono",
- "clap",
- "color-eyre",
- "core_test_support",
- "crossterm",
- "derive_more 2.1.1",
- "diffy",
- "dirs 6.0.0",
- "dunce",
- "futures",
- "genex-ansi-escape",
- "genex-app-server-client",
- "genex-app-server-daemon",
- "genex-app-server-protocol",
- "genex-arg0",
- "genex-build-info",
- "genex-config",
- "genex-context-fragments",
- "genex-core-plugins",
- "genex-exec-server",
- "genex-features",
- "genex-file-search",
- "genex-git-utils",
- "genex-history",
- "genex-http-client",
- "genex-install-context",
- "genex-login",
- "genex-mcp",
- "genex-mermaid",
- "genex-message-history",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-models-manager",
- "genex-otel",
- "genex-plugin",
- "genex-protocol",
- "genex-rollout",
- "genex-sandboxing",
- "genex-shell-command",
- "genex-state",
- "genex-terminal-detection",
- "genex-uds",
- "genex-utils-absolute-path",
- "genex-utils-approval-presets",
- "genex-utils-cargo-bin",
- "genex-utils-cli",
- "genex-utils-elapsed",
- "genex-utils-fuzzy-match",
- "genex-utils-home-dir",
- "genex-utils-path",
- "genex-utils-path-uri",
- "genex-utils-plugins",
- "genex-utils-sandbox-summary",
- "genex-utils-sleep-inhibitor",
- "genex-utils-string",
- "genex-worktree",
- "http",
- "image",
- "itertools 0.14.0",
- "lazy_static",
- "libc",
- "objc2-app-kit",
- "pathdiff",
- "pretty_assertions",
- "pulldown-cmark",
- "rand 0.9.3",
- "ratatui",
- "ratatui-macros",
- "regex-lite",
- "rmcp",
- "serde",
- "serde_json",
- "serial_test",
- "sha2 0.10.9",
- "shlex",
- "strum 0.27.2",
- "strum_macros 0.28.0",
- "supports-color 3.0.2",
- "syntect",
- "tempfile",
- "textwrap 0.16.2",
- "thiserror 2.0.18",
- "tokio",
- "tokio-stream",
- "tokio-tungstenite",
- "tokio-util",
- "toml 0.9.11+spec-1.1.0",
- "toml_edit 0.24.0+spec-1.1.0",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "two-face",
- "unicode-segmentation",
- "unicode-width 0.2.1",
- "url",
- "urlencoding",
- "uuid",
- "vt100",
- "webbrowser",
- "wiremock",
- "zbus",
-]
-
-[[package]]
-name = "genex-uds"
-version = "0.0.0"
-dependencies = [
- "libc",
- "pretty_assertions",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "genex-user-verification"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "core-foundation 0.10.1",
- "dirs 6.0.0",
- "objc2",
- "objc2-foundation",
- "objc2-local-authentication",
- "p256",
- "pretty_assertions",
- "security-framework 3.5.1",
- "security-framework-sys",
- "sha2 0.10.9",
- "tempfile",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
-name = "genex-utils-absolute-path"
-version = "0.0.0"
-dependencies = [
- "dirs 6.0.0",
- "dunce",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "tempfile",
- "ts-rs",
-]
-
-[[package]]
-name = "genex-utils-approval-presets"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
-]
-
-[[package]]
-name = "genex-utils-audio"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "genex-protocol",
- "genex-utils-cache",
- "genex-utils-string",
- "pretty_assertions",
- "symphonia",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
-name = "genex-utils-cache"
-version = "0.0.0"
-dependencies = [
- "lru",
- "sha1 0.10.6",
- "tokio",
-]
-
-[[package]]
-name = "genex-utils-cargo-bin"
-version = "0.0.0"
-dependencies = [
- "assert_cmd",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "genex-utils-cli"
-version = "0.0.0"
-dependencies = [
- "clap",
- "genex-protocol",
- "genex-shell-command",
- "pretty_assertions",
- "serde",
- "toml 0.9.11+spec-1.1.0",
-]
-
-[[package]]
-name = "genex-utils-elapsed"
-version = "0.0.0"
-
-[[package]]
-name = "genex-utils-fuzzy-match"
-version = "0.0.0"
-
-[[package]]
-name = "genex-utils-git-discovery"
-version = "0.0.0"
-dependencies = [
- "futures",
- "genex-git-utils",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "genex-utils-home-dir"
-version = "0.0.0"
-dependencies = [
- "dirs 6.0.0",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "tempfile",
-]
-
-[[package]]
-name = "genex-utils-image"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "divan",
- "genex-utils-cache",
- "image",
- "mime_guess",
- "thiserror 2.0.18",
- "tokio",
-]
-
-[[package]]
-name = "genex-utils-json-to-toml"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
- "serde_json",
- "toml 0.9.11+spec-1.1.0",
-]
-
-[[package]]
-name = "genex-utils-output-truncation"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "genex-utils-string",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-utils-path"
-version = "0.0.0"
-dependencies = [
- "dunce",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "tempfile",
-]
-
-[[package]]
-name = "genex-utils-path-uri"
-version = "0.0.0"
-dependencies = [
- "base64 0.22.1",
- "genex-utils-absolute-path",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "ts-rs",
- "url",
- "urlencoding",
-]
-
-[[package]]
-name = "genex-utils-plugins"
-version = "0.0.0"
-dependencies = [
- "genex-exec-server",
- "genex-exec-server-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "genex-utils-pty"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "libc",
- "portable-pty",
- "pretty_assertions",
- "tokio",
-]
-
-[[package]]
-name = "genex-utils-redacted-string"
-version = "0.0.0"
-dependencies = [
- "schemars 0.8.22",
- "serde",
-]
-
-[[package]]
-name = "genex-utils-rustls-provider"
-version = "0.0.0"
-dependencies = [
- "rustls",
-]
-
-[[package]]
-name = "genex-utils-sandbox-summary"
-version = "0.0.0"
-dependencies = [
- "genex-protocol",
- "genex-utils-absolute-path",
- "genex-utils-path-uri",
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-utils-sleep-inhibitor"
-version = "0.0.0"
-dependencies = [
- "core-foundation 0.9.4",
- "libc",
- "tracing",
-]
-
-[[package]]
-name = "genex-utils-stream-parser"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-utils-string"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
- "regex-lite",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "genex-utils-template"
-version = "0.0.0"
-dependencies = [
- "pretty_assertions",
-]
-
-[[package]]
-name = "genex-web-search-extension"
-version = "0.0.0"
-dependencies = [
- "genex-api",
- "genex-core",
- "genex-extension-api",
- "genex-extension-items",
- "genex-http-client",
- "genex-login",
- "genex-model-provider",
- "genex-model-provider-info",
- "genex-otel",
- "genex-protocol",
- "genex-providers",
- "genex-tools",
- "http",
- "pretty_assertions",
- "schemars 0.8.22",
- "serde_json",
- "url",
-]
-
-[[package]]
-name = "genex-websocket-client"
-version = "0.0.0"
-dependencies = [
- "futures",
- "genex-http-client",
- "genex-utils-rustls-provider",
- "pretty_assertions",
- "rcgen",
- "rustls",
- "tokio",
- "tokio-rustls",
- "tokio-tungstenite",
- "url",
-]
-
-[[package]]
-name = "genex-worktree"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "dunce",
- "genex-git-utils",
- "genex-protocol",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "uuid",
 ]
 
 [[package]]
@@ -12226,6 +9672,2560 @@ dependencies = [
  "unicode-width 0.1.14",
  "utf8parse",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "ruxex-agent-extension"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "core_test_support",
+ "pretty_assertions",
+ "ruxex-core",
+ "ruxex-protocol",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-agent-graph-store"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-state",
+ "ruxex-utils-absolute-path",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-agent-roles"
+version = "0.0.0"
+dependencies = [
+ "ruxex-config",
+ "ruxex-file-system",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-ansi-escape"
+version = "0.0.0"
+dependencies = [
+ "ansi-to-tui",
+ "ratatui",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-api"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "async-channel",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "eventsource-stream",
+ "futures",
+ "http",
+ "pretty_assertions",
+ "rcgen",
+ "regex-lite",
+ "rustls",
+ "ruxex-client",
+ "ruxex-http-client",
+ "ruxex-protocol",
+ "ruxex-utils-rustls-provider",
+ "ruxex-websocket-client",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-test",
+ "tokio-tungstenite",
+ "tokio-util",
+ "tracing",
+ "tungstenite",
+ "url",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-app-server"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "app_test_support",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "core_test_support",
+ "flate2",
+ "futures",
+ "hmac 0.12.1",
+ "http",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "pretty_assertions",
+ "rmcp",
+ "ruxex-agent-extension",
+ "ruxex-app-server-protocol",
+ "ruxex-app-server-transport",
+ "ruxex-arg0",
+ "ruxex-code-mode",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-core-plugins",
+ "ruxex-diagnostics",
+ "ruxex-exec-server",
+ "ruxex-extension-api",
+ "ruxex-features",
+ "ruxex-file-search",
+ "ruxex-file-watcher",
+ "ruxex-git-utils",
+ "ruxex-goal-extension",
+ "ruxex-history-notes-extension",
+ "ruxex-home",
+ "ruxex-hooks",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-mcp",
+ "ruxex-mcp-extension",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-network-proxy",
+ "ruxex-otel",
+ "ruxex-plugin",
+ "ruxex-prompts",
+ "ruxex-protocol",
+ "ruxex-providers",
+ "ruxex-queue-extension",
+ "ruxex-rmcp-client",
+ "ruxex-rollout",
+ "ruxex-sandboxing",
+ "ruxex-shell-command",
+ "ruxex-skills",
+ "ruxex-skills-extension",
+ "ruxex-state",
+ "ruxex-thread-store",
+ "ruxex-tools",
+ "ruxex-uds",
+ "ruxex-user-verification",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-cli",
+ "ruxex-utils-json-to-toml",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "ruxex-web-search-extension",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sha2 0.10.9",
+ "shlex",
+ "sqlx",
+ "tar",
+ "tempfile",
+ "test-case",
+ "thiserror 2.0.18",
+ "tikv-jemallocator",
+ "time",
+ "tokio",
+ "tokio-tungstenite",
+ "tokio-util",
+ "toml 0.9.11+spec-1.1.0",
+ "toml_edit 0.24.0+spec-1.1.0",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-app-server-client"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "pretty_assertions",
+ "ruxex-app-server",
+ "ruxex-app-server-protocol",
+ "ruxex-arg0",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-exec-server",
+ "ruxex-protocol",
+ "ruxex-uds",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-rustls-provider",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "ruxex-app-server-daemon"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "futures",
+ "libc",
+ "pretty_assertions",
+ "ruxex-app-server-protocol",
+ "ruxex-app-server-transport",
+ "ruxex-http-client",
+ "ruxex-install-context",
+ "ruxex-uds",
+ "ruxex-utils-home-dir",
+ "semver",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-app-server-protocol"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "inventory",
+ "pretty_assertions",
+ "rmcp",
+ "ruxex-app-server-protocol-noop-macros",
+ "ruxex-experimental-api-macros",
+ "ruxex-extension-items",
+ "ruxex-history",
+ "ruxex-protocol",
+ "ruxex-rollout",
+ "ruxex-secrets",
+ "ruxex-shell-command",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-redacted-string",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "similar",
+ "strum_macros 0.28.0",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tracing",
+ "ts-rs",
+ "uuid",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-app-server-protocol-noop-macros"
+version = "0.0.0"
+
+[[package]]
+name = "ruxex-app-server-test-client"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "pretty_assertions",
+ "ruxex-app-server-protocol",
+ "ruxex-core",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-utils-cli",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "tungstenite",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-app-server-transport"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "constant_time_eq",
+ "futures",
+ "gethostname",
+ "hmac 0.12.1",
+ "httpdate",
+ "jsonwebtoken",
+ "libc",
+ "owo-colors",
+ "pretty_assertions",
+ "rand 0.9.3",
+ "ruxex-api",
+ "ruxex-app-server-protocol",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-protocol",
+ "ruxex-state",
+ "ruxex-uds",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-rustls-provider",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "signal-hook",
+ "tempfile",
+ "time",
+ "tokio",
+ "tokio-tungstenite",
+ "tokio-util",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-apply-patch"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "assert_matches",
+ "pretty_assertions",
+ "ruxex-exec-server",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-path-uri",
+ "similar",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tree-sitter",
+ "tree-sitter-bash",
+]
+
+[[package]]
+name = "ruxex-arg0"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "dotenvy",
+ "pretty_assertions",
+ "ruxex-apply-patch",
+ "ruxex-async-utils",
+ "ruxex-exec-server",
+ "ruxex-install-context",
+ "ruxex-linux-sandbox",
+ "ruxex-sandboxing",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-home-dir",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-async-utils"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
+name = "ruxex-attachment-store"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "serde",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-build-info"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-install-context",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+]
+
+[[package]]
+name = "ruxex-bwrap"
+version = "0.0.0"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
+name = "ruxex-cli"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "app_test_support",
+ "assert_cmd",
+ "assert_matches",
+ "chrono",
+ "clap",
+ "clap_complete",
+ "crossterm",
+ "flate2",
+ "futures",
+ "http",
+ "insta",
+ "libc",
+ "os_info",
+ "owo-colors",
+ "predicates",
+ "pretty_assertions",
+ "regex-lite",
+ "ruxex-api",
+ "ruxex-app-server",
+ "ruxex-app-server-daemon",
+ "ruxex-app-server-protocol",
+ "ruxex-app-server-test-client",
+ "ruxex-arg0",
+ "ruxex-build-info",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-core-plugins",
+ "ruxex-credential-broker",
+ "ruxex-exec",
+ "ruxex-exec-server",
+ "ruxex-execpolicy",
+ "ruxex-extension-api",
+ "ruxex-features",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-home",
+ "ruxex-http-client",
+ "ruxex-install-context",
+ "ruxex-login",
+ "ruxex-mcp",
+ "ruxex-model-provider",
+ "ruxex-models-manager",
+ "ruxex-network-proxy",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-rmcp-client",
+ "ruxex-rollout",
+ "ruxex-rollout-trace",
+ "ruxex-sandboxing",
+ "ruxex-skills-extension",
+ "ruxex-state",
+ "ruxex-stdio-to-uds",
+ "ruxex-tcp-tunnel",
+ "ruxex-terminal-detection",
+ "ruxex-thread-store",
+ "ruxex-tui",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-cli",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "supports-color 3.0.2",
+ "sys-locale",
+ "tar",
+ "tempfile",
+ "tikv-jemallocator",
+ "tokio",
+ "tokio-tungstenite",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "url",
+ "vt100",
+ "which 8.0.0",
+ "wiremock",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-client"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "http",
+ "rand 0.9.3",
+ "ruxex-http-client",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-code-mode"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "http-body-util",
+ "pretty_assertions",
+ "prost",
+ "reqwest 0.12.28",
+ "ruxex-code-mode-protocol",
+ "ruxex-http-client",
+ "ruxex-install-context",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tower",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-code-mode-host"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "clap",
+ "futures",
+ "pretty_assertions",
+ "prost",
+ "ruxex-code-mode",
+ "ruxex-code-mode-protocol",
+ "ruxex-code-mode-runtime",
+ "ruxex-otel",
+ "ruxex-otel-trace-websocket",
+ "ruxex-protocol",
+ "ruxex-utils-cargo-bin",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-code-mode-protocol"
+version = "0.0.0"
+dependencies = [
+ "glob",
+ "pretty_assertions",
+ "prost",
+ "protoc-bin-vendored",
+ "ruxex-protocol",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+]
+
+[[package]]
+name = "ruxex-code-mode-runtime"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "deno_core_icudata",
+ "futures",
+ "opentelemetry",
+ "pretty_assertions",
+ "ruxex-code-mode-protocol",
+ "ruxex-protocol",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "v8",
+]
+
+[[package]]
+name = "ruxex-collaboration-mode-templates"
+version = "0.0.0"
+
+[[package]]
+name = "ruxex-config"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "core-foundation 0.9.4",
+ "dns-lookup",
+ "dunce",
+ "futures",
+ "gethostname",
+ "indexmap 2.14.0",
+ "libc",
+ "multimap",
+ "pretty_assertions",
+ "regex-lite",
+ "ruxex-execpolicy",
+ "ruxex-features",
+ "ruxex-file-system",
+ "ruxex-git-utils",
+ "ruxex-model-provider-info",
+ "ruxex-network-proxy",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "schemars 0.8.22",
+ "serde",
+ "serde_ignored",
+ "serde_json",
+ "serde_path_to_error",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 0.9.11+spec-1.1.0",
+ "toml_edit 0.24.0+spec-1.1.0",
+ "tracing",
+ "wildmatch",
+]
+
+[[package]]
+name = "ruxex-config-schema"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "ruxex-config",
+]
+
+[[package]]
+name = "ruxex-context-fragments"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-utils-string",
+]
+
+[[package]]
+name = "ruxex-core"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "assert_cmd",
+ "assert_matches",
+ "async-channel",
+ "base64 0.22.1",
+ "bm25",
+ "chrono",
+ "core_test_support",
+ "ctor 0.6.3",
+ "dirs 6.0.0",
+ "dunce",
+ "eventsource-stream",
+ "futures",
+ "http",
+ "iana-time-zone",
+ "image",
+ "indexmap 2.14.0",
+ "insta",
+ "libc",
+ "maplit",
+ "once_cell",
+ "openssl-sys",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "predicates",
+ "pretty_assertions",
+ "rand 0.9.3",
+ "regex-lite",
+ "rmcp",
+ "ruxex-agent-graph-store",
+ "ruxex-agent-roles",
+ "ruxex-app-server-protocol",
+ "ruxex-apply-patch",
+ "ruxex-async-utils",
+ "ruxex-attachment-store",
+ "ruxex-client",
+ "ruxex-code-mode",
+ "ruxex-config",
+ "ruxex-context-fragments",
+ "ruxex-core-plugins",
+ "ruxex-credential-broker",
+ "ruxex-diagnostics",
+ "ruxex-exec-server",
+ "ruxex-exec-server-test-support",
+ "ruxex-execpolicy",
+ "ruxex-extension-api",
+ "ruxex-extension-items",
+ "ruxex-features",
+ "ruxex-file-system",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-home",
+ "ruxex-hooks",
+ "ruxex-http-client",
+ "ruxex-install-context",
+ "ruxex-login",
+ "ruxex-mcp",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-network-proxy",
+ "ruxex-otel",
+ "ruxex-plugin",
+ "ruxex-prompts",
+ "ruxex-protocol",
+ "ruxex-providers",
+ "ruxex-response-debug-context",
+ "ruxex-rmcp-client",
+ "ruxex-rollout",
+ "ruxex-rollout-trace",
+ "ruxex-sandboxing",
+ "ruxex-shell-command",
+ "ruxex-skills",
+ "ruxex-skills-extension",
+ "ruxex-state",
+ "ruxex-terminal-detection",
+ "ruxex-test-binary-support",
+ "ruxex-thread-store",
+ "ruxex-tools",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-audio",
+ "ruxex-utils-cache",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-git-discovery",
+ "ruxex-utils-home-dir",
+ "ruxex-utils-image",
+ "ruxex-utils-output-truncation",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "ruxex-utils-pty",
+ "ruxex-utils-redacted-string",
+ "ruxex-utils-stream-parser",
+ "ruxex-utils-string",
+ "ruxex-web-search-extension",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sha1 0.10.6",
+ "shlex",
+ "similar",
+ "tempfile",
+ "test-case",
+ "test-log",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+ "tokio-util",
+ "toml 0.9.11+spec-1.1.0",
+ "toml_edit 0.24.0+spec-1.1.0",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "tracing-test",
+ "url",
+ "uuid",
+ "walkdir",
+ "which 8.0.0",
+ "whoami 1.6.1",
+ "wiremock",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-core-api"
+version = "0.0.0"
+dependencies = [
+ "ruxex-app-server-protocol",
+ "ruxex-arg0",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-exec-server",
+ "ruxex-extension-api",
+ "ruxex-features",
+ "ruxex-history",
+ "ruxex-home",
+ "ruxex-login",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-protocol",
+ "ruxex-state",
+ "ruxex-utils-absolute-path",
+]
+
+[[package]]
+name = "ruxex-core-plugins"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs 6.0.0",
+ "flate2",
+ "futures",
+ "http",
+ "libc",
+ "pretty_assertions",
+ "regex",
+ "ruxex-app-server-protocol",
+ "ruxex-config",
+ "ruxex-credential-broker",
+ "ruxex-exec-server",
+ "ruxex-exec-server-test-support",
+ "ruxex-git-utils",
+ "ruxex-hooks",
+ "ruxex-http-client",
+ "ruxex-mcp",
+ "ruxex-model-provider",
+ "ruxex-otel",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-shell-command",
+ "ruxex-skills",
+ "ruxex-tools",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "serde_yaml",
+ "sha2 0.10.9",
+ "tar",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+ "url",
+ "uuid",
+ "wiremock",
+ "zip",
+]
+
+[[package]]
+name = "ruxex-credential-broker"
+version = "0.0.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-desktop"
+version = "0.1.0"
+dependencies = [
+ "dirs 6.0.0",
+ "ruxex-app-server-client",
+ "ruxex-app-server-daemon",
+ "ruxex-app-server-protocol",
+ "ruxex-utils-absolute-path",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-macros",
+ "tauri-runtime",
+]
+
+[[package]]
+name = "ruxex-diagnostics"
+version = "0.0.0"
+dependencies = [
+ "libc",
+ "pretty_assertions",
+]
+
+[[package]]
+name = "ruxex-exec"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "clap",
+ "core_test_support",
+ "libc",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "owo-colors",
+ "predicates",
+ "pretty_assertions",
+ "ruxex-app-server-client",
+ "ruxex-app-server-protocol",
+ "ruxex-apply-patch",
+ "ruxex-arg0",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-features",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-rollout",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-cli",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-sandbox-summary",
+ "ruxex-worktree",
+ "serde",
+ "serde_json",
+ "supports-color 3.0.2",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "ts-rs",
+ "uuid",
+ "walkdir",
+ "wiremock",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-exec-server"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "base64 0.22.1",
+ "bytes",
+ "clatter",
+ "ctor 0.6.3",
+ "dirs 6.0.0",
+ "futures",
+ "http",
+ "libc",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "pretty_assertions",
+ "prost",
+ "rcgen",
+ "rustix 1.1.4",
+ "rustls",
+ "ruxex-build-info",
+ "ruxex-config",
+ "ruxex-exec-server-protocol",
+ "ruxex-exec-server-test-support",
+ "ruxex-file-system",
+ "ruxex-http-client",
+ "ruxex-network-proxy",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-sandboxing",
+ "ruxex-shell-command",
+ "ruxex-test-binary-support",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-home-dir",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "test-case",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-exec-server-protocol"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "pretty_assertions",
+ "ruxex-file-system",
+ "ruxex-network-proxy",
+ "ruxex-protocol",
+ "ruxex-shell-command",
+ "ruxex-utils-path-uri",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ruxex-exec-server-test-support"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "prost",
+ "ruxex-exec-server",
+ "ruxex-http-client",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-execpolicy"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "multimap",
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "serde",
+ "serde_json",
+ "shlex",
+ "starlark",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-experimental-api-macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "ruxex-extension-api"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-config",
+ "ruxex-context-fragments",
+ "ruxex-exec-server-protocol",
+ "ruxex-history",
+ "ruxex-mcp",
+ "ruxex-protocol",
+ "ruxex-tools",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-extension-items"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "ts-rs",
+]
+
+[[package]]
+name = "ruxex-features"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-network-proxy",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "schemars 0.8.22",
+ "serde",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-file-search"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossbeam-channel",
+ "ignore",
+ "nucleo",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-file-system"
+version = "0.0.0"
+dependencies = [
+ "bytes",
+ "futures",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde",
+]
+
+[[package]]
+name = "ruxex-file-watcher"
+version = "0.0.0"
+dependencies = [
+ "notify",
+ "pretty_assertions",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-git-utils"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "futures",
+ "gix",
+ "once_cell",
+ "pretty_assertions",
+ "regex",
+ "ruxex-file-system",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "schemars 0.8.22",
+ "serde",
+ "similar",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "ts-rs",
+ "walkdir",
+]
+
+[[package]]
+name = "ruxex-goal-extension"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "pretty_assertions",
+ "ruxex-core",
+ "ruxex-extension-api",
+ "ruxex-otel",
+ "ruxex-prompts",
+ "ruxex-protocol",
+ "ruxex-rollout",
+ "ruxex-state",
+ "ruxex-tools",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-template",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-history"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "pretty_assertions",
+ "ruxex-protocol",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ruxex-history-notes-extension"
+version = "0.0.0"
+dependencies = [
+ "core_test_support",
+ "http",
+ "pretty_assertions",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-extension-api",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-protocol",
+ "ruxex-providers",
+ "ruxex-tools",
+ "ruxex-utils-output-truncation",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-home"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-extension-api",
+ "ruxex-utils-absolute-path",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-hooks"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "chrono",
+ "futures",
+ "pretty_assertions",
+ "regex",
+ "ruxex-config",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-output-truncation",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-http-client"
+version = "0.0.0"
+dependencies = [
+ "bytes",
+ "futures",
+ "http",
+ "native-tls",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "pretty_assertions",
+ "rcgen",
+ "reqwest 0.12.28",
+ "rustls",
+ "rustls-native-certs",
+ "rustls-pki-types",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-rustls-provider",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "system-configuration",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-install-context"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-home-dir",
+ "semver",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "ruxex-keyring-store"
+version = "0.0.0"
+dependencies = [
+ "keyring",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-linux-sandbox"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "globset",
+ "landlock",
+ "libc",
+ "pretty_assertions",
+ "rustix 1.1.4",
+ "ruxex-core",
+ "ruxex-install-context",
+ "ruxex-network-proxy",
+ "ruxex-process-hardening",
+ "ruxex-protocol",
+ "ruxex-sandboxing",
+ "ruxex-uds",
+ "ruxex-utils-absolute-path",
+ "seccompiler",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "test-case",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "ruxex-login"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "chrono",
+ "core_test_support",
+ "http",
+ "keyring",
+ "once_cell",
+ "os_info",
+ "pretty_assertions",
+ "rand 0.9.3",
+ "regex-lite",
+ "ruxex-config",
+ "ruxex-http-client",
+ "ruxex-keyring-store",
+ "ruxex-model-provider-info",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-secrets",
+ "ruxex-terminal-detection",
+ "ruxex-utils-template",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tiny_http",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "urlencoding",
+ "webbrowser",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-mcp"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "assert_matches",
+ "async-channel",
+ "futures",
+ "insta",
+ "lru",
+ "pretty_assertions",
+ "regex-lite",
+ "rmcp",
+ "ruxex-api",
+ "ruxex-async-utils",
+ "ruxex-config",
+ "ruxex-diagnostics",
+ "ruxex-exec-server",
+ "ruxex-exec-server-test-support",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-otel",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-rmcp-client",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "serde",
+ "serde_json",
+ "sha1 0.10.6",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "ruxex-mcp-extension"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "futures",
+ "pretty_assertions",
+ "ruxex-config",
+ "ruxex-core",
+ "ruxex-core-plugins",
+ "ruxex-exec-server",
+ "ruxex-exec-server-test-support",
+ "ruxex-extension-api",
+ "ruxex-features",
+ "ruxex-login",
+ "ruxex-mcp",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-mermaid"
+version = "0.0.0"
+dependencies = [
+ "insta",
+ "pretty_assertions",
+ "unicode-width 0.2.1",
+]
+
+[[package]]
+name = "ruxex-message-history"
+version = "0.0.0"
+dependencies = [
+ "memchr",
+ "pretty_assertions",
+ "ruxex-config",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-model-provider"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "futures",
+ "http",
+ "pretty_assertions",
+ "ruxex-api",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-response-debug-context",
+ "ruxex-utils-redacted-string",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "url",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-model-provider-info"
+version = "0.0.0"
+dependencies = [
+ "http",
+ "maplit",
+ "pretty_assertions",
+ "ruxex-api",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-redacted-string",
+ "schemars 0.8.22",
+ "serde",
+ "tempfile",
+ "toml 0.9.11+spec-1.1.0",
+]
+
+[[package]]
+name = "ruxex-models-manager"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "pretty_assertions",
+ "ruxex-http-client",
+ "ruxex-otel",
+ "ruxex-prompts",
+ "ruxex-protocol",
+ "ruxex-utils-output-truncation",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-network-proxy"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "globset",
+ "libc",
+ "opentelemetry",
+ "pretty_assertions",
+ "rama-core",
+ "rama-dns",
+ "rama-http",
+ "rama-http-backend",
+ "rama-net",
+ "rama-socks5",
+ "rama-tcp",
+ "rama-tls-rustls",
+ "rama-unix",
+ "rand 0.9.3",
+ "rand_regex",
+ "regex",
+ "regex-automata",
+ "regex-syntax",
+ "rustls-native-certs",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-home-dir",
+ "ruxex-utils-rustls-provider",
+ "schemars 0.8.22",
+ "security-framework 3.5.1",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "ruxex-otel"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "eventsource-stream",
+ "gethostname",
+ "http",
+ "libc",
+ "opentelemetry",
+ "opentelemetry-appender-tracing",
+ "opentelemetry-otlp",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
+ "os_info",
+ "pretty_assertions",
+ "reqwest 0.12.28",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-string",
+ "seccompiler",
+ "serde",
+ "serde_json",
+ "strum_macros 0.28.0",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "ruxex-otel-trace-websocket"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "futures",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-plugin"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-config",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "ruxex-process-hardening"
+version = "0.0.0"
+dependencies = [
+ "libc",
+ "pretty_assertions",
+]
+
+[[package]]
+name = "ruxex-prompts"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "pretty_assertions",
+ "ruxex-collaboration-mode-templates",
+ "ruxex-context-fragments",
+ "ruxex-execpolicy",
+ "ruxex-git-utils",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-template",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-protocol"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chardetng",
+ "chrono",
+ "encoding_rs",
+ "gix-url",
+ "globset",
+ "http",
+ "icu_decimal",
+ "icu_locale_core",
+ "icu_provider",
+ "landlock",
+ "pretty_assertions",
+ "quick-xml 0.41.0",
+ "ruxex-async-utils",
+ "ruxex-execpolicy",
+ "ruxex-extension-items",
+ "ruxex-http-client",
+ "ruxex-network-proxy",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-image",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-redacted-string",
+ "ruxex-utils-string",
+ "schemars 0.8.22",
+ "seccompiler",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "strum 0.27.2",
+ "strum_macros 0.28.0",
+ "sys-locale",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "ts-rs",
+ "uuid",
+ "wildmatch",
+]
+
+[[package]]
+name = "ruxex-provider-host-example"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "ruxex-app-server",
+ "ruxex-arg0",
+ "ruxex-cli",
+ "ruxex-providers",
+]
+
+[[package]]
+name = "ruxex-providers"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "futures",
+ "http",
+ "pretty_assertions",
+ "ruxex-api",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-response-debug-context",
+ "ruxex-utils-redacted-string",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "url",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-queue-extension"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "core_test_support",
+ "pretty_assertions",
+ "ruxex-core",
+ "ruxex-extension-api",
+ "ruxex-protocol",
+ "ruxex-state",
+ "ruxex-thread-store",
+ "ruxex-utils-absolute-path",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-response-debug-context"
+version = "0.0.0"
+dependencies = [
+ "http",
+ "pretty_assertions",
+ "ruxex-api",
+]
+
+[[package]]
+name = "ruxex-rmcp-client"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "base64 0.22.1",
+ "bytes",
+ "futures",
+ "http",
+ "keyring",
+ "libc",
+ "memchr",
+ "oauth2",
+ "pretty_assertions",
+ "rmcp",
+ "ruxex-api",
+ "ruxex-config",
+ "ruxex-exec-server",
+ "ruxex-http-client",
+ "ruxex-keyring-store",
+ "ruxex-network-proxy",
+ "ruxex-protocol",
+ "ruxex-secrets",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-home-dir",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sha2 0.10.9",
+ "sse-stream",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tiny_http",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+ "url",
+ "urlencoding",
+ "webbrowser",
+ "which 8.0.0",
+ "wiremock",
+]
+
+[[package]]
+name = "ruxex-rollout"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "pretty_assertions",
+ "regex",
+ "ruxex-extension-items",
+ "ruxex-file-search",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-state",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "time",
+ "tokio",
+ "tracing",
+ "uuid",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-rollout-trace"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "http",
+ "pretty_assertions",
+ "ruxex-code-mode",
+ "ruxex-protocol",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-sandboxing"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "dunce",
+ "libc",
+ "pretty_assertions",
+ "regex-lite",
+ "ruxex-network-proxy",
+ "ruxex-protocol",
+ "ruxex-uds",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-pty",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "url",
+ "which 8.0.0",
+]
+
+[[package]]
+name = "ruxex-secrets"
+version = "0.0.0"
+dependencies = [
+ "age",
+ "anyhow",
+ "base64 0.22.1",
+ "keyring",
+ "pretty_assertions",
+ "rand 0.9.3",
+ "regex",
+ "ruxex-git-utils",
+ "ruxex-keyring-store",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-shell-command"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "libc",
+ "once_cell",
+ "pretty_assertions",
+ "regex",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "serde",
+ "serde_json",
+ "shlex",
+ "tempfile",
+ "tree-sitter",
+ "tree-sitter-bash",
+ "url",
+ "which 8.0.0",
+]
+
+[[package]]
+name = "ruxex-skills"
+version = "0.0.0"
+dependencies = [
+ "include_dir",
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-shell-command",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde",
+ "serde_yaml",
+ "shlex",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-skills-extension"
+version = "0.0.0"
+dependencies = [
+ "assert_matches",
+ "dirs 6.0.0",
+ "dunce",
+ "futures",
+ "insta",
+ "opentelemetry_sdk",
+ "pretty_assertions",
+ "ruxex-config",
+ "ruxex-exec-server",
+ "ruxex-extension-api",
+ "ruxex-mcp",
+ "ruxex-models-manager",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-skills",
+ "ruxex-tools",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "ruxex-utils-string",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "tokio",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "ruxex-state"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "libsqlite3-sys",
+ "log",
+ "pretty_assertions",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "scopeguard",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strum 0.27.2",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "ruxex-stdio-to-uds"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "pretty_assertions",
+ "ruxex-uds",
+ "ruxex-utils-cargo-bin",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-tcp-tunnel"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "clap",
+ "h3",
+ "h3-quinn",
+ "http",
+ "pretty_assertions",
+ "quinn",
+ "rand 0.9.3",
+ "rcgen",
+ "rustls",
+ "rustls-native-certs",
+ "serde_json",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "ruxex-terminal-detection"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-test-binary-support"
+version = "0.0.0"
+dependencies = [
+ "ruxex-arg0",
+ "tempfile",
+]
+
+[[package]]
+name = "ruxex-thread-store"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "futures",
+ "pretty_assertions",
+ "pulldown-cmark",
+ "ruxex-app-server-protocol",
+ "ruxex-extension-items",
+ "ruxex-git-utils",
+ "ruxex-install-context",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-rollout",
+ "ruxex-state",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+ "zstd",
+]
+
+[[package]]
+name = "ruxex-tools"
+version = "0.0.0"
+dependencies = [
+ "bitflags 2.13.1",
+ "jsonptr",
+ "pretty_assertions",
+ "rmcp",
+ "ruxex-code-mode",
+ "ruxex-extension-items",
+ "ruxex-features",
+ "ruxex-file-system",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-output-truncation",
+ "ruxex-utils-string",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
+ "urlencoding",
+]
+
+[[package]]
+name = "ruxex-tui"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "app_test_support",
+ "arboard",
+ "assert_matches",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "color-eyre",
+ "core_test_support",
+ "crossterm",
+ "derive_more 2.1.1",
+ "diffy",
+ "dirs 6.0.0",
+ "dunce",
+ "futures",
+ "http",
+ "image",
+ "itertools 0.14.0",
+ "lazy_static",
+ "libc",
+ "objc2-app-kit",
+ "pathdiff",
+ "pretty_assertions",
+ "pulldown-cmark",
+ "rand 0.9.3",
+ "ratatui",
+ "ratatui-macros",
+ "regex-lite",
+ "rmcp",
+ "ruxex-ansi-escape",
+ "ruxex-app-server-client",
+ "ruxex-app-server-daemon",
+ "ruxex-app-server-protocol",
+ "ruxex-arg0",
+ "ruxex-build-info",
+ "ruxex-config",
+ "ruxex-context-fragments",
+ "ruxex-core-plugins",
+ "ruxex-exec-server",
+ "ruxex-features",
+ "ruxex-file-search",
+ "ruxex-git-utils",
+ "ruxex-history",
+ "ruxex-http-client",
+ "ruxex-install-context",
+ "ruxex-login",
+ "ruxex-mcp",
+ "ruxex-mermaid",
+ "ruxex-message-history",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-models-manager",
+ "ruxex-otel",
+ "ruxex-plugin",
+ "ruxex-protocol",
+ "ruxex-rollout",
+ "ruxex-sandboxing",
+ "ruxex-shell-command",
+ "ruxex-state",
+ "ruxex-terminal-detection",
+ "ruxex-uds",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-approval-presets",
+ "ruxex-utils-cargo-bin",
+ "ruxex-utils-cli",
+ "ruxex-utils-elapsed",
+ "ruxex-utils-fuzzy-match",
+ "ruxex-utils-home-dir",
+ "ruxex-utils-path",
+ "ruxex-utils-path-uri",
+ "ruxex-utils-plugins",
+ "ruxex-utils-sandbox-summary",
+ "ruxex-utils-sleep-inhibitor",
+ "ruxex-utils-string",
+ "ruxex-worktree",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sha2 0.10.9",
+ "shlex",
+ "strum 0.27.2",
+ "strum_macros 0.28.0",
+ "supports-color 3.0.2",
+ "syntect",
+ "tempfile",
+ "textwrap 0.16.2",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
+ "tokio-tungstenite",
+ "tokio-util",
+ "toml 0.9.11+spec-1.1.0",
+ "toml_edit 0.24.0+spec-1.1.0",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "two-face",
+ "unicode-segmentation",
+ "unicode-width 0.2.1",
+ "url",
+ "urlencoding",
+ "uuid",
+ "vt100",
+ "webbrowser",
+ "wiremock",
+ "zbus",
+]
+
+[[package]]
+name = "ruxex-uds"
+version = "0.0.0"
+dependencies = [
+ "libc",
+ "pretty_assertions",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-user-verification"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "core-foundation 0.10.1",
+ "dirs 6.0.0",
+ "objc2",
+ "objc2-foundation",
+ "objc2-local-authentication",
+ "p256",
+ "pretty_assertions",
+ "security-framework 3.5.1",
+ "security-framework-sys",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-utils-absolute-path"
+version = "0.0.0"
+dependencies = [
+ "dirs 6.0.0",
+ "dunce",
+ "pretty_assertions",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "ts-rs",
+]
+
+[[package]]
+name = "ruxex-utils-approval-presets"
+version = "0.0.0"
+dependencies = [
+ "ruxex-protocol",
+]
+
+[[package]]
+name = "ruxex-utils-audio"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-utils-cache",
+ "ruxex-utils-string",
+ "symphonia",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-utils-cache"
+version = "0.0.0"
+dependencies = [
+ "lru",
+ "sha1 0.10.6",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-utils-cargo-bin"
+version = "0.0.0"
+dependencies = [
+ "assert_cmd",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "ruxex-utils-cli"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-shell-command",
+ "serde",
+ "toml 0.9.11+spec-1.1.0",
+]
+
+[[package]]
+name = "ruxex-utils-elapsed"
+version = "0.0.0"
+
+[[package]]
+name = "ruxex-utils-fuzzy-match"
+version = "0.0.0"
+
+[[package]]
+name = "ruxex-utils-git-discovery"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "pretty_assertions",
+ "ruxex-git-utils",
+ "ruxex-utils-absolute-path",
+ "tempfile",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-utils-home-dir"
+version = "0.0.0"
+dependencies = [
+ "dirs 6.0.0",
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "tempfile",
+]
+
+[[package]]
+name = "ruxex-utils-image"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "divan",
+ "image",
+ "mime_guess",
+ "ruxex-utils-cache",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-utils-json-to-toml"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "serde_json",
+ "toml 0.9.11+spec-1.1.0",
+]
+
+[[package]]
+name = "ruxex-utils-output-truncation"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-utils-string",
+]
+
+[[package]]
+name = "ruxex-utils-path"
+version = "0.0.0"
+dependencies = [
+ "dunce",
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "tempfile",
+]
+
+[[package]]
+name = "ruxex-utils-path-uri"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "pretty_assertions",
+ "ruxex-utils-absolute-path",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "ts-rs",
+ "url",
+ "urlencoding",
+]
+
+[[package]]
+name = "ruxex-utils-plugins"
+version = "0.0.0"
+dependencies = [
+ "ruxex-exec-server",
+ "ruxex-exec-server-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-utils-pty"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "libc",
+ "portable-pty",
+ "pretty_assertions",
+ "tokio",
+]
+
+[[package]]
+name = "ruxex-utils-redacted-string"
+version = "0.0.0"
+dependencies = [
+ "schemars 0.8.22",
+ "serde",
+]
+
+[[package]]
+name = "ruxex-utils-rustls-provider"
+version = "0.0.0"
+dependencies = [
+ "rustls",
+]
+
+[[package]]
+name = "ruxex-utils-sandbox-summary"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "ruxex-protocol",
+ "ruxex-utils-absolute-path",
+ "ruxex-utils-path-uri",
+]
+
+[[package]]
+name = "ruxex-utils-sleep-inhibitor"
+version = "0.0.0"
+dependencies = [
+ "core-foundation 0.9.4",
+ "libc",
+ "tracing",
+]
+
+[[package]]
+name = "ruxex-utils-stream-parser"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+]
+
+[[package]]
+name = "ruxex-utils-string"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+ "regex-lite",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ruxex-utils-template"
+version = "0.0.0"
+dependencies = [
+ "pretty_assertions",
+]
+
+[[package]]
+name = "ruxex-web-search-extension"
+version = "0.0.0"
+dependencies = [
+ "http",
+ "pretty_assertions",
+ "ruxex-api",
+ "ruxex-core",
+ "ruxex-extension-api",
+ "ruxex-extension-items",
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-otel",
+ "ruxex-protocol",
+ "ruxex-providers",
+ "ruxex-tools",
+ "schemars 0.8.22",
+ "serde_json",
+ "url",
+]
+
+[[package]]
+name = "ruxex-websocket-client"
+version = "0.0.0"
+dependencies = [
+ "futures",
+ "pretty_assertions",
+ "rcgen",
+ "rustls",
+ "ruxex-http-client",
+ "ruxex-utils-rustls-provider",
+ "tokio",
+ "tokio-rustls",
+ "tokio-tungstenite",
+ "url",
+]
+
+[[package]]
+name = "ruxex-worktree"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "dunce",
+ "pretty_assertions",
+ "ruxex-git-utils",
+ "ruxex-protocol",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "uuid",
 ]
 
 [[package]]

@@ -19,14 +19,14 @@ use std::time::Instant;
 
 use anyhow::Context as _;
 use futures::FutureExt as _;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_exec_server::HttpClient;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::RmcpClient;
-use genex_utils_cargo_bin::CargoBinError;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::HttpClient;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_utils_cargo_bin::CargoBinError;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientCapabilities;
@@ -46,7 +46,7 @@ const INITIALIZED_NOTIFICATION_POST_FAILURE_CONTROL_PATH: &str =
     "/test/control/initialized-notification-post-failure";
 
 fn streamable_http_server_bin() -> Result<PathBuf, CargoBinError> {
-    genex_utils_cargo_bin::cargo_bin("test_streamable_http_server")
+    ruxex_utils_cargo_bin::cargo_bin("test_streamable_http_server")
 }
 
 fn init_params() -> InitializeRequestParams {
@@ -55,7 +55,7 @@ fn init_params() -> InitializeRequestParams {
         Some(ElicitationCapability::new().with_form(FormElicitationCapability::new()));
     InitializeRequestParams::new(
         capabilities,
-        Implementation::new("genex-test", "0.0.0-test").with_title("Genex rmcp recovery test"),
+        Implementation::new("ruxex-test", "0.0.0-test").with_title("Ruxex rmcp recovery test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }
@@ -137,8 +137,8 @@ pub(crate) async fn call_echo_tool(
         .await
 }
 
-fn control_client() -> anyhow::Result<genex_http_client::HttpClient> {
-    Ok(genex_http_client::HttpClientBuilder::new().build_direct()?)
+fn control_client() -> anyhow::Result<ruxex_http_client::HttpClient> {
+    Ok(ruxex_http_client::HttpClientBuilder::new().build_direct()?)
 }
 
 pub(crate) async fn arm_session_post_failure(

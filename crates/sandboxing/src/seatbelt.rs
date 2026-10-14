@@ -1,14 +1,14 @@
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::PROXY_URL_ENV_KEYS;
-use genex_network_proxy::has_proxy_url_env_vars;
-use genex_network_proxy::proxy_url_env_value;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::WritableRoot;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::PROXY_URL_ENV_KEYS;
+use ruxex_network_proxy::has_proxy_url_env_vars;
+use ruxex_network_proxy::proxy_url_env_value;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::WritableRoot;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -460,9 +460,9 @@ fn normalize_top_level_alias_for_sandbox(
 
 fn normalize_writable_root_for_sandbox(
     root: AbsolutePathBuf,
-    allowed_symlinked_genex_home: Option<&AbsolutePathBuf>,
+    allowed_symlinked_ruxex_home: Option<&AbsolutePathBuf>,
 ) -> Result<NormalizedWritableRoot, SeatbeltPreparationError> {
-    let allow_symlinks = allowed_symlinked_genex_home.is_some_and(|home| {
+    let allow_symlinks = allowed_symlinked_ruxex_home.is_some_and(|home| {
         root.as_path().starts_with(home.as_path())
             || normalize_path_for_sandbox(home.as_path())
                 .is_some_and(|target| root.as_path().starts_with(target.as_path()))
@@ -470,10 +470,10 @@ fn normalize_writable_root_for_sandbox(
     if !allow_symlinks && let Some(symlink) = nested_symlink_component(root.as_path()) {
         return Err(SeatbeltPreparationError::FileSystem(format!(
             "writable root {} contains symlink component {}; symlinked writable roots are not supported.\n\
-             If this writable root is at or beneath GENEX_HOME and you trust its symlink targets, \
-             set `allow_symlinked_genex_home = true` at the top level of `$GENEX_HOME/config.toml` \
-             (normally `~/.genex/config.toml`) on the execution host, then restart Genex or its executor. \
-             This opt-out trusts targets outside GENEX_HOME and targets changed between commands. \
+             If this writable root is at or beneath RUXEX_HOME and you trust its symlink targets, \
+             set `allow_symlinked_ruxex_home = true` at the top level of `$RUXEX_HOME/config.toml` \
+             (normally `~/.ruxex/config.toml`) on the execution host, then restart Ruxex or its executor. \
+             This opt-out trusts targets outside RUXEX_HOME and targets changed between commands. \
              It does not apply to other writable roots.",
             root.display(),
             symlink.display()
@@ -482,7 +482,7 @@ fn normalize_writable_root_for_sandbox(
 
     let normalized = if allow_symlinks {
         // This explicit opt-out trusts the current target, including targets
-        // outside GENEX_HOME and links changed by an earlier command.
+        // outside RUXEX_HOME and links changed by an earlier command.
         normalize_path_for_sandbox(root.as_path()).unwrap_or(root)
     } else {
         // Otherwise preserve mutable components instead of granting their targets.
@@ -511,7 +511,7 @@ fn normalize_writable_root_for_sandbox(
 fn build_seatbelt_access_policy(
     access_kind: SeatbeltAccessKind,
     roots: Vec<SeatbeltAccessRoot>,
-    allowed_symlinked_genex_home: Option<&AbsolutePathBuf>,
+    allowed_symlinked_ruxex_home: Option<&AbsolutePathBuf>,
 ) -> Result<(String, Vec<(String, PathBuf)>), SeatbeltPreparationError> {
     let mut policy_components = Vec::new();
     let mut root_anchor_denies = Vec::new();
@@ -531,7 +531,7 @@ fn build_seatbelt_access_policy(
             SeatbeltAccessKind::Write => {
                 match normalize_writable_root_for_sandbox(
                     access_root.root,
-                    allowed_symlinked_genex_home,
+                    allowed_symlinked_ruxex_home,
                 )? {
                     NormalizedWritableRoot::Subpath(root) => (root, SeatbeltPathMatch::Subpath),
                     NormalizedWritableRoot::Literal(root) => (root, SeatbeltPathMatch::Literal),
@@ -585,7 +585,7 @@ fn build_seatbelt_access_policy(
                 params.push((excluded_param.clone(), excluded_subpath.into_path_buf()));
                 // Exclude both the exact protected path and anything beneath it.
                 // `subpath` alone leaves a gap for first-time creation of the
-                // protected directory itself, such as `mkdir .genex`.
+                // protected directory itself, such as `mkdir .ruxex`.
                 require_parts.push(format!(
                     "(require-not (literal (param \"{excluded_param}\")))"
                 ));
@@ -879,7 +879,7 @@ pub fn create_seatbelt_command_args(
     create_seatbelt_command_args_with_profile(
         args,
         MacosSeatbeltProfile::Process,
-        /*allowed_symlinked_genex_home*/ None,
+        /*allowed_symlinked_ruxex_home*/ None,
     )
     .map_err(|err| err.to_string())
 }
@@ -887,7 +887,7 @@ pub fn create_seatbelt_command_args(
 pub(crate) fn create_seatbelt_command_args_with_profile(
     args: CreateSeatbeltCommandArgsParams<'_>,
     profile: MacosSeatbeltProfile,
-    allowed_symlinked_genex_home: Option<&AbsolutePathBuf>,
+    allowed_symlinked_ruxex_home: Option<&AbsolutePathBuf>,
 ) -> Result<Vec<String>, SeatbeltPreparationError> {
     let CreateSeatbeltCommandArgsParams {
         command,
@@ -905,7 +905,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
         file_system_sandbox_policy.get_unreadable_roots_with_cwd(sandbox_policy_cwd);
     let writable_roots = file_system_sandbox_policy
         .get_writable_roots_with_cwd_preserving_mutable_paths(sandbox_policy_cwd);
-    let allowed_symlinked_genex_home = allowed_symlinked_genex_home
+    let allowed_symlinked_ruxex_home = allowed_symlinked_ruxex_home
         .cloned()
         .map(normalize_top_level_alias_for_sandbox)
         .transpose()?;
@@ -949,7 +949,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
                         excluded_subpaths: unreadable_roots.clone(),
                         protected_metadata_names: Vec::new(),
                     }],
-                    /*allowed_symlinked_genex_home*/ None,
+                    /*allowed_symlinked_ruxex_home*/ None,
                 )?
             }
         } else {
@@ -967,7 +967,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
                         excluded_subpaths: root.read_only_subpaths,
                     })
                     .collect(),
-                allowed_symlinked_genex_home.as_ref(),
+                allowed_symlinked_ruxex_home.as_ref(),
             )?
         };
 
@@ -986,7 +986,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
                         excluded_subpaths: unreadable_roots,
                         protected_metadata_names: Vec::new(),
                     }],
-                    /*allowed_symlinked_genex_home*/ None,
+                    /*allowed_symlinked_ruxex_home*/ None,
                 )?;
                 (
                     format!("; allow read-only file operations\n{policy}"),
@@ -1009,7 +1009,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
                         root,
                     })
                     .collect(),
-                /*allowed_symlinked_genex_home*/ None,
+                /*allowed_symlinked_ruxex_home*/ None,
             )?;
             if policy.is_empty() {
                 (String::new(), params)
@@ -1043,7 +1043,7 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
     // Network grants and Unix-socket allowlists must never reopen the
     // privileged app-server RPC transport to filesystem-restricted commands.
     if !file_system_sandbox_policy.has_full_disk_write_access() {
-        let directory = genex_uds::shared_daemon_socket_directory()
+        let directory = ruxex_uds::shared_daemon_socket_directory()
             .map_err(|error| SeatbeltPreparationError::FileSystem(error.to_string()))?;
         let directory = serde_json::to_string(&directory.to_string_lossy())
             .map_err(|error| SeatbeltPreparationError::FileSystem(error.to_string()))?;

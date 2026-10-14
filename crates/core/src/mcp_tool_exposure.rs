@@ -5,11 +5,11 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::Weak;
 
-use genex_mcp::McpBinding;
-use genex_mcp::ToolInfo as McpToolInfo;
-use genex_mcp::tool_is_model_visible;
-use genex_tools::ToolExposure;
-use genex_tools::ToolName;
+use ruxex_mcp::McpBinding;
+use ruxex_mcp::ToolInfo as McpToolInfo;
+use ruxex_mcp::tool_is_model_visible;
+use ruxex_tools::ToolExposure;
+use ruxex_tools::ToolName;
 use tracing::instrument;
 use tracing::warn;
 
@@ -33,7 +33,7 @@ impl McpHandlerCache {
     pub(crate) fn append_mcp_tools(
         &self,
         binding: &Arc<McpBinding>,
-        mcp_server_catalog: &genex_mcp::ResolvedMcpCatalog,
+        mcp_server_catalog: &ruxex_mcp::ResolvedMcpCatalog,
         search_tool_enabled: bool,
         registry: &mut ToolRegistry,
     ) -> HashSet<ToolName> {
@@ -66,7 +66,7 @@ impl McpHandlerCache {
 #[instrument(level = "trace", skip_all)]
 fn append_mcp_tools(
     all_mcp_tools: &[McpToolInfo],
-    mcp_server_catalog: &genex_mcp::ResolvedMcpCatalog,
+    mcp_server_catalog: &ruxex_mcp::ResolvedMcpCatalog,
     search_tool_enabled: bool,
     handlers: &mut HashMap<ToolName, Arc<McpHandler>>,
     registry: &mut ToolRegistry,

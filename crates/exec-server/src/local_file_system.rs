@@ -1,10 +1,10 @@
-use genex_file_system::MAX_WALK_DEPTH;
-use genex_file_system::MAX_WALK_DIRECTORIES;
-use genex_file_system::MAX_WALK_ENTRIES;
-use genex_file_system::MAX_WALK_RESPONSE_BYTES;
-use genex_file_system::WALK_RESPONSE_ITEM_OVERHEAD_BYTES;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::MAX_WALK_DEPTH;
+use ruxex_file_system::MAX_WALK_DIRECTORIES;
+use ruxex_file_system::MAX_WALK_ENTRIES;
+use ruxex_file_system::MAX_WALK_RESPONSE_BYTES;
+use ruxex_file_system::WALK_RESPONSE_ITEM_OVERHEAD_BYTES;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::path::Path;
@@ -1302,9 +1302,9 @@ mod tests {
 #[cfg(test)]
 mod walk_tests {
     use super::*;
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::permissions::FileSystemSandboxPolicy;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
     use pretty_assertions::assert_eq;
 
     #[tokio::test]

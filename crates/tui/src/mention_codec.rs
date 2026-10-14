@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use genex_utils_plugins::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
-use genex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
+use ruxex_utils_plugins::mention_syntax::PLUGIN_TEXT_MENTION_SIGIL;
+use ruxex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LinkedMention {
@@ -28,7 +28,7 @@ pub(crate) fn encode_history_mentions(text: &str, mentions: &[LinkedMention]) ->
 pub(crate) fn encode_history_mentions_at_elements(
     text: &str,
     mentions: &[LinkedMention],
-    elements: &[genex_protocol::user_input::TextElement],
+    elements: &[ruxex_protocol::user_input::TextElement],
 ) -> String {
     if mentions.is_empty() || text.is_empty() {
         return text.to_string();

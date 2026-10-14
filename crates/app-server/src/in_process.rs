@@ -31,10 +31,10 @@
 //! `MessageProcessor` with overload or internal errors so approval flows do
 //! not hang indefinitely.
 //!
-//! # Relationship to `genex-app-server-client`
+//! # Relationship to `ruxex-app-server-client`
 //!
 //! This module provides the low-level runtime handle ([`InProcessClientHandle`]).
-//! Higher-level callers (TUI, exec) should go through `genex-app-server-client`,
+//! Higher-level callers (TUI, exec) should go through `ruxex-app-server-client`,
 //! which wraps this module behind a worker task with async request/response
 //! helpers, surface-specific startup policy, and bounded shutdown.
 
@@ -70,29 +70,29 @@ use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
-use genex_app_server_protocol::AgentMessageDelivery;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::Result;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadItem;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::LoaderOverrides;
-use genex_config::ThreadConfigLoader;
-use genex_core::check_execpolicy_for_warnings;
-use genex_core::config::Config;
-use genex_core::resolve_installation_id;
-use genex_exec_server::EnvironmentManager;
-use genex_login::CredentialManager;
-use genex_protocol::protocol::SessionSource;
-pub use genex_rollout::StateDbHandle;
-pub use genex_state::log_db::LogDbLayer;
+use ruxex_app_server_protocol::AgentMessageDelivery;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::Result;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::ThreadConfigLoader;
+use ruxex_core::check_execpolicy_for_warnings;
+use ruxex_core::config::Config;
+use ruxex_core::resolve_installation_id;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_login::CredentialManager;
+use ruxex_protocol::protocol::SessionSource;
+pub use ruxex_rollout::StateDbHandle;
+pub use ruxex_state::log_db::LogDbLayer;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -153,7 +153,7 @@ pub struct InProcessStartArgs {
     pub config_warnings: Vec<ConfigWarningNotification>,
     /// Session source stamped into thread/session metadata.
     pub session_source: SessionSource,
-    /// Whether auth loading should honor the `GENEX_API_KEY` environment variable.
+    /// Whether auth loading should honor the `RUXEX_API_KEY` environment variable.
     pub enable_api_key_env: bool,
     /// Shared AppServer runtime injected by the host, when using the public
     /// builder API. When absent, startup creates one from configuration.
@@ -304,14 +304,14 @@ impl InProcessClientSender {
 /// Handle used by an in-process client to call app-server and consume events.
 ///
 /// This is the low-level runtime handle. Higher-level callers should usually go
-/// through `genex-app-server-client`, which adds worker-task buffering,
+/// through `ruxex-app-server-client`, which adds worker-task buffering,
 /// request/response helpers, and surface-specific startup policy.
 pub struct InProcessClientHandle {
     client: InProcessClientSender,
     event_rx: mpsc::Receiver<InProcessServerEvent>,
     runtime_handle: tokio::task::JoinHandle<()>,
     #[cfg(test)]
-    _test_genex_home: Option<tempfile::TempDir>,
+    _test_ruxex_home: Option<tempfile::TempDir>,
 }
 
 impl InProcessClientHandle {
@@ -461,7 +461,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         )
     })?;
     let channel_capacity = args.channel_capacity.max(1);
-    let installation_id = resolve_installation_id(&args.config.genex_home).await?;
+    let installation_id = resolve_installation_id(&args.config.ruxex_home).await?;
     let runtime = match args.runtime {
         Some(runtime) => runtime,
         None => {
@@ -511,7 +511,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 
         let processor_outgoing = Arc::clone(&outgoing_message_sender);
         let config_manager = ConfigManager::new(
-            args.config.genex_home.to_path_buf(),
+            args.config.ruxex_home.to_path_buf(),
             args.cli_overrides,
             args.loader_overrides,
             args.strict_config,
@@ -832,7 +832,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
         event_rx,
         runtime_handle,
         #[cfg(test)]
-        _test_genex_home: None,
+        _test_ruxex_home: None,
     })
 }
 
@@ -840,33 +840,33 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
 mod tests {
     use super::*;
     use crate::AppServerRuntimeBuilder;
-    use genex_app_server_protocol::ClientInfo;
-    use genex_app_server_protocol::ConfigRequirementsReadResponse;
-    use genex_app_server_protocol::SessionSource as ApiSessionSource;
-    use genex_app_server_protocol::ThreadAttachmentOperation;
-    use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
-    use genex_app_server_protocol::ThreadQueueChangedNotification;
-    use genex_app_server_protocol::ThreadStartParams;
-    use genex_app_server_protocol::ThreadStartResponse;
-    use genex_app_server_protocol::Turn;
-    use genex_app_server_protocol::TurnCompletedNotification;
-    use genex_app_server_protocol::TurnItemsView;
-    use genex_app_server_protocol::TurnStatus;
-    use genex_core::config::ConfigBuilder;
-    use genex_model_provider_info::ModelProviderInfo;
+    use ruxex_app_server_protocol::ClientInfo;
+    use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+    use ruxex_app_server_protocol::SessionSource as ApiSessionSource;
+    use ruxex_app_server_protocol::ThreadAttachmentOperation;
+    use ruxex_app_server_protocol::ThreadAttachmentUpdatedNotification;
+    use ruxex_app_server_protocol::ThreadQueueChangedNotification;
+    use ruxex_app_server_protocol::ThreadStartParams;
+    use ruxex_app_server_protocol::ThreadStartResponse;
+    use ruxex_app_server_protocol::Turn;
+    use ruxex_app_server_protocol::TurnCompletedNotification;
+    use ruxex_app_server_protocol::TurnItemsView;
+    use ruxex_app_server_protocol::TurnStatus;
+    use ruxex_core::config::ConfigBuilder;
+    use ruxex_model_provider_info::ModelProviderInfo;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::TempDir;
 
-    async fn build_test_config(genex_home: &Path) -> Config {
+    async fn build_test_config(ruxex_home: &Path) -> Config {
         match ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .build()
             .await
         {
             Ok(config) => config,
-            Err(_) => Config::load_default_with_cli_overrides_for_genex_home(
-                genex_home.to_path_buf(),
+            Err(_) => Config::load_default_with_cli_overrides_for_ruxex_home(
+                ruxex_home.to_path_buf(),
                 Vec::new(),
             )
             .await
@@ -878,9 +878,9 @@ mod tests {
         session_source: SessionSource,
         channel_capacity: usize,
     ) -> InProcessClientHandle {
-        let genex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config(genex_home.path()).await);
-        let state_db = genex_rollout::state_db::try_init(config.as_ref())
+        let ruxex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(ruxex_home.path()).await);
+        let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
         let args = InProcessStartArgs {
@@ -889,7 +889,7 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: LoaderOverrides::default(),
             strict_config: false,
-            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+            thread_config_loader: Arc::new(ruxex_config::NoopThreadConfigLoader),
             log_db: None,
             state_db: Some(state_db),
             environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -899,7 +899,7 @@ mod tests {
             runtime: None,
             initialize: InitializeParams {
                 client_info: ClientInfo {
-                    name: "genex-in-process-test".to_string(),
+                    name: "ruxex-in-process-test".to_string(),
                     title: None,
                     version: "0.0.0".to_string(),
                 },
@@ -908,7 +908,7 @@ mod tests {
             channel_capacity,
         };
         let mut client = start(args).await.expect("in-process runtime should start");
-        client._test_genex_home = Some(genex_home);
+        client._test_ruxex_home = Some(ruxex_home);
         client
     }
 
@@ -918,9 +918,9 @@ mod tests {
 
     #[tokio::test]
     async fn builder_uses_the_shared_app_server_runtime() {
-        let genex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config(genex_home.path()).await);
-        let state_db = genex_rollout::state_db::try_init(config.as_ref())
+        let ruxex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(ruxex_home.path()).await);
+        let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
         let runtime =
@@ -933,7 +933,7 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: LoaderOverrides::default(),
             strict_config: false,
-            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+            thread_config_loader: Arc::new(ruxex_config::NoopThreadConfigLoader),
             log_db: None,
             state_db: Some(state_db),
             environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -943,7 +943,7 @@ mod tests {
             runtime: Some(runtime),
             initialize: InitializeParams {
                 client_info: ClientInfo {
-                    name: "genex-in-process-test".to_string(),
+                    name: "ruxex-in-process-test".to_string(),
                     title: None,
                     version: "0.0.0".to_string(),
                 },
@@ -969,9 +969,9 @@ mod tests {
 
     #[tokio::test]
     async fn injected_provider_remains_authoritative_during_initialize() {
-        let genex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config(genex_home.path()).await);
-        let state_db = genex_rollout::state_db::try_init(config.as_ref())
+        let ruxex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config(ruxex_home.path()).await);
+        let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
         let injected_provider = ModelProviderInfo {
@@ -990,7 +990,7 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: LoaderOverrides::default(),
             strict_config: false,
-            thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+            thread_config_loader: Arc::new(ruxex_config::NoopThreadConfigLoader),
             log_db: None,
             state_db: Some(state_db),
             environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -1000,7 +1000,7 @@ mod tests {
             runtime: Some(runtime),
             initialize: InitializeParams {
                 client_info: ClientInfo {
-                    name: "genex-in-process-test".to_string(),
+                    name: "ruxex-in-process-test".to_string(),
                     title: None,
                     version: "0.0.0".to_string(),
                 },
@@ -1143,7 +1143,7 @@ mod tests {
             client: InProcessClientSender { client_tx },
             event_rx,
             runtime_handle,
-            _test_genex_home: None,
+            _test_ruxex_home: None,
         };
 
         client

@@ -8,19 +8,19 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxTransformRequest;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxTransformRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -192,11 +192,11 @@ impl ShellSnapshotSandbox {
             .context("shell snapshot execution task failed")?
             .map_err(|err| match err.details() {
                 // Startup output can contain credentials, even when execution fails.
-                GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => anyhow!(
+                RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => anyhow!(
                     "Snapshot command was denied by sandbox with status {}",
                     output.exit_code
                 ),
-                GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => {
+                RuxexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => {
                     anyhow!("Snapshot command timed out")
                 }
                 _ => anyhow::Error::new(err)

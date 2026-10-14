@@ -1,8 +1,8 @@
-use genex_config::ConfigRequirements;
-use genex_config::Sourced;
-use genex_config::config_toml::ConfigToml;
-use genex_login::default_client::RESIDENCY_HEADER_NAME;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::Sourced;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_login::default_client::RESIDENCY_HEADER_NAME;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -101,21 +101,21 @@ pub(super) fn push_sqlite_home_env_override_warning(
     tracing::warn!(
         ?source,
         ?value,
-        "`GENEX_SQLITE_HOME` is overridden by an exact requirement for sqlite_home"
+        "`RUXEX_SQLITE_HOME` is overridden by an exact requirement for sqlite_home"
     );
     startup_warnings.push(format!(
-        "Environment value for `$GENEX_SQLITE_HOME` is overridden by the required `sqlite_home` value {value:?} from {source}."
+        "Environment value for `$RUXEX_SQLITE_HOME` is overridden by the required `sqlite_home` value {value:?} from {source}."
     ));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_config::ConfigRequirements;
-    use genex_config::RequirementSource;
-    use genex_config::Sourced;
-    use genex_config::config_toml::ConfigToml;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_config::ConfigRequirements;
+    use ruxex_config::RequirementSource;
+    use ruxex_config::Sourced;
+    use ruxex_config::config_toml::ConfigToml;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
 
     #[test]
     fn applies_exact_requirements_and_reports_conflicts() {

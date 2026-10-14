@@ -8,17 +8,17 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::GitInfo;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_state::BackfillStatus;
-use genex_state::ThreadMetadataBuilder;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::GitInfo;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_state::BackfillStatus;
+use ruxex_state::ThreadMetadataBuilder;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::fs::File;
 use std::io::Write;
@@ -236,30 +236,30 @@ fn builder_from_items_falls_back_to_filename() {
 #[tokio::test]
 async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     let dir = tempdir().expect("tempdir");
-    let genex_home = dir.path().to_path_buf();
+    let ruxex_home = dir.path().to_path_buf();
     let first_uuid = Uuid::new_v4();
     let second_uuid = Uuid::new_v4();
     let first_path = write_rollout_in_sessions(
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         first_uuid,
         /*git*/ None,
     );
     let second_path = write_rollout_in_sessions(
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         "2026-01-27T12-35-56",
         "2026-01-27T12:35:56Z",
         second_uuid,
         /*git*/ None,
     );
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("initialize runtime");
-    let first_watermark = backfill_watermark_for_path(genex_home.as_path(), first_path.as_path());
+    let first_watermark = backfill_watermark_for_path(ruxex_home.as_path(), first_path.as_path());
     runtime.mark_backfill_running().await.expect("mark running");
     runtime
         .checkpoint_backfill(first_watermark.as_str())
@@ -270,7 +270,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     ))
     .await;
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
+    backfill_sessions(runtime.as_ref(), ruxex_home.as_path()).await;
 
     let first_id = ThreadId::from_string(&first_uuid.to_string()).expect("first thread id");
     let second_id = ThreadId::from_string(&second_uuid.to_string()).expect("second thread id");
@@ -297,7 +297,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     assert_eq!(
         state.last_watermark,
         Some(backfill_watermark_for_path(
-            genex_home.as_path(),
+            ruxex_home.as_path(),
             second_path.as_path()
         ))
     );
@@ -307,15 +307,15 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
 #[tokio::test]
 async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_fields() {
     let dir = tempdir().expect("tempdir");
-    let genex_home = dir.path().to_path_buf();
+    let ruxex_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
     let rollout_path = write_rollout_in_sessions(
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
         Some(GitInfo {
-            commit_hash: Some(genex_git_utils::GitSha::new("rollout-sha")),
+            commit_hash: Some(ruxex_git_utils::GitSha::new("rollout-sha")),
             branch: Some("rollout-branch".to_string()),
             repository_url: Some(
                 SanitizedGitUrl::try_from("git@example.com:owner/repo.git")
@@ -324,8 +324,8 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         }),
     );
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("initialize runtime");
@@ -342,7 +342,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         .await
         .expect("existing metadata upsert");
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
+    backfill_sessions(runtime.as_ref(), ruxex_home.as_path()).await;
 
     let persisted = runtime
         .get_thread(thread_id)
@@ -360,11 +360,11 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
 #[tokio::test]
 async fn backfill_sessions_normalizes_cwd_before_upsert() {
     let dir = tempdir().expect("tempdir");
-    let genex_home = dir.path().to_path_buf();
+    let ruxex_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
-    let session_cwd = genex_home.join(".");
+    let session_cwd = ruxex_home.join(".");
     let rollout_path = write_rollout_in_sessions_with_cwd(
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
@@ -373,13 +373,13 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
         ThreadHistoryMode::Paginated,
     );
 
-    let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+    let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("initialize runtime");
 
-    backfill_sessions(runtime.as_ref(), genex_home.as_path()).await;
+    backfill_sessions(runtime.as_ref(), ruxex_home.as_path()).await;
 
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
     let stored = runtime
@@ -393,25 +393,25 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
 }
 
 fn write_rollout_in_sessions(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
     git: Option<GitInfo>,
 ) -> PathBuf {
     write_rollout_in_sessions_with_cwd(
-        genex_home,
+        ruxex_home,
         filename_ts,
         event_ts,
         thread_uuid,
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         git,
         ThreadHistoryMode::Paginated,
     )
 }
 
 fn write_rollout_in_sessions_with_cwd(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
@@ -420,7 +420,7 @@ fn write_rollout_in_sessions_with_cwd(
     history_mode: ThreadHistoryMode,
 ) -> PathBuf {
     let id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
-    let sessions_dir = genex_home.join("sessions");
+    let sessions_dir = ruxex_home.join("sessions");
     std::fs::create_dir_all(sessions_dir.as_path()).expect("create sessions dir");
     let path = sessions_dir.join(format!("rollout-{filename_ts}-{thread_uuid}.jsonl"));
     let session_meta = SessionMeta {

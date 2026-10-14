@@ -2,10 +2,10 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Duration;
 
-use genex_network_proxy::NetworkDecision;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkPolicyRequest;
-use genex_network_proxy::NetworkProtocol;
+use ruxex_network_proxy::NetworkDecision;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkPolicyRequest;
+use ruxex_network_proxy::NetworkProtocol;
 use tokio_util::sync::CancellationToken;
 
 use crate::ProcessId;

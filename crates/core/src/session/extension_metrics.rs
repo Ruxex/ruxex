@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use genex_extension_api::ExtensionMetrics;
-use genex_otel::SessionTelemetry;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_otel::SessionTelemetry;
 
 struct SessionTelemetryExtensionMetrics {
     session_telemetry: SessionTelemetry,

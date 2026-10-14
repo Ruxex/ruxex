@@ -5,15 +5,15 @@ use super::session::Session;
 use super::session::SessionSettingsUpdate;
 use super::step_settings::StepSettingsUpdate;
 use crate::config::ConstraintResult;
-use genex_history::RolloutItem;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::ThreadSettingsAppliedEvent;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_thread_store::ThreadStoreResult;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::ThreadSettingsAppliedEvent;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_thread_store::ThreadStoreResult;
 use std::sync::Arc;
 use tokio::sync::SemaphorePermit;
 
@@ -46,7 +46,7 @@ pub(super) async fn update(
                 msg: EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: format!("invalid thread settings override: {error}"),
-                    genex_error_info: Some(GenexErrorInfo::BadRequest),
+                    ruxex_error_info: Some(RuxexErrorInfo::BadRequest),
                 }),
             })
             .await;
@@ -143,7 +143,7 @@ pub(super) async fn applied_event(session: &Session) -> EventMsg {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::protocol::ThreadSettingsOverrides;
+    use ruxex_protocol::protocol::ThreadSettingsOverrides;
 
     #[test]
     fn prepares_protocol_overrides_without_losing_sparse_fields() {

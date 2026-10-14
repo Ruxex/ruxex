@@ -432,7 +432,7 @@
     "ConfigLayerSource": {
       "oneOf": [
         {
-          "description": "Default configuration supplied with the installed Genex package.",
+          "description": "Default configuration supplied with the installed Ruxex package.",
           "properties": {
             "file": {
               "allOf": [
@@ -536,7 +536,7 @@
           "type": "object"
         },
         {
-          "description": "User config layer from $GENEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
+          "description": "User config layer from $RUXEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
           "properties": {
             "file": {
               "allOf": [
@@ -569,9 +569,9 @@
           "type": "object"
         },
         {
-          "description": "Path to a .genex/ folder within a project. There could be multiple of these between `cwd` and the project/repo root.",
+          "description": "Path to a .ruxex/ folder within a project. There could be multiple of these between `cwd` and the project/repo root.",
           "properties": {
-            "dotGenexFolder": {
+            "dotRuxexFolder": {
               "$ref": "#/definitions/AbsolutePathBuf"
             },
             "type": {
@@ -583,7 +583,7 @@
             }
           },
           "required": [
-            "dotGenexFolder",
+            "dotRuxexFolder",
             "type"
           ],
           "title": "ProjectConfigLayerSource",

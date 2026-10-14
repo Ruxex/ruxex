@@ -6,7 +6,7 @@ mod system_commands;
 pub use system_commands::system_executable;
 pub use system_commands::system_path;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::io;
@@ -20,7 +20,7 @@ pub fn normalize_for_path_comparison(path: impl AsRef<Path>) -> std::io::Result<
     Ok(normalize_for_wsl(canonical))
 }
 
-/// Compare paths after applying Genex's filesystem normalization.
+/// Compare paths after applying Ruxex's filesystem normalization.
 ///
 /// If either path cannot be normalized, this falls back to direct path equality.
 pub fn paths_match_after_normalization(left: impl AsRef<Path>, right: impl AsRef<Path>) -> bool {

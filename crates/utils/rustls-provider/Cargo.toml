@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-rustls-provider"
+name = "ruxex-utils-rustls-provider"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

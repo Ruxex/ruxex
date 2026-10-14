@@ -1,7 +1,7 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -712,7 +712,7 @@ mod tests {
         use std::os::unix::ffi::OsStringExt;
         use std::process::Command;
 
-        const CHILD_ENV: &str = "GENEX_TEST_NON_UNICODE_BROKER_CONTEXT";
+        const CHILD_ENV: &str = "RUXEX_TEST_NON_UNICODE_BROKER_CONTEXT";
         if std::env::var_os(CHILD_ENV).is_none() {
             let output = Command::new(std::env::current_exe().unwrap())
                 .args([

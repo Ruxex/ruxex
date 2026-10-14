@@ -3,7 +3,7 @@
 use super::*;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCMessage;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tokio::net::TcpListener;

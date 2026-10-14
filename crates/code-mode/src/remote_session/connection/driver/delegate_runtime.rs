@@ -7,16 +7,16 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
-use genex_code_mode_protocol::CodeModeNestedToolCall;
-use genex_code_mode_protocol::host::ClientToHost;
-use genex_code_mode_protocol::host::DelegateRequest;
-use genex_code_mode_protocol::host::DelegateRequestId;
-use genex_code_mode_protocol::host::DelegateResponse;
-use genex_code_mode_protocol::host::EncodedFrame;
-use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
-use genex_code_mode_protocol::host::SessionId;
-use genex_code_mode_protocol::host::WireCellId;
-use genex_code_mode_protocol::host::WireResult;
+use ruxex_code_mode_protocol::CodeModeNestedToolCall;
+use ruxex_code_mode_protocol::host::ClientToHost;
+use ruxex_code_mode_protocol::host::DelegateRequest;
+use ruxex_code_mode_protocol::host::DelegateRequestId;
+use ruxex_code_mode_protocol::host::DelegateResponse;
+use ruxex_code_mode_protocol::host::EncodedFrame;
+use ruxex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use ruxex_code_mode_protocol::host::SessionId;
+use ruxex_code_mode_protocol::host::WireCellId;
+use ruxex_code_mode_protocol::host::WireResult;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
@@ -31,8 +31,8 @@ const MAX_RECENT_DELEGATE_REQUEST_IDS: usize = 4096;
 
 #[derive(Clone, Eq, Hash, PartialEq)]
 struct CellKey {
-    session_id: genex_code_mode_protocol::host::SessionId,
-    cell_id: genex_code_mode_protocol::CellId,
+    session_id: ruxex_code_mode_protocol::host::SessionId,
+    cell_id: ruxex_code_mode_protocol::CellId,
 }
 
 impl CellKey {
@@ -61,7 +61,7 @@ enum DelegateTask {
     InvokeTool(CodeModeNestedToolCall),
     Notify {
         call_id: String,
-        cell_id: genex_code_mode_protocol::CellId,
+        cell_id: ruxex_code_mode_protocol::CellId,
         text: String,
     },
 }

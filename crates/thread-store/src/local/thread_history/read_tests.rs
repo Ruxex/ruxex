@@ -2,17 +2,17 @@ use std::fs;
 use std::time::Duration;
 
 use chrono::Utc;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ThreadTimelineEntry;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ThreadTimelineEntry;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -43,7 +43,7 @@ async fn list_turns_pages_projected_rows_and_applies_item_views() {
             20,
             "failed",
             Some(
-                r#"{"message":"turn failed","genexErrorInfo":"serverOverloaded","additionalDetails":"retry later"}"#,
+                r#"{"message":"turn failed","ruxexErrorInfo":"serverOverloaded","additionalDetails":"retry later"}"#,
             ),
             None,
             None,
@@ -92,7 +92,7 @@ async fn list_turns_pages_projected_rows_and_applies_item_views() {
         first_page.turns[1].error,
         Some(StoredTurnError {
             message: "turn failed".to_string(),
-            genex_error_info: Some(GenexErrorInfo::ServerOverloaded),
+            ruxex_error_info: Some(RuxexErrorInfo::ServerOverloaded),
             additional_details: Some("retry later".to_string()),
         })
     );
@@ -231,7 +231,7 @@ async fn list_items_pages_whole_thread_and_per_turn_rows() {
 async fn timeline_turn_boundaries_page_through_shared_ordinals() {
     let (_home, store, thread_id) = store_with_mode(ThreadHistoryMode::Paginated).await;
     let db = history_db(&store).await;
-    let error = r#"{"message":"failed","genexErrorInfo":null,"additionalDetails":null}"#;
+    let error = r#"{"message":"failed","ruxexErrorInfo":null,"additionalDetails":null}"#;
     for (turn_id, start, end, status, error_json) in [
         ("complete", 10, Some(20), "completed", None),
         ("interrupt", 20, Some(30), "interrupted", None),
@@ -1012,10 +1012,10 @@ async fn store_with_mode(history_mode: ThreadHistoryMode) -> (TempDir, LocalThre
             /*history_base*/ None,
         );
     }
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state runtime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path,
         Utc::now(),
@@ -1107,7 +1107,7 @@ fn rollout_end_byte_offset(path: &std::path::Path, end_ordinal_exclusive: u64) -
     let end_byte_offset = bytes
         .split_inclusive(|byte| *byte == b'\n')
         .take_while(|line| {
-            genex_rollout::parse_rollout_line_bytes(line)
+            ruxex_rollout::parse_rollout_line_bytes(line)
                 .expect("parse rollout fixture")
                 .ordinal
                 .expect("paginated rollout ordinal")

@@ -1,24 +1,24 @@
-use genex_config::NetworkConstraints;
-use genex_execpolicy::Policy;
-use genex_network_proxy::BlockedRequestObserver;
-use genex_network_proxy::ConfigReloader;
-use genex_network_proxy::ConfigReloaderFuture;
-use genex_network_proxy::ConfigState;
-use genex_network_proxy::EnvironmentNetworkPolicy;
-use genex_network_proxy::ManagedProxyRouting;
-use genex_network_proxy::NetworkDecision;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyAuditMetadata;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkProxyConstraints;
-use genex_network_proxy::NetworkProxyHandle;
-use genex_network_proxy::NetworkProxyState;
-use genex_network_proxy::build_config_state;
-use genex_network_proxy::host_and_port_from_network_addr;
-use genex_network_proxy::normalize_host;
-use genex_network_proxy::validate_policy_against_constraints;
-use genex_protocol::models::PermissionProfile;
+use ruxex_config::NetworkConstraints;
+use ruxex_execpolicy::Policy;
+use ruxex_network_proxy::BlockedRequestObserver;
+use ruxex_network_proxy::ConfigReloader;
+use ruxex_network_proxy::ConfigReloaderFuture;
+use ruxex_network_proxy::ConfigState;
+use ruxex_network_proxy::EnvironmentNetworkPolicy;
+use ruxex_network_proxy::ManagedProxyRouting;
+use ruxex_network_proxy::NetworkDecision;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyAuditMetadata;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConstraints;
+use ruxex_network_proxy::NetworkProxyHandle;
+use ruxex_network_proxy::NetworkProxyState;
+use ruxex_network_proxy::build_config_state;
+use ruxex_network_proxy::host_and_port_from_network_addr;
+use ruxex_network_proxy::normalize_host;
+use ruxex_network_proxy::validate_policy_against_constraints;
+use ruxex_protocol::models::PermissionProfile;
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -358,14 +358,14 @@ impl NetworkProxySpec {
                 requirements
                     .domains
                     .as_ref()
-                    .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains)
+                    .and_then(ruxex_config::NetworkDomainPermissionsToml::allowed_domains)
                     .unwrap_or_default(),
             )
         } else {
             requirements
                 .domains
                 .as_ref()
-                .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains)
+                .and_then(ruxex_config::NetworkDomainPermissionsToml::allowed_domains)
         };
         if let Some(managed_allowed_domains) = managed_allowed_domains {
             // Managed requirements seed the baseline allowlist. User additions
@@ -386,7 +386,7 @@ impl NetworkProxySpec {
         let managed_denied_domains = requirements
             .domains
             .as_ref()
-            .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains);
+            .and_then(ruxex_config::NetworkDomainPermissionsToml::denied_domains);
         if let Some(managed_denied_domains) = managed_denied_domains {
             let effective_denied_domains = if denylist_expansion_enabled {
                 Self::merge_domain_lists(
@@ -404,7 +404,7 @@ impl NetworkProxySpec {
             let allow_unix_sockets = requirements
                 .unix_sockets
                 .as_ref()
-                .map(genex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
+                .map(ruxex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
                 .unwrap_or_default();
             config.set_allow_unix_sockets(allow_unix_sockets.clone());
             constraints.allow_unix_sockets = Some(allow_unix_sockets);
@@ -462,9 +462,9 @@ fn upsert_network_domains(config: &mut NetworkProxyConfig, hosts: Vec<String>, a
             config.upsert_domain_permission(
                 host,
                 if allow {
-                    genex_network_proxy::NetworkDomainPermission::Allow
+                    ruxex_network_proxy::NetworkDomainPermission::Allow
                 } else {
-                    genex_network_proxy::NetworkDomainPermission::Deny
+                    ruxex_network_proxy::NetworkDomainPermission::Deny
                 },
                 normalize_host,
             );

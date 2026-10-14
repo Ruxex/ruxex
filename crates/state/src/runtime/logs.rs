@@ -411,7 +411,7 @@ mod tests {
     use crate::LogQuery;
     use crate::migrations::LOGS_MIGRATOR;
     use chrono::Utc;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use sqlx::SqlitePool;
     use sqlx::migrate::Migrator;
@@ -437,9 +437,9 @@ mod tests {
 
     #[tokio::test]
     async fn insert_logs_use_dedicated_log_database() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -462,22 +462,22 @@ mod tests {
             .expect("insert test logs");
 
         let logs_path =
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()).logs_db_path();
+            crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs()).logs_db_path();
         let logs_count = log_row_count(logs_path.as_path()).await;
 
         assert_eq!(logs_count, 1);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn init_migrates_message_only_logs_db_to_feedback_log_body_schema() {
-        let genex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&genex_home)
+        let ruxex_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&ruxex_home)
             .await
-            .expect("create genex home");
+            .expect("create ruxex home");
         let logs_path =
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()).logs_db_path();
+            crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs()).logs_db_path();
         let old_logs_migrator = Migrator {
             migrations: Cow::Owned(vec![LOGS_MIGRATOR.migrations[0].clone()]),
             ignore_missing: false,
@@ -486,7 +486,7 @@ mod tests {
             table_name: LOGS_MIGRATOR.table_name.clone(),
             create_schemas: LOGS_MIGRATOR.create_schemas.clone(),
         };
-        let pool = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs())
+        let pool = crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs())
             .open_read_write_pool(&logs_path)
             .await
             .expect("open old logs db");
@@ -515,7 +515,7 @@ mod tests {
         drop(pool);
 
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -566,20 +566,20 @@ mod tests {
         );
         migrated_pool.close().await;
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn init_configures_logs_db_with_incremental_auto_vacuum() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let _runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
 
         let logs_path =
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()).logs_db_path();
+            crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs()).logs_db_path();
         let pool = open_db_pool(logs_path.as_path()).await;
         let auto_vacuum = sqlx::query_scalar::<_, i64>("PRAGMA auto_vacuum")
             .fetch_one(&pool)
@@ -588,14 +588,14 @@ mod tests {
         assert_eq!(auto_vacuum, 2);
         pool.close().await;
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn query_logs_with_search_matches_rendered_body_substring() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -643,14 +643,14 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].message.as_deref(), Some("foo=2 alphabet"));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn query_logs_filters_level_set_without_rewriting_stored_level() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -730,14 +730,14 @@ mod tests {
             vec![("warn", Some("warn-row")), ("ERROR", Some("error-row"))]
         );
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_size_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -786,14 +786,14 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].ts, 2);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_thread_row_when_it_exceeds_size_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -826,14 +826,14 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_per_process_uuid_only() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -897,14 +897,14 @@ mod tests {
         timestamps.sort_unstable();
         assert_eq!(timestamps, vec![2, 3]);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_process_row_when_it_exceeds_size_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -937,14 +937,14 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_with_null_process_uuid() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -1007,14 +1007,14 @@ mod tests {
         timestamps.sort_unstable();
         assert_eq!(timestamps, vec![2, 3]);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_null_process_row_when_it_exceeds_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -1047,14 +1047,14 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_row_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -1092,14 +1092,14 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_rows_when_process_exceeds_row_limit() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -1141,14 +1141,14 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_null_process_rows_when_row_limit_exceeded() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -1190,6 +1190,6 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 }

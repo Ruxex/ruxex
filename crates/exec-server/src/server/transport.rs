@@ -1,4 +1,4 @@
-use genex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpClientFactory;
 use tokio::io;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
@@ -102,7 +102,7 @@ where
         http_client_factory,
         request_dispatch_mode,
     );
-    tracing::info!("genex-exec-server listening on stdio");
+    tracing::info!("ruxex-exec-server listening on stdio");
     processor
         .run_connection(
             JsonRpcConnection::from_stdio(reader, writer, "exec-server stdio".to_string()),

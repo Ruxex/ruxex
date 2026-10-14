@@ -11,16 +11,16 @@ use axum::http::header::AUTHORIZATION;
 use axum::middleware;
 use axum::middleware::Next;
 use axum::response::Response;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::DynamicToolCallOutputContentItem;
-use genex_app_server_protocol::DynamicToolCallParams;
-use genex_app_server_protocol::DynamicToolNamespaceTool;
-use genex_app_server_protocol::DynamicToolSpec;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_config::McpServerConfig;
-use genex_config::McpServerRequirement;
-use genex_config::RawMcpServerConfig;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
+use ruxex_app_server_protocol::DynamicToolCallParams;
+use ruxex_app_server_protocol::DynamicToolNamespaceTool;
+use ruxex_app_server_protocol::DynamicToolSpec;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_config::McpServerConfig;
+use ruxex_config::McpServerRequirement;
+use ruxex_config::RawMcpServerConfig;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::CallToolRequestParams;
@@ -250,7 +250,7 @@ impl ServerHandler for DynamicToolMcpHandler {
     ) -> Result<rmcp::model::CallToolResponse, McpError> {
         let metadata = &context.meta.0.0;
         let turn_metadata = metadata
-            .get("x-genex-turn-metadata")
+            .get("x-ruxex-turn-metadata")
             .and_then(|value| match value {
                 Value::Object(_) => Some(value.clone()),
                 Value::String(value) => serde_json::from_str(value).ok(),

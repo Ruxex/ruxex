@@ -2,8 +2,8 @@ use std::io::Cursor;
 use std::path::Path;
 
 use divan::Bencher;
-use genex_utils_image::PromptImageMode;
-use genex_utils_image::load_for_prompt_bytes;
+use ruxex_utils_image::PromptImageMode;
+use ruxex_utils_image::load_for_prompt_bytes;
 use image::DynamicImage;
 use image::ImageFormat;
 use image::Rgb;

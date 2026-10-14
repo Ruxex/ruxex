@@ -4,7 +4,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 use crate::GitToolingError;
 

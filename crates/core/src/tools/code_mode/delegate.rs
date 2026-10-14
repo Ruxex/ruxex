@@ -4,17 +4,17 @@ use std::sync::Mutex;
 use std::sync::Weak;
 
 use crate::tools::context::ToolCallOrigin;
-use genex_code_mode::CellId;
-use genex_code_mode::CodeModeNestedToolCall;
-use genex_code_mode::CodeModeSessionDelegate;
-use genex_code_mode::NotificationFuture;
-use genex_code_mode::ToolInvocationFuture;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::ThreadId;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseItem;
-use genex_utils_output_truncation::with_serialization_allowance;
+use ruxex_code_mode::CellId;
+use ruxex_code_mode::CodeModeNestedToolCall;
+use ruxex_code_mode::CodeModeSessionDelegate;
+use ruxex_code_mode::NotificationFuture;
+use ruxex_code_mode::ToolInvocationFuture;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_utils_output_truncation::with_serialization_allowance;
 use serde_json::Value as JsonValue;
 use tokio::sync::oneshot;
 use tokio::sync::watch;
@@ -480,7 +480,7 @@ impl CoreTurnHost {
                     output: FunctionCallOutputPayload::from_text(text),
                     internal_chat_message_metadata_passthrough: None,
                 },
-                metadata: Some(GenexHarnessMetadata {
+                metadata: Some(RuxexHarnessMetadata {
                     history_truncation_token_limit: Some(output_token_limit),
                     ..Default::default()
                 }),

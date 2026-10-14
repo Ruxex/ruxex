@@ -1,4 +1,4 @@
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TokenUsage;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -4,9 +4,9 @@ use super::WorldStateSection;
 use super::multi_agent_usage_hint::MultiAgentUsageHintState;
 use crate::context::ContextualUserFragment;
 use crate::context::multi_agent_mode_instructions::MultiAgentModeInstructions;
-use genex_protocol::config_types::MultiAgentMode;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_protocol::config_types::MultiAgentMode;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::truncate_text;
 use serde::Deserialize;
 use serde::Serialize;
 

@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::McpServerConfig;
-use genex_config::McpServerDisabledReason;
-use genex_config::RequirementSource;
-use genex_config::RequirementsLayerEntry;
-use genex_config::compose_requirements_for_hostname;
-use genex_config::format_config_layer_source;
-use genex_config::host_name;
-use genex_config::loader::LocalTomlLayerStack;
-use genex_config::loader::load_local_config_layers;
-use genex_exec_server_protocol::EnvironmentConfigLayer;
-use genex_exec_server_protocol::EnvironmentConfigLayerStack;
-use genex_exec_server_protocol::EnvironmentConfigReadParams;
-use genex_exec_server_protocol::EnvironmentConfigReadResponse;
-use genex_file_system::ExecutorFileSystem;
-use genex_utils_home_dir::find_genex_home;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::McpServerConfig;
+use ruxex_config::McpServerDisabledReason;
+use ruxex_config::RequirementSource;
+use ruxex_config::RequirementsLayerEntry;
+use ruxex_config::compose_requirements_for_hostname;
+use ruxex_config::format_config_layer_source;
+use ruxex_config::host_name;
+use ruxex_config::loader::LocalTomlLayerStack;
+use ruxex_config::loader::load_local_config_layers;
+use ruxex_exec_server_protocol::EnvironmentConfigLayer;
+use ruxex_exec_server_protocol::EnvironmentConfigLayerStack;
+use ruxex_exec_server_protocol::EnvironmentConfigReadParams;
+use ruxex_exec_server_protocol::EnvironmentConfigReadResponse;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_utils_home_dir::find_ruxex_home;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::Environment;
 use crate::ExecServerError;
@@ -38,10 +38,10 @@ pub(crate) async fn read_environment_config(
         .cwd
         .to_abs_path()
         .map_err(|error| ReadEnvironmentConfigError::InvalidParams(error.to_string()))?;
-    let genex_home = find_genex_home().map_err(|error| {
-        ReadEnvironmentConfigError::Internal(format!("failed to find Genex home: {error}"))
+    let ruxex_home = find_ruxex_home().map_err(|error| {
+        ReadEnvironmentConfigError::Internal(format!("failed to find Ruxex home: {error}"))
     })?;
-    let layers = load_local_config_layers(file_system, genex_home.as_path(), &cwd)
+    let layers = load_local_config_layers(file_system, ruxex_home.as_path(), &cwd)
         .await
         .map_err(|error| {
             ReadEnvironmentConfigError::Internal(format!(
@@ -53,7 +53,7 @@ pub(crate) async fn read_environment_config(
     Ok(EnvironmentConfigReadResponse {
         user_home_dir: dirs::home_dir()
             .and_then(|home_dir| PathUri::from_host_native_path(home_dir).ok()),
-        genex_home_dir: PathUri::from_abs_path(&genex_home),
+        ruxex_home_dir: PathUri::from_abs_path(&ruxex_home),
         hostname: host_name(),
         config: serialize_layer_stack(layers.config, |source| {
             format_config_layer_source(source, CONFIG_TOML_FILE)
@@ -104,7 +104,7 @@ impl Environment {
             let config = toml::from_str::<toml::Value>(&layer.toml).map_err(|error| {
                 ExecServerError::Protocol(format!("invalid executor-local MCP config: {error}"))
             })?;
-            genex_config::merge_toml_values(&mut merged, &config);
+            ruxex_config::merge_toml_values(&mut merged, &config);
         }
         let mut servers = merged
             .get("mcp_servers")

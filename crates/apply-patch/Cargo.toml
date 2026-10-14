@@ -1,11 +1,11 @@
 [package]
-name = "genex-apply-patch"
+name = "ruxex-apply-patch"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_apply_patch"
+name = "ruxex_apply_patch"
 path = "src/lib.rs"
 doctest = false
 
@@ -18,9 +18,9 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-exec-server = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 similar = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }
@@ -30,6 +30,6 @@ tree-sitter-bash = { workspace = true }
 [dev-dependencies]
 assert_cmd = { workspace = true }
 assert_matches = { workspace = true }
-genex-utils-cargo-bin = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

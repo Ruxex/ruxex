@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookRunSummary;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookRunSummary;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 use super::common;
 use crate::engine::ClaudeHooksEngine;

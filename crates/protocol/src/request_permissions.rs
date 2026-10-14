@@ -1,7 +1,7 @@
 use crate::models::AdditionalPermissionProfile;
 use crate::models::FileSystemPermissions;
 use crate::models::NetworkPermissions;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

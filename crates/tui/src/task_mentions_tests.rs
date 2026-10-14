@@ -2,7 +2,7 @@ use super::*;
 use crate::mention_codec::LinkedMention;
 use crate::mention_codec::decode_history_mentions_with_at_mentions;
 use crate::mention_codec::encode_history_mentions_at_elements;
-use genex_protocol::user_input::TextElement;
+use ruxex_protocol::user_input::TextElement;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -81,7 +81,7 @@ fn task_reference_context_deduplicates_and_merges_with_ide_context() {
         mention: title.to_string(),
         path: "thread://task-123".to_string(),
     };
-    let text = format!("# IDE: @{title}\n## My request for Genex:\n{visible}");
+    let text = format!("# IDE: @{title}\n## My request for Ruxex:\n{visible}");
     let plugin_start = text.find("plugin @").expect("plugin mention") + "plugin ".len();
     let selected_start = text.rfind(&format!("@{title}")).expect("selected task");
     let mut items = vec![UserInput::Text {
@@ -89,7 +89,7 @@ fn task_reference_context_deduplicates_and_merges_with_ide_context() {
         text_elements: [plugin_start, selected_start]
             .into_iter()
             .map(|start| {
-                genex_app_server_protocol::TextElement::new(
+                ruxex_app_server_protocol::TextElement::new(
                     ByteRange {
                         start,
                         end: start + title.len() + 1,
@@ -118,7 +118,7 @@ fn task_reference_context_deduplicates_and_merges_with_ide_context() {
         panic!("expected text with deduplicated task references");
     };
     assert!(text.starts_with("# IDE: @Review the migration\n## Referenced chats"));
-    assert_eq!(text.matches("## My request for Genex:").count(), 1);
+    assert_eq!(text.matches("## My request for Ruxex:").count(), 1);
     assert_eq!(text.matches("\"threadId\":\"task-123\"").count(), 1);
     assert!(text.contains("MUST call `read_thread`"));
     assert!(text.ends_with(
@@ -153,7 +153,7 @@ fn task_reference_heading_inside_selected_title_is_not_a_context_boundary() {
     let title = format!("Review {REQUEST_HEADING} carefully");
     let mut items = vec![UserInput::Text {
         text: format!("@{title}"),
-        text_elements: vec![genex_app_server_protocol::TextElement::new(
+        text_elements: vec![ruxex_app_server_protocol::TextElement::new(
             ByteRange {
                 start: 0,
                 end: title.len() + 1,
@@ -175,6 +175,6 @@ fn task_reference_heading_inside_selected_title_is_not_a_context_boundary() {
     let [UserInput::Text { text, .. }] = items.as_slice() else {
         panic!("expected text with a task reference");
     };
-    assert!(text.starts_with("## Referenced chats with Genex:"));
+    assert!(text.starts_with("## Referenced chats with Ruxex:"));
     assert!(text.ends_with(&format!("[@{title}](thread://task-123)")));
 }

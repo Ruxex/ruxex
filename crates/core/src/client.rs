@@ -1,6 +1,6 @@
 //! Session- and turn-scoped helpers for talking to model provider APIs.
 //!
-//! `ModelClient` is intended to live for the lifetime of a Genex session and holds the stable
+//! `ModelClient` is intended to live for the lifetime of a Ruxex session and holds the stable
 //! configuration and state needed to talk to the mounted provider (auth, conversation id,
 //! and transport fallback state).
 //!
@@ -10,7 +10,7 @@
 //!
 //! A [`ModelClientSession`] is created per turn and is used to stream one or more Responses API
 //! requests during that turn. It caches a Responses WebSocket connection (opened lazily) and stores
-//! per-turn state such as the `x-genex-turn-state` token used for sticky routing.
+//! per-turn state such as the `x-ruxex-turn-state` token used for sticky routing.
 //! Cached connections, incremental response state, and turn routing are discarded when auth
 //! ownership changes.
 //!
@@ -32,34 +32,34 @@ use std::sync::OnceLock;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use crate::GenexResponsesHeaders;
+use crate::RuxexResponsesHeaders;
 use async_channel::Sender;
-use genex_login::default_client::add_originator_header;
-use genex_otel::ProviderResponseEvent;
-use genex_otel::ProviderSafetyBuffering;
-use genex_otel::SessionTelemetry;
-use genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
-use genex_otel::current_span_w3c_trace_context;
-use genex_protocol::ResponseItemId;
+use ruxex_login::default_client::add_originator_header;
+use ruxex_otel::ProviderResponseEvent;
+use ruxex_otel::ProviderSafetyBuffering;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC;
+use ruxex_otel::current_span_w3c_trace_context;
+use ruxex_protocol::ResponseItemId;
 
 use futures::StreamExt;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use genex_protocol::config_types::Verbosity as VerbosityConfig;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AuthRecoveryEvent;
-use genex_protocol::protocol::Event as ProtocolEvent;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_rollout_trace::InferenceTraceAttempt;
-use genex_rollout_trace::InferenceTraceContext;
-use genex_tools::create_tools_json_for_chat_completions_api;
-use genex_tools::create_tools_json_for_responses_api;
-use genex_tools::create_tools_json_for_responses_lite;
-use genex_tools::create_tools_raw_json_for_responses_api;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use ruxex_protocol::config_types::Verbosity as VerbosityConfig;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AuthRecoveryEvent;
+use ruxex_protocol::protocol::Event as ProtocolEvent;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_rollout_trace::InferenceTraceAttempt;
+use ruxex_rollout_trace::InferenceTraceContext;
+use ruxex_tools::create_tools_json_for_chat_completions_api;
+use ruxex_tools::create_tools_json_for_responses_api;
+use ruxex_tools::create_tools_json_for_responses_lite;
+use ruxex_tools::create_tools_raw_json_for_responses_api;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
 use std::time::Duration;
@@ -82,45 +82,45 @@ use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::context::BaseInstructionsFragment;
 use crate::context::ContextualUserFragment;
-use crate::responses_metadata::GenexResponsesMetadata;
-use genex_model_provider::ProviderChatEvent;
-use genex_model_provider::ProviderConnectionKey;
-use genex_model_provider::ProviderError;
-use genex_model_provider::ProviderReasoning;
-use genex_model_provider::ProviderReasoningContext;
-use genex_model_provider::ProviderReasoningSummaryDelivery;
-use genex_model_provider::ProviderRequestAuth;
-use genex_model_provider::ProviderRequestCompression;
-use genex_model_provider::ProviderRequestFormat;
-use genex_model_provider::ProviderStreamConnectRequest;
-use genex_model_provider::ProviderStreamContinuation;
-use genex_model_provider::ProviderStreamEvent;
-use genex_model_provider::ProviderStreamOptions;
-use genex_model_provider::ProviderStreamOutcome;
-use genex_model_provider::ProviderStreamRequest;
-use genex_model_provider::ProviderStreamTelemetry;
-use genex_model_provider::ProviderUnauthorizedRecovery;
-use genex_model_provider::SharedModelProvider;
-use genex_model_provider::SharedProviderStreamSession;
-use genex_model_provider::build_provider_text_controls;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use ruxex_model_provider::ProviderChatEvent;
+use ruxex_model_provider::ProviderConnectionKey;
+use ruxex_model_provider::ProviderError;
+use ruxex_model_provider::ProviderReasoning;
+use ruxex_model_provider::ProviderReasoningContext;
+use ruxex_model_provider::ProviderReasoningSummaryDelivery;
+use ruxex_model_provider::ProviderRequestAuth;
+use ruxex_model_provider::ProviderRequestCompression;
+use ruxex_model_provider::ProviderRequestFormat;
+use ruxex_model_provider::ProviderStreamConnectRequest;
+use ruxex_model_provider::ProviderStreamContinuation;
+use ruxex_model_provider::ProviderStreamEvent;
+use ruxex_model_provider::ProviderStreamOptions;
+use ruxex_model_provider::ProviderStreamOutcome;
+use ruxex_model_provider::ProviderStreamRequest;
+use ruxex_model_provider::ProviderStreamTelemetry;
+use ruxex_model_provider::ProviderUnauthorizedRecovery;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_model_provider::SharedProviderStreamSession;
+use ruxex_model_provider::build_provider_text_controls;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result;
 
-pub const X_GENEX_INSTALLATION_ID_HEADER: &str = "x-genex-installation-id";
-pub const X_GENEX_ROUTING_HINT_HEADER: &str = "x-genex-routing-hint";
-pub const X_GENEX_TURN_STATE_HEADER: &str = "x-genex-turn-state";
-pub const X_GENEX_TURN_METADATA_HEADER: &str = "x-genex-turn-metadata";
-pub const X_GENEX_PARENT_THREAD_ID_HEADER: &str = "x-genex-parent-thread-id";
-pub const X_GENEX_WINDOW_ID_HEADER: &str = "x-genex-window-id";
+pub const X_RUXEX_INSTALLATION_ID_HEADER: &str = "x-ruxex-installation-id";
+pub const X_RUXEX_ROUTING_HINT_HEADER: &str = "x-ruxex-routing-hint";
+pub const X_RUXEX_TURN_STATE_HEADER: &str = "x-ruxex-turn-state";
+pub const X_RUXEX_TURN_METADATA_HEADER: &str = "x-ruxex-turn-metadata";
+pub const X_RUXEX_PARENT_THREAD_ID_HEADER: &str = "x-ruxex-parent-thread-id";
+pub const X_RUXEX_WINDOW_ID_HEADER: &str = "x-ruxex-window-id";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_provider_internal_genex_responses_lite";
-const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str = "x-provider-internal-genex-responses-lite";
+    "ws_request_header_x_provider_internal_ruxex_responses_lite";
+const X_PROVIDER_INTERNAL_RESPONSES_LITE_HEADER: &str = "x-provider-internal-ruxex-responses-lite";
 
 fn session_telemetry_for_request(
     session_telemetry: &SessionTelemetry,
-    request: &genex_model_provider::ChatRequest,
+    request: &ruxex_model_provider::ChatRequest,
 ) -> SessionTelemetry {
     let effort = request
         .reasoning
@@ -162,7 +162,7 @@ struct CurrentClientSetup {
     auth: ProviderRequestAuth,
     auth_owner_generation: Option<u64>,
     connection_key: ProviderConnectionKey,
-    credential_snapshot: genex_model_provider::SharedProviderCredentialSnapshot,
+    credential_snapshot: ruxex_model_provider::SharedProviderCredentialSnapshot,
 }
 
 struct ResponsesTransportOptions {
@@ -175,7 +175,7 @@ struct ResponsesTransportOptions {
 
 /// A session-scoped client for model-provider API calls.
 ///
-/// This holds configuration and state that should be shared across turns within a Genex session
+/// This holds configuration and state that should be shared across turns within a Ruxex session
 /// (auth, mounted provider, thread id, and transport fallback state).
 ///
 /// WebSocket fallback is session-scoped: once a turn activates the HTTP fallback, subsequent turns
@@ -188,7 +188,7 @@ struct ResponsesTransportOptions {
 pub struct ModelClient {
     state: Arc<ModelClientState>,
     prompt_cache_key_override: Option<String>,
-    genex_responses_headers: Option<Arc<GenexResponsesHeaders>>,
+    ruxex_responses_headers: Option<Arc<RuxexResponsesHeaders>>,
     event_sender: Option<Sender<ProtocolEvent>>,
     restored_history: bool,
 }
@@ -200,10 +200,10 @@ pub struct ModelClient {
 ///
 /// - The last full request, so subsequent calls can reuse incremental websocket request payloads
 ///   only when the current request is an incremental extension of the previous one.
-/// - The `x-genex-turn-state` sticky-routing token, which must be replayed for all requests within
+/// - The `x-ruxex-turn-state` sticky-routing token, which must be replayed for all requests within
 ///   the same turn.
 ///
-/// Create a fresh `ModelClientSession` for each Genex turn. Reusing it across turns would replay
+/// Create a fresh `ModelClientSession` for each Ruxex turn. Reusing it across turns would replay
 /// the previous turn's sticky-routing token into the next turn, which violates the client/server
 /// contract and can cause routing bugs.
 pub struct ModelClientSession {
@@ -218,8 +218,8 @@ pub struct ModelClientSession {
     /// Turn state for sticky routing.
     ///
     /// This is an `OnceLock` that stores the turn state value received from the server
-    /// on turn start via the `x-genex-turn-state` response header. Once set, this value
-    /// should be sent back to the server in the `x-genex-turn-state` request header for
+    /// on turn start via the `x-ruxex-turn-state` response header. Once set, this value
+    /// should be sent back to the server in the `x-ruxex-turn-state` request header for
     /// all subsequent requests within the same turn to maintain sticky routing.
     ///
     /// This is a contract between the client and server: we receive it at turn start,
@@ -247,7 +247,7 @@ struct WebsocketSession {
     /// Owner of the cached state, including before a connection is opened.
     auth_owner_generation: Option<u64>,
     connection_key: Option<ProviderConnectionKey>,
-    last_request: Option<genex_model_provider::ChatRequest>,
+    last_request: Option<ruxex_model_provider::ChatRequest>,
     last_response_rx: Option<oneshot::Receiver<LastResponse>>,
     last_response_from_untraced_warmup: bool,
     continuation_reset_reason: Option<&'static str>,
@@ -258,10 +258,10 @@ struct WebsocketSession {
 // Access programs are authorized per response, including continuations, without replaying input.
 // Keep the destructuring exhaustive so new request fields require an explicit reuse decision.
 fn responses_request_properties_match(
-    previous: &genex_model_provider::ChatRequest,
-    current: &genex_model_provider::ChatRequest,
+    previous: &ruxex_model_provider::ChatRequest,
+    current: &ruxex_model_provider::ChatRequest,
 ) -> bool {
-    let genex_model_provider::ChatRequest {
+    let ruxex_model_provider::ChatRequest {
         model: previous_model,
         instructions: previous_instructions,
         input: _,
@@ -283,7 +283,7 @@ fn responses_request_properties_match(
         access_programs: _,
         transport: _,
     } = previous;
-    let genex_model_provider::ChatRequest {
+    let ruxex_model_provider::ChatRequest {
         model: current_model,
         instructions: current_instructions,
         input: _,
@@ -430,7 +430,7 @@ impl ModelClient {
                 cached_websocket_session: StdMutex::new(WebsocketSession::default()),
             }),
             prompt_cache_key_override: None,
-            genex_responses_headers: None,
+            ruxex_responses_headers: None,
             event_sender: None,
             restored_history: false,
         }
@@ -445,15 +445,15 @@ impl ModelClient {
         mut self,
         prompt_cache_key_override: Option<String>,
         event_sender: Sender<ProtocolEvent>,
-        genex_responses_headers: Option<Arc<GenexResponsesHeaders>>,
+        ruxex_responses_headers: Option<Arc<RuxexResponsesHeaders>>,
     ) -> Self {
         self.prompt_cache_key_override = prompt_cache_key_override;
         self.event_sender = Some(event_sender);
-        self.genex_responses_headers = genex_responses_headers;
+        self.ruxex_responses_headers = ruxex_responses_headers;
         self
     }
 
-    fn prompt_cache_key(&self, responses_metadata: &GenexResponsesMetadata) -> String {
+    fn prompt_cache_key(&self, responses_metadata: &RuxexResponsesMetadata) -> String {
         if let Some(prompt_cache_key) = &self.prompt_cache_key_override {
             return prompt_cache_key.clone();
         }
@@ -469,7 +469,7 @@ impl ModelClient {
 
     // Hosted Responses clients may derive cache affinity from the session-id header.
     // Keep the actual session identity in turn metadata, hooks, and history/notes requests.
-    fn responses_session_id(&self, metadata: &GenexResponsesMetadata) -> String {
+    fn responses_session_id(&self, metadata: &RuxexResponsesMetadata) -> String {
         if self.state.session_source.is_non_root_agent() {
             metadata.session_id.clone()
         } else {
@@ -525,7 +525,7 @@ impl ModelClient {
         if activated {
             warn!("falling back to HTTP");
             session_telemetry.counter(
-                "genex.transport.fallback_to_http",
+                "ruxex.transport.fallback_to_http",
                 /*inc*/ 1,
                 &[("from_wire_api", "responses_websocket")],
             );
@@ -537,7 +537,7 @@ impl ModelClient {
 
     fn build_responses_compatibility_headers(
         &self,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
     ) -> ApiHeaderMap {
         let extra_headers = responses_metadata.compatibility_headers();
         extra_headers
@@ -545,7 +545,7 @@ impl ModelClient {
 
     fn build_ws_client_metadata(
         &self,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         use_responses_lite: bool,
     ) -> HashMap<String, String> {
         let mut client_metadata = responses_metadata.client_metadata();
@@ -600,8 +600,8 @@ impl ModelClient {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &GenexResponsesMetadata,
-    ) -> Result<genex_model_provider::ChatRequest> {
+        responses_metadata: &RuxexResponsesMetadata,
+    ) -> Result<ruxex_model_provider::ChatRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
         let is_responses_provider = matches!(
             self.state.provider.request_format(),
@@ -685,7 +685,7 @@ impl ModelClient {
         );
         let prompt_cache_key = Some(self.prompt_cache_key(responses_metadata));
         let service_tier = model_info.service_tier_for_request(service_tier);
-        let request = genex_model_provider::ChatRequest {
+        let request = ruxex_model_provider::ChatRequest {
             model: model_info.slug.clone(),
             instructions,
             input,
@@ -705,11 +705,11 @@ impl ModelClient {
             text,
             client_metadata: Some(responses_metadata.client_metadata().into_iter().collect()),
             access_programs: None,
-            transport: genex_model_provider::ChatTransportOptions {
+            transport: ruxex_model_provider::ChatTransportOptions {
                 session_id: None,
                 thread_id: None,
                 extra_headers: std::collections::BTreeMap::new(),
-                compression: genex_model_provider::ProviderRequestCompression::None,
+                compression: ruxex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
                 connection_key: None,
                 credential_snapshot: None,
@@ -765,9 +765,9 @@ impl ModelClient {
             .provider
             .request_snapshot()
             .await
-            .map_err(|error| GenexErr::Fatal(error.to_string()))?;
+            .map_err(|error| RuxexErr::Fatal(error.to_string()))?;
         if !snapshot.auth.authenticated {
-            return Err(GenexErr::Fatal("provider is unauthenticated".to_string()));
+            return Err(RuxexErr::Fatal("provider is unauthenticated".to_string()));
         }
         Ok(CurrentClientSetup {
             auth_owner_generation: snapshot.auth.owner_generation,
@@ -778,7 +778,7 @@ impl ModelClient {
     }
 
     fn responses_headers(&self, auth: &ProviderRequestAuth, model: &str) -> ApiHeaderMap {
-        self.genex_responses_headers
+        self.ruxex_responses_headers
             .as_ref()
             .filter(|config| config.model == model && self.uses_managed_auth(auth))
             .map(|config| config.headers.clone())
@@ -813,7 +813,7 @@ impl ModelClient {
     /// Builds websocket handshake headers for both prewarm and turn-time reconnect.
     async fn build_websocket_headers(
         &self,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
     ) -> ApiHeaderMap {
         let mut headers = build_responses_headers(
             self.state.beta_features_header.as_deref(),
@@ -825,7 +825,7 @@ impl ModelClient {
         }
         headers.extend(self.build_responses_compatibility_headers(responses_metadata));
         if let Some(routing_hint) = &responses_metadata.routing_hint {
-            headers.insert(X_GENEX_ROUTING_HINT_HEADER, routing_hint.clone());
+            headers.insert(X_RUXEX_ROUTING_HINT_HEADER, routing_hint.clone());
         }
         if let Some(header_value) = self.generate_attestation_header_for().await {
             headers.insert(X_OAI_ATTESTATION_HEADER, header_value);
@@ -865,7 +865,7 @@ impl ModelClientSession {
     /// regardless of transport choice.
     async fn build_responses_options(
         &self,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         compression: ProviderRequestCompression,
         use_responses_lite: bool,
     ) -> ResponsesTransportOptions {
@@ -899,7 +899,7 @@ impl ModelClientSession {
     /// are treated as part of the baseline so we do not resend them.
     fn get_incremental_items(
         &self,
-        request: &genex_model_provider::ChatRequest,
+        request: &ruxex_model_provider::ChatRequest,
         last_response: &LastResponse,
     ) -> Option<Vec<ResponseItem>> {
         let previous_request = self.websocket_session.last_request.as_ref()?;
@@ -944,7 +944,7 @@ impl ModelClientSession {
 
     fn prepare_websocket_request(
         &mut self,
-        request: &genex_model_provider::ChatRequest,
+        request: &ruxex_model_provider::ChatRequest,
     ) -> Option<WebsocketContinuation> {
         let last_response = self.get_last_response()?;
         let items = self.get_incremental_items(request, &last_response)?;
@@ -968,13 +968,13 @@ impl ModelClientSession {
         &mut self,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
     ) -> Result<()> {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
         }
         let client_setup = self.client_setup().await.map_err(|err| {
-            GenexErr::Fatal(format!(
+            RuxexErr::Fatal(format!(
                 "failed to build websocket prewarm client setup: {err}"
             ))
         })?;
@@ -1006,12 +1006,12 @@ impl ModelClientSession {
             .provider
             .open_stream_session()
             .await
-            .map_err(provider_error_to_genex_error)?;
+            .map_err(provider_error_to_ruxex_error)?;
         let connect_request = ProviderStreamConnectRequest {
             session_id: Some(self.client.responses_session_id(responses_metadata)),
             thread_id: Some(responses_metadata.thread_id.to_string()),
             extra_headers: neutral_headers(websocket_headers),
-            default_headers: neutral_headers(genex_login::default_client::default_headers()),
+            default_headers: neutral_headers(ruxex_login::default_client::default_headers()),
             connection_key: connection_key.clone(),
             credential_snapshot: client_setup.credential_snapshot.clone(),
             telemetry: Some(telemetry),
@@ -1023,8 +1023,8 @@ impl ModelClientSession {
         )
         .await
         .map_err(|_| ProviderError::Transient("provider websocket connection timed out".into()))
-        .map_err(provider_error_to_genex_error)?
-        .map_err(provider_error_to_genex_error);
+        .map_err(provider_error_to_ruxex_error)?
+        .map_err(provider_error_to_ruxex_error);
         let error_message = result.as_ref().err().map(ToString::to_string);
         session_telemetry.record_websocket_connect(
             start.elapsed(),
@@ -1073,20 +1073,20 @@ impl ModelClientSession {
         prompt: &Prompt,
         model_info: &ModelInfo,
         session_telemetry: &SessionTelemetry,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
         // Admit the turn before constructing the provider request. The provider owns the
         // private credential snapshot; this neutral setup remains fixed for the session.
         let client_setup = self.client_setup().await?;
         if prompt.output_schema.is_some() {
-            return Err(genex_protocol::error::GenexErr::UnsupportedOperation(
+            return Err(ruxex_protocol::error::RuxexErr::UnsupportedOperation(
                 "output_schema is not supported for Chat Completions API".to_string(),
             ));
         }
 
         let tools = create_tools_json_for_chat_completions_api(&prompt.tools)?;
-        let request = genex_model_provider::ChatRequest {
+        let request = ruxex_model_provider::ChatRequest {
             model: model_info.slug.clone(),
             instructions: prompt.base_instructions.text.clone(),
             input: prompt.input.clone(),
@@ -1106,11 +1106,11 @@ impl ModelClientSession {
             text: None,
             client_metadata: None,
             access_programs: None,
-            transport: genex_model_provider::ChatTransportOptions {
+            transport: ruxex_model_provider::ChatTransportOptions {
                 session_id: None,
                 thread_id: None,
                 extra_headers: std::collections::BTreeMap::new(),
-                compression: genex_model_provider::ProviderRequestCompression::None,
+                compression: ruxex_model_provider::ProviderRequestCompression::None,
                 turn_state: None,
                 connection_key: None,
                 credential_snapshot: Some(client_setup.credential_snapshot.clone()),
@@ -1122,7 +1122,7 @@ impl ModelClientSession {
             .provider
             .chat(request)
             .await
-            .map_err(|error| GenexErr::Fatal(error.to_string()))?;
+            .map_err(|error| RuxexErr::Fatal(error.to_string()))?;
         let api_stream = provider_stream;
         let (stream, _) = map_response_events(
             None,
@@ -1158,7 +1158,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
         let mut provider_auth_recovery_attempted = false;
@@ -1193,7 +1193,7 @@ impl ModelClientSession {
             ) {
                 options
                     .extra_headers
-                    .insert(X_GENEX_ROUTING_HINT_HEADER, header_value);
+                    .insert(X_RUXEX_ROUTING_HINT_HEADER, header_value);
             }
             self.client
                 .prepare_response_items_for_request(&mut request.input);
@@ -1203,10 +1203,10 @@ impl ModelClientSession {
             let inference_trace_attempt = inference_trace.start_attempt();
             inference_trace_attempt.add_request_headers(&mut options.extra_headers);
             inference_trace_attempt.record_started(&request);
-            let provider_request = genex_model_provider::ChatRequest {
+            let provider_request = ruxex_model_provider::ChatRequest {
                 conversation_id: Some(self.client.responses_session_id(responses_metadata)),
                 session_source: Some(self.client.state.session_source.clone()),
-                transport: genex_model_provider::ChatTransportOptions {
+                transport: ruxex_model_provider::ChatTransportOptions {
                     session_id: options.session_id.clone(),
                     thread_id: options.thread_id.clone(),
                     extra_headers: neutral_headers(options.extra_headers),
@@ -1229,7 +1229,7 @@ impl ModelClientSession {
                     );
                     return Ok(stream);
                 }
-                Err(genex_model_provider::ProviderError::Unauthorized) => {
+                Err(ruxex_model_provider::ProviderError::Unauthorized) => {
                     let _recovery = handle_unauthorized(
                         ProviderError::Unauthorized,
                         &mut provider_auth_recovery_attempted,
@@ -1241,7 +1241,7 @@ impl ModelClientSession {
                     .await?;
                     continue;
                 }
-                Err(error) => return Err(GenexErr::Fatal(error.to_string())),
+                Err(error) => return Err(RuxexErr::Fatal(error.to_string())),
             }
         }
     }
@@ -1268,7 +1268,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         warmup: bool,
         request_trace: Option<W3cTraceContext>,
         inference_trace: &InferenceTraceContext,
@@ -1319,7 +1319,7 @@ impl ModelClientSession {
                 .client
                 .build_ws_client_metadata(responses_metadata, model_info.use_responses_lite);
             if let Some(turn_state) = self.turn_state.get() {
-                client_metadata.insert(X_GENEX_TURN_STATE_HEADER.to_string(), turn_state.clone());
+                client_metadata.insert(X_RUXEX_TURN_STATE_HEADER.to_string(), turn_state.clone());
             }
             let continuation = self.prepare_websocket_request(&request);
             let (mode, reason) = if continuation.is_some() {
@@ -1394,7 +1394,7 @@ impl ModelClientSession {
                     tracestate.to_string(),
                 );
             }
-            request.transport = genex_model_provider::ChatTransportOptions {
+            request.transport = ruxex_model_provider::ChatTransportOptions {
                 session_id: Some(self.client.responses_session_id(responses_metadata)),
                 thread_id: Some(responses_metadata.thread_id.to_string()),
                 extra_headers: neutral_headers(websocket_headers),
@@ -1417,7 +1417,7 @@ impl ModelClientSession {
                     Err(ProviderError::Unsupported) => {
                         return Ok(WebsocketStreamOutcome::FallbackToHttp);
                     }
-                    Err(error) => return Err(provider_error_to_genex_error(error)),
+                    Err(error) => return Err(provider_error_to_ruxex_error(error)),
                 };
                 self.websocket_session.stream_session = Some(stream_session.clone());
                 self.websocket_session.connection_key = Some(client_setup.connection_key.clone());
@@ -1447,7 +1447,7 @@ impl ModelClientSession {
                                 .then_some(client_metadata),
                         }),
                         default_headers: neutral_headers(
-                            genex_login::default_client::default_headers(),
+                            ruxex_login::default_client::default_headers(),
                         ),
                         telemetry: Some(stream_telemetry),
                     })
@@ -1479,7 +1479,7 @@ impl ModelClientSession {
                     continue;
                 }
                 Err(error) => {
-                    let error = provider_error_to_genex_error(error);
+                    let error = provider_error_to_ruxex_error(error);
                     inference_trace_attempt.record_failed(&error, None, /*output_items*/ &[]);
                     return Err(error);
                 }
@@ -1513,7 +1513,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
     ) -> Result<()> {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
@@ -1574,7 +1574,7 @@ impl ModelClientSession {
         effort: Option<ReasoningEffortConfig>,
         summary: ReasoningSummaryConfig,
         service_tier: Option<String>,
-        responses_metadata: &GenexResponsesMetadata,
+        responses_metadata: &RuxexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
         match self.client.state.provider.request_format() {
@@ -1628,7 +1628,7 @@ impl ModelClientSession {
         }
     }
 
-    /// Permanently disables WebSockets for this Genex session and resets WebSocket state.
+    /// Permanently disables WebSockets for this Ruxex session and resets WebSocket state.
     ///
     /// This is used after exhausting the provider retry budget, to force subsequent requests onto
     /// the HTTP transport.
@@ -1660,10 +1660,10 @@ fn neutral_headers(headers: ApiHeaderMap) -> std::collections::BTreeMap<String, 
 
 /// Builds the extra headers attached to Responses API requests.
 ///
-/// These headers implement Genex-specific conventions:
+/// These headers implement Ruxex-specific conventions:
 ///
-/// - `x-genex-beta-features`: comma-separated beta feature keys enabled for the session.
-/// - `x-genex-turn-state`: sticky routing token captured earlier in the turn.
+/// - `x-ruxex-beta-features`: comma-separated beta feature keys enabled for the session.
+/// - `x-ruxex-turn-state`: sticky routing token captured earlier in the turn.
 fn build_responses_headers(
     beta_features_header: Option<&str>,
     turn_state: Option<&Arc<OnceLock<String>>>,
@@ -1673,13 +1673,13 @@ fn build_responses_headers(
         && !value.is_empty()
         && let Ok(header_value) = HeaderValue::from_str(value)
     {
-        headers.insert("x-genex-beta-features", header_value);
+        headers.insert("x-ruxex-beta-features", header_value);
     }
     if let Some(turn_state) = turn_state
         && let Some(state) = turn_state.get()
         && let Ok(header_value) = HeaderValue::from_str(state)
     {
-        headers.insert(X_GENEX_TURN_STATE_HEADER, header_value);
+        headers.insert(X_RUXEX_TURN_STATE_HEADER, header_value);
     }
     headers
 }
@@ -1888,7 +1888,7 @@ where
                     }
                 }
                 Err(err) => {
-                    let mapped = provider_error_to_genex_error(err);
+                    let mapped = provider_error_to_ruxex_error(err);
                     inference_trace_attempt.record_failed(
                         &mapped,
                         upstream_request_id,
@@ -1923,7 +1923,7 @@ where
 /// Handles a 401 response by optionally refreshing external credentials once.
 ///
 /// When refresh succeeds, the caller should retry the API call; otherwise
-/// the mapped `GenexErr` is returned to the caller.
+/// the mapped `RuxexErr` is returned to the caller.
 
 fn emit_auth_recovery_event(
     event_sender: Option<&Sender<ProtocolEvent>>,
@@ -1978,7 +1978,7 @@ async fn handle_unauthorized(
             }
             Ok(ProviderUnauthorizedRecovery::NotConfigured) => {}
             Err(error) => {
-                let error = provider_recovery_error_to_genex_error(error);
+                let error = provider_recovery_error_to_ruxex_error(error);
                 warn!(
                     error = %error,
                     "provider authentication recovery failed"
@@ -1997,24 +1997,24 @@ async fn handle_unauthorized(
         /*auth_state_changed*/ None,
     );
 
-    Err(GenexErr::Fatal(error.to_string()))
+    Err(RuxexErr::Fatal(error.to_string()))
 }
 
-fn provider_recovery_error_to_genex_error(error: genex_model_provider::ProviderError) -> GenexErr {
+fn provider_recovery_error_to_ruxex_error(error: ruxex_model_provider::ProviderError) -> RuxexErr {
     match error {
-        genex_model_provider::ProviderError::Transient(message)
-        | genex_model_provider::ProviderError::Transport(message) => {
-            GenexErr::Io(std::io::Error::other(message))
+        ruxex_model_provider::ProviderError::Transient(message)
+        | ruxex_model_provider::ProviderError::Transport(message) => {
+            RuxexErr::Io(std::io::Error::other(message))
         }
-        genex_model_provider::ProviderError::RateLimited { .. } => {
-            GenexErr::Io(std::io::Error::other("provider rate limit reached"))
+        ruxex_model_provider::ProviderError::RateLimited { .. } => {
+            RuxexErr::Io(std::io::Error::other("provider rate limit reached"))
         }
-        other => GenexErr::Fatal(other.to_string()),
+        other => RuxexErr::Fatal(other.to_string()),
     }
 }
 
-fn provider_error_to_genex_error(error: ProviderError) -> GenexErr {
-    provider_recovery_error_to_genex_error(error)
+fn provider_error_to_ruxex_error(error: ProviderError) -> RuxexErr {
+    provider_recovery_error_to_ruxex_error(error)
 }
 
 struct ApiTelemetry {

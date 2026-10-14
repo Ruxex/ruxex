@@ -3,12 +3,12 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use genex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::grpc;
-use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
-use genex_protocol::ToolName;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use ruxex_protocol::ToolName;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 

@@ -1,6 +1,6 @@
-use genex_tools::FreeformTool;
-use genex_tools::FreeformToolFormat;
-use genex_tools::ToolSpec;
+use ruxex_tools::FreeformTool;
+use ruxex_tools::FreeformToolFormat;
+use ruxex_tools::ToolSpec;
 
 const APPLY_PATCH_LARK_GRAMMAR: &str = include_str!("../../../assets/tools/apply_patch.lark");
 

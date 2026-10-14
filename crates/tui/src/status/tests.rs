@@ -28,30 +28,30 @@ use chrono::Duration as ChronoDuration;
 use chrono::Local;
 use chrono::TimeZone;
 use chrono::Utc;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::CreditsSnapshot;
-use genex_app_server_protocol::RateLimitSnapshot;
-use genex_app_server_protocol::RateLimitWindow;
-use genex_app_server_protocol::SpendControlLimitSnapshot;
-use genex_config::LoaderOverrides;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_models_manager::test_support::construct_model_info_offline_for_tests;
-use genex_models_manager::test_support::get_model_offline_for_tests;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::CreditsSnapshot;
+use ruxex_app_server_protocol::RateLimitSnapshot;
+use ruxex_app_server_protocol::RateLimitWindow;
+use ruxex_app_server_protocol::SpendControlLimitSnapshot;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_models_manager::test_support::construct_model_info_offline_for_tests;
+use ruxex_models_manager::test_support::get_model_offline_for_tests;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use ratatui::prelude::*;
 use std::sync::Arc;
@@ -132,7 +132,7 @@ fn app_server_workspace_write_profile(network_enabled: bool) -> PermissionProfil
 
 async fn test_config(temp_home: &TempDir) -> Config {
     let mut config = ConfigBuilder::default()
-        .genex_home(temp_home.path().to_path_buf())
+        .ruxex_home(temp_home.path().to_path_buf())
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .build()
         .await
@@ -265,7 +265,7 @@ async fn status_header_uses_server_provider_name() {
 
     let rendered = render_lines(&composite.display_lines(/*width*/ 120));
     assert!(rendered.iter().any(|line| line.contains("provider Injected Provider")));
-    assert!(!rendered.iter().any(|line| line.contains("provider Genex")));
+    assert!(!rendered.iter().any(|line| line.contains("provider Ruxex")));
 }
 
 fn reset_at_from(captured_at: &chrono::DateTime<chrono::Local>, seconds: i64) -> i64 {

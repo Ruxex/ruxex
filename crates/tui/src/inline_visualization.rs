@@ -5,7 +5,7 @@ mod viewer;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use chrono::DateTime;
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use pulldown_cmark::Event;
 use pulldown_cmark::Options;
 use pulldown_cmark::Parser;
@@ -26,7 +26,7 @@ use uuid::Uuid;
 
 use self::viewer::materialize_document;
 
-const DIRECTIVE_PREFIX: &str = "::genex-inline-vis{";
+const DIRECTIVE_PREFIX: &str = "::ruxex-inline-vis{";
 const CONTENT_REFERENCE_PREFIX: &str = "\u{e200}visualize\u{e202}";
 const CONTENT_REFERENCE_SUFFIX: char = '\u{e201}';
 const MAX_FRAGMENT_BYTES: u64 = 2 * 1024 * 1024;
@@ -41,8 +41,8 @@ pub(crate) struct InlineVisualizationContext {
 
 impl InlineVisualizationContext {
     #[cfg(test)]
-    pub(crate) fn new(genex_home: &Path, thread_id: ThreadId) -> Option<Self> {
-        Self::new_with_writable_roots(genex_home, thread_id, std::iter::empty())
+    pub(crate) fn new(ruxex_home: &Path, thread_id: ThreadId) -> Option<Self> {
+        Self::new_with_writable_roots(ruxex_home, thread_id, std::iter::empty())
     }
 
     pub(crate) fn from_config(
@@ -55,12 +55,12 @@ impl InlineVisualizationContext {
         }
         let writable_roots = file_system_policy.get_writable_roots_with_cwd(config.cwd.as_path());
         let context = Self::new_with_writable_roots(
-            config.genex_home.as_path(),
+            config.ruxex_home.as_path(),
             thread_id,
             writable_roots.iter().map(|root| root.root.as_path()),
         )?;
         let viewer_caches = [
-            config.genex_home.as_path().join("visualization-viewers"),
+            config.ruxex_home.as_path().join("visualization-viewers"),
             context.viewer_dir.parent()?.parent()?.to_path_buf(),
         ];
         for viewer_cache in viewer_caches {
@@ -79,17 +79,17 @@ impl InlineVisualizationContext {
     }
 
     fn new_with_writable_roots<'a>(
-        genex_home: &Path,
+        ruxex_home: &Path,
         thread_id: ThreadId,
         writable_roots: impl IntoIterator<Item = &'a Path>,
     ) -> Option<Self> {
-        let genex_home = fs::canonicalize(genex_home).ok()?;
+        let ruxex_home = fs::canonicalize(ruxex_home).ok()?;
         let thread_id = thread_id.to_string();
         let uuid = Uuid::parse_str(&thread_id).ok()?;
         let timestamp = uuid.get_timestamp()?;
         let (seconds, nanos) = timestamp.to_unix();
         let created_at = DateTime::from_timestamp(i64::try_from(seconds).ok()?, nanos)?;
-        let visualizations_dir = genex_home.join("visualizations");
+        let visualizations_dir = ruxex_home.join("visualizations");
         let granted_thread_dirs = writable_roots
             .into_iter()
             .filter(|root| is_visualization_thread_dir(&visualizations_dir, root))
@@ -104,7 +104,7 @@ impl InlineVisualizationContext {
         Some(Self {
             visualizations_dir,
             thread_dir,
-            viewer_dir: genex_home
+            viewer_dir: ruxex_home
                 .join("visualization-viewers")
                 .join(thread_id)
                 .join(artifact_thread_id),
@@ -288,7 +288,7 @@ fn link_placeholder() -> String {
     let mut bytes = [0_u8; 24];
     rand::rng().fill_bytes(&mut bytes);
     let token = URL_SAFE_NO_PAD.encode(bytes);
-    format!("https://genex.invalid/inline-visualization/{token}")
+    format!("https://ruxex.invalid/inline-visualization/{token}")
 }
 
 fn parse_directive_file(directive: &str) -> Option<Cow<'_, str>> {

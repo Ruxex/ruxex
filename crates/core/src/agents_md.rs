@@ -16,15 +16,15 @@ use crate::config::Config;
 use crate::context::UserInstructions as ContextUserInstructions;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use futures::StreamExt;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadFileOptions;
-use genex_extension_api::Instructions;
-use genex_file_system::FileSystemSandboxContext;
-use genex_file_system::FindUpErrorPolicy;
-use genex_file_system::find_nearest_ancestor_with_markers;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_extension_api::Instructions;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_file_system::FindUpErrorPolicy;
+use ruxex_file_system::find_nearest_ancestor_with_markers;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::io;
 use tracing::error;
 
@@ -300,7 +300,7 @@ impl LoadedAgentsMd {
     /// Creates source-less user instructions for tests.
     ///
     /// This cannot be gated with `#[cfg(test)]` because integration tests
-    /// compile `genex-core` as a normal dependency without that configuration.
+    /// compile `ruxex-core` as a normal dependency without that configuration.
     pub fn from_text_for_testing(contents: impl Into<String>) -> Self {
         let contents = contents.into();
         if contents.trim().is_empty() {

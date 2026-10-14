@@ -24,23 +24,23 @@ use crate::tools::router::tool_log_payload;
 use crate::tools::tool_dispatch_trace::ToolDispatchTrace;
 use crate::util::error_or_panic;
 use futures::future::BoxFuture;
-use genex_extension_api::AllowedTools;
-use genex_extension_api::ToolCallOutcome;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::protocol::EventMsg;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_extension_api::AllowedTools;
+use ruxex_extension_api::ToolCallOutcome;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use indexmap::IndexMap;
 use indexmap::map::Entry;
 use serde_json::Value;
 
 pub(crate) type ToolTelemetryTags = Vec<(&'static str, String)>;
 
-pub use genex_tools::ToolExecutor;
-pub use genex_tools::ToolExposure;
+pub use ruxex_tools::ToolExecutor;
+pub use ruxex_tools::ToolExposure;
 
 /// Typed runtime contract for locally executed tools.
 ///
@@ -58,7 +58,7 @@ pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
     }
 
     /// Returns lazily cached Code Mode definitions owned by this runtime.
-    fn cached_code_mode_definitions(&self) -> Option<&[genex_code_mode::ToolDefinition]> {
+    fn cached_code_mode_definitions(&self) -> Option<&[ruxex_code_mode::ToolDefinition]> {
         None
     }
 
@@ -196,7 +196,7 @@ impl AnyToolResult {
             item: result.to_response_item(&call_id, &payload).into(),
             metadata: result
                 .fallback_token_limit_override()
-                .map(|limit| GenexHarnessMetadata {
+                .map(|limit| RuxexHarnessMetadata {
                     history_truncation_token_limit: Some(limit),
                     ..Default::default()
                 }),

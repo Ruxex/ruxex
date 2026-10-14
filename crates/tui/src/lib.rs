@@ -1,5 +1,5 @@
 // Forbid accidental stdout/stderr writes in the *library* portion of the TUI.
-// The standalone `genex-tui` binary prints a short help message before the
+// The standalone `ruxex-tui` binary prints a short help message before the
 // alternate‑screen mode starts; that file opts‑out locally via `allow`.
 #![recursion_limit = "256"]
 #![deny(clippy::print_stdout, clippy::print_stderr)]
@@ -28,50 +28,50 @@ use app_server_session::AppServerSession;
 use app_server_session::ThreadParamsMode;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
-use genex_app_server_client::AppServerClient;
-use genex_app_server_client::AppServerRuntime;
-use genex_app_server_client::AppServerRuntimeBuilder;
-use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-use genex_app_server_client::InProcessAppServerClient;
-use genex_app_server_client::InProcessClientStartArgs;
-use genex_app_server_client::ProviderInit;
-use genex_app_server_client::RemoteAppServerClient;
-use genex_app_server_client::RemoteAppServerConnectArgs;
-pub use genex_app_server_client::RemoteAppServerEndpoint;
-use genex_app_server_client::configured_app_server_runtime_from_config;
-use genex_app_server_client::provider_init_from_config_with_descriptor;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::GetAccountResponse;
-use genex_app_server_protocol::ProviderAuthStatus;
-use genex_app_server_protocol::Thread as AppServerThread;
+use ruxex_app_server_client::AppServerClient;
+use ruxex_app_server_client::AppServerRuntime;
+use ruxex_app_server_client::AppServerRuntimeBuilder;
+use ruxex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+use ruxex_app_server_client::InProcessAppServerClient;
+use ruxex_app_server_client::InProcessClientStartArgs;
+use ruxex_app_server_client::ProviderInit;
+use ruxex_app_server_client::RemoteAppServerClient;
+use ruxex_app_server_client::RemoteAppServerConnectArgs;
+pub use ruxex_app_server_client::RemoteAppServerEndpoint;
+use ruxex_app_server_client::configured_app_server_runtime_from_config;
+use ruxex_app_server_client::provider_init_from_config_with_descriptor;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::GetAccountResponse;
+use ruxex_app_server_protocol::ProviderAuthStatus;
+use ruxex_app_server_protocol::Thread as AppServerThread;
 #[cfg(test)]
-use genex_app_server_protocol::ThreadListCwdFilter;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
-use genex_app_server_protocol::ThreadSourceKind;
-use genex_config::ConfigLoadError;
-use genex_config::LoaderOverrides;
-use genex_config::format_config_error_with_source;
-use genex_config::types::ResumeCwdMode;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_features::Feature;
-use genex_login::default_client::originator;
-use genex_login::default_client::set_default_client_residency_requirement;
-use genex_login::enforce_login_restrictions;
-use genex_model_provider::ModelProviderFactory;
-use genex_model_provider::ProviderDescriptor;
-use genex_protocol::ThreadId;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::config_types::AltScreenMode;
-use genex_protocol::config_types::SandboxMode;
-use genex_rollout::StateDbHandle;
-use genex_rollout::state_db;
-use genex_state::log_db;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
-use genex_utils_home_dir::find_genex_home;
+use ruxex_app_server_protocol::ThreadListCwdFilter;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
+use ruxex_app_server_protocol::ThreadSourceKind;
+use ruxex_config::ConfigLoadError;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::format_config_error_with_source;
+use ruxex_config::types::ResumeCwdMode;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_features::Feature;
+use ruxex_login::default_client::originator;
+use ruxex_login::default_client::set_default_client_residency_requirement;
+use ruxex_login::enforce_login_restrictions;
+use ruxex_model_provider::ModelProviderFactory;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::config_types::AltScreenMode;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_rollout::StateDbHandle;
+use ruxex_rollout::state_db;
+use ruxex_state::log_db;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
+use ruxex_utils_home_dir::find_ruxex_home;
 pub use session_archive_commands::DeleteConfirmation;
 pub use session_archive_commands::SessionArchiveAction;
 pub use session_archive_commands::SessionArchiveCommandOptions;
@@ -93,7 +93,7 @@ use tracing_subscriber::prelude::*;
 use url::Url;
 use uuid::Uuid;
 
-pub(crate) use genex_app_server_client::legacy_core;
+pub(crate) use ruxex_app_server_client::legacy_core;
 
 pub(crate) use worktree_startup::ManagedTuiWorktree;
 
@@ -230,13 +230,13 @@ use crate::startup_hooks_review::load_startup_hooks_review_entry;
 use crate::startup_hooks_review::maybe_run_startup_hooks_review;
 use crate::tui::Tui;
 pub use cli::Cli;
-use genex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::Arg0DispatchPaths;
 pub use markdown_render::render_markdown_text;
 pub use public_widgets::composer_input::ComposerAction;
 pub use public_widgets::composer_input::ComposerInput;
 // (tests access modules directly within the crate)
 
-const TUI_LOG_FILE_NAME: &str = "genex-tui.log";
+const TUI_LOG_FILE_NAME: &str = "ruxex-tui.log";
 const INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT: Duration = Duration::from_millis(/*millis*/ 500);
 
 const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
@@ -244,7 +244,7 @@ const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
 
 /// Hidden argument used when a provider-owned host re-enters itself as the
 /// AppServer daemon process.
-pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
+pub use ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
@@ -307,14 +307,14 @@ async fn init_state_db_for_app_server_target(
 ) -> std::io::Result<Option<StateDbHandle>> {
     match app_server_target {
         AppServerTarget::Embedded => {
-            genex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
+            ruxex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
                     format!("failed to mount provider data root: {err}"),
                 )
             })?;
             state_db::try_init(config).await.map(Some).map_err(|err| {
-                let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
+                let database_path = ruxex_state::runtime_db_path_for_corruption_error(&err)
                     .unwrap_or_else(|| config.sqlite_config().state_db_path());
                 std::io::Error::other(LocalStateDbStartupError::new(
                     database_path,
@@ -323,7 +323,7 @@ async fn init_state_db_for_app_server_target(
             })
         }
         AppServerTarget::LocalDaemon { .. } => {
-            genex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
+            ruxex_app_server_client::mount_provider_home_for_config(config).map_err(|err| {
                 std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
                     format!("failed to mount provider data root: {err}"),
@@ -339,10 +339,10 @@ async fn init_state_db_for_app_server_target(
 }
 
 // TODO(jif) delete after 22/11/2026.
-fn remove_legacy_tui_log_file(genex_home: &Path) {
+fn remove_legacy_tui_log_file(ruxex_home: &Path) {
     // Shared append-only TUI logs could grow without bound. Existing processes
     // may still hold the file open, so startup cleanup is best effort.
-    let _ = std::fs::remove_file(genex_home.join("log").join(TUI_LOG_FILE_NAME));
+    let _ = std::fs::remove_file(ruxex_home.join("log").join(TUI_LOG_FILE_NAME));
 }
 
 fn remote_addr_has_explicit_port(addr: &str, parsed: &Url) -> bool {
@@ -387,8 +387,8 @@ fn websocket_url_supports_auth_token(parsed: &Url) -> bool {
 pub fn resolve_remote_addr(addr: &str) -> color_eyre::Result<RemoteAppServerEndpoint> {
     if let Some(socket_path) = addr.strip_prefix("unix://") {
         let socket_path = if socket_path.is_empty() {
-            let genex_home = find_genex_home().wrap_err("failed to resolve GENEX_HOME")?;
-            genex_app_server_client::app_server_control_socket_path(&genex_home)
+            let ruxex_home = find_ruxex_home().wrap_err("failed to resolve RUXEX_HOME")?;
+            ruxex_app_server_client::app_server_control_socket_path(&ruxex_home)
                 .map_err(color_eyre::Report::new)?
         } else {
             AbsolutePathBuf::relative_to_current_dir(socket_path)
@@ -437,7 +437,7 @@ async fn connect_remote_app_server(
 ) -> color_eyre::Result<AppServerClient> {
     let app_server = RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
         endpoint,
-        client_name: "genex-tui".to_string(),
+        client_name: "ruxex-tui".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
         opt_out_notification_methods: Vec::new(),
@@ -448,11 +448,11 @@ async fn connect_remote_app_server(
     Ok(AppServerClient::Remote(app_server))
 }
 
-async fn maybe_probe_default_daemon_socket(genex_home: &Path) -> Option<AbsolutePathBuf> {
-    let socket_path = genex_app_server_client::app_server_control_socket_path(genex_home).ok()?;
+async fn maybe_probe_default_daemon_socket(ruxex_home: &Path) -> Option<AbsolutePathBuf> {
+    let socket_path = ruxex_app_server_client::app_server_control_socket_path(ruxex_home).ok()?;
     match tokio::time::timeout(
         AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT,
-        genex_uds::UnixStream::connect(socket_path.as_path()),
+        ruxex_uds::UnixStream::connect(socket_path.as_path()),
     )
     .await
     {
@@ -553,7 +553,7 @@ pub(crate) async fn start_app_server_for_picker(
     .await?;
     Ok(
         AppServerSession::new(app_server, target.thread_params_mode())
-            .with_local_genex_home(&config.genex_home),
+            .with_local_ruxex_home(&config.ruxex_home),
     )
 }
 
@@ -626,7 +626,7 @@ where
             .unwrap_or_else(|err| panic!("cli session source should deserialize: {err}")),
         enable_api_key_env: false,
         runtime: Some(runtime),
-        client_name: "genex-tui".to_string(),
+        client_name: "ruxex-tui".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
         opt_out_notification_methods: Vec::new(),
@@ -722,7 +722,7 @@ async fn lookup_session_target_with_app_server(
 
     Ok(named_session_lookup::lookup(
         app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         id_or_name,
         &[named_session_lookup::SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -794,7 +794,7 @@ fn latest_session_lookup_params(
             resume_picker::repository_cwd_filter(
                 cwd,
                 uses_remote_filesystem,
-                config.features.enabled(genex_features::Feature::Worktrees),
+                config.features.enabled(ruxex_features::Feature::Worktrees),
             )
         }),
         use_state_db_only: match lookup_mode {
@@ -1090,7 +1090,7 @@ async fn run_ratatui_app(
     let app_server_session = match startup_app_server {
         Ok(Ok(app_server)) => {
             AppServerSession::new(app_server, app_server_target.thread_params_mode())
-                .with_local_genex_home(&initial_config.genex_home)
+                .with_local_ruxex_home(&initial_config.ruxex_home)
         }
         Ok(Err(err)) => {
             terminal_restore_guard.restore_silently();
@@ -1252,7 +1252,7 @@ async fn run_ratatui_app(
                 resume_hint: None,
                 disconnect_info: None,
                 exit_reason: ExitReason::Fatal(format!(
-                    "No saved session found with ID {id_str}. Run `genex {action}` without an ID to choose from existing sessions."
+                    "No saved session found with ID {id_str}. Run `ruxex {action}` without an ID to choose from existing sessions."
                 )),
             })
         };
@@ -1262,7 +1262,7 @@ async fn run_ratatui_app(
     if (cli.resume_picker || cli.fork_picker)
         && let Some(name) = config.tui_theme.as_deref()
         && let Some(theme) =
-            crate::render::highlight::resolve_theme_by_name(name, Some(config.genex_home.as_path()))
+            crate::render::highlight::resolve_theme_by_name(name, Some(config.ruxex_home.as_path()))
     {
         crate::render::highlight::set_syntax_theme(theme);
     }
@@ -1604,7 +1604,7 @@ async fn run_ratatui_app(
                 // A picker can replace the server; account reads belong to their original session.
                 startup_account = None;
                 AppServerSession::new(app_server, app_server_target.thread_params_mode())
-                    .with_local_genex_home(&config.genex_home)
+                    .with_local_ruxex_home(&config.ruxex_home)
                     .with_remote_cwd_override(remote_cwd_override.clone())
             }
             Ok(Err(err)) => {
@@ -1680,7 +1680,7 @@ async fn run_ratatui_app(
                 )
                 .await?;
                 app_server = AppServerSession::new(client, app_server_target.thread_params_mode())
-                    .with_local_genex_home(&config.genex_home);
+                    .with_local_ruxex_home(&config.ruxex_home);
             }
         } else if consent.should_exit {
             if matches!(app_server_target, AppServerTarget::Embedded) {
@@ -1718,7 +1718,7 @@ async fn run_ratatui_app(
     // this must happen after the last possible reload.
     if let Some(w) = crate::render::highlight::set_theme_override(
         local_settings.tui.theme.clone(),
-        find_genex_home().ok().map(AbsolutePathBuf::into_path_buf),
+        find_ruxex_home().ok().map(AbsolutePathBuf::into_path_buf),
     ) {
         config.startup_warnings.push(w);
     }
@@ -1991,17 +1991,17 @@ async fn load_config_with_worktree_source_policy(
 
 #[allow(clippy::print_stderr)]
 async fn load_bootstrap_config_or_exit(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
-    cli_kv_overrides: Vec<(String, genex_config::TomlValue)>,
+    cli_kv_overrides: Vec<(String, ruxex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> ConfigTomlLoadResult {
     match load_config_toml_with_layer_stack(
-        genex_home,
+        ruxex_home,
         cwd,
         cli_kv_overrides,
-        genex_config::ConfigLoadOptions {
+        ruxex_config::ConfigLoadOptions {
             loader_overrides,
             strict_config,
         },

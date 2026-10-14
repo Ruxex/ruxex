@@ -16,12 +16,12 @@ mod test_support;
 mod tools;
 
 use crate::context::ContextualUserFragment;
-use genex_extension_api::PreviousWorldStateSection;
-use genex_extension_api::RenderedWorldStateFragment;
-use genex_extension_api::WorldStateSectionContribution;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::ResponseItem;
+use ruxex_extension_api::PreviousWorldStateSection;
+use ruxex_extension_api::RenderedWorldStateFragment;
+use ruxex_extension_api::WorldStateSectionContribution;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ResponseItem;
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
@@ -263,7 +263,7 @@ pub(crate) struct WorldStateHash(String);
 impl WorldStateHash {
     pub(crate) fn from_fragment(fragment: &(impl ContextualUserFragment + ?Sized)) -> Self {
         let mut hasher = Sha1::new();
-        hasher.update(b"genex-world-state-fragment-v1\0");
+        hasher.update(b"ruxex-world-state-fragment-v1\0");
         hash_component(&mut hasher, fragment.role());
         hash_component(&mut hasher, &fragment.render());
         Self(format!("{:x}", hasher.finalize()))

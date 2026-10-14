@@ -11,8 +11,8 @@
 //! and the bottom pane's runtime keymap bindings. Updating only one of those would make the UI
 //! appear to accept a remap while some handlers still respond to the old keys.
 
-use genex_config::types::TuiKeymap;
-use genex_terminal_detection::terminal_info;
+use ruxex_config::types::TuiKeymap;
+use ruxex_terminal_detection::terminal_info;
 
 use super::ChatWidget;
 use super::queued_message_edit_hint_binding;

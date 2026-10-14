@@ -75,7 +75,7 @@
       ]
     },
     "CollaborationMode": {
-      "description": "Collaboration mode for a Genex session.",
+      "description": "Collaboration mode for a Ruxex session.",
       "properties": {
         "mode": {
           "$ref": "#/definitions/ModeKind"

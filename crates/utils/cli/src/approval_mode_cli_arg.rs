@@ -2,7 +2,7 @@
 
 use clap::ValueEnum;
 
-use genex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::AskForApproval;
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 #[value(rename_all = "kebab-case")]

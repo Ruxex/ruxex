@@ -1,14 +1,14 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCRequest;
-use genex_exec_server_protocol::JSONRPCResponse;
-use genex_exec_server_protocol::RequestId;
-use genex_network_proxy::NetworkDecision;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkPolicyRequest;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::JSONRPCResponse;
+use ruxex_exec_server_protocol::RequestId;
+use ruxex_network_proxy::NetworkDecision;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkPolicyRequest;
+use ruxex_utils_path_uri::PathUri;
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
 use opentelemetry_sdk::trace::SdkTracerProvider;
@@ -159,7 +159,7 @@ async fn abandoned_process_start_unregisters_and_cleans_up() {
     let (start_seen_tx, start_seen_rx) = oneshot::channel();
     let (finish_start_tx, finish_start_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        complete_stdio_initialize(&mut peer, "genex-core").await;
+        complete_stdio_initialize(&mut peer, "ruxex-core").await;
         let JSONRPCMessage::Request(start) = read_jsonrpc_stdio(&mut peer).await else {
             panic!("expected process start request");
         };
@@ -251,7 +251,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
     let subscriber = tracing_subscriber::registry().with(
         tracing_opentelemetry::layer()
             .with_tracer(tracer_provider.tracer("exec-server-test"))
-            .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
+            .with_filter(filter_fn(ruxex_otel::OtelProvider::trace_export_filter)),
     );
     let _subscriber = tracing::subscriber::set_default(subscriber);
     tracing::callsite::rebuild_interest_cache();
@@ -263,7 +263,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
     let (overflow_checked_tx, overflow_checked_rx) = oneshot::channel();
     let (unregistered_tx, unregistered_rx) = oneshot::channel();
     let server = tokio::spawn(async move {
-        complete_stdio_initialize(&mut peer, "genex-core").await;
+        complete_stdio_initialize(&mut peer, "ruxex-core").await;
         ready_rx.await.expect("process should be registered");
 
         for (request_id, host, expected) in [
@@ -360,7 +360,7 @@ async fn policy_requests_use_process_decider_and_cancel_on_unregister() {
                 tracing::Span::current()
                     .metadata()
                     .map(tracing::Metadata::name),
-                Some("genex.exec_server.request"),
+                Some("ruxex.exec_server.request"),
                 "network policy decisions must run inside the inbound request span"
             );
             match request.host.as_str() {

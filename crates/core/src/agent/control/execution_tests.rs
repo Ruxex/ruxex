@@ -1,8 +1,8 @@
 use crate::agent::AgentControl;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 
 fn control_with_limit(max_threads: usize) -> AgentControl {
@@ -29,7 +29,7 @@ fn execution_guards_count_active_v2_subagent_turns() {
     let Err(err) = control.ensure_execution_capacity(MultiAgentVersion::V2, &source) else {
         panic!("second active turn should exceed the derived non-root cap");
     };
-    let GenexErrorDetails::AgentLimitReached { max_threads } = err.details() else {
+    let RuxexErrorDetails::AgentLimitReached { max_threads } = err.details() else {
         panic!("expected AgentLimitReached");
     };
     assert_eq!(*max_threads, 1);

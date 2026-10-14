@@ -1,7 +1,7 @@
 use super::*;
 
 use anyhow::Result;
-use genex_protocol::protocol::USER_MESSAGE_BEGIN;
+use ruxex_protocol::protocol::USER_MESSAGE_BEGIN;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::path::PathBuf;
@@ -18,7 +18,7 @@ fn extract_conversation_summary_prefers_plain_user_messages() -> Result<()> {
             "id": conversation_id.to_string(),
             "timestamp": timestamp,
             "cwd": "/",
-            "originator": "genex",
+            "originator": "ruxex",
             "cli_version": "0.0.0"
         }),
         json!({
@@ -58,7 +58,7 @@ fn extract_conversation_summary_prefers_plain_user_messages() -> Result<()> {
         preview: "Count to 5".to_string(),
         cwd: PathBuf::from("/"),
         cli_version: "0.0.0".to_string(),
-        source: genex_protocol::protocol::SessionSource::VSCode,
+        source: ruxex_protocol::protocol::SessionSource::VSCode,
         git_info: None,
     };
 

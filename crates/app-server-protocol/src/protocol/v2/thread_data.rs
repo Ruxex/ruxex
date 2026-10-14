@@ -1,19 +1,19 @@
-use super::GenexErrorInfo;
+use super::RuxexErrorInfo;
 use super::ThreadEnvironment;
 use super::ThreadItem;
 use super::ThreadStatus;
 use super::TurnStatus;
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::MisalignmentErrorDetails as CoreMisalignmentErrorDetails;
-use genex_protocol::protocol::MisalignmentSteer as CoreMisalignmentSteer;
-use genex_protocol::protocol::SessionSource as CoreSessionSource;
-use genex_protocol::protocol::SubAgentSource as CoreSubAgentSource;
-use genex_protocol::protocol::ThreadHistoryMode as CoreThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource as CoreThreadSource;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::MisalignmentErrorDetails as CoreMisalignmentErrorDetails;
+use ruxex_protocol::protocol::MisalignmentSteer as CoreMisalignmentSteer;
+use ruxex_protocol::protocol::SessionSource as CoreSessionSource;
+use ruxex_protocol::protocol::SubAgentSource as CoreSubAgentSource;
+use ruxex_protocol::protocol::ThreadHistoryMode as CoreThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource as CoreThreadSource;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
 use schemars::r#gen::SchemaGenerator;
 #[cfg(test)]
@@ -189,7 +189,7 @@ pub struct ThreadSectionAppearance {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct Thread {
-    /// Identifier for this thread. Genex-generated thread IDs are UUIDv7.
+    /// Identifier for this thread. Ruxex-generated thread IDs are UUIDv7.
     pub id: String,
     /// Current environments for a loaded thread, in priority order, primary first.
     /// `null` means the thread is not loaded or the server does not expose its selection.
@@ -252,7 +252,7 @@ pub struct Thread {
     /// Originator recorded when the thread was created, independent of its current client or executor.
     /// Null when the recorded originator is unavailable.
     pub originator: Option<String>,
-    /// Origin of the thread (CLI, VSCode, genex exec, genex app-server, etc.).
+    /// Origin of the thread (CLI, VSCode, ruxex exec, ruxex app-server, etc.).
     pub source: SessionSource,
     /// Whether the app server accepts direct turn input for this loaded thread.
     /// `None` means the capability is unavailable, such as for an unloaded stored thread.
@@ -367,7 +367,7 @@ impl<'de> Deserialize<'de> for Thread {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct Turn {
-    /// Identifier for this turn. Genex-generated turn IDs are UUIDv7.
+    /// Identifier for this turn. Ruxex-generated turn IDs are UUIDv7.
     pub id: String,
     /// Thread items currently included in this turn payload.
     pub items: Vec<ThreadItem>,
@@ -407,7 +407,7 @@ pub enum TurnItemsView {
 #[error("{message}")]
 pub struct TurnError {
     pub message: String,
-    pub genex_error_info: Option<GenexErrorInfo>,
+    pub ruxex_error_info: Option<RuxexErrorInfo>,
     #[serde(default)]
     pub additional_details: Option<String>,
     /// Optional public explanation and continuation instruction for a misalignment block.

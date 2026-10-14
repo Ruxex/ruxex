@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-sandbox-summary"
+name = "ruxex-utils-sandbox-summary"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,11 +8,11 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-genex-protocol = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 
 [dev-dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }
 
 [lib]

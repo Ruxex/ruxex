@@ -3,9 +3,9 @@ use crate::events::shared::log_and_trace_event;
 use crate::events::shared::log_event;
 use crate::events::shared::tool_namespace;
 use crate::events::shared::trace_event;
-use genex_protocol::ToolName;
-use genex_protocol::config_types::ToolResultLogConfig;
-use genex_utils_string::take_bytes_at_char_boundary;
+use ruxex_protocol::ToolName;
+use ruxex_protocol::config_types::ToolResultLogConfig;
+use ruxex_utils_string::take_bytes_at_char_boundary;
 use std::borrow::Cow;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
@@ -54,7 +54,7 @@ pub(crate) fn emit_tool_result(
     log_and_trace_event!(
         telemetry,
         common: {
-            event.name = "genex.tool_result",
+            event.name = "ruxex.tool_result",
             tool_result_seq = tool_result_seq,
             tool_name = %tool_name.name,
             tool_namespace = %tool_namespace,

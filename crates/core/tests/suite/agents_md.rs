@@ -1,46 +1,46 @@
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_core::ForkSnapshot;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_extension_api::Instructions;
-use genex_extension_api::LoadInstructionsFuture;
-use genex_extension_api::LoadedUserInstructions;
-use genex_extension_api::ThreadInstructionsProvider;
-use genex_extension_api::UserInstructionsProvider;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_history::RolloutItem;
-use genex_home::GenexHomeUserInstructionsProvider;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::ForkBoundary;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_thread_store::PrepareForkParams;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::ForkSnapshot;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_extension_api::Instructions;
+use ruxex_extension_api::LoadInstructionsFuture;
+use ruxex_extension_api::LoadedUserInstructions;
+use ruxex_extension_api::ThreadInstructionsProvider;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_features::Feature;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_history::RolloutItem;
+use ruxex_home::RuxexHomeUserInstructionsProvider;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::request_user_input::RequestUserInputAnswer;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::ForkBoundary;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_thread_store::PrepareForkParams;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 const REMOTE_ENVIRONMENT_ID: &str = "remote";
-use genex_utils_string::approx_bytes_for_tokens;
+use ruxex_utils_string::approx_bytes_for_tokens;
 use core_test_support::PathBufExt;
 use core_test_support::create_directory_symlink;
 use core_test_support::load_default_config_for_test;
@@ -54,12 +54,12 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::RecordingUserInstructionsProvider;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::executor_path_uri;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::RecordingUserInstructionsProvider;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::executor_path_uri;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -94,7 +94,7 @@ const SPAWN_SEED_PROMPT: &str = "seed parent history";
 const PROVIDER_WARNING: &str = "global instruction source unavailable; using fallback";
 
 struct WarningInstructionsProvider {
-    inner: GenexHomeUserInstructionsProvider,
+    inner: RuxexHomeUserInstructionsProvider,
     warning_active: AtomicBool,
 }
 
@@ -164,7 +164,7 @@ impl ThreadInstructionsProvider for RecordingThreadInstructionsProvider {
     }
 }
 
-async fn agents_instructions(mut builder: TestGenexBuilder) -> Result<String> {
+async fn agents_instructions(mut builder: TestRuxexBuilder) -> Result<String> {
     let server = start_mock_server().await;
     let resp_mock = mount_sse_once(
         &server,
@@ -198,7 +198,7 @@ fn remove_agents_md_world_state_section(rollout_path: &Path) -> Result<()> {
     let mut removed_section = false;
     let retained = rollout
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?
         .into_iter()
         .map(|mut line| {
@@ -240,7 +240,7 @@ fn assert_single_instruction_fragment(request: &responses::ResponsesRequest, exp
     assert_eq!(instruction_fragments(request), vec![expected.to_string()]);
 }
 
-async fn submit_thread_turn(thread: &Arc<genex_core::GenexThread>, prompt: &str) -> Result<()> {
+async fn submit_thread_turn(thread: &Arc<ruxex_core::RuxexThread>, prompt: &str) -> Result<()> {
     thread
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: prompt.to_string(),
@@ -252,7 +252,7 @@ async fn submit_thread_turn(thread: &Arc<genex_core::GenexThread>, prompt: &str)
 }
 
 async fn persisted_resume_history(
-    thread: &Arc<genex_core::GenexThread>,
+    thread: &Arc<ruxex_core::RuxexThread>,
 ) -> Result<(ThreadId, InitialHistory)> {
     thread.ensure_rollout_materialized().await;
     thread.flush_rollout().await?;
@@ -299,7 +299,7 @@ fn request_body_contains(request: &wiremock::Request, text: &str) -> bool {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn agents_override_is_preferred_over_agents_md() -> Result<()> {
     let instructions =
-        agents_instructions(test_genex().with_workspace_setup(|cwd, fs| async move {
+        agents_instructions(test_ruxex().with_workspace_setup(|cwd, fs| async move {
             let agents_md = cwd.join("AGENTS.md");
             let override_md = cwd.join("AGENTS.override.md");
             let agents_md_uri = executor_path_uri(&agents_md)?;
@@ -337,7 +337,7 @@ async fn agents_override_is_preferred_over_agents_md() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn agents_docs_are_concatenated_from_project_root_to_cwd() -> Result<()> {
     let instructions = agents_instructions(
-        test_genex()
+        test_ruxex()
             .with_config(|config| {
                 config.cwd = config.cwd.join("nested/workspace");
             })
@@ -413,7 +413,7 @@ async fn symlinked_cwd_uses_logical_parent_for_agents_discovery() -> Result<()> 
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_config(|config| {
             config.cwd = config.cwd.join("logical-repo/workspace");
         })
@@ -463,7 +463,7 @@ async fn symlinked_cwd_uses_logical_parent_for_agents_discovery() -> Result<()> 
         .expect("symlink should have a parent");
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&logical_root.join("AGENTS.md")),
             PathUri::from_abs_path(&test.config.cwd.join("AGENTS.md"))
@@ -496,7 +496,7 @@ async fn selected_environment_sources_match_model_visible_instructions() -> Resu
     let global_agents = home.path().join("AGENTS.md");
     std::fs::write(&global_agents, "global doc")?;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_workspace_setup(|cwd, fs| async move {
             let agents_md_uri = executor_path_uri(cwd.join("AGENTS.md"))?;
@@ -513,7 +513,7 @@ async fn selected_environment_sources_match_model_visible_instructions() -> Resu
     let global_agents = global_agents.abs();
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&global_agents),
             test.workspace_path_uri("AGENTS.md")?,
@@ -544,7 +544,7 @@ async fn untrusted_project_excludes_project_instructions() -> Result<()> {
     let global_agents =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_config(|config| {
             config.active_project.trust_level = Some(TrustLevel::Untrusted);
@@ -562,7 +562,7 @@ async fn untrusted_project_excludes_project_instructions() -> Result<()> {
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&global_agents)]
     );
 
@@ -594,7 +594,7 @@ async fn runtime_trust_reload_refreshes_project_instructions() -> Result<()> {
     let home = Arc::new(TempDir::new()?);
     let global_agents =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_config(|config| {
             config.active_project.trust_level = Some(TrustLevel::Trusted);
@@ -615,25 +615,25 @@ async fn runtime_trust_reload_refreshes_project_instructions() -> Result<()> {
 
     test.submit_turn("trusted project").await?;
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![global_agents.clone(), project_agents.clone()]
     );
 
-    let mut untrusted_config = (*test.genex.config().await).clone();
+    let mut untrusted_config = (*test.ruxex.config().await).clone();
     untrusted_config.active_project.trust_level = Some(TrustLevel::Untrusted);
-    test.genex.refresh_runtime_config(untrusted_config).await;
+    test.ruxex.refresh_runtime_config(untrusted_config).await;
     test.submit_turn("untrusted project").await?;
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![global_agents.clone()]
     );
 
-    let mut trusted_config = (*test.genex.config().await).clone();
+    let mut trusted_config = (*test.ruxex.config().await).clone();
     trusted_config.active_project.trust_level = Some(TrustLevel::Trusted);
-    test.genex.refresh_runtime_config(trusted_config).await;
+    test.ruxex.refresh_runtime_config(trusted_config).await;
     test.submit_turn("trusted again").await?;
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![global_agents, project_agents]
     );
 
@@ -665,7 +665,7 @@ async fn restricted_project_without_instructions_starts_successfully() -> Result
         sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
     )
     .await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         let mut file_system_policy = FileSystemSandboxPolicy::read_only();
         file_system_policy.entries.push(FileSystemSandboxEntry::new(
             config.cwd.join("private.txt").into(),
@@ -682,7 +682,7 @@ async fn restricted_project_without_instructions_starts_successfully() -> Result
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         Vec::<PathUri>::new()
     );
     test.submit_text_turn("continue without project instructions")
@@ -705,7 +705,7 @@ async fn denied_project_instructions_fail_thread_creation() -> Result<()> {
     let home = Arc::new(TempDir::new()?);
     write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_config(|config| {
             let mut file_system_policy = FileSystemSandboxPolicy::read_only();
@@ -759,7 +759,7 @@ async fn symlinked_writable_root_reports_sandbox_failure_instead_of_session_corr
     let visualization_root = home.path().join("visualizations");
     create_directory_symlink(&visualization_target, &visualization_root);
 
-    let mut builder = test_genex().with_home(home).with_config(move |config| {
+    let mut builder = test_ruxex().with_home(home).with_config(move |config| {
         config.project_doc_max_bytes = 1;
         let mut file_system_policy = FileSystemSandboxPolicy::read_only();
         file_system_policy.entries.push(FileSystemSandboxEntry::new(
@@ -797,11 +797,11 @@ async fn symlinked_writable_root_reports_sandbox_failure_instead_of_session_corr
         "sandbox preparation failure should not be diagnosed as session corruption: {error}"
     );
     let error = error
-        .replace(&canonical_home_path, "$GENEX_HOME")
-        .replace(&home_path, "$GENEX_HOME");
+        .replace(&canonical_home_path, "$RUXEX_HOME")
+        .replace(&home_path, "$RUXEX_HOME");
     insta::assert_snapshot!(error, @"
-    failed to load AGENTS.md instructions for environment `local`: failed to prepare fs sandbox: failed to prepare Seatbelt sandbox: writable root $GENEX_HOME/visualizations contains symlink component $GENEX_HOME/visualizations; symlinked writable roots are not supported.
-    If this writable root is at or beneath GENEX_HOME and you trust its symlink targets, set `allow_symlinked_genex_home = true` at the top level of `$GENEX_HOME/config.toml` (normally `~/.genex/config.toml`) on the execution host, then restart Genex or its executor. This opt-out trusts targets outside GENEX_HOME and targets changed between commands. It does not apply to other writable roots.
+    failed to load AGENTS.md instructions for environment `local`: failed to prepare fs sandbox: failed to prepare Seatbelt sandbox: writable root $RUXEX_HOME/visualizations contains symlink component $RUXEX_HOME/visualizations; symlinked writable roots are not supported.
+    If this writable root is at or beneath RUXEX_HOME and you trust its symlink targets, set `allow_symlinked_ruxex_home = true` at the top level of `$RUXEX_HOME/config.toml` (normally `~/.ruxex/config.toml`) on the execution host, then restart Ruxex or its executor. This opt-out trusts targets outside RUXEX_HOME and targets changed between commands. It does not apply to other writable roots.
     ");
 
     Ok(())
@@ -826,10 +826,10 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     let home = Arc::new(TempDir::new()?);
     let global_source = write_global_file(&home, GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(WarningInstructionsProvider {
-    inner: GenexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
+    inner: RuxexHomeUserInstructionsProvider::new(home.path().to_path_buf().abs()),
         warning_active: AtomicBool::new(/*v*/ false),
     });
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -845,7 +845,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     let test = builder.build_with_auto_env(&server).await?;
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![
             PathUri::from_abs_path(&global_source),
             test.workspace_path_uri(GLOBAL_AGENTS_FILENAME)?
@@ -866,7 +866,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect instructions after tightening permissions".to_string(),
@@ -881,7 +881,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
         .await?;
 
     let mut warnings_before_error = Vec::new();
-    let EventMsg::Error(error) = wait_for_event(&test.genex, |event| {
+    let EventMsg::Error(error) = wait_for_event(&test.ruxex, |event| {
         if let EventMsg::Warning(warning) = event {
             warnings_before_error.push(warning.message.clone());
         }
@@ -899,7 +899,7 @@ async fn tightening_environment_read_permissions_invalidates_cached_project_inst
     );
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         Vec::<PathUri>::new()
     );
     assert!(
@@ -925,12 +925,12 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-        GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+        RuxexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
             home.path().to_path_buf(),
         )?),
     )));
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -981,8 +981,8 @@ async fn loads_user_instructions_without_a_primary_environment() -> Result<()> {
 }
 
 struct ThreadInstructionsFixture {
-    test: TestGenex,
-    thread: Arc<genex_core::GenexThread>,
+    test: TestRuxex,
+    thread: Arc<ruxex_core::RuxexThread>,
     provider: Arc<RecordingThreadInstructionsProvider>,
 }
 
@@ -991,11 +991,11 @@ impl ThreadInstructionsFixture {
         let home = Arc::new(TempDir::new()?);
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
         let global_provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-            GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+            RuxexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
                 home.path().to_path_buf(),
             )?),
         )));
-        let mut builder = test_genex()
+        let mut builder = test_ruxex()
             .with_home(home)
             .with_user_instructions_provider(global_provider.clone())
             .with_config(|config| {
@@ -1050,7 +1050,7 @@ async fn thread_provider_composes_and_clears_only_its_instructions() -> Result<(
     .await;
     let fixture = ThreadInstructionsFixture::new(&server).await?;
     let sources = vec![
-        PathUri::from_abs_path(&fixture.test.config.genex_home.join(GLOBAL_AGENTS_FILENAME)),
+        PathUri::from_abs_path(&fixture.test.config.ruxex_home.join(GLOBAL_AGENTS_FILENAME)),
         fixture.test.workspace_path_uri(GLOBAL_AGENTS_FILENAME)?,
     ];
     assert_eq!(fixture.thread.instruction_sources().await, sources);
@@ -1233,7 +1233,7 @@ async fn thread_provider_enforces_its_own_limit_before_startup_and_sampling() ->
         .ok_or_else(|| anyhow!("oversized instructions must fail before thread creation"))?;
     assert!(matches!(
         error.details(),
-        GenexErrorDetails::InvalidRequest(_)
+        RuxexErrorDetails::InvalidRequest(_)
     ));
     assert!(error.to_string().contains("10000 estimated tokens"));
 
@@ -1333,7 +1333,7 @@ async fn fork_preserves_thread_instructions(source: InstructionForkSource) -> Re
         }
         InstructionForkSource::OfflinePrepared => ThreadHistoryMode::Paginated,
     };
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_config(|config| {
             config
                 .features
@@ -1457,7 +1457,7 @@ async fn thread_provider_lives_with_its_session_across_resume() -> Result<()> {
             .to_vec(),
     )
     .await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
     let provider = Arc::new(RecordingThreadInstructionsProvider::new(
         /*instructions*/ None,
@@ -1556,7 +1556,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_workspace_setup(|cwd, fs| async move {
             let agents_md_uri = executor_path_uri(cwd.join("AGENTS.md"))?;
@@ -1576,7 +1576,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
     ];
 
     // Confirm the thread records both creation-time sources in composition order.
-    assert_eq!(test.genex.instruction_sources().await, creation_sources);
+    assert_eq!(test.ruxex.instruction_sources().await, creation_sources);
 
     // Materialize the initial snapshot, then rewrite both selected files in place before another
     // ordinary turn.
@@ -1645,7 +1645,7 @@ async fn fresh_thread_composes_global_before_project_and_reports_sources() -> Re
         "expected rendered instructions to contain {PROJECT_SEPARATOR:?}; observed: {rendered}"
     );
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         creation_sources,
         "same-path global refresh preserves source paths and composition order"
     );
@@ -1676,7 +1676,7 @@ async fn multi_environment_project_instructions_share_one_byte_budget() -> Resul
     .await;
     let local_root = TempDir::new()?;
     std::fs::write(local_root.path().join(GLOBAL_AGENTS_FILENAME), "VWXYZ")?;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_config(|config| config.project_doc_max_bytes = 7)
         .with_workspace_setup(|cwd, fs| async move {
             fs.write_file(
@@ -1751,14 +1751,14 @@ async fn multi_environment_thread_refreshes_global_and_keeps_repository_snapshot
     let global_source =
         write_global_file(home.as_ref(), GLOBAL_AGENTS_FILENAME, GLOBAL_INSTRUCTIONS)?;
     let provider = Arc::new(RecordingUserInstructionsProvider::new(Arc::new(
-        GenexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
+        RuxexHomeUserInstructionsProvider::new(AbsolutePathBuf::try_from(
             home.path().to_path_buf(),
         )?),
     )));
     let local_root = TempDir::new()?;
     let local_source = local_root.path().join(GLOBAL_AGENTS_FILENAME);
     std::fs::write(&local_source, "local project instructions")?;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_user_instructions_provider(provider.clone())
         .with_workspace_setup(|cwd, fs| async move {
@@ -1892,10 +1892,10 @@ async fn global_instruction_warnings_reappear_only_after_recovery() -> Result<()
         "Failed to read global AGENTS.md instructions from `{}`: {read_error}",
         override_path.display()
     );
-    let mut builder = test_genex().with_home(Arc::clone(&home));
+    let mut builder = test_ruxex().with_home(Arc::clone(&home));
     let test = builder.build_with_auto_env(&server).await?;
     wait_for_event(
-        &test.genex,
+        &test.ruxex,
         |event| matches!(event, EventMsg::Warning(warning) if warning.message == expected_warning),
     )
     .await;
@@ -1912,14 +1912,14 @@ async fn global_instruction_warnings_reappear_only_after_recovery() -> Result<()
         } else {
             std::fs::write(&override_path, "")?;
         }
-        test.genex
+        test.ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "check the instructions".to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
         let mut warnings = Vec::new();
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             if let EventMsg::Warning(warning) = event {
                 warnings.push(warning.message.clone());
             }
@@ -1957,13 +1957,13 @@ async fn invalid_utf8_global_instructions_are_lossy() -> Result<()> {
         b"global\xFFinstructions",
     )?;
 
-    let mut builder = test_genex().with_home(home);
+    let mut builder = test_ruxex().with_home(home);
     let test = builder.build(&server).await?;
     test.submit_turn("inspect lossy global instructions")
         .await?;
 
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)]
     );
     let expected_fragment =
@@ -2004,12 +2004,12 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
     )?;
 
     // Create the initial thread and persist its creation-time instruction snapshot.
-    let mut initial_builder = test_genex().with_home(Arc::clone(&home));
+    let mut initial_builder = test_ruxex().with_home(Arc::clone(&home));
     let initial = initial_builder.build(&server).await?;
 
     // Assert the pre-resume thread reports the source used to create its snapshot.
     assert_eq!(
-        initial.genex.instruction_sources().await,
+        initial.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&old_source)],
         "initial thread reports the creation-time global source"
     );
@@ -2019,8 +2019,8 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
         .rollout_path
         .clone()
         .expect("rollout path");
-    initial.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&initial.genex, |event| {
+    initial.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&initial.ruxex, |event| {
         matches!(event, EventMsg::ShutdownComplete)
     })
     .await;
@@ -2029,14 +2029,14 @@ async fn cold_resume_invalidates_deleted_legacy_agents_md_once() -> Result<()> {
     remove_agents_md_world_state_section(&rollout_path)?;
 
     std::fs::remove_file(old_source.as_path())?;
-    let mut resume_builder = test_genex().with_home(Arc::clone(&home));
+    let mut resume_builder = test_ruxex().with_home(Arc::clone(&home));
     let resumed = resume_builder
         .resume(&server, Arc::clone(&home), rollout_path)
         .await?;
 
     // Model history still contains the old fragment, but the source no longer exists.
     assert_eq!(
-        resumed.genex.instruction_sources().await,
+        resumed.ruxex.instruction_sources().await,
         Vec::<PathUri>::new(),
         "resume reports no deleted instruction source"
     );
@@ -2108,19 +2108,19 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
     )?;
 
     // Create the parent and persist its creation-time instruction snapshot.
-    let mut builder = test_genex().with_home(Arc::clone(&home));
+    let mut builder = test_ruxex().with_home(Arc::clone(&home));
     let parent = builder.build(&server).await?;
 
     // Assert the parent reports the source used to create its snapshot.
     assert_eq!(
-        parent.genex.instruction_sources().await,
+        parent.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "parent reports the creation-time global source"
     );
     parent.submit_turn("persist instructions").await?;
-    parent.genex.ensure_rollout_materialized().await;
-    parent.genex.flush_rollout().await?;
-    let rollout_path = parent.genex.rollout_path().expect("rollout path");
+    parent.ruxex.ensure_rollout_materialized().await;
+    parent.ruxex.flush_rollout().await?;
+    let rollout_path = parent.ruxex.rollout_path().expect("rollout path");
 
     // Add a preferred override source, then fork with freshly loaded configuration.
     let new_source = write_global_file(
@@ -2134,7 +2134,7 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
     fork_config.model = parent.config.model.clone();
     fork_config.model_provider = parent.config.model_provider.clone();
     fork_config.model_catalog = parent.config.model_catalog.clone();
-    fork_config.genex_self_exe = parent.config.genex_self_exe.clone();
+    fork_config.ruxex_self_exe = parent.config.ruxex_self_exe.clone();
     fork_config
         .features
         .enable(Feature::ContentItemKinds)
@@ -2143,7 +2143,7 @@ async fn fork_injects_changed_agents_md_once() -> Result<()> {
         .thread_manager
         .fork_thread(
             ForkSnapshot::Interrupted,
-            genex_core::StartThreadOptions::new(fork_config),
+            ruxex_core::StartThreadOptions::new(fork_config),
             rollout_path,
         )
         .await?;
@@ -2278,7 +2278,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
         GLOBAL_AGENTS_FILENAME,
         OLD_GLOBAL_INSTRUCTIONS,
     )?;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_config(|config| {
             let _ = config.features.enable(Feature::Collab);
@@ -2288,7 +2288,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
 
     // Assert the parent reports the creation-time source before spawning.
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&source)],
         "parent reports the creation-time global source before spawning"
     );
@@ -2343,7 +2343,7 @@ async fn run_subagent_global_instruction_case(fork_context: bool) -> Result<()> 
         );
     }
     assert_eq!(
-        test.genex.instruction_sources().await,
+        test.ruxex.instruction_sources().await,
         vec![PathUri::from_abs_path(&new_source)],
         "parent reports the refreshed global source"
     );

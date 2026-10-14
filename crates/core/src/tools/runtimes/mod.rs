@@ -4,41 +4,41 @@ Module: runtimes
 Concrete ToolRuntime implementations for specific tools. Each runtime stays
 small and focused and reuses the orchestrator for approvals + sandbox + retry.
 */
-use crate::exec_env::GENEX_PERMISSION_PROFILE_ENV_VAR;
-use crate::exec_env::GENEX_SESSION_ID_ENV_VAR;
-use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
-use crate::exec_env::GENEX_VERSION_ENV_VAR;
+use crate::exec_env::RUXEX_PERMISSION_PROFILE_ENV_VAR;
+use crate::exec_env::RUXEX_SESSION_ID_ENV_VAR;
+use crate::exec_env::RUXEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::RUXEX_VERSION_ENV_VAR;
 use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
 use crate::shell::ShellType;
-use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
+use ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use ruxex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
 #[cfg(unix)]
-use genex_install_context::InstallContext;
-use genex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
-use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use ruxex_install_context::InstallContext;
+use ruxex_network_proxy::CREDENTIAL_BROKER_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::CUSTOM_CA_ENV_KEYS;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
-use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use genex_network_proxy::PROXY_ENV_KEYS;
+use ruxex_network_proxy::RUXEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use ruxex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::PROXY_ENV_KEYS;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
-pub(crate) use genex_network_proxy::is_managed_proxy_env_var;
-pub(crate) use genex_network_proxy::strip_managed_proxy_env;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
-use genex_shell_command::shell_snapshot::posix_env_path_expansion_function;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
+pub(crate) use ruxex_network_proxy::is_managed_proxy_env_var;
+pub(crate) use ruxex_network_proxy::strip_managed_proxy_env;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_shell_command::shell_snapshot::posix_env_path_expansion_function;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::Path;
 
 pub(crate) mod apply_patch;
 pub(crate) mod unified_exec;
 
-const SNAPSHOT_ORIGINAL_BASH_ENV_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_BASH_ENV";
-const SNAPSHOT_ORIGINAL_POSIX_ENV_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_POSIX_ENV";
-const SNAPSHOT_ORIGINAL_ZDOTDIR_ENV_KEY: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_ZDOTDIR";
-const SNAPSHOT_BROKERED_VALUE_ENV_PREFIX: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_BROKERED_VALUE_";
-const SNAPSHOT_BROKERED_UNSET_ENV_PREFIX: &str = "GENEX_NETWORK_PROXY_SNAPSHOT_BROKERED_UNSET_";
+const SNAPSHOT_ORIGINAL_BASH_ENV_ENV_KEY: &str = "RUXEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_BASH_ENV";
+const SNAPSHOT_ORIGINAL_POSIX_ENV_ENV_KEY: &str = "RUXEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_POSIX_ENV";
+const SNAPSHOT_ORIGINAL_ZDOTDIR_ENV_KEY: &str = "RUXEX_NETWORK_PROXY_SNAPSHOT_ORIGINAL_ZDOTDIR";
+const SNAPSHOT_BROKERED_VALUE_ENV_PREFIX: &str = "RUXEX_NETWORK_PROXY_SNAPSHOT_BROKERED_VALUE_";
+const SNAPSHOT_BROKERED_UNSET_ENV_PREFIX: &str = "RUXEX_NETWORK_PROXY_SNAPSHOT_BROKERED_UNSET_";
 
 pub(crate) fn exec_env_for_sandbox_permissions(
     env: &HashMap<String, String>,
@@ -46,7 +46,7 @@ pub(crate) fn exec_env_for_sandbox_permissions(
 ) -> HashMap<String, String> {
     let mut env = env.clone();
     // Escalated commands intentionally use the original, unbrokered environment. This branch is
-    // defensive cleanup for a caller that passes an environment already prepared by Genex.
+    // defensive cleanup for a caller that passes an environment already prepared by Ruxex.
     if sandbox_permissions.requires_escalated_permissions()
         && env.contains_key(PROXY_ACTIVE_ENV_KEY)
     {
@@ -81,7 +81,7 @@ fn prepend_path_entry(env: &mut HashMap<String, String>, path_entry: &str) -> Op
     }
 }
 
-/// PATH entries owned by Genex runtime setup.
+/// PATH entries owned by Ruxex runtime setup.
 ///
 /// These are applied to the live exec environment immediately and replayed after
 /// restoring a shell snapshot, unless the user explicitly overrides `PATH`.
@@ -152,14 +152,14 @@ pub(crate) fn prepare_brokered_shell_snapshot_env(
             !key.starts_with(SNAPSHOT_BROKERED_VALUE_ENV_PREFIX)
                 && !key.starts_with(SNAPSHOT_BROKERED_UNSET_ENV_PREFIX)
         });
-        for key in genex_network_proxy::brokered_credential_value_env_keys(env) {
+        for key in ruxex_network_proxy::brokered_credential_value_env_keys(env) {
             if is_valid_shell_variable_name(&key)
                 && let Some(value) = env.get(&key).cloned()
             {
                 env.insert(format!("{SNAPSHOT_BROKERED_VALUE_ENV_PREFIX}{key}"), value);
             }
         }
-        for key in genex_network_proxy::brokered_credential_marker_env_keys(env) {
+        for key in ruxex_network_proxy::brokered_credential_marker_env_keys(env) {
             if !is_valid_shell_variable_name(&key) {
                 continue;
             }
@@ -215,10 +215,10 @@ pub(crate) fn prepare_brokered_shell_snapshot_env(
 /// `explicit_env_overrides` contains policy-driven shell env overrides that
 /// should win after the snapshot is sourced, while `env` is the full live exec
 /// environment. We need access to both so snapshot restore logic can preserve
-/// runtime-only vars like `GENEX_THREAD_ID` without pretending they came from
+/// runtime-only vars like `RUXEX_THREAD_ID` without pretending they came from
 /// the explicit override policy.
 ///
-/// `runtime_path_prepends` contains Genex-owned PATH entries already applied to
+/// `runtime_path_prepends` contains Ruxex-owned PATH entries already applied to
 /// the live `env`; snapshot wrapping replays them after restoring the snapshot
 /// PATH unless the user explicitly overrides `PATH`.
 pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
@@ -257,7 +257,7 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         && command[0] == shell_path.as_ref()
         && matches!(session_shell.shell_type, ShellType::Bash | ShellType::Zsh);
     let original_shell_is_zsh = command_uses_session_zsh
-        || genex_shell_command::shell_detect::detect_shell_type(&command[0])
+        || ruxex_shell_command::shell_detect::detect_shell_type(&command[0])
             == Some(ShellType::Zsh);
     let brokered_zsh_flag = if flag == "-lc" { "-lfc" } else { "-fc" };
     let original_shell_flag = if brokered && original_shell_is_zsh {
@@ -273,11 +273,11 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         .collect::<String>();
     let mut override_env = explicit_env_overrides.clone();
     for key in [
-        GENEX_SESSION_ID_ENV_VAR,
-        GENEX_THREAD_ID_ENV_VAR,
-        GENEX_VERSION_ENV_VAR,
-        GENEX_PERMISSION_PROFILE_ENV_VAR,
-        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+        RUXEX_SESSION_ID_ENV_VAR,
+        RUXEX_THREAD_ID_ENV_VAR,
+        RUXEX_VERSION_ENV_VAR,
+        RUXEX_PERMISSION_PROFILE_ENV_VAR,
+        RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
         PLUGIN_METRICS_OUTPUT_ENV_VAR,
     ] {
         if let Some(value) = env.get(key) {
@@ -288,8 +288,8 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
     let (override_captures, override_exports) = build_override_exports(
         &override_env,
         &[
-            GENEX_PERMISSION_PROFILE_ENV_VAR,
-            GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+            RUXEX_PERMISSION_PROFILE_ENV_VAR,
+            RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ],
     );
@@ -312,65 +312,65 @@ pub(crate) fn maybe_wrap_shell_lc_with_snapshot(
         let expand_env_function = posix_env_path_expansion_function();
         (
             format!(
-                r#"__GENEX_SNAPSHOT_ORIGINAL_ENV_SET="${{ENV+x}}"
-__GENEX_SNAPSHOT_ORIGINAL_ENV="${{ENV-}}"
+                r#"__RUXEX_SNAPSHOT_ORIGINAL_ENV_SET="${{ENV+x}}"
+__RUXEX_SNAPSHOT_ORIGINAL_ENV="${{ENV-}}"
 {expand_env_function}
-__genex_snapshot_expand_env_with_zdotdir() (
+__ruxex_snapshot_expand_env_with_zdotdir() (
   if [ -n "${{{zdotdir_key}+x}}" ]; then
     export ZDOTDIR="${{{zdotdir_key}}}"
   elif [ -n "${{ZSH_VERSION-}}" ] && [ "${{ZDOTDIR-}}" = /dev/null ]; then
     unset ZDOTDIR
   fi
-  __genex_snapshot_expand_env "$1"
+  __ruxex_snapshot_expand_env "$1"
 )
-__GENEX_SNAPSHOT_PROTECTED_ENV=$(
-  __genex_snapshot_expand_env_with_zdotdir "${{{startup_env_key}-}}"
+__RUXEX_SNAPSHOT_PROTECTED_ENV=$(
+  __ruxex_snapshot_expand_env_with_zdotdir "${{{startup_env_key}-}}"
 )
-__GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV=$(
-  __genex_snapshot_expand_env_with_zdotdir "${{{alternate_startup_env_key}-}}"
+__RUXEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV=$(
+  __ruxex_snapshot_expand_env_with_zdotdir "${{{alternate_startup_env_key}-}}"
 )"#
             ),
-            "__GENEX_SNAPSHOT_REPLAYED_BASH_ENV=\"${BASH_ENV-}\"".to_string(),
+            "__RUXEX_SNAPSHOT_REPLAYED_BASH_ENV=\"${BASH_ENV-}\"".to_string(),
             format!(
-                r#"__GENEX_SNAPSHOT_CURRENT_ENV=$(
-  __genex_snapshot_expand_env_with_zdotdir "${{ENV-}}"
+                r#"__RUXEX_SNAPSHOT_CURRENT_ENV=$(
+  __ruxex_snapshot_expand_env_with_zdotdir "${{ENV-}}"
 )
-__GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV=$(
-  __genex_snapshot_expand_env_with_zdotdir "$__GENEX_SNAPSHOT_ORIGINAL_ENV"
+__RUXEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV=$(
+  __ruxex_snapshot_expand_env_with_zdotdir "$__RUXEX_SNAPSHOT_ORIGINAL_ENV"
 )
-__GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV=$(
-  __genex_snapshot_expand_env_with_zdotdir "$__GENEX_SNAPSHOT_REPLAYED_BASH_ENV"
+__RUXEX_SNAPSHOT_REPLAYED_PROTECTED_ENV=$(
+  __ruxex_snapshot_expand_env_with_zdotdir "$__RUXEX_SNAPSHOT_REPLAYED_BASH_ENV"
 )
-unset -f __genex_snapshot_expand_env __genex_snapshot_expand_env_with_zdotdir
-__genex_snapshot_env_is_protected() (
-  for __genex_protected_env in \
-    "$__GENEX_SNAPSHOT_PROTECTED_ENV" \
-    "$__GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV" \
-    "$__GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV"; do
-    if [ -n "$__genex_protected_env" ] &&
-      {{ [ "$1" = "$__genex_protected_env" ] ||
-        [ "$1" -ef "$__genex_protected_env" ] 2>/dev/null; }}; then
+unset -f __ruxex_snapshot_expand_env __ruxex_snapshot_expand_env_with_zdotdir
+__ruxex_snapshot_env_is_protected() (
+  for __ruxex_protected_env in \
+    "$__RUXEX_SNAPSHOT_PROTECTED_ENV" \
+    "$__RUXEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV" \
+    "$__RUXEX_SNAPSHOT_REPLAYED_PROTECTED_ENV"; do
+    if [ -n "$__ruxex_protected_env" ] &&
+      {{ [ "$1" = "$__ruxex_protected_env" ] ||
+        [ "$1" -ef "$__ruxex_protected_env" ] 2>/dev/null; }}; then
       return 0
     fi
   done
   return 1
 )
-if __genex_snapshot_env_is_protected "$__GENEX_SNAPSHOT_CURRENT_ENV"; then
-  if [ -n "$__GENEX_SNAPSHOT_ORIGINAL_ENV_SET" ] &&
-    ! __genex_snapshot_env_is_protected "$__GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV"; then
-    builtin export ENV="$__GENEX_SNAPSHOT_ORIGINAL_ENV" 2>/dev/null ||
-      command export ENV="$__GENEX_SNAPSHOT_ORIGINAL_ENV" || exit 1
-    [ "${{ENV-}}" = "$__GENEX_SNAPSHOT_ORIGINAL_ENV" ] || exit 1
+if __ruxex_snapshot_env_is_protected "$__RUXEX_SNAPSHOT_CURRENT_ENV"; then
+  if [ -n "$__RUXEX_SNAPSHOT_ORIGINAL_ENV_SET" ] &&
+    ! __ruxex_snapshot_env_is_protected "$__RUXEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV"; then
+    builtin export ENV="$__RUXEX_SNAPSHOT_ORIGINAL_ENV" 2>/dev/null ||
+      command export ENV="$__RUXEX_SNAPSHOT_ORIGINAL_ENV" || exit 1
+    [ "${{ENV-}}" = "$__RUXEX_SNAPSHOT_ORIGINAL_ENV" ] || exit 1
   else
     builtin unset ENV 2>/dev/null || command unset ENV || exit 1
     [ -z "${{ENV+x}}" ] || exit 1
   fi
 fi
-unset -f __genex_snapshot_env_is_protected
-unset __GENEX_SNAPSHOT_ORIGINAL_ENV_SET __GENEX_SNAPSHOT_ORIGINAL_ENV \
-  __GENEX_SNAPSHOT_PROTECTED_ENV __GENEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV \
-  __GENEX_SNAPSHOT_REPLAYED_BASH_ENV __GENEX_SNAPSHOT_REPLAYED_PROTECTED_ENV \
-  __GENEX_SNAPSHOT_CURRENT_ENV __GENEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV \
+unset -f __ruxex_snapshot_env_is_protected
+unset __RUXEX_SNAPSHOT_ORIGINAL_ENV_SET __RUXEX_SNAPSHOT_ORIGINAL_ENV \
+  __RUXEX_SNAPSHOT_PROTECTED_ENV __RUXEX_SNAPSHOT_ALTERNATE_PROTECTED_ENV \
+  __RUXEX_SNAPSHOT_REPLAYED_BASH_ENV __RUXEX_SNAPSHOT_REPLAYED_PROTECTED_ENV \
+  __RUXEX_SNAPSHOT_CURRENT_ENV __RUXEX_SNAPSHOT_ORIGINAL_EXPANDED_ENV \
   {bash_env_key} {posix_env_key}"#
             ),
         )
@@ -500,7 +500,7 @@ fn build_brokered_credential_exports(env: &HashMap<String, String>, remove_copie
         return exports;
     }
     format!(
-        "case $- in\n  *x*) __GENEX_SNAPSHOT_BROKER_XTRACE=1; set +x ;;\n  *) __GENEX_SNAPSHOT_BROKER_XTRACE= ;;\nesac\n{exports}\nif [ -n \"$__GENEX_SNAPSHOT_BROKER_XTRACE\" ]; then\n  unset __GENEX_SNAPSHOT_BROKER_XTRACE\n  set -x\nelse\n  unset __GENEX_SNAPSHOT_BROKER_XTRACE\nfi"
+        "case $- in\n  *x*) __RUXEX_SNAPSHOT_BROKER_XTRACE=1; set +x ;;\n  *) __RUXEX_SNAPSHOT_BROKER_XTRACE= ;;\nesac\n{exports}\nif [ -n \"$__RUXEX_SNAPSHOT_BROKER_XTRACE\" ]; then\n  unset __RUXEX_SNAPSHOT_BROKER_XTRACE\n  set -x\nelse\n  unset __RUXEX_SNAPSHOT_BROKER_XTRACE\nfi"
     )
 }
 
@@ -518,14 +518,14 @@ fn build_override_exports(
     keys.sort_unstable();
     keys.dedup();
 
-    build_override_exports_for_keys("__GENEX_SNAPSHOT_OVERRIDE", &keys)
+    build_override_exports_for_keys("__RUXEX_SNAPSHOT_OVERRIDE", &keys)
 }
 
 fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
     let mut keys = PROXY_ENV_KEYS
         .iter()
         .copied()
-        .chain(genex_network_proxy::brokered_credential_env_keys(env))
+        .chain(ruxex_network_proxy::brokered_credential_env_keys(env))
         .chain(CUSTOM_CA_ENV_KEYS)
         .chain(
             env.get(CREDENTIAL_BROKER_ACTIVE_ENV_KEY)
@@ -538,15 +538,15 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
     keys.dedup();
 
     let (captures, restores) =
-        build_override_exports_for_keys("__GENEX_SNAPSHOT_PROXY_OVERRIDE", &keys);
+        build_override_exports_for_keys("__RUXEX_SNAPSHOT_PROXY_OVERRIDE", &keys);
     let key = PROXY_ACTIVE_ENV_KEY;
     let proxy_blocks = (
-        format!("{captures}\n__GENEX_SNAPSHOT_PROXY_ENV_SET=\"${{{key}+x}}\""),
+        format!("{captures}\n__RUXEX_SNAPSHOT_PROXY_ENV_SET=\"${{{key}+x}}\""),
         format!(
-            "if [ -n \"$__GENEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
+            "if [ -n \"$__RUXEX_SNAPSHOT_PROXY_ENV_SET\" ] || [ -n \"${{{key}+x}}\" ]; then\n{restores}\nfi"
         ),
     );
-    let git_blocks = build_genex_proxy_git_ssh_command_exports();
+    let git_blocks = build_ruxex_proxy_git_ssh_command_exports();
     (
         join_shell_blocks([proxy_blocks.0, git_blocks.0]),
         join_shell_blocks([proxy_blocks.1, git_blocks.1]),
@@ -554,21 +554,21 @@ fn build_proxy_env_exports(env: &HashMap<String, String>) -> (String, String) {
 }
 
 #[cfg(target_os = "macos")]
-fn build_genex_proxy_git_ssh_command_exports() -> (String, String) {
+fn build_ruxex_proxy_git_ssh_command_exports() -> (String, String) {
     let key = PROXY_GIT_SSH_COMMAND_ENV_KEY;
-    let marker_pattern = format!("{}\\ *", GENEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
+    let marker_pattern = format!("{}\\ *", RUXEX_PROXY_GIT_SSH_COMMAND_MARKER.trim_end());
     (
         format!(
-            "__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"
+            "__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET=\"${{{key}+x}}\"\n__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND=\"${{{key}-}}\"\ncase \"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\" in\n  {marker_pattern}) __RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED=1 ;;\n  *) __RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED= ;;\nesac"
         ),
         format!(
-            "case \"${{{key}-}}\" in\n  {marker_pattern}) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED=1 ;;\n  *) __GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED= ;;\nesac\nif [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED\" ]; then\n  if [ -z \"${{{key}+x}}\" ] || [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n    export {key}=\"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  fi\nelif [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n  if [ -n \"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET\" ]; then\n    export {key}=\"$__GENEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  else\n    unset {key}\n  fi\nfi"
+            "case \"${{{key}-}}\" in\n  {marker_pattern}) __RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED=1 ;;\n  *) __RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED= ;;\nesac\nif [ -n \"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_LIVE_MARKED\" ]; then\n  if [ -z \"${{{key}+x}}\" ] || [ -n \"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n    export {key}=\"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  fi\nelif [ -n \"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_AFTER_MARKED\" ]; then\n  if [ -n \"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND_SET\" ]; then\n    export {key}=\"$__RUXEX_SNAPSHOT_PROXY_GIT_SSH_COMMAND\"\n  else\n    unset {key}\n  fi\nfi"
         ),
     )
 }
 
 #[cfg(not(target_os = "macos"))]
-fn build_genex_proxy_git_ssh_command_exports() -> (String, String) {
+fn build_ruxex_proxy_git_ssh_command_exports() -> (String, String) {
     (String::new(), String::new())
 }
 

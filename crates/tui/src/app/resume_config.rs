@@ -8,7 +8,7 @@ use crate::startup_draft::StartupDraftPump;
 use crate::startup_hooks_review::StartupHooksReviewOutcome;
 use crate::startup_hooks_review::load_startup_hooks_review_entry;
 use crate::startup_hooks_review::maybe_run_startup_hooks_review;
-use genex_config::types::ResumeCwdMode;
+use ruxex_config::types::ResumeCwdMode;
 
 impl App {
     pub(super) async fn resume_config_for_target(
@@ -149,7 +149,7 @@ impl App {
         app_server: &mut AppServerSession,
         config: &mut Config,
         cwd: &Path,
-        resumed_thread: Option<&genex_app_server_protocol::Thread>,
+        resumed_thread: Option<&ruxex_app_server_protocol::Thread>,
         mut startup_draft: Option<&mut StartupDraftPump>,
     ) -> std::result::Result<(), AppRunControl> {
         // Keep the existing explicit remote --cd gate, including retries after cancellation.

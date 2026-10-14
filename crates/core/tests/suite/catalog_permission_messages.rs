@@ -5,21 +5,21 @@ use core_test_support::responses::mount_models_once;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_login::GenexAuth;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_login::RuxexAuth;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
 
@@ -58,8 +58,8 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
             config
@@ -72,25 +72,25 @@ async fn catalog_permission_message_loaded_from_remote_models_is_sent() -> Resul
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(model_slug.to_string()),
             ..Default::default()
         },
     )
     .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

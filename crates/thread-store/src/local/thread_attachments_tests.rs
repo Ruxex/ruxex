@@ -15,8 +15,8 @@ use crate::ThreadStoreError;
 use crate::local::test_support::test_config;
 use crate::local::test_support::write_session_file;
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::path::Path;
@@ -75,7 +75,7 @@ async fn thread_attachments_require_a_supported_sqlite_store() {
 async fn unloaded_thread_attachments_support_listing_and_removal() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -84,7 +84,7 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
     let first_thread_id = ThreadId::new();
     let second_thread_id = ThreadId::new();
     for thread_id in [first_thread_id, second_thread_id] {
-        let metadata = genex_state::ThreadMetadataBuilder::new(
+        let metadata = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             home.path().join(format!("{thread_id}.jsonl")),
             Utc::now(),
@@ -190,7 +190,7 @@ async fn unloaded_thread_attachments_support_listing_and_removal() {
 async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_categories() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = LocalThreadStore::new(config, Some(runtime));
@@ -236,12 +236,12 @@ async fn attachment_state_errors_preserve_missing_thread_and_invalid_request_cat
 async fn attachment_mutations_wait_for_exclusive_thread_lifecycle_operations() {
     let home = tempfile::TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     let thread_id = ThreadId::new();
-    let metadata = genex_state::ThreadMetadataBuilder::new(
+    let metadata = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         home.path().join(format!("{thread_id}.jsonl")),
         Utc::now(),
@@ -383,7 +383,7 @@ async fn attachment_owner_deletion_can_retry_after_state_cleanup_fails() {
         .upsert_thread_spawn_edge(
             parent_id,
             child_id,
-            genex_state::DirectionalThreadSpawnEdgeStatus::Closed,
+            ruxex_state::DirectionalThreadSpawnEdgeStatus::Closed,
         )
         .await
         .expect("persist child relation for deletion retry");
@@ -459,7 +459,7 @@ async fn store_with_attachment_owners(
     thread_ids: &[ThreadId],
 ) -> (LocalThreadStore, Vec<PathBuf>) {
     let config = test_config(home);
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -471,7 +471,7 @@ async fn store_with_attachment_owners(
             Uuid::parse_str(&thread_id.to_string()).expect("thread UUID"),
         )
         .expect("session file");
-        let metadata = genex_state::ThreadMetadataBuilder::new(
+        let metadata = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             rollout_path.clone(),
             Utc::now(),

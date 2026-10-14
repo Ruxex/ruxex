@@ -31,16 +31,16 @@ use crate::launcher::initialize_bwrap_launcher;
 use crate::launcher::preferred_bwrap_supports_argv0;
 use crate::proxy_routing::activate_proxy_routes_in_netns;
 use crate::proxy_routing::prepare_host_proxy_route_spec;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::FileSystemAccessMode;
-use genex_protocol::protocol::FileSystemPath;
-use genex_protocol::protocol::FileSystemSandboxEntry;
-use genex_protocol::protocol::FileSystemSandboxPolicy;
-use genex_protocol::protocol::FileSystemSpecialPath;
-use genex_protocol::protocol::NetworkSandboxPolicy;
-use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::FileSystemAccessMode;
+use ruxex_protocol::protocol::FileSystemPath;
+use ruxex_protocol::protocol::FileSystemSandboxEntry;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_protocol::protocol::FileSystemSpecialPath;
+use ruxex_protocol::protocol::NetworkSandboxPolicy;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
 
 static BWRAP_CHILD_PID: AtomicI32 = AtomicI32::new(0);
 static PENDING_FORWARDED_SIGNAL: AtomicI32 = AtomicI32::new(0);
@@ -466,7 +466,7 @@ fn build_bwrap_argv(
     sandbox_policy_cwd: &Path,
     command_cwd: &Path,
     options: BwrapOptions,
-) -> GenexResult<crate::bwrap::BwrapArgs> {
+) -> RuxexResult<crate::bwrap::BwrapArgs> {
     let bwrap_args = create_bwrap_command_args(
         inner,
         file_system_sandbox_policy,
@@ -485,7 +485,7 @@ fn build_bwrap_argv(
     })
 }
 
-fn exit_with_bwrap_build_error(err: genex_protocol::error::GenexErr) -> ! {
+fn exit_with_bwrap_build_error(err: ruxex_protocol::error::RuxexErr) -> ! {
     eprintln!("error building bubblewrap command: {err}");
     std::process::exit(1);
 }
@@ -511,7 +511,7 @@ fn apply_inner_command_argv0_for_launcher(
     if supports_argv0 {
         argv.splice(
             command_separator_index..command_separator_index,
-            ["--argv0".to_string(), GENEX_LINUX_SANDBOX_ARG0.to_string()],
+            ["--argv0".to_string(), RUXEX_LINUX_SANDBOX_ARG0.to_string()],
         );
         return;
     }
@@ -530,13 +530,13 @@ fn current_process_argv0() -> String {
     }
 }
 
-fn preflight_proc_mount_support(options: BwrapOptions) -> GenexResult<bool> {
+fn preflight_proc_mount_support(options: BwrapOptions) -> RuxexResult<bool> {
     let preflight_argv = build_preflight_bwrap_argv(options)?;
     let stderr = run_bwrap_in_child_capture_stderr(preflight_argv);
     Ok(!is_proc_mount_failure(stderr.as_str()))
 }
 
-fn build_preflight_bwrap_argv(options: BwrapOptions) -> GenexResult<crate::bwrap::BwrapArgs> {
+fn build_preflight_bwrap_argv(options: BwrapOptions) -> RuxexResult<crate::bwrap::BwrapArgs> {
     let file_system_sandbox_policy =
         FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
             path: FileSystemPath::Special {
@@ -1360,7 +1360,7 @@ pub(crate) fn synthetic_mount_registry_root() -> PathBuf {
                 )
             });
             let registry_root = temp_dir.join(format!(
-                "genex-bwrap-synthetic-mount-targets-{effective_uid}"
+                "ruxex-bwrap-synthetic-mount-targets-{effective_uid}"
             ));
             // A registry symlink can redirect bookkeeping into a writable root
             // that does not overlap TMPDIR, bypassing its read-only mount.

@@ -13,12 +13,12 @@ use crate::mention_codec::is_mention_name_char;
 use crate::mention_codec::parse_linked_tool_mention;
 use crate::skills_helpers::skill_description;
 use crate::skills_helpers::skill_display_name;
-use genex_app_server_protocol::SkillMetadata;
-use genex_app_server_protocol::SkillsListEntry;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_protocol::parse_command::ParsedCommand;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
+use ruxex_app_server_protocol::SkillMetadata;
+use ruxex_app_server_protocol::SkillsListEntry;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_protocol::parse_command::ParsedCommand;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::mention_syntax::TOOL_MENTION_SIGIL;
 
 impl ChatWidget {
     pub(crate) fn open_skills_list(&mut self) {

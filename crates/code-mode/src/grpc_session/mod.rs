@@ -8,21 +8,21 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeSession;
-use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use genex_code_mode_protocol::CodeModeSessionDelegate;
-use genex_code_mode_protocol::CodeModeSessionProvider;
-use genex_code_mode_protocol::CodeModeSessionProviderFuture;
-use genex_code_mode_protocol::CodeModeSessionResultFuture;
-use genex_code_mode_protocol::ExecuteRequest;
-use genex_code_mode_protocol::StartedCell;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::WaitRequest;
-use genex_code_mode_protocol::grpc;
-use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeSession;
+use ruxex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::CodeModeSessionProvider;
+use ruxex_code_mode_protocol::CodeModeSessionProviderFuture;
+use ruxex_code_mode_protocol::CodeModeSessionResultFuture;
+use ruxex_code_mode_protocol::ExecuteRequest;
+use ruxex_code_mode_protocol::StartedCell;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::WaitRequest;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 use tokio::sync::watch;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -52,7 +52,7 @@ const SHUTDOWN_ERROR: &str = "code mode session is shutting down";
 
 fn inject_span_traceparent<T>(request: &mut tonic::Request<T>, span: &tracing::Span) {
     if let Some(traceparent) =
-        genex_otel::span_w3c_trace_context(span).and_then(|trace| trace.traceparent)
+        ruxex_otel::span_w3c_trace_context(span).and_then(|trace| trace.traceparent)
         && let Ok(traceparent) = traceparent.parse()
     {
         request.metadata_mut().insert("traceparent", traceparent);

@@ -1,4 +1,4 @@
-# genex-utils-pty
+# ruxex-utils-pty
 
 Lightweight helpers for spawning interactive processes either under a PTY (pseudo terminal) or regular pipes. The public API is minimal and mirrors both backends so callers can switch based on their needs (e.g., enabling or disabling TTY).
 
@@ -21,9 +21,9 @@ Lightweight helpers for spawning interactive processes either under a PTY (pseud
 ```rust
 use std::collections::HashMap;
 use std::path::Path;
-use genex_utils_pty::combine_output_receivers;
-use genex_utils_pty::spawn_pty_process;
-use genex_utils_pty::TerminalSize;
+use ruxex_utils_pty::combine_output_receivers;
+use ruxex_utils_pty::spawn_pty_process;
+use ruxex_utils_pty::TerminalSize;
 
 # tokio_test::block_on(async {
 let env_map: HashMap<String, String> = std::env::vars().collect();
@@ -59,5 +59,5 @@ Use `spawn_pipe_process_no_stdin` to force stdin closed (commands that read stdi
 Unit tests live in `src/lib.rs` and cover both backends (PTY Python REPL and pipe-based stdin roundtrip). Run with:
 
 ```
-just test -p genex-utils-pty --no-capture
+just test -p ruxex-utils-pty --no-capture
 ```

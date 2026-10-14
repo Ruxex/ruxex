@@ -1,12 +1,12 @@
 //! Hidden user-context fragment for extension-owned model steering.
 
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 use std::error::Error;
 use std::fmt;
 
-const CONTEXT_START_MARKER: &str = "<genex_internal_context";
-const CONTEXT_END_MARKER: &str = "</genex_internal_context>";
+const CONTEXT_START_MARKER: &str = "<ruxex_internal_context";
+const CONTEXT_END_MARKER: &str = "</ruxex_internal_context>";
 const LEGACY_GOAL_CONTEXT_START_MARKER: &str = "<goal_context>";
 const LEGACY_GOAL_CONTEXT_END_MARKER: &str = "</goal_context>";
 const SOURCE_ATTR_START: &str = " source=\"";

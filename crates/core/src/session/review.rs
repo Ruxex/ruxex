@@ -93,7 +93,7 @@ pub(super) async fn spawn_review_thread(
         &model_info,
     ));
 
-    let extension_data = Arc::new(genex_extension_api::ExtensionData::new(
+    let extension_data = Arc::new(ruxex_extension_api::ExtensionData::new(
         review_turn_id.clone(),
     ));
     extension_data.insert(parent_turn_context.skills_snapshot().as_ref().clone());

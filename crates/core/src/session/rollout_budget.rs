@@ -1,9 +1,9 @@
 use super::session::Session;
 use super::turn_context::TurnContext;
 use crate::context::ContextualUserFragment;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::TokenUsage;
 
 pub(super) async fn maybe_record_reminder(
     sess: &Session,
@@ -27,14 +27,14 @@ pub(super) async fn maybe_record_reminder(
 }
 
 impl Session {
-    pub(crate) fn record_rollout_budget_usage(&self, usage: &TokenUsage) -> GenexResult<()> {
+    pub(crate) fn record_rollout_budget_usage(&self, usage: &TokenUsage) -> RuxexResult<()> {
         if self
             .services
             .agent_control
             .rollout_budget()
             .record_usage(usage)?
         {
-            return Err(GenexErr::SessionBudgetExceeded);
+            return Err(RuxexErr::SessionBudgetExceeded);
         }
         Ok(())
     }

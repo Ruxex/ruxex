@@ -1,11 +1,11 @@
 [package]
-name = "genex-message-history"
+name = "ruxex-message-history"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_message_history"
+name = "ruxex_message_history"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,7 +13,7 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-config = { workspace = true }
+ruxex-config = { workspace = true }
 memchr = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

@@ -10,8 +10,8 @@ use super::FileSystemSandboxPolicyContext;
 use super::FileSystemSpecialPath;
 use super::InvalidDenyReadGlobBehavior;
 use super::PreparedReadDenyMatcher;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 
 /// Prepared mandatory rules reused when a caller replaces its selected profile.
 pub struct DenyReadValidator {

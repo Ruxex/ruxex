@@ -1,5 +1,5 @@
 [package]
-name = "genex-worktree"
+name = "ruxex-worktree"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,8 +12,8 @@ doctest = false
 
 [dependencies]
 anyhow = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-protocol = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-protocol = { workspace = true }
 dunce = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

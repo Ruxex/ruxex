@@ -116,7 +116,7 @@ fn bash_snapshot_filters_invalid_exports() -> Result<()> {
         .env("BASH_ENV", "/dev/null")
         .env("VALID_NAME", "ok")
         .env("PWD", "/tmp/stale")
-        .env("NEXTEST_BIN_EXE_genex-write-config-schema", "/path/to/bin")
+        .env("NEXTEST_BIN_EXE_ruxex-write-config-schema", "/path/to/bin")
         .env("BAD-NAME", "broken")
         .output()?;
 
@@ -125,7 +125,7 @@ fn bash_snapshot_filters_invalid_exports() -> Result<()> {
     let stdout = captured_script(ShellType::Bash, &String::from_utf8(output.stdout)?)?;
     assert!(stdout.contains("VALID_NAME"));
     assert!(!stdout.contains("PWD=/tmp/stale"));
-    assert!(!stdout.contains("NEXTEST_BIN_EXE_genex-write-config-schema"));
+    assert!(!stdout.contains("NEXTEST_BIN_EXE_ruxex-write-config-schema"));
     assert!(!stdout.contains("BAD-NAME"));
 
     Ok(())
@@ -272,7 +272,7 @@ fn sh_declarations_preserve_path_export_state() -> Result<()> {
 #[test]
 fn posix_startup_path_expansion_preserves_supported_forms() -> Result<()> {
     let script = format!(
-        "{}\n__genex_snapshot_expand_env \"$ENV\"",
+        "{}\n__ruxex_snapshot_expand_env \"$ENV\"",
         super::posix_env_path_expansion_function()
     );
     let output = Command::new("/bin/sh")
@@ -374,7 +374,7 @@ fn posix_startup_path_expansion_preserves_supported_forms() -> Result<()> {
 
     let injected_marker = dir.path().join("env-injected");
     let injected_env = format!(
-        "\"; touch '{}'; __genex_env_file=\"",
+        "\"; touch '{}'; __ruxex_env_file=\"",
         injected_marker.display()
     );
     let output = Command::new("/bin/sh")
@@ -2179,7 +2179,7 @@ fn zsh_snapshot_restores_tied_path() -> Result<()> {
     let readonly_restored = Command::new("/bin/zsh")
         .arg("-f")
         .arg("-c")
-        .arg("set -e; . \"$1\"; export PATH='/genex-path':\"$PATH\"; print -r -- \"$PATH\"")
+        .arg("set -e; . \"$1\"; export PATH='/ruxex-path':\"$PATH\"; print -r -- \"$PATH\"")
         .arg("zsh")
         .arg(&snapshot_path)
         .env_clear()
@@ -2188,7 +2188,7 @@ fn zsh_snapshot_restores_tied_path() -> Result<()> {
     assert!(readonly_restored.status.success());
     assert_eq!(
         String::from_utf8(readonly_restored.stdout)?.trim_end(),
-        "/genex-path:/usr/bin:/bin"
+        "/ruxex-path:/usr/bin:/bin"
     );
 
     assert!(

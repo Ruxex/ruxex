@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-git-discovery"
+name = "ruxex-utils-git-discovery"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,8 +8,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-genex-git-utils = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 futures = { workspace = true, features = ["std"] }
 tokio = { workspace = true, features = ["sync"] }
 tracing = { workspace = true }

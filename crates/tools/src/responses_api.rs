@@ -5,8 +5,8 @@ use crate::ToolOutputSchema;
 use crate::parse_agent_plugin_mcp_tool;
 use crate::parse_dynamic_tool;
 use crate::parse_mcp_tool;
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_protocol::dynamic_tools::DynamicToolFunctionSpec;
 use serde::Deserialize;
 use serde::Serialize;
 

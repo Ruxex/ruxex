@@ -12,11 +12,11 @@ use crate::legacy_core::config::Config;
 use crate::status::format_credit_micros;
 use crate::status::format_estimated_usd_micros;
 use crate::status::format_tokens_compact;
-use genex_app_server_protocol::AskForApproval;
-use genex_config::ConfigLayerSource;
-use genex_config::os_host_name;
-use genex_protocol::models::PermissionProfile;
-use genex_utils_sandbox_summary::summarize_permission_profile;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::os_host_name;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_utils_sandbox_summary::summarize_permission_profile;
 
 use super::status_state::TerminalTitleStatusKind;
 
@@ -211,7 +211,7 @@ impl ChatWidget {
         self.set_status_line_hyperlink(hyperlink_url);
     }
 
-    /// Clears the terminal title Genex most recently wrote, if any.
+    /// Clears the terminal title Ruxex most recently wrote, if any.
     ///
     /// This does not attempt to restore the shell or terminal's previous title;
     /// it only clears the managed title and updates the cache after a successful
@@ -482,8 +482,8 @@ impl ChatWidget {
             .config_layer_stack
             .all_layers_low_to_high()
             .find_map(|layer| match &layer.name {
-                ConfigLayerSource::Project { dot_genex_folder } => {
-                    dot_genex_folder.as_path().parent().map(Path::to_path_buf)
+                ConfigLayerSource::Project { dot_ruxex_folder } => {
+                    dot_ruxex_folder.as_path().parent().map(Path::to_path_buf)
                 }
                 _ => None,
             })
@@ -652,7 +652,7 @@ impl ChatWidget {
             StatusLineItem::FiveHourLimit => {
                 let (window, is_secondary) = self
                     .rate_limit_snapshots_by_limit_id
-                    .get(genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
+                    .get(ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
                     .and_then(five_hour_status_window)?;
                 let label = limit_label_for_window(window.window_minutes, is_secondary);
                 self.status_line_limit_display(Some(window), &label)
@@ -660,12 +660,12 @@ impl ChatWidget {
             StatusLineItem::WeeklyLimit => {
                 let (window, is_secondary) = self
                     .rate_limit_snapshots_by_limit_id
-                    .get(genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
+                    .get(ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID)
                     .and_then(weekly_status_window)?;
                 let label = limit_label_for_window(window.window_minutes, is_secondary);
                 self.status_line_limit_display(Some(window), &label)
             }
-            StatusLineItem::GenexVersion => Some(GENEX_CLI_VERSION.to_string()),
+            StatusLineItem::RuxexVersion => Some(RUXEX_CLI_VERSION.to_string()),
             StatusLineItem::ContextWindowSize => self
                 .status_line_context_window_size()
                 .map(|cws| format!("{} window", format_tokens_compact(cws))),
@@ -715,7 +715,7 @@ impl ChatWidget {
         item: StatusSurfacePreviewItem,
     ) -> Option<String> {
         let status_line_item = match item {
-            StatusSurfacePreviewItem::AppName => return Some("genex".to_string()),
+            StatusSurfacePreviewItem::AppName => return Some("ruxex".to_string()),
             StatusSurfacePreviewItem::ProjectName => return self.terminal_title_project_name(),
             StatusSurfacePreviewItem::ProjectRoot => StatusLineItem::ProjectRoot,
             StatusSurfacePreviewItem::Status => return Some(self.run_state_status_text()),
@@ -733,7 +733,7 @@ impl ChatWidget {
             StatusSurfacePreviewItem::ContextUsed => StatusLineItem::ContextUsed,
             StatusSurfacePreviewItem::FiveHourLimit => StatusLineItem::FiveHourLimit,
             StatusSurfacePreviewItem::WeeklyLimit => StatusLineItem::WeeklyLimit,
-            StatusSurfacePreviewItem::GenexVersion => StatusLineItem::GenexVersion,
+            StatusSurfacePreviewItem::RuxexVersion => StatusLineItem::RuxexVersion,
             StatusSurfacePreviewItem::ContextWindowSize => StatusLineItem::ContextWindowSize,
             StatusSurfacePreviewItem::UsedTokens => StatusLineItem::UsedTokens,
             StatusSurfacePreviewItem::TotalInputTokens => StatusLineItem::TotalInputTokens,
@@ -758,7 +758,7 @@ impl ChatWidget {
         now: Instant,
     ) -> Option<String> {
         match item {
-            TerminalTitleItem::AppName => Some("genex".to_string()),
+            TerminalTitleItem::AppName => Some("ruxex".to_string()),
             TerminalTitleItem::Project => self.terminal_title_project_name(),
             TerminalTitleItem::CurrentDir => Some(Self::truncate_terminal_title_part(
                 format_directory_display(self.status_line_cwd(), /*max_width*/ None),
@@ -792,8 +792,8 @@ impl ChatWidget {
             TerminalTitleItem::WeeklyLimit => self
                 .status_line_value_for_item(StatusLineItem::WeeklyLimit)
                 .map(|value| Self::truncate_terminal_title_part(value, /*max_chars*/ 32)),
-            TerminalTitleItem::GenexVersion => self
-                .status_line_value_for_item(StatusLineItem::GenexVersion)
+            TerminalTitleItem::RuxexVersion => self
+                .status_line_value_for_item(StatusLineItem::RuxexVersion)
                 .map(|value| Self::truncate_terminal_title_part(value, /*max_chars*/ 32)),
             TerminalTitleItem::UsedTokens => self
                 .status_line_value_for_item(StatusLineItem::UsedTokens)
@@ -965,7 +965,7 @@ impl ChatWidget {
 fn five_hour_status_window(
     snapshot: &RateLimitSnapshotDisplay,
 ) -> Option<(&RateLimitWindowDisplay, bool)> {
-    find_primary_genex_window(snapshot, "5h")
+    find_primary_ruxex_window(snapshot, "5h")
         .or_else(|| secondary_window_with_label_when_weekly_is_available(snapshot, "5h"))
         .or_else(|| non_weekly_primary_window(snapshot))
         .or_else(|| non_weekly_secondary_window_when_primary_is_weekly(snapshot))
@@ -974,11 +974,11 @@ fn five_hour_status_window(
 fn weekly_status_window(
     snapshot: &RateLimitSnapshotDisplay,
 ) -> Option<(&RateLimitWindowDisplay, bool)> {
-    find_genex_window(snapshot, "weekly")
+    find_ruxex_window(snapshot, "weekly")
         .or_else(|| snapshot.secondary.as_ref().map(|window| (window, true)))
 }
 
-fn find_genex_window<'a>(
+fn find_ruxex_window<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
@@ -997,7 +997,7 @@ fn find_genex_window<'a>(
     None
 }
 
-fn find_primary_genex_window<'a>(
+fn find_primary_ruxex_window<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
@@ -1013,7 +1013,7 @@ fn secondary_window_with_label_when_weekly_is_available<'a>(
     snapshot: &'a RateLimitSnapshotDisplay,
     label: &str,
 ) -> Option<(&'a RateLimitWindowDisplay, bool)> {
-    find_genex_window(snapshot, "weekly")?;
+    find_ruxex_window(snapshot, "weekly")?;
 
     let secondary = snapshot.secondary.as_ref()?;
     if matches_window_label(secondary, label) {

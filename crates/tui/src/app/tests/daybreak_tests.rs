@@ -2,12 +2,12 @@ use super::*;
 use crate::daybreak::Notice;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::AccountUpdatedNotification;
-use genex_app_server_protocol::AuthMode;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ErrorNotification;
-use genex_login::AuthCredentialsStoreMode;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::AccountUpdatedNotification;
+use ruxex_app_server_protocol::AuthMode;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_login::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -18,7 +18,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
     app.config.managed_auth_base_url = backend.uri();
     app.config.cli_auth_credentials_store_mode = AuthCredentialsStoreMode::File;
     write_api_key_auth(
-        &app.config.genex_home,
+        &app.config.ruxex_home,
         ApiKeyAuthFixture::new("test-token")
             .account_id("account")
             .user_id("user"),
@@ -42,7 +42,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
         (200, false, "example-model", true, Notice::Limited),
     ] {
         backend.reset().await;
-        let genex_home = app.config.genex_home.clone();
+        let ruxex_home = app.config.ruxex_home.clone();
         let response = wiremock::ResponseTemplate::new(status)
             .set_delay(if model == "example-model" && enrolled { Duration::from_secs(1) } else { Duration::ZERO })
             .set_body_json(json!({"programs": [{"program":"cyber", "state": if enrolled { "active" } else { "inactive" }, "grants": if enrolled { json!([{"level":"tac2"}]) } else { json!([]) }}]}));
@@ -54,7 +54,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
             .respond_with(move |_: &wiremock::Request| {
                 if replace_account {
                     write_api_key_auth(
-                        &genex_home,
+                        &ruxex_home,
                         ApiKeyAuthFixture::new("test-token").account_id("other-account"),
                         AuthCredentialsStoreMode::File,
                     )
@@ -93,7 +93,7 @@ async fn cyber_refusal_reads_eligibility_without_changing_the_model() -> Result<
                         error: AppServerTurnError {
                             misalignment: None,
                             message: "server fallback".into(),
-                            genex_error_info: Some(GenexErrorInfo::CyberPolicy),
+                            ruxex_error_info: Some(RuxexErrorInfo::CyberPolicy),
                             additional_details: None,
                         },
                         will_retry: false,

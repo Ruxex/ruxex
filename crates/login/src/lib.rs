@@ -3,8 +3,8 @@ pub mod auth_env_telemetry;
 mod outbound_proxy;
 pub mod test_support;
 
-pub use genex_config::types::AuthCredentialsStoreMode;
-pub use genex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
+pub use ruxex_config::types::AuthCredentialsStoreMode;
+pub use ruxex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
 
 pub use auth::AuthChangeState;
 pub use auth::AuthConfig;
@@ -18,8 +18,8 @@ pub use auth::ExternalAuth;
 pub use auth::ExternalAuthFuture;
 pub use auth::ExternalAuthRefreshContext;
 pub use auth::ExternalAuthRefreshReason;
-pub use auth::GENEX_API_KEY_ENV_VAR;
-pub use auth::GenexAuth;
+pub use auth::RUXEX_API_KEY_ENV_VAR;
+pub use auth::RuxexAuth;
 pub use auth::ProviderAuth;
 pub use auth::RefreshTokenError;
 pub use auth::UnauthorizedRecovery;

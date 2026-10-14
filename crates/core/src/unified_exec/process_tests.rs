@@ -1,15 +1,15 @@
 use super::process::UnifiedExecProcess;
 use crate::unified_exec::UnifiedExecError;
-use genex_exec_server::ExecProcess;
-use genex_exec_server::ExecProcessEventReceiver;
-use genex_exec_server::ExecProcessFuture;
-use genex_exec_server::ExecServerError;
-use genex_exec_server::ProcessId;
-use genex_exec_server::ProcessSignal;
-use genex_exec_server::ReadResponse;
-use genex_exec_server::StartedExecProcess;
-use genex_exec_server::WriteResponse;
-use genex_exec_server::WriteStatus;
+use ruxex_exec_server::ExecProcess;
+use ruxex_exec_server::ExecProcessEventReceiver;
+use ruxex_exec_server::ExecProcessFuture;
+use ruxex_exec_server::ExecServerError;
+use ruxex_exec_server::ProcessId;
+use ruxex_exec_server::ProcessSignal;
+use ruxex_exec_server::ReadResponse;
+use ruxex_exec_server::StartedExecProcess;
+use ruxex_exec_server::WriteResponse;
+use ruxex_exec_server::WriteStatus;
 use pretty_assertions::assert_eq;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -88,7 +88,7 @@ impl ExecProcess for MockExecProcess {
 pub(super) async fn remote_process(
     write_status: WriteStatus,
     terminate_error: Option<String>,
-    sandbox_type: genex_sandboxing::SandboxType,
+    sandbox_type: ruxex_sandboxing::SandboxType,
 ) -> UnifiedExecProcess {
     let (wake_tx, _wake_rx) = watch::channel(0);
     let started = StartedExecProcess {
@@ -114,7 +114,7 @@ async fn remote_write_unknown_process_marks_process_exited() {
     let process = remote_process(
         WriteStatus::UnknownProcess,
         /*terminate_error*/ None,
-        genex_sandboxing::SandboxType::None,
+        ruxex_sandboxing::SandboxType::None,
     )
     .await;
 
@@ -132,7 +132,7 @@ async fn remote_write_closed_stdin_marks_process_exited() {
     let process = remote_process(
         WriteStatus::StdinClosed,
         /*terminate_error*/ None,
-        genex_sandboxing::SandboxType::None,
+        ruxex_sandboxing::SandboxType::None,
     )
     .await;
 
@@ -150,7 +150,7 @@ async fn fail_and_terminate_preserves_failure_message() {
     let process = remote_process(
         WriteStatus::Accepted,
         /*terminate_error*/ None,
-        genex_sandboxing::SandboxType::None,
+        ruxex_sandboxing::SandboxType::None,
     )
     .await;
 
@@ -169,7 +169,7 @@ async fn remote_terminate_confirmed_updates_state_on_success_only() {
     let process = remote_process(
         WriteStatus::Accepted,
         Some("terminate unavailable".to_string()),
-        genex_sandboxing::SandboxType::None,
+        ruxex_sandboxing::SandboxType::None,
     )
     .await;
 
@@ -184,7 +184,7 @@ async fn remote_terminate_confirmed_updates_state_on_success_only() {
     let process = remote_process(
         WriteStatus::Accepted,
         /*terminate_error*/ None,
-        genex_sandboxing::SandboxType::None,
+        ruxex_sandboxing::SandboxType::None,
     )
     .await;
 
@@ -201,12 +201,12 @@ async fn remote_process_preserves_executor_sandbox_type() {
     let process = remote_process(
         WriteStatus::Accepted,
         /*terminate_error*/ None,
-        genex_sandboxing::SandboxType::LinuxSeccomp,
+        ruxex_sandboxing::SandboxType::LinuxSeccomp,
     )
     .await;
 
     assert_eq!(
         process.sandbox_type(),
-        genex_sandboxing::SandboxType::LinuxSeccomp
+        ruxex_sandboxing::SandboxType::LinuxSeccomp
     );
 }

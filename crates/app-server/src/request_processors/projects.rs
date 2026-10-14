@@ -1,41 +1,41 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::Project;
-use genex_app_server_protocol::ProjectChangeType;
-use genex_app_server_protocol::ProjectChangedNotification;
-use genex_app_server_protocol::ProjectCreateParams;
-use genex_app_server_protocol::ProjectCreateResponse;
-use genex_app_server_protocol::ProjectDeleteParams;
-use genex_app_server_protocol::ProjectDeleteResponse;
-use genex_app_server_protocol::ProjectImportParams;
-use genex_app_server_protocol::ProjectImportResponse;
-use genex_app_server_protocol::ProjectListParams;
-use genex_app_server_protocol::ProjectListResponse;
-use genex_app_server_protocol::ProjectMoveParams;
-use genex_app_server_protocol::ProjectMoveResponse;
-use genex_app_server_protocol::ProjectReadParams;
-use genex_app_server_protocol::ProjectReadResponse;
-use genex_app_server_protocol::ProjectRoot;
-use genex_app_server_protocol::ProjectSortKey;
-use genex_app_server_protocol::ProjectUpdateParams;
-use genex_app_server_protocol::ProjectUpdateResponse;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadProjectUpdatedNotification;
-use genex_thread_store::CreateProjectParams as StoreCreateProjectParams;
-use genex_thread_store::ListProjectsParams as StoreListProjectsParams;
-use genex_thread_store::MoveProjectParams as StoreMoveProjectParams;
-use genex_thread_store::ProjectMoveOutcome;
-use genex_thread_store::ProjectSortKey as StoreProjectSortKey;
-use genex_thread_store::SortDirection as StoreSortDirection;
-use genex_thread_store::StoredProject;
-use genex_thread_store::StoredProjectRoot;
-use genex_thread_store::ThreadStore;
-use genex_thread_store::ThreadStoreError;
-use genex_thread_store::UpdateProjectParams as StoreUpdateProjectParams;
+use ruxex_app_server_protocol::ClientResponsePayload;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::Project;
+use ruxex_app_server_protocol::ProjectChangeType;
+use ruxex_app_server_protocol::ProjectChangedNotification;
+use ruxex_app_server_protocol::ProjectCreateParams;
+use ruxex_app_server_protocol::ProjectCreateResponse;
+use ruxex_app_server_protocol::ProjectDeleteParams;
+use ruxex_app_server_protocol::ProjectDeleteResponse;
+use ruxex_app_server_protocol::ProjectImportParams;
+use ruxex_app_server_protocol::ProjectImportResponse;
+use ruxex_app_server_protocol::ProjectListParams;
+use ruxex_app_server_protocol::ProjectListResponse;
+use ruxex_app_server_protocol::ProjectMoveParams;
+use ruxex_app_server_protocol::ProjectMoveResponse;
+use ruxex_app_server_protocol::ProjectReadParams;
+use ruxex_app_server_protocol::ProjectReadResponse;
+use ruxex_app_server_protocol::ProjectRoot;
+use ruxex_app_server_protocol::ProjectSortKey;
+use ruxex_app_server_protocol::ProjectUpdateParams;
+use ruxex_app_server_protocol::ProjectUpdateResponse;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadProjectUpdatedNotification;
+use ruxex_thread_store::CreateProjectParams as StoreCreateProjectParams;
+use ruxex_thread_store::ListProjectsParams as StoreListProjectsParams;
+use ruxex_thread_store::MoveProjectParams as StoreMoveProjectParams;
+use ruxex_thread_store::ProjectMoveOutcome;
+use ruxex_thread_store::ProjectSortKey as StoreProjectSortKey;
+use ruxex_thread_store::SortDirection as StoreSortDirection;
+use ruxex_thread_store::StoredProject;
+use ruxex_thread_store::StoredProjectRoot;
+use ruxex_thread_store::ThreadStore;
+use ruxex_thread_store::ThreadStoreError;
+use ruxex_thread_store::UpdateProjectParams as StoreUpdateProjectParams;
 use tokio::sync::Semaphore;
 use tokio::sync::SemaphorePermit;
 
@@ -324,7 +324,7 @@ fn validate_roots(roots: Vec<ProjectRoot>) -> Result<Vec<StoredProjectRoot>, JSO
     roots
         .into_iter()
         .map(|root| {
-            let path = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path_checked(
+            let path = ruxex_utils_absolute_path::AbsolutePathBuf::from_absolute_path_checked(
                 root.path.into_path_buf(),
             )
             .map_err(|error| invalid_params(format!("invalid project root: {error}")))?
@@ -369,7 +369,7 @@ fn api_project(project: StoredProject) -> Result<Project, JSONRPCErrorError> {
             .into_iter()
             .map(|root| {
                 Ok(ProjectRoot {
-                    path: genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(root.path)
+                    path: ruxex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(root.path)
                         .map_err(|error| {
                             internal_error(format!("stored project root is not absolute: {error}"))
                         })?,

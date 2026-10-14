@@ -15,16 +15,16 @@ use anyhow::Result;
 use anyhow::bail;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::to_response;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
@@ -50,7 +50,7 @@ use wiremock::matchers::path_regex;
 #[tokio::test]
 async fn websocket_transport_ctrl_c_waits_for_running_turn_before_exit() -> Result<()> {
     let GracefulCtrlCFixture {
-        _genex_home,
+        _ruxex_home,
         _server,
         mut process,
         mut ws,
@@ -130,7 +130,7 @@ async fn websocket_transport_ctrl_c_waits_for_running_turn_before_exit() -> Resu
 #[tokio::test]
 async fn websocket_transport_second_ctrl_c_forces_exit_while_turn_running() -> Result<()> {
     let GracefulCtrlCFixture {
-        _genex_home,
+        _ruxex_home,
         _server,
         mut process,
         mut ws,
@@ -158,14 +158,14 @@ async fn websocket_transport_second_ctrl_c_forces_exit_while_turn_running() -> R
 #[tokio::test]
 async fn websocket_transport_sigterm_waits_for_running_turn_before_exit() -> Result<()> {
     let GracefulCtrlCFixture {
-        _genex_home,
+        _ruxex_home,
         _server,
         mut process,
         mut ws,
         ..
     } = start_ctrl_c_restart_fixture(Duration::from_secs(3)).await?;
 
-    send_sigterm(&process, _genex_home.path())?;
+    send_sigterm(&process, _ruxex_home.path())?;
     assert_process_does_not_exit_within(&mut process, Duration::from_millis(300)).await?;
 
     let status = wait_for_process_exit_within(
@@ -185,17 +185,17 @@ async fn websocket_transport_sigterm_waits_for_running_turn_before_exit() -> Res
 #[tokio::test]
 async fn websocket_transport_second_sigterm_forces_exit_while_turn_running() -> Result<()> {
     let GracefulCtrlCFixture {
-        _genex_home,
+        _ruxex_home,
         _server,
         mut process,
         mut ws,
         ..
     } = start_ctrl_c_restart_fixture(Duration::from_secs(3)).await?;
 
-    send_sigterm(&process, _genex_home.path())?;
+    send_sigterm(&process, _ruxex_home.path())?;
     assert_process_does_not_exit_within(&mut process, Duration::from_millis(300)).await?;
 
-    send_sigterm(&process, _genex_home.path())?;
+    send_sigterm(&process, _ruxex_home.path())?;
     let status = wait_for_process_exit_within(
         &mut process,
         Duration::from_secs(2),
@@ -213,7 +213,7 @@ async fn websocket_transport_second_sigterm_forces_exit_while_turn_running() -> 
 #[tokio::test]
 async fn websocket_transport_repeated_sighup_keeps_waiting_for_running_turn() -> Result<()> {
     let GracefulCtrlCFixture {
-        _genex_home,
+        _ruxex_home,
         _server,
         mut process,
         mut ws,
@@ -255,7 +255,7 @@ async fn websocket_transport_allows_turn_interrupt_during_drain() -> Result<()> 
         }],
     ])
     .await;
-    let (_genex_home, mut process, mut ws) = start_ctrl_c_restart_client(server.uri()).await?;
+    let (_ruxex_home, mut process, mut ws) = start_ctrl_c_restart_client(server.uri()).await?;
     send_thread_start_request(&mut ws, /*id*/ 2).await?;
     let ThreadStartResponse { thread, .. } =
         to_response(read_response_for_id(&mut ws, /*id*/ 2).await?)?;
@@ -333,7 +333,7 @@ async fn websocket_transport_drain_stops_automatic_turns(
         }],
     ])
     .await;
-    let (_genex_home, mut process, mut ws) = start_ctrl_c_restart_client(server.uri()).await?;
+    let (_ruxex_home, mut process, mut ws) = start_ctrl_c_restart_client(server.uri()).await?;
     send_thread_start_request(&mut ws, /*id*/ 2).await?;
     let ThreadStartResponse { thread, .. } =
         to_response(read_response_for_id(&mut ws, /*id*/ 2).await?)?;
@@ -398,7 +398,7 @@ async fn websocket_transport_drain_stops_automatic_turns(
 }
 
 struct GracefulCtrlCFixture {
-    _genex_home: TempDir,
+    _ruxex_home: TempDir,
     _server: wiremock::MockServer,
     process: Child,
     ws: WsClient,
@@ -416,7 +416,7 @@ async fn start_ctrl_c_restart_fixture(turn_delay: Duration) -> Result<GracefulCt
         .mount(&server)
         .await;
 
-    let (genex_home, process, mut ws) = start_ctrl_c_restart_client(&server.uri()).await?;
+    let (ruxex_home, process, mut ws) = start_ctrl_c_restart_client(&server.uri()).await?;
 
     send_thread_start_request(&mut ws, /*id*/ 2).await?;
     let thread_start_response = read_response_for_id(&mut ws, /*id*/ 2).await?;
@@ -429,7 +429,7 @@ async fn start_ctrl_c_restart_fixture(turn_delay: Duration) -> Result<GracefulCt
     wait_for_responses_post(&server, Duration::from_secs(5)).await?;
 
     Ok(GracefulCtrlCFixture {
-        _genex_home: genex_home,
+        _ruxex_home: ruxex_home,
         _server: server,
         process,
         ws,
@@ -439,10 +439,10 @@ async fn start_ctrl_c_restart_fixture(turn_delay: Duration) -> Result<GracefulCt
 }
 
 async fn start_ctrl_c_restart_client(server_uri: &str) -> Result<(TempDir, Child, WsClient)> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), server_uri, "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), server_uri, "never")?;
 
-    let (process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
     let mut ws = connect_websocket(bind_addr).await?;
 
     send_request(
@@ -465,7 +465,7 @@ async fn start_ctrl_c_restart_client(server_uri: &str) -> Result<(TempDir, Child
     let init_response = read_response_for_id(&mut ws, /*id*/ 1).await?;
     assert_eq!(init_response.id, RequestId::Integer(1));
 
-    Ok((genex_home, process, ws))
+    Ok((ruxex_home, process, ws))
 }
 
 async fn send_thread_start_request(stream: &mut WsClient, id: i64) -> Result<()> {

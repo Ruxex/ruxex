@@ -1,8 +1,8 @@
-use genex_extension_api::PreviousWorldStateSection;
-use genex_extension_api::RenderedWorldStateFragment;
-use genex_extension_api::WorldStateSectionContribution;
-use genex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
-use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use ruxex_extension_api::PreviousWorldStateSection;
+use ruxex_extension_api::RenderedWorldStateFragment;
+use ruxex_extension_api::WorldStateSectionContribution;
+use ruxex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
+use ruxex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
 use serde_json::json;
 
 use crate::render::SkillRenderReport;

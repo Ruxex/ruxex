@@ -8,9 +8,9 @@ use crate::CONFIG_TOML_FILE;
 use crate::McpServerConfig;
 
 pub async fn load_global_mcp_servers(
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> std::io::Result<BTreeMap<String, McpServerConfig>> {
-    let config_path = genex_home.join(CONFIG_TOML_FILE);
+    let config_path = ruxex_home.join(CONFIG_TOML_FILE);
     let raw = match tokio::fs::read_to_string(&config_path).await {
         Ok(raw) => raw,
         Err(err) if err.kind() == ErrorKind::NotFound => return Ok(BTreeMap::new()),

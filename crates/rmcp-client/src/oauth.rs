@@ -13,7 +13,7 @@
 //! keystore that always encrypts secrets when they are transferred across the bus. If DBus isn't installed the keystore will fall back to the json
 //! file because we don't use the "vendored" feature.
 //!
-//! If the keyring is not available or fails, we fall back to GENEX_HOME/.credentials.json which is consistent with other coding CLI agents.
+//! If the keyring is not available or fails, we fall back to RUXEX_HOME/.credentials.json which is consistent with other coding CLI agents.
 
 mod credential_store;
 mod ema_identity;
@@ -32,13 +32,13 @@ pub(crate) mod test_support;
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::Result;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_secrets::LocalSecretsNamespace;
-use genex_secrets::SecretName;
-use genex_secrets::SecretScope;
-use genex_secrets::SecretsBackendKind;
-use genex_secrets::SecretsManager;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_secrets::LocalSecretsNamespace;
+use ruxex_secrets::SecretName;
+use ruxex_secrets::SecretScope;
+use ruxex_secrets::SecretsBackendKind;
+use ruxex_secrets::SecretsManager;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::Scope;
@@ -67,12 +67,12 @@ use self::store_lock::OAuthStore;
 use self::store_lock::OAuthStoreLock;
 use self::store_lock::OAuthStoreLockFailure;
 
-use genex_keyring_store::DefaultKeyringStore;
-use genex_keyring_store::KeyringStore;
+use ruxex_keyring_store::DefaultKeyringStore;
+use ruxex_keyring_store::KeyringStore;
 use rmcp::transport::auth::AuthorizationManager;
 use tokio::sync::Mutex;
 
-use genex_utils_home_dir::find_genex_home;
+use ruxex_utils_home_dir::find_ruxex_home;
 
 pub(crate) use self::credential_store::OAuthCredentialStore;
 pub(crate) use self::ema_identity::stored_oidc_identity;
@@ -88,7 +88,7 @@ pub(crate) use self::resolved_store::resolve_oauth_tokens_from_store_policy;
 use self::resolved_store::try_resolve_oauth_tokens_from_store_policy;
 pub(crate) use self::runtime::OAuthRuntime;
 
-const KEYRING_SERVICE: &str = "Genex MCP Credentials";
+const KEYRING_SERVICE: &str = "Ruxex MCP Credentials";
 const MCP_OAUTH_SECRET_PREFIX: &str = "MCP_OAUTH";
 const REFRESH_SKEW_MILLIS: u64 = 30_000;
 
@@ -409,9 +409,9 @@ fn load_oauth_tokens_from_secrets_keyring_with_lock_held<K: KeyringStore + Clone
     server_name: &str,
     url: &str,
 ) -> std::result::Result<Option<StoredOAuthTokens>, OAuthKeyringLoadError> {
-    let genex_home = find_genex_home().map_err(anyhow::Error::from)?;
+    let ruxex_home = find_ruxex_home().map_err(anyhow::Error::from)?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -540,9 +540,9 @@ fn save_oauth_tokens_to_secrets_keyring_with_lock_held<K: KeyringStore + Clone +
     tokens: &StoredOAuthTokens,
     serialized: &str,
 ) -> Result<()> {
-    let genex_home = find_genex_home()?;
+    let ruxex_home = find_ruxex_home()?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -692,9 +692,9 @@ fn delete_oauth_tokens_from_secrets_keyring<K: KeyringStore + Clone + 'static>(
     url: &str,
 ) -> Result<bool> {
     let _store_lock = OAuthStoreLock::acquire_for_write(OAuthStore::Secrets)?;
-    let genex_home = find_genex_home()?;
+    let ruxex_home = find_ruxex_home()?;
     let manager = SecretsManager::new_with_keyring_store_and_namespace(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         SecretsBackendKind::Local,
         Arc::new(keyring_store.clone()),
         LocalSecretsNamespace::McpOAuth,
@@ -1021,12 +1021,12 @@ fn compute_store_key(server_name: &str, server_url: &str) -> Result<String> {
     payload.insert("headers".to_string(), Value::Object(JsonMap::new()));
     let payload = if enterprise_owned {
         // The OS keyring is shared across homes. Keep enterprise sessions
-        // isolated by Genex profile as well as authenticated user and workspace.
-        let genex_home = find_genex_home()?;
-        fs::create_dir_all(&genex_home)?;
+        // isolated by Ruxex profile as well as authenticated user and workspace.
+        let ruxex_home = find_ruxex_home()?;
+        fs::create_dir_all(&ruxex_home)?;
         payload.insert(
-            "genex_home".to_string(),
-            serde_json::to_value(genex_home.as_path().canonicalize()?)?,
+            "ruxex_home".to_string(),
+            serde_json::to_value(ruxex_home.as_path().canonicalize()?)?,
         );
         // Different binaries can enable different serde_json ordering features.
         serde_json::to_value(payload.into_iter().collect::<BTreeMap<_, _>>())?
@@ -1054,7 +1054,7 @@ fn compute_secret_name(server_name: &str, server_url: &str) -> Result<SecretName
 }
 
 fn fallback_file_path() -> Result<PathBuf> {
-    Ok(find_genex_home()?.join(FALLBACK_FILENAME).to_path_buf())
+    Ok(find_ruxex_home()?.join(FALLBACK_FILENAME).to_path_buf())
 }
 
 fn read_fallback_file_unlocked() -> Result<Option<FallbackFile>> {
@@ -1140,8 +1140,8 @@ fn sha_256_prefix(value: &Value) -> Result<String> {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use genex_keyring_store::tests::MockKeyringStore;
-    use genex_secrets::compute_keyring_account;
+    use ruxex_keyring_store::tests::MockKeyringStore;
+    use ruxex_secrets::compute_keyring_account;
     use keyring::Error as KeyringError;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
@@ -1150,11 +1150,11 @@ mod tests {
     #[path = "persistor_tests.rs"]
     mod persistor_tests;
 
-    use super::test_support::TempGenexHome;
+    use super::test_support::TempRuxexHome;
 
     #[test]
     fn stored_oauth_credentials_ignore_derived_expiration_and_track_token_changes() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let mut tokens = sample_tokens();
         let credentials = super::normalized_oauth_credentials(Some(&tokens));
         tokens
@@ -1195,7 +1195,7 @@ mod tests {
 
     #[test]
     fn resolve_oauth_tokens_from_store_policy_uses_keyring_when_available() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let expected = tokens.clone();
@@ -1221,7 +1221,7 @@ mod tests {
 
     #[test]
     fn load_oauth_tokens_falls_back_when_missing_in_keyring() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let expected = tokens.clone();
@@ -1243,7 +1243,7 @@ mod tests {
 
     #[test]
     fn load_oauth_tokens_falls_back_when_keyring_errors() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let expected = tokens.clone();
@@ -1267,7 +1267,7 @@ mod tests {
 
     #[test]
     fn exact_store_operations_do_not_adopt_or_mutate_the_other_store() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let file_tokens = sample_tokens();
         let mut keyring_tokens = file_tokens.clone();
@@ -1296,7 +1296,7 @@ mod tests {
 
     #[test]
     fn save_oauth_tokens_prefers_keyring_when_available() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let key = super::compute_store_key(&tokens.server_name, &tokens.url)?;
@@ -1319,7 +1319,7 @@ mod tests {
 
     #[test]
     fn save_oauth_tokens_writes_fallback_when_keyring_fails() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let key = super::compute_store_key(&tokens.server_name, &tokens.url)?;
@@ -1352,7 +1352,7 @@ mod tests {
     #[test]
     fn fallback_file_is_private_at_creation() -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
-        const CHILD: &str = "GENEX_TEST_OAUTH_PERMISSIVE_UMASK";
+        const CHILD: &str = "RUXEX_TEST_OAUTH_PERMISSIVE_UMASK";
 
         if std::env::var_os(CHILD).is_none() {
             // Change umask only in the child running this one test.
@@ -1369,7 +1369,7 @@ mod tests {
             return Ok(());
         }
 
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let path = fallback_file_path()?;
         let file = open_fallback_file_for_write(&path)?;
         assert_eq!(file.metadata()?.permissions().mode() & 0o777, 0o600);
@@ -1381,7 +1381,7 @@ mod tests {
         #[cfg(unix)]
         use std::os::unix::fs::PermissionsExt;
 
-        let env = TempGenexHome::new();
+        let env = TempRuxexHome::new();
         save_oauth_tokens_to_file(&sample_tokens())?;
         let path = fallback_file_path()?;
         let original = env.path().join("original-file");
@@ -1408,7 +1408,7 @@ mod tests {
     fn fallback_file_write_does_not_follow_symlinks() -> Result<()> {
         use std::os::unix::fs::symlink;
 
-        let env = TempGenexHome::new();
+        let env = TempRuxexHome::new();
         let path = fallback_file_path()?;
         let target = env.path().join("symlink-target");
         fs::write(&target, "synthetic credentials")?;
@@ -1424,7 +1424,7 @@ mod tests {
 
     #[test]
     fn save_oauth_tokens_with_secrets_backend_writes_encrypted_storage() -> Result<()> {
-        let env = TempGenexHome::new();
+        let env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let key = super::compute_store_key(&tokens.server_name, &tokens.url)?;
@@ -1459,7 +1459,7 @@ mod tests {
 
     #[test]
     fn load_oauth_tokens_with_secrets_backend_reads_encrypted_storage() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let expected = tokens.clone();
@@ -1484,7 +1484,7 @@ mod tests {
 
     #[test]
     fn load_oauth_tokens_with_secrets_backend_ignores_direct_entry() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let key = super::compute_store_key(&tokens.server_name, &tokens.url)?;
@@ -1505,7 +1505,7 @@ mod tests {
     #[test]
     fn save_oauth_tokens_with_secrets_backend_falls_back_to_file_when_keyring_fails() -> Result<()>
     {
-        let env = TempGenexHome::new();
+        let env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         store.set_error(
             &compute_keyring_account(env.path()),
@@ -1528,7 +1528,7 @@ mod tests {
 
     #[test]
     fn delete_oauth_tokens_with_secrets_backend_removes_secrets_and_file() -> Result<()> {
-        let env = TempGenexHome::new();
+        let env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let serialized = serde_json::to_string(&tokens)?;
@@ -1567,7 +1567,7 @@ mod tests {
 
     #[test]
     fn delete_oauth_tokens_removes_all_storage() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let serialized = serde_json::to_string(&tokens)?;
@@ -1590,7 +1590,7 @@ mod tests {
 
     #[test]
     fn delete_oauth_tokens_file_mode_removes_keyring_only_entry() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let serialized = serde_json::to_string(&tokens)?;
@@ -1613,7 +1613,7 @@ mod tests {
 
     #[test]
     fn delete_oauth_tokens_propagates_keyring_errors() -> Result<()> {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let store = MockKeyringStore::default();
         let tokens = sample_tokens();
         let key = super::compute_store_key(&tokens.server_name, &tokens.url)?;

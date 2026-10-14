@@ -12,20 +12,20 @@ use tracing::trace_span;
 use tracing::warn;
 
 use crate::client::ModelClientSession;
-use crate::responses_metadata::GenexResponsesRequestKind;
+use crate::responses_metadata::RuxexResponsesRequestKind;
 use crate::session::INITIAL_SUBMIT_ID;
 use crate::session::RequestEffortUsage;
 use crate::session::session::Session;
 use crate::session::turn::build_prompt;
-use genex_features::Feature;
-use genex_otel::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
-use genex_otel::STARTUP_PREWARM_DURATION_METRIC;
-use genex_otel::SessionTelemetry;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::BaseInstructions;
+use ruxex_features::Feature;
+use ruxex_otel::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
+use ruxex_otel::STARTUP_PREWARM_DURATION_METRIC;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::BaseInstructions;
 
 pub(crate) struct SessionStartupPrewarmHandle {
-    task: AbortOnDropHandle<GenexResult<ModelClientSession>>,
+    task: AbortOnDropHandle<RuxexResult<ModelClientSession>>,
     started_at: Instant,
     timeout: Duration,
 }
@@ -41,7 +41,7 @@ pub(crate) enum SessionStartupPrewarmResolution {
 
 impl SessionStartupPrewarmHandle {
     pub(crate) fn new(
-        task: JoinHandle<GenexResult<ModelClientSession>>,
+        task: JoinHandle<RuxexResult<ModelClientSession>>,
         started_at: Instant,
         timeout: Duration,
     ) -> Self {
@@ -157,7 +157,7 @@ impl SessionStartupPrewarmHandle {
     }
 
     fn resolution_from_join_result(
-        result: std::result::Result<GenexResult<ModelClientSession>, tokio::task::JoinError>,
+        result: std::result::Result<RuxexResult<ModelClientSession>, tokio::task::JoinError>,
         started_at: Instant,
     ) -> SessionStartupPrewarmResolution {
         match result {
@@ -262,7 +262,7 @@ impl Session {
 async fn schedule_startup_prewarm_inner(
     session: Arc<Session>,
     base_instructions: String,
-) -> GenexResult<ModelClientSession> {
+) -> RuxexResult<ModelClientSession> {
     let prewarm_started_at = Instant::now();
     let startup_turn_context = session
         .new_startup_prewarm_turn_with_sub_id(INITIAL_SUBMIT_ID.to_owned())
@@ -301,7 +301,7 @@ async fn schedule_startup_prewarm_inner(
         /*status*/ None,
     );
     let responses_metadata = session
-        .responses_metadata(step_context.as_ref(), GenexResponsesRequestKind::Prewarm)
+        .responses_metadata(step_context.as_ref(), RuxexResponsesRequestKind::Prewarm)
         .await;
     let mut client_session = session.services.model_client.new_session();
     let websocket_warmup_started_at = Instant::now();

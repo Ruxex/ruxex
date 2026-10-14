@@ -1,11 +1,11 @@
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::EnvironmentConfig;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_protocol::approvals::ExecApprovalKind;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SandboxPolicy;
-use core_test_support::test_genex::local_selections;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::EnvironmentConfig;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_protocol::approvals::ExecApprovalKind;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SandboxPolicy;
+use core_test_support::test_ruxex::local_selections;
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
@@ -13,27 +13,27 @@ use std::sync::OnceLock;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::EnvironmentVariablePattern;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::ExecCommandStatus;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
-use genex_protocol::user_input::UserInput;
-use genex_utils_output_truncation::approx_tokens_from_byte_count;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::EnvironmentVariablePattern;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_protocol::protocol::ExecCommandStatus;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::shell_environment::RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_output_truncation::approx_tokens_from_byte_count;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::TempDirExt;
 use core_test_support::assert_regex_match;
 use core_test_support::managed_network_requirements_loader;
@@ -52,10 +52,10 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::TestGenexHarness;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::TestRuxexHarness;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -183,10 +183,10 @@ fn collect_tool_outputs(bodies: &[Value]) -> Result<HashMap<String, ParsedUnifie
 }
 
 async fn wait_for_raw_unified_exec_output(
-    test: &TestGenex,
+    test: &TestRuxex,
     call_id: &str,
 ) -> Result<ParsedUnifiedExecOutput> {
-    let content = wait_for_event_match(&test.genex, |event| match event {
+    let content = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::RawResponseItem(raw) => match &raw.item {
             ResponseItem::FunctionCallOutput {
                 call_id: Some(output_call_id),
@@ -204,7 +204,7 @@ async fn wait_for_raw_unified_exec_output(
 }
 
 async fn submit_unified_exec_turn(
-    test: &TestGenex,
+    test: &TestRuxex,
     prompt: &str,
     permission_profile: PermissionProfile,
 ) -> Result<()> {
@@ -212,7 +212,7 @@ async fn submit_unified_exec_turn(
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -239,7 +239,7 @@ async fn submit_unified_exec_turn(
 }
 
 async fn create_workspace_directory(
-    test: &TestGenex,
+    test: &TestRuxex,
     rel_path: impl AsRef<std::path::Path>,
 ) -> Result<std::path::PathBuf> {
     let abs_path = test.config.cwd.join(rel_path.as_ref());
@@ -261,10 +261,10 @@ async fn create_workspace_directory(
 async fn exec_command_hides_and_rejects_login_when_disabled() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.permissions.allow_login_shell = false;
     });
-    let harness = TestGenexHarness::with_builder(builder).await?;
+    let harness = TestRuxexHarness::with_builder(builder).await?;
     let call_id = "exec-command-login-disabled";
     let arguments = json!({
         "cmd": "echo should not run",
@@ -308,12 +308,12 @@ async fn exec_command_hides_and_rejects_login_when_disabled() -> Result<()> {
 async fn exec_command_hides_and_rejects_tty_when_disabled() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("legacy-model").with_cloud_config_bundle(
+    let builder = test_ruxex().with_model("legacy-model").with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             "[features]\nunified_exec_tty = false\n",
         ),
     );
-    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestRuxexHarness::with_auto_env_builder(builder).await?;
     let call_id = "tty-denied";
     let arguments = json!({"cmd": "echo should-not-run > tty-disabled-rejected", "tty": true});
     let request_log = mount_sse_sequence(
@@ -359,12 +359,12 @@ async fn exec_command_runs_without_tty_when_tty_disabled() -> Result<()> {
         "basic PowerShell execution through Wine is unavailable"
     );
 
-    let builder = test_genex().with_model("legacy-model").with_cloud_config_bundle(
+    let builder = test_ruxex().with_model("legacy-model").with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             "[features]\nunified_exec_tty = false\n",
         ),
     );
-    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestRuxexHarness::with_auto_env_builder(builder).await?;
     let mut responses = Vec::new();
     for (call_id, arguments) in [
         ("tty-false", json!({"cmd": "echo pipe-ok", "tty": false})),
@@ -402,18 +402,18 @@ async fn exec_command_does_not_expose_configured_noise_auth_token() -> Result<()
         "basic PowerShell execution through Wine is unavailable"
     );
 
-    let builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.permissions.shell_environment_policy.r#set.insert(
-            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
+            RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_string(),
             "configured-noise-token".to_string(),
         );
         config.permissions.shell_environment_policy.r#set.insert(
-            GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
+            RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR.to_ascii_lowercase(),
             "case-variant-noise-token".to_string(),
         );
     });
-    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
-    let command = "if [ -n \"${GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${genex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi";
+    let harness = TestRuxexHarness::with_auto_env_builder(builder).await?;
+    let command = "if [ -n \"${RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN:-}\" ] || [ -n \"${ruxex_exec_server_noise_auth_token:-}\" ]; then echo leaked; else echo unset; fi";
     let call_id = "exec-command-noise-auth-token";
     let arguments = json!({ "cmd": command, "yield_time_ms": 5_000 });
     mount_sse_sequence(
@@ -450,7 +450,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
     );
     skip_if_no_network!(Ok(()));
 
-    let builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.permissions.shell_environment_policy = ShellEnvironmentPolicy {
             inherit: ShellEnvironmentPolicyInherit::None,
             include_only: vec![EnvironmentVariablePattern::new_case_insensitive("DROP")],
@@ -458,17 +458,17 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
                 ("KEEP".to_string(), "preserved".to_string()),
                 ("DROP".to_string(), "filtered".to_string()),
                 (
-                    "GENEX_VERSION".to_string(),
+                    "RUXEX_VERSION".to_string(),
                     "configured-version".to_string(),
                 ),
             ]),
             ..Default::default()
         };
     });
-    let harness = TestGenexHarness::with_auto_env_builder(builder).await?;
+    let harness = TestRuxexHarness::with_auto_env_builder(builder).await?;
     let selection = harness
         .test()
-        .genex
+        .ruxex
         .environment_selections()
         .await
         .into_iter()
@@ -476,7 +476,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
         .context("thread should select its executor environment")?;
     harness
         .test()
-        .genex
+        .ruxex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -505,7 +505,7 @@ async fn exec_command_uses_installed_environment_shell_policy_with_explicit_over
         .await?;
 
     let call_id = "exec-command-environment-shell-policy";
-    let command = r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$GENEX_VERSION""#;
+    let command = r#"printf '%s:%s:%s:%s' "$KEEP" "${DROP:-missing}" "${OWNER_ONLY:-missing}" "$RUXEX_VERSION""#;
     let arguments = json!({
         "cmd": command,
         "login": false,
@@ -547,8 +547,8 @@ async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     skip_if_sandbox!(Ok(()));
     skip_if_host_windows!(Ok(()));
 
-    let builder = test_genex();
-    let harness = TestGenexHarness::with_builder(builder).await?;
+    let builder = test_ruxex();
+    let harness = TestRuxexHarness::with_builder(builder).await?;
 
     let patch =
         "*** Begin Patch\n*** Add File: uexec_apply.txt\n+hello from unified exec\n*** End Patch";
@@ -576,13 +576,13 @@ async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     mount_sse_sequence(harness.server(), responses).await;
 
     let test = harness.test();
-    let genex = test.genex.clone();
+    let ruxex = test.ruxex.clone();
     let cwd = test.config.cwd.clone();
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, &cwd);
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "apply patch via unified exec".into(),
@@ -610,7 +610,7 @@ async fn unified_exec_intercepts_apply_patch_exec_command() -> Result<()> {
     let mut patch_end = None;
     let mut saw_exec_begin = false;
     let mut saw_exec_end = false;
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::PatchApplyBegin(begin) if begin.call_id == call_id => {
             saw_patch_begin = true;
             assert!(
@@ -680,7 +680,7 @@ async fn unified_exec_rejects_justification_without_sandbox_permissions() -> Res
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("example-model-2");
+    let mut builder = test_ruxex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-missing-sandbox-permissions";
@@ -713,7 +713,7 @@ async fn unified_exec_rejects_justification_without_sandbox_permissions() -> Res
     .await?;
 
     let mut saw_exec_begin = false;
-    wait_for_event(&test.genex, |event| match event {
+    wait_for_event(&test.ruxex, |event| match event {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => {
             saw_exec_begin = true;
             false
@@ -753,7 +753,7 @@ async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("example-model-2");
+    let mut builder = test_ruxex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
     let cwd = test.config.cwd.to_path_buf();
 
@@ -780,7 +780,7 @@ async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
 
     submit_unified_exec_turn(&test, "emit begin event", PermissionProfile::Disabled).await?;
 
-    let begin_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let begin_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -790,7 +790,7 @@ async fn unified_exec_emits_exec_command_begin_event() -> Result<()> {
 
     assert_eq!(begin_event.cwd, PathUri::from_host_native_path(&cwd)?);
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -810,7 +810,7 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("example-model-2");
+    let mut builder = test_ruxex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let workdir_rel = std::path::PathBuf::from("uexec_relative_workdir");
@@ -844,7 +844,7 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
     )
     .await?;
 
-    let begin_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let begin_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -856,7 +856,7 @@ async fn unified_exec_resolves_relative_workdir() -> Result<()> {
         "exec_command cwd should resolve relative workdir against turn cwd",
     );
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -874,7 +874,7 @@ async fn unified_exec_respects_workdir_override() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("example-model-2");
+    let mut builder = test_ruxex().with_model("example-model-2");
     let test = builder.build_with_auto_env(&server).await?;
 
     let workdir = create_workspace_directory(&test, "uexec_workdir_test").await?;
@@ -902,7 +902,7 @@ async fn unified_exec_respects_workdir_override() -> Result<()> {
 
     submit_unified_exec_turn(&test, "run workdir test", PermissionProfile::Disabled).await?;
 
-    let begin_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let begin_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -914,7 +914,7 @@ async fn unified_exec_respects_workdir_override() -> Result<()> {
         "exec_command cwd should reflect the requested workdir override"
     );
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -934,7 +934,7 @@ async fn unified_exec_emits_exec_command_end_event() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-end-event";
@@ -974,7 +974,7 @@ async fn unified_exec_emits_exec_command_end_event() -> Result<()> {
 
     submit_unified_exec_turn(&test, "emit end event", PermissionProfile::Disabled).await?;
 
-    let end_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let end_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandEnd(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -986,7 +986,7 @@ async fn unified_exec_emits_exec_command_end_event() -> Result<()> {
         "expected aggregated output to contain marker"
     );
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1002,7 +1002,7 @@ async fn unified_exec_emits_output_delta_for_exec_command() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-delta-1";
@@ -1062,7 +1062,7 @@ async fn unified_exec_emits_output_delta_for_exec_command() -> Result<()> {
     let mut end_event = None;
     let mut turn_completed = false;
     while !turn_completed || end_event.is_none() {
-        match wait_for_event(&test.genex, |_| true).await {
+        match wait_for_event(&test.ruxex, |_| true).await {
             EventMsg::ExecCommandOutputDelta(event) => {
                 if event.call_id != call_id {
                     continue;
@@ -1114,7 +1114,7 @@ async fn unified_exec_full_lifecycle_with_background_end_event() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-full-lifecycle";
@@ -1150,7 +1150,7 @@ async fn unified_exec_full_lifecycle_with_background_end_event() -> Result<()> {
     let mut task_completed = false;
 
     loop {
-        let msg = wait_for_event(&test.genex, |_| true).await;
+        let msg = wait_for_event(&test.ruxex, |_| true).await;
         match msg {
             EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => begin_event = Some(ev),
             EventMsg::ExecCommandEnd(ev) if ev.call_id == call_id => {
@@ -1207,7 +1207,7 @@ async fn unified_exec_network_denial_emits_failed_background_end_event() -> Resu
 
     let call_id = "uexec-network-denied";
     let args = json!({
-        "cmd": "python3 -c \"import os, socket, time, urllib.parse; time.sleep(0.3); proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY']); sock = socket.create_connection((proxy.hostname, proxy.port), timeout=2); sock.sendall(b'GET http://genex-network-denied.invalid/ HTTP/1.1\\r\\nHost: genex-network-denied.invalid\\r\\n\\r\\n'); sock.recv(1024); time.sleep(5)\"",
+        "cmd": "python3 -c \"import os, socket, time, urllib.parse; time.sleep(0.3); proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY']); sock = socket.create_connection((proxy.hostname, proxy.port), timeout=2); sock.sendall(b'GET http://ruxex-network-denied.invalid/ HTTP/1.1\\r\\nHost: ruxex-network-denied.invalid\\r\\n\\r\\n'); sock.recv(1024); time.sleep(5)\"",
         "yield_time_ms": 50,
     });
     let response_mock =
@@ -1231,7 +1231,7 @@ async fn unified_exec_network_denial_emits_failed_background_end_event() -> Resu
     );
 
     if !turn_completed {
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -1251,7 +1251,7 @@ async fn unified_exec_short_lived_network_denial_emits_failed_end_event() -> Res
 
     let call_id = "uexec-short-network-denied";
     let args = json!({
-        "cmd": "python3 -c \"import os, socket, urllib.parse; proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY']); sock = socket.create_connection((proxy.hostname, proxy.port), timeout=2); sock.sendall(b'GET http://genex-short-network-denied.invalid/ HTTP/1.1\\r\\nHost: genex-short-network-denied.invalid\\r\\n\\r\\n'); sock.recv(1024)\"",
+        "cmd": "python3 -c \"import os, socket, urllib.parse; proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY']); sock = socket.create_connection((proxy.hostname, proxy.port), timeout=2); sock.sendall(b'GET http://ruxex-short-network-denied.invalid/ HTTP/1.1\\r\\nHost: ruxex-short-network-denied.invalid\\r\\n\\r\\n'); sock.recv(1024)\"",
         "yield_time_ms": 1000,
     });
     let response_mock =
@@ -1275,7 +1275,7 @@ async fn unified_exec_short_lived_network_denial_emits_failed_end_event() -> Res
     );
 
     if !turn_completed {
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -1285,8 +1285,8 @@ async fn unified_exec_short_lived_network_denial_emits_failed_end_event() -> Res
 
 async fn unified_exec_network_denial_test(
     server: &wiremock::MockServer,
-) -> Result<(TestGenex, PermissionProfile)> {
-    use genex_config::Constrained;
+) -> Result<(TestRuxex, PermissionProfile)> {
+    use ruxex_config::Constrained;
     use std::sync::Arc;
     use tempfile::TempDir;
 
@@ -1311,7 +1311,7 @@ allow_local_binding = true
         /*exclude_slash_tmp*/ false,
     );
     let permission_profile = permission_profile_for_config.clone();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -1351,10 +1351,10 @@ async fn mount_unified_exec_network_denial_responses(
 }
 
 async fn wait_for_unified_exec_end(
-    test: &TestGenex,
+    test: &TestRuxex,
     call_id: &str,
     response_mock: &core_test_support::responses::ResponseMock,
-) -> (genex_protocol::protocol::ExecCommandEndEvent, bool) {
+) -> (ruxex_protocol::protocol::ExecCommandEndEvent, bool) {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
     let mut observed_events = Vec::new();
     let mut turn_completed = false;
@@ -1372,7 +1372,7 @@ async fn wait_for_unified_exec_end(
             "timed out waiting for network denial end event; observed {observed_events:?}; response requests: {}",
             response_mock.requests().len()
         );
-        let event = tokio::time::timeout(remaining, test.genex.next_event())
+        let event = tokio::time::timeout(remaining, test.ruxex.next_event())
             .await
             .expect(&timeout_message)
             .expect("event stream ended unexpectedly")
@@ -1401,7 +1401,7 @@ async fn unified_exec_emits_terminal_interaction_for_write_stdin(
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         if stdin_approval {
             config
                 .features
@@ -1457,7 +1457,7 @@ async fn unified_exec_emits_terminal_interaction_for_write_stdin(
 
     if stdin_approval {
         // Start without waiting for completion so the loop below can answer approvals.
-        test.genex
+        test.ruxex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "stdin delta".to_string(),
@@ -1480,10 +1480,10 @@ async fn unified_exec_emits_terminal_interaction_for_write_stdin(
     let mut approvals = Vec::new();
 
     loop {
-        let msg = wait_for_event(&test.genex, |_| true).await;
+        let msg = wait_for_event(&test.ruxex, |_| true).await;
         match msg {
             EventMsg::ExecApprovalRequest(approval) => {
-                test.genex
+                test.ruxex
                     .submit(Op::ExecApproval {
                         id: approval.effective_approval_id(),
                         turn_id: Some(approval.turn_id),
@@ -1534,7 +1534,7 @@ async fn unified_exec_terminal_interaction_captures_delayed_output() -> Result<(
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let open_call_id = "uexec-delayed-open";
@@ -1627,7 +1627,7 @@ async fn unified_exec_terminal_interaction_captures_delayed_output() -> Result<(
 
     // Consume all events for this turn so we can assert on each stage.
     loop {
-        let msg = wait_for_event(&test.genex, |_| true).await;
+        let msg = wait_for_event(&test.ruxex, |_| true).await;
         match msg {
             EventMsg::ExecCommandBegin(ev) if ev.call_id == open_call_id => {
                 begin_event = Some(ev);
@@ -1709,7 +1709,7 @@ async fn unified_exec_emits_one_begin_and_one_end_event() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let open_call_id = "uexec-open-session";
@@ -1765,7 +1765,7 @@ async fn unified_exec_emits_one_begin_and_one_end_event() -> Result<()> {
     let mut terminal_interactions = Vec::new();
     let mut task_completed = false;
     loop {
-        let event_msg = wait_for_event(&test.genex, |_| true).await;
+        let event_msg = wait_for_event(&test.ruxex, |_| true).await;
         match event_msg {
             EventMsg::ExecCommandBegin(event) if event.call_id == open_call_id => {
                 begin_events.push(event);
@@ -1827,7 +1827,7 @@ async fn exec_command_reports_chunk_and_exit_metadata() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-metadata";
@@ -1852,7 +1852,7 @@ async fn exec_command_reports_chunk_and_exit_metadata() -> Result<()> {
 
     submit_unified_exec_turn(&test, "run metadata test", PermissionProfile::Disabled).await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1916,7 +1916,7 @@ async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Re
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -1958,7 +1958,7 @@ async fn exec_command_clamps_model_requested_max_output_tokens_to_policy() -> Re
     );
     assert_eq!(output_text.matches("tokens truncated").count(), 1);
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1975,7 +1975,7 @@ async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Res
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config.tool_output_token_limit = Some(50);
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -2044,7 +2044,7 @@ async fn write_stdin_clamps_model_requested_max_output_tokens_to_policy() -> Res
     );
     assert_eq!(stdin_output_text.matches("tokens truncated").count(), 1);
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2061,7 +2061,7 @@ async fn unified_exec_defaults_to_pipe() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-default-pipe";
@@ -2091,7 +2091,7 @@ async fn unified_exec_defaults_to_pipe() -> Result<()> {
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2126,7 +2126,7 @@ async fn unified_exec_can_enable_tty() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-tty-enabled";
@@ -2152,7 +2152,7 @@ async fn unified_exec_can_enable_tty() -> Result<()> {
 
     submit_unified_exec_turn(&test, "check tty enabled", PermissionProfile::Disabled).await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2188,7 +2188,7 @@ async fn unified_exec_respects_early_exit_notifications() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec-early-exit";
@@ -2217,7 +2217,7 @@ async fn unified_exec_respects_early_exit_notifications() -> Result<()> {
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2267,7 +2267,7 @@ async fn write_stdin_returns_exit_metadata_and_clears_session() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let start_call_id = "uexec-cat-start";
@@ -2335,7 +2335,7 @@ async fn write_stdin_returns_exit_metadata_and_clears_session() -> Result<()> {
     let mut exit_lifecycle_order = Vec::new();
     let mut turn_completed = false;
     loop {
-        let event = wait_for_event(&test.genex, |_| true).await;
+        let event = wait_for_event(&test.ruxex, |_| true).await;
         match event {
             EventMsg::TerminalInteraction(event)
                 if event.call_id == start_call_id
@@ -2470,7 +2470,7 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::WriteStdinApproval)
@@ -2519,7 +2519,7 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
     ];
     let request_log = mount_sse_sequence(&server, responses).await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "interrupt non-tty unified exec".to_string(),
@@ -2537,10 +2537,10 @@ async fn assert_write_stdin_ctrl_c_interrupts_non_tty_session(
 
     let mut approval_count = 0;
     loop {
-        match wait_for_event(&test.genex, |_| true).await {
+        match wait_for_event(&test.ruxex, |_| true).await {
             EventMsg::ExecApprovalRequest(approval) => {
                 approval_count += 1;
-                test.genex
+                test.ruxex
                     .submit(Op::ExecApproval {
                         id: approval.effective_approval_id(),
                         turn_id: Some(approval.turn_id),
@@ -2617,7 +2617,7 @@ async fn write_stdin_ctrl_c_terminates_non_tty_session_on_windows() -> Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let start_call_id = "uexec-windows-interrupt-start";
@@ -2669,7 +2669,7 @@ async fn write_stdin_ctrl_c_terminates_non_tty_session_on_windows() -> Result<()
     .await?;
 
     wait_for_event_with_timeout(
-        &test.genex,
+        &test.ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         Duration::from_secs(20),
     )
@@ -2706,7 +2706,7 @@ async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let start_call_id = "uexec-end-on-exit-start";
@@ -2769,7 +2769,7 @@ async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()
     submit_unified_exec_turn(&test, "end on exit", PermissionProfile::Disabled).await?;
 
     // We expect the ExecCommandEnd event to match the initial exec_command call_id.
-    let end_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let end_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandEnd(ev) if ev.call_id == start_call_id => Some(ev.clone()),
         _ => None,
     })
@@ -2777,7 +2777,7 @@ async fn unified_exec_emits_end_event_when_session_dies_via_stdin() -> Result<()
 
     assert_eq!(end_event.exit_code, 0);
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2792,9 +2792,9 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -2830,7 +2830,7 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, turn_cwd.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "keep unified exec process after turn end".into(),
@@ -2854,7 +2854,7 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
         )
         .await?;
 
-    let begin_event = wait_for_event_match(&genex, |msg| match msg {
+    let begin_event = wait_for_event_match(&ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -2871,15 +2871,15 @@ async fn unified_exec_keeps_long_running_session_after_turn_end() -> Result<()> 
         "expected numeric pid, got {pid:?}"
     );
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     assert!(
         process_is_alive(&pid)?,
         "expected unified exec process to remain alive after turn completion"
     );
 
-    genex.submit(Op::Shutdown).await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
     wait_for_process_exit(&pid).await?;
 
     Ok(())
@@ -2893,9 +2893,9 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -2924,7 +2924,7 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, turn_cwd.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "interrupt long-running unified exec".into(),
@@ -2948,7 +2948,7 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
         )
         .await?;
 
-    let _begin_event = wait_for_event_match(&genex, |msg| match msg {
+    let _begin_event = wait_for_event_match(&ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(ev) if ev.call_id == call_id => Some(ev.clone()),
         _ => None,
     })
@@ -2960,15 +2960,15 @@ async fn unified_exec_interrupt_preserves_long_running_session() -> Result<()> {
         "expected numeric pid, got {pid:?}"
     );
 
-    genex.submit(Op::Interrupt).await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
+    ruxex.submit(Op::Interrupt).await?;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
 
     assert!(
         process_is_alive(&pid)?,
         "expected unified exec process to remain alive after interrupt"
     );
 
-    genex.submit(Op::CleanBackgroundTerminals).await?;
+    ruxex.submit(Op::CleanBackgroundTerminals).await?;
     wait_for_process_exit(&pid).await?;
 
     Ok(())
@@ -2983,7 +2983,7 @@ async fn unified_exec_reuses_session_via_stdin() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let first_call_id = "uexec-start";
@@ -3028,7 +3028,7 @@ async fn unified_exec_reuses_session_via_stdin() -> Result<()> {
 
     submit_unified_exec_turn(&test, "run unified exec", PermissionProfile::Disabled).await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3077,7 +3077,7 @@ async fn unified_exec_streams_after_lagged_output() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let script = r#"python3 - <<'PY'
@@ -3143,7 +3143,7 @@ PY
     // This is a worst case scenario for the truncate logic, and CI can spend a
     // while draining the lagged tail before the follow-up tool call completes.
     wait_for_event_with_timeout(
-        &test.genex,
+        &test.ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         UNIFIED_EXEC_LAGGED_OUTPUT_TIMEOUT,
     )
@@ -3188,7 +3188,7 @@ async fn unified_exec_timeout_and_followup_poll() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let first_call_id = "uexec-timeout";
@@ -3233,7 +3233,7 @@ async fn unified_exec_timeout_and_followup_poll() -> Result<()> {
     submit_unified_exec_turn(&test, "check timeout", PermissionProfile::Disabled).await?;
 
     loop {
-        let event = test.genex.next_event().await.expect("event");
+        let event = test.ruxex.next_event().await.expect("event");
         if matches!(event.msg, EventMsg::TurnComplete(_)) {
             break;
         }
@@ -3269,7 +3269,7 @@ async fn managed_unified_exec_disable_runs_commands_without_retained_authority()
     skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_cloud_config_bundle(
+    let mut builder = test_ruxex().with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             r#"
 [features]
@@ -3302,7 +3302,7 @@ shell_tool = true
     .await;
 
     submit_unified_exec_turn(&test, "run one-shot command", PermissionProfile::Disabled).await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3334,7 +3334,7 @@ async fn managed_one_shot_command_is_terminated_when_the_turn_is_interrupted() -
     skip_if_target_windows!(Ok(()), "uses a POSIX command and process checks");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_cloud_config_bundle(
+    let mut builder = test_ruxex().with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             r#"
 [features]
@@ -3371,15 +3371,15 @@ shell_tool = true
         PermissionProfile::Disabled,
     )
     .await?;
-    wait_for_event_match(&test.genex, |event| match event {
+    wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(()),
         _ => None,
     })
     .await;
     let pid = wait_for_pid_file(&pid_path).await?;
 
-    test.genex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -3402,7 +3402,7 @@ async fn unified_exec_formats_large_output_summary() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let output_line = "token token \n";
@@ -3443,7 +3443,7 @@ PY
 
     submit_unified_exec_turn(&test, "summarize large output", PermissionProfile::Disabled).await?;
 
-    let end_event = wait_for_event_match(&test.genex, |event| match event {
+    let end_event = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::ExecCommandEnd(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -3455,7 +3455,7 @@ PY
         &end_event.aggregated_output,
     );
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3493,9 +3493,9 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -3525,7 +3525,7 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "summarize large output".into(),
@@ -3549,7 +3549,7 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");
@@ -3569,18 +3569,18 @@ async fn unified_exec_runs_under_sandbox() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::permissions::FileSystemAccessMode;
-    use genex_protocol::permissions::FileSystemPath;
-    use genex_protocol::permissions::FileSystemSandboxEntry;
-    use genex_protocol::permissions::FileSystemSandboxPolicy;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::permissions::FileSystemAccessMode;
+    use ruxex_protocol::permissions::FileSystemPath;
+    use ruxex_protocol::permissions::FileSystemSandboxEntry;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
 
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         let mut file_system_sandbox_policy = FileSystemSandboxPolicy::default();
         file_system_sandbox_policy
             .entries
@@ -3599,8 +3599,8 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
             ))
             .expect("set permission profile");
     });
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -3641,7 +3641,7 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
     let turn_cwd = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "read the fixture files".into(),
@@ -3665,7 +3665,7 @@ async fn unified_exec_enforces_glob_deny_read_policy() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");
@@ -3716,9 +3716,9 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -3770,7 +3770,7 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), turn_cwd.as_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "start python under seatbelt".into(),
@@ -3794,7 +3794,7 @@ async fn unified_exec_python_prompt_under_seatbelt() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert!(!requests.is_empty(), "expected at least one POST request");
@@ -3846,7 +3846,7 @@ async fn unified_exec_runs_on_all_platforms() -> Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
 
     let call_id = "uexec";
@@ -3869,7 +3869,7 @@ async fn unified_exec_runs_on_all_platforms() -> Result<()> {
 
     submit_unified_exec_turn(&test, "summarize large output", PermissionProfile::Disabled).await?;
 
-    let end_event = wait_for_event_match(&test.genex, |msg| match msg {
+    let end_event = wait_for_event_match(&test.ruxex, |msg| match msg {
         EventMsg::ExecCommandEnd(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -3877,7 +3877,7 @@ async fn unified_exec_runs_on_all_platforms() -> Result<()> {
     assert_eq!(end_event.exit_code, 0);
     assert_regex_match(".*hello crossplat.*", &end_event.aggregated_output);
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3904,7 +3904,7 @@ async fn write_stdin_calls_run_in_parallel_across_sessions() -> Result<()> {
     skip_if_target_windows!(Ok(()), "uses bash and POSIX file rendezvous commands");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
 
     let start_args = serde_json::to_string(&json!({
@@ -3946,7 +3946,7 @@ async fn write_stdin_calls_run_in_parallel_across_sessions() -> Result<()> {
     .await;
 
     submit_unified_exec_turn(&test, "start terminals", PermissionProfile::Disabled).await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::io::Cursor;
 
-use genex_app_server_protocol::ToolRequestUserInputAnswer;
-use genex_app_server_protocol::ToolRequestUserInputOption;
-use genex_app_server_protocol::ToolRequestUserInputParams;
-use genex_app_server_protocol::ToolRequestUserInputQuestion;
-use genex_app_server_protocol::ToolRequestUserInputResponse;
+use ruxex_app_server_protocol::ToolRequestUserInputAnswer;
+use ruxex_app_server_protocol::ToolRequestUserInputOption;
+use ruxex_app_server_protocol::ToolRequestUserInputParams;
+use ruxex_app_server_protocol::ToolRequestUserInputQuestion;
+use ruxex_app_server_protocol::ToolRequestUserInputResponse;
 use pretty_assertions::assert_eq;
 
 use super::prompt_for_answers_with;

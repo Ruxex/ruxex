@@ -3,21 +3,21 @@
 //! Permissions and the saved local executor selection must match the resumed runtime.
 
 use super::ThreadRequestProcessor;
-use genex_app_server_protocol::ThreadEnvironment;
-use genex_app_server_transport::daemon_recovery::InterruptedTurn;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::TurnStartOptions;
-use genex_core::context::ContextualUserFragment;
-use genex_core::context::InternalContextSource;
-use genex_core::context::InternalModelContextFragment;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_rollout::RolloutItem;
+use ruxex_app_server_protocol::ThreadEnvironment;
+use ruxex_app_server_transport::daemon_recovery::InterruptedTurn;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::TurnStartOptions;
+use ruxex_core::context::ContextualUserFragment;
+use ruxex_core::context::InternalContextSource;
+use ruxex_core::context::InternalModelContextFragment;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_rollout::RolloutItem;
 
 impl ThreadRequestProcessor {
     pub(crate) async fn continue_daemon_turn(&self, thread_id: &str, saved: InterruptedTurn) {
@@ -30,7 +30,7 @@ impl ThreadRequestProcessor {
         let Some(path) = thread.rollout_path() else {
             return;
         };
-        let history = match genex_rollout::RolloutRecorder::load_rollout_items(&path).await {
+        let history = match ruxex_rollout::RolloutRecorder::load_rollout_items(&path).await {
             Ok((history, _, _)) => history,
             Err(err) => {
                 tracing::warn!(%thread_id, %err, "failed to read interrupted turn history");
@@ -75,7 +75,7 @@ impl ThreadRequestProcessor {
         let [environment] = config.environment_selections() else {
             return;
         };
-        if environment.environment_id != genex_exec_server::LOCAL_ENVIRONMENT_ID
+        if environment.environment_id != ruxex_exec_server::LOCAL_ENVIRONMENT_ID
             || environment.config != EnvironmentConfigState::FromThread
             || saved.local_environment.as_ref() != Some(&ThreadEnvironment::from(environment))
         {

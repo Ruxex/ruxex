@@ -20,14 +20,14 @@ const IDE_CONTEXT_REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 #[cfg(unix)]
 const MAX_IPC_FRAME_BYTES: usize = 256 * 1024 * 1024;
 #[cfg(unix)]
-const TUI_SOURCE_CLIENT_ID: &str = "genex-tui";
+const TUI_SOURCE_CLIENT_ID: &str = "ruxex-tui";
 #[cfg(unix)]
 const OPEN_IDE_HINT: &str =
-    "Open this project in VS Code or Cursor with the Genex extension active.";
+    "Open this project in VS Code or Cursor with the Ruxex extension active.";
 #[cfg(unix)]
 const IDE_DID_NOT_PROVIDE_CONTEXT_HINT: &str = "The IDE extension did not provide context.";
 #[cfg(unix)]
-const KEEP_TRYING_HINT: &str = "Genex will keep trying on future messages.";
+const KEEP_TRYING_HINT: &str = "Ruxex will keep trying on future messages.";
 
 #[derive(Debug, Error)]
 pub(crate) enum IdeContextError {
@@ -66,10 +66,10 @@ impl IdeContextError {
                 "The selected IDE context is too large. Clear any large selection in your IDE and try /ide again.".to_string()
             }
             IdeContextError::Send(_) => {
-                "Genex could not request IDE context. Try /ide again.".to_string()
+                "Ruxex could not request IDE context. Try /ide again.".to_string()
             }
             IdeContextError::Read(_) | IdeContextError::InvalidResponse(_) => {
-                "Genex could not read IDE context. Try /ide again.".to_string()
+                "Ruxex could not read IDE context. Try /ide again.".to_string()
             }
         }
     }
@@ -86,11 +86,11 @@ impl IdeContextError {
                 OPEN_IDE_HINT.to_string()
             }
             IdeContextError::Read(error) if error.kind() == std::io::ErrorKind::TimedOut => {
-                "Genex timed out waiting for IDE context. It will keep trying on future messages."
+                "Ruxex timed out waiting for IDE context. It will keep trying on future messages."
                     .to_string()
             }
             IdeContextError::RequestFailed(error) if error == "client-disconnected" => {
-                hint_with_retry("The IDE connection changed while Genex was requesting context.")
+                hint_with_retry("The IDE connection changed while Ruxex was requesting context.")
             }
             IdeContextError::RequestFailed(error) if error == "request-timeout" => {
                 hint_with_retry("The IDE extension did not answer in time.")
@@ -103,13 +103,13 @@ impl IdeContextError {
                 "The connected IDE client does not support IDE context requests.".to_string()
             }
             IdeContextError::Send(_) => {
-                hint_with_retry("Genex lost the IDE connection while requesting context.")
+                hint_with_retry("Ruxex lost the IDE connection while requesting context.")
             }
             IdeContextError::InvalidResponse(_) => {
-                hint_with_retry("Genex received an unexpected IDE context response.")
+                hint_with_retry("Ruxex received an unexpected IDE context response.")
             }
             IdeContextError::RequestFailed(_) => hint_with_retry(IDE_DID_NOT_PROVIDE_CONTEXT_HINT),
-            IdeContextError::Read(_) => hint_with_retry("Genex could not read IDE context."),
+            IdeContextError::Read(_) => hint_with_retry("Ruxex could not read IDE context."),
         }
     }
 }
@@ -125,10 +125,10 @@ type IdeContextStream = UnixDeadlineStream;
 #[cfg(unix)]
 pub(crate) fn fetch_ide_context(
     workspace_root: &Path,
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> Result<IdeContext, IdeContextError> {
     let deadline = Instant::now() + IDE_CONTEXT_REQUEST_TIMEOUT;
-    let primary_socket_path = primary_ipc_socket_path(genex_home);
+    let primary_socket_path = primary_ipc_socket_path(ruxex_home);
     let uid = unsafe { libc::getuid() };
     let legacy_socket_paths = legacy_ipc_socket_paths(&std::env::temp_dir(), uid);
     fetch_ide_context_from_unix_socket_paths(
@@ -140,8 +140,8 @@ pub(crate) fn fetch_ide_context(
 }
 
 #[cfg(unix)]
-fn primary_ipc_socket_path(genex_home: &Path) -> PathBuf {
-    genex_home.join("ipc").join("ipc.sock")
+fn primary_ipc_socket_path(ruxex_home: &Path) -> PathBuf {
+    ruxex_home.join("ipc").join("ipc.sock")
 }
 
 #[cfg(unix)]
@@ -906,12 +906,12 @@ mod tests {
     }
 
     #[test]
-    fn primary_ipc_socket_path_uses_genex_home() {
-        let genex_home = Path::new("/home/test/.genex");
+    fn primary_ipc_socket_path_uses_ruxex_home() {
+        let ruxex_home = Path::new("/home/test/.ruxex");
 
         assert_eq!(
-            primary_ipc_socket_path(genex_home),
-            genex_home.join("ipc").join("ipc.sock")
+            primary_ipc_socket_path(ruxex_home),
+            ruxex_home.join("ipc").join("ipc.sock")
         );
     }
 

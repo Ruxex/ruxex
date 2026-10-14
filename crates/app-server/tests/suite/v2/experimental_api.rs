@@ -4,15 +4,15 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use tempfile::TempDir;
@@ -25,9 +25,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 #[test_case("turn/settings/update"; "turn settings")]
 #[tokio::test]
 async fn settings_update_requires_experimental_api_capability(method: &str) -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -65,11 +65,11 @@ async fn settings_update_requires_experimental_api_capability(method: &str) -> R
 #[tokio::test]
 async fn thread_start_mock_field_requires_experimental_api_capability() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let init = mcp
@@ -108,11 +108,11 @@ async fn thread_start_mock_field_requires_experimental_api_capability() -> Resul
 async fn thread_start_without_dynamic_tools_allows_without_experimental_api_capability()
 -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let init = mcp
@@ -150,11 +150,11 @@ async fn thread_start_without_dynamic_tools_allows_without_experimental_api_capa
 async fn thread_start_granular_approval_policy_requires_experimental_api_capability() -> Result<()>
 {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     let init = mcp

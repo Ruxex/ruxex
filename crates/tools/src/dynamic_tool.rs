@@ -1,6 +1,6 @@
 use crate::ToolDefinition;
 use crate::parse_tool_input_schema;
-use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use ruxex_protocol::dynamic_tools::DynamicToolFunctionSpec;
 
 pub fn parse_dynamic_tool(
     tool: &DynamicToolFunctionSpec,

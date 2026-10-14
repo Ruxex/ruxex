@@ -3,7 +3,7 @@ use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::app::tests::session_lifecycle_requests::recorded_params;
 use crate::app::tests::session_lifecycle_requests::start_recording_remote_app_server;
 use crate::app_event::RecapTrigger;
-use genex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider_info::ModelProviderInfo;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -74,9 +74,9 @@ async fn recap_generation_uses_bounded_structured_request_and_inserts_result() -
     .collect();
     let (model_server, _completions) = start_streaming_sse_server(vec![chunks]).await;
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
+    let ruxex_home = tempdir()?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             r#"
 model = "{MODEL}"
@@ -92,8 +92,8 @@ stream_max_retries = 0
             model_server.uri()
         ),
     )?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs());
     app.config.model = Some(MODEL.to_string());
     app.config.model_provider_id = MODEL_PROVIDER_ID.to_string();
     app.config.model_provider = ModelProviderInfo {
@@ -377,13 +377,13 @@ async fn recap_generation_uses_remote_workspace_cwd() -> Result<()> {
 #[tokio::test]
 async fn temporary_recap_threads_disable_remote_mcp_servers() -> Result<()> {
     let (mut app, _app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
+    let ruxex_home = tempdir()?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         "features.context_management.experimental_mode = true\n[mcp_servers.filesystem]\ncommand = 'true'\n",
     )?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.path().abs());
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs());
     let (app_server, requests, proxy) = start_recording_remote_app_server(&app.config).await?;
 
     let config = app.chat_widget.config_ref();

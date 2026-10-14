@@ -1,6 +1,6 @@
 //! Reads and binds Desktop-compatible thread ownership for managed worktrees.
 //!
-//! Stores a versioned `genex-thread.json` record in each worktree's Git metadata.
+//! Stores a versioned `ruxex-thread.json` record in each worktree's Git metadata.
 //! Binding publishes the record atomically without replacing another owner;
 //! binding the same thread again leaves the existing record unchanged.
 
@@ -16,7 +16,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
-const OWNER_FILENAME: &str = "genex-thread.json";
+const OWNER_FILENAME: &str = "ruxex-thread.json";
 const OWNER_VERSION: u8 = 1;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]

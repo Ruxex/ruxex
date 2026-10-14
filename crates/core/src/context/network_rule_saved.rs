@@ -1,7 +1,7 @@
 use super::ContextualUserFragment;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct NetworkRuleSaved {

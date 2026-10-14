@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-core"
+name = "ruxex-core"
 version.workspace = true
 
 [lib]
-name = "genex_core"
+name = "ruxex_core"
 path = "src/lib.rs"
 
 [lints]
@@ -18,66 +18,66 @@ async-channel = { workspace = true }
 base64 = { workspace = true }
 bm25 = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-genex-agent-graph-store = { workspace = true }
-genex-agent-roles = { workspace = true }
-genex-app-server-protocol = { workspace = true }
-genex-apply-patch = { workspace = true }
-genex-async-utils = { workspace = true }
-genex-attachment-store = { workspace = true }
-genex-client = { workspace = true }
-genex-code-mode = { workspace = true }
-genex-context-fragments = { workspace = true }
-genex-config = { workspace = true }
-genex-credential-broker = { workspace = true }
-genex-core-plugins = { workspace = true }
-genex-diagnostics = { workspace = true }
-genex-exec-server = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-extension-items = { workspace = true }
-genex-features = { workspace = true }
-genex-file-system = { workspace = true }
-genex-login = { workspace = true }
-genex-mcp = { workspace = true }
-genex-model-provider-info = { workspace = true }
-genex-models-manager = { workspace = true }
-genex-shell-command = { workspace = true }
-genex-execpolicy = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-history = { workspace = true }
-genex-hooks = { workspace = true }
-genex-http-client = { workspace = true }
-genex-install-context = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-otel = { workspace = true }
-genex-plugin = { workspace = true }
-genex-model-provider = { workspace = true }
-genex-providers = { workspace = true }
-genex-protocol = { workspace = true }
-genex-response-debug-context = { workspace = true }
-genex-prompts = { workspace = true }
-genex-rollout = { workspace = true }
-genex-rollout-trace = { workspace = true }
-genex-rmcp-client = { workspace = true }
-genex-sandboxing = { workspace = true }
-genex-skills = { workspace = true }
-genex-skills-extension = { workspace = true }
-genex-state = { workspace = true }
-genex-terminal-detection = { workspace = true }
-genex-thread-store = { workspace = true }
-genex-tools = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-audio = { workspace = true }
-genex-utils-cache = { workspace = true }
-genex-utils-git-discovery = { workspace = true }
-genex-utils-image = { workspace = true }
-genex-utils-home-dir = { workspace = true }
-genex-utils-output-truncation = { workspace = true }
-genex-utils-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
-genex-utils-plugins = { workspace = true }
-genex-utils-pty = { workspace = true }
-genex-utils-string = { workspace = true }
-genex-utils-stream-parser = { workspace = true }
+ruxex-agent-graph-store = { workspace = true }
+ruxex-agent-roles = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-apply-patch = { workspace = true }
+ruxex-async-utils = { workspace = true }
+ruxex-attachment-store = { workspace = true }
+ruxex-client = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-credential-broker = { workspace = true }
+ruxex-core-plugins = { workspace = true }
+ruxex-diagnostics = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-mcp = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-hooks = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-plugin = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-response-debug-context = { workspace = true }
+ruxex-prompts = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-rollout-trace = { workspace = true }
+ruxex-rmcp-client = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-skills = { workspace = true }
+ruxex-skills-extension = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-terminal-detection = { workspace = true }
+ruxex-thread-store = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-audio = { workspace = true }
+ruxex-utils-cache = { workspace = true }
+ruxex-utils-git-discovery = { workspace = true }
+ruxex-utils-image = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
+ruxex-utils-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-plugins = { workspace = true }
+ruxex-utils-pty = { workspace = true }
+ruxex-utils-string = { workspace = true }
+ruxex-utils-stream-parser = { workspace = true }
 dirs = { workspace = true }
 dunce = { workspace = true }
 eventsource-stream = { workspace = true }
@@ -133,13 +133,13 @@ openssl-sys = { workspace = true, features = ["vendored"] }
 [dev-dependencies]
 assert_cmd = { workspace = true }
 assert_matches = { workspace = true }
-genex-exec-server-test-support = { workspace = true }
-genex-home = { workspace = true }
-genex-otel = { workspace = true }
-genex-test-binary-support = { workspace = true }
-genex-utils-cargo-bin = { workspace = true }
-genex-utils-redacted-string = { workspace = true }
-genex-web-search-extension = { workspace = true }
+ruxex-exec-server-test-support = { workspace = true }
+ruxex-home = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-test-binary-support = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
+ruxex-utils-redacted-string = { workspace = true }
+ruxex-web-search-extension = { workspace = true }
 core_test_support = { workspace = true }
 ctor = { workspace = true }
 insta = { workspace = true }

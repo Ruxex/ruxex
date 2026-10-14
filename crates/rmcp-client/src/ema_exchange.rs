@@ -7,7 +7,7 @@ use std::time::Duration;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use genex_exec_server::HttpClient;
+use ruxex_exec_server::HttpClient;
 use rmcp::transport::auth::OAuthHttpRedirectPolicy;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;

@@ -6,15 +6,15 @@ use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 async fn build_config(temp_dir: &TempDir) -> Config {
     ConfigBuilder::default()
-        .genex_home(temp_dir.path().to_path_buf())
+        .ruxex_home(temp_dir.path().to_path_buf())
         .build()
         .await
         .expect("config should build")
@@ -29,7 +29,7 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     )?;
     let config = build_config(&home).await;
     let client_config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .cli_overrides(vec![(
             "default_permissions".to_string(),
             ":workspace".into(),
@@ -69,19 +69,19 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         Some(":workspace".to_string())
     );
     server
-        .thread_settings_update(genex_app_server_protocol::ThreadSettingsUpdateParams {
+        .thread_settings_update(ruxex_app_server_protocol::ThreadSettingsUpdateParams {
             thread_id: thread_id.to_string(),
             permissions: Some("server-only".into()),
-            approval_policy: Some(genex_app_server_protocol::AskForApproval::Never),
-            approvals_reviewer: Some(genex_app_server_protocol::ApprovalsReviewer::AutoReview),
+            approval_policy: Some(ruxex_app_server_protocol::AskForApproval::Never),
+            approvals_reviewer: Some(ruxex_app_server_protocol::ApprovalsReviewer::AutoReview),
             ..Default::default()
         })
         .await?;
     tokio::time::timeout(std::time::Duration::from_secs(5), async {
         loop {
-            if let Some(genex_app_server_client::AppServerEvent::ServerNotification(notification)) =
+            if let Some(ruxex_app_server_client::AppServerEvent::ServerNotification(notification)) =
                 server.next_event().await
-                && let genex_app_server_protocol::ServerNotification::ThreadSettingsUpdated(
+                && let ruxex_app_server_protocol::ServerNotification::ThreadSettingsUpdated(
                     settings,
                 ) = *notification
                 && settings.thread_id == thread_id.to_string()
@@ -118,11 +118,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     );
     assert_eq!(
         resumed.session.approval_policy,
-        genex_app_server_protocol::AskForApproval::Never
+        ruxex_app_server_protocol::AskForApproval::Never
     );
     assert_eq!(
         resumed.session.approvals_reviewer,
-        genex_protocol::config_types::ApprovalsReviewer::AutoReview
+        ruxex_protocol::config_types::ApprovalsReviewer::AutoReview
     );
     // A locally remembered profile may have been removed since selection.
     let stale_selection = crate::app_event::PermissionProfileSelection {
@@ -152,11 +152,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
     );
     assert_eq!(
         forked.session.approval_policy,
-        genex_app_server_protocol::AskForApproval::Never
+        ruxex_app_server_protocol::AskForApproval::Never
     );
     assert_eq!(
         forked.session.approvals_reviewer,
-        genex_protocol::config_types::ApprovalsReviewer::AutoReview
+        ruxex_protocol::config_types::ApprovalsReviewer::AutoReview
     );
     let side = server
         .fork_side_thread(&local_settings, client_config, thread_id)
@@ -166,10 +166,10 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         "server-only"
     );
     let explicit_config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .harness_overrides(crate::legacy_core::config::ConfigOverrides {
-            sandbox_mode: Some(genex_protocol::config_types::SandboxMode::ReadOnly),
-            approval_policy: Some(genex_protocol::protocol::AskForApproval::OnRequest),
+            sandbox_mode: Some(ruxex_protocol::config_types::SandboxMode::ReadOnly),
+            approval_policy: Some(ruxex_protocol::protocol::AskForApproval::OnRequest),
             ..Default::default()
         })
         .build()
@@ -184,11 +184,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         .await?;
     assert_eq!(
         explicit_fork.session.approval_policy,
-        genex_app_server_protocol::AskForApproval::OnRequest
+        ruxex_app_server_protocol::AskForApproval::OnRequest
     );
     assert_eq!(
         explicit_fork.session.permission_profile,
-        genex_protocol::models::PermissionProfile::read_only()
+        ruxex_protocol::models::PermissionProfile::read_only()
     );
     server.shutdown().await?;
     Ok(())
@@ -196,11 +196,11 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
 
 #[tokio::test]
 async fn viewing_thread_reads_history_without_resuming_it() -> Result<()> {
-    let genex_home = tempfile::tempdir()?;
-    let config = build_config(&genex_home).await;
+    let ruxex_home = tempfile::tempdir()?;
+    let config = build_config(&ruxex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -239,11 +239,11 @@ fn only_active_writer_failures_offer_read_only_view() {
 
 #[tokio::test]
 async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() -> Result<()> {
-    let genex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&genex_home).await;
+    let ruxex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&ruxex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -278,11 +278,11 @@ async fn legacy_resume_preserves_history_mode_after_picker_server_replacement() 
 
 #[tokio::test]
 async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut() -> Result<()> {
-    let genex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&genex_home).await;
+    let ruxex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&ruxex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_paginated_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",
@@ -293,7 +293,7 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
     let mut app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     app_server.remember_thread_history_mode(thread_id, ThreadHistoryMode::Paginated);
     let _maintenance_guard =
-        genex_rollout::try_acquire_rollout_maintenance_lock(genex_home.path())?
+        ruxex_rollout::try_acquire_rollout_maintenance_lock(ruxex_home.path())?
             .expect("acquire rollout maintenance lock");
     let next_request_id = app_server.next_request_id;
 
@@ -322,11 +322,11 @@ async fn rollout_maintenance_contention_disables_cached_legacy_resume_shortcut()
 
 #[tokio::test]
 async fn stale_legacy_history_mode_is_revalidated_before_resume() -> Result<()> {
-    let genex_home = tempfile::tempdir().expect("tempdir");
-    let config = build_config(&genex_home).await;
+    let ruxex_home = tempfile::tempdir().expect("tempdir");
+    let config = build_config(&ruxex_home).await;
     let thread_id = ThreadId::from_string(
         &create_fake_paginated_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved paginated user message",

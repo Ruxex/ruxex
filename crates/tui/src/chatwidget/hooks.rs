@@ -4,8 +4,8 @@ use super::ChatWidget;
 use crate::app_event::AppEvent;
 use crate::bottom_pane::HooksBrowserView;
 use crate::hooks_rpc::hooks_list_entry_for_cwd;
-use genex_app_server_protocol::HooksListEntry;
-use genex_app_server_protocol::HooksListResponse;
+use ruxex_app_server_protocol::HooksListEntry;
+use ruxex_app_server_protocol::HooksListResponse;
 
 impl ChatWidget {
     pub(crate) fn add_hooks_output(&mut self) {

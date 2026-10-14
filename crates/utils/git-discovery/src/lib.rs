@@ -16,8 +16,8 @@ use std::sync::Mutex;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
-use genex_git_utils::get_git_repo_root;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tokio::sync::Notify;
 use tokio::sync::oneshot;
 
@@ -83,7 +83,7 @@ impl GitRootDiscovery {
             // A failed spawn drops the closure and its guard, so do not hold the map lock.
             // Dropping the handle detaches the thread; Tokio never owns or joins it.
             let worker = std::thread::Builder::new()
-                .name("genex-git-root".to_string())
+                .name("ruxex-git-root".to_string())
                 .spawn(move || {
                     let root = (probe.discovery.find_root)(probe.cwd.as_path());
                     drop(probe);

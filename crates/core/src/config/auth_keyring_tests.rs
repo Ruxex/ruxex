@@ -1,15 +1,15 @@
 use super::*;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirements;
-use genex_config::ConfigRequirementsToml;
-use genex_config::FeatureRequirementsToml;
-use genex_config::RequirementSource;
-use genex_config::Sourced;
-use genex_config::config_toml::ConfigToml;
-use genex_config::config_toml::ForcedManagedWorkspaceIds;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_features::FeaturesToml;
-use genex_protocol::config_types::ForcedLoginMethod;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::FeatureRequirementsToml;
+use ruxex_config::RequirementSource;
+use ruxex_config::Sourced;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_config::config_toml::ForcedManagedWorkspaceIds;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_features::FeaturesToml;
+use ruxex_protocol::config_types::ForcedLoginMethod;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 
@@ -94,7 +94,7 @@ fn managed_auth_restrictions_intersect_workspaces_and_fail_closed() {
         )
         .expect("requirements should stack"),
     };
-    let auth_config = bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
+    let auth_config = bootstrap_auth_config(Path::new("ruxex-home"), &bootstrap_config)
         .expect("policy should resolve");
     assert_eq!(auth_config.forced_login_method, None);
     assert!(auth_config.is_login_method_allowed(ForcedLoginMethod::Managed));
@@ -120,7 +120,7 @@ fn managed_auth_restrictions_intersect_workspaces_and_fail_closed() {
         .expect("requirements should stack"),
     };
     assert_eq!(
-        bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
+        bootstrap_auth_config(Path::new("ruxex-home"), &bootstrap_config)
             .expect_err("managed-auth policy without an allowed workspace must fail")
             .kind(),
         std::io::ErrorKind::PermissionDenied
@@ -156,7 +156,7 @@ fn bootstrap_auth_config_applies_managed_store_and_managed_auth_base_url() {
         .expect("requirements should stack"),
     };
 
-    let auth_config = bootstrap_auth_config(Path::new("genex-home"), &bootstrap_config)
+    let auth_config = bootstrap_auth_config(Path::new("ruxex-home"), &bootstrap_config)
         .expect("managed authentication settings should resolve");
 
     assert_eq!(auth_config.auth_credentials_store_mode, managed_store);

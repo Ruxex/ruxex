@@ -1,21 +1,21 @@
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_features::Feature;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
-use genex_protocol::ThreadId;
-use genex_protocol::ToolName;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_features::Feature;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::ToolName;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_custom_tool_call;
@@ -32,8 +32,8 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -96,7 +96,7 @@ fn touch_command(path: &str) -> String {
 
 #[test]
 fn extract_log_field_handles_empty_bare_values() {
-    let line = "event.name=\"genex.tool_result\" mcp_server= mcp_server_origin=";
+    let line = "event.name=\"ruxex.tool_result\" mcp_server= mcp_server_origin=";
     assert_eq!(extract_log_field(line, "mcp_server"), Some(String::new()));
     assert_eq!(
         extract_log_field(line, "mcp_server_origin"),
@@ -106,7 +106,7 @@ fn extract_log_field_handles_empty_bare_values() {
 
 #[test]
 fn extract_log_field_does_not_confuse_similar_keys() {
-    let line = "event.name=\"genex.tool_result\" mcp_server_origin=stdio";
+    let line = "event.name=\"ruxex.tool_result\" mcp_server_origin=stdio";
     assert_eq!(extract_log_field(line, "mcp_server"), None);
     assert_eq!(
         extract_log_field(line, "mcp_server_origin"),
@@ -121,7 +121,7 @@ async fn responses_api_emits_api_request_event() {
 
     let response_mock = mount_sse_once(&server, sse(vec![ev_completed("done")])).await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
@@ -131,7 +131,7 @@ async fn responses_api_emits_api_request_event() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -139,7 +139,7 @@ async fn responses_api_emits_api_request_event() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request_body = response_mock.single_request().body_json();
     assert_eq!(request_body["service_tier"].as_str(), Some("flex"));
@@ -148,16 +148,16 @@ async fn responses_api_emits_api_request_event() {
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
-            .find(|line| line.contains("genex.api_request"))
+            .find(|line| line.contains("ruxex.api_request"))
             .map(|_| Ok(()))
-            .unwrap_or_else(|| Err("expected genex.api_request event".to_string()))
+            .unwrap_or_else(|| Err("expected ruxex.api_request event".to_string()))
     });
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("service_tier=\"flex\"")
                     && line.contains("model_reasoning_effort=\"high\"")
@@ -171,9 +171,9 @@ async fn responses_api_emits_api_request_event() {
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
-            .find(|line| line.contains("genex.conversation_starts"))
+            .find(|line| line.contains("ruxex.conversation_starts"))
             .map(|_| Ok(()))
-            .unwrap_or_else(|| Err("expected genex.conversation_starts event".to_string()))
+            .unwrap_or_else(|| Err("expected ruxex.conversation_starts event".to_string()))
     });
 }
 
@@ -188,9 +188,9 @@ async fn process_sse_emits_tracing_for_output_item() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await.unwrap();
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await.unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -198,13 +198,13 @@ async fn process_sse_emits_tracing_for_output_item() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("event.kind=response.output_item.done")
             })
             .map(|_| Ok(()))
@@ -219,7 +219,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
 
     mount_sse_once(&server, "data: not-json\n\n".to_string()).await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -230,7 +230,7 @@ async fn process_sse_emits_failed_event_on_parse_error() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -238,18 +238,18 @@ async fn process_sse_emits_failed_event_on_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("error.message")
                     && line.contains("expected ident at line 1 column 2")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -260,7 +260,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
 
     mount_sse_once(&server, sse(vec![ev_assistant_message("id", "hi")])).await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -271,7 +271,7 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -279,18 +279,18 @@ async fn process_sse_records_failed_event_when_stream_closes_without_completed()
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("error.message")
                     && line.contains("stream closed before response.completed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -321,7 +321,7 @@ async fn process_sse_failed_event_records_response_error_message() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -332,7 +332,7 @@ async fn process_sse_failed_event_records_response_error_message() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -340,19 +340,19 @@ async fn process_sse_failed_event_records_response_error_message() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("event.kind=response.failed")
                     && line.contains("error.message")
                     && line.contains("boom")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -380,7 +380,7 @@ async fn process_sse_failed_event_logs_parse_error() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -391,7 +391,7 @@ async fn process_sse_failed_event_logs_parse_error() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -399,16 +399,16 @@ async fn process_sse_failed_event_logs_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event") && line.contains("event.kind=response.failed")
+                line.contains("ruxex.sse_event") && line.contains("event.kind=response.failed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -426,7 +426,7 @@ async fn process_sse_failed_event_logs_missing_error() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -437,7 +437,7 @@ async fn process_sse_failed_event_logs_missing_error() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -445,16 +445,16 @@ async fn process_sse_failed_event_logs_missing_error() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event") && line.contains("event.kind=response.failed")
+                line.contains("ruxex.sse_event") && line.contains("event.kind=response.failed")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -481,7 +481,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -492,7 +492,7 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -500,19 +500,19 @@ async fn process_sse_failed_event_logs_response_completed_parse_error() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("error.message")
                     && line.contains("failed to parse ResponseCompleted")
             })
             .map(|_| Ok(()))
-            .unwrap_or(Err("missing genex.sse_event".to_string()))
+            .unwrap_or(Err("missing ruxex.sse_event".to_string()))
     });
 }
 
@@ -545,9 +545,9 @@ async fn process_sse_emits_completed_telemetry() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await.unwrap();
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await.unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -555,13 +555,13 @@ async fn process_sse_emits_completed_telemetry() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         lines
             .iter()
             .find(|line| {
-                line.contains("genex.sse_event")
+                line.contains("ruxex.sse_event")
                     && line.contains("event.kind=response.completed")
                     && line.contains("input_token_count=3")
                     && line.contains("output_token_count=5")
@@ -613,7 +613,7 @@ async fn turn_and_completed_response_spans_record_token_usage() {
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
             config
@@ -625,9 +625,9 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         .await
         .unwrap();
 
-    let TestGenex { genex, .. } = test;
+    let TestRuxex { ruxex, .. } = test;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -635,7 +635,7 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -643,27 +643,27 @@ async fn turn_and_completed_response_spans_record_token_usage() {
         logs.lines().any(|line| {
             line.contains("handle_responses{")
                 && line.contains("otel.name=\"completed\"")
-                && line.contains("genex.request.reasoning_effort=high")
+                && line.contains("ruxex.request.reasoning_effort=high")
                 && line.contains("gen_ai.usage.input_tokens=3")
                 && line.contains("gen_ai.usage.cache_read.input_tokens=1")
                 && line.contains("gen_ai.usage.cache_write.input_tokens=2")
                 && line.contains("gen_ai.usage.output_tokens=5")
-                && line.contains("genex.usage.reasoning_output_tokens=2")
-                && line.contains("genex.usage.total_tokens=9")
+                && line.contains("ruxex.usage.reasoning_output_tokens=2")
+                && line.contains("ruxex.usage.total_tokens=9")
         }),
         "missing completed response span token usage\nlogs:\n{logs}"
     );
     assert!(
         logs.lines().any(|line| {
             line.contains("turn{otel.name=\"session_task.turn\"")
-                && line.contains("genex.turn.reasoning_effort=high")
-                && line.contains("genex.turn.token_usage.input_tokens=3")
-                && line.contains("genex.turn.token_usage.cached_input_tokens=1")
-                && line.contains("genex.turn.token_usage.cache_write_input_tokens=2")
-                && line.contains("genex.turn.token_usage.non_cached_input_tokens=2")
-                && line.contains("genex.turn.token_usage.output_tokens=5")
-                && line.contains("genex.turn.token_usage.reasoning_output_tokens=2")
-                && line.contains("genex.turn.token_usage.total_tokens=9")
+                && line.contains("ruxex.turn.reasoning_effort=high")
+                && line.contains("ruxex.turn.token_usage.input_tokens=3")
+                && line.contains("ruxex.turn.token_usage.cached_input_tokens=1")
+                && line.contains("ruxex.turn.token_usage.cache_write_input_tokens=2")
+                && line.contains("ruxex.turn.token_usage.non_cached_input_tokens=2")
+                && line.contains("ruxex.turn.token_usage.output_tokens=5")
+                && line.contains("ruxex.turn.token_usage.reasoning_output_tokens=2")
+                && line.contains("ruxex.turn.token_usage.total_tokens=9")
         }),
         "missing regular turn span token usage\nlogs:\n{logs}"
     );
@@ -700,7 +700,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config
                 .features
@@ -711,7 +711,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -719,7 +719,7 @@ async fn handle_responses_span_records_response_kind_and_tool_name() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -786,7 +786,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::High);
@@ -799,7 +799,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -807,7 +807,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let logs = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
 
@@ -832,7 +832,7 @@ async fn record_responses_sets_span_fields_for_response_events() {
             logs.lines().any(|line| {
                 line.contains("handle_responses{")
                     && line.contains(&otel_name)
-                    && line.contains("genex.request.reasoning_effort=high")
+                    && line.contains("ruxex.request.reasoning_effort=high")
                     && from_field
                         .as_ref()
                         .is_none_or(|from_field| line.contains(from_field))
@@ -871,7 +871,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -882,7 +882,7 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -890,15 +890,15 @@ async fn handle_response_item_records_tool_result_for_custom_tool_call() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("genex.tool_result") && line.contains("call_id=custom-tool-call")
+                line.contains("ruxex.tool_result") && line.contains("call_id=custom-tool-call")
             })
-            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
+            .ok_or_else(|| "missing ruxex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=unsupported_tool") {
             return Err("missing tool_name field".to_string());
@@ -941,7 +941,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -952,7 +952,7 @@ async fn handle_response_item_records_tool_result_for_function_call() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -960,15 +960,15 @@ async fn handle_response_item_records_tool_result_for_function_call() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("genex.tool_result") && line.contains("call_id=function-call")
+                line.contains("ruxex.tool_result") && line.contains("call_id=function-call")
             })
-            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
+            .ok_or_else(|| "missing ruxex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=nonexistent") {
             return Err("missing tool_name field".to_string());
@@ -1011,7 +1011,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |config| {
             config
                 .features
@@ -1023,7 +1023,7 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1031,13 +1031,13 @@ async fn handle_response_item_records_tool_result_for_exec_command_call() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(|lines: &[&str]| {
         let line = lines
             .iter()
-            .find(|line| line.contains("genex.tool_result") && line.contains("call_id=shell-call"))
-            .ok_or_else(|| "missing genex.tool_result event".to_string())?;
+            .find(|line| line.contains("ruxex.tool_result") && line.contains("call_id=shell-call"))
+            .ok_or_else(|| "missing ruxex.tool_result event".to_string())?;
 
         if !line.contains("tool_name=exec_command") {
             return Err("missing tool_name field".to_string());
@@ -1073,9 +1073,9 @@ fn tool_decision_assertion<'a>(
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("genex.tool_decision") && line.contains(&format!("call_id={call_id}"))
+                line.contains("ruxex.tool_decision") && line.contains(&format!("call_id={call_id}"))
             })
-            .ok_or_else(|| format!("missing genex.tool_decision event for {call_id}"))?;
+            .ok_or_else(|| format!("missing ruxex.tool_decision event for {call_id}"))?;
 
         let lower = line.to_lowercase();
         if !lower.contains("tool_name=exec_command") {
@@ -1106,10 +1106,10 @@ fn sandbox_outcome_assertion<'a>(
         let line = lines
             .iter()
             .find(|line| {
-                line.contains("genex.sandbox_outcome")
+                line.contains("ruxex.sandbox_outcome")
                     && line.contains(&format!("call_id={call_id}"))
             })
-            .ok_or_else(|| format!("missing genex.sandbox_outcome event for {call_id}"))?;
+            .ok_or_else(|| format!("missing ruxex.sandbox_outcome event for {call_id}"))?;
 
         let lower = line.to_lowercase();
         if !lower.contains("tool_name=exec_command") {
@@ -1139,7 +1139,7 @@ fn network_policy_decisions_omit_source_and_destination() {
         /*account_id*/ None,
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
-        "Genex_Desktop".to_string(),
+        "Ruxex_Desktop".to_string(),
         /*log_user_prompts*/ false,
         "tty".to_string(),
         SessionSource::Cli,
@@ -1173,7 +1173,7 @@ fn network_policy_decisions_omit_source_and_destination() {
             let line = lines
                 .iter()
                 .find(|line| {
-                    line.contains("genex.tool_decision")
+                    line.contains("ruxex.tool_decision")
                         && line.contains(&format!("call_id={call_id}"))
                 })
                 .ok_or_else(|| format!("missing network tool decision for {call_id}"))?;
@@ -1209,7 +1209,7 @@ fn sandbox_outcome_event_records_outcome() {
         /*account_id*/ None,
         /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
-        "Genex_Desktop".to_string(),
+        "Ruxex_Desktop".to_string(),
         /*log_user_prompts*/ false,
         "tty".to_string(),
         SessionSource::Cli,
@@ -1251,7 +1251,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
             config
@@ -1263,7 +1263,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1271,7 +1271,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     logs_assert(tool_decision_assertion(
         "auto_config_call",
@@ -1284,7 +1284,7 @@ async fn handle_exec_command_autoapprove_from_config_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_approved_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("genex-otel-approval-test");
+    let command = touch_command("ruxex-otel-approval-test");
     mount_sse_once(
         &server,
         sse(vec![
@@ -1303,7 +1303,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1312,7 +1312,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "approved".into(),
             text_elements: Vec::new(),
@@ -1321,12 +1321,12 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    genex
+    ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1335,7 +1335,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_approved_call",
@@ -1348,7 +1348,7 @@ async fn handle_exec_command_user_approved_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("genex-otel-approval-test");
+    let command = touch_command("ruxex-otel-approval-test");
 
     mount_sse_once(
         &server,
@@ -1367,7 +1367,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1376,7 +1376,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "persist".into(),
             text_elements: Vec::new(),
@@ -1385,12 +1385,12 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    genex
+    ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1399,7 +1399,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_approved_session_call",
@@ -1412,7 +1412,7 @@ async fn handle_exec_command_user_approved_for_session_records_tool_decision() {
 #[traced_test]
 async fn handle_exec_command_user_denies_records_tool_decision() {
     let server = start_mock_server().await;
-    let command = touch_command("genex-otel-approval-test");
+    let command = touch_command("ruxex-otel-approval-test");
 
     mount_sse_once(
         &server,
@@ -1431,7 +1431,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         ]),
     )
     .await;
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(|config| {
             config.permissions.approval_policy =
                 Constrained::allow_any(AskForApproval::UnlessTrusted);
@@ -1440,7 +1440,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .await
         .unwrap();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "deny".into(),
             text_elements: Vec::new(),
@@ -1449,12 +1449,12 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .unwrap();
 
     let approval_event =
-        wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
+        wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ExecApprovalRequest(_))).await;
     let EventMsg::ExecApprovalRequest(approval) = approval_event else {
         panic!("expected ExecApprovalRequest event");
     };
 
-    genex
+    ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -1463,7 +1463,7 @@ async fn handle_exec_command_user_denies_records_tool_decision() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TokenCount(_))).await;
 
     logs_assert(tool_decision_assertion(
         "user_denied_call",

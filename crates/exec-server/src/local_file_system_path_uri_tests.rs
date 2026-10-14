@@ -1,4 +1,4 @@
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tokio::io;
 

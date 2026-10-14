@@ -15,38 +15,38 @@ use crate::session::turn_context::TurnContext;
 use crate::utils::json::serialized_json_bytes;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_context_fragments::set_annotated_content;
-use genex_context_fragments::to_annotated_content;
-use genex_extension_api::ConversationHistorySnapshot;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_history::RetainedContext;
-use genex_history::RetainedContextEvent;
-use genex_prompts::render_model_instructions;
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::models::AgentMessageInputContent;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TokenUsageInfo;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::WorldStateItem;
-use genex_utils_audio::estimate_audio_token_count;
-use genex_utils_cache::BlockingLruCache;
-use genex_utils_cache::sha1_digest;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::approx_bytes_for_tokens;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::approx_tokens_from_byte_count_i64;
-use genex_utils_output_truncation::truncate_function_output_payload;
-use genex_utils_output_truncation::with_serialization_allowance;
+use ruxex_context_fragments::set_annotated_content;
+use ruxex_context_fragments::to_annotated_content;
+use ruxex_extension_api::ConversationHistorySnapshot;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_history::RetainedContext;
+use ruxex_history::RetainedContextEvent;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::models::AgentMessageInputContent;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TokenUsageInfo;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::WorldStateItem;
+use ruxex_utils_audio::estimate_audio_token_count;
+use ruxex_utils_cache::BlockingLruCache;
+use ruxex_utils_cache::sha1_digest;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::approx_bytes_for_tokens;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::approx_tokens_from_byte_count_i64;
+use ruxex_utils_output_truncation::truncate_function_output_payload;
+use ruxex_utils_output_truncation::with_serialization_allowance;
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -95,8 +95,8 @@ pub(crate) enum HistoryReplacement {
 }
 
 impl ConversationHistorySnapshot for SharedConversationHistory {
-    fn latest_compaction(&self) -> Option<genex_history::CompactionCheckpoint<'_>> {
-        genex_history::CompactionCheckpoint::latest(&self.items)
+    fn latest_compaction(&self) -> Option<ruxex_history::CompactionCheckpoint<'_>> {
+        ruxex_history::CompactionCheckpoint::latest(&self.items)
     }
 
     fn retained_context(&self) -> Option<&RetainedContext> {
@@ -245,7 +245,7 @@ impl ContextManager {
 
     fn record_items_with_metadata<'a, I, T>(&mut self, items: I, policy: TruncationPolicy)
     where
-        I: IntoIterator<Item = (T, Option<&'a GenexHarnessMetadata>)>,
+        I: IntoIterator<Item = (T, Option<&'a RuxexHarnessMetadata>)>,
         T: Deref<Target = ResponseItem>,
     {
         for (item, metadata) in items {
@@ -621,7 +621,7 @@ impl ContextManager {
 }
 
 /// Configuration updates require harness provenance; raw system messages are never retained.
-fn is_api_message(message: &ResponseItem, metadata: Option<&GenexHarnessMetadata>) -> bool {
+fn is_api_message(message: &ResponseItem, metadata: Option<&RuxexHarnessMetadata>) -> bool {
     match message {
         ResponseItem::Message { role, .. } => role.as_str() != "system",
         ResponseItem::ConfigurationUpdate { .. } => {
@@ -1027,7 +1027,7 @@ mod tests {
             call_id: Some("call-1".to_string()),
             name: None,
             namespace: None,
-            output: genex_protocol::models::FunctionCallOutputPayload {
+            output: ruxex_protocol::models::FunctionCallOutputPayload {
                 body: FunctionCallOutputBody::ContentItems(vec![
                     FunctionCallOutputContentItem::InputText {
                         text: "result".to_string(),

@@ -171,17 +171,17 @@ fn normalize_stdio_cwd(
     Ok(Some(config_dir.join(cwd)))
 }
 
-pub(crate) fn environment_provider_from_genex_home(
-    genex_home: &Path,
+pub(crate) fn environment_provider_from_ruxex_home(
+    ruxex_home: &Path,
 ) -> Result<Box<dyn EnvironmentProvider>, ExecServerError> {
-    let path = genex_home.join(ENVIRONMENTS_TOML_FILE);
+    let path = ruxex_home.join(ENVIRONMENTS_TOML_FILE);
     let Some(environments) = load_environments_toml(&path)? else {
         return Ok(Box::new(DefaultEnvironmentProvider::from_env()));
     };
 
     Ok(Box::new(TomlEnvironmentProvider::new_with_config_dir(
         environments,
-        Some(genex_home),
+        Some(ruxex_home),
     )?))
 }
 
@@ -305,10 +305,10 @@ mod tests {
                 program: Some(" ssh ".to_string()),
                 args: Some(vec![
                     "dev".to_string(),
-                    "genex exec-server --listen stdio".to_string(),
+                    "ruxex exec-server --listen stdio".to_string(),
                 ]),
                 env: Some(HashMap::from([(
-                    "GENEX_LOG".to_string(),
+                    "RUXEX_LOG".to_string(),
                     "debug".to_string(),
                 )])),
                 ..Default::default()
@@ -422,7 +422,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "local".to_string(),
-                    program: Some("genex".to_string()),
+                    program: Some("ruxex".to_string()),
                     ..Default::default()
                 },
                 "environment id `local` is reserved",
@@ -430,7 +430,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: " devbox ".to_string(),
-                    program: Some("genex".to_string()),
+                    program: Some("ruxex".to_string()),
                     ..Default::default()
                 },
                 "environment id ` devbox ` must not contain surrounding whitespace",
@@ -438,7 +438,7 @@ mod tests {
             (
                 EnvironmentToml {
                     id: "dev box".to_string(),
-                    program: Some("genex".to_string()),
+                    program: Some("ruxex".to_string()),
                     ..Default::default()
                 },
                 "environment id `dev box` must contain only ASCII letters, numbers, '-' or '_'",
@@ -541,12 +541,12 @@ mod tests {
             environments: vec![
                 EnvironmentToml {
                     id: "devbox".to_string(),
-                    program: Some("genex".to_string()),
+                    program: Some("ruxex".to_string()),
                     ..Default::default()
                 },
                 EnvironmentToml {
                     id: "devbox".to_string(),
-                    program: Some("genex".to_string()),
+                    program: Some("ruxex".to_string()),
                     ..Default::default()
                 },
             ],
@@ -567,7 +567,7 @@ mod tests {
             include_local: None,
             environments: vec![EnvironmentToml {
                 id: id.clone(),
-                program: Some("genex".to_string()),
+                program: Some("ruxex".to_string()),
                 ..Default::default()
             }],
         })
@@ -598,8 +598,8 @@ mod tests {
 
     #[test]
     fn load_environments_toml_reads_root_environment_list() {
-        let genex_home = tempdir().expect("tempdir");
-        let path = genex_home.path().join(ENVIRONMENTS_TOML_FILE);
+        let ruxex_home = tempdir().expect("tempdir");
+        let path = ruxex_home.path().join(ENVIRONMENTS_TOML_FILE);
         std::fs::write(
             &path,
             r#"
@@ -614,10 +614,10 @@ initialize_timeout_sec = 34.0
 [[environments]]
 id = "ssh-dev"
 program = "ssh"
-args = ["dev", "genex exec-server --listen stdio"]
+args = ["dev", "ruxex exec-server --listen stdio"]
 cwd = "/tmp"
 [environments.env]
-GENEX_LOG = "debug"
+RUXEX_LOG = "debug"
 "#,
         )
         .expect("write environments.toml");
@@ -645,10 +645,10 @@ GENEX_LOG = "debug"
                 program: Some("ssh".to_string()),
                 args: Some(vec![
                     "dev".to_string(),
-                    "genex exec-server --listen stdio".to_string(),
+                    "ruxex exec-server --listen stdio".to_string(),
                 ]),
                 env: Some(HashMap::from([(
-                    "GENEX_LOG".to_string(),
+                    "RUXEX_LOG".to_string(),
                     "debug".to_string(),
                 )])),
                 cwd: Some(PathBuf::from("/tmp")),
@@ -659,7 +659,7 @@ GENEX_LOG = "debug"
 
     #[test]
     fn load_environments_toml_rejects_unknown_fields() {
-        let genex_home = tempdir().expect("tempdir");
+        let ruxex_home = tempdir().expect("tempdir");
         let cases = [
             ("unknown = true\n", "unknown field `unknown`"),
             (
@@ -674,7 +674,7 @@ unknown = true
         ];
 
         for (index, (contents, expected)) in cases.into_iter().enumerate() {
-            let path = genex_home.path().join(format!("environments-{index}.toml"));
+            let path = ruxex_home.path().join(format!("environments-{index}.toml"));
             std::fs::write(&path, contents).expect("write environments.toml");
 
             let err = load_environments_toml(&path).expect_err("unknown field should fail");
@@ -687,10 +687,10 @@ unknown = true
     }
 
     #[tokio::test]
-    async fn environment_provider_from_genex_home_uses_present_environments_file() {
-        let genex_home = tempdir().expect("tempdir");
+    async fn environment_provider_from_ruxex_home_uses_present_environments_file() {
+        let ruxex_home = tempdir().expect("tempdir");
         std::fs::write(
-            genex_home.path().join(ENVIRONMENTS_TOML_FILE),
+            ruxex_home.path().join(ENVIRONMENTS_TOML_FILE),
             r#"
 default = "none"
 include_local = false
@@ -699,7 +699,7 @@ include_local = false
         .expect("write environments.toml");
 
         let provider =
-            environment_provider_from_genex_home(genex_home.path()).expect("environment provider");
+            environment_provider_from_ruxex_home(ruxex_home.path()).expect("environment provider");
 
         let snapshot = provider.snapshot().await.expect("environments");
         let environment_ids: Vec<_> = snapshot
@@ -714,11 +714,11 @@ include_local = false
     }
 
     #[tokio::test]
-    async fn environment_provider_from_genex_home_falls_back_when_file_is_missing() {
-        let genex_home = tempdir().expect("tempdir");
+    async fn environment_provider_from_ruxex_home_falls_back_when_file_is_missing() {
+        let ruxex_home = tempdir().expect("tempdir");
 
         let provider =
-            environment_provider_from_genex_home(genex_home.path()).expect("environment provider");
+            environment_provider_from_ruxex_home(ruxex_home.path()).expect("environment provider");
 
         let snapshot = provider.snapshot().await.expect("environments");
         let environment_ids: Vec<_> = snapshot

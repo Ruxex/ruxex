@@ -48,7 +48,7 @@ pub fn run_main() -> i32 {
 
     let mut stdout = std::io::stdout();
     let mut stderr = std::io::stderr();
-    let cwd = match genex_utils_absolute_path::AbsolutePathBuf::current_dir() {
+    let cwd = match ruxex_utils_absolute_path::AbsolutePathBuf::current_dir() {
         Ok(cwd) => cwd,
         Err(err) => {
             eprintln!("Error: Failed to determine current directory.\n{err}");
@@ -66,13 +66,13 @@ pub fn run_main() -> i32 {
         }
     };
     // TODO(anp): Discover the standalone executable cwd as PathUri directly.
-    let cwd = genex_utils_path_uri::PathUri::from_abs_path(&cwd);
+    let cwd = ruxex_utils_path_uri::PathUri::from_abs_path(&cwd);
     match runtime.block_on(crate::apply_patch(
         &patch_arg,
         &cwd,
         &mut stdout,
         &mut stderr,
-        genex_exec_server::LOCAL_FS.as_ref(),
+        ruxex_exec_server::LOCAL_FS.as_ref(),
         /*sandbox*/ None,
     )) {
         Ok(_) => {

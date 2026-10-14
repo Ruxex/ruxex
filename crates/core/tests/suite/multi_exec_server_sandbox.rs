@@ -1,20 +1,20 @@
-use genex_core::TurnInputRequest;
+use ruxex_core::TurnInputRequest;
 use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::user_input::UserInput;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -22,8 +22,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event_with_timeout;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -44,7 +44,7 @@ const EXEC_SERVER_START_TIMEOUT: Duration = Duration::from_secs(30);
 const TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(super) struct ExecServerProcess {
-    _genex_home: TempDir,
+    _ruxex_home: TempDir,
     child: Child,
     _stdout: BufReader<ChildStdout>,
     pub(super) websocket_url: String,
@@ -52,10 +52,10 @@ pub(super) struct ExecServerProcess {
 
 impl ExecServerProcess {
     pub(super) async fn start() -> Result<Self> {
-        let genex_home = TempDir::new()?;
-        let mut child = Command::new(genex_utils_cargo_bin::cargo_bin("exec-server")?)
+        let ruxex_home = TempDir::new()?;
+        let mut child = Command::new(ruxex_utils_cargo_bin::cargo_bin("exec-server")?)
             .args(["--listen", "ws://127.0.0.1:0"])
-            .env("GENEX_HOME", genex_home.path())
+            .env("RUXEX_HOME", ruxex_home.path())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -85,7 +85,7 @@ impl ExecServerProcess {
         };
 
         Ok(Self {
-            _genex_home: genex_home,
+            _ruxex_home: ruxex_home,
             child,
             _stdout: stdout,
             websocket_url,
@@ -107,7 +107,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
     let second_workspace = TempDir::new()?;
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await?;
     let environment_manager = test.thread_manager.environment_manager();
     environment_manager.upsert_environment(
@@ -201,7 +201,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "write one file in each environment".into(),
@@ -220,7 +220,7 @@ async fn two_exec_servers_isolate_workspace_write_roots() -> Result<()> {
         )
         .await?;
     wait_for_event_with_timeout(
-        &test.genex,
+        &test.ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         TURN_COMPLETE_TIMEOUT,
     )

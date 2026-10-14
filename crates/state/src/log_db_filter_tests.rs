@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -8,13 +8,13 @@ use super::*;
 
 #[tokio::test]
 async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics() {
-    let genex_home =
-        std::env::temp_dir().join(format!("genex-state-log-db-filter-{}", Uuid::new_v4()));
-    let _cleanup = scopeguard::guard(genex_home.clone(), |genex_home| {
-        let _ = std::fs::remove_dir_all(genex_home);
+    let ruxex_home =
+        std::env::temp_dir().join(format!("ruxex-state-log-db-filter-{}", Uuid::new_v4()));
+    let _cleanup = scopeguard::guard(ruxex_home.clone(), |ruxex_home| {
+        let _ = std::fs::remove_dir_all(ruxex_home);
     });
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("initialize runtime");
@@ -46,41 +46,41 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
     tracing::debug!(target: "rmcp::transport", "dropped-rmcp-debug");
     tracing::info!(target: "rmcp::transport", "retained-rmcp-info");
     tracing::debug!(
-        target: "genex_rmcp_client::oauth",
-        "dropped-genex-rmcp-client-debug"
+        target: "ruxex_rmcp_client::oauth",
+        "dropped-ruxex-rmcp-client-debug"
     );
     tracing::info!(
-        target: "genex_rmcp_client::oauth",
-        "retained-genex-rmcp-client-info"
+        target: "ruxex_rmcp_client::oauth",
+        "retained-ruxex-rmcp-client-info"
     );
-    tracing::trace!(target: "genex_http_client::transport", "dropped-request-body");
-    tracing::debug!(target: "genex_http_client::transport", "retained-request-diagnostic");
-    tracing::trace!(target: "genex_api::sse", "dropped-sse-parent");
-    tracing::trace!(target: "genex_api::sse::responses", "dropped-sse-payload");
-    tracing::debug!(target: "genex_api::sse::responses", "retained-sse-diagnostic");
-    tracing::trace!(target: "genex_state", "retained-trace");
+    tracing::trace!(target: "ruxex_http_client::transport", "dropped-request-body");
+    tracing::debug!(target: "ruxex_http_client::transport", "retained-request-diagnostic");
+    tracing::trace!(target: "ruxex_api::sse", "dropped-sse-parent");
+    tracing::trace!(target: "ruxex_api::sse::responses", "dropped-sse-payload");
+    tracing::debug!(target: "ruxex_api::sse::responses", "retained-sse-diagnostic");
+    tracing::trace!(target: "ruxex_state", "retained-trace");
     tracing::trace!(
-        target: "genex_tui::streaming::controller",
+        target: "ruxex_tui::streaming::controller",
         "dropped-controller-trace"
     );
     tracing::debug!(
-        target: "genex_tui::streaming::controller",
+        target: "ruxex_tui::streaming::controller",
         "retained-controller-debug"
     );
     tracing::trace!(
-        target: "genex_tui::streaming::table_holdback",
+        target: "ruxex_tui::streaming::table_holdback",
         "dropped-table-holdback-trace"
     );
     tracing::debug!(
-        target: "genex_tui::streaming::table_holdback",
+        target: "ruxex_tui::streaming::table_holdback",
         "retained-table-holdback-debug"
     );
     tracing::trace!(
-        target: "genex_tui::streaming::commit_tick",
+        target: "ruxex_tui::streaming::commit_tick",
         "retained-commit-tick-trace"
     );
     tracing::trace!(
-        target: "genex_api::responses_websocket_timing",
+        target: "ruxex_api::responses_websocket_timing",
         payload = "complete timing payload",
         "dropped-websocket-timing"
     );
@@ -116,33 +116,33 @@ async fn sqlite_sink_filters_noisy_targets_without_dropping_useful_diagnostics()
             ("INFO", "rmcp::transport", Some("retained-rmcp-info")),
             (
                 "INFO",
-                "genex_rmcp_client::oauth",
-                Some("retained-genex-rmcp-client-info")
+                "ruxex_rmcp_client::oauth",
+                Some("retained-ruxex-rmcp-client-info")
             ),
             (
                 "DEBUG",
-                "genex_http_client::transport",
+                "ruxex_http_client::transport",
                 Some("retained-request-diagnostic")
             ),
             (
                 "DEBUG",
-                "genex_api::sse::responses",
+                "ruxex_api::sse::responses",
                 Some("retained-sse-diagnostic")
             ),
-            ("TRACE", "genex_state", Some("retained-trace")),
+            ("TRACE", "ruxex_state", Some("retained-trace")),
             (
                 "DEBUG",
-                "genex_tui::streaming::controller",
+                "ruxex_tui::streaming::controller",
                 Some("retained-controller-debug"),
             ),
             (
                 "DEBUG",
-                "genex_tui::streaming::table_holdback",
+                "ruxex_tui::streaming::table_holdback",
                 Some("retained-table-holdback-debug"),
             ),
             (
                 "TRACE",
-                "genex_tui::streaming::commit_tick",
+                "ruxex_tui::streaming::commit_tick",
                 Some("retained-commit-tick-trace"),
             ),
         ]

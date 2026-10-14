@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use genex_protocol::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 use crate::SkillMetadata;
 use crate::ToolMentionKind;

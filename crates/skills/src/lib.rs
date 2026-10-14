@@ -42,7 +42,7 @@ pub use parser::parse_skill_frontmatter_metadata;
 pub use selection::ExplicitSkillLookup;
 pub use selection::collect_explicit_skill_mentions;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use include_dir::Dir;
 use std::collections::hash_map::DefaultHasher;
 use std::fs;
@@ -55,17 +55,17 @@ const SYSTEM_SKILLS_DIR: Dir = include_dir::include_dir!("$CARGO_MANIFEST_DIR/sr
 
 const SYSTEM_SKILLS_DIR_NAME: &str = ".system";
 const SKILLS_DIR_NAME: &str = "skills";
-const SYSTEM_SKILLS_MARKER_FILENAME: &str = ".genex-system-skills.marker";
+const SYSTEM_SKILLS_MARKER_FILENAME: &str = ".ruxex-system-skills.marker";
 const SYSTEM_SKILLS_MARKER_SALT: &str = "v1";
 
-/// Returns the on-disk cache location for embedded system skills from an absolute GENEX_HOME.
-pub fn system_cache_root_dir(genex_home: &AbsolutePathBuf) -> AbsolutePathBuf {
-    genex_home
+/// Returns the on-disk cache location for embedded system skills from an absolute RUXEX_HOME.
+pub fn system_cache_root_dir(ruxex_home: &AbsolutePathBuf) -> AbsolutePathBuf {
+    ruxex_home
         .join(SKILLS_DIR_NAME)
         .join(SYSTEM_SKILLS_DIR_NAME)
 }
 
-/// Installs embedded system skills into `GENEX_HOME/skills/.system`.
+/// Installs embedded system skills into `RUXEX_HOME/skills/.system`.
 ///
 /// Clears any existing system skills directory first and then writes the embedded
 /// skills directory into place.
@@ -73,12 +73,12 @@ pub fn system_cache_root_dir(genex_home: &AbsolutePathBuf) -> AbsolutePathBuf {
 /// To avoid doing unnecessary work on every startup, a marker file is written
 /// with a fingerprint of the embedded directory. When the marker matches, the
 /// install is skipped.
-pub fn install_system_skills(genex_home: &AbsolutePathBuf) -> Result<(), SystemSkillsError> {
-    let skills_root_dir = genex_home.join(SKILLS_DIR_NAME);
+pub fn install_system_skills(ruxex_home: &AbsolutePathBuf) -> Result<(), SystemSkillsError> {
+    let skills_root_dir = ruxex_home.join(SKILLS_DIR_NAME);
     fs::create_dir_all(skills_root_dir.as_path())
         .map_err(|source| SystemSkillsError::io("create skills root dir", source))?;
 
-    let dest_system = system_cache_root_dir(genex_home);
+    let dest_system = system_cache_root_dir(ruxex_home);
 
     let marker_path = dest_system.join(SYSTEM_SKILLS_MARKER_FILENAME);
     let expected_fingerprint = embedded_system_skills_fingerprint();

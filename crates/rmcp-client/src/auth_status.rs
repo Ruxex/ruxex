@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 use futures::FutureExt;
-use genex_exec_server::HttpClient;
-use genex_protocol::protocol::McpAuthStatus;
+use ruxex_exec_server::HttpClient;
+use ruxex_protocol::protocol::McpAuthStatus;
 use http::HeaderMap;
 use http::header::AUTHORIZATION;
 use rmcp::transport::AuthorizationManager;
@@ -19,8 +19,8 @@ use crate::oauth_callback::McpOAuthCallbackMode;
 use crate::oauth_callback::callback_mode;
 use crate::oauth_http_client::OAuthHttpClientAdapter;
 use crate::utils::build_default_headers;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
 
 const DISCOVERY_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -310,14 +310,14 @@ mod tests {
     use axum::http::header::WWW_AUTHENTICATE;
     use axum::routing::get;
     use futures::future::BoxFuture;
-    use genex_exec_server::ExecServerError;
-    use genex_exec_server::HttpRedirectPolicy;
-    use genex_exec_server::HttpRequestParams;
-    use genex_exec_server::HttpRequestResponse;
-    use genex_exec_server::HttpResponseBodyStream;
-    use genex_exec_server::RouteAwareHttpClient;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
+    use ruxex_exec_server::ExecServerError;
+    use ruxex_exec_server::HttpRedirectPolicy;
+    use ruxex_exec_server::HttpRequestParams;
+    use ruxex_exec_server::HttpRequestResponse;
+    use ruxex_exec_server::HttpResponseBodyStream;
+    use ruxex_exec_server::RouteAwareHttpClient;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
     use pretty_assertions::assert_eq;
     use serial_test::serial;
     use std::collections::HashMap;
@@ -500,7 +500,7 @@ mod tests {
     #[tokio::test]
     #[serial(auth_status_env)]
     async fn determine_auth_status_uses_bearer_token_when_env_authorization_header_present() {
-        let _guard = EnvVarGuard::set("GENEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN", "Bearer token");
+        let _guard = EnvVarGuard::set("RUXEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN", "Bearer token");
         let status = determine_streamable_http_auth_status(
             "server",
             "not-a-url",
@@ -508,7 +508,7 @@ mod tests {
             /*http_headers*/ None,
             Some(HashMap::from([(
                 "Authorization".to_string(),
-                "GENEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN".to_string(),
+                "RUXEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN".to_string(),
             )])),
             OAuthCredentialsStoreMode::Keyring,
             AuthKeyringBackendKind::default(),

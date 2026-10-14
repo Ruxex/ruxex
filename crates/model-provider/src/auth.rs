@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use genex_api::AuthError;
-use genex_api::AuthHeadersFuture;
-use genex_api::AuthProvider;
-use genex_api::SharedAuthProvider;
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
+use ruxex_api::AuthError;
+use ruxex_api::AuthHeadersFuture;
+use ruxex_api::AuthProvider;
+use ruxex_api::SharedAuthProvider;
+use ruxex_login::AuthHeaders;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
 use http::HeaderMap;
 
 use crate::bearer_auth_provider::BearerAuthProvider;
@@ -26,16 +26,16 @@ impl AuthProvider for HeaderAuthProvider {
 struct CredentialManagerAuthProvider {
     credential_manager: Arc<CredentialManager>,
     // Request headers always come from the current CredentialManager snapshot below.
-    expected_auth: GenexAuth,
+    expected_auth: RuxexAuth,
 }
 
 impl CredentialManagerAuthProvider {
-    fn is_expected_auth(&self, auth: &GenexAuth) -> bool {
+    fn is_expected_auth(&self, auth: &RuxexAuth) -> bool {
         auth.api_auth_mode() == self.expected_auth.api_auth_mode()
             && auth.get_account_id() == self.expected_auth.get_account_id()
     }
 
-    fn current_auth(&self) -> Option<GenexAuth> {
+    fn current_auth(&self) -> Option<RuxexAuth> {
         self.credential_manager
             .auth_cached()
             .filter(|auth| self.is_expected_auth(auth))
@@ -92,9 +92,9 @@ pub fn credential_manager_for_provider(
 }
 
 pub fn resolve_provider_auth(
-    auth: Option<&GenexAuth>,
+    auth: Option<&RuxexAuth>,
     provider: &ModelProviderInfo,
-) -> genex_protocol::error::Result<SharedAuthProvider> {
+) -> ruxex_protocol::error::Result<SharedAuthProvider> {
     // Explicitly selected/stored credentials take precedence over provider
     // environment configuration. This lets the login flow work even when an
     // env-backed provider does not have its env var set.
@@ -111,9 +111,9 @@ pub fn resolve_provider_auth(
 
 pub async fn provider_auth(
     credential_manager: Option<&Arc<CredentialManager>>,
-    fallback_auth: Option<GenexAuth>,
+    fallback_auth: Option<RuxexAuth>,
     provider: &ModelProviderInfo,
-) -> Option<GenexAuth> {
+) -> Option<RuxexAuth> {
     if provider.auth.is_some() {
         return match credential_manager {
             Some(credential_manager) => credential_manager.auth().await,
@@ -134,13 +134,13 @@ pub async fn provider_auth(
     }
 }
 
-pub fn cached_provider_auth(credential_manager: &CredentialManager) -> Option<GenexAuth> {
+pub fn cached_provider_auth(credential_manager: &CredentialManager) -> Option<RuxexAuth> {
     credential_manager.auth_cached()
 }
 
 fn bearer_auth_for_provider(
     provider: &ModelProviderInfo,
-) -> genex_protocol::error::Result<Option<BearerAuthProvider>> {
+) -> ruxex_protocol::error::Result<Option<BearerAuthProvider>> {
     if let Some(api_key) = provider.api_key()? {
         return Ok(Some(BearerAuthProvider::new(api_key)));
     }
@@ -152,11 +152,11 @@ fn bearer_auth_for_provider(
     Ok(None)
 }
 
-/// Builds request-header auth for a stored Genex auth snapshot.
-pub fn auth_provider_from_auth(auth: &GenexAuth) -> SharedAuthProvider {
+/// Builds request-header auth for a stored Ruxex auth snapshot.
+pub fn auth_provider_from_auth(auth: &RuxexAuth) -> SharedAuthProvider {
     match auth {
-        GenexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
-        GenexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
+        RuxexAuth::Headers(auth) => Arc::new(HeaderAuthProvider { auth: auth.clone() }),
+        RuxexAuth::ApiKey(_) => Arc::new(BearerAuthProvider {
             token: auth.get_token().ok(),
         }),
     }
@@ -169,7 +169,7 @@ pub fn auth_provider_from_auth(auth: &GenexAuth) -> SharedAuthProvider {
 /// that state so a later account switch cannot reuse it.
 pub fn auth_provider_from_credential_manager(
     credential_manager: Arc<CredentialManager>,
-    expected_auth: &GenexAuth,
+    expected_auth: &RuxexAuth,
 ) -> SharedAuthProvider {
     Arc::new(CredentialManagerAuthProvider {
         credential_manager,
@@ -179,9 +179,9 @@ pub fn auth_provider_from_credential_manager(
 
 #[cfg(test)]
 mod tests {
-    use genex_model_provider_info::WireApi;
-    use genex_model_provider_info::create_responses_provider_with_base_url;
-    use genex_protocol::config_types::ModelProviderAuthInfo;
+    use ruxex_model_provider_info::WireApi;
+    use ruxex_model_provider_info::create_responses_provider_with_base_url;
+    use ruxex_protocol::config_types::ModelProviderAuthInfo;
     use http::HeaderValue;
     use http::header::AUTHORIZATION;
     use pretty_assertions::assert_eq;
@@ -211,7 +211,7 @@ mod tests {
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
         );
-        let ambient_auth = GenexAuth::Headers(AuthHeaders::new(ambient_headers));
+        let ambient_auth = RuxexAuth::Headers(AuthHeaders::new(ambient_headers));
 
         let auth =
             resolve_provider_auth(Some(&ambient_auth), &provider).expect("auth should resolve");
@@ -226,7 +226,7 @@ mod tests {
             WireApi::Responses,
         );
         provider.experimental_bearer_token = Some("provider-token".into());
-        let ambient_auth = GenexAuth::from_api_key("ambient-api-key");
+        let ambient_auth = RuxexAuth::from_api_key("ambient-api-key");
 
         let headers = resolve_provider_auth(Some(&ambient_auth), &provider)
             .expect("auth should resolve")
@@ -255,7 +255,7 @@ mod tests {
                 .try_into()
                 .expect("current directory should be absolute"),
         });
-        let command_auth = GenexAuth::from_api_key("command-token");
+        let command_auth = RuxexAuth::from_api_key("command-token");
 
         let headers = resolve_provider_auth(Some(&command_auth), &provider)
             .expect("auth should resolve")
@@ -275,7 +275,7 @@ mod tests {
             AUTHORIZATION,
             HeaderValue::from_static("Bearer ambient-token"),
         );
-        let ambient_auth = GenexAuth::Headers(AuthHeaders::new(expected.clone()));
+        let ambient_auth = RuxexAuth::Headers(AuthHeaders::new(expected.clone()));
 
         let auth =
             resolve_provider_auth(Some(&ambient_auth), &provider).expect("auth should resolve");
@@ -291,7 +291,7 @@ mod tests {
             HeaderValue::from_static("Bearer external"),
         );
         expected.insert("x-external-auth", HeaderValue::from_static("enabled"));
-        let auth = GenexAuth::Headers(AuthHeaders::new(expected.clone()));
+        let auth = RuxexAuth::Headers(AuthHeaders::new(expected.clone()));
 
         let actual = auth_provider_from_auth(&auth).to_auth_headers();
 

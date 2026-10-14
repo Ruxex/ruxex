@@ -15,25 +15,25 @@ use super::seatbelt_regex_for_glob;
 use super::seatbelt_regex_for_unreadable_glob;
 use super::unix_socket_dir_params;
 use super::unix_socket_policy;
-use genex_network_proxy::ConfigReloader;
-use genex_network_proxy::ConfigReloaderFuture;
-use genex_network_proxy::ConfigState;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::NetworkMode;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkProxyConstraints;
-use genex_network_proxy::NetworkProxyState;
-use genex_network_proxy::build_config_state;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_network_proxy::ConfigReloader;
+use ruxex_network_proxy::ConfigReloaderFuture;
+use ruxex_network_proxy::ConfigState;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkMode;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConstraints;
+use ruxex_network_proxy::NetworkProxyState;
+use ruxex_network_proxy::build_config_state;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::permissions::PROTECTED_METADATA_PATH_NAMES;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::ffi::CStr;
 use std::ffi::OsStr;
@@ -218,7 +218,7 @@ fn filesystem_helper_platform_defaults_do_not_grant_applications_directory() {
                 extra_allow_unix_sockets: &[],
             },
             profile,
-            /*allowed_symlinked_genex_home*/ None,
+            /*allowed_symlinked_ruxex_home*/ None,
         )
         .expect("build restricted seatbelt command");
 
@@ -262,7 +262,7 @@ fn filesystem_helper_platform_defaults_do_not_grant_applications_directory() {
 #[test]
 fn process_platform_defaults_allow_scratch_without_granting_it_to_filesystem_helpers() {
     let workspace = tempfile::Builder::new()
-        .prefix("genex-seatbelt-approved-project-")
+        .prefix("ruxex-seatbelt-approved-project-")
         .tempdir_in("/private/tmp")
         .expect("approved project directory");
     let approved_file = workspace.path().join("approved.txt");
@@ -298,7 +298,7 @@ fn process_platform_defaults_allow_scratch_without_granting_it_to_filesystem_hel
                 extra_allow_unix_sockets: &[],
             },
             profile,
-            /*allowed_symlinked_genex_home*/ None,
+            /*allowed_symlinked_ruxex_home*/ None,
         )
         .expect("build restricted seatbelt command")
     };
@@ -353,7 +353,7 @@ fn process_platform_defaults_allow_scratch_without_granting_it_to_filesystem_hel
 
     for scratch_root in ["/private/tmp", "/private/var/tmp"] {
         let scratch = tempfile::Builder::new()
-            .prefix("genex-seatbelt-process-scratch-")
+            .prefix("ruxex-seatbelt-process-scratch-")
             .tempdir_in(scratch_root)
             .expect("scratch directory");
         let scratch_file = scratch.path().join("scratch.txt");
@@ -491,7 +491,7 @@ fn dynamic_network_policy_allows_tls_without_darwin_user_cache_write() {
 
 #[test]
 fn explicit_unreadable_paths_are_excluded_from_full_disk_read_and_write_access() {
-    let unreadable = absolute_path("/tmp/genex-unreadable");
+    let unreadable = absolute_path("/tmp/ruxex-unreadable");
     let file_system_policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry {
             path: FileSystemPath::Special {
@@ -560,7 +560,7 @@ fn explicit_unreadable_paths_are_excluded_from_full_disk_read_and_write_access()
         writable_definitions,
         vec![
             "-DWRITABLE_ROOT_0=/".to_string(),
-            "-DWRITABLE_ROOT_0_EXCLUDED_0=/.genex".to_string(),
+            "-DWRITABLE_ROOT_0_EXCLUDED_0=/.ruxex".to_string(),
             format!("-DWRITABLE_ROOT_0_EXCLUDED_1={}", unreadable_root.display()),
         ],
         "unexpected write carveout parameters in args: {args:#?}"
@@ -822,11 +822,11 @@ async fn prepared_managed_network_context_takes_precedence_over_live_proxy_socke
             state,
             Arc::new(TestConfigReloader),
         )))
-        .managed_by_genex(/*managed_by_genex*/ false)
+        .managed_by_ruxex(/*managed_by_ruxex*/ false)
         .build()
         .await?;
-    let prepared_socket = "/tmp/genex-prepared-use";
-    let explicit_socket = "/tmp/genex-browser-use";
+    let prepared_socket = "/tmp/ruxex-prepared-use";
+    let explicit_socket = "/tmp/ruxex-browser-use";
     let managed_network = ManagedNetworkSandboxContext {
         loopback_ports: vec![43123],
         allow_unix_sockets: vec![prepared_socket.to_string(), "relative.sock".to_string()],
@@ -905,8 +905,8 @@ async fn prepared_managed_network_context_takes_precedence_over_live_proxy_socke
 
 #[test]
 fn explicit_unreadable_paths_are_excluded_from_readable_roots() {
-    let root = absolute_path("/tmp/genex-readable");
-    let unreadable = absolute_path("/tmp/genex-readable/private");
+    let root = absolute_path("/tmp/ruxex-readable");
+    let unreadable = absolute_path("/tmp/ruxex-readable/private");
     let file_system_policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry {
             path: root.into(),
@@ -1092,7 +1092,7 @@ fn preferences_access_requires_unrestricted_reads() {
     )]);
     let mut denied_path = full_read.clone();
     denied_path.entries.push(FileSystemSandboxEntry::new(
-        absolute_path("/tmp/genex-private").into(),
+        absolute_path("/tmp/ruxex-private").into(),
         FileSystemAccessMode::Deny,
     ));
     let mut denied_glob = full_read.clone();
@@ -1127,7 +1127,7 @@ fn preferences_access_requires_unrestricted_reads() {
                     extra_allow_unix_sockets: &[],
                 },
                 profile,
-                /*allowed_symlinked_genex_home*/ None,
+                /*allowed_symlinked_ruxex_home*/ None,
             )
             .expect("build seatbelt policy");
             let policy = seatbelt_policy_arg(&args);
@@ -1161,18 +1161,18 @@ fn restricted_reads_cannot_read_preferences_outside_allowed_roots() {
     }
 
     let workspace = tempfile::Builder::new()
-        .prefix("genex-prefs-")
+        .prefix("ruxex-prefs-")
         .tempdir()
         .expect("temp workspace");
     let domain = PreferenceDomain(format!(
-        "com.genex.genex.{}",
+        "com.ruxex.ruxex.{}",
         workspace
             .path()
             .file_name()
             .expect("workspace name")
             .to_string_lossy()
     ));
-    let marker = "genex-preferences-read-canary";
+    let marker = "ruxex-preferences-read-canary";
     // Some test runners give tests a temporary HOME, but preferences use the
     // account home. Use caller-owned storage because tests can query the
     // account concurrently.
@@ -1474,7 +1474,7 @@ fn create_seatbelt_args_allowlists_explicit_unix_socket_paths_without_proxy() {
         &SandboxPolicy::new_read_only_policy(),
         cwd.path(),
     );
-    let extra_allow_unix_sockets = vec![absolute_path("/tmp/genex-browser-use")];
+    let extra_allow_unix_sockets = vec![absolute_path("/tmp/ruxex-browser-use")];
     let args = create_seatbelt_command_args(CreateSeatbeltCommandArgsParams {
         command: vec!["/usr/bin/true".to_string()],
         file_system_sandbox_policy: &file_system_policy,
@@ -1499,7 +1499,7 @@ fn create_seatbelt_args_allowlists_explicit_unix_socket_paths_without_proxy() {
         ),
         "policy should allow outbound AF_UNIX traffic for explicit socket paths:\n{policy}"
     );
-    let expected_socket_root = normalize_path_for_sandbox(Path::new("/tmp/genex-browser-use"))
+    let expected_socket_root = normalize_path_for_sandbox(Path::new("/tmp/ruxex-browser-use"))
         .expect("socket root should normalize")
         .to_string_lossy()
         .into_owned();
@@ -1517,8 +1517,8 @@ async fn create_seatbelt_args_merges_proxy_and_explicit_unix_socket_paths() -> a
         &SandboxPolicy::new_read_only_policy(),
         cwd.path(),
     );
-    let network_socket = "/tmp/genex-proxy-use";
-    let explicit_socket = "/tmp/genex-browser-use";
+    let network_socket = "/tmp/ruxex-proxy-use";
+    let explicit_socket = "/tmp/ruxex-browser-use";
     let mut network_config = NetworkProxyConfig {
         enabled: true,
         mode: NetworkMode::Full,
@@ -1531,7 +1531,7 @@ async fn create_seatbelt_args_merges_proxy_and_explicit_unix_socket_paths() -> a
             state,
             Arc::new(TestConfigReloader),
         )))
-        .managed_by_genex(/*managed_by_genex*/ false)
+        .managed_by_ruxex(/*managed_by_ruxex*/ false)
         .build()
         .await?;
     let extra_allow_unix_sockets = vec![absolute_path(explicit_socket)];
@@ -1579,7 +1579,7 @@ fn create_seatbelt_args_preserves_full_network_with_explicit_unix_socket_paths()
         &SandboxPolicy::new_read_only_policy(),
         cwd.path(),
     );
-    let extra_allow_unix_sockets = vec![absolute_path("/tmp/genex-browser-use")];
+    let extra_allow_unix_sockets = vec![absolute_path("/tmp/ruxex-browser-use")];
     let args = create_seatbelt_command_args(CreateSeatbeltCommandArgsParams {
         command: vec!["/usr/bin/true".to_string()],
         file_system_sandbox_policy: &file_system_policy,
@@ -1730,7 +1730,7 @@ fn create_seatbelt_args_full_network_with_proxy_is_still_proxy_only() {
 }
 
 #[test]
-fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
+fn create_seatbelt_args_with_read_only_git_and_ruxex_subpaths() {
     // Create a temporary workspace with two writable roots: one containing
     // top-level workspace metadata paths and one without them.
     let tmp = TempDir::new().expect("tempdir");
@@ -1739,7 +1739,7 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
         vulnerable_root_canonical,
         dot_git_canonical,
         dot_agents_canonical: _,
-        dot_genex_canonical,
+        dot_ruxex_canonical,
         empty_root,
         empty_root_canonical,
     } = populate_tmpdir(tmp.path());
@@ -1759,13 +1759,13 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
     };
 
     // Create the Seatbelt command to wrap a shell command that tries to
-    // write to .genex/config.toml in the vulnerable root.
+    // write to .ruxex/config.toml in the vulnerable root.
     let shell_command: Vec<String> = [
         "bash",
         "-c",
         "echo 'sandbox_mode = \"danger-full-access\"' > \"$1\"",
         "bash",
-        dot_genex_canonical
+        dot_ruxex_canonical
             .join("config.toml")
             .to_string_lossy()
             .as_ref(),
@@ -1799,7 +1799,7 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
     assert!(
         policy_text.contains("WRITABLE_ROOT_1_EXCLUDED_0")
             && policy_text.contains("WRITABLE_ROOT_1_EXCLUDED_1"),
-        "expected explicit writable root .git/.genex carveouts in policy:\n{policy_text}",
+        "expected explicit writable root .git/.ruxex carveouts in policy:\n{policy_text}",
     );
     assert!(
         policy_text.contains(&seatbelt_protected_metadata_name_requirements(
@@ -1831,7 +1831,7 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
             "-DWRITABLE_ROOT_0_EXCLUDED_0={}",
             cwd.canonicalize()
                 .expect("canonicalize cwd")
-                .join(".genex")
+                .join(".ruxex")
                 .display()
         ),
         format!(
@@ -1858,7 +1858,7 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
         ),
         format!(
             "-DWRITABLE_ROOT_1_EXCLUDED_1={}",
-            dot_genex_canonical.to_string_lossy()
+            dot_ruxex_canonical.to_string_lossy()
         ),
         format!(
             "-DWRITABLE_ROOT_2={}",
@@ -1880,9 +1880,9 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
         .expect("seatbelt args should include command separator");
     assert_eq!(args[command_index + 1..], shell_command);
 
-    // Verify that .genex/config.toml cannot be modified under the generated
+    // Verify that .ruxex/config.toml cannot be modified under the generated
     // Seatbelt policy.
-    let config_toml = dot_genex_canonical.join("config.toml");
+    let config_toml = dot_ruxex_canonical.join("config.toml");
     let output = Command::new(MACOS_PATH_TO_SEATBELT_EXECUTABLE)
         .args(&args)
         .current_dir(&cwd)
@@ -1938,7 +1938,7 @@ fn create_seatbelt_args_with_read_only_git_and_genex_subpaths() {
     );
     assert_seatbelt_denied(&output.stderr, &pre_commit_hook);
 
-    // Verify that writing a file to the folder containing .git and .genex is allowed.
+    // Verify that writing a file to the folder containing .git and .ruxex is allowed.
     let allowed_file = vulnerable_root_canonical.join("allowed.txt");
     let shell_command_allowed: Vec<String> = [
         "bash",
@@ -2418,11 +2418,11 @@ fn seatbelt_protects_resolved_target_of_symlinked_metadata_directory() {
     let tmp = TempDir::new().expect("tempdir");
     let writable_root = tmp.path().join("workspace");
     let actual_config = writable_root.join("actual-config");
-    let dot_genex = writable_root.join(".genex");
+    let dot_ruxex = writable_root.join(".ruxex");
     let config_toml = actual_config.join("config.toml");
     fs::create_dir_all(&actual_config).expect("create actual config directory");
     fs::write(&config_toml, "original").expect("write config");
-    symlink(&actual_config, &dot_genex).expect("create .genex symlink");
+    symlink(&actual_config, &dot_ruxex).expect("create .ruxex symlink");
     let policy = restricted_write_policy(&[writable_root.as_path()]);
     let args = create_seatbelt_command_args(CreateSeatbeltCommandArgsParams {
         command: vec![
@@ -2451,7 +2451,7 @@ fn seatbelt_protects_resolved_target_of_symlinked_metadata_directory() {
 
     assert!(
         !output.status.success(),
-        "resolved .genex target should remain read-only"
+        "resolved .ruxex target should remain read-only"
     );
     assert_eq!(
         fs::read_to_string(&config_toml).expect("read config"),
@@ -2460,7 +2460,7 @@ fn seatbelt_protects_resolved_target_of_symlinked_metadata_directory() {
 }
 
 #[test]
-fn create_seatbelt_args_block_first_time_dot_genex_creation_with_metadata_name_regex() {
+fn create_seatbelt_args_block_first_time_dot_ruxex_creation_with_metadata_name_regex() {
     let tmp = TempDir::new().expect("tempdir");
     let repo_root = tmp.path().join("repo");
     fs::create_dir_all(&repo_root).expect("create repo root");
@@ -2472,8 +2472,8 @@ fn create_seatbelt_args_block_first_time_dot_genex_creation_with_metadata_name_r
         .output()
         .expect("git init .");
 
-    let dot_genex = repo_root.join(".genex");
-    let config_toml = dot_genex.join("config.toml");
+    let dot_ruxex = repo_root.join(".ruxex");
+    let config_toml = dot_ruxex.join("config.toml");
     let policy = SandboxPolicy::WorkspaceWrite {
         writable_roots: vec![repo_root.as_path().try_into().expect("absolute repo root")],
         network_access: false,
@@ -2486,7 +2486,7 @@ fn create_seatbelt_args_block_first_time_dot_genex_creation_with_metadata_name_r
         "-c",
         "mkdir -p \"$1\" && echo 'sandbox_mode = \"danger-full-access\"' > \"$2\"",
         "bash",
-        dot_genex.to_string_lossy().as_ref(),
+        dot_ruxex.to_string_lossy().as_ref(),
         config_toml.to_string_lossy().as_ref(),
     ]
     .iter()
@@ -2619,7 +2619,7 @@ fn create_seatbelt_args_for_cwd_as_git_repo() {
         vulnerable_root_canonical,
         dot_git_canonical,
         dot_agents_canonical,
-        dot_genex_canonical,
+        dot_ruxex_canonical,
         ..
     } = populate_tmpdir(tmp.path());
 
@@ -2638,7 +2638,7 @@ fn create_seatbelt_args_for_cwd_as_git_repo() {
         "-c",
         "echo 'sandbox_mode = \"danger-full-access\"' > \"$1\"",
         "bash",
-        dot_genex_canonical
+        dot_ruxex_canonical
             .join("config.toml")
             .to_string_lossy()
             .as_ref(),
@@ -2698,13 +2698,13 @@ fn create_seatbelt_args_for_cwd_as_git_repo() {
         args.contains(&expected_dot_git),
         "missing {expected_dot_git}: {args:#?}"
     );
-    let expected_dot_genex = format!(
+    let expected_dot_ruxex = format!(
         "-DWRITABLE_ROOT_0_EXCLUDED_1={}",
-        dot_genex_canonical.to_string_lossy()
+        dot_ruxex_canonical.to_string_lossy()
     );
     assert!(
-        args.contains(&expected_dot_genex),
-        "missing {expected_dot_genex}: {args:#?}"
+        args.contains(&expected_dot_ruxex),
+        "missing {expected_dot_ruxex}: {args:#?}"
     );
     let expected_dot_agents = format!(
         "-DWRITABLE_ROOT_0_EXCLUDED_2={}",
@@ -2731,14 +2731,14 @@ struct PopulatedTmp {
     /// For the purposes of this test, we consider this a "vulnerable" root
     /// because a bad actor could write to .git/hooks/pre-commit so an
     /// unsuspecting user would run code as privileged the next time they
-    /// ran `git commit` themselves, or modified .genex/config.toml to
+    /// ran `git commit` themselves, or modified .ruxex/config.toml to
     /// contain `sandbox_mode = "danger-full-access"` so the agent would
     /// have full privileges the next time it ran in that repo.
     vulnerable_root: PathBuf,
     vulnerable_root_canonical: PathBuf,
     dot_git_canonical: PathBuf,
     dot_agents_canonical: PathBuf,
-    dot_genex_canonical: PathBuf,
+    dot_ruxex_canonical: PathBuf,
 
     /// Path without protected metadata subfolders.
     empty_root: PathBuf,
@@ -2759,12 +2759,12 @@ fn populate_tmpdir(tmp: &Path) -> PopulatedTmp {
         .output()
         .expect("git init .");
 
-    fs::create_dir_all(vulnerable_root.join(".genex")).expect("create .genex");
+    fs::create_dir_all(vulnerable_root.join(".ruxex")).expect("create .ruxex");
     fs::write(
-        vulnerable_root.join(".genex").join("config.toml"),
+        vulnerable_root.join(".ruxex").join("config.toml"),
         "sandbox_mode = \"read-only\"\n",
     )
-    .expect("write .genex/config.toml");
+    .expect("write .ruxex/config.toml");
 
     let empty_root = tmp.join("empty_root");
     fs::create_dir_all(&empty_root).expect("create empty_root");
@@ -2775,14 +2775,14 @@ fn populate_tmpdir(tmp: &Path) -> PopulatedTmp {
         .expect("canonicalize vulnerable_root");
     let dot_git_canonical = vulnerable_root_canonical.join(".git");
     let dot_agents_canonical = vulnerable_root_canonical.join(".agents");
-    let dot_genex_canonical = vulnerable_root_canonical.join(".genex");
+    let dot_ruxex_canonical = vulnerable_root_canonical.join(".ruxex");
     let empty_root_canonical = empty_root.canonicalize().expect("canonicalize empty_root");
     PopulatedTmp {
         vulnerable_root,
         vulnerable_root_canonical,
         dot_git_canonical,
         dot_agents_canonical,
-        dot_genex_canonical,
+        dot_ruxex_canonical,
         empty_root,
         empty_root_canonical,
     }

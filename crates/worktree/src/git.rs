@@ -20,9 +20,9 @@ use std::process::Output;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG;
-use genex_git_utils::git_config_override_env;
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG;
+use ruxex_git_utils::git_config_override_env;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 const DISABLED_HOOKS_PATH: &str = "/dev/null";
 

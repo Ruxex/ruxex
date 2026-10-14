@@ -15,13 +15,13 @@ pub enum BackendKind {
 
 #[derive(Debug, Clone)]
 pub(crate) struct BackendPaths {
-    pub(crate) genex_bin: PathBuf,
+    pub(crate) ruxex_bin: PathBuf,
     pub(crate) pid_file: PathBuf,
     pub(crate) command_args: Option<Vec<OsString>>,
 }
 
 pub(crate) fn pid_backend(paths: BackendPaths) -> PidBackend {
-    PidBackend::new(paths.genex_bin, paths.pid_file, paths.command_args)
+    PidBackend::new(paths.ruxex_bin, paths.pid_file, paths.command_args)
 }
 
 pub(crate) async fn append_stderr_log_tail_context(pid_file: &Path, context: &mut String) {

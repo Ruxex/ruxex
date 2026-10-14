@@ -3,22 +3,22 @@
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_rollout;
-use genex_config::types::HistoryPersistence;
-use genex_message_history::HistoryConfig;
+use ruxex_config::types::HistoryPersistence;
+use ruxex_message_history::HistoryConfig;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
     let local_home = tempfile::tempdir()?;
     let local_config = ConfigBuilder::default()
-        .genex_home(local_home.path().to_path_buf())
+        .ruxex_home(local_home.path().to_path_buf())
         .build()
         .await?;
     let local_settings = LocalSettings::from(&local_config);
     let history_config =
-        HistoryConfig::new(local_settings.genex_home.clone(), &local_settings.history);
-    genex_message_history::append_entry("local prompt", ThreadId::new(), &history_config).await?;
-    let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;
+        HistoryConfig::new(local_settings.ruxex_home.clone(), &local_settings.history);
+    ruxex_message_history::append_entry("local prompt", ThreadId::new(), &history_config).await?;
+    let (log_id, entry_count) = ruxex_message_history::history_metadata(&history_config).await;
     let expected = Some(MessageHistoryMetadata {
         log_id,
         entry_count,
@@ -28,7 +28,7 @@ async fn lifecycle_metadata_uses_local_prompt_history() -> Result<()> {
     for mode in [ThreadParamsMode::Embedded, ThreadParamsMode::Remote] {
         let server_home = tempfile::tempdir()?;
         let mut config = ConfigBuilder::default()
-            .genex_home(server_home.path().to_path_buf())
+            .ruxex_home(server_home.path().to_path_buf())
             .build()
             .await?;
         config.history.persistence = HistoryPersistence::None;

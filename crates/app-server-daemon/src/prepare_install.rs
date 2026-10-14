@@ -5,8 +5,8 @@ use std::path::Path;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_install_context::GenexPackageManifest;
-use genex_install_context::InstallContext;
+use ruxex_install_context::RuxexPackageManifest;
+use ruxex_install_context::InstallContext;
 
 use crate::Daemon;
 use crate::install_lock::acquire_install_lock;
@@ -45,11 +45,11 @@ async fn prepare_from_package(
         .settings_file
         .parent()
         .and_then(Path::parent)
-        .context("daemon settings path has no Genex home")?;
+        .context("daemon settings path has no Ruxex home")?;
     let previous_root = managed_install::package_root(home);
     let root = home.join("packages/app-server-daemon");
     anyhow::ensure!(
-        daemon.managed_genex_bin.starts_with(&previous_root),
+        daemon.managed_ruxex_bin.starts_with(&previous_root),
         "daemon package location changed; retry the command"
     );
     if previous_root != root
@@ -66,7 +66,7 @@ async fn prepare_from_package(
             )
         })
     {
-        daemon.ensure_managed_genex_bin()?;
+        daemon.ensure_managed_ruxex_bin()?;
         return Ok(true);
     }
     std::fs::create_dir_all(&root)?;
@@ -77,9 +77,9 @@ async fn prepare_from_package(
     let backend = daemon.running_backend_instance(settings).await?;
     anyhow::ensure!(
         backend.is_some() || crate::client::probe(&daemon.socket_path).await.is_err(),
-        "app server is running but is not managed by genex app-server daemon"
+        "app server is running but is not managed by ruxex app-server daemon"
     );
-    let selected = managed_install::managed_genex_bin(home);
+    let selected = managed_install::managed_ruxex_bin(home);
     let previous_release = previous_root.join("current").canonicalize().ok();
     if selected.is_file() {
         return Ok(true);
@@ -90,18 +90,18 @@ async fn prepare_from_package(
         "the selected daemon package is incomplete; repair its installation before starting"
     );
     let source = source.context(
-        "this CLI has no complete local package; install a packaged Genex CLI or use the standalone installer",
+        "this CLI has no complete local package; install a packaged Ruxex CLI or use the standalone installer",
     )?;
     anyhow::ensure!(
         !root.canonicalize()?.starts_with(source.canonicalize()?),
-        "GENEX_HOME must be outside the source CLI package"
+        "RUXEX_HOME must be outside the source CLI package"
     );
-    let manifest_bytes = std::fs::read(source.join("genex-package.json"))?;
-    let manifest: GenexPackageManifest = serde_json::from_slice(&manifest_bytes)?;
+    let manifest_bytes = std::fs::read(source.join("ruxex-package.json"))?;
+    let manifest: RuxexPackageManifest = serde_json::from_slice(&manifest_bytes)?;
     let version = manifest.version.to_string();
     let target = platform_target()?;
     let metadata: serde_json::Value = serde_json::from_slice(&manifest_bytes)?;
-    let entrypoint = "bin/genex";
+    let entrypoint = "bin/ruxex";
     anyhow::ensure!(
         metadata["target"] == target && metadata["entrypoint"] == entrypoint,
         "the CLI package does not match this platform or executable"
@@ -119,7 +119,7 @@ async fn prepare_from_package(
         managed_install::package_root(home) == previous_root,
         "daemon package location changed; retry the command"
     );
-    if managed_install::managed_genex_bin(home).is_file() {
+    if managed_install::managed_ruxex_bin(home).is_file() {
         return Ok(true);
     }
     anyhow::ensure!(
@@ -140,19 +140,19 @@ async fn prepare_from_package(
         .tempdir_in(&releases)?;
     let digest = package_tree(source, Some(stage.path()))?;
     validate_package(stage.path())?;
-    let staged_exe = if cfg!(target_os = "macos") && stage.path().join("GenexCLI.app").is_dir() {
-        stage.path().join("GenexCLI.app/Contents/MacOS/codex")
+    let staged_exe = if cfg!(target_os = "macos") && stage.path().join("RuxexCLI.app").is_dir() {
+        stage.path().join("RuxexCLI.app/Contents/MacOS/codex")
     } else {
         stage.path().join(entrypoint)
     };
     anyhow::ensure!(
         package_tree(source, /*destination*/ None)? == digest
-            && std::fs::read(stage.path().join("genex-package.json"))? == manifest_bytes
+            && std::fs::read(stage.path().join("ruxex-package.json"))? == manifest_bytes
             && managed_install::executable_identity(&staged_exe).await? == running_identity,
         "the CLI package changed while preparing the daemon or differs from the running executable"
     );
     let binary_version =
-        managed_install::managed_genex_version(&stage.path().join(entrypoint)).await?;
+        managed_install::managed_ruxex_version(&stage.path().join(entrypoint)).await?;
     anyhow::ensure!(
         !stable || version == binary_version,
         "the CLI package version does not match its executable"
@@ -171,8 +171,8 @@ async fn prepare_from_package(
         );
     } else {
         #[cfg(unix)]
-        if !stage.path().join("genex").exists() {
-            std::os::unix::fs::symlink("bin/genex", stage.path().join("genex"))?;
+        if !stage.path().join("ruxex").exists() {
+            std::os::unix::fs::symlink("bin/ruxex", stage.path().join("ruxex"))?;
         }
         std::fs::rename(stage.path(), &release)?;
     }
@@ -202,7 +202,7 @@ fn package_tree(root: &Path, destination: Option<&Path>) -> Result<String> {
         // The Unix installer adds this alias outside the package layout.
         if cfg!(unix)
             && relative == Path::new("codex")
-            && std::fs::read_link(&path).ok().as_deref() == Some(Path::new("bin/genex"))
+            && std::fs::read_link(&path).ok().as_deref() == Some(Path::new("bin/ruxex"))
         {
             continue;
         }
@@ -259,26 +259,26 @@ fn stable_version(value: &str) -> Option<semver::Version> {
 
 fn validate_package(root: &Path) -> Result<()> {
     let mut names = vec![
-        "genex-package.json",
-        "bin/genex",
-        "bin/genex-code-mode-host",
-        "genex-path/rg",
+        "ruxex-package.json",
+        "bin/ruxex",
+        "bin/ruxex-code-mode-host",
+        "ruxex-path/rg",
     ];
     if cfg!(target_os = "linux") {
-        names.push("genex-resources/bwrap");
+        names.push("ruxex-resources/bwrap");
     }
     for name in names {
         if !root.join(name).is_file() {
             return Err(anyhow!(
-                "local Genex package is missing {name}; reinstall the CLI or use the standalone installer"
+                "local Ruxex package is missing {name}; reinstall the CLI or use the standalone installer"
             ));
         }
         #[cfg(unix)]
-        if name != "genex-package.json" {
+        if name != "ruxex-package.json" {
             use std::os::unix::fs::PermissionsExt;
             if std::fs::metadata(root.join(name))?.permissions().mode() & 0o111 == 0 {
                 return Err(anyhow!(
-                    "local Genex package file {name} is not executable; reinstall the CLI or use the standalone installer"
+                    "local Ruxex package file {name} is not executable; reinstall the CLI or use the standalone installer"
                 ));
             }
         }

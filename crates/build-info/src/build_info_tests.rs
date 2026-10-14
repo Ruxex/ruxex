@@ -1,6 +1,6 @@
 use std::fs;
 
-use genex_install_context::InstallContext;
+use ruxex_install_context::InstallContext;
 use pretty_assertions::assert_eq;
 use semver::Version;
 use tempfile::tempdir;
@@ -16,10 +16,10 @@ fn packaged_runtime_uses_manifest_version() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("genex");
+    let executable = bin_dir.join("ruxex");
     fs::write(&executable, b"").expect("create runtime binary");
     fs::write(
-        package.path().join("genex-package.json"),
+        package.path().join("ruxex-package.json"),
         r#"{"version":"1.2.3-alpha.4"}"#,
     )
     .expect("create runtime package manifest");
@@ -35,7 +35,7 @@ fn packaged_runtime_uses_manifest_version() {
         BuildInfo {
             version: Version::parse("1.2.3-alpha.4").expect("valid release version"),
             build_commit: BUILD_COMMIT.to_string(),
-            target: Some(env!("GENEX_BUILD_TARGET").to_string()),
+            target: Some(env!("RUXEX_BUILD_TARGET").to_string()),
         },
     );
 }
@@ -54,7 +54,7 @@ fn unpackaged_runtime_uses_build_commit() {
         BuildInfo {
             version: Version::new(0, 0, 0),
             build_commit: BUILD_COMMIT.to_string(),
-            target: Some(env!("GENEX_BUILD_TARGET").to_string()),
+            target: Some(env!("RUXEX_BUILD_TARGET").to_string()),
         },
     );
 }
@@ -65,9 +65,9 @@ fn legacy_package_without_version_uses_build_commit() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("genex");
+    let executable = bin_dir.join("ruxex");
     fs::write(&executable, b"").expect("create runtime binary");
-    fs::write(package.path().join("genex-package.json"), "{}")
+    fs::write(package.path().join("ruxex-package.json"), "{}")
         .expect("create legacy runtime package manifest");
 
     let context = InstallContext::from_exe(
@@ -81,7 +81,7 @@ fn legacy_package_without_version_uses_build_commit() {
         BuildInfo {
             version: Version::new(0, 0, 0),
             build_commit: BUILD_COMMIT.to_string(),
-            target: Some(env!("GENEX_BUILD_TARGET").to_string()),
+            target: Some(env!("RUXEX_BUILD_TARGET").to_string()),
         },
     );
 }
@@ -92,10 +92,10 @@ fn invalid_package_version_uses_build_commit() {
     let package = tempdir().expect("create runtime package");
     let bin_dir = package.path().join("bin");
     fs::create_dir(&bin_dir).expect("create runtime binary directory");
-    let executable = bin_dir.join("genex");
+    let executable = bin_dir.join("ruxex");
     fs::write(&executable, b"").expect("create runtime binary");
     fs::write(
-        package.path().join("genex-package.json"),
+        package.path().join("ruxex-package.json"),
         r#"{"version":"not-a-release-version"}"#,
     )
     .expect("create runtime package manifest");
@@ -111,7 +111,7 @@ fn invalid_package_version_uses_build_commit() {
         BuildInfo {
             version: Version::new(0, 0, 0),
             build_commit: BUILD_COMMIT.to_string(),
-            target: Some(env!("GENEX_BUILD_TARGET").to_string()),
+            target: Some(env!("RUXEX_BUILD_TARGET").to_string()),
         },
     );
 }

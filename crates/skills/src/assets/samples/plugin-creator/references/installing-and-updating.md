@@ -12,7 +12,7 @@ Use this flow when all of the following are true:
 
 - the plugin already exists locally
 - the marketplace entry already points at the plugin source you are editing
-- the user wants Genex to see the updated plugin without manually editing marketplace files
+- the user wants Ruxex to see the updated plugin without manually editing marketplace files
 
 If the user still needs the initial plugin entry or marketplace structure created, use the scaffold
 flow first and only then switch to this reinstall flow.
@@ -36,7 +36,7 @@ To read the name from a different marketplace file, pass the path directly:
 python3 scripts/read_marketplace_name.py --marketplace-path <path-to-marketplace.json>
 ```
 
-2. Update the plugin manifest to a single Genex cachebuster suffix:
+2. Update the plugin manifest to a single Ruxex cachebuster suffix:
 
 ```bash
 python3 scripts/update_plugin_cachebuster.py \
@@ -48,7 +48,7 @@ Prefer the default helper behavior here. If you omit `--cachebuster`, the helper
 timestamp down to seconds, which is the recommended path for routine local iteration.
 
 Only use a manual cachebuster override when the user explicitly asks for one or when a workflow
-outside Genex depends on a specific token:
+outside Ruxex depends on a specific token:
 
 ```bash
 python3 scripts/update_plugin_cachebuster.py \
@@ -59,19 +59,19 @@ python3 scripts/update_plugin_cachebuster.py \
 3. Reinstall from that marketplace name:
 
 ```bash
-genex plugin add <plugin-name>@<marketplace-name-from-marketplace-json>
+ruxex plugin add <plugin-name>@<marketplace-name-from-marketplace-json>
 ```
 
 The default personal marketplace is discovered implicitly from
-`~/.agents/plugins/marketplace.json`. You do not need `genex plugin marketplace add` for that
-path, and `genex plugin marketplace list` is not the right check for whether that default
+`~/.agents/plugins/marketplace.json`. You do not need `ruxex plugin marketplace add` for that
+path, and `ruxex plugin marketplace list` is not the right check for whether that default
 marketplace exists.
 
 4. If the plugin is not using the personal marketplace file, check which configured local
    marketplace is actually surfacing that plugin:
 
 ```bash
-genex plugin list
+ruxex plugin list
 ```
 
 If the plugin is not in the personal marketplace file, confirm which marketplace entry points at
@@ -84,10 +84,10 @@ continuing.
    name:
 
 ```bash
-genex plugin add <plugin-name>@<local-marketplace>
+ruxex plugin add <plugin-name>@<local-marketplace>
 ```
 
-6. Prompt the user to use a new thread to try the updated plugin, so that Genex picks up new skills
+6. Prompt the user to use a new thread to try the updated plugin, so that Ruxex picks up new skills
    and tools.
 
 ## Cachebuster Policy
@@ -117,20 +117,20 @@ numeric version components just to trigger reinstall behavior.
 - Prefer the personal marketplace file for the default scaffolded flow.
 - Read the personal marketplace name with
   `python3 scripts/read_marketplace_name.py` and use the printed value when constructing
-  `genex plugin add <plugin-name>@<marketplace-name>`.
+  `ruxex plugin add <plugin-name>@<marketplace-name>`.
 - For non-default marketplace files, use
   `python3 scripts/read_marketplace_name.py --marketplace-path <path-to-marketplace.json>` to read
   the name before constructing reinstall commands.
-- Do not tell the user to run `genex plugin marketplace add` for the default personal-marketplace
-  flow. That marketplace is discovered implicitly by Genex.
+- Do not tell the user to run `ruxex plugin marketplace add` for the default personal-marketplace
+  flow. That marketplace is discovered implicitly by Ruxex.
 - If the user specified a different marketplace path, make sure that marketplace is installed
   before giving install or reinstall instructions. Non-default marketplace paths are not
   discovered implicitly.
-- Use `genex plugin list` when the plugin lives in a different configured marketplace and you need
+- Use `ruxex plugin list` when the plugin lives in a different configured marketplace and you need
   to confirm which marketplace is surfacing that plugin.
 - If a non-default local marketplace has not been configured yet, install it with
-  `genex plugin marketplace add <path-to-marketplace-root>` before telling the user to run
-  `genex plugin add <plugin-name>@<marketplace-name>`.
+  `ruxex plugin marketplace add <path-to-marketplace-root>` before telling the user to run
+  `ruxex plugin add <plugin-name>@<marketplace-name>`.
 - If the plugin is not in the personal marketplace file, confirm that the selected marketplace is
   local before telling the user to reinstall from it.
 - If the selected marketplace is not local, stop and help the user resolve that mismatch rather

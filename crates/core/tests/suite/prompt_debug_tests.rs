@@ -3,16 +3,16 @@ use std::sync::Arc;
 use anyhow::Result;
 use core_test_support::responses::strip_metadata;
 use core_test_support::responses::strip_response_item_id;
-use genex_core::build_prompt_input;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_home::GenexHomeUserInstructionsProvider;
-use genex_login::CredentialManager;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::user_input::UserInput;
-use genex_providers::create_model_provider;
+use ruxex_core::build_prompt_input;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_home::RuxexHomeUserInstructionsProvider;
+use ruxex_login::CredentialManager;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::create_model_provider;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -20,20 +20,20 @@ const TEST_INSTRUCTIONS: &str = "Global test instructions";
 
 #[tokio::test]
 async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    std::fs::write(genex_home.path().join("AGENTS.md"), TEST_INSTRUCTIONS)?;
+    std::fs::write(ruxex_home.path().join("AGENTS.md"), TEST_INSTRUCTIONS)?;
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
-            genex_self_exe: Some(std::env::current_exe()?),
+            ruxex_self_exe: Some(std::env::current_exe()?),
             ..ConfigOverrides::default()
         })
         .build()
         .await?;
-    let user_instructions_provider = Arc::new(GenexHomeUserInstructionsProvider::new(
-        config.genex_home.clone(),
+    let user_instructions_provider = Arc::new(RuxexHomeUserInstructionsProvider::new(
+        config.ruxex_home.clone(),
     ));
     let credential_manager = CredentialManager::shared_from_config(&config, false).await?;
     let provider = create_model_provider(

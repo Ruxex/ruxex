@@ -3,10 +3,10 @@ use crate::context::ContextualUserFragment;
 use crate::context::InternalContextSource;
 use crate::context::InternalModelContextFragment;
 use crate::context::SubagentNotification;
-use genex_protocol::items::HookPromptFragment;
-use genex_protocol::items::build_hook_prompt_message;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::items::HookPromptFragment;
+use ruxex_protocol::items::build_hook_prompt_message;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -85,7 +85,7 @@ fn detects_internal_model_context_fragment() {
     );
     assert_eq!(
         text,
-        "<genex_internal_context source=\"extension\">\nInternal steering.\n</genex_internal_context>"
+        "<ruxex_internal_context source=\"extension\">\nInternal steering.\n</ruxex_internal_context>"
     );
     assert!(is_contextual_user_fragment(&ContentItem::InputText {
         text
@@ -110,7 +110,7 @@ fn does_not_hide_arbitrary_context_tags() {
 #[test]
 fn rejects_invalid_internal_model_context_source() {
     assert!(!is_contextual_user_fragment(&ContentItem::InputText {
-        text: "<genex_internal_context source=\"Extension\">\nbody\n</genex_internal_context>"
+        text: "<ruxex_internal_context source=\"Extension\">\nbody\n</ruxex_internal_context>"
             .to_string(),
     }));
 }
@@ -124,7 +124,7 @@ fn contextual_user_fragment_is_dyn_compatible() {
 
     assert_eq!(
         fragment.render(),
-        "<genex_internal_context source=\"extension\">\nInternal steering.\n</genex_internal_context>"
+        "<ruxex_internal_context source=\"extension\">\nInternal steering.\n</ruxex_internal_context>"
     );
 }
 

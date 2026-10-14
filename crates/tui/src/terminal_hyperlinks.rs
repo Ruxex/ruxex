@@ -1005,7 +1005,7 @@ mod tests {
             .expect("test path should convert to file URL");
         let mut link = TerminalHyperlink::web(
             /*columns*/ 0..4,
-            "https://genex.invalid/viewer".to_string(),
+            "https://ruxex.invalid/viewer".to_string(),
         );
         link.retarget_to_trusted_file(&file_url);
         let line = HyperlinkLine {

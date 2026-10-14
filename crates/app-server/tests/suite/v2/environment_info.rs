@@ -3,14 +3,14 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::EnvironmentAddResponse;
-use genex_app_server_protocol::EnvironmentInfoResponse;
-use genex_app_server_protocol::EnvironmentShellInfo;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::EnvironmentAddResponse;
+use ruxex_app_server_protocol::EnvironmentInfoResponse;
+use ruxex_app_server_protocol::EnvironmentShellInfo;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_utils_path_uri::PathUri;
 use futures::SinkExt;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -112,9 +112,9 @@ async fn environment_info_returns_remote_environment_info() -> Result<()> {
         Ok::<_, anyhow::Error>(())
     });
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -164,9 +164,9 @@ async fn environment_info_accepts_missing_cwd() -> Result<()> {
         Ok::<_, anyhow::Error>(())
     });
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -205,9 +205,9 @@ async fn environment_info_accepts_missing_cwd() -> Result<()> {
 
 #[tokio::test]
 async fn environment_info_rejects_unknown_environment() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -242,9 +242,9 @@ async fn environment_info_rejects_unknown_environment() -> Result<()> {
 async fn environment_info_reports_connection_failure() -> Result<()> {
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;

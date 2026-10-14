@@ -1,10 +1,10 @@
 use super::*;
 use crate::marketplace_upgrade::upgrade_configured_git_marketplaces;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::RequirementSource;
-use genex_config::RequirementsLayerEntry;
-use genex_config::compose_requirements;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::RequirementSource;
+use ruxex_config::RequirementsLayerEntry;
+use ruxex_config::compose_requirements;
 use pretty_assertions::assert_eq;
 use std::fs;
 #[cfg(target_os = "windows")]
@@ -40,7 +40,7 @@ fn config_layer_stack_with_user_config(
     .expect("requirements should be present");
     let requirements_toml = with_sources.clone().into_toml();
     let requirements =
-        genex_config::ConfigRequirements::try_from(with_sources).expect("normalize requirements");
+        ruxex_config::ConfigRequirements::try_from(with_sources).expect("normalize requirements");
     let layers = user_config
         .map(|(contents, file)| {
             vec![ConfigLayerEntry::new(
@@ -221,7 +221,7 @@ restrict_to_allowed_sources = {restricted}
 
 #[test]
 fn system_marketplace_discovery_and_install_validate_source_and_root() {
-    let genex_home = TempDir::new().expect("create Genex home");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
     let configured_root = TempDir::new().expect("create configured marketplace");
     let other_root = TempDir::new().expect("create other marketplace");
     let configured_root = configured_root
@@ -232,7 +232,7 @@ fn system_marketplace_discovery_and_install_validate_source_and_root() {
         .path()
         .canonicalize()
         .expect("canonical other root");
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         &format!(
@@ -260,7 +260,7 @@ source = {configured_root:?}
     let stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::System {
-                file: AbsolutePathBuf::try_from(genex_home.path().join("system.toml")).unwrap(),
+                file: AbsolutePathBuf::try_from(ruxex_home.path().join("system.toml")).unwrap(),
             },
             layer.config.clone(),
         )],
@@ -280,23 +280,23 @@ source = {configured_root:?}
     assert_eq!(
         crate::installed_marketplaces::installed_marketplace_roots_from_layer_stack(
             &stack,
-            genex_home.path()
+            ruxex_home.path()
         ),
         vec![AbsolutePathBuf::try_from(configured_root).unwrap()],
     );
     assert_eq!(
-        policy.validate_install(&stack, genex_home.path(), &configured_path, "company"),
+        policy.validate_install(&stack, ruxex_home.path(), &configured_path, "company"),
         Ok(())
     );
     assert!(
         policy
-            .validate_install(&stack, genex_home.path(), &configured_path, "other")
+            .validate_install(&stack, ruxex_home.path(), &configured_path, "other")
             .expect_err("unconfigured name should fail")
             .contains("must be added to config")
     );
     assert!(
         policy
-            .validate_install(&stack, genex_home.path(), &other_path, "company")
+            .validate_install(&stack, ruxex_home.path(), &other_path, "company")
             .expect_err("mismatched root should fail")
             .contains("does not match configured marketplace")
     );
@@ -304,8 +304,8 @@ source = {configured_root:?}
 
 #[test]
 fn blocked_configured_source_is_not_installable() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         r#"
@@ -326,12 +326,12 @@ source = "https://github.com/example/blocked.git"
         )),
     );
     let marketplace_path = AbsolutePathBuf::try_from(
-        marketplace_install_root(genex_home.path()).join("debug/.agents/plugins/marketplace.json"),
+        marketplace_install_root(ruxex_home.path()).join("debug/.agents/plugins/marketplace.json"),
     )
     .expect("absolute marketplace path");
 
     let err = MarketplacePolicy::from_requirements(stack.requirements())
-        .validate_install(&stack, genex_home.path(), &marketplace_path, "debug")
+        .validate_install(&stack, ruxex_home.path(), &marketplace_path, "debug")
         .expect_err("blocked marketplace install should fail");
     assert!(err.contains("is not allowed by requirements"));
 }
@@ -356,8 +356,8 @@ source = "marketplaces/company"
 
 #[test]
 fn managed_bundled_source_is_bound_to_its_expected_name() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let bundled_root = genex_home
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let bundled_root = ruxex_home
         .path()
         .join(".tmp/bundled-marketplaces")
         .join(crate::BUNDLED_MARKETPLACE_NAME);
@@ -374,7 +374,7 @@ restrict_to_allowed_sources = true
     );
 
     let expected_name =
-        validate_marketplace_source_for_add(genex_home.path(), stack.requirements(), &source)
+        validate_marketplace_source_for_add(ruxex_home.path(), stack.requirements(), &source)
             .expect("managed marketplace source should bypass restrictions");
     assert_eq!(
         validate_marketplace_name_for_add(expected_name, crate::BUNDLED_MARKETPLACE_NAME,),
@@ -385,8 +385,8 @@ restrict_to_allowed_sources = true
 
 #[test]
 fn projected_user_config_removes_blocked_marketplaces_and_plugins() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         r#"
@@ -418,7 +418,7 @@ enabled = true
     );
 
     let projected =
-        policy_filtered_plugin_config(&stack, genex_home.path()).expect("project plugin config");
+        policy_filtered_plugin_config(&stack, ruxex_home.path()).expect("project plugin config");
     assert_eq!(
         projected["marketplaces"]
             .as_table()
@@ -429,7 +429,7 @@ enabled = true
         vec!["allowed".to_string()]
     );
     assert_eq!(
-        configured_plugins_from_stack(&stack, genex_home.path())
+        configured_plugins_from_stack(&stack, ruxex_home.path())
             .into_keys()
             .collect::<Vec<_>>(),
         vec!["sample@allowed".to_string()]
@@ -442,12 +442,12 @@ enabled = true
 
 #[test]
 fn managed_bundled_config_is_retained_only_at_its_owned_path() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let bundled_root = genex_home
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let bundled_root = ruxex_home
         .path()
         .join(".tmp/bundled-marketplaces")
         .join(crate::BUNDLED_MARKETPLACE_NAME);
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         r#"
@@ -457,11 +457,11 @@ restrict_to_allowed_sources = true
         Some((
             &format!(
                 r#"
-[marketplaces.genex-bundled]
+[marketplaces.ruxex-bundled]
 source_type = "local"
 source = {bundled_root:?}
 
-[marketplaces.genex-bundled-alpha]
+[marketplaces.ruxex-bundled-alpha]
 source_type = "local"
 source = "/tmp/not-managed"
 
@@ -469,10 +469,10 @@ source = "/tmp/not-managed"
 source_type = "local"
 source = {bundled_root:?}
 
-[plugins."sample@genex-bundled"]
+[plugins."sample@ruxex-bundled"]
 enabled = true
 
-[plugins."sample@genex-bundled-alpha"]
+[plugins."sample@ruxex-bundled-alpha"]
 enabled = true
 
 [plugins."sample@evil"]
@@ -484,7 +484,7 @@ enabled = true
     );
 
     let projected =
-        policy_filtered_plugin_config(&stack, genex_home.path()).expect("project plugin config");
+        policy_filtered_plugin_config(&stack, ruxex_home.path()).expect("project plugin config");
 
     assert_eq!(
         projected["marketplaces"]
@@ -508,13 +508,13 @@ enabled = true
 
 #[test]
 fn allowlisted_sources_cannot_claim_reserved_marketplace_names() {
-    let genex_home = TempDir::new().expect("create Genex home");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
     let source_root = TempDir::new().expect("create marketplace root");
     let source_root = source_root
         .path()
         .canonicalize()
         .expect("canonical marketplace root");
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         &format!(
@@ -530,7 +530,7 @@ path = {source_root:?}
         Some((
             &format!(
                 r#"
-[marketplaces.genex-bundled]
+[marketplaces.ruxex-bundled]
 source_type = "local"
 source = {source_root:?}
 
@@ -538,7 +538,7 @@ source = {source_root:?}
 source_type = "local"
 source = {source_root:?}
 
-[plugins."sample@genex-bundled"]
+[plugins."sample@ruxex-bundled"]
 enabled = true
 
 [plugins."sample@test-curated"]
@@ -550,7 +550,7 @@ enabled = true
     );
 
     let projected =
-        policy_filtered_plugin_config(&stack, genex_home.path()).expect("project plugin config");
+        policy_filtered_plugin_config(&stack, ruxex_home.path()).expect("project plugin config");
     assert_eq!(
         projected["marketplaces"]
             .as_table()
@@ -575,8 +575,8 @@ enabled = true
 fn blocked_or_reserved_upgrade_is_rejected_before_marketplace_installation() {
     let reload_config: crate::ConfigLayerReload =
         std::sync::Arc::new(|| panic!("blocked or reserved marketplace must not reload config"));
-    let genex_home = TempDir::new().expect("create Genex home");
-    let config_file = AbsolutePathBuf::try_from(genex_home.path().join("config.toml"))
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let config_file = AbsolutePathBuf::try_from(ruxex_home.path().join("config.toml"))
         .expect("absolute config path");
     let stack = config_layer_stack_with_user_config(
         r#"
@@ -594,7 +594,7 @@ source = "https://github.com/example/blocked.git"
     );
 
     let outcome = upgrade_configured_git_marketplaces(
-        genex_home.path(),
+        ruxex_home.path(),
         &stack,
         Some("debug"),
         &reload_config,
@@ -608,23 +608,23 @@ source = "https://github.com/example/blocked.git"
             .message
             .contains("is not allowed by requirements")
     );
-    assert!(!marketplace_install_root(genex_home.path()).exists());
+    assert!(!marketplace_install_root(ruxex_home.path()).exists());
 
     let stack = config_layer_stack_with_user_config(
         "[marketplaces]\nrestrict_to_allowed_sources = false\n",
         Some((
-            "[marketplaces.genex-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
+            "[marketplaces.ruxex-bundled]\nsource_type = \"git\"\nsource = \"https://github.com/example/blocked.git\"\n",
             config_file,
         )),
     );
     let outcome = upgrade_configured_git_marketplaces(
-        genex_home.path(),
+        ruxex_home.path(),
         &stack,
         Some(crate::BUNDLED_MARKETPLACE_NAME),
         &reload_config,
     );
     assert!(outcome.errors[0].message.contains("is reserved"));
-    assert!(!marketplace_install_root(genex_home.path()).exists());
+    assert!(!marketplace_install_root(ruxex_home.path()).exists());
 }
 
 #[test]

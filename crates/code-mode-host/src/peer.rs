@@ -7,18 +7,18 @@ use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
 use std::time::Instant;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::StartedCell;
-use genex_code_mode_protocol::host::DelegateRequest;
-use genex_code_mode_protocol::host::DelegateRequestId;
-use genex_code_mode_protocol::host::DelegateResponse;
-use genex_code_mode_protocol::host::EncodedFrame;
-use genex_code_mode_protocol::host::HostToClient;
-use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
-use genex_code_mode_protocol::host::RequestId;
-use genex_code_mode_protocol::host::SessionId;
-use genex_code_mode_protocol::host::WireResult;
-use genex_code_mode_protocol::host::WireRuntimeResponse;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::StartedCell;
+use ruxex_code_mode_protocol::host::DelegateRequest;
+use ruxex_code_mode_protocol::host::DelegateRequestId;
+use ruxex_code_mode_protocol::host::DelegateResponse;
+use ruxex_code_mode_protocol::host::EncodedFrame;
+use ruxex_code_mode_protocol::host::HostToClient;
+use ruxex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use ruxex_code_mode_protocol::host::RequestId;
+use ruxex_code_mode_protocol::host::SessionId;
+use ruxex_code_mode_protocol::host::WireResult;
+use ruxex_code_mode_protocol::host::WireRuntimeResponse;
 use tokio::sync::Mutex;
 use tokio::sync::Notify;
 use tokio::sync::OwnedSemaphorePermit;
@@ -88,7 +88,7 @@ impl HostPeer {
     pub(super) fn respond(
         &self,
         id: RequestId,
-        result: Result<genex_code_mode_protocol::host::HostResponse, String>,
+        result: Result<ruxex_code_mode_protocol::host::HostResponse, String>,
     ) {
         let message = HostToClient::Response {
             id,

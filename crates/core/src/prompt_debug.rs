@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_extension_api::ExtensionRegistry;
-use genex_extension_api::UserInstructionsProvider;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::user_input::UserInput;
 use tokio_util::sync::CancellationToken;
 
 use crate::config::Config;
@@ -30,29 +30,29 @@ pub async fn build_prompt_input(
     state_db: Option<StateDbHandle>,
     extensions: Arc<ExtensionRegistry<Config>>,
     user_instructions_provider: Arc<dyn UserInstructionsProvider>,
-) -> GenexResult<Vec<ResponseItem>> {
+) -> RuxexResult<Vec<ResponseItem>> {
     config.ephemeral = true;
 
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        config.genex_self_exe.clone(),
-        config.genex_linux_sandbox_exe.clone(),
+        config.ruxex_self_exe.clone(),
+        config.ruxex_linux_sandbox_exe.clone(),
     )?;
 
     let thread_store = thread_store_from_config(&config, state_db.clone());
-    let installation_id = resolve_installation_id(&config.genex_home).await?;
+    let installation_id = resolve_installation_id(&config.ruxex_home).await?;
     let thread_manager = ThreadManager::new(
         &config,
         Arc::clone(&provider),
         crate::build_models_manager_with_provider(&config, Arc::clone(&provider)),
         SessionSource::Exec,
         Arc::new(
-            EnvironmentManager::from_genex_home(
-                config.genex_home.clone(),
+            EnvironmentManager::from_ruxex_home(
+                config.ruxex_home.clone(),
                 Some(local_runtime_paths),
                 config.http_client_factory(),
             )
             .await
-            .map_err(|err| GenexErr::Fatal(err.to_string()))?,
+            .map_err(|err| RuxexErr::Fatal(err.to_string()))?,
         ),
         extensions,
         user_instructions_provider,
@@ -78,7 +78,7 @@ pub async fn build_prompt_input(
 pub(crate) async fn build_prompt_input_from_session(
     sess: &Arc<Session>,
     input: Vec<UserInput>,
-) -> GenexResult<Vec<ResponseItem>> {
+) -> RuxexResult<Vec<ResponseItem>> {
     let turn_context = sess.new_default_turn().await;
     // Prompt debugging builds a standalone request without entering run_turn.
     let step_context = sess

@@ -1,11 +1,11 @@
 [package]
-name = "genex-mermaid"
+name = "ruxex-mermaid"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_mermaid"
+name = "ruxex_mermaid"
 path = "src/lib.rs"
 doctest = false
 

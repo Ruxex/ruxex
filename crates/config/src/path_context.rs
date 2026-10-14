@@ -1,10 +1,10 @@
 //! Path facts for configuration parsing. Native callers and callers resolving
 //! another platform use the same resolver after fact capture.
 
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::LegacyAppPathStringError;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::LegacyAppPathStringError;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use std::cell::RefCell;
 
 /// The owning environment's path convention, base directory, and home for configuration.

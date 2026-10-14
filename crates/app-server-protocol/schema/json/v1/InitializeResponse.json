@@ -31,14 +31,6 @@
     "appServerIdentity": {
       "$ref": "#/definitions/AppServerIdentity"
     },
-    "genexHome": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/AbsolutePathBuf"
-        }
-      ],
-      "description": "Absolute path to the server's $GENEX_HOME directory."
-    },
     "platformFamily": {
       "description": "Platform family for the running app-server target, for example `\"unix\"`.",
       "type": "string"
@@ -47,15 +39,23 @@
       "description": "Operating system for the running app-server target, for example `\"macos\"` or `\"linux\"`.",
       "type": "string"
     },
+    "ruxexHome": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/AbsolutePathBuf"
+        }
+      ],
+      "description": "Absolute path to the server's $RUXEX_HOME directory."
+    },
     "userAgent": {
       "type": "string"
     }
   },
   "required": [
     "appServerIdentity",
-    "genexHome",
     "platformFamily",
     "platformOs",
+    "ruxexHome",
     "userAgent"
   ],
   "title": "InitializeResponse",

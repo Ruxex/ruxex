@@ -1,8 +1,8 @@
 use super::*;
 use assert_matches::assert_matches;
-use genex_config::types::ModelAvailabilityNuxConfig;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::model_types::ModelAvailabilityNux;
+use ruxex_config::types::ModelAvailabilityNuxConfig;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::model_types::ModelAvailabilityNux;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -72,7 +72,7 @@ async fn model_picker_refresh_updates_app_catalog_from_app_server() -> Result<()
     for model in models.iter_mut() {
         model.is_default = model.model == "example-model";
         if model.is_default {
-            model.service_tiers = vec![genex_protocol::model_types::ModelServiceTier {
+            model.service_tiers = vec![ruxex_protocol::model_types::ModelServiceTier {
                 id: ServiceTier::Flex.request_value().to_string(),
                 name: "Flex".to_string(),
                 description: "Flexible processing".to_string(),
@@ -322,9 +322,9 @@ fn select_model_availability_nux_returns_none_when_all_models_are_exhausted() {
 
 #[tokio::test]
 async fn prepare_startup_tooltip_override_persists_model_availability_nux_count() {
-    let genex_home = tempdir().expect("temp genex home");
+    let ruxex_home = tempdir().expect("temp ruxex home");
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await
         .expect("config");
@@ -355,7 +355,7 @@ async fn prepare_startup_tooltip_override_persists_model_availability_nux_count(
     );
 
     let reloaded = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await
         .expect("reloaded config");

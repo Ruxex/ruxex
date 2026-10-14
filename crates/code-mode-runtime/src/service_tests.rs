@@ -1,4 +1,4 @@
-use genex_code_mode_protocol::NoopCodeModeSessionDelegate;
+use ruxex_code_mode_protocol::NoopCodeModeSessionDelegate;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -18,10 +18,10 @@ use crate::ExecuteRequest;
 use crate::ExecuteToPendingOutcome;
 use crate::FunctionCallOutputContentItem;
 use crate::ToolDefinition;
-use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use genex_code_mode_protocol::NotificationFuture;
-use genex_code_mode_protocol::ToolInvocationFuture;
-use genex_protocol::ToolName;
+use ruxex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::NotificationFuture;
+use ruxex_code_mode_protocol::ToolInvocationFuture;
+use ruxex_protocol::ToolName;
 use pretty_assertions::assert_eq;
 use serde_json::Value as JsonValue;
 use tokio::sync::Notify;
@@ -1303,7 +1303,7 @@ image({
   type: "image",
   data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
   mimeType: "image/png",
-  _meta: { "genex/imageDetail": "original" },
+  _meta: { "ruxex/imageDetail": "original" },
 });
 "#
                 .to_string(),
@@ -1413,7 +1413,7 @@ image(
     type: "image",
     data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
     mimeType: "image/png",
-    _meta: { "genex/imageDetail": "original" },
+    _meta: { "ruxex/imageDetail": "original" },
   },
   "high",
 );
@@ -1587,7 +1587,7 @@ image({
       type: "image",
       data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
       mimeType: "image/png",
-      _meta: { "genex/imageDetail": "original" },
+      _meta: { "ruxex/imageDetail": "original" },
     },
   ],
   isError: false,

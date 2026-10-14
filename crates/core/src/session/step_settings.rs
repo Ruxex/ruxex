@@ -2,17 +2,17 @@
 
 use crate::config::Constrained;
 use crate::config::ConstraintResult;
-use genex_config::ConfigRequirements;
-use genex_models_manager::ModelsManagerConfig;
-use genex_models_manager::manager::ModelsManager;
-use genex_otel::SessionTelemetry;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::AskForApproval;
+use ruxex_config::ConfigRequirements;
+use ruxex_models_manager::ModelsManagerConfig;
+use ruxex_models_manager::manager::ModelsManager;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
 use std::sync::Arc;
 
 /// Model and execution settings selected for an individual model step within
@@ -259,14 +259,14 @@ impl StepSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_models_manager::model_info::model_info_from_slug;
-    use genex_protocol::config_types::ModeKind;
+    use ruxex_models_manager::model_info::model_info_from_slug;
+    use ruxex_protocol::config_types::ModeKind;
 
     fn selected_settings() -> StepSettings {
         StepSettings {
             collaboration_mode: CollaborationMode {
                 mode: ModeKind::Default,
-                settings: genex_protocol::config_types::Settings {
+                settings: ruxex_protocol::config_types::Settings {
                     model: "initial-model".to_string(),
                     reasoning_effort: None,
                     developer_instructions: Some("developer".to_string()),

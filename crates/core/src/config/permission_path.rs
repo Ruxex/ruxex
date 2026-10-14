@@ -3,9 +3,9 @@
 
 use std::io;
 
-use genex_config::ConfigPathContext;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigPathContext;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 
 pub(super) fn contains_glob(path: &str, _context: &ConfigPathContext) -> io::Result<bool> {
     Ok(contains_glob_chars(path))

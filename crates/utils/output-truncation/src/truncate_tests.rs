@@ -5,9 +5,9 @@ use crate::formatted_truncate_text;
 use crate::formatted_truncate_text_content_items_with_policy;
 use crate::truncate_function_output_items_with_policy;
 use crate::truncate_text;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ImageReference;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ImageReference;
 use pretty_assertions::assert_eq;
 
 #[test]

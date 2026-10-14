@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use genex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::ExtensionRegistryBuilder;
 
 mod service;
 

@@ -1,22 +1,22 @@
 //! Thread MCP runtime projection and publication.
 //!
 //! This module owns the small correctness boundary between immutable session
-//! inputs and the mutable [`genex_mcp::McpRuntime`]. Background scheduling
+//! inputs and the mutable [`ruxex_mcp::McpRuntime`]. Background scheduling
 //! belongs elsewhere.
 
 use super::session::SessionConfiguration;
 use super::*;
 use crate::mcp::McpRuntimeProjection;
-use genex_config::McpServerDisabledReason;
-use genex_config::McpServerTransportConfig;
-use genex_mcp::ElicitationReviewerHandle;
-use genex_mcp::McpEnvironmentAuthority;
-use genex_mcp::McpServerRegistration;
-use genex_mcp::McpServerSource;
-use genex_mcp::McpStartupPolicy;
-use genex_mcp::PreparedMcpCall;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::protocol::EnvironmentConfigState;
+use ruxex_config::McpServerDisabledReason;
+use ruxex_config::McpServerTransportConfig;
+use ruxex_mcp::ElicitationReviewerHandle;
+use ruxex_mcp::McpEnvironmentAuthority;
+use ruxex_mcp::McpServerRegistration;
+use ruxex_mcp::McpServerSource;
+use ruxex_mcp::McpStartupPolicy;
+use ruxex_mcp::PreparedMcpCall;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::protocol::EnvironmentConfigState;
 use std::collections::HashSet;
 
 pub(super) struct McpDesiredState {
@@ -144,7 +144,7 @@ impl Session {
         mut projection: McpRuntimeProjection,
     ) -> BoxFuture<'a, McpRuntimeProjection> {
         Box::pin(async move {
-            if self.isolation == genex_extension_api::SessionIsolation::Isolated {
+            if self.isolation == ruxex_extension_api::SessionIsolation::Isolated {
                 return projection;
             }
 
@@ -168,7 +168,7 @@ impl Session {
                 // Count completed discovery attempts, including refreshes, before host policy
                 // or MCP startup determines whether the server's tools become available.
                 self.services.session_telemetry.counter(
-                    "genex.mcp.executor_discovery",
+                    "ruxex.mcp.executor_discovery",
                     /*inc*/ 1,
                     &[("outcome", outcome)],
                 );
@@ -190,7 +190,7 @@ impl Session {
                         "unavailable"
                     };
                     self.services.session_telemetry.counter(
-                        "genex.mcp.executor_discovery.server",
+                        "ruxex.mcp.executor_discovery.server",
                         /*inc*/ 1,
                         &[("server_name", name.as_str()), ("outcome", outcome)],
                     );
@@ -263,7 +263,7 @@ impl Session {
                             .find(|selection| selection.environment_id == environment_id)
                         else {
                             return if environment_id
-                                == genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID
+                                == ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID
                             {
                                 McpEnvironmentAuthority::Unrestricted
                             } else {
@@ -342,7 +342,7 @@ impl Session {
             .collect();
         config
             .environment_cwds
-            .entry(genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string())
+            .entry(ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string())
             .or_insert_with(|| PathUri::from_abs_path(&desired.config.cwd));
         let mcp_servers = effective_mcp_servers(&config);
         config.set_server_permission_profiles(

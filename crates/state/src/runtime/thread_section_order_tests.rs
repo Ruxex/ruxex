@@ -4,8 +4,8 @@ use crate::runtime::test_support::unique_temp_dir;
 use anyhow::Result;
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 
@@ -14,9 +14,9 @@ const OTHER_THREAD_SECTION_ID: &str = "01984de2-8f74-7c91-a3b2-5c5e937cf319";
 
 #[tokio::test]
 async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -> Result<()> {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await?;
     let first = ThreadId::new();
@@ -27,9 +27,9 @@ async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -
     for thread_id in [first, second, unsectioned] {
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await?;
     }
@@ -80,9 +80,9 @@ async fn thread_section_ordering_batches_persisted_positions_and_entry_times() -
 
 #[tokio::test]
 async fn thread_sections_paginate_and_require_registered_identities() {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("state db should initialize");
@@ -158,7 +158,7 @@ async fn thread_sections_paginate_and_require_registered_identities() {
     );
 
     let thread_id = ThreadId::new();
-    let mut metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+    let mut metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
     metadata.section = Some(before_pinned.clone());
     runtime
         .upsert_thread(&metadata)
@@ -197,14 +197,14 @@ async fn thread_sections_paginate_and_require_registered_identities() {
 
 #[tokio::test]
 async fn thread_section_moves_round_trip_and_survive_rollout_reconciliation() {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("state db should initialize");
     let thread_id = ThreadId::new();
-    let metadata = test_thread_metadata(&genex_home, thread_id, genex_home.clone());
+    let metadata = test_thread_metadata(&ruxex_home, thread_id, ruxex_home.clone());
     runtime
         .upsert_thread(&metadata)
         .await
@@ -307,9 +307,9 @@ async fn thread_section_moves_round_trip_and_survive_rollout_reconciliation() {
 
 #[tokio::test]
 async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await?;
     let [first, second, third, fourth, fifth] = [
@@ -324,9 +324,9 @@ async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
     for thread_id in [first, second, third, fourth, fifth] {
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await?;
     }
@@ -429,9 +429,9 @@ async fn concurrent_section_moves_preserve_unique_positions() -> Result<()> {
 
 #[tokio::test]
 async fn section_moves_preserve_entry_order_and_renumber_exhausted_ranks() {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await
     .expect("state db should initialize");
@@ -453,9 +453,9 @@ async fn section_moves_preserve_entry_order_and_renumber_exhausted_ranks() {
     for thread_id in [first, second, third] {
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await
             .unwrap();

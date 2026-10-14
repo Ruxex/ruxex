@@ -3,10 +3,10 @@ use std::sync::PoisonError;
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use genex_code_mode_protocol::CodeModeNestedToolCall;
-use genex_code_mode_protocol::grpc as proto;
-use genex_code_mode_protocol::host::MAX_FRAME_BYTES;
-use genex_protocol::ToolName;
+use ruxex_code_mode_protocol::CodeModeNestedToolCall;
+use ruxex_code_mode_protocol::grpc as proto;
+use ruxex_code_mode_protocol::host::MAX_FRAME_BYTES;
+use ruxex_protocol::ToolName;
 use prost::Message;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
@@ -129,7 +129,7 @@ impl GrpcSession {
         // The saved traceparent belongs to the outer execution. Prefer the runtime's
         // per-tool span so the callback is nested under its invocation, with the
         // execution context as a fallback when no current span context is available.
-        let traceparent = genex_otel::current_span_w3c_trace_context()
+        let traceparent = ruxex_otel::current_span_w3c_trace_context()
             .and_then(|trace| trace.traceparent)
             .or(traceparent);
         if subscriptions.is_empty() {

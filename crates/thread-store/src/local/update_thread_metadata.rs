@@ -2,13 +2,13 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use chrono::Utc;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::GitInfo;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::read_session_meta_line;
-use genex_state::ThreadMetadataBuilder;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::GitInfo;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::read_session_meta_line;
+use ruxex_state::ThreadMetadataBuilder;
 use tracing::warn;
 
 use super::LocalThreadStore;
@@ -401,7 +401,7 @@ async fn metadata_for_missing_sqlite_row(
     rollout_path: &Path,
     rollout_path_archived: bool,
     patch: &ThreadMetadataPatch,
-) -> ThreadStoreResult<genex_state::ThreadMetadata> {
+) -> ThreadStoreResult<ruxex_state::ThreadMetadata> {
     let created_at = patch
         .created_at
         .or(patch.updated_at)
@@ -434,7 +434,7 @@ async fn canonical_history_mode(
     let session_meta = match read_session_meta_line(rollout_path).await {
         Ok(session_meta) => session_meta,
         Err(err) => {
-            if genex_rollout::existing_rollout_path(rollout_path)
+            if ruxex_rollout::existing_rollout_path(rollout_path)
                 .await
                 .is_none()
                 && let Some(history_mode) = store
@@ -504,7 +504,7 @@ fn has_observed_metadata_facts(patch: &ThreadMetadataPatch) -> bool {
 }
 
 async fn apply_thread_git_info_patch(
-    state_db: &genex_state::StateRuntime,
+    state_db: &ruxex_state::StateRuntime,
     thread_id: ThreadId,
     git_info: &GitInfoPatch,
 ) -> ThreadStoreResult<()> {
@@ -540,7 +540,7 @@ fn enum_to_string<T: serde::Serialize>(value: &T) -> String {
 }
 
 fn normalize_cwd(cwd: PathBuf) -> PathBuf {
-    genex_utils_path::normalize_for_path_comparison(cwd.as_path()).unwrap_or(cwd)
+    ruxex_utils_path::normalize_for_path_comparison(cwd.as_path()).unwrap_or(cwd)
 }
 
 fn resolve_git_info_patch(
@@ -562,15 +562,15 @@ fn resolve_git_info_patch(
 }
 
 fn rollout_path_is_archived(store: &LocalThreadStore, path: &Path) -> bool {
-    super::helpers::rollout_path_is_archived(store.config.genex_home.as_path(), path)
+    super::helpers::rollout_path_is_archived(store.config.ruxex_home.as_path(), path)
 }
 
 #[cfg(test)]
 mod tests {
-    use genex_protocol::model_types::ReasoningEffort;
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::protocol::ThreadHistoryMode;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_protocol::model_types::ReasoningEffort;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use uuid::Uuid;
@@ -600,12 +600,12 @@ mod tests {
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T14-20-00", uuid).expect("session file");
         let original_rollout = std::fs::read_to_string(&rollout_path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
 
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             rollout_path.as_path(),
             /*builder*/ None,
@@ -616,7 +616,7 @@ mod tests {
         store
             .move_thread_to_section(MoveThreadToSectionParams {
                 thread_id,
-                section: Some(genex_state::PINNED_THREAD_SECTION_ID.to_string()),
+                section: Some(ruxex_state::PINNED_THREAD_SECTION_ID.to_string()),
                 before_thread_id: None,
             })
             .await
@@ -633,9 +633,9 @@ mod tests {
 
         assert_eq!(
             pinned.section,
-            Some(genex_state::ThreadSection {
-                id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-                name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+            Some(ruxex_state::ThreadSection {
+                id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+                name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
                 appearance: None,
             })
         );
@@ -646,9 +646,9 @@ mod tests {
             .expect("pinned metadata");
         assert_eq!(
             pinned_metadata.section,
-            Some(genex_state::ThreadSection {
-                id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-                name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+            Some(ruxex_state::ThreadSection {
+                id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+                name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
                 appearance: None,
             })
         );
@@ -662,7 +662,7 @@ mod tests {
                 sort_direction: SortDirection::Desc,
                 allowed_sources: Vec::new(),
                 cwd_filters: None,
-                section: Some(Some(genex_state::PINNED_THREAD_SECTION_ID.to_string())),
+                section: Some(Some(ruxex_state::PINNED_THREAD_SECTION_ID.to_string())),
                 project_id: None,
                 archived: false,
                 search_term: None,
@@ -689,9 +689,9 @@ mod tests {
             .expect("read pinned thread by rollout path");
         assert_eq!(
             read_by_path.section,
-            Some(genex_state::ThreadSection {
-                id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-                name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+            Some(ruxex_state::ThreadSection {
+                id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+                name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
                 appearance: None,
             })
         );
@@ -748,7 +748,7 @@ mod tests {
         )
         .expect("session file");
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -821,12 +821,12 @@ mod tests {
         )
         .expect("session file");
         let original_rollout = std::fs::read_to_string(&path).expect("read rollout");
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
         .expect("state db should initialize");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -886,7 +886,7 @@ mod tests {
             std::fs::read_to_string(&path).expect("read rollout"),
             original_rollout
         );
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -916,7 +916,7 @@ mod tests {
     async fn update_thread_metadata_sets_git_info() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime));
@@ -960,7 +960,7 @@ mod tests {
     async fn update_thread_metadata_updates_permission_profile_and_reasoning_effort() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -1014,7 +1014,7 @@ mod tests {
     async fn update_thread_metadata_partially_updates_git_info() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime));
@@ -1073,7 +1073,7 @@ mod tests {
     async fn update_thread_metadata_clears_git_info_fields() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
@@ -1120,7 +1120,7 @@ mod tests {
 
         assert!(thread.git_info.is_none());
 
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -1159,7 +1159,7 @@ mod tests {
             })
             .await
             .expect("set memory mode after git clear");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -1231,7 +1231,7 @@ mod tests {
             })
             .await
             .expect("set memory mode after git clear and partial update");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -1293,7 +1293,7 @@ mod tests {
     async fn update_thread_metadata_applies_combined_explicit_patch() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1369,7 +1369,7 @@ mod tests {
     async fn metadata_patch_applies_title_over_existing_name() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1412,7 +1412,7 @@ mod tests {
     async fn metadata_patch_applies_latest_preview_and_first_user_message() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1470,7 +1470,7 @@ mod tests {
     async fn observed_metadata_rejects_unknown_thread_without_rollout() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1516,7 +1516,7 @@ mod tests {
             ThreadHistoryMode::Paginated,
         )
         .expect("session file");
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1556,7 +1556,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         write_archived_session_file(home.path(), "2025-01-03T19-30-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1592,7 +1592,7 @@ mod tests {
     async fn observed_metadata_normalizes_cwd_for_list_filters() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1605,7 +1605,7 @@ mod tests {
         let child = workspace.join("child");
         std::fs::create_dir_all(child.as_path()).expect("create workspace");
         let unnormalized_cwd = child.join("..");
-        let normalized_cwd = genex_utils_path::normalize_for_path_comparison(workspace.as_path())
+        let normalized_cwd = ruxex_utils_path::normalize_for_path_comparison(workspace.as_path())
             .expect("normalize cwd");
 
         store
@@ -1661,7 +1661,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T16-00-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1671,7 +1671,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             archived_path.as_path(),
             /*builder*/ None,
@@ -1722,7 +1722,7 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let archived_path = write_archived_session_file(home.path(), "2025-01-03T16-30-00", uuid)
             .expect("archived session file");
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -1732,7 +1732,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(runtime.as_ref()),
             archived_path.as_path(),
             /*builder*/ None,

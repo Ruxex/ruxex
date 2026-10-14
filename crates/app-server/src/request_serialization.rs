@@ -7,9 +7,9 @@ use std::sync::Arc;
 
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use genex_app_server_protocol::ClientRequestSerializationScope;
-use genex_diagnostics::Gauge;
-use genex_diagnostics::GaugeGuard;
+use ruxex_app_server_protocol::ClientRequestSerializationScope;
+use ruxex_diagnostics::Gauge;
+use ruxex_diagnostics::GaugeGuard;
 use tokio::sync::Mutex;
 use tokio::sync::Notify;
 use tracing::Instrument;
@@ -310,10 +310,10 @@ impl RequestSerializationQueues {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_app_server_protocol::ClientRequest;
-    use genex_app_server_protocol::ConfigBatchWriteParams;
-    use genex_app_server_protocol::HooksListParams;
-    use genex_app_server_protocol::RequestId;
+    use ruxex_app_server_protocol::ClientRequest;
+    use ruxex_app_server_protocol::ConfigBatchWriteParams;
+    use ruxex_app_server_protocol::HooksListParams;
+    use ruxex_app_server_protocol::RequestId;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
     use tokio::sync::broadcast;

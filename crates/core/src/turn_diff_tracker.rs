@@ -4,10 +4,10 @@ use std::time::Duration;
 
 use sha1::digest::Output;
 
-use genex_apply_patch::AppliedPatchChange;
-use genex_apply_patch::AppliedPatchDelta;
-use genex_apply_patch::AppliedPatchFileChange;
-use genex_utils_path_uri::PathUri;
+use ruxex_apply_patch::AppliedPatchChange;
+use ruxex_apply_patch::AppliedPatchDelta;
+use ruxex_apply_patch::AppliedPatchFileChange;
+use ruxex_utils_path_uri::PathUri;
 
 const ZERO_OID: &str = "0000000000000000000000000000000000000000";
 const DEV_NULL: &str = "/dev/null";

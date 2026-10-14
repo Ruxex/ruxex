@@ -1,9 +1,9 @@
 use super::*;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_sandboxing::SandboxType;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_sandboxing::SandboxType;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -63,7 +63,7 @@ fn sandbox_detection_ignores_network_policy_text_in_non_sandbox_mode() {
         /*exit_code*/ 0,
         "",
         "",
-        r#"GENEX_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"RUXEX_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
     assert!(!is_likely_sandbox_denied(SandboxType::None, &output));
 }
@@ -88,7 +88,7 @@ fn sandbox_detection_ignores_network_policy_text_with_zero_exit_code() {
         /*exit_code*/ 0,
         "",
         "",
-        r#"GENEX_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"RUXEX_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
 
     assert!(!is_likely_sandbox_denied(
@@ -260,7 +260,7 @@ async fn exec_full_buffer_capture_ignores_expiration() -> Result<()> {
     let output = exec(
         ExecParams {
             command,
-            cwd: genex_utils_absolute_path::AbsolutePathBuf::current_dir()?,
+            cwd: ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?,
             expiration: 1.into(),
             capture_policy: ExecCapturePolicy::FullBuffer,
             env,
@@ -295,7 +295,7 @@ async fn exec_full_buffer_capture_keeps_io_drain_timeout_when_descendant_holds_p
                     "-c".to_string(),
                     "printf hello; sleep 30 &".to_string(),
                 ],
-                cwd: genex_utils_absolute_path::AbsolutePathBuf::current_dir()?,
+                cwd: ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?,
                 expiration: 1.into(),
                 capture_policy: ExecCapturePolicy::FullBuffer,
                 env: std::env::vars().collect(),
@@ -394,7 +394,7 @@ async fn full_buffer_expiration_cleans_up_after_leader_exit(
     std::fs::write(dir.path().join("release"), "")?;
     tokio::time::sleep(Duration::from_millis(100)).await;
     let survived = dir.path().join("late_write").exists();
-    genex_utils_pty::process_group::kill_process_group(process_group_id)?;
+    ruxex_utils_pty::process_group::kill_process_group(process_group_id)?;
     assert!(
         !survived,
         "pipe-holding descendant survived capture failure"
@@ -471,7 +471,7 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy(
         format!("sleep 0.05; head -c {byte_count} /dev/zero | tr '\\0' 'a'"),
     ];
 
-    let cwd = genex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
+    let cwd = ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
     let permission_profile = PermissionProfile::Disabled;
     let output = process_exec_tool_call(
         ExecParams {
@@ -489,7 +489,7 @@ async fn process_exec_tool_call_preserves_full_buffer_capture_policy(
         &permission_profile,
         &cwd,
         &None,
-        /*genex_self_exe*/ &None,
+        /*ruxex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -526,7 +526,7 @@ async fn kill_child_process_group_kills_grandchildren_on_timeout() -> Result<()>
         "-c".to_string(),
         "sleep 60 & echo $!; sleep 60".to_string(),
     ];
-    let cwd = genex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
+    let cwd = ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
     let env: HashMap<String, String> = std::env::vars().collect();
     let params = ExecParams {
         command,
@@ -578,7 +578,7 @@ async fn kill_child_process_group_kills_grandchildren_on_timeout() -> Result<()>
 #[tokio::test]
 async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
     let command = long_running_command();
-    let cwd = genex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
+    let cwd = ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
     let env: HashMap<String, String> = std::env::vars().collect();
     let cancel_token = CancellationToken::new();
     let cancel_tx = cancel_token.clone();
@@ -605,7 +605,7 @@ async fn process_exec_tool_call_respects_cancellation_token() -> Result<()> {
             &PermissionProfile::Disabled,
             &cwd,
             &None,
-            /*genex_self_exe*/ &None,
+            /*ruxex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),
@@ -638,7 +638,7 @@ printf ready > "$READY_MARKER"
 while :; do sleep 1; done"#
             .to_string(),
     ];
-    let cwd = genex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
+    let cwd = ruxex_utils_absolute_path::AbsolutePathBuf::current_dir()?;
     let mut env: HashMap<String, String> = std::env::vars().collect();
     env.insert(
         "READY_MARKER".to_string(),
@@ -684,7 +684,7 @@ while :; do sleep 1; done"#
             &PermissionProfile::Disabled,
             &cwd,
             &None,
-            /*genex_self_exe*/ &None,
+            /*ruxex_self_exe*/ &None,
             /*use_legacy_landlock*/ false,
             /*stdout_stream*/ None,
         ),

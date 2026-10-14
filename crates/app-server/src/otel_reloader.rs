@@ -1,7 +1,7 @@
 use crate::OTEL_SERVICE_NAME;
 use crate::config_manager::ConfigManager;
-use genex_login::CredentialManager;
-use genex_otel::OtelProvider;
+use ruxex_login::CredentialManager;
+use ruxex_otel::OtelProvider;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::task::JoinHandle;
@@ -81,7 +81,7 @@ where
                             continue;
                         }
                     };
-                    let next_provider = match genex_core::otel_init::build_provider(
+                    let next_provider = match ruxex_core::otel_init::build_provider(
                         &config,
                         env!("CARGO_PKG_VERSION"),
                         Some(OTEL_SERVICE_NAME),
@@ -106,7 +106,7 @@ where
                         drop(tokio::task::spawn_blocking(move || previous_provider.shutdown()));
                     }
                     info!(
-                        event.name = "genex.app_server.otel_reloaded",
+                        event.name = "ruxex.app_server.otel_reloaded",
                         "reloaded telemetry exporters after account change"
                     );
                 }

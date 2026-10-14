@@ -14,14 +14,14 @@ use tokio::process::Command;
 /// New daemons own their packages, regardless of how the calling CLI was installed.
 /// Preserve legacy launch state, including logs left after a daemon is stopped;
 /// settings, installer selections, and lock files alone do not prove a prior launch.
-pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
-    let dedicated = genex_home.join("packages/app-server-daemon");
+pub(crate) fn package_root(ruxex_home: &Path) -> PathBuf {
+    let dedicated = ruxex_home.join("packages/app-server-daemon");
     if !matches!(dedicated.join("current").symlink_metadata(),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound)
     {
         return dedicated;
     }
-    let state = genex_home.join("app-server-daemon");
+    let state = ruxex_home.join("app-server-daemon");
     for (package, artifacts) in [
         (
             "app-server-daemon",
@@ -36,17 +36,17 @@ pub(crate) fn package_root(genex_home: &Path) -> PathBuf {
             !matches!(state.join(name).symlink_metadata(),
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound)
         }) {
-            return genex_home.join("packages").join(package);
+            return ruxex_home.join("packages").join(package);
         }
     }
     dedicated
 }
 
 /// Resolve both packaged and legacy binaries without requiring a valid install.
-pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
-    let root = package_root(genex_home);
+pub(crate) fn managed_ruxex_bin(ruxex_home: &Path) -> PathBuf {
+    let root = package_root(ruxex_home);
     let current = root.join("current");
-    let packaged = current.join("bin").join(managed_genex_file_name());
+    let packaged = current.join("bin").join(managed_ruxex_file_name());
     let legacy = current.join("codex");
     if packaged.is_file() || !legacy.is_file() && root.ends_with("app-server-daemon") {
         packaged
@@ -55,8 +55,8 @@ pub(crate) fn managed_genex_bin(genex_home: &Path) -> PathBuf {
     }
 }
 
-pub(crate) async fn managed_genex_version(genex_bin: &Path) -> Result<String> {
-    let mut command = Command::new(genex_bin);
+pub(crate) async fn managed_ruxex_version(ruxex_bin: &Path) -> Result<String> {
+    let mut command = Command::new(ruxex_bin);
     let output = command
         .arg("--version")
         .kill_on_drop(true)
@@ -64,25 +64,25 @@ pub(crate) async fn managed_genex_version(genex_bin: &Path) -> Result<String> {
         .await
         .with_context(|| {
             format!(
-                "failed to invoke managed Genex binary {}",
-                genex_bin.display()
+                "failed to invoke managed Ruxex binary {}",
+                ruxex_bin.display()
             )
         })?;
     if !output.status.success() {
         return Err(anyhow!(
-            "managed Genex binary {} exited with status {}",
-            genex_bin.display(),
+            "managed Ruxex binary {} exited with status {}",
+            ruxex_bin.display(),
             output.status
         ));
     }
 
     let stdout = String::from_utf8(output.stdout).with_context(|| {
         format!(
-            "managed Genex version was not utf-8: {}",
-            genex_bin.display()
+            "managed Ruxex version was not utf-8: {}",
+            ruxex_bin.display()
         )
     })?;
-    parse_genex_version(&stdout)
+    parse_ruxex_version(&stdout)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -103,16 +103,16 @@ pub(crate) fn executable_identity_from_bytes(bytes: &[u8]) -> ExecutableIdentity
     }
 }
 
-fn managed_genex_file_name() -> &'static str {
-    "genex"
+fn managed_ruxex_file_name() -> &'static str {
+    "ruxex"
 }
 
-fn parse_genex_version(output: &str) -> Result<String> {
+fn parse_ruxex_version(output: &str) -> Result<String> {
     let version = output
         .split_whitespace()
         .nth(1)
         .filter(|version| !version.is_empty())
-        .ok_or_else(|| anyhow!("managed Genex version output was malformed"))?;
+        .ok_or_else(|| anyhow!("managed Ruxex version output was malformed"))?;
     Ok(version.to_string())
 }
 

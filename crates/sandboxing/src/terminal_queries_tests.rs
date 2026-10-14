@@ -2,9 +2,9 @@
 use std::path::Path;
 use std::time::Duration;
 
-use genex_utils_pty::ProcessDriver;
-use genex_utils_pty::SpawnedProcess;
-use genex_utils_pty::spawn_from_driver;
+use ruxex_utils_pty::ProcessDriver;
+use ruxex_utils_pty::SpawnedProcess;
+use ruxex_utils_pty::spawn_from_driver;
 use pretty_assertions::assert_eq;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;

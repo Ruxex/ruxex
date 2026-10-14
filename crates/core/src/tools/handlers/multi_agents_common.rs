@@ -4,14 +4,14 @@ use crate::function_tool::FunctionCallError;
 use crate::tools::context::FunctionToolOutput;
 use crate::tools::context::ToolOutput;
 use crate::tools::context::ToolPayload;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::user_input::UserInput;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 
@@ -60,27 +60,27 @@ where
     })
 }
 
-pub(crate) fn collab_spawn_error(err: GenexErr) -> FunctionCallError {
+pub(crate) fn collab_spawn_error(err: RuxexErr) -> FunctionCallError {
     match err.details() {
-        GenexErrorDetails::UnsupportedOperation(message) if message == "thread manager dropped" => {
+        RuxexErrorDetails::UnsupportedOperation(message) if message == "thread manager dropped" => {
             FunctionCallError::RespondToModel("collab manager unavailable".to_string())
         }
-        GenexErrorDetails::UnsupportedOperation(message) => {
+        RuxexErrorDetails::UnsupportedOperation(message) => {
             FunctionCallError::RespondToModel(message.clone())
         }
         _ => FunctionCallError::RespondToModel(format!("collab spawn failed: {err}")),
     }
 }
 
-pub(crate) fn collab_agent_error(agent_id: ThreadId, err: GenexErr) -> FunctionCallError {
+pub(crate) fn collab_agent_error(agent_id: ThreadId, err: RuxexErr) -> FunctionCallError {
     match err.details() {
-        GenexErrorDetails::ThreadNotFound(id) => {
+        RuxexErrorDetails::ThreadNotFound(id) => {
             FunctionCallError::RespondToModel(format!("agent with id {id} not found"))
         }
-        GenexErrorDetails::InternalAgentDied => {
+        RuxexErrorDetails::InternalAgentDied => {
             FunctionCallError::RespondToModel(format!("agent with id {agent_id} is closed"))
         }
-        GenexErrorDetails::UnsupportedOperation(_) => {
+        RuxexErrorDetails::UnsupportedOperation(_) => {
             FunctionCallError::RespondToModel("collab manager unavailable".to_string())
         }
         _ => FunctionCallError::RespondToModel(format!("collab tool failed: {err}")),

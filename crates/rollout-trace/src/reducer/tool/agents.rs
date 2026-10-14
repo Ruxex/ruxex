@@ -1,14 +1,14 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use genex_protocol::protocol::CollabAgentInteractionBeginEvent;
-use genex_protocol::protocol::CollabAgentInteractionEndEvent;
-use genex_protocol::protocol::CollabAgentSpawnEndEvent;
-use genex_protocol::protocol::CollabCloseBeginEvent;
-use genex_protocol::protocol::CollabCloseEndEvent;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::SubAgentActivityEvent;
-use genex_protocol::protocol::SubAgentActivityKind;
+use ruxex_protocol::protocol::CollabAgentInteractionBeginEvent;
+use ruxex_protocol::protocol::CollabAgentInteractionEndEvent;
+use ruxex_protocol::protocol::CollabAgentSpawnEndEvent;
+use ruxex_protocol::protocol::CollabCloseBeginEvent;
+use ruxex_protocol::protocol::CollabCloseEndEvent;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::SubAgentActivityEvent;
+use ruxex_protocol::protocol::SubAgentActivityKind;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -51,7 +51,7 @@ pub(in crate::reducer) struct ObservedAgentResultEdge {
     pub(in crate::reducer) wall_time_unix_ms: i64,
     pub(in crate::reducer) edge_id: String,
     pub(in crate::reducer) child_thread_id: String,
-    pub(in crate::reducer) child_genex_turn_id: String,
+    pub(in crate::reducer) child_ruxex_turn_id: String,
     pub(in crate::reducer) parent_thread_id: String,
     pub(in crate::reducer) message: String,
     pub(in crate::reducer) carried_payload: Option<RawPayloadRef>,
@@ -480,7 +480,7 @@ impl TraceReducer {
         let message_author = self.agent_path_for_thread(&observed.child_thread_id)?;
         let source = if let Some(source_item_id) = self.latest_assistant_message_item_for_turn(
             &observed.child_thread_id,
-            &observed.child_genex_turn_id,
+            &observed.child_ruxex_turn_id,
         ) {
             TraceAnchor::ConversationItem {
                 item_id: source_item_id,
@@ -728,14 +728,14 @@ impl TraceReducer {
     fn latest_assistant_message_item_for_turn(
         &self,
         thread_id: &str,
-        genex_turn_id: &str,
+        ruxex_turn_id: &str,
     ) -> Option<String> {
         self.rollout
             .conversation_items
             .values()
             .filter(|item| {
                 item.thread_id == thread_id
-                    && item.genex_turn_id.as_deref() == Some(genex_turn_id)
+                    && item.ruxex_turn_id.as_deref() == Some(ruxex_turn_id)
                     && item.role == ConversationRole::Assistant
                     && item.kind == ConversationItemKind::Message
                     && item.agent_message.is_none()

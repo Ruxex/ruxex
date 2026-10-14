@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use genex_build_info::BuildInfo;
-use genex_exec_server_protocol::JSONRPCMessage;
+use ruxex_build_info::BuildInfo;
+use ruxex_exec_server_protocol::JSONRPCMessage;
 use tokio::sync::mpsc;
 use tracing::debug;
 use tracing::warn;
@@ -24,7 +24,7 @@ use crate::server::request_dispatcher::RequestTaskResult;
 use crate::server::session_registry::SessionRegistry;
 use crate::telemetry::ConnectionTransport;
 use crate::telemetry::ExecServerTelemetry;
-use genex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpClientFactory;
 
 #[derive(Clone)]
 pub(crate) struct ConnectionProcessor {
@@ -41,8 +41,8 @@ impl ConnectionProcessor {
         Self::new_with_telemetry(
             runtime_paths,
             ExecServerTelemetry::default(),
-            genex_http_client::HttpClientFactory::new(
-                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
+            ruxex_http_client::HttpClientFactory::new(
+                ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
             ),
             RequestDispatchMode::Inline,
         )
@@ -245,12 +245,12 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    use genex_exec_server_protocol::JSONRPCMessage;
-    use genex_exec_server_protocol::JSONRPCNotification;
-    use genex_exec_server_protocol::JSONRPCRequest;
-    use genex_exec_server_protocol::JSONRPCResponse;
-    use genex_exec_server_protocol::RequestId;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_exec_server_protocol::JSONRPCMessage;
+    use ruxex_exec_server_protocol::JSONRPCNotification;
+    use ruxex_exec_server_protocol::JSONRPCRequest;
+    use ruxex_exec_server_protocol::JSONRPCResponse;
+    use ruxex_exec_server_protocol::RequestId;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use serde::Serialize;
     use serde::de::DeserializeOwned;
@@ -500,7 +500,7 @@ mod tests {
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*genex_linux_sandbox_exe*/ None,
+            /*ruxex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths")
     }

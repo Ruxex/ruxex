@@ -27,14 +27,14 @@ def main() -> None:
     schema_root = args.schema_root or repository_schema_root
 
     env = os.environ.copy()
-    env["GENEX_APP_SERVER_SCHEMA_ROOT"] = str(schema_root)
-    env["GENEX_APP_SERVER_SCHEMA_EXPERIMENTAL"] = "1" if args.experimental else "0"
+    env["RUXEX_APP_SERVER_SCHEMA_ROOT"] = str(schema_root)
+    env["RUXEX_APP_SERVER_SCHEMA_EXPERIMENTAL"] = "1" if args.experimental else "0"
     subprocess.run(
         [
             "cargo",
             "test",
             "-p",
-            "genex-app-server-protocol",
+            "ruxex-app-server-protocol",
             "--lib",
             "schema_fixtures_tests::write_schema_fixtures_from_env",
             "--",

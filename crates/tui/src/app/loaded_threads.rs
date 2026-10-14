@@ -15,11 +15,11 @@
 //! found. The primary thread itself is never included in the output.
 
 use crate::app_server_session::thread_blocks_direct_input;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadStatus;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SubAgentSource;
 use std::collections::HashMap;
 use std::collections::HashSet;
 

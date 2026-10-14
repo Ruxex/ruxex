@@ -1,15 +1,15 @@
 use super::*;
 use crate::app_event::HistoryLookupResponse;
-use genex_app_server_protocol::ImageReference;
-use genex_app_server_protocol::NetworkAccess;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_app_server_protocol::ImageReference;
+use ruxex_app_server_protocol::NetworkAccess;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]
@@ -773,7 +773,7 @@ async fn replayed_retryable_app_server_error_keeps_turn_running() {
             thread_id: "thread-1".to_string(),
             turn: AppServerTurn {
                 id: "turn-1".to_string(),
-                items_view: genex_app_server_protocol::TurnItemsView::Full,
+                items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                 items: Vec::new(),
                 status: AppServerTurnStatus::InProgress,
                 error: None,
@@ -791,7 +791,7 @@ async fn replayed_retryable_app_server_error_keeps_turn_running() {
             error: AppServerTurnError {
                 misalignment: None,
                 message: "Reconnecting... 1/5".to_string(),
-                genex_error_info: None,
+                ruxex_error_info: None,
                 additional_details: Some("Idle timeout waiting for SSE".to_string()),
             },
             will_retry: true,
@@ -931,7 +931,7 @@ async fn replayed_in_progress_mcp_tool_call_stays_active() {
             id: "mcp-1".to_string(),
             server: "copilot-bridge".to_string(),
             tool: "copilot".to_string(),
-            status: genex_app_server_protocol::McpToolCallStatus::InProgress,
+            status: ruxex_app_server_protocol::McpToolCallStatus::InProgress,
             arguments: json!({"action": "wait"}),
             app_context: None,
             mcp_app_resource_uri: None,
@@ -967,7 +967,7 @@ async fn deferred_mcp_lifecycle_events_keep_fifo_after_stream_finishes() {
         id: "mcp-deferred".to_string(),
         server: "copilot-bridge".to_string(),
         tool: "copilot".to_string(),
-        status: genex_app_server_protocol::McpToolCallStatus::InProgress,
+        status: ruxex_app_server_protocol::McpToolCallStatus::InProgress,
         arguments: json!({"action": "wait"}),
         app_context: None,
         mcp_app_resource_uri: None,
@@ -985,14 +985,14 @@ async fn deferred_mcp_lifecycle_events_keep_fifo_after_stream_finishes() {
         id: "mcp-deferred".to_string(),
         server: "copilot-bridge".to_string(),
         tool: "copilot".to_string(),
-        status: genex_app_server_protocol::McpToolCallStatus::Completed,
+        status: ruxex_app_server_protocol::McpToolCallStatus::Completed,
         arguments: json!({"action": "wait"}),
         app_context: None,
         mcp_app_resource_uri: None,
         mcp_app_ui: None,
         plugin_id: None,
         read_only_hint: None,
-        result: Some(Box::new(genex_app_server_protocol::McpToolCallResult {
+        result: Some(Box::new(ruxex_app_server_protocol::McpToolCallResult {
             content: vec![json!({"type": "text", "text": "deferred result"})],
             structured_content: None,
             meta: None,
@@ -1025,7 +1025,7 @@ async fn live_reasoning_summary_is_not_rendered_twice_when_item_completes() {
             thread_id: "thread-1".to_string(),
             turn: AppServerTurn {
                 id: "turn-1".to_string(),
-                items_view: genex_app_server_protocol::TurnItemsView::Full,
+                items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                 items: Vec::new(),
                 status: AppServerTurnStatus::InProgress,
                 error: None,
@@ -1084,7 +1084,7 @@ async fn live_reasoning_summary_drops_empty_parts_without_losing_content() {
             thread_id: "thread-1".to_string(),
             turn: AppServerTurn {
                 id: "turn-1".to_string(),
-                items_view: genex_app_server_protocol::TurnItemsView::Full,
+                items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                 items: Vec::new(),
                 status: AppServerTurnStatus::InProgress,
                 error: None,
@@ -1105,7 +1105,7 @@ async fn live_reasoning_summary_drops_empty_parts_without_losing_content() {
     ] {
         chat.handle_server_notification(
             ServerNotification::ReasoningSummaryPartAdded(
-                genex_app_server_protocol::ReasoningSummaryPartAddedNotification {
+                ruxex_app_server_protocol::ReasoningSummaryPartAddedNotification {
                     thread_id: "thread-1".to_string(),
                     turn_id: "turn-1".to_string(),
                     item_id: "reasoning-1".to_string(),

@@ -2,10 +2,10 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::model_types::ReasoningEffort;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -23,9 +23,9 @@ async fn collaboration_catalog_is_optional_and_refetched_on_bootstrap() -> Resul
         Some(json!({"result": {"data": "invalid"}})),
         None,
     ] {
-        let genex_home = tempfile::tempdir()?;
+        let ruxex_home = tempfile::tempdir()?;
         let mut config = ConfigBuilder::default()
-            .genex_home(genex_home.path().to_path_buf())
+            .ruxex_home(ruxex_home.path().to_path_buf())
             .build()
             .await?;
         config.model = Some("task-model".into());

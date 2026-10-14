@@ -2,20 +2,20 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use genex_otel::MetricsClient;
-use genex_protocol::ThreadId;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
+use ruxex_otel::MetricsClient;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
 
 use crate::ResponseItemEnvelope;
 use crate::RolloutItem;
 use crate::policy::is_persisted_rollout_item;
 
-const ITEM_BYTES_METRIC: &str = "genex.rollout.persistence.item_bytes";
-const APPEND_METRIC: &str = "genex.rollout.persistence.append";
-const TURN_BYTES_METRIC: &str = "genex.rollout.persistence.turn_bytes";
-const MEASUREMENT_ERROR_METRIC: &str = "genex.rollout.persistence.measurement_error";
+const ITEM_BYTES_METRIC: &str = "ruxex.rollout.persistence.item_bytes";
+const APPEND_METRIC: &str = "ruxex.rollout.persistence.append";
+const TURN_BYTES_METRIC: &str = "ruxex.rollout.persistence.turn_bytes";
+const MEASUREMENT_ERROR_METRIC: &str = "ruxex.rollout.persistence.measurement_error";
 const SAMPLE_DENOMINATOR: u64 = 100;
 const SAMPLE_RATE_LABEL: &str = "0.01";
 
@@ -300,7 +300,7 @@ pub struct RolloutPersistenceTelemetry {
 
 impl RolloutPersistenceTelemetry {
     pub fn new(thread_id: ThreadId) -> Self {
-        let metrics = genex_otel::global();
+        let metrics = ruxex_otel::global();
         let sampled = metrics.is_some() && is_thread_sampled(thread_id);
         Self {
             metrics,

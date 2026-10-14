@@ -3,9 +3,9 @@ use std::sync::Mutex as StdMutex;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_exec_server_protocol::RequestId;
-use genex_http_client::HttpClientFactory;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_exec_server_protocol::RequestId;
+use ruxex_http_client::HttpClientFactory;
 use opentelemetry::trace::SpanContext;
 use serde_json::to_value;
 use std::collections::HashSet;

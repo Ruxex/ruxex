@@ -4,12 +4,12 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::RouteAwareHttpClient;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_keyring_store::DefaultKeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::RouteAwareHttpClient;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_keyring_store::DefaultKeyringStore;
 use http::HeaderMap;
 use keyring::Error as KeyringError;
 use oauth2::AccessToken;
@@ -38,7 +38,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 use super::MockKeyringStore;
-use super::TempGenexHome;
+use super::TempRuxexHome;
 use super::assert_tokens_match_without_expiry;
 use super::sample_tokens;
 use crate::http_client_adapter::StreamableHttpClientAdapter;
@@ -62,7 +62,7 @@ use crate::oauth_http_client::PROACTIVE_REFRESH_TIMEOUT;
 use crate::startup_error::is_authentication_required_error;
 
 const REFRESH_LOCK_CONTENTION_EVENT_TARGET: &str =
-    "genex_rmcp_client::oauth::refresh_lock::contention";
+    "ruxex_rmcp_client::oauth::refresh_lock::contention";
 
 #[tokio::test(flavor = "current_thread")]
 async fn login_and_logout_follow_the_completed_refresh() -> Result<()> {
@@ -889,8 +889,8 @@ async fn persistor_for(tokens: &StoredOAuthTokens) -> Result<OAuthPersistor> {
     ))
 }
 
-async fn test_context() -> Result<(TempGenexHome, MockServer, StoredOAuthTokens)> {
-    let env = TempGenexHome::new();
+async fn test_context() -> Result<(TempRuxexHome, MockServer, StoredOAuthTokens)> {
+    let env = TempRuxexHome::new();
     let server = MockServer::start().await;
     mount_oauth_metadata(&server).await;
     let tokens = expired_tokens(&format!("{}/mcp", server.uri()));

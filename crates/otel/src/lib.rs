@@ -9,7 +9,7 @@ mod targets;
 mod tool_result;
 
 use crate::metrics::Result as MetricsResult;
-use genex_protocol::auth::AuthMode;
+use ruxex_protocol::auth::AuthMode;
 use serde::Serialize;
 use strum_macros::Display;
 
@@ -38,7 +38,7 @@ pub use crate::trace_context::span_w3c_trace_context;
 pub use crate::trace_context::traceparent_context_from_env;
 pub use crate::trace_context::validate_tracestate_entries;
 pub use crate::trace_context::validate_tracestate_member;
-pub use genex_utils_string::sanitize_metric_tag_value;
+pub use ruxex_utils_string::sanitize_metric_tag_value;
 
 #[derive(Debug, Clone, Serialize, Display)]
 #[serde(rename_all = "snake_case")]

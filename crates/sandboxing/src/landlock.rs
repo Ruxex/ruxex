@@ -1,10 +1,10 @@
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_protocol::models::PermissionProfile;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_protocol::models::PermissionProfile;
 use std::path::Path;
 
-/// Basename used when the Genex executable self-invokes as the Linux sandbox
+/// Basename used when the Ruxex executable self-invokes as the Linux sandbox
 /// helper.
-pub const GENEX_LINUX_SANDBOX_ARG0: &str = "genex-linux-sandbox";
+pub const RUXEX_LINUX_SANDBOX_ARG0: &str = "ruxex-linux-sandbox";
 
 pub fn allow_network_for_proxy(enforce_managed_network: bool) -> bool {
     // When managed network requirements are active, request proxy-only
@@ -14,7 +14,7 @@ pub fn allow_network_for_proxy(enforce_managed_network: bool) -> bool {
 }
 
 /// Converts the permission profile into the CLI invocation for
-/// `genex-linux-sandbox`.
+/// `ruxex-linux-sandbox`.
 ///
 /// A managed context selects proxy isolation; a default context keeps its
 /// restrictive policy when an older caller supplies no additional details.
@@ -67,7 +67,7 @@ pub fn create_linux_sandbox_command_args_for_permission_profile(
 }
 
 /// Converts the sandbox cwd and execution options into the CLI invocation for
-/// `genex-linux-sandbox`.
+/// `ruxex-linux-sandbox`.
 #[cfg_attr(not(test), allow(dead_code))]
 fn create_linux_sandbox_command_args(
     command: Vec<String>,

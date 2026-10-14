@@ -2,29 +2,29 @@ use super::ExecutorPluginProvider;
 use super::ExecutorPluginProviderError;
 use super::resolve_plugin_root;
 use crate::manifest::parse_plugin_manifest_uri;
-use genex_exec_server::CopyOptions;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::ExecutorFileSystemFuture;
-use genex_exec_server::FileMetadata;
-use genex_exec_server::FileSystemReadStream;
-use genex_exec_server::FileSystemResult;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_exec_server::ReadDirectoryEntry;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WalkOptions;
-use genex_exec_server::WalkOutcome;
-use genex_exec_server::WriteFileOptions;
-use genex_exec_server_test_support::environment_manager_without_environments;
-use genex_plugin::PluginProvider;
-use genex_plugin::ResolvedPlugin;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::CopyOptions;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::ExecutorFileSystemFuture;
+use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemReadStream;
+use ruxex_exec_server::FileSystemResult;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_exec_server::ReadDirectoryEntry;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WalkOptions;
+use ruxex_exec_server::WalkOutcome;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_exec_server_test_support::environment_manager_without_environments;
+use ruxex_plugin::PluginProvider;
+use ruxex_plugin::ResolvedPlugin;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::io;
@@ -222,7 +222,7 @@ async fn plugin_root_resolution_uses_supplied_executor_file_system() {
     assert!(!plugin_root.exists());
     let plugin_root = PathUri::from_host_native_path(&plugin_root).expect("plugin root URI");
     let manifest_path = plugin_root
-        .join(".genex-plugin/plugin.json")
+        .join(".ruxex-plugin/plugin.json")
         .expect("manifest URI");
     let parsed_manifest =
         parse_plugin_manifest_uri(&plugin_root, &manifest_path, MANIFEST_CONTENTS)
@@ -270,7 +270,7 @@ async fn plugin_root_resolution_uses_supplied_executor_file_system() {
 async fn plugin_root_resolution_accepts_foreign_executor_file_uri() {
     let plugin_root = PathUri::parse("file:///C:/plugins/foo").expect("Windows plugin root URI");
     let manifest_path = plugin_root
-        .join(".genex-plugin/plugin.json")
+        .join(".ruxex-plugin/plugin.json")
         .expect("manifest URI");
     let parsed_manifest =
         parse_plugin_manifest_uri(&plugin_root, &manifest_path, MANIFEST_CONTENTS)
@@ -361,7 +361,7 @@ async fn root_agent_plugin_manifest_is_not_an_executor_plugin() {
 async fn unavailable_environment_does_not_fall_back_to_host_filesystem() {
     let temp_dir = tempdir().expect("tempdir");
     let plugin_root = temp_dir.path().join("host-plugin");
-    write_manifest(&plugin_root, ".genex-plugin/plugin.json", MANIFEST_CONTENTS);
+    write_manifest(&plugin_root, ".ruxex-plugin/plugin.json", MANIFEST_CONTENTS);
     let provider =
         ExecutorPluginProvider::new(Arc::new(environment_manager_without_environments()));
 
@@ -380,14 +380,14 @@ async fn unavailable_environment_does_not_fall_back_to_host_filesystem() {
 async fn malformed_preferred_manifest_does_not_fall_through_to_alternate() {
     let temp_dir = tempdir().expect("tempdir");
     let plugin_root = temp_dir.path().join("demo-plugin");
-    write_manifest(&plugin_root, ".genex-plugin/plugin.json", "{not-json");
+    write_manifest(&plugin_root, ".ruxex-plugin/plugin.json", "{not-json");
     write_manifest(
         &plugin_root,
         ".claude-plugin/plugin.json",
         MANIFEST_CONTENTS,
     );
     let expected_path =
-        PathUri::from_host_native_path(plugin_root.join(".genex-plugin/plugin.json"))
+        PathUri::from_host_native_path(plugin_root.join(".ruxex-plugin/plugin.json"))
             .expect("manifest URI");
     let provider = ExecutorPluginProvider::new(Arc::new(EnvironmentManager::default_for_tests()));
 

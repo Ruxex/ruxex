@@ -5,21 +5,21 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::write_models_cache_with_models;
-use genex_app_server_protocol::ApprovalsReviewer;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::SandboxMode;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_rollout::read_session_meta_line;
+use ruxex_app_server_protocol::ApprovalsReviewer;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::SandboxMode;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_rollout::read_session_meta_line;
 use core_test_support::load_default_config_for_test;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -40,16 +40,16 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     source_state: SourceState,
 ) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::MultiAgentV2)
-        .write(genex_home.path())?;
-    let config = load_default_config_for_test(&genex_home).await;
-    let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
+        .write(ruxex_home.path())?;
+    let config = load_default_config_for_test(&ruxex_home).await;
+    let mut model = ruxex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.multi_agent_version = Some(MultiAgentVersion::V2);
-    write_models_cache_with_models(genex_home.path(), vec![model]).await?;
+    write_models_cache_with_models(ruxex_home.path(), vec![model]).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let parent = mcp
@@ -72,7 +72,7 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     if matches!(source_state, SourceState::Unloaded) {
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build_initialized()
             .await?;
     }
@@ -102,7 +102,7 @@ async fn fork_before_first_turn_preserves_model_selected_multi_agent_version(
     // Resume before the child's first turn can persist another version-bearing context.
     mcp.shutdown_gracefully().await?;
     mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let _: ThreadResumeResponse = mcp

@@ -13,33 +13,33 @@ use crate::test_support::test_plugins_manager;
 use crate::test_support::test_plugins_manager_with_options;
 use crate::test_support::test_skill_root_loader;
 use crate::test_support::write_file;
-use genex_config::AppToolApproval;
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirements;
-use genex_config::ConfigRequirementsToml;
-use genex_config::McpServerConfig;
-use genex_config::McpServerToolConfig;
-use genex_config::RequirementSource;
-use genex_config::RequirementsLayerEntry;
-use genex_config::SkillConfigRules;
-use genex_config::compose_requirements;
-use genex_config::types::McpServerTransportConfig;
-use genex_credential_broker::CredentialBroker;
-use genex_credential_broker::CredentialError;
-use genex_credential_broker::CredentialFuture;
-use genex_credential_broker::CredentialOwner;
-use genex_credential_broker::CredentialPurpose;
-use genex_credential_broker::CredentialRequest;
-use genex_credential_broker::CredentialSnapshot;
-use genex_plugin::PluginId;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::protocol::Product;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_plugins::SkillDiscoveryMode;
+use ruxex_config::AppToolApproval;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::McpServerConfig;
+use ruxex_config::McpServerToolConfig;
+use ruxex_config::RequirementSource;
+use ruxex_config::RequirementsLayerEntry;
+use ruxex_config::SkillConfigRules;
+use ruxex_config::compose_requirements;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_credential_broker::CredentialBroker;
+use ruxex_credential_broker::CredentialError;
+use ruxex_credential_broker::CredentialFuture;
+use ruxex_credential_broker::CredentialOwner;
+use ruxex_credential_broker::CredentialPurpose;
+use ruxex_credential_broker::CredentialRequest;
+use ruxex_credential_broker::CredentialSnapshot;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::protocol::Product;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -67,13 +67,13 @@ impl CredentialBroker for ExactOwnerBroker {
 
 #[tokio::test]
 async fn plugin_manager_keeps_credential_requests_owner_scoped() {
-    let genex_home = tempfile::tempdir().expect("create Genex home");
+    let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
     let request = CredentialRequest::new(
         CredentialOwner::Plugin("weather".to_string()),
         CredentialPurpose::PluginResource,
     );
     let manager = PluginsManager::new_with_options(
-        genex_home.path().to_path_buf(),
+        ruxex_home.path().to_path_buf(),
         Some(Product::Codex),
         Arc::new(ExactOwnerBroker {
             request: request.clone(),
@@ -98,7 +98,7 @@ fn unrestricted_config_layer_stack() -> ConfigLayerStack {
 }
 
 fn config_layer_stack_with_requirements(
-    genex_home: &Path,
+    ruxex_home: &Path,
     user_config: &str,
     requirements: &str,
 ) -> ConfigLayerStack {
@@ -111,7 +111,7 @@ fn config_layer_stack_with_requirements(
     let requirements_toml = with_sources.clone().into_toml();
     let requirements = ConfigRequirements::try_from(with_sources).expect("normalize requirements");
     let config_file =
-        AbsolutePathBuf::try_from(genex_home.join(CONFIG_TOML_FILE)).expect("absolute config path");
+        AbsolutePathBuf::try_from(ruxex_home.join(CONFIG_TOML_FILE)).expect("absolute config path");
     ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -127,12 +127,12 @@ fn config_layer_stack_with_requirements(
 }
 
 fn plugins_config_input_with_requirements(
-    genex_home: &Path,
+    ruxex_home: &Path,
     user_config: &str,
     requirements: &str,
 ) -> PluginsConfigInput {
     PluginsConfigInput::new(
-        config_layer_stack_with_requirements(genex_home, user_config, requirements),
+        config_layer_stack_with_requirements(ruxex_home, user_config, requirements),
         /*plugins_enabled*/ true,
     )
 }
@@ -162,9 +162,9 @@ fn marketplace_source_refresh_notifies_only_after_installed_cache_changes() {
 
 #[tokio::test]
 async fn marketplace_policy_projection_disables_installed_plugin_and_invalidates_cache() {
-    let genex_home = TempDir::new().expect("create Genex home");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
     write_plugin(
-        &genex_home.path().join("plugins/cache/company"),
+        &ruxex_home.path().join("plugins/cache/company"),
         "sample/local",
         "sample",
     );
@@ -177,7 +177,7 @@ source = "https://github.com/example/company.git"
 enabled = true
 "#;
     let allowed = plugins_config_input_with_requirements(
-        genex_home.path(),
+        ruxex_home.path(),
         user_config,
         r#"
 [marketplaces]
@@ -189,7 +189,7 @@ url = "https://github.com/example/company.git"
 "#,
     );
     let blocked = plugins_config_input_with_requirements(
-        genex_home.path(),
+        ruxex_home.path(),
         user_config,
         r#"
 [marketplaces]
@@ -200,7 +200,7 @@ source = "git"
 url = "https://github.com/example/other.git"
 "#,
     );
-    let manager = test_plugins_manager(genex_home.path().to_path_buf());
+    let manager = test_plugins_manager(ruxex_home.path().to_path_buf());
 
     let allowed_outcome = manager.plugins_for_config(&allowed).await;
     assert_eq!(allowed_outcome.plugins().len(), 1);
@@ -212,8 +212,8 @@ url = "https://github.com/example/other.git"
 
 #[tokio::test]
 async fn plugin_read_rejects_marketplace_blocked_by_requirements() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let marketplace_root = genex_home.path().join("marketplace");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let marketplace_root = ruxex_home.path().join("marketplace");
     write_plugin(&marketplace_root, "sample", "sample");
     write_file(
         &marketplace_root.join(".agents/plugins/marketplace.json"),
@@ -228,7 +228,7 @@ async fn plugin_read_rejects_marketplace_blocked_by_requirements() {
 }"#,
     );
     let config = plugins_config_input_with_requirements(
-        genex_home.path(),
+        ruxex_home.path(),
         "",
         r#"
 [marketplaces]
@@ -239,7 +239,7 @@ restrict_to_allowed_sources = true
         AbsolutePathBuf::try_from(marketplace_root.join(".agents/plugins/marketplace.json"))
             .expect("absolute marketplace path");
 
-    let err = test_plugins_manager(genex_home.path().to_path_buf())
+    let err = test_plugins_manager(ruxex_home.path().to_path_buf())
         .read_plugin_for_config(
             &config,
             &PluginReadRequest {
@@ -257,8 +257,8 @@ restrict_to_allowed_sources = true
 
 #[test]
 fn marketplace_policy_filters_discovered_marketplaces_by_configured_name() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let repo_root = genex_home.path().join("repo");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let repo_root = ruxex_home.path().join("repo");
     let subdirectory = repo_root.join("worktree/subdirectory");
     fs::create_dir_all(&subdirectory).expect("create input subdirectory");
     write_plugin(&repo_root, "sample", "sample");
@@ -278,7 +278,7 @@ fn marketplace_policy_filters_discovered_marketplaces_by_configured_name() {
     let repo_root = AbsolutePathBuf::try_from(repo_root).expect("absolute repository root");
     let subdirectory =
         AbsolutePathBuf::try_from(subdirectory).expect("absolute input subdirectory");
-    let manager = test_plugins_manager(genex_home.path().to_path_buf());
+    let manager = test_plugins_manager(ruxex_home.path().to_path_buf());
     let user_config = format!(
         r#"
 [marketplaces.company]
@@ -288,7 +288,7 @@ source = {:?}
         repo_root.as_path()
     );
     let allowed = plugins_config_input_with_requirements(
-        genex_home.path(),
+        ruxex_home.path(),
         &user_config,
         &format!(
             r#"
@@ -303,7 +303,7 @@ path = {:?}
         ),
     );
     let blocked = plugins_config_input_with_requirements(
-        genex_home.path(),
+        ruxex_home.path(),
         &user_config,
         &format!(
             r#"
@@ -337,13 +337,13 @@ fn write_plugin_with_version(
     manifest_version: Option<&str>,
 ) {
     let plugin_root = root.join(dir_name);
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::create_dir_all(plugin_root.join("skills")).unwrap();
     let version = manifest_version
         .map(|manifest_version| format!(r#","version":"{manifest_version}""#))
         .unwrap_or_default();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         format!(r#"{{"name":"{manifest_name}"{version}}}"#),
     )
     .unwrap();
@@ -366,8 +366,8 @@ fn write_plugin(root: &Path, dir_name: &str, manifest_name: &str) {
 
 fn init_git_repo(repo: &Path) {
     run_git(repo, &["init"]);
-    run_git(repo, &["config", "user.email", "genex-test@example.com"]);
-    run_git(repo, &["config", "user.name", "Genex Test"]);
+    run_git(repo, &["config", "user.email", "ruxex-test@example.com"]);
+    run_git(repo, &["config", "user.name", "Ruxex Test"]);
     run_git(repo, &["add", "."]);
     run_git(repo, &["commit", "-m", "initial"]);
 }
@@ -411,30 +411,30 @@ fn plugin_config_toml(enabled: bool, plugins_feature_enabled: bool) -> String {
 
 async fn load_plugins_from_config(
     config_toml: &str,
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_mode: Option<AuthMode>,
 ) -> PluginLoadOutcome {
-    write_file(&genex_home.join(CONFIG_TOML_FILE), config_toml);
-    let config = load_config(genex_home, genex_home).await;
-    test_plugins_manager_with_options(genex_home.to_path_buf(), Some(Product::Codex), auth_mode)
+    write_file(&ruxex_home.join(CONFIG_TOML_FILE), config_toml);
+    let config = load_config(ruxex_home, ruxex_home).await;
+    test_plugins_manager_with_options(ruxex_home.to_path_buf(), Some(Product::Codex), auth_mode)
         .plugins_for_config(&config)
         .await
 }
 
-async fn load_config(genex_home: &Path, cwd: &Path) -> PluginsConfigInput {
-    load_plugins_config_input(genex_home, cwd).await
+async fn load_config(ruxex_home: &Path, cwd: &Path) -> PluginsConfigInput {
+    load_plugins_config_input(ruxex_home, cwd).await
 }
 
 #[tokio::test]
 async fn load_plugins_loads_manifest_mcp_server_objects() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/counter-sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "counter-sample",
   "version": "1.1.1",
@@ -456,7 +456,7 @@ plugins = true
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, ruxex_home.path(), /*auth_mode*/ None).await;
 
     assert_eq!(outcome.plugins()[0].error, None);
     assert_eq!(
@@ -494,14 +494,14 @@ enabled = true
 
 #[tokio::test]
 async fn load_plugins_applies_plugin_mcp_server_policy() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "sample"
 }"#,
@@ -541,7 +541,7 @@ output_token_limit = 12000
 "#;
 
     let outcome =
-        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, ruxex_home.path(), /*auth_mode*/ None).await;
     let server = outcome.plugins()[0]
         .mcp_servers
         .get("sample")
@@ -565,15 +565,15 @@ output_token_limit = 12000
 
 #[tokio::test]
 async fn load_plugins_resolves_disabled_skill_names_against_loaded_plugin_skills() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
     let skill_path = plugin_root.join("skills/sample-search/SKILL.md");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -592,7 +592,7 @@ enabled = false
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, ruxex_home.path(), /*auth_mode*/ None).await;
     let skill_path = std::fs::canonicalize(skill_path)
         .expect("skill path should canonicalize")
         .abs();
@@ -607,14 +607,14 @@ enabled = true
 
 #[tokio::test]
 async fn load_plugins_ignores_unknown_disabled_skill_names() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -633,7 +633,7 @@ enabled = false
 enabled = true
 "#;
     let outcome =
-        load_plugins_from_config(config_toml, genex_home.path(), /*auth_mode*/ None).await;
+        load_plugins_from_config(config_toml, ruxex_home.path(), /*auth_mode*/ None).await;
 
     assert!(outcome.plugins()[0].disabled_skill_paths.is_empty());
     assert!(outcome.plugins()[0].has_enabled_skills);
@@ -652,14 +652,14 @@ enabled = true
 
 #[tokio::test]
 async fn plugin_capability_summary_uses_manifest_mcp_server_objects() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/counter-sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "counter-sample",
   "version": "1.1.1",
@@ -694,14 +694,14 @@ async fn plugin_capability_summary_uses_manifest_mcp_server_objects() {
 
 #[tokio::test]
 async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "description": "Plugin that\n includes   the sample\tserver"
@@ -714,7 +714,7 @@ async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        genex_home.path(),
+        ruxex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -731,15 +731,15 @@ async fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
 
 #[tokio::test]
 async fn capability_summary_truncates_overlong_plugin_descriptions() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
     let too_long = "x".repeat(MAX_CAPABILITY_SUMMARY_DESCRIPTION_LEN + 1);
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         &format!(
             r#"{{
   "name": "sample",
@@ -754,7 +754,7 @@ async fn capability_summary_truncates_overlong_plugin_descriptions() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        genex_home.path(),
+        ruxex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -771,11 +771,11 @@ async fn capability_summary_truncates_overlong_plugin_descriptions() {
 
 #[tokio::test]
 async fn install_plugin_materializes_default_command_skills() {
-    let genex_home = TempDir::new().unwrap();
-    let source_root = genex_home.path().join("source/sample");
+    let ruxex_home = TempDir::new().unwrap();
+    let source_root = ruxex_home.path().join("source/sample");
 
     write_file(
-        &source_root.join(".genex-plugin/plugin.json"),
+        &source_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "skills": "./custom-skills/"
@@ -799,10 +799,10 @@ async fn install_plugin_materializes_default_command_skills() {
         &format!("---\ndescription: Oversized\n---\n{}", "x".repeat(4_000)),
     );
     write_file(
-        &source_root.join(".genex-plugin/migrated-command-skills/undeclared-command/SKILL.md"),
+        &source_root.join(".ruxex-plugin/migrated-command-skills/undeclared-command/SKILL.md"),
         "---\nname: undeclared-command\ndescription: undeclared command\n---\n",
     );
-    let result = PluginStore::new(genex_home.path().to_path_buf())
+    let result = PluginStore::new(ruxex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -810,7 +810,7 @@ async fn install_plugin_materializes_default_command_skills() {
         .unwrap();
     let migrated_skill = result
         .installed_path
-        .join(".genex-plugin/migrated-command-skills/source-command-pr-review/SKILL.md");
+        .join(".ruxex-plugin/migrated-command-skills/source-command-pr-review/SKILL.md");
     let expected_migrated_skill = "---\nname: \"source-command-pr-review\"\ndescription: \"Review a pull request\"\n---\n\n# source-command-pr-review\n\nUse this skill when the user asks to run the migrated source command `pr-review`.\n\n## Command Template\n\nInspect the proposed changes.\n";
     assert_eq!(
         fs::read_to_string(&migrated_skill).unwrap(),
@@ -819,13 +819,13 @@ async fn install_plugin_materializes_default_command_skills() {
     assert!(
         !result
             .installed_path
-            .join(".genex-plugin/migrated-command-skills/undeclared-command")
+            .join(".ruxex-plugin/migrated-command-skills/undeclared-command")
             .exists()
     );
     assert!(
         !result
             .installed_path
-            .join(".genex-plugin/migrated-command-skills/source-command-oversized")
+            .join(".ruxex-plugin/migrated-command-skills/source-command-oversized")
             .exists()
     );
 
@@ -862,7 +862,7 @@ async fn install_plugin_materializes_default_command_skills() {
             .unwrap(),
             AbsolutePathBuf::from_absolute_path_checked(
                 fs::canonicalize(result.installed_path.join(
-                    ".genex-plugin/migrated-command-skills/source-command-summarize/SKILL.md"
+                    ".ruxex-plugin/migrated-command-skills/source-command-summarize/SKILL.md"
                 ))
                 .unwrap()
             )
@@ -873,10 +873,10 @@ async fn install_plugin_materializes_default_command_skills() {
 
 #[test]
 fn install_plugin_ignores_invalid_commands_manifest_field() {
-    let genex_home = TempDir::new().unwrap();
-    let source_root = genex_home.path().join("source/sample");
+    let ruxex_home = TempDir::new().unwrap();
+    let source_root = ruxex_home.path().join("source/sample");
     write_file(
-        &source_root.join(".genex-plugin/plugin.json"),
+        &source_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample","commands":{}}"#,
     );
     write_file(
@@ -884,7 +884,7 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
         "---\ndescription: Review\n---\nReview the current change.\n",
     );
 
-    let result = PluginStore::new(genex_home.path().to_path_buf())
+    let result = PluginStore::new(ruxex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -894,23 +894,23 @@ fn install_plugin_ignores_invalid_commands_manifest_field() {
     assert!(
         !result
             .installed_path
-            .join(".genex-plugin/migrated-command-skills")
+            .join(".ruxex-plugin/migrated-command-skills")
             .exists()
     );
 }
 
 #[test]
 fn install_plugin_ignores_command_migration_errors() {
-    let genex_home = TempDir::new().unwrap();
-    let source_root = genex_home.path().join("source/sample");
+    let ruxex_home = TempDir::new().unwrap();
+    let source_root = ruxex_home.path().join("source/sample");
     write_file(
-        &source_root.join(".genex-plugin/plugin.json"),
+        &source_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample","commands":"./commands/review.md"}"#,
     );
     fs::create_dir_all(source_root.join("commands")).unwrap();
     fs::write(source_root.join("commands/review.md"), [0xff]).unwrap();
 
-    let result = PluginStore::new(genex_home.path().to_path_buf())
+    let result = PluginStore::new(ruxex_home.path().to_path_buf())
         .install(
             source_root.abs(),
             PluginId::parse("sample@test").expect("plugin id should parse"),
@@ -922,8 +922,8 @@ fn install_plugin_ignores_command_migration_errors() {
 
 #[tokio::test]
 async fn load_plugin_skills_dedupes_overlapping_manifest_roots() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local")
@@ -991,14 +991,14 @@ async fn load_plugin_skills_dedupes_overlapping_manifest_roots() {
 
 #[tokio::test]
 async fn load_plugins_ignores_invalid_manifest_skills_shape() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "sample",
   "skills": { "path": "./custom-skills/" }
@@ -1015,7 +1015,7 @@ async fn load_plugins_ignores_invalid_manifest_skills_shape() {
 
     let outcome = load_plugins_from_config(
         &plugin_config_toml(/*enabled*/ true, /*plugins_feature_enabled*/ true),
-        genex_home.path(),
+        ruxex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -1029,14 +1029,14 @@ async fn load_plugins_ignores_invalid_manifest_skills_shape() {
 
 #[tokio::test]
 async fn load_plugins_preserves_disabled_plugins_without_effective_contributions() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -1055,7 +1055,7 @@ async fn load_plugins_preserves_disabled_plugins_without_effective_contributions
         &plugin_config_toml(
             /*enabled*/ false, /*plugins_feature_enabled*/ true,
         ),
-        genex_home.path(),
+        ruxex_home.path(),
         /*auth_mode*/ None,
     )
     .await;
@@ -1086,14 +1086,14 @@ async fn load_plugins_preserves_disabled_plugins_without_effective_contributions
 
 #[tokio::test]
 async fn load_plugins_returns_empty_when_feature_disabled() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
 
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     );
     write_file(
@@ -1101,14 +1101,14 @@ async fn load_plugins_returns_empty_when_feature_disabled() {
         "---\nname: sample-search\ndescription: search sample data\n---\n",
     );
     write_file(
-        &genex_home.path().join(CONFIG_TOML_FILE),
+        &ruxex_home.path().join(CONFIG_TOML_FILE),
         &plugin_config_toml(
             /*enabled*/ true, /*plugins_feature_enabled*/ false,
         ),
     );
 
-    let config = load_config(genex_home.path(), genex_home.path()).await;
-    let outcome = test_plugins_manager(genex_home.path().to_path_buf())
+    let config = load_config(ruxex_home.path(), ruxex_home.path()).await;
+    let outcome = test_plugins_manager(ruxex_home.path().to_path_buf())
         .plugins_for_config(&config)
         .await;
 
@@ -1117,13 +1117,13 @@ async fn load_plugins_returns_empty_when_feature_disabled() {
 
 #[tokio::test]
 async fn plugin_cache_reuses_effective_configurations() {
-    let genex_home = TempDir::new().unwrap();
-    let plugin_root = genex_home
+    let ruxex_home = TempDir::new().unwrap();
+    let plugin_root = ruxex_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
     write_plugin(
-        genex_home.path().join("plugins/cache/test").as_path(),
+        ruxex_home.path().join("plugins/cache/test").as_path(),
         "sample/local",
         "sample",
     );
@@ -1138,7 +1138,7 @@ async fn plugin_cache_reuses_effective_configurations() {
 }"#,
     );
 
-    let user_file = genex_home.path().join(CONFIG_TOML_FILE).abs();
+    let user_file = ruxex_home.path().join(CONFIG_TOML_FILE).abs();
     let user_config: toml::Value = toml::from_str(&plugin_config_toml(
         /*enabled*/ true, /*plugins_feature_enabled*/ true,
     ))
@@ -1166,7 +1166,7 @@ async fn plugin_cache_reuses_effective_configurations() {
     let config = |session_config| {
         PluginsConfigInput::new(stack(session_config), /*plugins_enabled*/ true)
     };
-    let manager = test_plugins_manager(genex_home.path().to_path_buf());
+    let manager = test_plugins_manager(ruxex_home.path().to_path_buf());
 
     let first_config = config(r#"model = "first""#);
     let second_config = config(
@@ -1267,8 +1267,8 @@ async fn install_plugin_updates_config_with_relative_path_and_plugin_key() {
 
 #[tokio::test]
 async fn strict_install_requires_allowed_local_marketplace_to_be_added_first() {
-    let genex_home = TempDir::new().expect("create Genex home");
-    let marketplace_root = genex_home.path().join("company-marketplace");
+    let ruxex_home = TempDir::new().expect("create Ruxex home");
+    let marketplace_root = ruxex_home.path().join("company-marketplace");
     write_plugin(&marketplace_root, "sample", "sample");
     write_file(
         &marketplace_root.join(".agents/plugins/marketplace.json"),
@@ -1295,11 +1295,11 @@ source = "local"
 path = {marketplace_root:?}
 "#
     );
-    let config = config_layer_stack_with_requirements(genex_home.path(), "", &requirements);
+    let config = config_layer_stack_with_requirements(ruxex_home.path(), "", &requirements);
     let marketplace_path =
         AbsolutePathBuf::try_from(marketplace_root.join(".agents/plugins/marketplace.json"))
             .expect("absolute marketplace path");
-    let manager = test_plugins_manager(genex_home.path().to_path_buf());
+    let manager = test_plugins_manager(ruxex_home.path().to_path_buf());
 
     let err = manager
         .install_plugin(
@@ -1316,7 +1316,7 @@ path = {marketplace_root:?}
         PluginInstallError::Marketplace(MarketplaceError::InvalidMarketplaceFile { .. })
     ));
     assert!(err.to_string().contains("must be added to config"));
-    assert!(!genex_home.path().join(CONFIG_TOML_FILE).exists());
+    assert!(!ruxex_home.path().join(CONFIG_TOML_FILE).exists());
 
     let user_config = format!(
         r#"
@@ -1325,9 +1325,9 @@ source_type = "local"
 source = {marketplace_root:?}
 "#
     );
-    write_file(&genex_home.path().join(CONFIG_TOML_FILE), &user_config);
+    write_file(&ruxex_home.path().join(CONFIG_TOML_FILE), &user_config);
     let config =
-        config_layer_stack_with_requirements(genex_home.path(), &user_config, &requirements);
+        config_layer_stack_with_requirements(ruxex_home.path(), &user_config, &requirements);
     let outcome = manager
         .install_plugin(
             &config,
@@ -1465,7 +1465,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(!plugin_root.join(".genex-plugin/plugin.json").exists());
+    assert!(!plugin_root.join(".ruxex-plugin/plugin.json").exists());
     assert!(
         !tmp.path()
             .join("plugins/.marketplace-plugin-source-staging")
@@ -1491,7 +1491,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
     assert_eq!(interface.developer_name.as_deref(), Some("Byron Grogan"));
     assert_eq!(interface.category.as_deref(), Some("code-review"));
     let fallback_json: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(installed_path.join(".genex-plugin/plugin.json")).unwrap(),
+        &fs::read_to_string(installed_path.join(".ruxex-plugin/plugin.json")).unwrap(),
     )
     .unwrap();
     assert_eq!(
@@ -1502,7 +1502,7 @@ async fn install_plugin_writes_marketplace_manifest_fallback_when_missing_plugin
     assert_eq!(
         fs::read_to_string(
             installed_path
-                .join(".genex-plugin/migrated-command-skills/source-command-review/SKILL.md")
+                .join(".ruxex-plugin/migrated-command-skills/source-command-review/SKILL.md")
         )
         .unwrap(),
         "---\nname: \"source-command-review\"\ndescription: \"Review code\"\n---\n\n# source-command-review\n\nUse this skill when the user asks to run the migrated source command `review`.\n\n## Command Template\n\nReview the current change.\n"
@@ -1565,7 +1565,7 @@ async fn install_plugin_supports_git_subdir_marketplace_sources() {
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
 }
 
 #[tokio::test]
@@ -1619,7 +1619,7 @@ async fn install_plugin_supports_relative_git_subdir_marketplace_sources() {
             auth_policy: MarketplacePluginAuthPolicy::OnInstall,
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
 }
 
 #[tokio::test]
@@ -1972,7 +1972,7 @@ async fn read_plugin_for_config_does_not_fallback_from_invalid_plugin_manifest()
   ]
 }"#,
     );
-    write_file(&plugin_root.join(".genex-plugin/plugin.json"), "{");
+    write_file(&plugin_root.join(".ruxex-plugin/plugin.json"), "{");
     write_file(
         &tmp.path().join(CONFIG_TOML_FILE),
         r#"[features]
@@ -2021,7 +2021,7 @@ async fn read_plugin_for_config_uses_user_layer_skill_settings_only() {
 }"#,
     );
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"enabled-plugin"}"#,
     );
     write_file(
@@ -2038,7 +2038,7 @@ enabled = true
 "#,
     );
     write_file(
-        &repo_root.join(".genex/config.toml"),
+        &repo_root.join(".ruxex/config.toml"),
         r#"[[skills.config]]
 name = "enabled-plugin:sample-search"
 enabled = false
@@ -2093,7 +2093,7 @@ async fn list_marketplaces_installed_git_source_reads_metadata_from_cache_withou
     );
     let cached_plugin_root = tmp.path().join("plugins/cache/debug/toolkit/local");
     write_file(
-        &cached_plugin_root.join(".genex-plugin/plugin.json"),
+        &cached_plugin_root.join(".ruxex-plugin/plugin.json"),
         r##"{
   "name": "toolkit",
   "interface": {
@@ -2238,7 +2238,7 @@ source = "/tmp/debug"
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2256,7 +2256,7 @@ source = "/tmp/debug"
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();
@@ -2311,7 +2311,7 @@ source = "/tmp/debug"
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2329,7 +2329,7 @@ source = "/tmp/debug"
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();
@@ -2369,7 +2369,7 @@ plugins = true
 "#,
     );
     fs::create_dir_all(marketplace_root.join(".agents/plugins")).unwrap();
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
@@ -2387,7 +2387,7 @@ plugins = true
     )
     .unwrap();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .unwrap();
@@ -2697,8 +2697,8 @@ enabled = true
 
 #[tokio::test]
 async fn non_curated_plugin_cache_refresh_preserves_manual_priority() {
-    let genex_home = TempDir::new().unwrap();
-    let marketplace_root = genex_home.path().join("marketplace");
+    let ruxex_home = TempDir::new().unwrap();
+    let marketplace_root = ruxex_home.path().join("marketplace");
     fs::create_dir_all(marketplace_root.join(".git")).unwrap();
     write_plugin_with_version(
         &marketplace_root,
@@ -2717,7 +2717,7 @@ async fn non_curated_plugin_cache_refresh_preserves_manual_priority() {
 }"#,
     );
     write_file(
-        &genex_home.path().join(CONFIG_TOML_FILE),
+        &ruxex_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 
@@ -2725,7 +2725,7 @@ plugins = true
 enabled = true
 "#,
     );
-    let config = load_plugins_config_input(genex_home.path(), &marketplace_root).await;
+    let config = load_plugins_config_input(ruxex_home.path(), &marketplace_root).await;
     let context = PluginMarketplaceContext {
         global_config: config.clone(),
         scopes: vec![PluginMarketplaceScope {
@@ -2734,7 +2734,7 @@ enabled = true
         }],
         load_errors: Vec::new(),
     };
-    let manager = Arc::new(test_plugins_manager(genex_home.path().to_path_buf()));
+    let manager = Arc::new(test_plugins_manager(ruxex_home.path().to_path_buf()));
     manager
         .non_curated_cache_refresh_state
         .write()

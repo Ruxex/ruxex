@@ -4,36 +4,36 @@ use app_test_support::TestAppServer;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadArchiveResponse;
-use genex_app_server_protocol::ThreadArchivedNotification;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSource;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_core::ARCHIVED_SESSIONS_SUBDIR;
-use genex_core::find_archived_thread_path_by_id_str;
-use genex_core::find_thread_path_by_id_str;
-use genex_features::Feature;
-use genex_protocol::ThreadId;
-use genex_state::DirectionalThreadSpawnEdgeStatus;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadArchiveResponse;
+use ruxex_app_server_protocol::ThreadArchivedNotification;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnarchiveResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_core::ARCHIVED_SESSIONS_SUBDIR;
+use ruxex_core::find_archived_thread_path_by_id_str;
+use ruxex_core::find_thread_path_by_id_str;
+use ruxex_features::Feature;
+use ruxex_protocol::ThreadId;
+use ruxex_state::DirectionalThreadSpawnEdgeStatus;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -56,17 +56,17 @@ fn body_contains(request: &wiremock::Request, text: &str) -> bool {
 #[tokio::test]
 async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let parent_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
     )?;
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let mut owner = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread: child, .. } = owner
@@ -77,7 +77,7 @@ async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> R
         .await?;
     let child_thread_id = ThreadId::from_string(&child.id)?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     state_db
@@ -89,7 +89,7 @@ async fn thread_archive_rejects_owned_unmaterialized_paginated_descendant() -> R
         .await?;
 
     let mut other = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let request_id = other
@@ -125,18 +125,18 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
     const RESUME_CALL_ID: &str = "resume-call-1";
 
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::Collab)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let parent_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
     )?;
     let child_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
@@ -144,7 +144,7 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
     let parent_thread_id = ThreadId::from_string(&parent_id)?;
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     state_db
@@ -156,7 +156,7 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
         .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -283,18 +283,18 @@ async fn thread_archive_shuts_down_resumed_archived_descendant() -> Result<()> {
 #[tokio::test]
 async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(genex_home.path())?;
-    mount_analytics_capture(&server, genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    mount_analytics_capture(&server, ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     mcp.initialize_with_client_info(ClientInfo {
-        name: "genex_work_desktop".to_string(),
+        name: "ruxex_work_desktop".to_string(),
         title: None,
         version: "0.1.0".to_string(),
     })
@@ -305,7 +305,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),
             thread_source: Some(ThreadSource::User),
-            service_name: Some("genex_work_desktop".to_string()),
+            service_name: Some("ruxex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -318,7 +318,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
         rollout_path.display()
     );
     assert!(
-        find_thread_path_by_id_str(genex_home.path(), &thread.id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(ruxex_home.path(), &thread.id, /*state_db_ctx*/ None)
             .await?
             .is_none(),
         "thread id should not be discoverable before rollout materialization"
@@ -372,7 +372,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     );
 
     let discovered_path =
-        find_thread_path_by_id_str(genex_home.path(), &thread.id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(ruxex_home.path(), &thread.id, /*state_db_ctx*/ None)
             .await?
             .expect("expected rollout path for thread id to exist after materialization");
     assert_paths_match_on_disk(&discovered_path, &rollout_path)?;
@@ -393,7 +393,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     assert_eq!(archived_notification.thread_id, thread.id);
 
     let event = wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "genex_thread_archive_event"
+        event["event_type"] == "ruxex_thread_archive_event"
             && event["event_params"]["thread_id"] == thread.id
     })
     .await?;
@@ -403,20 +403,20 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     assert_eq!(
         event,
         json!({
-            "event_type": "genex_thread_archive_event",
+            "event_type": "ruxex_thread_archive_event",
             "event_params": {
                 "thread_id": thread.id,
                 "action": "archived",
                 "occurred_at_ms": occurred_at_ms,
                 "app_server_client": {
-                    "product_client_id": "genex_work_desktop",
-                    "client_name": "genex_work_desktop",
+                    "product_client_id": "ruxex_work_desktop",
+                    "client_name": "ruxex_work_desktop",
                     "client_version": "0.1.0",
                     "rpc_transport": "stdio",
                     "experimental_api_enabled": true,
                 },
                 "runtime": {
-                    "genex_rs_version": env!("CARGO_PKG_VERSION"),
+                    "ruxex_rs_version": env!("CARGO_PKG_VERSION"),
                     "runtime_os": std::env::consts::OS,
                     "runtime_os_version": event["event_params"]["runtime"]["runtime_os_version"],
                     "runtime_arch": std::env::consts::ARCH,
@@ -427,7 +427,7 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
     );
 
     // Verify file moved.
-    let archived_directory = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
+    let archived_directory = ruxex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
     // The archived file keeps the original filename (rollout-...-<id>.jsonl).
     let archived_rollout_path =
         archived_directory.join(rollout_path.file_name().expect("rollout file name"));
@@ -448,23 +448,23 @@ async fn thread_archive_requires_materialized_rollout() -> Result<()> {
 #[tokio::test]
 async fn thread_archive_archives_spawned_descendants() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let parent_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
     )?;
     let child_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
     )?;
     let grandchild_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-02-00",
         "2025-01-01T00:02:00Z",
         "grandchild",
@@ -474,7 +474,7 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     state_db
@@ -496,7 +496,7 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
         .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -524,7 +524,7 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
     for thread_id in [parent_thread_id, child_thread_id, grandchild_thread_id] {
         assert!(
             find_thread_path_by_id_str(
-                genex_home.path(),
+                ruxex_home.path(),
                 &thread_id.to_string(),
                 /*state_db_ctx*/ None,
             )
@@ -534,7 +534,7 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
         );
         assert!(
             find_archived_thread_path_by_id_str(
-                genex_home.path(),
+                ruxex_home.path(),
                 &thread_id.to_string(),
                 /*state_db_ctx*/ None,
             )
@@ -550,26 +550,26 @@ async fn thread_archive_archives_spawned_descendants() -> Result<()> {
 #[tokio::test]
 async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!(r#"managed_auth_base_url = "{}""#, server.uri()))
-        .write(genex_home.path())?;
-    mount_analytics_capture(&server, genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    mount_analytics_capture(&server, ruxex_home.path()).await?;
 
     let parent_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
     )?;
     let child_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-01-00",
         "2025-01-01T00:01:00Z",
         "child",
     )?;
     let grandchild_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-02-00",
         "2025-01-01T00:02:00Z",
         "grandchild",
@@ -579,7 +579,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     let child_thread_id = ThreadId::from_string(&child_id)?;
     let grandchild_thread_id = ThreadId::from_string(&grandchild_id)?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     state_db
@@ -601,17 +601,17 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         .await?;
 
     let child_rollout_path =
-        find_thread_path_by_id_str(genex_home.path(), &child_id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(ruxex_home.path(), &child_id, /*state_db_ctx*/ None)
             .await?
             .expect("child rollout path");
-    let archived_child_path = genex_home
+    let archived_child_path = ruxex_home
         .path()
         .join(ARCHIVED_SESSIONS_SUBDIR)
         .join(child_rollout_path.file_name().expect("rollout file name"));
     std::fs::create_dir_all(&archived_child_path)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -656,7 +656,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
     for thread_id in [parent_thread_id, grandchild_thread_id] {
         assert!(
             find_thread_path_by_id_str(
-                genex_home.path(),
+                ruxex_home.path(),
                 &thread_id.to_string(),
                 /*state_db_ctx*/ None,
             )
@@ -666,7 +666,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         );
         assert!(
             find_archived_thread_path_by_id_str(
-                genex_home.path(),
+                ruxex_home.path(),
                 &thread_id.to_string(),
                 /*state_db_ctx*/ None,
             )
@@ -696,7 +696,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         })
         .await?;
     wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "genex_thread_archive_event"
+        event["event_type"] == "ruxex_thread_archive_event"
             && event["event_params"]["thread_id"] == parent_id
             && event["event_params"]["action"] == "unarchived"
     })
@@ -708,7 +708,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("wiremock did not record requests"))?;
     let mut archive_events = Vec::new();
     for request in requests {
-        if request.url.path() != "/genex/analytics-events/events" {
+        if request.url.path() != "/ruxex/analytics-events/events" {
             continue;
         }
         let payload: Value = serde_json::from_slice(&request.body)?;
@@ -717,7 +717,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("analytics payload missing events array"))?;
         for event in events
             .iter()
-            .filter(|event| event["event_type"] == "genex_thread_archive_event")
+            .filter(|event| event["event_type"] == "ruxex_thread_archive_event")
         {
             for (header, expected) in [
                 ("authorization", "Bearer test-token"),
@@ -747,7 +747,7 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
         assert_eq!(
             event,
             &json!({
-                "event_type": "genex_thread_archive_event",
+                "event_type": "ruxex_thread_archive_event",
                 "event_params": {
                     "thread_id": thread_id,
                     "action": action,
@@ -763,11 +763,11 @@ async fn thread_archive_succeeds_when_descendant_archive_fails() -> Result<()> {
 #[tokio::test]
 async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let parent_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "parent",
@@ -776,7 +776,7 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
     let missing_child_thread_id = ThreadId::from_string("00000000-0000-0000-0000-000000000901")?;
 
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     state_db
@@ -791,7 +791,7 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
         .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -813,14 +813,14 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
     assert_eq!(archived_notification.thread_id, parent_id);
 
     assert!(
-        find_thread_path_by_id_str(genex_home.path(), &parent_id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(ruxex_home.path(), &parent_id, /*state_db_ctx*/ None)
             .await?
             .is_none(),
         "parent should be archived even when a descendant is missing"
     );
     assert!(
         find_archived_thread_path_by_id_str(
-            genex_home.path(),
+            ruxex_home.path(),
             &parent_id,
             /*state_db_ctx*/ None,
         )
@@ -835,11 +835,11 @@ async fn thread_archive_succeeds_when_spawned_descendant_is_missing() -> Result<
 #[tokio::test]
 async fn thread_archive_clears_stale_subscriptions_before_resume() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut primary = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -872,7 +872,7 @@ async fn thread_archive_clears_stale_subscriptions_before_resume() -> Result<()>
     primary.clear_message_buffer();
 
     let mut secondary = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 

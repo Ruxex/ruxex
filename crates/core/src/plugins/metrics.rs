@@ -1,8 +1,8 @@
 use crate::tools::sandboxing::ToolCtx;
-use genex_core_plugins::PluginMetricsSidecar;
-use genex_exec_server::Environment;
-use genex_protocol::items::ModelInvocationContext;
-use genex_utils_path_uri::PathUri;
+use ruxex_core_plugins::PluginMetricsSidecar;
+use ruxex_exec_server::Environment;
+use ruxex_protocol::items::ModelInvocationContext;
+use ruxex_utils_path_uri::PathUri;
 
 /// Creates a metrics sidecar for one plugin command.
 pub(crate) async fn sidecar_for_command(

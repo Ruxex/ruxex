@@ -14,12 +14,12 @@ help:
 # Run the provider-owned sample host with the same native GStreamer and rusty_v8 setup as `check`.
 alias c := run
 run *args:
-    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p genex-provider-host-example -- "$@"
+    {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo run -p ruxex-provider-host-example -- "$@"
 
 # Build and stage the local runtime package used by the Tauri desktop app.
 before-desktop:
-    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo build -p genex-provider-host-example -p genex-code-mode-host
-    pnpm --dir {{ justfile_directory() }}/apps/desktop run stage:runtime --output {{ justfile_directory() }}/apps/desktop/src-tauri/resources/genex-package --genex-bin {{ justfile_directory() }}/target/debug/genex-provider-host-example --code-mode-host {{ justfile_directory() }}/target/debug/genex-code-mode-host
+    systemd-run --user --scope --collect --quiet -p MemoryHigh=16G -p MemoryMax=18G -p MemorySwapMax=4G --setenv=CARGO_BUILD_JOBS=2 {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- rtk cargo build -p ruxex-provider-host-example -p ruxex-code-mode-host
+    pnpm --dir {{ justfile_directory() }}/apps/desktop run stage:runtime --output {{ justfile_directory() }}/apps/desktop/src-tauri/resources/ruxex-package --ruxex-bin {{ justfile_directory() }}/target/debug/ruxex-provider-host-example --code-mode-host {{ justfile_directory() }}/target/debug/ruxex-code-mode-host
 
 # Start the local Tauri desktop application in development mode.
 desktop: before-desktop
@@ -29,7 +29,7 @@ desktop: before-desktop
 hawk:
     {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo hawk check --output-format json > {{ justfile_directory() }}/hawk.json
 
-# Start `genex exec-server` and run genex-tui.
+# Start `ruxex exec-server` and run ruxex-tui.
 [no-cd]
 [positional-arguments]
 [unix]
@@ -38,16 +38,16 @@ tui-with-exec-server *args:
 
 # Run the CLI version of the file-search crate.
 file-search *args:
-    cargo run --bin genex-file-search -- {args}
+    cargo run --bin ruxex-file-search -- {args}
 
 # Run the standalone code-mode host from source.
 code-mode-host *args:
-    cargo run --bin genex-code-mode-host -- {args}
+    cargo run --bin ruxex-code-mode-host -- {args}
 
 # Build the standalone app-server and run the app-server test client
 app-server-test-client *args:
-    cargo build -p genex-app-server --bin genex-app-server
-    cargo run -p genex-app-server-test-client -- --app-server-bin ./target/debug/genex-app-server {args}
+    cargo build -p ruxex-app-server --bin ruxex-app-server
+    cargo run -p ruxex-app-server-test-client -- --app-server-bin ./target/debug/ruxex-app-server {args}
 
 # Format the justfile and Rust sources.
 fmt:
@@ -95,7 +95,7 @@ generate: write-config-schema write-app-server-schema write-app-server-schema-ex
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
-    cargo run -p genex-config-schema --bin genex-write-config-schema
+    cargo run -p ruxex-config-schema --bin ruxex-write-config-schema
 
 # Regenerate app-server protocol schemas.
 write-app-server-schema *args:
@@ -110,7 +110,7 @@ crate-dependency-graph *args:
 
 [no-cd]
 write-hooks-schema:
-    cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p genex-hooks --bin write_hooks_schema_fixtures
+    cargo run --manifest-path {{ justfile_directory() }}/Cargo.toml -p ruxex-hooks --bin write_hooks_schema_fixtures
 
 # Run argument-comment Dylint checks from source.
 [no-cd]
@@ -124,4 +124,4 @@ argument-comment-lint-from-source *args:
 # Tail logs from the state SQLite database
 [unix]
 log *args:
-    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p genex-cli --bin logs_client -- "$@"
+    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p ruxex-cli --bin logs_client -- "$@"

@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::sync::Weak;
 
 use axum::http::HeaderValue;
-use genex_app_server_protocol::AttestationGenerateParams;
-use genex_app_server_protocol::AttestationGenerateResponse;
-use genex_app_server_protocol::ServerRequestPayload;
-use genex_core::AttestationContext;
-use genex_core::AttestationProvider;
-use genex_core::GenerateAttestationFuture;
+use ruxex_app_server_protocol::AttestationGenerateParams;
+use ruxex_app_server_protocol::AttestationGenerateResponse;
+use ruxex_app_server_protocol::ServerRequestPayload;
+use ruxex_core::AttestationContext;
+use ruxex_core::AttestationProvider;
+use ruxex_core::GenerateAttestationFuture;
 use serde::Serialize;
 use tokio::time::Duration;
 use tokio::time::timeout;
@@ -63,7 +63,7 @@ impl AttestationProvider for AppServerAttestationProvider {
 async fn request_attestation_header_value_with_timeout(
     outgoing: Arc<OutgoingMessageSender>,
     thread_state_manager: ThreadStateManager,
-    thread_id: genex_protocol::ThreadId,
+    thread_id: ruxex_protocol::ThreadId,
     timeout_duration: Duration,
 ) -> Option<String> {
     let connection_id = thread_state_manager

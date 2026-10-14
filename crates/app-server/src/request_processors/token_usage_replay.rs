@@ -11,16 +11,16 @@
 
 use std::sync::Arc;
 
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadHistoryBuilder;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnStatus;
-use genex_core::GenexThread;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_rollout::RolloutItem;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadHistoryBuilder;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_core::RuxexThread;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_rollout::RolloutItem;
 
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingMessageSender;
@@ -36,7 +36,7 @@ pub(super) async fn send_thread_token_usage_update_to_connection(
     outgoing: &Arc<OutgoingMessageSender>,
     connection_id: ConnectionId,
     thread_id: ThreadId,
-    conversation: &GenexThread,
+    conversation: &RuxexThread,
     token_usage_turn_id: String,
 ) {
     let Some(info) = conversation.token_usage_info().await else {
@@ -112,10 +112,10 @@ fn latest_token_usage_turn_id(turns: &[Turn]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_app_server_protocol::build_turns_from_rollout_items;
-    use genex_protocol::protocol::AgentMessageEvent;
-    use genex_protocol::protocol::TokenCountEvent;
-    use genex_protocol::protocol::UserMessageEvent;
+    use ruxex_app_server_protocol::build_turns_from_rollout_items;
+    use ruxex_protocol::protocol::AgentMessageEvent;
+    use ruxex_protocol::protocol::TokenCountEvent;
+    use ruxex_protocol::protocol::UserMessageEvent;
     use pretty_assertions::assert_eq;
 
     #[test]

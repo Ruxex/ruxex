@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-queue-extension"
+name = "ruxex-queue-extension"
 version.workspace = true
 
 [lib]
-name = "genex_queue_extension"
+name = "ruxex_queue_extension"
 path = "src/lib.rs"
 test = false
 doctest = false
@@ -14,10 +14,10 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-core = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-protocol = { workspace = true }
-genex-thread-store = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-thread-store = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "sync", "time"] }
@@ -26,8 +26,8 @@ uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-genex-state = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 core_test_support = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

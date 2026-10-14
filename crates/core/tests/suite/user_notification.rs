@@ -1,15 +1,15 @@
 #![cfg(not(target_os = "windows"))]
 
-use genex_core::TurnInputRequest;
+use ruxex_core::TurnInputRequest;
 use std::os::unix::fs::PermissionsExt;
 
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::fs_wait;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -49,19 +49,19 @@ mv "${tmp_path}" "${payload_path}""#,
     let notify_file = notify_dir.path().join("notify.txt");
     let notify_script_str = notify_script.to_str().unwrap().to_string();
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_config(move |cfg| cfg.notify = Some(vec![notify_script_str]))
         .build(&server)
         .await?;
 
     // 1) Normal user input – should hit server once.
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello world".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // We fork the notify script, so we need to wait for it to write to the file.
     fs_wait::wait_for_path_exists(&notify_file, Duration::from_secs(5)).await?;

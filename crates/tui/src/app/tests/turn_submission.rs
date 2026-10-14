@@ -1,14 +1,14 @@
 use super::*;
 use crate::chatwidget::UserMessage;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 
@@ -68,7 +68,7 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
         error: Some(AppServerTurnError {
             misalignment: None,
             message: "misalignment policy violation".to_string(),
-            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
+            ruxex_error_info: Some(RuxexErrorInfo::MisalignmentPolicyViolation),
             additional_details: None,
         }),
         ..test_turn("turn-1", TurnStatus::Failed, Vec::new())
@@ -83,11 +83,11 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
     app.maybe_prompt_resume_paused_goal_after_resume(&mut app_server, thread_id)
         .await;
     for event in [
-        AppEvent::GenexOp(queued_turn),
-        AppEvent::GenexOp(crate::app_command::AppCommand::ExecApproval {
+        AppEvent::RuxexOp(queued_turn),
+        AppEvent::RuxexOp(crate::app_command::AppCommand::ExecApproval {
             id: "queued-approval".to_string(),
             turn_id: None,
-            decision: genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+            decision: ruxex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
         }),
         AppEvent::SetThreadGoalStatus {
             thread_id,
@@ -116,7 +116,7 @@ async fn misalignment_policy_blocks_queued_turns_and_goal_resumption() -> Result
         app.handle_event(&mut tui, &mut app_server, event).await?;
     }
 
-    assert!(!app.config.genex_home.join("worktrees").exists());
+    assert!(!app.config.ruxex_home.join("worktrees").exists());
     assert_eq!(
         app_server.next_request_id(),
         AppServerRequestId::Integer(next_request_id + 1)
@@ -164,7 +164,7 @@ async fn misalignment_policy_in_parent_stops_active_side_conversation() -> Resul
             error: AppServerTurnError {
                 misalignment: None,
                 message: "misalignment policy violation".to_string(),
-                genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
+                ruxex_error_info: Some(RuxexErrorInfo::MisalignmentPolicyViolation),
                 additional_details: None,
             },
             will_retry: false,

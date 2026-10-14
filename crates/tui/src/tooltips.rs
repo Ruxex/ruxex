@@ -1,12 +1,12 @@
-use genex_features::FEATURES;
-use genex_features::FeatureSpec;
-use genex_protocol::account::PlanType;
+use ruxex_features::FEATURES;
+use ruxex_features::FeatureSpec;
+use ruxex_protocol::account::PlanType;
 use lazy_static::lazy_static;
 use rand::Rng;
 
-const OTHER_TOOLTIP: &str = "*New* Build faster with Genex.";
+const OTHER_TOOLTIP: &str = "*New* Build faster with Ruxex.";
 const FREE_GO_TOOLTIP: &str =
-    "*New* For a limited time, Genex is included in your plan for free – let’s build together.";
+    "*New* For a limited time, Ruxex is included in your plan for free – let’s build together.";
 
 const RAW_TOOLTIPS: &str = include_str!("../assets/tooltips.txt");
 
@@ -31,7 +31,7 @@ fn experimental_tooltips(features: &[FeatureSpec]) -> Vec<&'static str> {
         .collect()
 }
 
-/// Pick a random tooltip to show to the user when starting Genex.
+/// Pick a random tooltip to show to the user when starting Ruxex.
 pub(crate) fn get_tooltip(plan: Option<PlanType>) -> Option<String> {
     let mut rng = rand::rng();
 

@@ -16,15 +16,15 @@ use crate::app_server_session::ResumeModelSettings;
 use crate::chatwidget::tests::helpers::normalize_snapshot_paths;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
 use crate::test_support::PathBufExt;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::models::MessagePhase;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_protocol::models::MessagePhase;
 use core_test_support::responses;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -138,7 +138,7 @@ async fn automatic_thread_title_respects_origin_metadata_after_switching() -> co
             AppEvent::GeneratedThreadTitle {
                 cancellation: CancellationToken::new(),
                 thread_id,
-                temporary_thread_id: genex_protocol::ThreadId::new(),
+                temporary_thread_id: ruxex_protocol::ThreadId::new(),
                 destination: ThreadTitleDestination::Automatic,
                 result: Ok(r#"{"title":"Generated title"}"#.to_string()),
             },
@@ -299,7 +299,7 @@ fn recent_conversation_messages_escape_markup_and_ignore_commentary() {
 fn recent_conversation_messages_strip_ide_context_before_escaping() {
     let ide_context = "x".repeat(THREAD_TITLE_PROMPT_MAX_BYTES + 1);
     let user_message = format!(
-        "# Context from my IDE setup:\n{ide_context}\n## My request for Genex:\n\nEarlier request\n## My request for Genex:\n  Fix <login> & retries  "
+        "# Context from my IDE setup:\n{ide_context}\n## My request for Ruxex:\n\nEarlier request\n## My request for Ruxex:\n  Fix <login> & retries  "
     );
     let items = vec![title_user_message("user-1", &user_message)];
 
@@ -592,7 +592,7 @@ async fn thread_title_progress_clears_failed_requests_and_follows_thread_switche
         AppEvent::GeneratedThreadTitle {
             cancellation: CancellationToken::new(),
             thread_id,
-            temporary_thread_id: genex_protocol::ThreadId::new(),
+            temporary_thread_id: ruxex_protocol::ThreadId::new(),
             destination: ThreadTitleDestination::Automatic,
             result: Err("generation failed".to_string()),
         },

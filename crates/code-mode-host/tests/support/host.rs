@@ -16,7 +16,7 @@ pub(crate) struct HostHarness {
 
 impl HostHarness {
     pub(crate) async fn start(listen_url: &str) -> Result<Self> {
-        let host_program = genex_utils_cargo_bin::cargo_bin("genex-code-mode-host")?;
+        let host_program = ruxex_utils_cargo_bin::cargo_bin("ruxex-code-mode-host")?;
         let mut child = Command::new(host_program)
             .args(["--listen", listen_url])
             .stdin(Stdio::null())

@@ -9,7 +9,7 @@ mod registry;
 mod schema;
 mod types;
 
-use genex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookEventName;
 
 pub use config_rules::hook_states_from_stack;
 pub use declarations::PluginHookDeclaration;
@@ -37,7 +37,7 @@ pub const HOOK_EVENT_NAMES: [&str; 12] = [
 
 /// Hook event names whose matcher fields are meaningful during dispatch.
 ///
-/// Other events can appear in hooks JSON, but Genex ignores their matcher
+/// Other events can appear in hooks JSON, but Ruxex ignores their matcher
 /// fields because those events do not dispatch against a tool, compaction
 /// trigger, session-start source, or session-end reason.
 pub const HOOK_EVENT_NAMES_WITH_MATCHERS: [&str; 9] = [

@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     plugin_root = Path(args.plugin_path).expanduser().resolve()
-    manifest_path = plugin_root / ".genex-plugin" / "plugin.json"
+    manifest_path = plugin_root / ".ruxex-plugin" / "plugin.json"
     manifest = load_manifest(manifest_path)
 
     plugin_name = manifest.get("name")

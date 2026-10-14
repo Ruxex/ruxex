@@ -2,41 +2,41 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
-use genex_app_server::runtime::mount_provider_home_for_config;
-use genex_core::config::Config;
-use genex_core::config::find_genex_home;
-use genex_core::plugins_manager_for_config;
-use genex_core_plugins::BUNDLED_MARKETPLACE_NAME;
-use genex_core_plugins::ConfiguredMarketplace;
-use genex_core_plugins::PluginInstallOutcome;
-use genex_core_plugins::PluginInstallRequest;
-use genex_core_plugins::PluginsConfigInput;
-use genex_core_plugins::PluginsManager;
-use genex_core_plugins::allowed_configured_marketplace_names;
-use genex_core_plugins::installed_marketplaces::marketplace_install_root;
-use genex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
-use genex_core_plugins::marketplace::MarketplaceListError;
-use genex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
-use genex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
-use genex_core_plugins::marketplace::MarketplacePluginSource;
-use genex_core_plugins::marketplace::find_marketplace_manifest_path;
-use genex_login::CredentialManager;
-use genex_plugin::PluginId;
-use genex_plugin::validate_plugin_segment;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_app_server::runtime::mount_provider_home_for_config;
+use ruxex_core::config::Config;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_core::plugins_manager_for_config;
+use ruxex_core_plugins::BUNDLED_MARKETPLACE_NAME;
+use ruxex_core_plugins::ConfiguredMarketplace;
+use ruxex_core_plugins::PluginInstallOutcome;
+use ruxex_core_plugins::PluginInstallRequest;
+use ruxex_core_plugins::PluginsConfigInput;
+use ruxex_core_plugins::PluginsManager;
+use ruxex_core_plugins::allowed_configured_marketplace_names;
+use ruxex_core_plugins::installed_marketplaces::marketplace_install_root;
+use ruxex_core_plugins::installed_marketplaces::resolve_configured_marketplace_root;
+use ruxex_core_plugins::marketplace::MarketplaceListError;
+use ruxex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
+use ruxex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
+use ruxex_core_plugins::marketplace::MarketplacePluginSource;
+use ruxex_core_plugins::marketplace::find_marketplace_manifest_path;
+use ruxex_login::CredentialManager;
+use ruxex_plugin::PluginId;
+use ruxex_plugin::validate_plugin_segment;
+use ruxex_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "genex-bundled-alpha";
-const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "genex-primary-runtime";
+const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "ruxex-bundled-alpha";
+const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "ruxex-primary-runtime";
 
 use crate::marketplace_cmd::MarketplaceCli;
 
 #[derive(Debug, Parser)]
-#[command(bin_name = "genex plugin")]
+#[command(bin_name = "ruxex plugin")]
 pub struct PluginCli {
     #[clap(flatten)]
     pub config_overrides: CliConfigOverrides,
@@ -68,8 +68,8 @@ pub enum PluginSubcommand {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "genex plugin add",
-    after_help = "Examples:\n  genex plugin add sample@debug\n  genex plugin add sample --marketplace debug"
+    bin_name = "ruxex plugin add",
+    after_help = "Examples:\n  ruxex plugin add sample@debug\n  ruxex plugin add sample --marketplace debug"
 )]
 pub struct AddPluginArgs {
     /// Plugin selector to install: either PLUGIN@MARKETPLACE or PLUGIN with --marketplace.
@@ -87,8 +87,8 @@ pub struct AddPluginArgs {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "genex plugin list",
-    after_help = "Examples:\n  genex plugin list\n  genex plugin list --marketplace debug\n  genex plugin list --json\n  genex plugin list --available --json"
+    bin_name = "ruxex plugin list",
+    after_help = "Examples:\n  ruxex plugin list\n  ruxex plugin list --marketplace debug\n  ruxex plugin list --json\n  ruxex plugin list --available --json"
 )]
 pub struct ListPluginsArgs {
     /// Only list plugins from this marketplace name.
@@ -106,8 +106,8 @@ pub struct ListPluginsArgs {
 
 #[derive(Debug, Parser)]
 #[command(
-    bin_name = "genex plugin remove",
-    after_help = "Examples:\n  genex plugin remove sample@debug\n  genex plugin remove sample --marketplace debug"
+    bin_name = "ruxex plugin remove",
+    after_help = "Examples:\n  ruxex plugin remove sample@debug\n  ruxex plugin remove sample --marketplace debug"
 )]
 pub struct RemovePluginArgs {
     /// Plugin selector to remove: either PLUGIN@MARKETPLACE or PLUGIN with --marketplace.
@@ -136,7 +136,7 @@ pub async fn run_plugin_add(
     let selection = parse_plugin_selection(plugin, marketplace_name)?;
     let marketplace = find_marketplace_for_plugin(
         &context.manager,
-        context.genex_home.as_path(),
+        context.ruxex_home.as_path(),
         &context.plugins_input,
         &selection.marketplace_name,
         &selection.plugin_name,
@@ -197,7 +197,7 @@ pub async fn run_plugin_list(
 ) -> Result<()> {
     let context = load_plugin_command_context(overrides).await?;
     let PluginCommandContext {
-        genex_home,
+        ruxex_home,
         plugins_input,
         manager,
         ..
@@ -206,13 +206,13 @@ pub async fn run_plugin_list(
         .list_marketplaces_for_config(&plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         &plugins_input,
         &outcome.errors,
         args.marketplace_name.as_deref(),
     )?;
 
-    let marketplace_sources = configured_marketplace_sources(&plugins_input, genex_home.as_path());
+    let marketplace_sources = configured_marketplace_sources(&plugins_input, ruxex_home.as_path());
     let marketplaces = outcome
         .marketplaces
         .into_iter()
@@ -331,7 +331,7 @@ pub async fn run_plugin_list(
 
 struct PluginListMarketplace {
     name: String,
-    path: genex_utils_absolute_path::AbsolutePathBuf,
+    path: ruxex_utils_absolute_path::AbsolutePathBuf,
     plugins: Vec<PluginListEntry>,
 }
 
@@ -389,7 +389,7 @@ impl PluginListEntry {
     fn from_configured_plugin(
         marketplace_name: &str,
         marketplace_source: Option<JsonMarketplaceSource>,
-        plugin: genex_core_plugins::ConfiguredMarketplacePlugin,
+        plugin: ruxex_core_plugins::ConfiguredMarketplacePlugin,
     ) -> Self {
         let display_version = plugin.installed_version;
         let version = display_version.clone().or(plugin.local_version);
@@ -484,7 +484,7 @@ pub(crate) struct JsonMarketplaceSource {
 
 pub(crate) fn configured_marketplace_sources(
     plugins_input: &PluginsConfigInput,
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> HashMap<String, JsonMarketplaceSource> {
     let effective_config = plugins_input.config_layer_stack.effective_config();
     let Some(marketplaces) = effective_config
@@ -494,7 +494,7 @@ pub(crate) fn configured_marketplace_sources(
         return HashMap::new();
     };
     let allowed_marketplace_names =
-        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, genex_home);
+        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, ruxex_home);
 
     marketplaces
         .iter()
@@ -579,7 +579,7 @@ impl JsonPluginRemoveOutput {
 }
 
 struct PluginCommandContext {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     plugins_input: PluginsConfigInput,
     manager: Arc<PluginsManager>,
 }
@@ -587,7 +587,7 @@ struct PluginCommandContext {
 async fn load_plugin_command_context(
     overrides: Vec<(String, toml::Value)>,
 ) -> Result<PluginCommandContext> {
-    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
+    let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
@@ -595,10 +595,10 @@ async fn load_plugin_command_context(
     let plugins_input = config.plugins_config_input();
     let manager = Arc::new(plugins_manager_for_config(
         &config,
-        genex_credential_broker::UnsupportedCredentialBroker::shared(),
+        ruxex_credential_broker::UnsupportedCredentialBroker::shared(),
     ));
     Ok(PluginCommandContext {
-        genex_home: genex_home.to_path_buf(),
+        ruxex_home: ruxex_home.to_path_buf(),
         plugins_input,
         manager,
     })
@@ -654,7 +654,7 @@ fn parse_plugin_selection(
 
 fn find_marketplace_for_plugin(
     manager: &PluginsManager,
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     marketplace_name: &str,
     plugin_name: &str,
@@ -663,7 +663,7 @@ fn find_marketplace_for_plugin(
         .list_marketplaces_for_config(plugins_input, &[])
         .context("failed to list marketplace plugins")?;
     ensure_configured_marketplace_snapshots_loaded(
-        genex_home,
+        ruxex_home,
         plugins_input,
         &outcome.errors,
         Some(marketplace_name),
@@ -696,13 +696,13 @@ pub(crate) struct ConfiguredMarketplaceSnapshotIssue {
 }
 
 fn ensure_configured_marketplace_snapshots_loaded(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     load_errors: &[MarketplaceListError],
     marketplace_name: Option<&str>,
 ) -> Result<()> {
     let issues = configured_marketplace_snapshot_issues(
-        genex_home,
+        ruxex_home,
         plugins_input,
         load_errors,
         marketplace_name,
@@ -727,7 +727,7 @@ fn ensure_configured_marketplace_snapshots_loaded(
 }
 
 pub(crate) fn configured_marketplace_snapshot_issues(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     plugins_input: &PluginsConfigInput,
     load_errors: &[MarketplaceListError],
     marketplace_name: Option<&str>,
@@ -740,9 +740,9 @@ pub(crate) fn configured_marketplace_snapshot_issues(
         return Vec::new();
     };
     let allowed_marketplace_names =
-        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, genex_home);
+        allowed_configured_marketplace_names(&plugins_input.config_layer_stack, ruxex_home);
 
-    let default_install_root = marketplace_install_root(genex_home);
+    let default_install_root = marketplace_install_root(ruxex_home);
     let mut manifest_paths = Vec::new();
     let mut issues = Vec::new();
     for (configured_name, marketplace) in configured_marketplaces {
@@ -791,7 +791,7 @@ pub(crate) fn configured_marketplace_snapshot_issues(
         match find_marketplace_manifest_path(&root) {
             Some(path) => manifest_paths.push((configured_name.clone(), path)),
             None => {
-                if is_implicit_system_marketplace_root(configured_name, genex_home, &root) {
+                if is_implicit_system_marketplace_root(configured_name, ruxex_home, &root) {
                     continue;
                 }
                 issues.push(ConfiguredMarketplaceSnapshotIssue {
@@ -820,7 +820,7 @@ pub(crate) fn configured_marketplace_snapshot_issues(
 
 fn is_implicit_system_marketplace_root(
     marketplace_name: &str,
-    _genex_home: &Path,
+    _ruxex_home: &Path,
     root: &Path,
 ) -> bool {
     if matches!(
@@ -835,8 +835,8 @@ fn is_implicit_system_marketplace_root(
         && path_ends_with(
             root,
             &[
-                "genex-runtimes",
-                "genex-primary-runtime",
+                "ruxex-runtimes",
+                "ruxex-primary-runtime",
                 "plugins",
                 marketplace_name,
             ],

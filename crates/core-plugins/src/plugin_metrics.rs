@@ -1,7 +1,7 @@
 use crate::script_attribution::normalized_relative_script_path;
-use genex_plugin::PluginId;
-use genex_protocol::items::is_safe_plugin_relative_path;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::items::is_safe_plugin_relative_path;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;

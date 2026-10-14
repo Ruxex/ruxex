@@ -33,7 +33,7 @@ impl App {
             .unwrap_or_else(|| "Not connected to the local background server.".to_string());
         let mut header = vec![Line::from("Daemon".bold()), Line::from(status.dim())];
         header.push(Line::from(
-            "Daemon package updates are not provided by Genex.".dim(),
+            "Daemon package updates are not provided by Ruxex.".dim(),
         ));
         self.chat_widget.show_selection_view(SelectionViewParams {
             header: Box::new(DaemonMenuHeader(header)),

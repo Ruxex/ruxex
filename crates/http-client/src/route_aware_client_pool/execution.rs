@@ -229,7 +229,7 @@ impl RouteAwareClientPool {
 
         rustls_clients.remember(current_url, current_route, fallback_client);
         tracing::info!(
-            event.name = "genex.http_client.tls_backend_fallback",
+            event.name = "ruxex.http_client.tls_backend_fallback",
             "HTTP client switched to rustls after a TLS protocol negotiation failure"
         );
 

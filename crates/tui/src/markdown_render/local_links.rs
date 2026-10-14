@@ -7,8 +7,8 @@
 //! canonical target to avoid duplicate file references.
 //!
 
-use genex_utils_path_uri::PathUri;
-use genex_utils_string::normalize_markdown_hash_location_suffix;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_string::normalize_markdown_hash_location_suffix;
 use regex_lite::Regex;
 use std::path::Path;
 use std::sync::LazyLock;
@@ -92,7 +92,7 @@ fn comparable_local_link_path(text: &str) -> Option<String> {
 
 /// Parse a local link target into normalized path text plus an optional location suffix.
 ///
-/// This accepts the path shapes Genex emits today: `file://` URLs, absolute and relative paths,
+/// This accepts the path shapes Ruxex emits today: `file://` URLs, absolute and relative paths,
 /// `~/...`, Windows paths, and `#L..C..` or `:line:col` suffixes.
 pub(super) fn render_local_link_target(dest_url: &str, cwd: Option<&Path>) -> Option<String> {
     let (path_text, location_suffix) = parse_local_link_target(dest_url)?;

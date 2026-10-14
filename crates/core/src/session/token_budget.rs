@@ -4,8 +4,8 @@ use crate::config::Config;
 use crate::config::TokenBudgetConfig;
 use crate::config::resolve_token_budget_config;
 use crate::context::ContextualUserFragment;
-use genex_features::Feature;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_features::Feature;
+use ruxex_protocol::model_types::ModelInfo;
 
 fn experimental_context_is_eligible(provider_supports_history_notes: bool) -> bool {
     provider_supports_history_notes
@@ -212,7 +212,7 @@ mod tests {
     use super::experimental_context_is_eligible;
     use super::resolve_token_budget;
     use crate::config::TokenBudgetConfig;
-    use genex_models_manager::model_info::model_info_from_slug;
+    use ruxex_models_manager::model_info::model_info_from_slug;
 
     #[test]
     fn experimental_context_follows_provider_history_notes_capability() {

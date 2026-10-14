@@ -4,9 +4,9 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 
 use arc_swap::ArcSwapOption;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 
 use crate::CapabilityRootsDiscoverParams;
 use crate::CapabilityRootsDiscoverResponse;
@@ -26,7 +26,7 @@ use crate::environment_provider::DefaultEnvironmentProvider;
 use crate::environment_provider::EnvironmentDefault;
 use crate::environment_provider::EnvironmentProvider;
 use crate::environment_provider::EnvironmentProviderSnapshot;
-use crate::environment_toml::environment_provider_from_genex_home;
+use crate::environment_toml::environment_provider_from_ruxex_home;
 use crate::local_file_system::LocalFileSystem;
 use crate::local_process::LocalProcess;
 use crate::process::ExecBackend;
@@ -47,7 +47,7 @@ pub enum EnvironmentConnectionState {
     Disconnected,
 }
 
-/// Owns the execution/filesystem environments available to the Genex runtime.
+/// Owns the execution/filesystem environments available to the Ruxex runtime.
 ///
 /// `EnvironmentManager` is a shared registry for concrete local and stdio
 /// environments. Filesystem and execution backends share the resulting
@@ -138,21 +138,21 @@ impl EnvironmentManager {
     }
 
     /// Discovers configured environments without starting stdio connections.
-    pub async fn prepare_from_genex_home(
-        genex_home: impl AsRef<std::path::Path>,
+    pub async fn prepare_from_ruxex_home(
+        ruxex_home: impl AsRef<std::path::Path>,
     ) -> Result<PreparedEnvironmentManager, ExecServerError> {
-        let provider = environment_provider_from_genex_home(genex_home.as_ref())?;
+        let provider = environment_provider_from_ruxex_home(ruxex_home.as_ref())?;
         let source = PreparedEnvironmentSource::Snapshot(provider.snapshot().await?);
         Ok(PreparedEnvironmentManager { source })
     }
 
-    /// Builds a manager from `GENEX_HOME` with an explicit outbound HTTP policy.
-    pub async fn from_genex_home(
-        genex_home: impl AsRef<std::path::Path>,
+    /// Builds a manager from `RUXEX_HOME` with an explicit outbound HTTP policy.
+    pub async fn from_ruxex_home(
+        ruxex_home: impl AsRef<std::path::Path>,
         local_runtime_paths: Option<ExecServerRuntimePaths>,
         http_client_factory: HttpClientFactory,
     ) -> Result<Self, ExecServerError> {
-        Self::prepare_from_genex_home(genex_home)
+        Self::prepare_from_ruxex_home(ruxex_home)
             .await?
             .build(local_runtime_paths, http_client_factory)
     }
@@ -704,9 +704,9 @@ mod tests {
     use crate::client_api::StdioExecServerCommand;
     use crate::environment_provider::EnvironmentDefault;
     use crate::environment_provider::EnvironmentProviderSnapshot;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     fn legacy_http_client_factory() -> HttpClientFactory {
@@ -716,7 +716,7 @@ mod tests {
     fn test_runtime_paths() -> ExecServerRuntimePaths {
         ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*genex_linux_sandbox_exe*/ None,
+            /*ruxex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths")
     }
@@ -888,7 +888,7 @@ mod tests {
         let environment = Environment::remote_with_transport(
             ExecServerTransportParams::StdioCommand {
                 command: StdioExecServerCommand {
-                    program: "genex-missing-exec-server-for-test".to_string(),
+                    program: "ruxex-missing-exec-server-for-test".to_string(),
                     args: Vec::new(),
                     env: HashMap::new(),
                     cwd: None,
@@ -910,7 +910,7 @@ mod tests {
     async fn environment_manager_leaves_stdio_environment_lazy() {
         let transport = ExecServerTransportParams::StdioCommand {
             command: StdioExecServerCommand {
-                program: "genex-missing-exec-server-for-test".to_string(),
+                program: "ruxex-missing-exec-server-for-test".to_string(),
                 args: Vec::new(),
                 env: HashMap::new(),
                 cwd: None,
@@ -936,12 +936,12 @@ mod tests {
 
     #[tokio::test]
     async fn selected_capability_inspection_keeps_stdio_environment_lazy() {
-        use genex_protocol::capabilities::CapabilityRootLocation;
-        use genex_protocol::capabilities::SelectedCapabilityRoot;
+        use ruxex_protocol::capabilities::CapabilityRootLocation;
+        use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 
         let transport = ExecServerTransportParams::StdioCommand {
             command: StdioExecServerCommand {
-                program: "genex-missing-exec-server-for-test".to_string(),
+                program: "ruxex-missing-exec-server-for-test".to_string(),
                 args: Vec::new(),
                 env: HashMap::new(),
                 cwd: None,
@@ -1038,7 +1038,7 @@ mod tests {
             .to_abs_path()
             .expect_err("sandbox cwd should not be native to this host");
         let sandbox = crate::FileSystemSandboxContext::from_permission_profile(
-            genex_protocol::models::PermissionProfile::workspace_write(),
+            ruxex_protocol::models::PermissionProfile::workspace_write(),
             sandbox_cwd.clone(),
         );
 
@@ -1079,15 +1079,15 @@ mod tests {
     #[tokio::test]
     async fn test_environment_rejects_sandboxed_filesystem_without_runtime_paths() {
         let environment = Environment::default_for_tests();
-        let path = genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(
+        let path = ruxex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(
             std::env::current_exe().expect("current exe").as_path(),
         )
         .expect("absolute current exe");
-        let path = genex_utils_path_uri::PathUri::from_abs_path(&path);
+        let path = ruxex_utils_path_uri::PathUri::from_abs_path(&path);
         let sandbox = crate::FileSystemSandboxContext::from_permission_profile(
-            genex_protocol::models::PermissionProfile::from_runtime_permissions(
-                &genex_protocol::permissions::FileSystemSandboxPolicy::restricted(Vec::new()),
-                genex_protocol::permissions::NetworkSandboxPolicy::Restricted,
+            ruxex_protocol::models::PermissionProfile::from_runtime_permissions(
+                &ruxex_protocol::permissions::FileSystemSandboxPolicy::restricted(Vec::new()),
+                ruxex_protocol::permissions::NetworkSandboxPolicy::Restricted,
             ),
             PathUri::from_host_native_path(std::env::current_dir().expect("read current dir"))
                 .expect("cwd URI"),

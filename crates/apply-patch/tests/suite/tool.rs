@@ -1,5 +1,5 @@
 use assert_cmd::Command;
-use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use tempfile::tempdir;
 
 fn run_apply_patch_in_dir(dir: &Path, patch: &str) -> anyhow::Result<assert_cmd::assert::Assert> {
-    let mut cmd = Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?);
-    cmd.env(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
+    let mut cmd = Command::new(ruxex_utils_cargo_bin::cargo_bin("apply_patch")?);
+    cmd.env(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
     cmd.current_dir(dir);
     Ok(cmd.arg(patch).assert())
 }
@@ -34,8 +34,8 @@ fn assert_apply_patch_updates_file(
 }
 
 fn apply_patch_command(dir: &Path) -> anyhow::Result<Command> {
-    let mut cmd = Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?);
-    cmd.env(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
+    let mut cmd = Command::new(ruxex_utils_cargo_bin::cargo_bin("apply_patch")?);
+    cmd.env(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1");
     cmd.current_dir(dir);
     Ok(cmd)
 }
@@ -138,8 +138,8 @@ fn test_apply_patch_cli_overrides_stale_line_handling_env() -> anyhow::Result<()
     fs::write(&target_path, b"one\r\n")?;
     let patch = "*** Begin Patch\n*** Update File: crlf.txt\n@@\n-one\n+uno\n*** End Patch";
 
-    Command::new(genex_utils_cargo_bin::cargo_bin("apply_patch")?)
-        .env(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "stale")
+    Command::new(ruxex_utils_cargo_bin::cargo_bin("apply_patch")?)
+        .env(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "stale")
         .arg(patch)
         .current_dir(tmp.path())
         .assert()

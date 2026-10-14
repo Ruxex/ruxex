@@ -1,4 +1,4 @@
-# Fixed defaults for packaged Genex clients.
+# Fixed defaults for packaged Ruxex clients.
 include_permissions_instructions = true
 include_collaboration_mode_instructions = true
 include_environment_context = true

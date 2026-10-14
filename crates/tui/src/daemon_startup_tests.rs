@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::legacy_core::config::ConfigBuilder;
-use genex_model_provider::PROVIDER_HOME_MARKER_FILE;
+use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -30,10 +30,10 @@ async fn local_daemon_state_db_rejects_a_mismatched_provider_home_before_opening
 ) -> color_eyre::Result<()> {
     let home = TempDir::new()?;
     let config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .build()
         .await?;
-    genex_app_server_client::mount_provider_home_for_config(&config)?;
+    ruxex_app_server_client::mount_provider_home_for_config(&config)?;
 
     let marker_path = home.path().join(PROVIDER_HOME_MARKER_FILE);
     let mut marker: serde_json::Value =
@@ -59,7 +59,7 @@ async fn local_daemon_state_db_rejects_a_mismatched_provider_home_before_opening
 async fn remote_app_server_does_not_open_local_state_db() -> color_eyre::Result<()> {
     let home = TempDir::new()?;
     let config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .build()
         .await?;
     let target = AppServerTarget::Remote {
@@ -83,7 +83,7 @@ async fn daemon_connection_rejects_unprotected_socket_before_handshake() -> colo
     let parent = home.path().join("control");
     std::fs::create_dir(&parent)?;
     let socket_path = AbsolutePathBuf::from_absolute_path_checked(parent.join("server.sock"))?;
-    let mut listener = genex_uds::UnixListener::bind(socket_path.as_path()).await?;
+    let mut listener = ruxex_uds::UnixListener::bind(socket_path.as_path()).await?;
     let target = AppServerTarget::LocalDaemon {
         allow_embedded_fallback: true,
         endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
@@ -105,7 +105,7 @@ async fn daemon_startup_falls_back_only_for_implicit_endpoints() -> color_eyre::
     ] {
         let home = TempDir::new()?;
         let config = ConfigBuilder::default()
-            .genex_home(home.path().to_path_buf())
+            .ruxex_home(home.path().to_path_buf())
             .build()
             .await?;
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
@@ -185,7 +185,7 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
             None,
         ),
     ] {
-        let cli = Cli::parse_from(std::iter::once("genex").chain(args.split_whitespace()));
+        let cli = Cli::parse_from(std::iter::once("ruxex").chain(args.split_whitespace()));
         assert_eq!(
             daemon_startup::exclusion(
                 &cli,
@@ -195,7 +195,7 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
             expected
         );
     }
-    let mut cli = Cli::parse_from(["genex"]);
+    let mut cli = Cli::parse_from(["ruxex"]);
     let overrides = vec![("web_search".into(), toml::Value::String("live".into()))];
     let loader = LoaderOverrides {
         ignore_user_config: true,

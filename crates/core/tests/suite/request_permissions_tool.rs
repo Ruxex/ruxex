@@ -2,26 +2,26 @@
 #![cfg(target_os = "macos")]
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_features::Feature;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -32,10 +32,10 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use regex_lite::Regex;
@@ -129,7 +129,7 @@ fn parse_result(item: &Value) -> (Option<i64>, String) {
 }
 
 async fn submit_turn(
-    test: &TestGenex,
+    test: &TestRuxex,
     prompt: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -138,7 +138,7 @@ async fn submit_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -165,18 +165,18 @@ async fn submit_turn(
     Ok(())
 }
 
-async fn wait_for_completion(test: &TestGenex) {
-    wait_for_event(&test.genex, |event| {
+async fn wait_for_completion(test: &TestRuxex) {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 }
 
 async fn expect_request_permissions_event(
-    test: &TestGenex,
+    test: &TestRuxex,
     expected_call_id: &str,
 ) -> RequestPermissionProfile {
-    let event = wait_for_event(&test.genex, |event| {
+    let event = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_)
@@ -206,7 +206,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
     let permission_profile = workspace_write_excluding_tmp();
     let permission_profile_for_config = permission_profile.clone();
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .permissions
@@ -273,7 +273,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -284,7 +284,7 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
         })
         .await?;
 
-    let completion_event = wait_for_event(&test.genex, |event| {
+    let completion_event = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -292,14 +292,14 @@ async fn approved_folder_write_request_permissions_unblocks_later_exec_without_s
     })
     .await;
     if let EventMsg::ExecApprovalRequest(approval) = completion_event {
-        test.genex
+        test.ruxex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
                 decision: ReviewDecision::Approved,
             })
             .await?;
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -340,7 +340,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
     let permission_profile = workspace_write_excluding_tmp();
     let permission_profile_for_config = permission_profile.clone();
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(approval_policy);
         config
             .permissions
@@ -432,7 +432,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         granted_permissions,
         normalized_requested_permissions.clone()
     );
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: "permissions-call".to_string(),
             response: RequestPermissionsResponse {
@@ -453,7 +453,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         assert!(guardian_request.body_contains_text(requested_file_name));
         assert!(guardian_request.body_contains_text(patch_content));
     } else {
-        let event = wait_for_event(&test.genex, |event| {
+        let event = wait_for_event(&test.ruxex, |event| {
             matches!(
                 event,
                 EventMsg::ApplyPatchApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -501,7 +501,7 @@ async fn apply_patch_after_request_permissions(strict_auto_review: bool) -> Resu
         format!("{patch_content}\n")
     );
 
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     Ok(())
 }

@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-rollout"
+name = "ruxex-rollout"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_rollout"
+name = "ruxex_rollout"
 path = "src/lib.rs"
 
 [lints]
@@ -15,15 +15,15 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-genex-extension-items = { workspace = true }
-genex-file-search = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-history = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-state = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-file-search = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -48,5 +48,5 @@ uuid = { workspace = true }
 zstd = { workspace = true }
 
 [dev-dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }

@@ -1,5 +1,5 @@
 use super::*;
-use genex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnItemsView;
 
 fn turn(id: &str, status: TurnStatus) -> Turn {
     Turn {

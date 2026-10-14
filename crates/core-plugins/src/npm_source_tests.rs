@@ -10,7 +10,7 @@ use std::io::Write;
 fn materialize_npm_plugin_source_uses_packed_package_root() {
     use std::os::unix::fs::PermissionsExt;
 
-    let genex_home = tempfile::tempdir().expect("create genex home");
+    let ruxex_home = tempfile::tempdir().expect("create ruxex home");
     let fake_npm_dir = tempfile::tempdir().expect("create fake npm directory");
     let archive_bytes =
         npm_package_archive_bytes("@acme/plugin", "1.2.0").expect("build fixture archive");
@@ -44,7 +44,7 @@ pwd > "$destination/pwd.txt"
     fs::set_permissions(&fake_npm, permissions).expect("make fake npm executable");
 
     let (plugin_root, tempdir) = materialize_npm_plugin_source_with_command(
-        genex_home.path(),
+        ruxex_home.path(),
         "@acme/plugin",
         Some("^1.2.0"),
         Some("https://npm.example.com"),
@@ -59,7 +59,7 @@ pwd > "$destination/pwd.txt"
     assert!(
         plugin_root
             .as_path()
-            .join(".genex-plugin/plugin.json")
+            .join(".ruxex-plugin/plugin.json")
             .is_file()
     );
     let args = fs::read_to_string(tempdir.path().join("args.txt")).expect("read npm arguments");
@@ -91,7 +91,7 @@ fn npm_package_archive_bytes(package: &str, version: &str) -> std::io::Result<Ve
     )?;
     append_archive_file(
         &mut archive,
-        "package/.genex-plugin/plugin.json",
+        "package/.ruxex-plugin/plugin.json",
         br#"{"name":"plugin"}"#,
     )?;
     let encoder = archive.into_inner()?;

@@ -9,8 +9,8 @@ use crate::RemoveThreadAttachmentParams;
 use crate::ThreadAttachmentPage;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use genex_protocol::ThreadId;
-use genex_rollout::StateDbHandle;
+use ruxex_protocol::ThreadId;
+use ruxex_rollout::StateDbHandle;
 
 pub(super) async fn copy_thread_attachments(
     store: &LocalThreadStore,

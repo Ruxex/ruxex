@@ -2,10 +2,10 @@ mod streamable_http_test_support;
 
 use std::collections::HashMap;
 
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::RmcpClient;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::RmcpClient;
 use serde_json::Value;
 use serde_json::json;
 use streamable_http_test_support::initialize_client;

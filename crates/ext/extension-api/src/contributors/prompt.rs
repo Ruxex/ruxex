@@ -1,8 +1,8 @@
 // All this file should be replaced by the existing fragment implementation ofc
 
-use genex_context_fragments::AnnotatedContent;
-use genex_context_fragments::RenderedFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_context_fragments::RenderedFragment;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PromptSlot {

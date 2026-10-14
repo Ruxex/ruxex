@@ -1,29 +1,29 @@
 use super::*;
 use crate::config::Config;
 use crate::config::ConfigBuilder;
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirements;
-use genex_config::ConfigRequirementsToml;
-use genex_config::LoaderOverrides;
-use genex_config::RequirementSource;
-use genex_config::RequirementsExecPolicy;
-use genex_config::Sourced;
-use genex_config::config_toml::ConfigToml;
-use genex_config::config_toml::ProjectConfig;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::RequirementSource;
+use ruxex_config::RequirementsExecPolicy;
+use ruxex_config::Sourced;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_config::config_toml::ProjectConfig;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -33,11 +33,11 @@ use tempfile::TempDir;
 use tempfile::tempdir;
 use toml::Value as TomlValue;
 
-fn config_stack_for_dot_genex_folder(dot_genex_folder: &Path) -> ConfigLayerStack {
-    let dot_genex_folder =
-        AbsolutePathBuf::from_absolute_path(dot_genex_folder).expect("absolute dot_genex_folder");
+fn config_stack_for_dot_ruxex_folder(dot_ruxex_folder: &Path) -> ConfigLayerStack {
+    let dot_ruxex_folder =
+        AbsolutePathBuf::from_absolute_path(dot_ruxex_folder).expect("absolute dot_ruxex_folder");
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_genex_folder },
+        ConfigLayerSource::Project { dot_ruxex_folder },
         TomlValue::Table(Default::default()),
     );
     ConfigLayerStack::new(
@@ -74,11 +74,11 @@ fn starlark_string(value: &str) -> String {
 }
 
 async fn write_project_trust_config(
-    genex_home: &Path,
+    ruxex_home: &Path,
     trusted_projects: &[(&Path, TrustLevel)],
 ) -> std::io::Result<()> {
     tokio::fs::write(
-        genex_home.join(genex_config::CONFIG_TOML_FILE),
+        ruxex_home.join(ruxex_config::CONFIG_TOML_FILE),
         toml::to_string(&ConfigToml {
             projects: Some(
                 trusted_projects
@@ -103,7 +103,7 @@ async fn write_project_trust_config(
 async fn test_config() -> (TempDir, Config) {
     let home = TempDir::new().expect("create temp dir");
     let config = ConfigBuilder::without_managed_config_for_tests()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
@@ -197,7 +197,7 @@ async fn child_does_not_use_parent_exec_policy_when_requirements_exec_policy_dif
 #[tokio::test]
 async fn returns_empty_policy_when_no_policy_files_exist() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path());
 
     let manager = ExecPolicyManager::load(&config_stack)
         .await
@@ -223,7 +223,7 @@ async fn rules_path_file_returns_read_dir_error() {
     let temp_dir = tempdir().expect("create temp dir");
     let rules_path = temp_dir.path().join(RULES_DIR_NAME);
     fs::write(&rules_path, "rules should be a directory").expect("write malformed rules path");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path());
 
     let err = load_exec_policy(&config_stack)
         .await
@@ -253,7 +253,7 @@ async fn collect_policy_files_returns_empty_when_dir_missing() {
 #[tokio::test]
 async fn format_exec_policy_error_with_source_renders_range() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     let broken_path = policy_dir.join("broken.rules");
@@ -298,7 +298,7 @@ fn parse_starlark_line_from_message_rejects_zero_line() {
 #[tokio::test]
 async fn loads_policies_from_policy_subdirectory() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     fs::write(
@@ -332,21 +332,21 @@ async fn merges_requirements_exec_policy_network_rules() -> anyhow::Result<()> {
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        genex_execpolicy::NetworkRuleProtocol::Https,
+        ruxex_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         /*justification*/ None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(genex_config::Sourced::new(
-            genex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            genex_config::RequirementSource::Unknown,
+        exec_policy: Some(ruxex_config::Sourced::new(
+            ruxex_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            ruxex_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
-    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_ruxex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_genex_folder },
+        ConfigLayerSource::Project { dot_ruxex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -376,9 +376,9 @@ async fn malformed_custom_rules_preserve_requirements_exec_policy() -> anyhow::R
         )),
         ..ConfigRequirements::default()
     };
-    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_ruxex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_genex_folder },
+        ConfigLayerSource::Project { dot_ruxex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -415,21 +415,21 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        genex_execpolicy::NetworkRuleProtocol::Https,
+        ruxex_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         /*justification*/ None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(genex_config::Sourced::new(
-            genex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            genex_config::RequirementSource::Unknown,
+        exec_policy: Some(ruxex_config::Sourced::new(
+            ruxex_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            ruxex_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
-    let dot_genex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_ruxex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_genex_folder },
+        ConfigLayerSource::Project { dot_ruxex_folder },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -451,7 +451,7 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
 #[tokio::test]
 async fn ignores_policies_outside_policy_dir() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path());
     fs::write(
         temp_dir.path().join("root.rules"),
         r#"prefix_rule(pattern=["ls"], decision="prompt")"#,
@@ -484,7 +484,7 @@ async fn ignores_policy_files_when_config_stack_disables_exec_policy_rules() {
         r#"prefix_rule(pattern=["curl"], decision="allow")"#,
     )
     .expect("write policy file");
-    let config_stack = config_stack_for_dot_genex_folder(temp_dir.path())
+    let config_stack = config_stack_for_dot_ruxex_folder(temp_dir.path())
         .with_user_and_project_exec_policy_rules_ignored(
             /*ignore_user_and_project_exec_policy_rules*/ true,
         );
@@ -513,7 +513,7 @@ async fn ignore_user_project_rules_keeps_system_policy_files() {
     )
     .expect("write policy file");
     let config_file =
-        AbsolutePathBuf::from_absolute_path(config_dir.join(genex_config::CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config_dir.join(ruxex_config::CONFIG_TOML_FILE))
             .expect("absolute config file");
     let layer = ConfigLayerEntry::new(
         ConfigLayerSource::System { file: config_file },
@@ -551,10 +551,10 @@ async fn ignores_rules_from_untrusted_project_layers() -> anyhow::Result<()> {
         r#"prefix_rule(pattern=["ls"], decision="forbidden")"#,
     )?;
 
-    let project_dot_genex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_ruxex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![ConfigLayerEntry::new_disabled(
         ConfigLayerSource::Project {
-            dot_genex_folder: project_dot_genex_folder,
+            dot_ruxex_folder: project_dot_ruxex_folder,
         },
         TomlValue::Table(Default::default()),
         "marked untrusted",
@@ -601,7 +601,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
 
     let user_config_toml =
         AbsolutePathBuf::from_absolute_path(user_dir.path().join("config.toml"))?;
-    let project_dot_genex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_ruxex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![
         ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -612,7 +612,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
         ),
         ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_genex_folder: project_dot_genex_folder,
+                dot_ruxex_folder: project_dot_ruxex_folder,
             },
             TomlValue::Table(Default::default()),
         ),
@@ -707,11 +707,11 @@ fn commands_for_exec_policy_falls_back_for_whitespace_shell_script() {
 #[tokio::test]
 async fn ignore_user_config_keeps_user_policy_files() -> std::io::Result<()> {
     let temp = tempdir()?;
-    let genex_home = temp.path().join("home_ignore_user_config");
-    let rules_dir = genex_home.join(RULES_DIR_NAME);
+    let ruxex_home = temp.path().join("home_ignore_user_config");
+    let rules_dir = ruxex_home.join(RULES_DIR_NAME);
     fs::create_dir_all(&rules_dir)?;
     fs::write(
-        genex_home.join(CONFIG_TOML_FILE),
+        ruxex_home.join(CONFIG_TOML_FILE),
         "model = \"from-user-config\"\ninvalid = [",
     )?;
     fs::write(
@@ -720,7 +720,7 @@ async fn ignore_user_config_keeps_user_policy_files() -> std::io::Result<()> {
     )?;
 
     let config = ConfigBuilder::default()
-        .genex_home(genex_home)
+        .ruxex_home(ruxex_home)
         .fallback_cwd(Some(temp.path().to_path_buf()))
         .loader_overrides(LoaderOverrides {
             ignore_user_config: true,
@@ -1611,7 +1611,7 @@ async fn request_rule_falls_back_when_prefix_rule_does_not_approve_all_commands(
     let command = vec![
         "bash".to_string(),
         "-lc".to_string(),
-        "cargo install cargo-insta && rm -rf /tmp/genex".to_string(),
+        "cargo install cargo-insta && rm -rf /tmp/ruxex".to_string(),
     ];
     let manager = ExecPolicyManager::default();
 
@@ -1634,7 +1634,7 @@ async fn request_rule_falls_back_when_prefix_rule_does_not_approve_all_commands(
             proposed_execpolicy_amendment: Some(ExecPolicyAmendment::new(vec![
                 "rm".to_string(),
                 "-rf".to_string(),
-                "/tmp/genex".to_string(),
+                "/tmp/ruxex".to_string(),
             ])),
         }
     );
@@ -1677,12 +1677,12 @@ async fn heuristics_apply_when_other_commands_match_policy() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_updates_policy_and_file() {
-    let genex_home = tempdir().expect("create temp dir");
+    let ruxex_home = tempdir().expect("create temp dir");
     let prefix = vec!["echo".to_string(), "hello".to_string()];
     let manager = ExecPolicyManager::default();
 
     manager
-        .append_amendment_and_update(genex_home.path(), &ExecPolicyAmendment::from(prefix))
+        .append_amendment_and_update(ruxex_home.path(), &ExecPolicyAmendment::from(prefix))
         .await
         .expect("update policy");
     let updated_policy = manager.current();
@@ -1699,7 +1699,7 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
         }
     ));
 
-    let contents = fs::read_to_string(default_policy_path(genex_home.path()))
+    let contents = fs::read_to_string(default_policy_path(ruxex_home.path()))
         .expect("policy file should have been created");
     assert_eq!(
         contents,
@@ -1710,11 +1710,11 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_rejects_empty_prefix() {
-    let genex_home = tempdir().expect("create temp dir");
+    let ruxex_home = tempdir().expect("create temp dir");
     let manager = ExecPolicyManager::default();
 
     let result = manager
-        .append_amendment_and_update(genex_home.path(), &ExecPolicyAmendment::from(vec![]))
+        .append_amendment_and_update(ruxex_home.path(), &ExecPolicyAmendment::from(vec![]))
         .await;
 
     assert!(matches!(
@@ -2307,13 +2307,13 @@ async fn assert_exec_approval_requirement_for_command(
 #[tokio::test]
 async fn exec_policies_only_load_from_trusted_project_layers() -> std::io::Result<()> {
     let temp = tempfile::tempdir()?;
-    let genex_home = temp.path().join("home_execpolicy_nested");
+    let ruxex_home = temp.path().join("home_execpolicy_nested");
     let project_root = temp.path().join("project_execpolicy_nested");
     let nested = project_root.join("nested");
-    let root_rules = project_root.join(".genex").join(RULES_DIR_NAME);
-    let nested_rules = nested.join(".genex").join(RULES_DIR_NAME);
+    let root_rules = project_root.join(".ruxex").join(RULES_DIR_NAME);
+    let nested_rules = nested.join(".ruxex").join(RULES_DIR_NAME);
 
-    fs::create_dir_all(&genex_home)?;
+    fs::create_dir_all(&ruxex_home)?;
     fs::create_dir_all(&nested_rules)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&root_rules)?;
@@ -2325,10 +2325,10 @@ async fn exec_policies_only_load_from_trusted_project_layers() -> std::io::Resul
         nested_rules.join("deny-mv.rules"),
         r#"prefix_rule(pattern=["mv"], decision="forbidden")"#,
     )?;
-    write_project_trust_config(&genex_home, &[(&nested, TrustLevel::Trusted)]).await?;
+    write_project_trust_config(&ruxex_home, &[(&nested, TrustLevel::Trusted)]).await?;
 
     let config = ConfigBuilder::default()
-        .genex_home(genex_home)
+        .ruxex_home(ruxex_home)
         .fallback_cwd(Some(nested))
         .build()
         .await?;
@@ -2357,7 +2357,7 @@ async fn exec_policies_require_project_trust_without_config_toml() -> std::io::R
     let temp = tempfile::tempdir()?;
     let project_root = temp.path().join("project_execpolicy");
     let nested = project_root.join("nested");
-    let rules_dir = project_root.join(".genex").join(RULES_DIR_NAME);
+    let rules_dir = project_root.join(".ruxex").join(RULES_DIR_NAME);
     fs::create_dir_all(&nested)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&rules_dir)?;
@@ -2385,12 +2385,12 @@ async fn exec_policies_require_project_trust_without_config_toml() -> std::io::R
     ];
 
     for (name, trust_entries, expected_decision) in cases {
-        let genex_home = temp.path().join(format!("home_execpolicy_{name}"));
-        fs::create_dir_all(&genex_home)?;
-        write_project_trust_config(&genex_home, &trust_entries).await?;
+        let ruxex_home = temp.path().join(format!("home_execpolicy_{name}"));
+        fs::create_dir_all(&ruxex_home)?;
+        write_project_trust_config(&ruxex_home, &trust_entries).await?;
 
         let config = ConfigBuilder::default()
-            .genex_home(genex_home)
+            .ruxex_home(ruxex_home)
             .fallback_cwd(Some(nested.clone()))
             .build()
             .await?;
@@ -2416,7 +2416,7 @@ async fn exec_policy_warnings_ignore_untrusted_project_rules_without_config_toml
     let temp = tempfile::tempdir()?;
     let project_root = temp.path().join("project_execpolicy_warning");
     let nested = project_root.join("nested");
-    let rules_dir = project_root.join(".genex").join(RULES_DIR_NAME);
+    let rules_dir = project_root.join(".ruxex").join(RULES_DIR_NAME);
     fs::create_dir_all(&nested)?;
     fs::write(project_root.join(".git"), "gitdir: here")?;
     fs::create_dir_all(&rules_dir)?;
@@ -2437,12 +2437,12 @@ async fn exec_policy_warnings_ignore_untrusted_project_rules_without_config_toml
     ];
 
     for (name, trust_entries, expect_warning) in cases {
-        let genex_home = temp.path().join(format!("home_execpolicy_warning_{name}"));
-        fs::create_dir_all(&genex_home)?;
-        write_project_trust_config(&genex_home, &trust_entries).await?;
+        let ruxex_home = temp.path().join(format!("home_execpolicy_warning_{name}"));
+        fs::create_dir_all(&ruxex_home)?;
+        write_project_trust_config(&ruxex_home, &trust_entries).await?;
 
         let config = ConfigBuilder::default()
-            .genex_home(genex_home)
+            .ruxex_home(ruxex_home)
             .fallback_cwd(Some(nested.clone()))
             .build()
             .await?;

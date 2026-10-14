@@ -8,23 +8,23 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::McpAuthState;
-use genex_rmcp_client::McpLoginRequirement;
-use genex_rmcp_client::McpOAuthRefreshMode;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::OAuthDiscoveryTimeout;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StoredOAuthTokens;
-use genex_rmcp_client::StreamableHttpRedirectMode;
-use genex_rmcp_client::WrappedOAuthTokenResponse;
-use genex_rmcp_client::determine_streamable_http_auth_status;
-use genex_rmcp_client::is_authentication_required_error;
-use genex_rmcp_client::save_oauth_tokens;
-use genex_rmcp_client::with_http_headers_helper;
-use genex_utils_cargo_bin::cargo_bin;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::McpAuthState;
+use ruxex_rmcp_client::McpLoginRequirement;
+use ruxex_rmcp_client::McpOAuthRefreshMode;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::OAuthDiscoveryTimeout;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StoredOAuthTokens;
+use ruxex_rmcp_client::StreamableHttpRedirectMode;
+use ruxex_rmcp_client::WrappedOAuthTokenResponse;
+use ruxex_rmcp_client::determine_streamable_http_auth_status;
+use ruxex_rmcp_client::is_authentication_required_error;
+use ruxex_rmcp_client::save_oauth_tokens;
+use ruxex_rmcp_client::with_http_headers_helper;
+use ruxex_utils_cargo_bin::cargo_bin;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
 use oauth2::basic::BasicTokenType;
@@ -53,7 +53,7 @@ const REFRESH_TOKEN: &str = "valid-refresh-token";
 const REFRESHED_ACCESS_TOKEN: &str = "refreshed-access-token";
 const RESOURCE_API_KEY: &str = "resource-api-key-secret";
 const RESOURCE_USER_AGENT: &str = "resource-only-user-agent";
-const MCP_USER_AGENT: &str = concat!("genex-mcp-client/", env!("CARGO_PKG_VERSION"));
+const MCP_USER_AGENT: &str = concat!("ruxex-mcp-client/", env!("CARGO_PKG_VERSION"));
 const CHILD_SERVER_URL_ENV: &str = "MCP_TEST_OAUTH_STARTUP_SERVER_URL";
 const CHILD_REFRESH_MODE_ENV: &str = "MCP_TEST_OAUTH_REFRESH_MODE";
 const CHILD_HELPER_COMMAND_ENV: &str = "MCP_TEST_OAUTH_STARTUP_HELPER_COMMAND";
@@ -147,7 +147,7 @@ async fn tool_call_preserves_challenge_only_after_silent_refresh_fails() -> anyh
             .await;
 
         // The child owns its credential store; the parallel test runner's environment is unchanged.
-        let genex_home = TempDir::new()?;
+        let ruxex_home = TempDir::new()?;
         let status = Command::new(std::env::current_exe()?)
             .args([
                 "oauth_tool_call_child",
@@ -155,7 +155,7 @@ async fn tool_call_preserves_challenge_only_after_silent_refresh_fails() -> anyh
                 "--ignored",
                 "--nocapture",
             ])
-            .env("GENEX_HOME", genex_home.path())
+            .env("RUXEX_HOME", ruxex_home.path())
             .env(CHILD_SERVER_URL_ENV, server_url)
             .env(CHILD_REFRESH_SUCCEEDS_ENV, refresh_succeeds.to_string())
             .status()
@@ -472,20 +472,20 @@ async fn assert_expired_token_refresh(
         .mount(&server)
         .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let with_headers_helper = matches!(
         scenario,
         OAuthStartupScenario::GatewayHeadersHelper
             | OAuthStartupScenario::SameOriginGatewayHeadersHelper
     );
 
-    // Credential storage resolves GENEX_HOME from the process environment.
+    // Credential storage resolves RUXEX_HOME from the process environment.
     // Run the client half of the test in an ignored helper test so it can use
     // an isolated home without mutating the parent test runner's environment.
     let mut command = Command::new(std::env::current_exe()?);
     command
         .args(["oauth_startup_child", "--exact", "--ignored", "--nocapture"])
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(CHILD_SERVER_URL_ENV, server_url)
         .env(CHILD_STORED_ISSUER_ENV, authorization_server_issuer)
         .env(CHILD_RESOURCE_API_KEY_ENV, RESOURCE_API_KEY)
@@ -648,7 +648,7 @@ async fn run_issuer_startup_child(
     stored_issuer: &str,
     access_token_expiry: &str,
 ) -> anyhow::Result<std::process::ExitStatus> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     Ok(Command::new(std::env::current_exe()?)
         .args([
             "issuer_startup_child",
@@ -656,7 +656,7 @@ async fn run_issuer_startup_child(
             "--ignored",
             "--nocapture",
         ])
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(CHILD_SERVER_URL_ENV, server_url)
         .env(CHILD_STORED_ISSUER_ENV, stored_issuer)
         .env(CHILD_ACCESS_TOKEN_EXPIRY_ENV, access_token_expiry)
@@ -772,7 +772,7 @@ async fn does_not_refresh_against_metadata_from_second_discovery() -> anyhow::Re
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn reports_auth_status_for_persisted_credentials() -> anyhow::Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
     let status = Command::new(std::env::current_exe()?)
         .args([
@@ -781,7 +781,7 @@ async fn reports_auth_status_for_persisted_credentials() -> anyhow::Result<()> {
             "--ignored",
             "--nocapture",
         ])
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .status()
         .await?;
 
@@ -805,7 +805,7 @@ async fn identifies_expired_unrefreshable_token_startup_error() -> anyhow::Resul
         .mount(&server)
         .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let status = Command::new(std::env::current_exe()?)
         .args([
             "expired_unrefreshable_startup_child",
@@ -813,7 +813,7 @@ async fn identifies_expired_unrefreshable_token_startup_error() -> anyhow::Resul
             "--ignored",
             "--nocapture",
         ])
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(CHILD_SERVER_URL_ENV, format!("{}/mcp", server.uri()))
         .status()
         .await?;

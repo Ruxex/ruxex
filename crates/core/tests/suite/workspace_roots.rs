@@ -1,13 +1,13 @@
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::EnvironmentConfig;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::RemoveOptions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::EnvironmentConfig;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
@@ -17,8 +17,8 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use serde_json::json;
 use test_case::test_case;
 use wiremock::MockServer;
@@ -35,15 +35,15 @@ fn workspace_roots_profile() -> PermissionProfile {
     )
 }
 
-async fn workspace_roots_test(server: &MockServer) -> Result<TestGenex> {
-    let mut builder = test_genex().with_config(|config| {
+async fn workspace_roots_test(server: &MockServer) -> Result<TestRuxex> {
+    let mut builder = test_ruxex().with_config(|config| {
         config.workspace_roots = vec![config.cwd.clone()];
     });
     builder.build_with_auto_env(server).await
 }
 
-fn outside_workspace_path(test: &TestGenex, file_name: &str) -> Result<PathUri> {
-    let file_name = format!("genex-workspace-roots-{}-{file_name}", std::process::id());
+fn outside_workspace_path(test: &TestRuxex, file_name: &str) -> Result<PathUri> {
+    let file_name = format!("ruxex-workspace-roots-{}-{file_name}", std::process::id());
     PathUri::from_abs_path(&test.config.cwd)
         .parent()
         .context("test workspace should have a parent")?
@@ -101,12 +101,12 @@ async fn mount_patch_and_command_calls(
     .await)
 }
 
-async fn submit_workspace_turn(test: &TestGenex, prompt: &str) -> Result<()> {
+async fn submit_workspace_turn(test: &TestRuxex, prompt: &str) -> Result<()> {
     test.submit_turn_with_permission_profile(prompt, workspace_roots_profile())
         .await
 }
 
-async fn read_file(test: &TestGenex, path: &PathUri) -> Result<String> {
+async fn read_file(test: &TestRuxex, path: &PathUri) -> Result<String> {
     Ok(String::from_utf8(
         test.fs()
             .read_file(path, Default::default(), /*sandbox*/ None)
@@ -114,7 +114,7 @@ async fn read_file(test: &TestGenex, path: &PathUri) -> Result<String> {
     )?)
 }
 
-async fn remove_files(test: &TestGenex, paths: &[&PathUri]) -> Result<()> {
+async fn remove_files(test: &TestRuxex, paths: &[&PathUri]) -> Result<()> {
     for path in paths {
         test.fs()
             .remove(
@@ -188,7 +188,7 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
     const COMMAND_CONTENTS: &str = "secondary root command";
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_config(move |config| {
             let secondary_root = config
                 .cwd
@@ -227,13 +227,13 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
         .join(&secondary_root_name)?;
     if owner_resolved_roots {
         let selection = test
-            .genex
+            .ruxex
             .environment_selections()
             .await
             .into_iter()
             .next()
             .context("thread should select its executor environment")?;
-        test.genex
+        test.ruxex
             .environment_ready(
                 &selection,
                 EnvironmentConfig {
@@ -307,7 +307,7 @@ async fn workspace_roots_allow_file_and_command_writes_in_secondary_root(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn workspace_roots_allow_patches_but_protect_metadata_directories() -> Result<()> {
     const PATCH_CONTENTS: &str = "workspace root patch access";
-    const PROTECTED_METADATA_DIRECTORIES: [&str; 4] = [".git", ".agents", ".genex", ".aws"];
+    const PROTECTED_METADATA_DIRECTORIES: [&str; 4] = [".git", ".agents", ".ruxex", ".aws"];
 
     let server = start_mock_server().await;
     let test = workspace_roots_test(&server).await?;

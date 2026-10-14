@@ -1,10 +1,10 @@
 //! Session-wide mutable state.
 
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::ResponseItem;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::BaseInstructionsProvenance;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -19,16 +19,16 @@ use crate::session::PreviousTurnSettings;
 use crate::session::session::SessionConfiguration;
 use crate::session::time_reminder::CurrentTimeReminderState;
 use crate::session_startup_prewarm::SessionStartupPrewarmHandle;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TokenUsageInfo;
-use genex_protocol::protocol::TokenUsageRecord;
-use genex_protocol::protocol::TurnContextItem;
-use genex_utils_output_truncation::TruncationPolicy;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TokenUsageInfo;
+use ruxex_protocol::protocol::TokenUsageRecord;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_utils_output_truncation::TruncationPolicy;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
 
@@ -97,7 +97,7 @@ pub(crate) struct SessionState {
     /// Retained after completion so later turns do not repeat speculative captures.
     pub(crate) shell_snapshot_prewarm: Option<AbortOnDropHandle<()>>,
     pub(crate) current_time_reminder: CurrentTimeReminderState,
-    pub(crate) pending_session_start_sources: VecDeque<genex_hooks::SessionStartSource>,
+    pub(crate) pending_session_start_sources: VecDeque<ruxex_hooks::SessionStartSource>,
     granted_permissions_by_environment_id: HashMap<String, AdditionalPermissionProfile>,
     next_turn_is_first: bool,
 }
@@ -384,14 +384,14 @@ impl SessionState {
 
     pub(crate) fn queue_pending_session_start_source(
         &mut self,
-        value: genex_hooks::SessionStartSource,
+        value: ruxex_hooks::SessionStartSource,
     ) {
         self.pending_session_start_sources.push_back(value);
     }
 
     pub(crate) fn take_pending_session_start_source(
         &mut self,
-    ) -> Option<genex_hooks::SessionStartSource> {
+    ) -> Option<ruxex_hooks::SessionStartSource> {
         self.pending_session_start_sources.pop_front()
     }
 

@@ -1,5 +1,5 @@
-use genex_core::config::Config;
-use genex_extension_api::ExtensionRegistryBuilder;
+use ruxex_core::config::Config;
+use ruxex_extension_api::ExtensionRegistryBuilder;
 
 mod executor_plugin;
 
@@ -10,7 +10,7 @@ pub fn install(builder: &mut ExtensionRegistryBuilder<Config>) {
 /// Installs discovery for MCP servers declared by thread-selected executor plugins.
 pub fn install_executor_plugins(
     builder: &mut ExtensionRegistryBuilder<Config>,
-    environment_manager: std::sync::Arc<genex_exec_server::EnvironmentManager>,
+    environment_manager: std::sync::Arc<ruxex_exec_server::EnvironmentManager>,
 ) {
     builder.mcp_server_contributor(std::sync::Arc::new(
         executor_plugin::SelectedExecutorPluginMcpContributor::new(environment_manager),

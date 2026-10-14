@@ -24,10 +24,10 @@ use crate::bottom_pane::SelectionViewParams;
 use crate::bottom_pane::popup_consts::standard_popup_hint_line_for_keymap;
 use crate::chatwidget::ThreadInputStateRestoreMode;
 use crate::startup_draft::StartupDraftPump;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::SubAgentSource;
 
 pub(crate) const AGENTS_OVERVIEW_VIEW_ID: &str = "agents-overview";
 
@@ -82,7 +82,7 @@ impl App {
                     Some(SelectionItem {
                         name: "Start background server".to_string(),
                         description: Some(
-                            "Open `genex agents` in another terminal afterward.".to_string(),
+                            "Open `ruxex agents` in another terminal afterward.".to_string(),
                         ),
                         actions: vec![Box::new(|tx| tx.send(AppEvent::StartAgentsDaemon))],
                         dismiss_on_select: true,
@@ -395,7 +395,7 @@ impl App {
             };
             let unloaded = matches!(
                 target_thread.status,
-                genex_app_server_protocol::ThreadStatus::NotLoaded
+                ruxex_app_server_protocol::ThreadStatus::NotLoaded
             );
             let preserve_explicit_permissions = unloaded || started.is_some();
             let (mut resume_config, mut local_settings) = if let Some((config, _)) = &started {
@@ -459,7 +459,7 @@ impl App {
             let baseline_permissions =
                 RuntimePermissionProfileOverride::from_config(&resume_config);
             let resume_model_settings = match target_thread.status {
-                genex_app_server_protocol::ThreadStatus::NotLoaded => {
+                ruxex_app_server_protocol::ThreadStatus::NotLoaded => {
                     self.apply_runtime_policy_overrides(
                         &mut resume_config,
                         RuntimePolicyOverrideScope::ExplicitOnly,
@@ -484,9 +484,9 @@ impl App {
                     }
                     self.resume_model_settings()
                 }
-                genex_app_server_protocol::ThreadStatus::Idle
-                | genex_app_server_protocol::ThreadStatus::Active { .. }
-                | genex_app_server_protocol::ThreadStatus::SystemError => {
+                ruxex_app_server_protocol::ThreadStatus::Idle
+                | ruxex_app_server_protocol::ThreadStatus::Active { .. }
+                | ruxex_app_server_protocol::ThreadStatus::SystemError => {
                     crate::app_server_session::ResumeModelSettings::PreserveExistingThread
                 }
             };
@@ -610,7 +610,7 @@ impl App {
                             == RuntimePermissionProfileTurnOverride::LegacySandbox
                 });
             self.local_settings = local_settings;
-            self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
+            self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
             self.config = resume_config;
             tui.set_notification_settings(
                 self.local_settings.tui.notification_settings.method,
@@ -748,7 +748,7 @@ impl App {
         for request in requests {
             self.handle_app_server_event(
                 app_server,
-                genex_app_server_client::AppServerEvent::ServerRequest(Box::new(request)),
+                ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(request)),
             )
             .await;
         }
@@ -954,9 +954,9 @@ impl App {
                 let executable = if current_executable
                     .file_stem()
                     .and_then(std::ffi::OsStr::to_str)
-                    .is_some_and(|name| name == "genex-tui")
+                    .is_some_and(|name| name == "ruxex-tui")
                 {
-                    current_executable.with_file_name("genex")
+                    current_executable.with_file_name("ruxex")
                 } else {
                     current_executable
                 };

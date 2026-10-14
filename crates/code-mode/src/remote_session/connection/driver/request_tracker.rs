@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use genex_code_mode_protocol::host::RequestId;
-use genex_code_mode_protocol::host::SessionId;
-use genex_code_mode_protocol::host::WireCellId;
+use ruxex_code_mode_protocol::host::RequestId;
+use ruxex_code_mode_protocol::host::SessionId;
+use ruxex_code_mode_protocol::host::WireCellId;
 use tokio::sync::mpsc;
 
 use super::types::DeferredWait;

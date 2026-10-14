@@ -1,35 +1,35 @@
-use core_test_support::test_genex::local_selections;
+use core_test_support::test_ruxex::local_selections;
 use std::sync::Arc;
 
-use genex_core::GenexThread;
-use genex_core::StartIfIdleSubmission;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::TurnStartOptions;
-use genex_core::config::CurrentTimeReminderConfig;
-use genex_extension_items::ExtensionItem;
-use genex_extension_items::sleep::SleepItem;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_protocol::AgentPath;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::AgentMessageInputContent;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::turn_input::CyberAccessProgram;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::RuxexThread;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::TurnStartOptions;
+use ruxex_core::config::CurrentTimeReminderConfig;
+use ruxex_extension_items::ExtensionItem;
+use ruxex_extension_items::sleep::SleepItem;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::AgentMessageInputContent;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::turn_input::CyberAccessProgram;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::SnapshotEntry;
@@ -46,9 +46,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::StreamingSseServer;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -78,11 +78,11 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
         ]),
     )
     .await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
 
-    submit_queue_only_agent_mail(test.genex.as_ref(), "pending mailbox input").await;
+    submit_queue_only_agent_mail(test.ruxex.as_ref(), "pending mailbox input").await;
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::ResponseItem(
             responses::user_message_item("automatic response item"),
         )))
@@ -90,7 +90,7 @@ async fn idle_response_items_include_pending_mailbox_in_first_request() -> anyho
     let StartIfIdleSubmission::Started { turn_id } = submission else {
         panic!("automatic input should start a turn");
     };
-    wait_for_turn_complete(test.genex.as_ref()).await;
+    wait_for_turn_complete(test.ruxex.as_ref()).await;
 
     let request = response.single_request();
     let request_body = request.body_json();
@@ -128,24 +128,24 @@ async fn standalone_tool_output_starts_instruction_turn() -> anyhow::Result<()> 
         responses::sse(vec![ev_response_created("turn"), ev_completed("turn")]),
     )
     .await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
 
     let expected_output = json!({
         "type": "function_call_output",
         "name": "send_message_to_thread",
-        "namespace": "genex_app",
+        "namespace": "ruxex_app",
         "output": "delegated work",
     });
     let output = serde_json::from_value(expected_output.clone())?;
 
     let submission = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::new(TurnInput::ResponseItem(output)))
         .await?;
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("standalone output should start a turn");
     };
-    wait_for_turn_complete(test.genex.as_ref()).await;
+    wait_for_turn_complete(test.ruxex.as_ref()).await;
 
     let request = response.single_request();
     responses::assert_root_turn(&request.body_json(), Some(&turn_id))?;
@@ -170,11 +170,11 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         ]),
     )
     .await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
 
     if mode == ModeKind::Plan {
         core_test_support::submit_thread_settings(
-            test.genex.as_ref(),
+            test.ruxex.as_ref(),
             ThreadSettingsOverrides {
                 collaboration_mode: Some(CollaborationMode {
                     mode,
@@ -195,7 +195,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         text_elements: Vec::new(),
     }];
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::UserInput {
             content: expected_input.clone(),
             client_id: Some("queued-user-message".to_string()),
@@ -203,7 +203,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    let user_message = core_test_support::wait_for_event_match(test.genex.as_ref(), |event| {
+    let user_message = core_test_support::wait_for_event_match(test.ruxex.as_ref(), |event| {
         let EventMsg::ItemCompleted(event) = event else {
             return None;
         };
@@ -218,7 +218,7 @@ async fn assert_idle_user_input_reaches_the_first_model_request(
         user_message.client_id
     );
     assert_eq!(expected_input, user_message.content);
-    wait_for_turn_complete(test.genex.as_ref()).await;
+    wait_for_turn_complete(test.ruxex.as_ref()).await;
 
     let request = response.single_request();
     let request_body = request.body_json();
@@ -316,18 +316,18 @@ fn response_completed_chunks(response_id: &str) -> Vec<StreamingSseChunk> {
     ]
 }
 
-async fn build_genex(server: &StreamingSseServer) -> Arc<GenexThread> {
-    test_genex()
+async fn build_ruxex(server: &StreamingSseServer) -> Arc<RuxexThread> {
+    test_ruxex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_model("legacy-model")
         .build_with_streaming_server(server)
         .await
-        .expect("build streaming Genex test session")
-        .genex
+        .expect("build streaming Ruxex test session")
+        .ruxex
 }
 
-async fn submit_user_input(genex: &GenexThread, text: &str) {
-    genex
+async fn submit_user_input(ruxex: &RuxexThread, text: &str) {
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
@@ -336,10 +336,10 @@ async fn submit_user_input(genex: &GenexThread, text: &str) {
         .expect("submit user input");
 }
 
-async fn submit_danger_full_access_user_turn(test: &TestGenex, text: &str) {
+async fn submit_danger_full_access_user_turn(test: &TestRuxex, text: &str) {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
@@ -365,8 +365,8 @@ async fn submit_danger_full_access_user_turn(test: &TestGenex, text: &str) {
         .expect("submit user turn");
 }
 
-async fn steer_user_input(genex: &GenexThread, text: &str) {
-    let submission = genex
+async fn steer_user_input(ruxex: &RuxexThread, text: &str) {
+    let submission = ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
@@ -376,8 +376,8 @@ async fn steer_user_input(genex: &GenexThread, text: &str) {
     assert!(matches!(submission, TurnInputSubmission::Steered { .. }));
 }
 
-async fn enqueue_queue_only_agent_mail(genex: &GenexThread, text: &str) {
-    genex
+async fn enqueue_queue_only_agent_mail(ruxex: &RuxexThread, text: &str) {
+    ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::try_from("/root/worker").expect("worker path should parse"),
@@ -392,20 +392,20 @@ async fn enqueue_queue_only_agent_mail(genex: &GenexThread, text: &str) {
         .expect("submit queue-only agent mail");
 }
 
-async fn submit_queue_only_agent_mail(genex: &GenexThread, text: &str) {
-    enqueue_queue_only_agent_mail(genex, text).await;
-    genex
+async fn submit_queue_only_agent_mail(ruxex: &RuxexThread, text: &str) {
+    enqueue_queue_only_agent_mail(ruxex, text).await;
+    ruxex
         .submit(Op::RealtimeConversationListVoices)
         .await
         .expect("submit list-voices barrier");
-    wait_for_event(genex, |event| {
+    wait_for_event(ruxex, |event| {
         matches!(event, EventMsg::RealtimeConversationListVoicesResponse(_))
     })
     .await;
 }
 
-async fn wait_for_reasoning_item_started(genex: &GenexThread) {
-    wait_for_event(genex, |event| {
+async fn wait_for_reasoning_item_started(ruxex: &RuxexThread) {
+    wait_for_event(ruxex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(item_started)
@@ -415,21 +415,21 @@ async fn wait_for_reasoning_item_started(genex: &GenexThread) {
     .await;
 }
 
-async fn wait_for_agent_message(genex: &GenexThread, text: &str) {
+async fn wait_for_agent_message(ruxex: &RuxexThread, text: &str) {
     let final_message = wait_for_event(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::AgentMessage(message) if message.message == text),
     )
     .await;
     assert!(matches!(final_message, EventMsg::AgentMessage(_)));
 }
 
-async fn wait_for_turn_complete(genex: &GenexThread) {
-    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+async fn wait_for_turn_complete(ruxex: &RuxexThread) {
+    wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 
-async fn wait_for_sleep_item_started(genex: &GenexThread, call_id: &str, duration_ms: u64) {
-    let event = wait_for_event(genex, |event| {
+async fn wait_for_sleep_item_started(ruxex: &RuxexThread, call_id: &str, duration_ms: u64) {
+    let event = wait_for_event(ruxex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(started)
@@ -455,8 +455,8 @@ async fn wait_for_sleep_item_started(genex: &GenexThread, call_id: &str, duratio
     );
 }
 
-async fn wait_for_sleep_item_completed(genex: &GenexThread, call_id: &str, duration_ms: u64) {
-    let event = wait_for_event(genex, |event| {
+async fn wait_for_sleep_item_completed(ruxex: &RuxexThread, call_id: &str, duration_ms: u64) {
+    let event = wait_for_event(ruxex, |event| {
         matches!(
             event,
             EventMsg::ItemCompleted(completed)
@@ -484,13 +484,13 @@ async fn wait_for_sleep_item_completed(genex: &GenexThread, call_id: &str, durat
 
 struct SleepingRootExtension;
 
-impl genex_extension_api::ThreadLifecycleContributor<genex_core::config::Config>
+impl ruxex_extension_api::ThreadLifecycleContributor<ruxex_core::config::Config>
     for SleepingRootExtension
 {
     fn on_thread_start<'a>(
         &'a self,
-        input: genex_extension_api::ThreadStartInput<'a, genex_core::config::Config>,
-    ) -> genex_extension_api::ExtensionFuture<'a, ()> {
+        input: ruxex_extension_api::ThreadStartInput<'a, ruxex_core::config::Config>,
+    ) -> ruxex_extension_api::ExtensionFuture<'a, ()> {
         Box::pin(async move {
             input.thread_store.insert(SleepItem {
                 id: "clock-wait-1".to_string(),
@@ -514,18 +514,18 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     )
     .await;
     let mut extensions =
-        genex_extension_api::ExtensionRegistryBuilder::<genex_core::config::Config>::new();
+        ruxex_extension_api::ExtensionRegistryBuilder::<ruxex_core::config::Config>::new();
     extensions.thread_lifecycle_contributor(Arc::new(SleepingRootExtension));
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .build_with_auto_env(&server)
         .await
-        .expect("build Genex test session")
-        .genex;
+        .expect("build Ruxex test session")
+        .ruxex;
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "wait for the worker".to_string(),
@@ -538,9 +538,9 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
         )
         .await
         .expect("start initial turn");
-    wait_for_turn_complete(&genex).await;
-    enqueue_queue_only_agent_mail(&genex, CHILD_MESSAGE).await;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
+    enqueue_queue_only_agent_mail(&ruxex, CHILD_MESSAGE).await;
+    wait_for_turn_complete(&ruxex).await;
 
     assert_eq!(
         requests
@@ -550,7 +550,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
             .collect::<Vec<_>>(),
         vec![json!({"cyber": "standard"}); 2],
     );
-    let history = genex
+    let history = ruxex
         .load_history(/*include_archived*/ true)
         .await
         .expect("load persisted thread history");
@@ -560,10 +560,10 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
             RolloutItem::ResponseItem(envelope)
                 if matches!(
                     &envelope.item,
-                    genex_protocol::models::ResponseItem::AgentMessage { content, .. }
+                    ruxex_protocol::models::ResponseItem::AgentMessage { content, .. }
                         if content.iter().any(|content| matches!(
                             content,
-                            genex_protocol::models::AgentMessageInputContent::InputText { text }
+                            ruxex_protocol::models::AgentMessageInputContent::InputText { text }
                                 if text == CHILD_MESSAGE
                         ))
                 )
@@ -590,7 +590,7 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config
@@ -600,17 +600,17 @@ async fn steer_interrupts_wait_agent_and_is_sent_in_follow_up_request() {
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build Genex test session")
-        .genex;
+        .expect("build Ruxex test session")
+        .ruxex;
 
-    submit_user_input(&genex, INITIAL_PROMPT).await;
-    wait_for_event(&genex, |event| {
+    submit_user_input(&ruxex, INITIAL_PROMPT).await;
+    wait_for_event(&ruxex, |event| {
         matches!(event, EventMsg::CollabWaitingBegin(_))
     })
     .await;
 
-    steer_user_input(&genex, STEER_PROMPT).await;
-    wait_for_turn_complete(&genex).await;
+    steer_user_input(&ruxex, STEER_PROMPT).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -670,7 +670,7 @@ async fn any_new_input_interrupts_sleep() {
         response_completed_chunks("resp-3"),
     ])
     .await;
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config
@@ -684,19 +684,19 @@ async fn any_new_input_interrupts_sleep() {
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build Genex test session")
-        .genex;
+        .expect("build Ruxex test session")
+        .ruxex;
 
-    submit_user_input(&genex, INITIAL_PROMPT).await;
-    wait_for_sleep_item_started(&genex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    submit_user_input(&ruxex, INITIAL_PROMPT).await;
+    wait_for_sleep_item_started(&ruxex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
 
-    steer_user_input(&genex, STEER_PROMPT).await;
-    wait_for_sleep_item_completed(&genex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
-    wait_for_sleep_item_started(&genex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    steer_user_input(&ruxex, STEER_PROMPT).await;
+    wait_for_sleep_item_completed(&ruxex, FIRST_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    wait_for_sleep_item_started(&ruxex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
 
-    submit_queue_only_agent_mail(&genex, "new mailbox input").await;
-    wait_for_sleep_item_completed(&genex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
-    wait_for_turn_complete(&genex).await;
+    submit_queue_only_agent_mail(&ruxex, "new mailbox input").await;
+    wait_for_sleep_item_completed(&ruxex, SECOND_SLEEP_CALL_ID, SLEEP_DURATION_MS).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 3);
@@ -714,16 +714,16 @@ async fn any_new_input_interrupts_sleep() {
     let third: Value = from_slice(&requests[2]).expect("parse third request");
     assert_interrupted_sleep_output(function_call_output_text(&third, SECOND_SLEEP_CALL_ID));
 
-    genex.submit(Op::Shutdown).await.expect("shutdown session");
-    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    ruxex.submit(Op::Shutdown).await.expect("shutdown session");
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = genex.rollout_path().expect("rollout path");
+    let rollout_path = ruxex.rollout_path().expect("rollout path");
     let rollout = tokio::fs::read_to_string(rollout_path)
         .await
         .expect("read rollout");
     let persisted_sleep_items = rollout
         .lines()
-        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| ruxex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::EventMsg(EventMsg::ItemCompleted(event)) => match event.item {
                 TurnItem::Extension(ExtensionItem::Sleep(item)) => Some(item),
@@ -811,14 +811,14 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
         .build_with_streaming_server(&server)
         .await
         .unwrap()
-        .genex;
+        .ruxex;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first prompt".into(),
             text_elements: Vec::new(),
@@ -826,12 +826,12 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
         .await
         .unwrap();
 
-    wait_for_event(&genex, |event| {
+    wait_for_event(&ruxex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "second prompt".into(),
             text_elements: Vec::new(),
@@ -841,7 +841,7 @@ async fn injected_user_input_triggers_follow_up_request_with_deltas() {
 
     let _ = gate_completed_tx.send(());
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -887,17 +887,17 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_genex(&server).await;
+    let ruxex = build_ruxex(&server).await;
 
-    submit_user_input(&genex, "first prompt").await;
+    submit_user_input(&ruxex, "first prompt").await;
 
-    wait_for_reasoning_item_started(&genex).await;
+    wait_for_reasoning_item_started(&ruxex).await;
 
-    submit_queue_only_agent_mail(&genex, "queued child update").await;
+    submit_queue_only_agent_mail(&ruxex, "queued child update").await;
 
     let _ = gate_reasoning_done_tx.send(());
 
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot("pending_input_queued_mail_after_reasoning", &requests);
@@ -942,11 +942,11 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_commentary_message_ite
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_genex(&server).await;
+    let ruxex = build_ruxex(&server).await;
 
-    submit_user_input(&genex, "first prompt").await;
+    submit_user_input(&ruxex, "first prompt").await;
 
-    wait_for_event(&genex, |event| {
+    wait_for_event(&ruxex, |event| {
         matches!(
             event,
             EventMsg::ItemStarted(item_started)
@@ -955,13 +955,13 @@ async fn queued_inter_agent_mail_triggers_follow_up_after_commentary_message_ite
     })
     .await;
 
-    submit_queue_only_agent_mail(&genex, "queued child update").await;
+    submit_queue_only_agent_mail(&ruxex, "queued child update").await;
 
     let _ = gate_message_done_tx.send(());
 
-    wait_for_agent_message(&genex, "first answer").await;
+    wait_for_agent_message(&ruxex, "first answer").await;
 
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot("pending_input_queued_mail_after_commentary", &requests);
@@ -993,11 +993,11 @@ async fn queued_inter_agent_mail_does_not_restart_after_final_answer() {
         response_completed_chunks("unexpected-resp-2"),
     ])
     .await;
-    let genex = build_genex(&server).await;
+    let ruxex = build_ruxex(&server).await;
 
-    submit_queue_only_agent_mail(&genex, "queued child update").await;
-    submit_user_input(&genex, "first prompt").await;
-    wait_for_turn_complete(&genex).await;
+    submit_queue_only_agent_mail(&ruxex, "queued child update").await;
+    submit_user_input(&ruxex, "first prompt").await;
+    wait_for_turn_complete(&ruxex).await;
 
     let mut requests = server.requests().await;
     assert_eq!(requests.len(), 1);
@@ -1010,8 +1010,8 @@ async fn queued_inter_agent_mail_does_not_restart_after_final_answer() {
             .all(|item| item.get("type").and_then(Value::as_str) != Some("agent_message"))
     );
 
-    submit_user_input(&genex, "second prompt").await;
-    wait_for_turn_complete(&genex).await;
+    submit_user_input(&ruxex, "second prompt").await;
+    wait_for_turn_complete(&ruxex).await;
 
     requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -1068,24 +1068,24 @@ async fn injected_response_item_reopens_turn_after_final_answer() {
     ];
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
-    let genex = build_genex(&server).await;
+    let ruxex = build_ruxex(&server).await;
 
-    submit_user_input(&genex, INITIAL_PROMPT).await;
-    wait_for_reasoning_item_started(&genex).await;
+    submit_user_input(&ruxex, INITIAL_PROMPT).await;
+    wait_for_reasoning_item_started(&ruxex).await;
 
     assert!(
-        genex
+        ruxex
             .inject_if_running(vec![responses::user_message_item(INJECTED_CONTEXT)])
             .await
             .is_ok()
     );
-    genex
+    ruxex
         .inject_response_items(vec![responses::user_message_item(EXTERNAL_CONTEXT)])
         .await
         .expect("external context should be injected");
     let _ = gate_completed_tx.send(());
 
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 2);
@@ -1139,19 +1139,19 @@ async fn user_input_does_not_preempt_after_reasoning_item() {
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, response_completed_chunks("resp-2")]).await;
 
-    let genex = build_genex(&server).await;
+    let ruxex = build_ruxex(&server).await;
 
-    submit_user_input(&genex, "first prompt").await;
+    submit_user_input(&ruxex, "first prompt").await;
 
-    wait_for_reasoning_item_started(&genex).await;
+    wait_for_reasoning_item_started(&ruxex).await;
 
-    steer_user_input(&genex, "second prompt").await;
+    steer_user_input(&ruxex, "second prompt").await;
 
     let _ = gate_reasoning_done_tx.send(());
 
-    wait_for_agent_message(&genex, "first answer").await;
+    wait_for_agent_message(&ruxex, "first answer").await;
 
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_two_responses_input_snapshot(
@@ -1242,9 +1242,9 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     let (server, _completions) = start_streaming_sse_server(streams).await;
     let config_server = responses::start_mock_server().await;
     let base_url = format!("{}/v1", server.uri());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("legacy-model")
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url);
             config.model_auto_compact_token_limit = Some(100_000);
@@ -1253,26 +1253,26 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         })
         .build_with_auto_env(&config_server)
         .await?;
-    let genex = &test.genex;
+    let ruxex = &test.ruxex;
 
     if failure_point == CompactionFailurePoint::PreTurn {
-        submit_user_input(genex, "initial prompt").await;
-        wait_for_turn_complete(genex).await;
+        submit_user_input(ruxex, "initial prompt").await;
+        wait_for_turn_complete(ruxex).await;
     }
     if pending_input == PendingInputAfterFailure::QueuedMail {
-        submit_queue_only_agent_mail(genex, PENDING_MESSAGE).await;
+        submit_queue_only_agent_mail(ruxex, PENDING_MESSAGE).await;
     }
-    submit_user_input(genex, "prompt that needs compaction").await;
+    submit_user_input(ruxex, "prompt that needs compaction").await;
     tokio::time::timeout(
         std::time::Duration::from_secs(/*secs*/ 10),
         server.wait_for_request_count(/*count*/ 2),
     )
     .await?;
     match pending_input {
-        PendingInputAfterFailure::Steer => steer_user_input(genex, PENDING_MESSAGE).await,
+        PendingInputAfterFailure::Steer => steer_user_input(ruxex, PENDING_MESSAGE).await,
         PendingInputAfterFailure::QueuedMail => {}
         PendingInputAfterFailure::TriggeringMail => {
-            genex
+            ruxex
                 .submit(Op::InterAgentCommunication {
                     communication: InterAgentCommunication::new(
                         AgentPath::root().join("worker").expect("valid worker path"),
@@ -1284,8 +1284,8 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
                     start_options: Default::default(),
                 })
                 .await?;
-            genex.submit(Op::RealtimeConversationListVoices).await?;
-            wait_for_event(genex, |event| {
+            ruxex.submit(Op::RealtimeConversationListVoices).await?;
+            wait_for_event(ruxex, |event| {
                 matches!(event, EventMsg::RealtimeConversationListVoicesResponse(_))
             })
             .await;
@@ -1295,12 +1295,12 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
 
     let mut errors = Vec::new();
     let mut completed_turns = 0;
-    wait_for_event(genex, |event| {
+    wait_for_event(ruxex, |event| {
         match event {
             EventMsg::Error(error) => {
                 assert_eq!(
-                    error.genex_error_info,
-                    Some(GenexErrorInfo::UsageLimitExceeded)
+                    error.ruxex_error_info,
+                    Some(RuxexErrorInfo::UsageLimitExceeded)
                 );
                 errors.push(error.clone());
             }
@@ -1328,8 +1328,8 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
         );
     }
 
-    genex.flush_rollout().await?;
-    let history = genex.load_history(/*include_archived*/ false).await?;
+    ruxex.flush_rollout().await?;
+    let history = ruxex.load_history(/*include_archived*/ false).await?;
     let saved_pending_messages = history
         .items
         .iter()
@@ -1361,9 +1361,9 @@ async fn terminal_compaction_error_does_not_retry_pending_input(
     assert_eq!(saved_pending_messages, vec![PENDING_MESSAGE]);
 
     // The failed turn must not poison a later explicit retry once compaction can succeed.
-    submit_user_input(genex, "retry after quota resets").await;
-    wait_for_agent_message(genex, "recovered answer").await;
-    let completed = wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    submit_user_input(ruxex, "retry after quota resets").await;
+    wait_for_agent_message(ruxex, "recovered answer").await;
+    let completed = wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let EventMsg::TurnComplete(completed) = completed else {
         unreachable!("expected turn completion");
     };
@@ -1423,7 +1423,7 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
     ])
     .await;
 
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1432,14 +1432,14 @@ async fn steered_user_input_waits_for_model_continuation_after_mid_turn_compact(
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Genex test session")
-        .genex;
+        .expect("build streaming Ruxex test session")
+        .ruxex;
 
-    submit_user_input(&genex, "first prompt").await;
-    submit_user_input(&genex, "second prompt").await;
+    submit_user_input(&ruxex, "first prompt").await;
+    submit_user_input(&ruxex, "second prompt").await;
 
-    wait_for_agent_message(&genex, "resumed old task").await;
-    wait_for_turn_complete(&genex).await;
+    wait_for_agent_message(&ruxex, "resumed old task").await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 4);
@@ -1508,7 +1508,7 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         start_streaming_sse_server(vec![first_chunks, compact_chunks, steered_follow_up_chunks])
             .await;
 
-    let genex = test_genex()
+    let ruxex = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1517,16 +1517,16 @@ async fn steered_user_input_follows_compact_when_only_the_steer_needs_follow_up(
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Genex test session")
-        .genex;
+        .expect("build streaming Ruxex test session")
+        .ruxex;
 
-    submit_user_input(&genex, "first prompt").await;
-    wait_for_agent_message(&genex, "first answer").await;
-    steer_user_input(&genex, "second prompt").await;
+    submit_user_input(&ruxex, "first prompt").await;
+    wait_for_agent_message(&ruxex, "first answer").await;
+    steer_user_input(&ruxex, "second prompt").await;
     let _ = gate_first_completed_tx.send(());
 
-    wait_for_agent_message(&genex, "processed steered prompt").await;
-    wait_for_turn_complete(&genex).await;
+    wait_for_agent_message(&ruxex, "processed steered prompt").await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 3);
@@ -1625,7 +1625,7 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
     ])
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             config.model_provider.name = "provider (test)".to_string();
@@ -1634,15 +1634,15 @@ async fn steered_user_input_waits_when_tool_output_triggers_compact_before_next_
         })
         .build_with_streaming_server(&server)
         .await
-        .expect("build streaming Genex test session");
-    let genex = test.genex.clone();
+        .expect("build streaming Ruxex test session");
+    let ruxex = test.ruxex.clone();
 
     submit_danger_full_access_user_turn(&test, "first prompt").await;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
-    steer_user_input(&genex, "second prompt").await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnStarted(_))).await;
+    steer_user_input(&ruxex, "second prompt").await;
     let _ = gate_first_completed_tx.send(());
 
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = server.requests().await;
     assert_eq!(requests.len(), 4);

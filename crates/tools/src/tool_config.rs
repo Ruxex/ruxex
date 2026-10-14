@@ -1,7 +1,7 @@
-use genex_features::Feature;
-use genex_features::Features;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
+use ruxex_features::Feature;
+use ruxex_features::Features;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
 pub fn request_user_input_available_modes(features: &Features) -> Vec<ModeKind> {
     TUI_VISIBLE_COLLABORATION_MODES
         .into_iter()

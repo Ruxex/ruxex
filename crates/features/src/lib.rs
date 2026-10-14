@@ -3,10 +3,10 @@
 //! This crate defines the feature registry plus the logic used to resolve an
 //! effective feature set from config-like inputs.
 
-use genex_otel::SessionTelemetry;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::WarningEvent;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::WarningEvent;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -89,7 +89,7 @@ pub enum Feature {
     /// Allow registration of the built-in sleep tool.
     SleepTool,
     /// Enable Claude-style lifecycle hooks loaded from hooks.json files.
-    GenexHooks,
+    RuxexHooks,
     /// Store CLI auth in the encrypted local secrets backend when keyring storage is selected.
     SecretAuthStorage,
 
@@ -149,7 +149,7 @@ pub enum Feature {
     /// Enable runtime metrics snapshots via a manual reader.
     RuntimeMetrics,
     /// Compress cold local thread-store rollout files, including shared histories.
-    /// Requires every reader of the Genex home to support compressed shared histories.
+    /// Requires every reader of the Ruxex home to support compressed shared histories.
     LocalThreadStoreCompression,
     /// Enable the Chronicle sidecar for passive screen-context memories.
     Chronicle,
@@ -161,7 +161,7 @@ pub enum Feature {
     NetworkProxy,
     /// Enable managed worktree creation and repository-aware sessions.
     Worktrees,
-    /// Respect host system proxy settings for Genex-owned network clients.
+    /// Respect host system proxy settings for Ruxex-owned network clients.
     RespectSystemProxy,
     /// Enable collab tools.
     Collab,
@@ -215,7 +215,7 @@ pub enum Feature {
     ///
     /// Requirements-only gate: this should be set from requirements, not user config.
     BrowserUseExternal,
-    /// Allow Genex Computer Use.
+    /// Allow Ruxex Computer Use.
     ///
     /// Requirements-only gate: this should be set from requirements, not user config.
     ComputerUse,
@@ -421,7 +421,7 @@ impl Features {
             }
             if self.enabled(feature.id) != feature.default_enabled {
                 otel.counter(
-                    "genex.feature.state",
+                    "ruxex.feature.state",
                     /*inc*/ 1,
                     &[
                         ("feature", feature.key),
@@ -896,7 +896,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         default_enabled: false,
     },
     FeatureSpec {
-        id: Feature::GenexHooks,
+        id: Feature::RuxexHooks,
         key: "hooks",
         stage: Stage::Stable,
         default_enabled: true,
@@ -937,7 +937,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "Network proxy",
             menu_description: "Apply network proxy restrictions to sandboxed sessions that already have network access.",
-            announcement: "NEW: Network proxy can now be enabled through feature configuration. Restart Genex after enabling it.",
+            announcement: "NEW: Network proxy can now be enabled through feature configuration. Restart Ruxex after enabling it.",
         },
         default_enabled: false,
     },
@@ -1187,7 +1187,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: if cfg!(any(target_os = "macos", target_os = "linux")) {
             Stage::Experimental {
                 name: "Prevent sleep while running",
-                menu_description: "Keep your computer awake while Genex is running a thread.",
+                menu_description: "Keep your computer awake while Ruxex is running a thread.",
                 announcement: "NEW: Prevent sleep while running is now available through feature configuration.",
             }
         } else {

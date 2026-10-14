@@ -5,7 +5,7 @@ use super::STATE_MIGRATOR;
 use super::THREAD_HISTORY_MIGRATOR;
 use crate::PINNED_THREAD_SECTION_ID;
 use crate::PINNED_THREAD_SECTION_NAME;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 #[test]

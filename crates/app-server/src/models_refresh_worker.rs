@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_http_client::HttpClientFactory;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::SharedModelsManager;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 

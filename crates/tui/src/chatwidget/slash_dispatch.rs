@@ -284,7 +284,7 @@ impl ChatWidget {
             }
             SlashCommand::Rename => {
                 self.session_telemetry
-                    .counter("genex.thread.rename", /*inc*/ 1, &[]);
+                    .counter("ruxex.thread.rename", /*inc*/ 1, &[]);
                 self.show_rename_prompt();
             }
             SlashCommand::Model => {
@@ -617,7 +617,7 @@ impl ChatWidget {
                     return;
                 }
                 self.session_telemetry
-                    .counter("genex.thread.rename", /*inc*/ 1, &[]);
+                    .counter("ruxex.thread.rename", /*inc*/ 1, &[]);
                 let Some(name) = normalize_thread_name(&args) else {
                     self.add_error_message("Thread name cannot be empty.".to_string());
                     return;
@@ -938,7 +938,7 @@ impl ChatWidget {
         BuiltinCommandFlags {
             collaboration_modes_enabled: self.collaboration_modes_enabled(),
             plugins_command_enabled: self.config.features.enabled(Feature::Plugins),
-            token_activity_command_enabled: self.has_genex_backend_auth,
+            token_activity_command_enabled: self.has_ruxex_backend_auth,
             goal_command_enabled: self.config.features.enabled(Feature::Goals),
             service_tier_commands_enabled: true,
             worktrees_enabled: self.config.features.enabled(Feature::Worktrees)

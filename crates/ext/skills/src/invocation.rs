@@ -1,10 +1,10 @@
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_extension_api::ExtensionData;
-use genex_skills::ImplicitSkillAccess;
-use genex_skills::detect_implicit_skill_invocation_for_command;
-use genex_skills::implicit_skill_accesses_for_command;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_extension_api::ExtensionData;
+use ruxex_skills::ImplicitSkillAccess;
+use ruxex_skills::detect_implicit_skill_invocation_for_command;
+use ruxex_skills::implicit_skill_accesses_for_command;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::HostSkillsSnapshot;
 use crate::catalog::SkillSourceKind;
@@ -21,7 +21,7 @@ pub struct SkillInvocation {
 pub enum SkillInvocationLocation {
     Host {
         path: AbsolutePathBuf,
-        scope: genex_protocol::protocol::SkillScope,
+        scope: ruxex_protocol::protocol::SkillScope,
     },
     Resource {
         id: String,

@@ -1,10 +1,10 @@
 //! Checks array element kinds when a sort comparator mutates its receiver.
 
-use genex_code_mode_runtime::ExecuteRequest;
-use genex_code_mode_runtime::FunctionCallOutputContentItem;
-use genex_code_mode_runtime::InProcessCodeModeSession;
-use genex_code_mode_runtime::NoopCodeModeSessionDelegate;
-use genex_code_mode_runtime::RuntimeResponse;
+use ruxex_code_mode_runtime::ExecuteRequest;
+use ruxex_code_mode_runtime::FunctionCallOutputContentItem;
+use ruxex_code_mode_runtime::InProcessCodeModeSession;
+use ruxex_code_mode_runtime::NoopCodeModeSessionDelegate;
+use ruxex_code_mode_runtime::RuntimeResponse;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 

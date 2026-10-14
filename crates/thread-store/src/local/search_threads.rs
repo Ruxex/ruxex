@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_install_context::InstallContext;
-use genex_rollout::RolloutConfig;
-use genex_rollout::first_rollout_content_match_snippet;
-use genex_rollout::parse_cursor;
-use genex_rollout::search_rollout_matches;
+use ruxex_install_context::InstallContext;
+use ruxex_rollout::RolloutConfig;
+use ruxex_rollout::first_rollout_content_match_snippet;
+use ruxex_rollout::parse_cursor;
+use ruxex_rollout::search_rollout_matches;
 
 use super::LocalThreadStore;
 use super::helpers::resolve_thread_names;
@@ -28,7 +28,7 @@ use crate::ThreadStoreResult;
 mod tests;
 
 struct ThreadSearchItem {
-    item: genex_rollout::ThreadItem,
+    item: ruxex_rollout::ThreadItem,
     snippet: String,
 }
 
@@ -52,9 +52,9 @@ pub(super) async fn search_threads(
         })
         .transpose()?;
     let sort_key = match params.sort_key {
-        ThreadSortKey::CreatedAt => genex_rollout::ThreadSortKey::CreatedAt,
-        ThreadSortKey::UpdatedAt => genex_rollout::ThreadSortKey::UpdatedAt,
-        ThreadSortKey::RecencyAt => genex_rollout::ThreadSortKey::RecencyAt,
+        ThreadSortKey::CreatedAt => ruxex_rollout::ThreadSortKey::CreatedAt,
+        ThreadSortKey::UpdatedAt => ruxex_rollout::ThreadSortKey::UpdatedAt,
+        ThreadSortKey::RecencyAt => ruxex_rollout::ThreadSortKey::RecencyAt,
         ThreadSortKey::SectionPosition => {
             return Err(ThreadStoreError::InvalidRequest {
                 message: "section-position sorting requires a section filter".to_owned(),
@@ -62,19 +62,19 @@ pub(super) async fn search_threads(
         }
     };
     let sort_direction = match params.sort_direction {
-        SortDirection::Asc => genex_rollout::SortDirection::Asc,
-        SortDirection::Desc => genex_rollout::SortDirection::Desc,
+        SortDirection::Asc => ruxex_rollout::SortDirection::Asc,
+        SortDirection::Desc => ruxex_rollout::SortDirection::Desc,
     };
     let state_db = store.state_db().await;
     let rollout_config = RolloutConfig {
-        genex_home: store.config.genex_home.clone(),
+        ruxex_home: store.config.ruxex_home.clone(),
         sqlite: store.config.sqlite.clone(),
-        cwd: store.config.genex_home.clone(),
+        cwd: store.config.ruxex_home.clone(),
     };
     let rg_command = InstallContext::current().rg_command();
     let matching_rollouts = search_rollout_matches(
         rg_command.as_path(),
-        store.config.genex_home.as_path(),
+        store.config.ruxex_home.as_path(),
         params.archived,
         search_term,
     )
@@ -194,13 +194,13 @@ pub(super) async fn search_threads(
 }
 
 fn rollout_search_path(path: &Path) -> PathBuf {
-    genex_rollout::plain_rollout_path(path)
+    ruxex_rollout::plain_rollout_path(path)
 }
 
 fn cursor_from_thread_search_item(
     item: &ThreadSearchItem,
     sort_key: ThreadSortKey,
-) -> Option<genex_rollout::Cursor> {
+) -> Option<ruxex_rollout::Cursor> {
     let timestamp = match sort_key {
         ThreadSortKey::CreatedAt => item.item.created_at.as_deref()?,
         ThreadSortKey::UpdatedAt => item

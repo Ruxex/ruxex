@@ -37,25 +37,25 @@ use crate::tools::registry::ToolExecutor;
 use crate::tools::runtimes::apply_patch::ApplyPatchRequest;
 use crate::tools::runtimes::apply_patch::ApplyPatchRuntime;
 use crate::tools::sandboxing::ToolCtx;
-use genex_apply_patch::ApplyPatchAction;
-use genex_apply_patch::ApplyPatchFileChange;
-use genex_apply_patch::Hunk;
-use genex_apply_patch::StreamingPatchParser;
-use genex_exec_server::ExecutorFileSystem;
-use genex_features::Feature;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::FileChange;
-use genex_protocol::protocol::PatchApplyUpdatedEvent;
-use genex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_sandboxing::policy_transforms::normalize_additional_permissions;
-use genex_sandboxing::policy_transforms::normalize_additional_permissions_with_context;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
-use genex_utils_path_uri::PathUri;
+use ruxex_apply_patch::ApplyPatchAction;
+use ruxex_apply_patch::ApplyPatchFileChange;
+use ruxex_apply_patch::Hunk;
+use ruxex_apply_patch::StreamingPatchParser;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_features::Feature;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_protocol::protocol::PatchApplyUpdatedEvent;
+use ruxex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_sandboxing::policy_transforms::normalize_additional_permissions;
+use ruxex_sandboxing::policy_transforms::normalize_additional_permissions_with_context;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
+use ruxex_utils_path_uri::PathUri;
 
 const APPLY_PATCH_ARGUMENT_DIFF_BUFFER_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -175,7 +175,7 @@ fn hunk_source_path(hunk: &Hunk) -> &Path {
     }
 }
 
-fn format_update_chunks_for_progress(chunks: &[genex_apply_patch::UpdateFileChunk]) -> String {
+fn format_update_chunks_for_progress(chunks: &[ruxex_apply_patch::UpdateFileChunk]) -> String {
     let mut unified_diff = String::new();
     for chunk in chunks {
         match &chunk.change_context {
@@ -224,7 +224,7 @@ fn file_paths_for_action(action: &ApplyPatchAction) -> Vec<PathUri> {
 
 fn write_permissions_for_paths(
     file_paths: &[PathUri],
-    file_system_sandbox_policy: &genex_protocol::permissions::FileSystemSandboxPolicy,
+    file_system_sandbox_policy: &ruxex_protocol::permissions::FileSystemSandboxPolicy,
     context: &FileSystemSandboxPolicyContext<'_>,
     sandbox_route: PatchSandboxRoute,
 ) -> Option<AdditionalPermissionProfile> {
@@ -283,7 +283,7 @@ async fn effective_patch_permissions(
 ) -> (
     Vec<PathUri>,
     crate::tools::handlers::EffectiveAdditionalPermissions,
-    genex_protocol::permissions::FileSystemSandboxPolicy,
+    ruxex_protocol::permissions::FileSystemSandboxPolicy,
 ) {
     let environment_id = environment.selection.environment_id.as_str();
     let file_paths = file_paths_for_action(action);
@@ -334,7 +334,7 @@ impl ToolExecutor<ToolInvocation> for ApplyPatchHandler {
         create_apply_patch_freeform_tool(self.multi_environment)
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -363,7 +363,7 @@ impl ApplyPatchHandler {
                 "apply_patch handler received unsupported payload".to_string(),
             ));
         };
-        let args = match genex_apply_patch::parse_patch(&patch_input) {
+        let args = match ruxex_apply_patch::parse_patch(&patch_input) {
             Ok(args) => args,
             Err(parse_error) => {
                 return Err(FunctionCallError::RespondToModel(format!(
@@ -386,7 +386,7 @@ impl ApplyPatchHandler {
         };
         let fs = turn_environment.environment.get_filesystem();
         let sandbox = turn_environment.sandbox_context(/*additional_permissions*/ None);
-        match genex_apply_patch::verify_apply_patch_args(
+        match ruxex_apply_patch::verify_apply_patch_args(
             args,
             turn_environment.cwd(),
             fs.as_ref(),
@@ -394,7 +394,7 @@ impl ApplyPatchHandler {
         )
         .await
         {
-            genex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
+            ruxex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
                 let tool_ctx = ToolCtx {
                     session,
                     step_context: Arc::clone(&step_context),
@@ -411,18 +411,18 @@ impl ApplyPatchHandler {
                 .await?;
                 Ok(boxed_tool_output(ApplyPatchToolOutput::from_text(content)))
             }
-            genex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
+            ruxex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
                 Err(FunctionCallError::RespondToModel(format!(
                     "apply_patch verification failed: {parse_error}"
                 )))
             }
-            genex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
+            ruxex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
                 tracing::trace!("Failed to parse apply_patch input, {error:?}");
                 Err(FunctionCallError::RespondToModel(
                     "apply_patch handler received invalid patch input".to_string(),
                 ))
             }
-            genex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => {
+            ruxex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => {
                 Err(FunctionCallError::RespondToModel(
                     "apply_patch handler received non-apply_patch input".to_string(),
                 ))
@@ -494,10 +494,10 @@ pub(crate) async fn intercept_apply_patch(
     tool_name: &str,
 ) -> Result<Option<FunctionToolOutput>, FunctionCallError> {
     let sandbox = turn_environment.sandbox_context(/*additional_permissions*/ None);
-    match genex_apply_patch::maybe_parse_apply_patch_verified(command, cwd, fs, Some(&sandbox))
+    match ruxex_apply_patch::maybe_parse_apply_patch_verified(command, cwd, fs, Some(&sandbox))
         .await
     {
-        genex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
+        ruxex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
             let tool_ctx = ToolCtx {
                 session,
                 step_context,
@@ -509,16 +509,16 @@ pub(crate) async fn intercept_apply_patch(
                 execute_verified_patch(changes, turn_environment, tracker, tool_ctx).await?;
             Ok(Some(FunctionToolOutput::from_text(content, Some(true))))
         }
-        genex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
+        ruxex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
             Err(FunctionCallError::RespondToModel(format!(
                 "apply_patch verification failed: {parse_error}"
             )))
         }
-        genex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
+        ruxex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
             tracing::trace!("Failed to parse apply_patch input, {error:?}");
             Ok(None)
         }
-        genex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => Ok(None),
+        ruxex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => Ok(None),
     }
 }
 

@@ -12,14 +12,14 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use futures::future::join_all;
-use genex_code_mode::CellId;
-use genex_code_mode::CodeModeNestedToolCall;
-use genex_code_mode::CodeModeSession;
-use genex_code_mode::CodeModeSessionProvider;
-use genex_code_mode::CodeModeToolKind;
-use genex_code_mode::RuntimeResponse;
-use genex_protocol::ThreadId;
-use genex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_code_mode::CellId;
+use ruxex_code_mode::CodeModeNestedToolCall;
+use ruxex_code_mode::CodeModeSession;
+use ruxex_code_mode::CodeModeSessionProvider;
+use ruxex_code_mode::CodeModeToolKind;
+use ruxex_code_mode::RuntimeResponse;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
 use serde_json::Value as JsonValue;
 use tokio::sync::OnceCell;
 use tokio_util::sync::CancellationToken;
@@ -40,12 +40,12 @@ use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
 use crate::unified_exec::resolve_max_tokens;
-use genex_protocol::model_types::ToolMode;
-use genex_tools::ToolName;
-use genex_utils_audio::estimate_audio_token_count;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::formatted_truncate_text_content_items_with_policy;
-use genex_utils_output_truncation::truncate_function_output_items_with_policy;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_tools::ToolName;
+use ruxex_utils_audio::estimate_audio_token_count;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::formatted_truncate_text_content_items_with_policy;
+use ruxex_utils_output_truncation::truncate_function_output_items_with_policy;
 
 use delegate::CodeModeCellDelegate;
 use delegate::CodeModeDispatchBroker;
@@ -54,9 +54,9 @@ pub(crate) use execute_handler::CodeModeExecuteHandler;
 use response_adapter::into_function_call_output_content_items;
 pub(crate) use wait_handler::CodeModeWaitHandler;
 
-pub(crate) const PUBLIC_TOOL_NAME: &str = genex_code_mode::PUBLIC_TOOL_NAME;
-pub(crate) const WAIT_TOOL_NAME: &str = genex_code_mode::WAIT_TOOL_NAME;
-pub(crate) const DEFAULT_WAIT_YIELD_TIME_MS: u64 = genex_code_mode::DEFAULT_WAIT_YIELD_TIME_MS;
+pub(crate) const PUBLIC_TOOL_NAME: &str = ruxex_code_mode::PUBLIC_TOOL_NAME;
+pub(crate) const WAIT_TOOL_NAME: &str = ruxex_code_mode::WAIT_TOOL_NAME;
+pub(crate) const DEFAULT_WAIT_YIELD_TIME_MS: u64 = ruxex_code_mode::DEFAULT_WAIT_YIELD_TIME_MS;
 
 /// Returns true for the code-mode `exec` tool in the default namespace.
 pub(crate) fn is_exec_tool_name(tool_name: &ToolName) -> bool {
@@ -114,7 +114,7 @@ impl CodeModeService {
             .swap(true, Ordering::Relaxed))
         .then(|| {
             format!(
-                "Code Mode is unavailable because {error}. {behavior}; enable `features.code_mode_host` and install `genex-code-mode-host`."
+                "Code Mode is unavailable because {error}. {behavior}; enable `features.code_mode_host` and install `ruxex-code-mode-host`."
             )
         })
     }
@@ -125,9 +125,9 @@ impl CodeModeService {
 
     pub(crate) async fn execute(
         &self,
-        mut request: genex_code_mode::ExecuteRequest,
+        mut request: ruxex_code_mode::ExecuteRequest,
         step_context: Arc<StepContext>,
-    ) -> Result<genex_code_mode::StartedCell, String> {
+    ) -> Result<ruxex_code_mode::StartedCell, String> {
         request
             .yield_time_ms
             .get_or_insert(self.default_exec_yield_time_ms);
@@ -140,15 +140,15 @@ impl CodeModeService {
 
     pub(crate) async fn wait(
         &self,
-        request: genex_code_mode::WaitRequest,
-    ) -> Result<genex_code_mode::WaitOutcome, String> {
+        request: ruxex_code_mode::WaitRequest,
+    ) -> Result<ruxex_code_mode::WaitOutcome, String> {
         self.session().await?.wait(request).await
     }
 
     pub(crate) async fn terminate(
         &self,
         cell_id: CellId,
-    ) -> Result<genex_code_mode::WaitOutcome, String> {
+    ) -> Result<ruxex_code_mode::WaitOutcome, String> {
         self.session().await?.terminate(cell_id).await
     }
 
@@ -188,7 +188,7 @@ impl CodeModeService {
 
     pub(crate) fn mark_cell_ready_for_dispatch(
         &self,
-        cell_id: &genex_code_mode::CellId,
+        cell_id: &ruxex_code_mode::CellId,
         originating_call: Option<crate::tools::context::ToolCallOrigin>,
     ) {
         self.dispatch_broker
@@ -197,7 +197,7 @@ impl CodeModeService {
 
     pub(crate) fn cell_originating_call(
         &self,
-        cell_id: &genex_code_mode::CellId,
+        cell_id: &ruxex_code_mode::CellId,
     ) -> Option<crate::tools::context::ToolCallOrigin> {
         self.dispatch_broker.cell_originating_call(cell_id)
     }
@@ -252,7 +252,7 @@ impl CodeModeService {
 }
 
 pub(super) async fn handle_runtime_response(
-    model_info: &genex_protocol::model_types::ModelInfo,
+    model_info: &ruxex_protocol::model_types::ModelInfo,
     response: RuntimeResponse,
     max_output_tokens: Option<usize>,
     wall_time: Duration,
@@ -366,10 +366,10 @@ fn submit_nested_tool(
     let tool_name = tool_name.with_default_namespace();
     // A cell can outlive a turn; the broker records arrival before a dispatching turn is known.
     tracing::event!(
-        name: "genex.code_mode.nested_tool_dispatched",
-        target: "genex_otel.trace_safe",
+        name: "ruxex.code_mode.nested_tool_dispatched",
+        target: "ruxex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "genex.code_mode.nested_tool_dispatched",
+        event.name = "ruxex.code_mode.nested_tool_dispatched",
         conversation.id = %thread_id,
         turn_id = turn_id.as_str(),
         cell.id = telemetry::trace_id(cell_id.as_str()),

@@ -15,7 +15,7 @@ impl ChatWidget {
         }
     }
 
-    pub(super) fn on_hook_started(&mut self, run: genex_app_server_protocol::HookRunSummary) {
+    pub(super) fn on_hook_started(&mut self, run: ruxex_app_server_protocol::HookRunSummary) {
         self.flush_answer_stream_with_separator();
         self.flush_completed_hook_output();
         match self.active_hook_cell.as_mut() {
@@ -34,7 +34,7 @@ impl ChatWidget {
 
     pub(super) fn on_hook_completed(
         &mut self,
-        completed: genex_app_server_protocol::HookRunSummary,
+        completed: ruxex_app_server_protocol::HookRunSummary,
     ) {
         let completed_existing_run = self
             .active_hook_cell

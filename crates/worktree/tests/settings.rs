@@ -1,6 +1,6 @@
 #![allow(clippy::expect_used)]
 
-use genex_worktree::WorktreeSettings;
+use ruxex_worktree::WorktreeSettings;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -15,15 +15,15 @@ fn desktop_config(entries: [(&str, Value); 3]) -> HashMap<String, Value> {
 
 #[test]
 fn default_settings_match_desktop_worktree_defaults() {
-    let genex_home = tempfile::tempdir().expect("create Genex home");
+    let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
 
-    let settings = WorktreeSettings::from_desktop_config(genex_home.path(), /*desktop*/ None)
+    let settings = WorktreeSettings::from_desktop_config(ruxex_home.path(), /*desktop*/ None)
         .expect("load default worktree settings");
 
     assert_eq!(
         settings,
         WorktreeSettings {
-            root: genex_home.path().join("worktrees"),
+            root: ruxex_home.path().join("worktrees"),
             auto_cleanup_enabled: true,
             keep_count: 15,
         }
@@ -32,8 +32,8 @@ fn default_settings_match_desktop_worktree_defaults() {
 
 #[test]
 fn desktop_settings_use_existing_root_and_retention_keys() {
-    let genex_home = tempfile::tempdir().expect("create Genex home");
-    let custom_root = genex_home.path().join("custom-managed-worktrees");
+    let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
+    let custom_root = ruxex_home.path().join("custom-managed-worktrees");
     let desktop = desktop_config([
         (
             "git-worktree-root",
@@ -43,7 +43,7 @@ fn desktop_settings_use_existing_root_and_retention_keys() {
         ("worktree-keep-count", json!(4)),
     ]);
 
-    let settings = WorktreeSettings::from_desktop_config(genex_home.path(), Some(&desktop))
+    let settings = WorktreeSettings::from_desktop_config(ruxex_home.path(), Some(&desktop))
         .expect("load existing Desktop worktree settings");
 
     assert_eq!(
@@ -58,7 +58,7 @@ fn desktop_settings_use_existing_root_and_retention_keys() {
 
 #[test]
 fn desktop_settings_reject_invalid_root_and_retention_values() {
-    let genex_home = tempfile::tempdir().expect("create Genex home");
+    let ruxex_home = tempfile::tempdir().expect("create Ruxex home");
     let invalid_configs = [
         HashMap::from([("git-worktree-root".to_owned(), json!("relative/worktrees"))]),
         HashMap::from([("worktree-auto-cleanup-enabled".to_owned(), json!("yes"))]),
@@ -69,7 +69,7 @@ fn desktop_settings_reject_invalid_root_and_retention_values() {
 
     for desktop in invalid_configs {
         assert!(
-            WorktreeSettings::from_desktop_config(genex_home.path(), Some(&desktop)).is_err(),
+            WorktreeSettings::from_desktop_config(ruxex_home.path(), Some(&desktop)).is_err(),
             "invalid Desktop worktree settings were accepted: {desktop:?}",
         );
     }

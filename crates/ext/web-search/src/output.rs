@@ -1,8 +1,8 @@
-use genex_extension_api::ToolOutput;
-use genex_extension_api::ToolPayload;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
+use ruxex_extension_api::ToolOutput;
+use ruxex_extension_api::ToolPayload;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseInputItem;
 
 pub(crate) struct SearchOutput {
     output: String,
@@ -37,10 +37,10 @@ impl ToolOutput for SearchOutput {
 
 #[cfg(test)]
 mod tests {
-    use genex_extension_api::ToolPayload;
-    use genex_protocol::models::FunctionCallOutputContentItem;
-    use genex_protocol::models::FunctionCallOutputPayload;
-    use genex_protocol::models::ResponseInputItem;
+    use ruxex_extension_api::ToolPayload;
+    use ruxex_protocol::models::FunctionCallOutputContentItem;
+    use ruxex_protocol::models::FunctionCallOutputPayload;
+    use ruxex_protocol::models::ResponseInputItem;
     use pretty_assertions::assert_eq;
 
     use super::SearchOutput;

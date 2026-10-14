@@ -18,7 +18,7 @@ use std::time::Instant;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_config::types::Tui;
+use ruxex_config::types::Tui;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use unicode_width::UnicodeWidthStr;

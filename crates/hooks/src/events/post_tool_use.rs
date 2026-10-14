@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::HookRunSummary;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::HookRunSummary;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde_json::Value;
 
 use super::common;
@@ -317,13 +317,13 @@ fn serialization_failure_outcome(hook_events: Vec<HookCompletedEvent>) -> PostTo
 
 #[cfg(test)]
 mod tests {
-    use genex_protocol::ThreadId;
-    use genex_protocol::protocol::HookEventName;
-    use genex_protocol::protocol::HookOutputEntry;
-    use genex_protocol::protocol::HookOutputEntryKind;
-    use genex_protocol::protocol::HookRunStatus;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::protocol::HookEventName;
+    use ruxex_protocol::protocol::HookOutputEntry;
+    use ruxex_protocol::protocol::HookOutputEntryKind;
+    use ruxex_protocol::protocol::HookRunStatus;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 
@@ -596,7 +596,7 @@ mod tests {
             status_message: Some("running post tool use hook".to_string()),
             additional_context_limit: Default::default(),
             source_path: test_path_buf("/tmp/hooks.json").abs().into(),
-            source: genex_protocol::protocol::HookSource::User,
+            source: ruxex_protocol::protocol::HookSource::User,
             display_order: 0,
             kind: crate::engine::ConfiguredHandlerKind::Command {
                 command: "python3 post_tool_use_hook.py".to_string(),

@@ -4,8 +4,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -28,22 +28,22 @@ impl ThreadManager {
         options: StartThreadOptions,
         until: impl Future<Output = ()> + Send + 'static,
         tasks: &TaskTracker,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         if matches!(
             options.initial_history,
-            genex_history::InitialHistory::Resumed(_)
+            ruxex_history::InitialHistory::Resumed(_)
         ) {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "owned thread startup requires new or forked history".to_owned(),
             ));
         }
         if options
             .thread_extension_init
-            .get::<genex_extension_api::SessionIsolation>()
+            .get::<ruxex_extension_api::SessionIsolation>()
             .as_deref()
-            != Some(&genex_extension_api::SessionIsolation::Isolated)
+            != Some(&ruxex_extension_api::SessionIsolation::Isolated)
         {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "owned thread startup requires explicit session isolation".to_owned(),
             ));
         }
@@ -66,8 +66,8 @@ impl ThreadManager {
                 );
                 tokio::select! {
                     biased;
-                    _ = &mut until => Err(GenexErr::TurnAborted),
-                    _ = abandoned.cancelled() => Err(GenexErr::TurnAborted),
+                    _ = &mut until => Err(RuxexErr::TurnAborted),
+                    _ = abandoned.cancelled() => Err(RuxexErr::TurnAborted),
                     result = start => result,
                 }
             };
@@ -102,7 +102,7 @@ impl ThreadManager {
                 }
             }
         });
-        let thread = receiver.await.map_err(|_| GenexErr::InternalAgentDied)??;
+        let thread = receiver.await.map_err(|_| RuxexErr::InternalAgentDied)??;
         handoff.disarm();
         Ok(thread)
     }

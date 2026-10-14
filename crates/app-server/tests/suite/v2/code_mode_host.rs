@@ -5,20 +5,20 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ThreadDecrementElicitationParams;
-use genex_app_server_protocol::ThreadDecrementElicitationResponse;
-use genex_app_server_protocol::ThreadGoalSetResponse;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_app_server_protocol::ThreadGoalUpdatedNotification;
-use genex_app_server_protocol::ThreadIncrementElicitationParams;
-use genex_app_server_protocol::ThreadIncrementElicitationResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
+use ruxex_app_server_protocol::ThreadDecrementElicitationParams;
+use ruxex_app_server_protocol::ThreadDecrementElicitationResponse;
+use ruxex_app_server_protocol::ThreadGoalSetResponse;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_app_server_protocol::ThreadGoalUpdatedNotification;
+use ruxex_app_server_protocol::ThreadIncrementElicitationParams;
+use ruxex_app_server_protocol::ThreadIncrementElicitationResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -47,7 +47,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
 ) -> Result<()> {
     let mut host = match transport {
         "grpc" => Some(
-            Command::new(genex_utils_cargo_bin::cargo_bin("genex-code-mode-host")?)
+            Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-code-mode-host")?)
                 .args(["--listen", "grpc://127.0.0.1:0"])
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
@@ -99,13 +99,13 @@ async fn code_mode_model_output_uses_structured_host_timing(
         ]),
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&model_server.uri())
         .enable_feature(Feature::CodeModeOnly)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut builder = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .with_json_logging("genex_code_mode::timing=info,genex_core::tools::parallel=info");
+        .with_ruxex_home(ruxex_home.path())
+        .with_json_logging("ruxex_code_mode::timing=info,ruxex_core::tools::parallel=info");
     if let Some(host_url) = host_url.as_deref() {
         builder = builder.with_args(&["--code-mode-host", host_url]);
     }
@@ -134,7 +134,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
         .await?;
     let _: TurnStartResponse = app_server.read_response(start_id).await?;
     let timing = app_server
-        .wait_for_json_log_event("genex.code_mode.host_timing")
+        .wait_for_json_log_event("ruxex.code_mode.host_timing")
         .await?;
     // Hold only the app-server after the host outcome, so local elapsed time
     // cannot round to the same displayed duration as the host measurement.
@@ -181,7 +181,7 @@ async fn code_mode_model_output_uses_structured_host_timing(
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn app_server_shares_flag_selected_grpc_code_mode_host_across_threads() -> Result<()> {
-    let host_program = genex_utils_cargo_bin::cargo_bin("genex-code-mode-host")?;
+    let host_program = ruxex_utils_cargo_bin::cargo_bin("ruxex-code-mode-host")?;
     let mut code_mode_host = Command::new(host_program)
         .args(["--listen", "grpc://127.0.0.1:0"])
         .stdin(Stdio::null())
@@ -234,14 +234,14 @@ async fn app_server_shares_flag_selected_grpc_code_mode_host_across_threads() ->
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&model_server.uri())
         .enable_feature(Feature::CodeModeOnly)
         .enable_feature(Feature::CodeModePrewarm)
-        .write(genex_home.path())?;
-    let original_config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+        .write(ruxex_home.path())?;
+    let original_config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_args(&["--code-mode-host", &host_url])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -285,7 +285,7 @@ async fn app_server_shares_flag_selected_grpc_code_mode_host_across_threads() ->
         );
     }
     assert_eq!(
-        std::fs::read_to_string(genex_home.path().join("config.toml"))?,
+        std::fs::read_to_string(ruxex_home.path().join("config.toml"))?,
         original_config
     );
 
@@ -295,15 +295,15 @@ async fn app_server_shares_flag_selected_grpc_code_mode_host_across_threads() ->
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn app_server_prewarms_flag_selected_grpc_code_mode_host_before_first_turn() -> Result<()> {
     let model_server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&model_server.uri())
         .enable_feature(Feature::CodeModePrewarm)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let host_url = format!("http://{}", listener.local_addr()?);
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_args(&["--code-mode-host", &host_url])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -345,17 +345,17 @@ async fn app_server_blocks_goal_after_repeated_code_mode_host_failures() -> Resu
     }
     let response_mock = responses::mount_sse_sequence(&model_server, model_responses).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&model_server.uri())
         .enable_feature(Feature::CodeModeOnly)
         .enable_feature(Feature::Goals)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let host_url = format!("http://{}", listener.local_addr()?);
     drop(listener);
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_args(&["--code-mode-host", &host_url])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;

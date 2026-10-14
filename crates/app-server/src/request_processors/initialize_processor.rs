@@ -2,21 +2,21 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
 use axum::http::HeaderValue;
-use genex_login::default_client::SetOriginatorError;
-use genex_login::default_client::USER_AGENT_SUFFIX;
-use genex_login::default_client::get_user_agent;
-use genex_login::default_client::set_default_client_residency_requirement;
-use genex_login::default_client::set_default_originator;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::mount_provider_home;
-use genex_protocol::mcp::ClientMcpExtensions;
+use ruxex_login::default_client::SetOriginatorError;
+use ruxex_login::default_client::USER_AGENT_SUFFIX;
+use ruxex_login::default_client::get_user_agent;
+use ruxex_login::default_client::set_default_client_residency_requirement;
+use ruxex_login::default_client::set_default_originator;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_protocol::mcp::ClientMcpExtensions;
 
 use super::*;
 use crate::message_processor::ConnectionSessionState;
 use crate::message_processor::InitializedConnectionSessionState;
 use crate::transport::ConnectionOrigin;
 
-const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["genex_app_server_daemon", "genex-backend"];
+const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["ruxex_app_server_daemon", "ruxex-backend"];
 
 #[derive(Clone)]
 pub(crate) struct InitializeRequestProcessor {
@@ -73,7 +73,7 @@ impl InitializeRequestProcessor {
         let experimental_api_enabled = capabilities.experimental_api;
         let request_attestation = capabilities.request_attestation;
         let extensions = capabilities.extensions.as_ref();
-        let mut client_mcp_extensions = genex_mcp::client_mcp_extensions(extensions);
+        let mut client_mcp_extensions = ruxex_mcp::client_mcp_extensions(extensions);
         let opt_out_notification_methods = capabilities
             .opt_out_notification_methods
             .unwrap_or_default();
@@ -94,8 +94,8 @@ impl InitializeRequestProcessor {
         let user_verification_enabled = experimental_api_enabled
             && matches!(
                 (session.origin, name.as_str()),
-                (ConnectionOrigin::InProcess, "genex-tui")
-                    | (ConnectionOrigin::Stdio, "Genex Desktop")
+                (ConnectionOrigin::InProcess, "ruxex-tui")
+                    | (ConnectionOrigin::Stdio, "Ruxex Desktop")
             )
             && tokio::task::spawn_blocking(self.user_verification.device_supported)
                 .await
@@ -117,7 +117,7 @@ impl InitializeRequestProcessor {
         let originator = name.clone();
         let user_agent_suffix = format!("{name}; {version}");
         let mutates_global_identity = !NON_ORIGINATING_CLIENT_NAMES.contains(&name.as_str());
-        let genex_home = self.config.genex_home.clone();
+        let ruxex_home = self.config.ruxex_home.clone();
         if session
             .initialize(InitializedConnectionSessionState {
                 experimental_api_enabled,
@@ -149,7 +149,7 @@ impl InitializeRequestProcessor {
                     }
                     SetOriginatorError::AlreadyInitialized => {
                         // No-op. This is expected to happen if the originator is already set via env var.
-                        // TODO(owen): Once we remove support for GENEX_INTERNAL_ORIGINATOR_OVERRIDE,
+                        // TODO(owen): Once we remove support for RUXEX_INTERNAL_ORIGINATOR_OVERRIDE,
                         // this will be an unexpected state and we can return a JSON-RPC error indicating
                         // internal server error.
                     }
@@ -162,7 +162,7 @@ impl InitializeRequestProcessor {
         }
 
         let user_agent = get_user_agent();
-        let marker = mount_provider_home(&self.config.genex_home, &self.provider_descriptor)
+        let marker = mount_provider_home(&self.config.ruxex_home, &self.provider_descriptor)
             .map_err(|error| {
                 invalid_request(format!("failed to mount provider data root: {error}"))
             })?;
@@ -173,7 +173,7 @@ impl InitializeRequestProcessor {
                 Some(user_agent.clone()),
             ),
             user_agent,
-            genex_home: genex_home,
+            ruxex_home: ruxex_home,
             platform_family: std::env::consts::FAMILY.to_string(),
             platform_os: std::env::consts::OS.to_string(),
         };

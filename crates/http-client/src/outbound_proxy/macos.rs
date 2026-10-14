@@ -137,7 +137,7 @@ pub(super) fn configuration(request_url: &str) -> MacosSystemProxyConfiguration 
 }
 
 fn system_proxy_settings() -> Option<CFDictionary<CFString, CFType>> {
-    let store = SCDynamicStoreBuilder::new("Genex").build()?;
+    let store = SCDynamicStoreBuilder::new("Ruxex").build()?;
     store.get_proxies()
 }
 

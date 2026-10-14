@@ -30,22 +30,22 @@ use anyhow::Result;
 use anyhow::anyhow;
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use genex_config::types::McpServerEnvVar;
-use genex_exec_server::ExecBackend;
-use genex_exec_server::ExecEnvPolicy;
-use genex_exec_server::ExecParams;
-use genex_exec_server::ExecProcess;
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::types::McpServerEnvVar;
+use ruxex_exec_server::ExecBackend;
+use ruxex_exec_server::ExecEnvPolicy;
+use ruxex_exec_server::ExecParams;
+use ruxex_exec_server::ExecProcess;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 #[cfg(all(unix, not(target_os = "macos")))]
-use genex_utils_pty::process_group::kill_process_group;
+use ruxex_utils_pty::process_group::kill_process_group;
 #[cfg(target_os = "macos")]
-use genex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
+use ruxex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
 #[cfg(all(unix, not(target_os = "macos")))]
-use genex_utils_pty::process_group::terminate_process_group;
+use ruxex_utils_pty::process_group::terminate_process_group;
 #[cfg(target_os = "macos")]
-use genex_utils_pty::process_group::terminate_process_group_with_member_fallback as terminate_process_group;
+use ruxex_utils_pty::process_group::terminate_process_group_with_member_fallback as terminate_process_group;
 use rmcp::service::RoleClient;
 use rmcp::service::RxJsonRpcMessage;
 use rmcp::service::TxJsonRpcMessage;
@@ -598,7 +598,7 @@ impl ExecutorStdioServerLauncher {
             Vec::new()
         } else {
             // `source = "remote"` means the value is read from the executor's
-            // environment, not copied from Genex. Start from `All` only so the
+            // environment, not copied from Ruxex. Start from `All` only so the
             // named remote variable is available to the filter below; the
             // effective child env is still limited by `include_only`.
             crate::utils::DEFAULT_ENV_VARS
@@ -624,9 +624,9 @@ impl ExecutorStdioServerLauncher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::config_types::EnvironmentVariablePattern;
-    use genex_protocol::config_types::ShellEnvironmentPolicy;
-    use genex_protocol::shell_environment;
+    use ruxex_protocol::config_types::EnvironmentVariablePattern;
+    use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+    use ruxex_protocol::shell_environment;
 
     #[test]
     fn remote_env_policy_uses_core_env_without_remote_source_vars() {

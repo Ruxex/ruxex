@@ -1,8 +1,8 @@
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::ThreadItem;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::ThreadItem;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -44,7 +44,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
     for compressed in [false, true] {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+        let state_db = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("initialize state database");
         let uuid = Uuid::new_v4();
@@ -74,7 +74,7 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
         let home_paths = {
             let verbatim = std::fs::canonicalize(&home_paths[0]).expect("canonicalize home");
             let ordinary =
-                genex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(&verbatim)
+                ruxex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(&verbatim)
                     .expect("normalize home")
                     .into_path_buf();
             [ordinary, verbatim]
@@ -102,16 +102,16 @@ async fn search_matches_selected_rollout_across_path_spellings_and_compression()
             })
             .collect::<Vec<_>>();
 
-        for genex_home in home_paths {
+        for ruxex_home in home_paths {
             let store = LocalThreadStore::new(
                 super::super::LocalThreadStoreConfig {
-                    genex_home,
+                    ruxex_home,
                     ..config.clone()
                 },
                 Some(state_db.clone()),
             );
             for selected_path in &selected_paths {
-                let mut metadata = genex_state::ThreadMetadataBuilder::new(
+                let mut metadata = ruxex_state::ThreadMetadataBuilder::new(
                     thread_id,
                     selected_path.clone(),
                     Utc::now(),

@@ -1,6 +1,6 @@
 //! Answer a bounded set of blocking terminal queries without emulating a terminal.
 
-use genex_utils_pty::SpawnedProcess;
+use ruxex_utils_pty::SpawnedProcess;
 use tokio::sync::mpsc;
 
 // Each pair contains the query bytes and the response to write to stdin.

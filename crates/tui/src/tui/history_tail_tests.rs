@@ -17,7 +17,7 @@ fn replacing_visible_history_tail_preserves_existing_terminal_scrollback() {
     let backend = VT100Backend::with_scrollback(width, height, /*scrollback_len*/ 32);
     let mut terminal = Terminal::with_options(backend).expect("terminal");
     for line in [
-        "shell history that predates Genex",
+        "shell history that predates Ruxex",
         "shell output one",
         "shell output two",
         "shell output three",
@@ -70,7 +70,7 @@ fn replacing_visible_history_tail_preserves_existing_terminal_scrollback() {
     screen_with_scrollback.set_scrollback(/*rows*/ usize::MAX);
     let scrollback = screen_with_scrollback.contents();
     assert!(
-        scrollback.contains("shell history that predates Genex"),
+        scrollback.contains("shell history that predates Ruxex"),
         "existing terminal scrollback was discarded: {scrollback}"
     );
 }

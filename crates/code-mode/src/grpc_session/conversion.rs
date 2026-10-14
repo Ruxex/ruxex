@@ -1,16 +1,16 @@
 use std::time::Duration;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeNestedToolCall;
-use genex_code_mode_protocol::CodeModeToolKind;
-use genex_code_mode_protocol::ExecuteRequest;
-use genex_code_mode_protocol::FunctionCallOutputContentItem;
-use genex_code_mode_protocol::ImageDetail;
-use genex_code_mode_protocol::RuntimeResponse;
-use genex_code_mode_protocol::ToolDefinition;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::grpc;
-use genex_protocol::ToolName;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeNestedToolCall;
+use ruxex_code_mode_protocol::CodeModeToolKind;
+use ruxex_code_mode_protocol::ExecuteRequest;
+use ruxex_code_mode_protocol::FunctionCallOutputContentItem;
+use ruxex_code_mode_protocol::ImageDetail;
+use ruxex_code_mode_protocol::RuntimeResponse;
+use ruxex_code_mode_protocol::ToolDefinition;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_protocol::ToolName;
 
 pub(super) fn execute_request(
     session_id: &str,

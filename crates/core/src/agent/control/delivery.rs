@@ -11,10 +11,10 @@ use crate::context::ContextualUserFragment;
 use crate::context::InterAgentMessage;
 use crate::context::InterAgentMessageType;
 use crate::session::turn_context::TurnContext;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::protocol::InterAgentCommunication;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MessageDeliveryMode {
@@ -66,7 +66,7 @@ impl AgentMessage {
 #[derive(Debug)]
 pub(crate) enum MessageDeliveryError {
     InvalidRequest(String),
-    Agent(GenexErr),
+    Agent(RuxexErr),
 }
 
 impl AgentControl {

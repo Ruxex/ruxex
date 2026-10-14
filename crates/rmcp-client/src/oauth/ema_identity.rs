@@ -2,8 +2,8 @@
 
 use anyhow::Result;
 use anyhow::bail;
-use genex_keyring_store::DefaultKeyringStore;
-use genex_keyring_store::KeyringStore;
+use ruxex_keyring_store::DefaultKeyringStore;
+use ruxex_keyring_store::KeyringStore;
 
 use super::ResolvedOAuthCredentialStore;
 use super::StoredOAuthCredentialSnapshot;

@@ -2,13 +2,13 @@
 #![allow(clippy::unwrap_used)]
 
 use core_test_support::responses;
-use core_test_support::test_genex_exec::test_genex_exec;
+use core_test_support::test_ruxex_exec::test_ruxex_exec;
 
-/// Verify that when the server reports an error, `genex-exec` exits with a
+/// Verify that when the server reports an error, `ruxex-exec` exits with a
 /// non-zero status code so automation can detect failures.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exits_non_zero_when_server_reports_error() -> anyhow::Result<()> {
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
 
     // Mock a simple Responses API SSE stream that immediately reports a
     // `response.failed` event with an error message.

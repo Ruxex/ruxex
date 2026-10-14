@@ -1,5 +1,5 @@
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::protocol::AgentStatus;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::protocol::AgentStatus;
 
 use super::ContextualUserFragment;
 

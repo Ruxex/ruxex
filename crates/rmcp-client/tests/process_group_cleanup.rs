@@ -11,10 +11,10 @@ use std::time::Duration;
 use anyhow::Context;
 use anyhow::Result;
 use futures::FutureExt as _;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::RmcpClient;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
 use rmcp::model::InitializeRequestParams;
@@ -22,13 +22,13 @@ use rmcp::model::ProtocolVersion;
 use serde_json::json;
 
 fn stdio_server_bin() -> Result<std::path::PathBuf> {
-    genex_utils_cargo_bin::cargo_bin("test_stdio_server").map_err(Into::into)
+    ruxex_utils_cargo_bin::cargo_bin("test_stdio_server").map_err(Into::into)
 }
 
 fn init_params() -> InitializeRequestParams {
     InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("genex-test", "0.0.0-test").with_title("Genex rmcp shutdown test"),
+        Implementation::new("ruxex-test", "0.0.0-test").with_title("Ruxex rmcp shutdown test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }

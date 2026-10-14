@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-stream-parser"
+name = "ruxex-utils-stream-parser"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

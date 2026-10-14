@@ -1,34 +1,34 @@
 use std::sync::Arc;
 
-use genex_prompts::render_review_exit_interrupted;
-use genex_prompts::render_review_exit_success;
-use genex_protocol::ResponseItemId;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::items::ExitedReviewModeItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AgentMessageContentDeltaEvent;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ReviewOutputEvent;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::review_format::format_review_findings_block;
-use genex_protocol::review_format::render_review_output_text;
+use ruxex_prompts::render_review_exit_interrupted;
+use ruxex_prompts::render_review_exit_success;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::items::ExitedReviewModeItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::BaseInstructionsProvenance;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AgentMessageContentDeltaEvent;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ReviewOutputEvent;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::review_format::format_review_findings_block;
+use ruxex_protocol::review_format::render_review_output_text;
 use tokio_util::sync::CancellationToken;
 
 use crate::config::Constrained;
-use crate::genex_delegate::run_genex_thread_one_shot;
+use crate::ruxex_delegate::run_ruxex_thread_one_shot;
 use crate::session::TurnInput;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::state::TaskKind;
-use genex_features::Feature;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::PersistContext;
+use ruxex_features::Feature;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::PersistContext;
 
 use super::SessionTask;
 use super::SessionTaskResult;
@@ -61,7 +61,7 @@ impl SessionTask for ReviewTask {
         session
             .services
             .session_telemetry
-            .counter("genex.task.review", /*inc*/ 1, &[]);
+            .counter("ruxex.task.review", /*inc*/ 1, &[]);
 
         let mut user_input = Vec::new();
         for item in input {
@@ -73,7 +73,7 @@ impl SessionTask for ReviewTask {
             }
         }
 
-        // Start a sub-Genex conversation and get the receiver for events.
+        // Start a sub-Ruxex conversation and get the receiver for events.
         let output = match start_review_conversation(
             session.clone(),
             ctx.clone(),
@@ -121,7 +121,7 @@ async fn start_review_conversation(
     sub_agent_config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);
 
     sub_agent_config.model = Some(ctx.model_info().slug.clone());
-    (run_genex_thread_one_shot(
+    (run_ruxex_thread_one_shot(
         sub_agent_config,
         Arc::clone(&session.services.models_manager),
         input,

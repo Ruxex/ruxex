@@ -1,6 +1,6 @@
 use crate::legacy_core::config::Config;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::model_types::ModelPreset;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::model_types::ModelPreset;
 
 pub(crate) fn configured_service_tier(config: &Config) -> Option<String> {
     config.service_tier.clone()

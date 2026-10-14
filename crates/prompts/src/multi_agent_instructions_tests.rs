@@ -1,8 +1,8 @@
 //! Covers role composition and attribution for captured model instructions.
 
 use super::*;
-use genex_context_fragments::AnnotatedContent;
-use genex_context_fragments::RenderedFragment;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_context_fragments::RenderedFragment;
 use pretty_assertions::assert_eq;
 
 #[test]

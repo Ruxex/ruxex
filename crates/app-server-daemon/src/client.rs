@@ -6,15 +6,15 @@ use anyhow::Result;
 use anyhow::anyhow;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::InitializeResponse;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::RequestId;
-use genex_uds::UnixStream;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::InitializeResponse;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_uds::UnixStream;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tokio::time::timeout;
@@ -23,7 +23,7 @@ use tokio_tungstenite::client_async;
 use tokio_tungstenite::tungstenite::Message;
 
 pub(crate) const CONTROL_SOCKET_RESPONSE_TIMEOUT: Duration = Duration::from_secs(2);
-const CLIENT_NAME: &str = "genex_app_server_daemon";
+const CLIENT_NAME: &str = "ruxex_app_server_daemon";
 const INITIALIZE_REQUEST_ID: RequestId = RequestId::Integer(1);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -87,7 +87,7 @@ where
         params: Some(serde_json::to_value(InitializeParams {
             client_info: ClientInfo {
                 name: CLIENT_NAME.to_string(),
-                title: Some("Genex App Server Daemon".to_string()),
+                title: Some("Ruxex App Server Daemon".to_string()),
                 version: env!("CARGO_PKG_VERSION").to_string(),
             },
             capabilities: if experimental_api {
@@ -168,10 +168,10 @@ mod tests {
     use super::parse_version_from_user_agent;
 
     #[test]
-    fn parses_version_from_genex_user_agent() {
+    fn parses_version_from_ruxex_user_agent() {
         assert_eq!(
             parse_version_from_user_agent(
-                "genex_app_server_daemon/1.2.3 (Linux 6.8.0; x86_64) genex_cli_rs/1.2.3",
+                "ruxex_app_server_daemon/1.2.3 (Linux 6.8.0; x86_64) ruxex_cli_rs/1.2.3",
             )
             .expect("version"),
             "1.2.3"
@@ -180,6 +180,6 @@ mod tests {
 
     #[test]
     fn rejects_user_agent_without_version() {
-        assert!(parse_version_from_user_agent("genex_app_server_daemon").is_err());
+        assert!(parse_version_from_user_agent("ruxex_app_server_daemon").is_err());
     }
 }

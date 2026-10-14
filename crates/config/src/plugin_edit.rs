@@ -2,8 +2,8 @@ use std::fs;
 use std::io::ErrorKind;
 use std::path::Path;
 
-use genex_utils_path::resolve_symlink_write_paths;
-use genex_utils_path::write_atomically;
+use ruxex_utils_path::resolve_symlink_write_paths;
+use ruxex_utils_path::write_atomically;
 use tokio::task;
 use toml_edit::DocumentMut;
 use toml_edit::Item as TomlItem;
@@ -19,12 +19,12 @@ pub enum PluginConfigEdit {
 }
 
 pub async fn set_user_plugin_enabled(
-    genex_home: &Path,
+    ruxex_home: &Path,
     plugin_key: String,
     enabled: bool,
 ) -> std::io::Result<()> {
     apply_user_plugin_config_edits(
-        genex_home,
+        ruxex_home,
         vec![PluginConfigEdit::SetEnabled {
             plugin_key,
             enabled,
@@ -33,29 +33,29 @@ pub async fn set_user_plugin_enabled(
     .await
 }
 
-pub async fn clear_user_plugin(genex_home: &Path, plugin_key: String) -> std::io::Result<()> {
-    apply_user_plugin_config_edits(genex_home, vec![PluginConfigEdit::Clear { plugin_key }]).await
+pub async fn clear_user_plugin(ruxex_home: &Path, plugin_key: String) -> std::io::Result<()> {
+    apply_user_plugin_config_edits(ruxex_home, vec![PluginConfigEdit::Clear { plugin_key }]).await
 }
 
 pub async fn apply_user_plugin_config_edits(
-    genex_home: &Path,
+    ruxex_home: &Path,
     edits: Vec<PluginConfigEdit>,
 ) -> std::io::Result<()> {
-    let genex_home = genex_home.to_path_buf();
-    task::spawn_blocking(move || apply_user_plugin_config_edits_blocking(&genex_home, edits))
+    let ruxex_home = ruxex_home.to_path_buf();
+    task::spawn_blocking(move || apply_user_plugin_config_edits_blocking(&ruxex_home, edits))
         .await
         .map_err(|err| std::io::Error::other(format!("config persistence task panicked: {err}")))?
 }
 
 fn apply_user_plugin_config_edits_blocking(
-    genex_home: &Path,
+    ruxex_home: &Path,
     edits: Vec<PluginConfigEdit>,
 ) -> std::io::Result<()> {
     if edits.is_empty() {
         return Ok(());
     }
 
-    let config_path = genex_home.join(CONFIG_TOML_FILE);
+    let config_path = ruxex_home.join(CONFIG_TOML_FILE);
     let write_paths = resolve_symlink_write_paths(&config_path)?;
     let mut doc = read_or_create_document(write_paths.read_path.as_deref())?;
     let mut mutated = false;
@@ -185,17 +185,17 @@ mod tests {
 
     #[tokio::test]
     async fn set_user_plugin_enabled_writes_plugin_entry() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
 
         set_user_plugin_enabled(
-            genex_home.path(),
+            ruxex_home.path(),
             "demo@market".to_string(),
             /*enabled*/ true,
         )
         .await
         .unwrap();
 
-        let config = read_config(genex_home.path());
+        let config = read_config(ruxex_home.path());
         let expected: toml::Value = toml::from_str(
             r#"
 [plugins."demo@market"]
@@ -208,9 +208,9 @@ enabled = true
 
     #[tokio::test]
     async fn set_user_plugin_enabled_preserves_existing_plugin_fields() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         fs::write(
-            genex_home.path().join(CONFIG_TOML_FILE),
+            ruxex_home.path().join(CONFIG_TOML_FILE),
             r#"
 [plugins."demo@market"]
 enabled = false
@@ -220,14 +220,14 @@ source = "/tmp/plugin"
         .unwrap();
 
         set_user_plugin_enabled(
-            genex_home.path(),
+            ruxex_home.path(),
             "demo@market".to_string(),
             /*enabled*/ true,
         )
         .await
         .unwrap();
 
-        let config = read_config(genex_home.path());
+        let config = read_config(ruxex_home.path());
         let expected: toml::Value = toml::from_str(
             r#"
 [plugins."demo@market"]
@@ -241,9 +241,9 @@ source = "/tmp/plugin"
 
     #[tokio::test]
     async fn clear_user_plugin_removes_empty_plugins_table() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         fs::write(
-            genex_home.path().join(CONFIG_TOML_FILE),
+            ruxex_home.path().join(CONFIG_TOML_FILE),
             r#"
 [plugins."demo@market"]
 enabled = true
@@ -251,25 +251,25 @@ enabled = true
         )
         .unwrap();
 
-        clear_user_plugin(genex_home.path(), "demo@market".to_string())
+        clear_user_plugin(ruxex_home.path(), "demo@market".to_string())
             .await
             .unwrap();
 
         assert_eq!(
-            fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE)).unwrap(),
+            fs::read_to_string(ruxex_home.path().join(CONFIG_TOML_FILE)).unwrap(),
             ""
         );
     }
 
     #[tokio::test]
     async fn clear_user_plugin_missing_entry_does_not_create_config() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
 
-        clear_user_plugin(genex_home.path(), "demo@market".to_string())
+        clear_user_plugin(ruxex_home.path(), "demo@market".to_string())
             .await
             .unwrap();
 
-        assert!(!genex_home.path().join(CONFIG_TOML_FILE).exists());
+        assert!(!ruxex_home.path().join(CONFIG_TOML_FILE).exists());
     }
 
     #[tokio::test]
@@ -277,12 +277,12 @@ enabled = true
     async fn set_user_plugin_enabled_follows_config_symlink() {
         use std::os::unix::fs::symlink;
 
-        let genex_home = TempDir::new().unwrap();
-        let target_path = genex_home.path().join("target_config.toml");
-        symlink(&target_path, genex_home.path().join(CONFIG_TOML_FILE)).unwrap();
+        let ruxex_home = TempDir::new().unwrap();
+        let target_path = ruxex_home.path().join("target_config.toml");
+        symlink(&target_path, ruxex_home.path().join(CONFIG_TOML_FILE)).unwrap();
 
         set_user_plugin_enabled(
-            genex_home.path(),
+            ruxex_home.path(),
             "demo@market".to_string(),
             /*enabled*/ true,
         )
@@ -301,7 +301,7 @@ enabled = true
         assert_eq!(config, expected);
     }
 
-    fn read_config(genex_home: &Path) -> toml::Value {
-        toml::from_str(&fs::read_to_string(genex_home.join(CONFIG_TOML_FILE)).unwrap()).unwrap()
+    fn read_config(ruxex_home: &Path) -> toml::Value {
+        toml::from_str(&fs::read_to_string(ruxex_home.join(CONFIG_TOML_FILE)).unwrap()).unwrap()
     }
 }

@@ -1,7 +1,7 @@
-use genex_otel::AuthEnvTelemetryMetadata;
-use genex_otel::OtelProvider;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
+use ruxex_otel::AuthEnvTelemetryMetadata;
+use ruxex_otel::OtelProvider;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TelemetryAuthMode;
 use opentelemetry::KeyValue;
 use opentelemetry::logs::AnyValue;
 use opentelemetry::trace::TracerProvider as _;
@@ -18,17 +18,17 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::layer::SubscriberExt;
 
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::ToolName;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ToolResultLogConfig;
-use genex_protocol::models::ImageReference;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::ToolName;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::ToolResultLogConfig;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::user_input::UserInput;
 
 fn log_attributes(record: &SdkLogRecord) -> BTreeMap<String, String> {
     record
@@ -87,8 +87,8 @@ fn find_span_event_by_name_attr<'a>(
 
 fn auth_env_metadata() -> AuthEnvTelemetryMetadata {
     AuthEnvTelemetryMetadata {
-        genex_api_key_env_present: false,
-        genex_api_key_env_enabled: true,
+        ruxex_api_key_env_present: false,
+        ruxex_api_key_env_enabled: true,
         provider_env_key_name: Some("configured".to_string()),
         provider_env_key_present: Some(true),
     }
@@ -128,7 +128,7 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -159,10 +159,10 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
         logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("genex_otel.log_only") })
+            .all(|log| { log.record.target().map(Cow::as_ref) == Some("ruxex_otel.log_only") })
     );
 
-    let prompt_log = find_log_by_event_name(&logs, "genex.user_prompt");
+    let prompt_log = find_log_by_event_name(&logs, "ruxex.user_prompt");
     let prompt_log_attrs = log_attributes(&prompt_log.record);
     assert_eq!(
         prompt_log_attrs.get("prompt").map(String::as_str),
@@ -178,7 +178,7 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
     let span_events = &spans[0].events.events;
     assert_eq!(span_events.len(), 1);
 
-    let prompt_trace_event = find_span_event_by_name_attr(span_events, "genex.user_prompt");
+    let prompt_trace_event = find_span_event_by_name_attr(span_events, "ruxex.user_prompt");
     let prompt_trace_attrs = span_event_attributes(prompt_trace_event);
     assert_eq!(
         prompt_trace_attrs.get("prompt_length").map(String::as_str),
@@ -222,7 +222,7 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             source,
@@ -327,10 +327,10 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
         logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("genex_otel.log_only") })
+            .all(|log| { log.record.target().map(Cow::as_ref) == Some("ruxex_otel.log_only") })
     );
 
-    let tool_log = find_log_by_event_name(&logs, "genex.tool_result");
+    let tool_log = find_log_by_event_name(&logs, "ruxex.tool_result");
     let tool_log_attrs = log_attributes(&tool_log.record);
     assert_eq!(
         tool_log_attrs.get("tool_name").map(String::as_str),
@@ -351,7 +351,7 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
     let tool_logs: Vec<_> = logs
         .iter()
         .map(|log| log_attributes(&log.record))
-        .filter(|attrs| attrs.get("event.name").map(String::as_str) == Some("genex.tool_result"))
+        .filter(|attrs| attrs.get("event.name").map(String::as_str) == Some("ruxex.tool_result"))
         .collect();
     assert_eq!(
         tool_logs
@@ -419,7 +419,7 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
         assert!(!attrs.contains_key("agent_name"));
     }
 
-    let tool_trace_event = find_span_event_by_name_attr(span_events, "genex.tool_result");
+    let tool_trace_event = find_span_event_by_name_attr(span_events, "ruxex.tool_result");
     let tool_trace_attrs = span_event_attributes(tool_trace_event);
     assert_eq!(
         tool_trace_attrs.get("arguments_length").map(String::as_str),
@@ -475,7 +475,7 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -497,7 +497,7 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
     tracer_provider.force_flush().expect("flush traces");
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
-    let recovery_log = find_log_by_event_name(&logs, "genex.auth_recovery");
+    let recovery_log = find_log_by_event_name(&logs, "ruxex.auth_recovery");
     let recovery_log_attrs = log_attributes(&recovery_log.record);
     assert_eq!(
         recovery_log_attrs.get("auth.mode").map(String::as_str),
@@ -533,7 +533,7 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
     let span_events = &spans[0].events.events;
     assert_eq!(span_events.len(), 1);
 
-    let recovery_trace_event = find_span_event_by_name_attr(span_events, "genex.auth_recovery");
+    let recovery_trace_event = find_span_event_by_name_attr(span_events, "ruxex.auth_recovery");
     let recovery_trace_attrs = span_event_attributes(recovery_trace_event);
     assert_eq!(
         recovery_trace_attrs.get("auth.mode").map(String::as_str),
@@ -599,7 +599,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -637,7 +637,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
     tracer_provider.force_flush().expect("flush traces");
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
-    let conversation_log = find_log_by_event_name(&logs, "genex.conversation_starts");
+    let conversation_log = find_log_by_event_name(&logs, "ruxex.conversation_starts");
     let conversation_log_attrs = log_attributes(&conversation_log.record);
     assert_eq!(
         conversation_log_attrs
@@ -645,7 +645,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
             .map(String::as_str),
         Some("configured")
     );
-    let request_log = find_log_by_event_name(&logs, "genex.api_request");
+    let request_log = find_log_by_event_name(&logs, "ruxex.api_request");
     let request_log_attrs = log_attributes(&request_log.record);
     assert_eq!(
         request_log_attrs
@@ -683,14 +683,14 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
     );
     assert_eq!(
         request_log_attrs
-            .get("auth.env_genex_api_key_enabled")
+            .get("auth.env_ruxex_api_key_enabled")
             .map(String::as_str),
         Some("true")
     );
 
     let spans = span_exporter.get_finished_spans().expect("span export");
     let conversation_trace_event =
-        find_span_event_by_name_attr(&spans[0].events.events, "genex.conversation_starts");
+        find_span_event_by_name_attr(&spans[0].events.events, "ruxex.conversation_starts");
     let conversation_trace_attrs = span_event_attributes(conversation_trace_event);
     assert_eq!(
         conversation_trace_attrs
@@ -699,7 +699,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
         Some("true")
     );
     let request_trace_event =
-        find_span_event_by_name_attr(&spans[0].events.events, "genex.api_request");
+        find_span_event_by_name_attr(&spans[0].events.events, "ruxex.api_request");
     let request_trace_attrs = span_event_attributes(request_trace_event);
     assert_eq!(
         request_trace_attrs
@@ -759,7 +759,7 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -787,7 +787,7 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
     tracer_provider.force_flush().expect("flush traces");
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
-    let connect_log = find_log_by_event_name(&logs, "genex.websocket_connect");
+    let connect_log = find_log_by_event_name(&logs, "ruxex.websocket_connect");
     let connect_log_attrs = log_attributes(&connect_log.record);
     assert_eq!(
         connect_log_attrs
@@ -820,7 +820,7 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
 
     let spans = span_exporter.get_finished_spans().expect("span export");
     let connect_trace_event =
-        find_span_event_by_name_attr(&spans[0].events.events, "genex.websocket_connect");
+        find_span_event_by_name_attr(&spans[0].events.events, "ruxex.websocket_connect");
     let connect_trace_attrs = span_event_attributes(connect_trace_event);
     assert_eq!(
         connect_trace_attrs
@@ -864,7 +864,7 @@ fn otel_export_routing_policy_routes_websocket_request_transport_observability()
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "genex_exec".to_string(),
+            "ruxex_exec".to_string(),
             /*log_user_prompts*/ true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -883,7 +883,7 @@ fn otel_export_routing_policy_routes_websocket_request_transport_observability()
     tracer_provider.force_flush().expect("flush traces");
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
-    let request_log = find_log_by_event_name(&logs, "genex.websocket_request");
+    let request_log = find_log_by_event_name(&logs, "ruxex.websocket_request");
     let request_log_attrs = log_attributes(&request_log.record);
     assert_eq!(
         request_log_attrs
@@ -898,7 +898,7 @@ fn otel_export_routing_policy_routes_websocket_request_transport_observability()
 
     let spans = span_exporter.get_finished_spans().expect("span export");
     let request_trace_event =
-        find_span_event_by_name_attr(&spans[0].events.events, "genex.websocket_request");
+        find_span_event_by_name_attr(&spans[0].events.events, "ruxex.websocket_request");
     let request_trace_attrs = span_event_attributes(request_trace_event);
     assert_eq!(
         request_trace_attrs

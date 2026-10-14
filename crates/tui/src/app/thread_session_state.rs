@@ -1,10 +1,10 @@
 use super::App;
 use crate::session_state::ThreadSessionState;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::Thread;
-use genex_protocol::ThreadId;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::PermissionProfile;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::Thread;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 
 impl App {
     pub(super) async fn sync_active_thread_service_tier_to_cached_session(&mut self) {

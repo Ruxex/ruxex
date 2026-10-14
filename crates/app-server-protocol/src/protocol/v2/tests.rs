@@ -1,53 +1,53 @@
 use super::*;
 use crate::ServerNotification;
-use genex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use genex_protocol::config_types::MultiAgentMode;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
-use genex_protocol::items::CollabAgentToolCallItem;
-use genex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
-use genex_protocol::items::CommandExecutionItem;
-use genex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
-use genex_protocol::items::DynamicToolCallItem;
-use genex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
-use genex_protocol::items::FileChangeItem;
-use genex_protocol::items::ImageViewItem;
-use genex_protocol::items::McpToolCallItem;
-use genex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
-use genex_protocol::items::ReasoningItem;
-use genex_protocol::items::SubAgentActivityItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::items::WebSearchItem as CoreWebSearchItem;
-use genex_protocol::mcp::CallToolResult;
-use genex_protocol::mcp::McpServerInfo;
-use genex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference as CoreImageReference;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::NetworkPermissions as CoreNetworkPermissions;
-use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
-use genex_protocol::permissions::FileSystemAccessMode as CoreFileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath as CoreFileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry as CoreFileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialPath;
-use genex_protocol::protocol::AgentStatus as CoreAgentStatus;
-use genex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use genex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
-use genex_protocol::protocol::GenexErrorInfo as CoreGenexErrorInfo;
-use genex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
-use genex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
-use genex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
-use genex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-use genex_protocol::user_input::UserInput as CoreUserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_absolute_path::test_support::test_path_buf;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
+use ruxex_protocol::config_types::MultiAgentMode;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
+use ruxex_protocol::items::CollabAgentToolCallItem;
+use ruxex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
+use ruxex_protocol::items::CommandExecutionItem;
+use ruxex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
+use ruxex_protocol::items::DynamicToolCallItem;
+use ruxex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
+use ruxex_protocol::items::FileChangeItem;
+use ruxex_protocol::items::ImageViewItem;
+use ruxex_protocol::items::McpToolCallItem;
+use ruxex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
+use ruxex_protocol::items::ReasoningItem;
+use ruxex_protocol::items::SubAgentActivityItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::items::WebSearchItem as CoreWebSearchItem;
+use ruxex_protocol::mcp::CallToolResult;
+use ruxex_protocol::mcp::McpServerInfo;
+use ruxex_protocol::models::AdditionalPermissionProfile as CoreAdditionalPermissionProfile;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference as CoreImageReference;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::NetworkPermissions as CoreNetworkPermissions;
+use ruxex_protocol::models::WebSearchAction as CoreWebSearchAction;
+use ruxex_protocol::permissions::FileSystemAccessMode as CoreFileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath as CoreFileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry as CoreFileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath as CoreFileSystemSpecialPath;
+use ruxex_protocol::protocol::AgentStatus as CoreAgentStatus;
+use ruxex_protocol::protocol::AskForApproval as CoreAskForApproval;
+use ruxex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
+use ruxex_protocol::protocol::RuxexErrorInfo as CoreRuxexErrorInfo;
+use ruxex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
+use ruxex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
+use ruxex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
+use ruxex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use ruxex_protocol::user_input::UserInput as CoreUserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_absolute_path::test_support::test_path_buf;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::Value as JsonValue;
 use serde_json::json;
@@ -157,7 +157,7 @@ fn thread_sources_round_trip_as_scalar_labels() {
             source
         );
 
-        let core_source: genex_protocol::protocol::ThreadSource = source.clone().into();
+        let core_source: ruxex_protocol::protocol::ThreadSource = source.clone().into();
         assert_eq!(ThreadSource::from(core_source), source);
     }
 }
@@ -1777,7 +1777,7 @@ fn sandbox_policy_round_trips_external_sandbox_network_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        genex_protocol::protocol::SandboxPolicy::ExternalSandbox {
+        ruxex_protocol::protocol::SandboxPolicy::ExternalSandbox {
             network_access: CoreNetworkAccess::Enabled,
         }
     );
@@ -1795,7 +1795,7 @@ fn sandbox_policy_round_trips_read_only_network_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        genex_protocol::protocol::SandboxPolicy::ReadOnly {
+        ruxex_protocol::protocol::SandboxPolicy::ReadOnly {
             network_access: true,
         }
     );
@@ -1952,9 +1952,9 @@ fn config_requirements_granular_allowed_approval_policy_is_marked_experimental()
 fn config_requirements_read_accepts_foreign_path_uris() {
     let response: ConfigRequirementsReadResponse = serde_json::from_value(json!({
         "requirements": {
-            "sqliteHome": "file:///C:/Users/alice/.genex/state",
-            "logDir": "file:///C:/Users/alice/.genex/logs",
-            "modelCatalogJson": "file:///C:/Users/alice/.genex/models.json"
+            "sqliteHome": "file:///C:/Users/alice/.ruxex/state",
+            "logDir": "file:///C:/Users/alice/.ruxex/logs",
+            "modelCatalogJson": "file:///C:/Users/alice/.ruxex/models.json"
         }
     }))
     .expect("requirements response with foreign paths should deserialize");
@@ -1964,15 +1964,15 @@ fn config_requirements_read_accepts_foreign_path_uris() {
 
     assert_eq!(
         requirements.sqlite_home,
-        Some(PathUri::parse("file:///C:/Users/alice/.genex/state").expect("valid URI"))
+        Some(PathUri::parse("file:///C:/Users/alice/.ruxex/state").expect("valid URI"))
     );
     assert_eq!(
         requirements.log_dir,
-        Some(PathUri::parse("file:///C:/Users/alice/.genex/logs").expect("valid URI"))
+        Some(PathUri::parse("file:///C:/Users/alice/.ruxex/logs").expect("valid URI"))
     );
     assert_eq!(
         requirements.model_catalog_json,
-        Some(PathUri::parse("file:///C:/Users/alice/.genex/models.json").expect("valid URI"))
+        Some(PathUri::parse("file:///C:/Users/alice/.ruxex/models.json").expect("valid URI"))
     );
 }
 
@@ -2516,7 +2516,7 @@ fn sandbox_policy_round_trips_workspace_write_access() {
     let core_policy = v2_policy.to_core();
     assert_eq!(
         core_policy,
-        genex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
+        ruxex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
             writable_roots: vec![],
             network_access: true,
             exclude_tmpdir_env_var: false,
@@ -2722,7 +2722,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             },
             CoreUserInput::Skill {
                 name: "skill-creator".to_string(),
-                path: PathBuf::from("/repo/.genex/skills/skill-creator/SKILL.md"),
+                path: PathBuf::from("/repo/.ruxex/skills/skill-creator/SKILL.md"),
             },
             CoreUserInput::Mention {
                 name: "Demo App".to_string(),
@@ -2759,7 +2759,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
                 },
                 UserInput::Skill {
                     name: "skill-creator".to_string(),
-                    path: PathBuf::from("/repo/.genex/skills/skill-creator/SKILL.md"),
+                    path: PathBuf::from("/repo/.ruxex/skills/skill-creator/SKILL.md"),
                 },
                 UserInput::Mention {
                     name: "Demo App".to_string(),
@@ -2878,7 +2878,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
             "push".to_string(),
         ],
         cwd: PathUri::from_abs_path(&test_path_buf("/tmp").abs()),
-        parsed_cmd: vec![genex_protocol::parse_command::ParsedCommand::Unknown {
+        parsed_cmd: vec![ruxex_protocol::parse_command::ParsedCommand::Unknown {
             cmd: "git -c 'http.extraHeader=Authorization: Bearer example_synthetic_bearer_token_123456' -c http.extraHeader=X-Trace:example push"
                 .to_string(),
         }],
@@ -2923,13 +2923,13 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         arguments: json!({"id": "123"}),
         status: CoreDynamicToolCallStatus::Completed,
         content_items: Some(vec![
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText {
                 text: "ok".to_string(),
             },
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url: "data:image/png;base64,AAA".to_string(),
             },
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
                 audio_url: "data:audio/wav;base64,YXVkaW8=".to_string(),
             },
         ]),
@@ -2962,8 +2962,8 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         }
     );
 
-    let sender_thread_id = genex_protocol::ThreadId::default();
-    let receiver_thread_id = genex_protocol::ThreadId::default();
+    let sender_thread_id = ruxex_protocol::ThreadId::default();
+    let receiver_thread_id = ruxex_protocol::ThreadId::default();
     let collab_item = TurnItem::CollabAgentToolCall(CollabAgentToolCallItem {
         id: "collab-1".to_string(),
         tool: CoreCollabAgentTool::SendInput,
@@ -3006,7 +3006,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         id: "activity-1".to_string(),
         kind: CoreSubAgentActivityKind::Completed,
         agent_thread_id: receiver_thread_id,
-        agent_path: genex_protocol::AgentPath::root()
+        agent_path: ruxex_protocol::AgentPath::root()
             .join("worker")
             .expect("worker path"),
     });
@@ -3055,7 +3055,7 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
     );
     assert_eq!(
         ThreadItem::from(TurnItem::Extension(
-            genex_extension_items::ExtensionItem::WebSearch(expected_search_item.clone()),
+            ruxex_extension_items::ExtensionItem::WebSearch(expected_search_item.clone()),
         )),
         ThreadItem::WebSearch(expected_search_item)
     );
@@ -3077,13 +3077,13 @@ fn core_turn_item_into_thread_item_converts_supported_variants() {
         id: "patch-1".to_string(),
         changes: [(
             PathBuf::from("README.md"),
-            genex_protocol::protocol::FileChange::Add {
+            ruxex_protocol::protocol::FileChange::Add {
                 content: "hello\n".to_string(),
             },
         )]
         .into_iter()
         .collect(),
-        status: Some(genex_protocol::protocol::PatchApplyStatus::Completed),
+        status: Some(ruxex_protocol::protocol::PatchApplyStatus::Completed),
         auto_approved: None,
         stdout: Some("Done!".to_string()),
         stderr: Some(String::new()),
@@ -4221,8 +4221,8 @@ fn marketplace_upgrade_response_serializes_camel_case_fields() {
 }
 
 #[test]
-fn genex_error_info_serializes_http_status_code_in_camel_case() {
-    let value = GenexErrorInfo::ResponseTooManyFailedAttempts {
+fn ruxex_error_info_serializes_http_status_code_in_camel_case() {
+    let value = RuxexErrorInfo::ResponseTooManyFailedAttempts {
         http_status_code: Some(401),
     };
 
@@ -4239,22 +4239,22 @@ fn genex_error_info_serializes_http_status_code_in_camel_case() {
 #[test]
 fn core_error_info_converts_to_camel_case() {
     for (core, expected) in [
-        (CoreGenexErrorInfo::CyberPolicy, json!("cyberPolicy")),
+        (CoreRuxexErrorInfo::CyberPolicy, json!("cyberPolicy")),
         (
-            CoreGenexErrorInfo::RateLimitExceeded,
+            CoreRuxexErrorInfo::RateLimitExceeded,
             json!("rateLimitExceeded"),
         ),
     ] {
         assert_eq!(
-            serde_json::to_value(GenexErrorInfo::from(core)).unwrap(),
+            serde_json::to_value(RuxexErrorInfo::from(core)).unwrap(),
             expected
         );
     }
 }
 
 #[test]
-fn genex_error_info_serializes_active_turn_not_steerable_turn_kind_in_camel_case() {
-    let value = GenexErrorInfo::ActiveTurnNotSteerable {
+fn ruxex_error_info_serializes_active_turn_not_steerable_turn_kind_in_camel_case() {
+    let value = RuxexErrorInfo::ActiveTurnNotSteerable {
         turn_kind: NonSteerableTurnKind::Review,
     };
 
@@ -4480,7 +4480,7 @@ fn turn_start_cyber_access_program_uses_separate_wire_formats() {
             "cyberAccessProgram": app_server_value,
         }))
         .expect("params should deserialize");
-        let core_program: genex_protocol::turn_input::CyberAccessProgram = params
+        let core_program: ruxex_protocol::turn_input::CyberAccessProgram = params
             .cyber_access_program
             .expect("explicit program")
             .into();
@@ -4507,7 +4507,7 @@ fn turn_start_params_round_trip_multi_agent_mode() {
 
     assert_eq!(
         params.multi_agent_mode,
-        Some(genex_protocol::config_types::MultiAgentMode::Proactive)
+        Some(ruxex_protocol::config_types::MultiAgentMode::Proactive)
     );
     assert_eq!(
         crate::experimental_api::ExperimentalApi::experimental_reason(&params),
@@ -4528,7 +4528,7 @@ fn thread_start_params_round_trip_multi_agent_mode() {
 
     assert_eq!(
         params.multi_agent_mode,
-        Some(genex_protocol::config_types::MultiAgentMode::Proactive)
+        Some(ruxex_protocol::config_types::MultiAgentMode::Proactive)
     );
     assert_eq!(
         crate::experimental_api::ExperimentalApi::experimental_reason(&params),
@@ -4595,9 +4595,9 @@ fn thread_settings_update_params_preserve_field_level_experimental_gates() {
 
     let collaboration_mode = ThreadSettingsUpdateParams {
         thread_id: "thread_123".to_string(),
-        collaboration_mode: Some(genex_protocol::config_types::CollaborationMode {
-            mode: genex_protocol::config_types::ModeKind::Plan,
-            settings: genex_protocol::config_types::Settings {
+        collaboration_mode: Some(ruxex_protocol::config_types::CollaborationMode {
+            mode: ruxex_protocol::config_types::ModeKind::Plan,
+            settings: ruxex_protocol::config_types::Settings {
                 model: "mock-model".to_string(),
                 reasoning_effort: None,
                 developer_instructions: None,

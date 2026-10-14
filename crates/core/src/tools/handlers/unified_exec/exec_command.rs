@@ -31,19 +31,19 @@ use crate::unified_exec::UnifiedExecContext;
 use crate::unified_exec::UnifiedExecError;
 use crate::unified_exec::UnifiedExecProcessManager;
 use crate::unified_exec::generate_chunk_id;
-use genex_features::Feature;
-use genex_otel::SessionTelemetry;
-use genex_otel::TOOL_CALL_UNIFIED_EXEC_METRIC;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::SandboxablePreference;
-use genex_shell_command::shell_detect::detect_shell_type;
-use genex_tools::JsonSchema;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_string::truncate_middle_chars;
+use ruxex_features::Feature;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TOOL_CALL_UNIFIED_EXEC_METRIC;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxablePreference;
+use ruxex_shell_command::shell_detect::detect_shell_type;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_string::truncate_middle_chars;
 
 use super::super::shell_spec::CommandToolOptions;
 use super::super::shell_spec::create_exec_command_tool_with_environment_id;
@@ -140,7 +140,7 @@ impl ToolExecutor<ToolInvocation> for ExecCommandHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

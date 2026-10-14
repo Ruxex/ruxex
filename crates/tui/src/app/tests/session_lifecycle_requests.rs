@@ -5,30 +5,30 @@ use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_parented_rollout_with_source;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItemsListParams;
-use genex_app_server_protocol::ThreadItemsListResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_protocol::AgentPath;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::EnteredReviewModeItem;
-use genex_protocol::items::ExitedReviewModeItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ReviewTarget;
-use genex_protocol::user_input::UserInput as CoreUserInput;
-use genex_state::SqliteConfig;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItemsListParams;
+use ruxex_app_server_protocol::ThreadItemsListResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::EnteredReviewModeItem;
+use ruxex_protocol::items::ExitedReviewModeItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ReviewTarget;
+use ruxex_protocol::user_input::UserInput as CoreUserInput;
+use ruxex_state::SqliteConfig;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -81,10 +81,10 @@ async fn complete_managed_worktree_creation(
 
 #[tokio::test]
 async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()> {
-    let (mut app, genex_home) = make_history_test_app().await?;
+    let (mut app, ruxex_home) = make_history_test_app().await?;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             "2026-01-01T00-00-00",
             "2026-01-01T00:00:00Z",
             "Saved user message",
@@ -93,7 +93,7 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
         .expect("create rollout"),
     )?;
     let path = Some(rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         "2026-01-01T00-00-00",
         &thread_id.to_string(),
     ));
@@ -112,9 +112,9 @@ async fn same_thread_retry_keeps_subscription_and_restores_draft() -> Result<()>
     app.chat_widget.insert_str("Retained draft");
     app.chat_widget.show_external_writer_thread();
     crate::legacy_core::config::set_project_trust_level(
-        app.config.genex_home.as_path(),
+        app.config.ruxex_home.as_path(),
         app.config.cwd.as_path(),
-        genex_protocol::config_types::TrustLevel::Trusted,
+        ruxex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     app.harness_overrides.cwd = Some(app.config.cwd.to_path_buf());
@@ -265,18 +265,18 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
         crate::init_state_db_for_app_server_target(config, &crate::AppServerTarget::Embedded)
             .await?;
     let mut embedded = crate::start_embedded_app_server(
-        genex_arg0::Arg0DispatchPaths::default(),
+        ruxex_arg0::Arg0DispatchPaths::default(),
         config.clone(),
         Vec::new(),
         loader_overrides,
         /*strict_config*/ false,
-        genex_config::CloudConfigBundleLoader::default(),
+        ruxex_config::CloudConfigBundleLoader::default(),
         /*log_db*/ None,
         state_db,
-        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
+        Arc::new(ruxex_exec_server::EnvironmentManager::default_for_tests()),
     )
     .await?;
-    let genex_home = config.genex_home.display().to_string();
+    let ruxex_home = config.ruxex_home.display().to_string();
     let requests = Arc::new(Mutex::new(Vec::new()));
     let request_sink = Arc::clone(&requests);
     let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -292,7 +292,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                 frame = websocket.next() => frame,
                 event = embedded.next_event() => {
                     let Some(event) = event else { break };
-                    if let genex_app_server_client::InProcessServerEvent::ServerNotification(notification) = event
+                    if let ruxex_app_server_client::InProcessServerEvent::ServerNotification(notification) = event
                         && matches!(*notification, ServerNotification::ThreadSettingsUpdated(_))
                     {
                         websocket.send(Message::Text(serde_json::to_string(&notification)?.into())).await?;
@@ -321,8 +321,8 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
                             serde_json::to_string(&JSONRPCMessage::Response(JSONRPCResponse {
                                 id: request.id,
                                 result: serde_json::json!({
-                                    "userAgent": "genex-tui-test",
-                                    "genexHome": genex_home,
+                                    "userAgent": "ruxex-tui-test",
+                                    "ruxexHome": ruxex_home,
                                 }),
                             }))?
                             .into(),
@@ -625,7 +625,7 @@ pub(super) async fn start_recording_app_server_with_realtime_speech(
 
     Ok((
         AppServerSession::new(app_server, thread_params_mode)
-            .with_local_genex_home(&config.genex_home),
+            .with_local_ruxex_home(&config.ruxex_home),
         requests,
         proxy,
     ))
@@ -638,7 +638,7 @@ fn create_history_rollout(
 ) -> Result<ThreadId> {
     let create_rollout = create_fake_paginated_rollout;
     let thread_id = create_rollout(
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         preview,
@@ -660,10 +660,10 @@ pub(super) fn recorded_params(requests: &RecordedRequests, method: &str) -> Vec<
 
 async fn make_history_test_app() -> Result<(App, tempfile::TempDir)> {
     let mut app = make_test_app().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
-    Ok((app, genex_home))
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
+    Ok((app, ruxex_home))
 }
 
 #[tokio::test]
@@ -677,7 +677,7 @@ async fn delete_current_thread_navigates_only_after_success() -> Result<()> {
         },
         AppServerTarget::Remote { endpoint },
     ] {
-        let (mut app, _genex_home) = make_history_test_app().await?;
+        let (mut app, _ruxex_home) = make_history_test_app().await?;
         let thread_id =
             create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "delete me")?;
         let (mut server, requests, proxy) = start_recording_app_server(
@@ -799,7 +799,7 @@ fn spawn_approved_task_tool_call(
     app: &App,
     app_server: &AppServerSession,
     request_id: AppServerRequestId,
-    params: genex_app_server_protocol::DynamicToolCallParams,
+    params: ruxex_app_server_protocol::DynamicToolCallParams,
 ) {
     let request_handle = app_server.request_handle();
     let app_event_tx = app.app_event_tx.clone();
@@ -831,7 +831,7 @@ fn spawn_approved_task_tool_call(
 
 #[tokio::test]
 async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = Box::pin(start_recording_app_server(
         &app.config,
         /*blocked_thread_list*/ None,
@@ -857,7 +857,7 @@ async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() ->
     assert_eq!(starts.len(), 2);
     for params in starts {
         assert_eq!(params["dynamicTools"][0]["type"], "namespace");
-        assert_eq!(params["dynamicTools"][0]["name"], "genex_tui");
+        assert_eq!(params["dynamicTools"][0]["name"], "ruxex_tui");
         assert_eq!(
             params["dynamicTools"][0]["tools"].as_array().map(Vec::len),
             Some(6)
@@ -942,10 +942,10 @@ async fn external_transport_registers_dynamic_tools_and_finds_task_mentions() ->
 
 #[tokio::test]
 async fn archive_current_thread_reports_success_only_after_archiving() -> Result<()> {
-    let (mut app, _genex_home) = make_history_test_app().await?;
+    let (mut app, _ruxex_home) = make_history_test_app().await?;
     let thread_id = ThreadId::from_string(
         &create_fake_rollout(
-            &app.config.genex_home,
+            &app.config.ruxex_home,
             "2026-08-25T01-00-00",
             "2026-08-25T01:00:00Z",
             "archive me",
@@ -977,14 +977,14 @@ async fn archive_current_thread_reports_success_only_after_archiving() -> Result
 #[tokio::test]
 async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() -> Result<()> {
     let (mut app, events, _ops) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
     app.config
         .web_search_mode
-        .set(genex_protocol::config_types::WebSearchMode::Live)?;
+        .set(ruxex_protocol::config_types::WebSearchMode::Live)?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         "web_search = \"disabled\"\n",
     )?;
     // Keep the large lifecycle futures off the Windows test thread's stack.
@@ -1017,14 +1017,14 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     .await?;
     assert!(startup.task_tools_available);
 
-    let inventory: genex_app_server_protocol::ListMcpServerStatusResponse = app_server
+    let inventory: ruxex_app_server_protocol::ListMcpServerStatusResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::McpServerStatusList {
             request_id: AppServerRequestId::String("tui-tool-inventory".to_string()),
-            params: genex_app_server_protocol::ListMcpServerStatusParams {
+            params: ruxex_app_server_protocol::ListMcpServerStatusParams {
                 cursor: None,
                 limit: None,
-                detail: Some(genex_app_server_protocol::McpServerStatusDetail::ToolsAndAuthOnly),
+                detail: Some(ruxex_app_server_protocol::McpServerStatusDetail::ToolsAndAuthOnly),
                 thread_id: Some(thread_id.to_string()),
             },
         })
@@ -1032,7 +1032,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     let tools = &inventory
         .data
         .iter()
-        .find(|server| server.name == "genex_tui")
+        .find(|server| server.name == "ruxex_tui")
         .expect("local daemon must connect to the TUI MCP server")
         .tools;
     assert_eq!(tools.len(), 9);
@@ -1052,7 +1052,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     for params in &starts {
         assert_eq!(params["dynamicTools"], serde_json::Value::Null);
         assert_eq!(params["config"]["web_search"], "live");
-        let server = &params["config"]["mcp_servers.genex_tui"];
+        let server = &params["config"]["mcp_servers.ruxex_tui"];
         assert!(
             server["url"]
                 .as_str()
@@ -1069,10 +1069,10 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         }
     }
 
-    let mcp_url = starts[0]["config"]["mcp_servers.genex_tui"]["url"]
+    let mcp_url = starts[0]["config"]["mcp_servers.ruxex_tui"]["url"]
         .as_str()
         .expect("MCP server URL");
-    let unauthorized = genex_http_client::HttpClientBuilder::new()
+    let unauthorized = ruxex_http_client::HttpClientBuilder::new()
         .build_direct()?
         .post(mcp_url)
         .send()
@@ -1081,7 +1081,7 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
 
     app.config
         .web_search_mode
-        .set(genex_protocol::config_types::WebSearchMode::Disabled)?;
+        .set(ruxex_protocol::config_types::WebSearchMode::Disabled)?;
     let delegation_source = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -1098,8 +1098,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("resumed task request");
     assert_eq!(
-        resumed["config"]["mcp_servers.genex_tui"],
-        starts[0]["config"]["mcp_servers.genex_tui"]
+        resumed["config"]["mcp_servers.ruxex_tui"],
+        starts[0]["config"]["mcp_servers.ruxex_tui"]
     );
     Box::pin(app_server.resume_thread(
         &app.local_settings,
@@ -1112,8 +1112,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("reattached task request");
     assert_eq!(
-        reattached["config"]["mcp_servers.genex_tui"],
-        starts[0]["config"]["mcp_servers.genex_tui"]
+        reattached["config"]["mcp_servers.ruxex_tui"],
+        starts[0]["config"]["mcp_servers.ruxex_tui"]
     );
     Box::pin(app_server.fork_thread(&app.local_settings, app.config.clone(), delegation_source))
         .await?;
@@ -1121,14 +1121,14 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("forked task request");
     assert_eq!(
-        forked["config"]["mcp_servers.genex_tui"],
-        starts[0]["config"]["mcp_servers.genex_tui"]
+        forked["config"]["mcp_servers.ruxex_tui"],
+        starts[0]["config"]["mcp_servers.ruxex_tui"]
     );
     let authorization =
-        starts[0]["config"]["mcp_servers.genex_tui"]["http_headers"]["Authorization"]
+        starts[0]["config"]["mcp_servers.ruxex_tui"]["http_headers"]["Authorization"]
             .as_str()
             .expect("MCP bearer token");
-    let client = genex_http_client::HttpClientBuilder::new().build_direct()?;
+    let client = ruxex_http_client::HttpClientBuilder::new().build_direct()?;
     let call_tool = |id: u32, tool: &'static str, arguments: serde_json::Value| {
         client
             .post(mcp_url)
@@ -1233,8 +1233,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
     assert_eq!(child["dynamicTools"], serde_json::Value::Null);
     assert!(child["config"]["web_search"].is_null());
     assert_eq!(
-        child["config"]["mcp_servers.genex_tui"],
-        starts[0]["config"]["mcp_servers.genex_tui"]
+        child["config"]["mcp_servers.ruxex_tui"],
+        starts[0]["config"]["mcp_servers.ruxex_tui"]
     );
     let forked = call_tool(
         3,
@@ -1248,8 +1248,8 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
         .pop()
         .expect("MCP-created fork request");
     assert_eq!(
-        forked["config"]["mcp_servers.genex_tui"],
-        starts[0]["config"]["mcp_servers.genex_tui"]
+        forked["config"]["mcp_servers.ruxex_tui"],
+        starts[0]["config"]["mcp_servers.ruxex_tui"]
     );
 
     app_server.shutdown().await?;
@@ -1260,15 +1260,15 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() 
 #[tokio::test]
 async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Result<()> {
     for scenario in ["conflicting", "blocked", "mismatched", "allowed"] {
-        let (mut app, _genex_home) = make_history_test_app().await?;
+        let (mut app, _ruxex_home) = make_history_test_app().await?;
         if scenario == "conflicting" {
-            let raw = serde_json::from_value::<genex_config::RawMcpServerConfig>(
+            let raw = serde_json::from_value::<ruxex_config::RawMcpServerConfig>(
                 serde_json::json!({"url": "http://127.0.0.1:1/mcp", "enabled": false}),
             )?;
             let mut servers = app.config.mcp_servers.get().clone();
             servers.insert(
                 crate::dynamic_tools::NAMESPACE.to_string(),
-                genex_config::McpServerConfig::try_from(raw)
+                ruxex_config::McpServerConfig::try_from(raw)
                     .map_err(color_eyre::eyre::Report::msg)?,
             );
             app.config.mcp_servers.set(servers)?;
@@ -1276,31 +1276,31 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
             let mut allowed_servers = std::collections::BTreeMap::new();
             if matches!(scenario, "mismatched" | "allowed") {
                 let requirement = if scenario == "allowed" {
-                    genex_config::McpServerRequirement::Url(
-                        genex_protocol::mcp_policy::McpServerValueMatcher::Prefix {
+                    ruxex_config::McpServerRequirement::Url(
+                        ruxex_protocol::mcp_policy::McpServerValueMatcher::Prefix {
                             value: "http://127.0.0.1:".to_string(),
                         },
                     )
                 } else {
-                    genex_config::McpServerRequirement::Identity {
-                        identity: genex_config::McpServerIdentity::Url {
+                    ruxex_config::McpServerRequirement::Identity {
+                        identity: ruxex_config::McpServerIdentity::Url {
                             url: "http://127.0.0.1:1/mcp".to_string(),
                         },
                     }
                 };
                 allowed_servers.insert(crate::dynamic_tools::NAMESPACE.to_string(), requirement);
             }
-            let requirements = genex_config::ConfigRequirements {
-                mcp_servers: Some(genex_config::Sourced::new(
+            let requirements = ruxex_config::ConfigRequirements {
+                mcp_servers: Some(ruxex_config::Sourced::new(
                     allowed_servers,
-                    genex_config::RequirementSource::Unknown,
+                    ruxex_config::RequirementSource::Unknown,
                 )),
                 ..Default::default()
             };
-            app.config.config_layer_stack = genex_config::ConfigLayerStack::new(
+            app.config.config_layer_stack = ruxex_config::ConfigLayerStack::new(
                 Vec::new(),
                 requirements,
-                genex_config::ConfigRequirementsToml::default(),
+                ruxex_config::ConfigRequirementsToml::default(),
             )?;
         }
         let (mut app_server, requests, proxy) = start_recording_app_server(
@@ -1335,13 +1335,13 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
             .expect("fallback task start");
         if scenario == "allowed" {
             assert!(start["dynamicTools"].is_null());
-            assert!(start["config"]["mcp_servers.genex_tui"].is_object());
+            assert!(start["config"]["mcp_servers.ruxex_tui"].is_object());
         } else {
             assert_eq!(
                 start["dynamicTools"][0]["tools"].as_array().map(Vec::len),
                 Some(6)
             );
-            assert!(start["config"]["mcp_servers.genex_tui"].is_null());
+            assert!(start["config"]["mcp_servers.ruxex_tui"].is_null());
         }
         app_server.shutdown().await?;
         proxy.await??;
@@ -1351,7 +1351,7 @@ async fn local_mcp_respects_configured_servers_and_managed_requirements() -> Res
 
 #[tokio::test]
 async fn older_external_server_starts_without_unsupported_dynamic_tools_or_history() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
         &app.config,
         HistoryCapabilities::LegacyDynamicToolsAndHistory,
@@ -1395,20 +1395,20 @@ async fn older_external_server_starts_without_unsupported_dynamic_tools_or_histo
 #[tokio::test]
 async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
     let app_server = crate::start_embedded_app_server_for_picker(&app.config).await?;
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(100),
-                params: genex_app_server_protocol::DynamicToolCallParams {
+                params: ruxex_app_server_protocol::DynamicToolCallParams {
                     thread_id: "thread-1".to_string(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-1".to_string(),
-                    namespace: Some("genex_app".to_string()),
+                    namespace: Some("ruxex_app".to_string()),
                     tool: "list_threads".to_string(),
                     arguments: serde_json::json!({}),
                 },
@@ -1430,14 +1430,14 @@ async fn embedded_server_rejects_unowned_dynamic_tool_calls() -> Result<()> {
 #[tokio::test]
 async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespace() -> Result<()> {
     let (mut app, mut events, _ops) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
     app.config
         .permissions
         .set_permission_profile(PermissionProfile::workspace_write_with(
             &[app.config.cwd.clone()],
-            genex_protocol::permissions::NetworkSandboxPolicy::Restricted,
+            ruxex_protocol::permissions::NetworkSandboxPolicy::Restricted,
             /*exclude_tmpdir_env_var*/ true,
             /*exclude_slash_tmp*/ true,
         ))?;
@@ -1454,13 +1454,13 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         .thread_id
         .to_string();
 
-    for namespace in [Some("genex_app"), None] {
+    for namespace in [Some("ruxex_app"), None] {
         app.handle_app_server_event(
             &app_server,
-            genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+            ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(
                 ServerRequest::DynamicToolCall {
                     request_id: AppServerRequestId::Integer(100),
-                    params: genex_app_server_protocol::DynamicToolCallParams {
+                    params: ruxex_app_server_protocol::DynamicToolCallParams {
                         thread_id: thread_id.clone(),
                         turn_id: "turn-1".to_string(),
                         call_id: "call-1".to_string(),
@@ -1477,14 +1477,14 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(101),
-                params: genex_app_server_protocol::DynamicToolCallParams {
+                params: ruxex_app_server_protocol::DynamicToolCallParams {
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-2".to_string(),
-                    namespace: Some("genex_tui".to_string()),
+                    namespace: Some("ruxex_tui".to_string()),
                     tool: "list_threads".to_string(),
                     arguments: serde_json::json!({}),
                 },
@@ -1534,14 +1534,14 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(
             ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(102),
-                params: genex_app_server_protocol::DynamicToolCallParams {
+                params: ruxex_app_server_protocol::DynamicToolCallParams {
                     thread_id: thread_id.clone(),
                     turn_id: "turn-1".to_string(),
                     call_id: "call-3".to_string(),
-                    namespace: Some("genex_tui".to_string()),
+                    namespace: Some("ruxex_tui".to_string()),
                     tool: "set_thread_title".to_string(),
                     arguments: serde_json::json!({"threadId": thread_id, "title": "Renamed"}),
                 },
@@ -1568,14 +1568,14 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
     {
         app.handle_app_server_event(
             &app_server,
-            genex_app_server_client::AppServerEvent::ServerRequest(Box::new(
+            ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(
                 ServerRequest::DynamicToolCall {
                     request_id: AppServerRequestId::String(format!("rejected-{index}")),
-                    params: genex_app_server_protocol::DynamicToolCallParams {
+                    params: ruxex_app_server_protocol::DynamicToolCallParams {
                         thread_id: thread_id.clone(),
                         turn_id: "turn-1".to_string(),
                         call_id: format!("rejected-{index}"),
-                        namespace: Some("genex_tui".to_string()),
+                        namespace: Some("ruxex_tui".to_string()),
                         tool: tool.to_string(),
                         arguments: serde_json::json!({}),
                     },
@@ -1605,13 +1605,13 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             crate::app_server_session::ResumeModelSettings::RestoreFromThread,
         )
         .await?;
-    let project: genex_app_server_protocol::ProjectCreateResponse = app_server
+    let project: ruxex_app_server_protocol::ProjectCreateResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ProjectCreate {
             request_id: AppServerRequestId::String("create-source-project".to_string()),
-            params: genex_app_server_protocol::ProjectCreateParams {
+            params: ruxex_app_server_protocol::ProjectCreateParams {
                 name: "Source project".to_string(),
-                roots: vec![genex_app_server_protocol::ProjectRoot {
+                roots: vec![ruxex_app_server_protocol::ProjectRoot {
                     path: app.config.cwd.clone(),
                 }],
                 metadata: None,
@@ -1619,11 +1619,11 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             },
         })
         .await?;
-    let _: genex_app_server_protocol::ThreadMetadataUpdateResponse = app_server
+    let _: ruxex_app_server_protocol::ThreadMetadataUpdateResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ThreadMetadataUpdate {
             request_id: AppServerRequestId::String("assign-source-project".to_string()),
-            params: genex_app_server_protocol::ThreadMetadataUpdateParams {
+            params: ruxex_app_server_protocol::ThreadMetadataUpdateParams {
                 thread_id: creation_source.to_string(),
                 project_id: Some(project.project.id.clone()),
                 daybreak_enabled: None,
@@ -1631,13 +1631,13 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
             },
         })
         .await?;
-    let source_settings: genex_app_server_protocol::ThreadResumeResponse = app_server
+    let source_settings: ruxex_app_server_protocol::ThreadResumeResponse = app_server
         .request_handle()
         .request_typed(ClientRequest::ThreadResume {
             request_id: AppServerRequestId::String("read-source-sandbox".to_string()),
-            params: genex_app_server_protocol::ThreadResumeParams {
+            params: ruxex_app_server_protocol::ThreadResumeParams {
                 thread_id: creation_source.to_string(),
-                ..genex_app_server_protocol::ThreadResumeParams::default()
+                ..ruxex_app_server_protocol::ThreadResumeParams::default()
             },
         })
         .await?;
@@ -1647,11 +1647,11 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         &app,
         &app_server,
         AppServerRequestId::Integer(103),
-        genex_app_server_protocol::DynamicToolCallParams {
+        ruxex_app_server_protocol::DynamicToolCallParams {
             thread_id: creation_source.to_string(),
             turn_id: "turn-1".to_string(),
             call_id: "call-4".to_string(),
-            namespace: Some("genex_tui".to_string()),
+            namespace: Some("ruxex_tui".to_string()),
             tool: "create_thread".to_string(),
             arguments: serde_json::json!({
                 "prompt": "Check <main> & report",
@@ -1710,16 +1710,16 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         turn["toolOutput"],
         serde_json::json!({
             "name": "create_thread",
-            "namespace": "genex_tui",
+            "namespace": "ruxex_tui",
             "output": format!(
-                "<genex_delegation>\n  <source_thread_id>{creation_source}</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report</input>\n</genex_delegation>"
+                "<ruxex_delegation>\n  <source_thread_id>{creation_source}</source_thread_id>\n  <input>Check &lt;main&gt; &amp; report</input>\n</ruxex_delegation>"
             )
         })
     );
     assert_eq!(turn["sandboxPolicy"], source_sandbox);
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
+        ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
             created_thread_id,
             "turn-2",
             "item-1",
@@ -1736,11 +1736,11 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         &app,
         &app_server,
         AppServerRequestId::Integer(104),
-        genex_app_server_protocol::DynamicToolCallParams {
+        ruxex_app_server_protocol::DynamicToolCallParams {
             thread_id: thread_id.clone(),
             turn_id: "turn-1".to_string(),
             call_id: "call-5".to_string(),
-            namespace: Some("genex_tui".to_string()),
+            namespace: Some("ruxex_tui".to_string()),
             tool: "send_message_to_thread".to_string(),
             arguments: serde_json::json!({
                 "threadId": creation_source,
@@ -1784,9 +1784,9 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
         turn["toolOutput"],
         serde_json::json!({
             "name": "send_message_to_thread",
-            "namespace": "genex_tui",
+            "namespace": "ruxex_tui",
             "output": format!(
-                "<genex_delegation>\n  <source_thread_id>{thread_id}</source_thread_id>\n  <input>Follow &lt;up&gt; &amp; report</input>\n</genex_delegation>"
+                "<ruxex_delegation>\n  <source_thread_id>{thread_id}</source_thread_id>\n  <input>Follow &lt;up&gt; &amp; report</input>\n</ruxex_delegation>"
             )
         })
     );
@@ -1824,12 +1824,12 @@ async fn dynamic_tool_requests_ignore_other_namespaces_and_dispatch_tui_namespac
 #[tokio::test]
 async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
     app.local_settings.tui.terminal_resize_reflow_max_rows = Some(2);
     let thread_id = create_fake_paginated_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2026-01-02T00-00-00",
         "2026-01-02T00:00:00Z",
         "multi-page transcript",
@@ -1838,7 +1838,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     .map_err(|error| color_eyre::eyre::eyre!("failed to create paginated rollout: {error}"))?;
     let thread_id = ThreadId::from_string(&thread_id)?;
     let path = rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         "2026-01-02T00-00-00",
         &thread_id.to_string(),
     );
@@ -1913,7 +1913,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
     while app_event_rx.try_recv().is_ok() {}
     let initial_turn_requests = recorded_params(&requests, "thread/turns/list").len();
     let initial_item_requests = recorded_params(&requests, "thread/items/list").len();
-    let export_path = genex_home.path().join("complete-export.md");
+    let export_path = ruxex_home.path().join("complete-export.md");
     app.chat_widget
         .set_queue_autosend_suppressed(/*suppressed*/ true);
     app.chat_widget.insert_str("queued after export");
@@ -2000,7 +2000,7 @@ async fn transcript_home_loads_every_older_history_page() -> Result<()> {
 
 #[tokio::test]
 async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let legacy_thread_id =
         create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let paginated_thread_id = create_history_rollout(
@@ -2068,7 +2068,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
     let (_status_sender, status_updates) = tokio::sync::broadcast::channel(/*capacity*/ 1);
     let response = crate::dynamic_tools::execute(
         app_server.request_handle(),
-        genex_app_server_protocol::DynamicToolCallParams {
+        ruxex_app_server_protocol::DynamicToolCallParams {
             thread_id: started.session.thread_id.to_string(),
             turn_id: "source-turn".to_string(),
             call_id: "legacy-wait".to_string(),
@@ -2079,7 +2079,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
                 "timeoutMs": 0
             }),
         },
-        genex_app_server_protocol::ThreadStartParams::default(),
+        ruxex_app_server_protocol::ThreadStartParams::default(),
         status_updates,
         /*app_event_tx*/ None,
     )
@@ -2100,7 +2100,7 @@ async fn remote_legacy_history_start_negotiates_once_for_resume_and_fork() -> Re
 
 #[tokio::test]
 async fn remote_legacy_history_start_retries_unsupported_paginated_variant() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
         &app.config,
         HistoryCapabilities::LegacyOnlyUnsupportedVariant,
@@ -2130,7 +2130,7 @@ enum LegacyHistoryRequest {
 }
 
 async fn assert_remote_legacy_history_retry(request: LegacyHistoryRequest) -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let legacy_thread_id =
         create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "legacy history")?;
     let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
@@ -2195,7 +2195,7 @@ async fn remote_legacy_history_fork_avoids_unsupported_fields() -> Result<()> {
 
 #[tokio::test]
 async fn paginated_fork_survives_post_response_hydration_failure() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let parent_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2236,9 +2236,9 @@ async fn paginated_fork_survives_post_response_hydration_failure() -> Result<()>
 #[tokio::test]
 async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcript() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
     app.local_settings.tui.terminal_resize_reflow_max_rows = Some(8);
     let thread_id = create_history_rollout(
         &app.config,
@@ -2246,7 +2246,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
         "scrollback pagination",
     )?;
     let path = rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         "2026-01-02T00-00-00",
         &thread_id.to_string(),
     );
@@ -2367,14 +2367,14 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
         };
         let partial = render_overlay(overlay);
         assert!(partial.contains("Earlier messages are available — scroll up to load them"));
-        assert!(!partial.contains("provider Genex"));
+        assert!(!partial.contains("provider Ruxex"));
         assert!(!partial.contains("This is a test announcement"));
         assert!(!partial.contains('%'));
 
         overlay.set_history_state(crate::pager_overlay::TranscriptHistoryState::LoadingOlder);
         let loading = render_overlay(overlay);
         assert!(loading.contains("Loading earlier messages..."));
-        assert!(!loading.contains("provider Genex"));
+        assert!(!loading.contains("provider Ruxex"));
         assert!(!loading.contains('%'));
     } else {
         panic!("expected transcript overlay");
@@ -2421,7 +2421,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
 
 #[tokio::test]
 async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
-    let (app, _genex_home) = make_history_test_app().await?;
+    let (app, _ruxex_home) = make_history_test_app().await?;
     let paginated_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2519,7 +2519,7 @@ async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
 
 #[tokio::test]
 async fn agents_overview_stop_uses_history_mode_for_turn_lookup() -> Result<()> {
-    let (mut app, _genex_home) = make_history_test_app().await?;
+    let (mut app, _ruxex_home) = make_history_test_app().await?;
     let paginated_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2583,7 +2583,7 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
             vec!["recency_at", "recency_at", "recency_at", "recency_at"],
         ),
     ] {
-        let (mut app, _genex_home) = make_history_test_app().await?;
+        let (mut app, _ruxex_home) = make_history_test_app().await?;
         let (mut app_server, requests, proxy) = start_recording_app_server_with_history(
             &app.config,
             capabilities,
@@ -2631,9 +2631,9 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
                     &app_server,
                     AppServerEvent::ServerNotification(Box::new(
                         ServerNotification::ThreadStatusChanged(
-                            genex_app_server_protocol::ThreadStatusChangedNotification {
+                            ruxex_app_server_protocol::ThreadStatusChangedNotification {
                                 thread_id: started.session.thread_id.to_string(),
-                                status: genex_app_server_protocol::ThreadStatus::Idle,
+                                status: ruxex_app_server_protocol::ThreadStatus::Idle,
                             },
                         ),
                     )),
@@ -2657,7 +2657,7 @@ async fn agents_overview_seeds_loaded_threads_when_recent_listing_is_unavailable
 
 #[tokio::test]
 async fn agents_overview_stop_uses_full_history_after_legacy_negotiation() -> Result<()> {
-    let (mut app, _genex_home) = make_history_test_app().await?;
+    let (mut app, _ruxex_home) = make_history_test_app().await?;
     let thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2691,7 +2691,7 @@ async fn agents_overview_stop_uses_full_history_after_legacy_negotiation() -> Re
 
 #[tokio::test]
 async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() -> Result<()> {
-    let (app, genex_home) = make_history_test_app().await?;
+    let (app, ruxex_home) = make_history_test_app().await?;
     let parent_thread_id = create_history_rollout(
         &app.config,
         ThreadHistoryMode::Paginated,
@@ -2700,7 +2700,7 @@ async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() 
     let child_timestamp = "2026-01-02T00-00-01";
     let child_thread_id = ThreadId::from_string(
         &create_fake_parented_rollout_with_source(
-            genex_home.path(),
+            ruxex_home.path(),
             child_timestamp,
             "2026-01-02T00:00:01Z",
             "child-only paginated history",
@@ -2720,7 +2720,7 @@ async fn cold_paginated_subagent_transcript_excludes_inherited_parent_history() 
         .map_err(|err| color_eyre::eyre::eyre!("failed to create subagent rollout: {err}"))?,
     )?;
     let child_rollout_path = rollout_path(
-        genex_home.path(),
+        ruxex_home.path(),
         child_timestamp,
         &child_thread_id.to_string(),
     );
@@ -2892,9 +2892,9 @@ fn fresh_session_applies_requested_name() -> Result<()> {
                 .build()?;
             runtime.block_on(async {
                 let mut app = make_test_app().await;
-                let genex_home = tempdir()?;
-                app.config.genex_home = genex_home.path().to_path_buf().abs();
-                app.config.sqlite = SqliteConfig::new_for_testing(genex_home.path().abs());
+                let ruxex_home = tempdir()?;
+                app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+                app.config.sqlite = SqliteConfig::new_for_testing(ruxex_home.path().abs());
                 let (mut app_server, requests, proxy) = start_recording_app_server(
                     &app.config,
                     /*blocked_thread_list*/ None,
@@ -2955,7 +2955,7 @@ async fn external_writer_escape_preserves_snapshot_and_explicit_quits() -> Resul
         },
         AppServerTarget::Remote { endpoint },
     ] {
-        let (mut app, _genex_home) = make_history_test_app().await?;
+        let (mut app, _ruxex_home) = make_history_test_app().await?;
         let thread_id =
             create_history_rollout(&app.config, ThreadHistoryMode::Paginated, "owned elsewhere")?;
         let (mut server, requests, proxy) = start_recording_app_server(

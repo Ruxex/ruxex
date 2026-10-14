@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use std::process::Command;
 
-pub const GENEX_ARG0_EXEC_HELPER_ARG1: &str = "--genex-run-as-arg0-exec-helper";
+pub const RUXEX_ARG0_EXEC_HELPER_ARG1: &str = "--ruxex-run-as-arg0-exec-helper";
 
 #[cfg(unix)]
 pub fn main() -> ! {

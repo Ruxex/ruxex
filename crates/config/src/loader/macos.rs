@@ -17,14 +17,14 @@ use core_foundation::base::CFType;
 use core_foundation::base::TCFType;
 use core_foundation::string::CFString;
 use core_foundation::string::CFStringRef;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
 use std::ffi::c_void;
 use std::io;
 use std::path::Path;
 use tokio::task;
 use toml::Value as TomlValue;
 
-const MANAGED_PREFERENCES_APPLICATION_ID: &str = "com.genex.genex";
+const MANAGED_PREFERENCES_APPLICATION_ID: &str = "com.ruxex.ruxex";
 const MANAGED_PREFERENCES_CONFIG_KEY: &str = "config_toml_base64";
 const MANAGED_PREFERENCES_REQUIREMENTS_KEY: &str = "requirements_toml_base64";
 

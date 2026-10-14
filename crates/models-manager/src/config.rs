@@ -1,4 +1,4 @@
-use genex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelCatalog;
 
 #[derive(Debug, Clone, Default)]
 pub struct ModelsManagerConfig {

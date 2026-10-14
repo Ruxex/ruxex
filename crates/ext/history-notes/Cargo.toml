@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-history-notes-extension"
+name = "ruxex-history-notes-extension"
 version.workspace = true
 
 [lib]
-name = "genex_history_notes_extension"
+name = "ruxex_history_notes_extension"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,21 +13,21 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-core = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-http-client = { workspace = true }
-genex-login = { workspace = true }
-genex-model-provider = { workspace = true }
-genex-providers = { workspace = true }
-genex-protocol = { workspace = true }
-genex-tools = { workspace = true }
-genex-utils-output-truncation = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
 http = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
-genex-config = { workspace = true }
-genex-model-provider-info = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
 core_test_support = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

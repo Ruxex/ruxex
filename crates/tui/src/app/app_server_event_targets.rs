@@ -1,8 +1,8 @@
 //! Thread targeting helpers for app-server requests and notifications.
 
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_protocol::ThreadId;
 
 pub(super) fn server_request_thread_id(request: &ServerRequest) -> Option<ThreadId> {
     match request {

@@ -18,7 +18,7 @@ use crate::keymap::RuntimeKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
-use genex_protocol::items::AsyncUserInputQuestion;
+use ruxex_protocol::items::AsyncUserInputQuestion;
 use std::collections::HashSet;
 use std::time::Duration;
 use std::time::Instant;

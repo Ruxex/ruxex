@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadParams;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::RemoteCompactionSupport;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadParams;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use ruxex_app_server_protocol::RemoteCompactionSupport;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -13,9 +13,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[tokio::test]
 async fn read_default_provider_capabilities() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;

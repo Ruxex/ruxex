@@ -3,41 +3,41 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use genex_extension_api::ConfigContributor;
-use genex_extension_api::ContentItemKind;
-use genex_extension_api::ContextContributor;
-use genex_extension_api::ContextualUserFragment;
-use genex_extension_api::ConversationHistorySnapshot;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::ExtensionEventSink;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionMetrics;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::ExtensionTurnInterrupt;
-use genex_extension_api::ExtensionWarning;
-use genex_extension_api::McpServerContributionContext;
-use genex_extension_api::PromptFragment;
-use genex_extension_api::ResponseItem;
-use genex_extension_api::SkillInvocationContributor;
-use genex_extension_api::ThreadLifecycleContributor;
-use genex_extension_api::TokenUsageContributor;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolContributor;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolLifecycleContributor;
-use genex_extension_api::TurnContextContributionInput;
-use genex_extension_api::TurnInputContext;
-use genex_extension_api::TurnInputContributor;
-use genex_extension_api::TurnItemContributor;
-use genex_extension_api::TurnLifecycleContributor;
-use genex_protocol::items::HookPromptItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::WarningEvent;
+use ruxex_extension_api::ConfigContributor;
+use ruxex_extension_api::ContentItemKind;
+use ruxex_extension_api::ContextContributor;
+use ruxex_extension_api::ContextualUserFragment;
+use ruxex_extension_api::ConversationHistorySnapshot;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::ExtensionEventSink;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::ExtensionTurnInterrupt;
+use ruxex_extension_api::ExtensionWarning;
+use ruxex_extension_api::McpServerContributionContext;
+use ruxex_extension_api::PromptFragment;
+use ruxex_extension_api::ResponseItem;
+use ruxex_extension_api::SkillInvocationContributor;
+use ruxex_extension_api::ThreadLifecycleContributor;
+use ruxex_extension_api::TokenUsageContributor;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolContributor;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolLifecycleContributor;
+use ruxex_extension_api::TurnContextContributionInput;
+use ruxex_extension_api::TurnInputContext;
+use ruxex_extension_api::TurnInputContributor;
+use ruxex_extension_api::TurnItemContributor;
+use ruxex_extension_api::TurnLifecycleContributor;
+use ruxex_protocol::items::HookPromptItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::WarningEvent;
 use pretty_assertions::assert_eq;
 
 struct AllContributors;
@@ -53,7 +53,7 @@ fn mcp_contribution_context_identifies_the_running_thread() {
         &config,
         &thread_init,
         &thread_store,
-        "genex_work_cca",
+        "ruxex_work_cca",
         &[],
         /*executor_capability_discovery*/ None,
     )
@@ -281,7 +281,7 @@ async fn contributors_preserve_registration_order() {
         fragments.extend(
             contributor
                 .contribute_turn_context(TurnContextContributionInput {
-                    thread_id: genex_protocol::ThreadId::default(),
+                    thread_id: ruxex_protocol::ThreadId::default(),
                     turn_id: turn_store.level_id(),
                     session_store: &session_store,
                     thread_store: &thread_store,

@@ -1,5 +1,5 @@
-use genex_plugin::PluginHookSource;
-use genex_protocol::protocol::HookEventName;
+use ruxex_plugin::PluginHookSource;
+use ruxex_protocol::protocol::HookEventName;
 
 /// Minimal declaration metadata for one bundled plugin hook handler.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,12 +38,12 @@ pub(crate) fn plugin_hook_key_source(plugin_id: &str, source_relative_path: &str
 
 #[cfg(test)]
 mod tests {
-    use genex_config::HookEventsToml;
-    use genex_config::HookHandlerConfig;
-    use genex_config::MatcherGroup;
-    use genex_plugin::PluginId;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_config::HookEventsToml;
+    use ruxex_config::HookHandlerConfig;
+    use ruxex_config::MatcherGroup;
+    use ruxex_plugin::PluginId;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
 
     use super::*;

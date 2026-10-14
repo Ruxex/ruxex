@@ -11,13 +11,13 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::LoginAccountResponse;
-use genex_app_server_protocol::McpServerToolCallParams;
-use genex_app_server_protocol::McpServerToolCallResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_features::Feature;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::LoginAccountResponse;
+use ruxex_app_server_protocol::McpServerToolCallParams;
+use ruxex_app_server_protocol::McpServerToolCallResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_features::Feature;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -50,13 +50,13 @@ impl CuratedMcpSyncFixture {
         let (mcp_server_url, mcp_server_handle) =
             start_mcp_server(/*sensitive_action*/ None).await?;
         let fixture_root = TempDir::new()?;
-        let genex_home = fixture_root.path().join("genex-home");
+        let ruxex_home = fixture_root.path().join("ruxex-home");
         let curated_repo = fixture_root.path().join("plugins.git");
         let git_wrapper_dir = fixture_root.path().join("bin");
         let git_config = fixture_root.path().join("gitconfig");
         let sync_barrier = fixture_root.path().join("allow-curated-sync");
         let malicious_git_helper_marker = fixture_root.path().join("malicious-git-helper-ran");
-        std::fs::create_dir_all(&genex_home)?;
+        std::fs::create_dir_all(&ruxex_home)?;
         std::fs::create_dir_all(&curated_repo)?;
         std::fs::create_dir_all(&git_wrapper_dir)?;
 
@@ -80,12 +80,12 @@ impl CuratedMcpSyncFixture {
         run_git(
             &real_git,
             &curated_repo,
-            &["config", "user.email", "genex-tests@provider.com"],
+            &["config", "user.email", "ruxex-tests@provider.com"],
         )?;
         run_git(
             &real_git,
             &curated_repo,
-            &["config", "user.name", "Genex Tests"],
+            &["config", "user.name", "Ruxex Tests"],
         )?;
         run_git(&real_git, &curated_repo, &["add", "."])?;
         run_git(
@@ -121,17 +121,17 @@ impl CuratedMcpSyncFixture {
         let mut helper_permissions = std::fs::metadata(&malicious_git_helper)?.permissions();
         helper_permissions.set_mode(0o755);
         std::fs::set_permissions(&malicious_git_helper, helper_permissions)?;
-        run_git(&real_git, &genex_home, &["init", "-b", "main"])?;
+        run_git(&real_git, &ruxex_home, &["init", "-b", "main"])?;
         run_git(
             &real_git,
-            &genex_home,
+            &ruxex_home,
             &["config", "protocol.ext.allow", "always"],
         )?;
         let malicious_rewrite_key =
             format!("url.ext::{}.insteadOf", malicious_git_helper.display());
         run_git(
             &real_git,
-            &genex_home,
+            &ruxex_home,
             &["config", &malicious_rewrite_key, GITHUB_PLUGINS_GIT_URL],
         )?;
         let git_wrapper = git_wrapper_dir.join("git");
@@ -163,9 +163,9 @@ enabled = true
 [mcp_servers.{REFRESH_PROBE_SERVER_NAME}]
 url = "{mcp_server_url}/mcp""#
             ))
-            .write(&genex_home)?;
+            .write(&ruxex_home)?;
         write_api_key_auth(
-            &genex_home,
+            &ruxex_home,
             ApiKeyAuthFixture::new("test-token")
                 .account_id("account-123")
                 .user_id("user-123")
@@ -182,7 +182,7 @@ url = "{mcp_server_url}/mcp""#
         let git_config = git_config.to_string_lossy();
         let sync_barrier_env = sync_barrier.to_string_lossy();
         let mcp = TestAppServer::builder()
-            .with_genex_home(&genex_home)
+            .with_ruxex_home(&ruxex_home)
             .with_env_overrides(&[
                 ("PATH", Some(child_path.as_ref())),
                 ("REAL_GIT", Some(real_git.as_ref())),
@@ -332,9 +332,9 @@ fn write_plugin(
     server_name: &str,
     mcp_server_url: &str,
 ) -> Result<()> {
-    std::fs::create_dir_all(root.join(".genex-plugin"))?;
+    std::fs::create_dir_all(root.join(".ruxex-plugin"))?;
     std::fs::write(
-        root.join(".genex-plugin/plugin.json"),
+        root.join(".ruxex-plugin/plugin.json"),
         serde_json::to_vec_pretty(&json!({"name": plugin_name}))?,
     )?;
     std::fs::write(

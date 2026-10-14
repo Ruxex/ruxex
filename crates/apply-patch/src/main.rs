@@ -1,3 +1,3 @@
 pub fn main() -> ! {
-    genex_apply_patch::main()
+    ruxex_apply_patch::main()
 }

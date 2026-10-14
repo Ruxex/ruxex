@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-goal-extension"
+name = "ruxex-goal-extension"
 version.workspace = true
 
 [lib]
-name = "genex_goal_extension"
+name = "ruxex_goal_extension"
 path = "src/lib.rs"
 test = false
 doctest = false
@@ -14,15 +14,15 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-core = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-otel = { workspace = true }
-genex-prompts = { workspace = true }
-genex-protocol = { workspace = true }
-genex-rollout = { workspace = true }
-genex-state = { workspace = true }
-genex-tools = { workspace = true }
-genex-utils-template = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-prompts = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-template = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
@@ -31,7 +31,7 @@ tracing = { workspace = true }
 [dev-dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -60,7 +60,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::ExperimentalApi as ExperimentalApiTrait;
-    use genex_experimental_api_macros::ExperimentalApi;
+    use ruxex_experimental_api_macros::ExperimentalApi;
     use pretty_assertions::assert_eq;
 
     #[allow(dead_code)]

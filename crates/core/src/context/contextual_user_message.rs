@@ -1,7 +1,7 @@
-use genex_protocol::items::HookPromptItem;
-use genex_protocol::items::parse_hook_prompt_fragment;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::items::HookPromptItem;
+use ruxex_protocol::items::parse_hook_prompt_fragment;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
 
 use super::AdditionalContextUserFragment;
 use super::ContextualUserFragment;
@@ -19,7 +19,7 @@ const CONTEXTUAL_USER_FRAGMENT_MATCHERS: &[fn(&str) -> bool] = &[
     UserInstructions::matches_text,
     EnvironmentsState::matches_text,
     AdditionalContextUserFragment::matches_text,
-    genex_skills_extension::is_skill_prompt_fragment,
+    ruxex_skills_extension::is_skill_prompt_fragment,
     UserShellCommand::matches_text,
     TurnAborted::matches_text,
     SubagentNotification::matches_text,

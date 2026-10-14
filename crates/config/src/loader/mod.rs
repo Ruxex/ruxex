@@ -34,13 +34,13 @@ use crate::strict_config::unknown_feature_toml_value_field;
 use crate::thread_config::ThreadConfigContext;
 use crate::thread_config::ThreadConfigLoader;
 use dunce::canonicalize as normalize_path;
-use genex_file_system::ExecutorFileSystem;
-use genex_git_utils::resolve_root_git_project_for_trust;
-use genex_network_proxy::is_credential_broker_provider_env_key;
-use genex_protocol::config_types::TrustLevel;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_git_utils::resolve_root_git_project_for_trust;
+use ruxex_network_proxy::is_credential_broker_provider_env_key;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use std::io;
 use std::path::Path;
@@ -53,7 +53,7 @@ pub use local::load_local_config_layers;
 pub use managed_requirements::load_managed_requirements_state;
 
 #[cfg(unix)]
-const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/genex/config.toml";
+const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/ruxex/config.toml";
 
 // Project-local config comes from repository contents, so it should not get to
 // choose where a user's credentials are sent or which local commands are run.
@@ -78,19 +78,19 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 /// composed with config-style TOML merging plus field-specific handling for
 /// hooks, rules, deny-read permissions, and remote sandbox config:
 ///
-/// - system    `/etc/genex/requirements.toml`
+/// - system    `/etc/ruxex/requirements.toml`
 /// - admin:    managed preferences (*)
 ///
 /// Configuration is built up from multiple layers in the following order:
 ///
-/// - package:  optional default configuration supplied with the Genex package
+/// - package:  optional default configuration supplied with the Ruxex package
 /// - admin:    managed preferences (*)
-/// - system    `/etc/genex/config.toml`
-/// - user      `${GENEX_HOME}/config.toml`
-/// - profile   `${GENEX_HOME}/<name>.config.toml`, when selected
+/// - system    `/etc/ruxex/config.toml`
+/// - user      `${RUXEX_HOME}/config.toml`
+/// - profile   `${RUXEX_HOME}/<name>.config.toml`, when selected
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
-/// - tree      parent directories up to root looking for `./.genex/config.toml` (loaded but disabled when untrusted)
-/// - repo      `$(git rev-parse --show-toplevel)/.genex/config.toml` (loaded but disabled when untrusted)
+/// - tree      parent directories up to root looking for `./.ruxex/config.toml` (loaded but disabled when untrusted)
+/// - repo      `$(git rev-parse --show-toplevel)/.ruxex/config.toml` (loaded but disabled when untrusted)
 /// - runtime   e.g., --config flags, model selector in UI
 ///
 /// (*) Only available on macOS via managed device profiles.
@@ -104,7 +104,7 @@ async fn first_layer_config_error_from_entries(layers: &[ConfigLayerEntry]) -> O
 #[allow(clippy::too_many_arguments)]
 pub async fn load_config_layers_state(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<AbsolutePathBuf>,
     cli_overrides: &[(String, TomlValue)],
     options: impl Into<ConfigLoadOptions>,
@@ -147,14 +147,14 @@ pub async fn load_config_layers_state(
         let config = toml::from_str(raw_toml).map_err(|error| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("invalid embedded packaged defaults; this is a Genex build error: {error}"),
+                format!("invalid embedded packaged defaults; this is a Ruxex build error: {error}"),
             )
         })?;
         ConfigLayerEntry::new_with_raw_toml(
             ConfigLayerSource::PackagedDefaults { file },
             config,
             raw_toml.to_owned(),
-            AbsolutePathBuf::from_absolute_path(genex_home)?,
+            AbsolutePathBuf::from_absolute_path(ruxex_home)?,
         )
     };
     let active_user_profile = overrides.user_config_profile.clone();
@@ -165,7 +165,7 @@ pub async fn load_config_layers_state(
     let (config_requirements_toml, loaded_config_layers, requirements_layers) =
         managed_requirements::load_requirements_from_sources(
             fs,
-            genex_home,
+            ruxex_home,
             &overrides,
             strict_config,
         )
@@ -191,7 +191,7 @@ pub async fn load_config_layers_state(
         let base_dir = cwd
             .as_ref()
             .map(AbsolutePathBuf::as_path)
-            .unwrap_or(genex_home);
+            .unwrap_or(ruxex_home);
         if strict_config {
             validate_cli_overrides_strictly(&cli_overrides_layer, base_dir)?;
         }
@@ -223,8 +223,8 @@ pub async fn load_config_layers_state(
     // Add the base user config layer. When profile-v2 is selected, add the
     // profile config as a second user layer on top so the profile only needs to
     // contain overrides.
-    let active_user_file = overrides.user_config_path(genex_home)?;
-    let base_user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, genex_home);
+    let active_user_file = overrides.user_config_path(ruxex_home)?;
+    let base_user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, ruxex_home);
     let base_user_layer = load_user_config_layer(
         fs,
         &base_user_file,
@@ -288,7 +288,7 @@ pub async fn load_config_layers_state(
         project_discovery::merge_managed_config_for_discovery(
             &mut merged_so_far,
             &loaded_config_layers,
-            genex_home,
+            ruxex_home,
         )?;
 
         let project_root_markers = vec![".git".to_string()];
@@ -298,7 +298,7 @@ pub async fn load_config_layers_state(
             &trusted_broker_config,
             &cwd,
             &project_root_markers,
-            genex_home,
+            ruxex_home,
             &active_user_file,
         )
         .await
@@ -325,7 +325,7 @@ pub async fn load_config_layers_state(
             &cwd,
             &project_trust_context.project_root,
             &project_trust_context,
-            genex_home,
+            ruxex_home,
             strict_config,
         )
         .await?;
@@ -356,14 +356,14 @@ pub async fn load_config_layers_state(
         // relies on AbsolutePathBufGuard to resolve `~/`, we must supply a
         // value for base_dir. Preserve that same base on the layer so later
         // raw-TOML diagnostics parse with the same path semantics.
-        let raw_toml_base_dir = AbsolutePathBuf::from_absolute_path(genex_home)?;
+        let raw_toml_base_dir = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
         let managed_config = resolve_relative_paths_in_config_toml(
             config.managed_config,
             raw_toml_base_dir.as_path(),
         )?;
         layers.push(ConfigLayerEntry::new_with_raw_toml(
             ConfigLayerSource::Mdm {
-                domain: "com.genex.genex".to_string(),
+                domain: "com.ruxex.ruxex".to_string(),
                 key: "config_toml_base64".to_string(),
             },
             managed_config,
@@ -622,7 +622,7 @@ pub async fn load_requirements_toml(
 
 #[cfg(unix)]
 fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    AbsolutePathBuf::from_absolute_path(Path::new("/etc/genex/requirements.toml"))
+    AbsolutePathBuf::from_absolute_path(Path::new("/etc/ruxex/requirements.toml"))
 }
 
 fn system_requirements_toml_file_with_overrides(
@@ -638,16 +638,16 @@ fn system_requirements_toml_file_with_overrides(
 ///
 /// Filesystem or managed-preference errors are returned so callers can conservatively avoid
 /// assuming that administrator-controlled configuration is absent.
-pub fn has_local_managed_configuration(genex_home: &Path) -> io::Result<bool> {
+pub fn has_local_managed_configuration(ruxex_home: &Path) -> io::Result<bool> {
     let system_requirements_file = system_requirements_toml_file()?;
     has_local_managed_configuration_with_system_requirements_path(
-        genex_home,
+        ruxex_home,
         system_requirements_file.as_path(),
     )
 }
 
 fn has_local_managed_configuration_with_system_requirements_path(
-    _genex_home: &Path,
+    _ruxex_home: &Path,
     system_requirements_path: &Path,
 ) -> io::Result<bool> {
     if system_requirements_path.try_exists()? {
@@ -813,18 +813,18 @@ impl ProjectTrustContext {
         }
 
         let relative_dir = dir.as_path().strip_prefix(checkout_root.as_path()).ok()?;
-        Some(repo_root.join(relative_dir).join(".genex"))
+        Some(repo_root.join(relative_dir).join(".ruxex"))
     }
 }
 
 fn project_layer_entry(
-    dot_genex_folder: &AbsolutePathBuf,
+    dot_ruxex_folder: &AbsolutePathBuf,
     config: TomlValue,
     disabled_reason: Option<String>,
     hooks_config_folder_override: Option<AbsolutePathBuf>,
 ) -> ConfigLayerEntry {
     let source = ConfigLayerSource::Project {
-        dot_genex_folder: dot_genex_folder.clone(),
+        dot_ruxex_folder: dot_ruxex_folder.clone(),
     };
 
     let entry = if let Some(reason) = disabled_reason {
@@ -927,10 +927,10 @@ fn sanitize_project_config(
 }
 
 fn project_ignored_config_keys_warning(
-    dot_genex_folder: &AbsolutePathBuf,
+    dot_ruxex_folder: &AbsolutePathBuf,
     ignored_keys: &[String],
 ) -> String {
-    let config_path = dot_genex_folder.join(CONFIG_TOML_FILE);
+    let config_path = dot_ruxex_folder.join(CONFIG_TOML_FILE);
     let ignored_keys = ignored_keys.join(", ");
     format!(
         concat!(
@@ -1247,7 +1247,7 @@ struct LoadedProjectLayers {
 
 #[derive(Debug, Clone)]
 struct DiscoveredProjectLayer {
-    dot_genex_folder: AbsolutePathBuf,
+    dot_ruxex_folder: AbsolutePathBuf,
     config: TomlValue,
     disabled_reason: Option<String>,
     hooks_config_folder_override: Option<AbsolutePathBuf>,
@@ -1270,7 +1270,7 @@ async fn load_project_layers(
     cwd: &AbsolutePathBuf,
     project_root: &AbsolutePathBuf,
     trust_context: &ProjectTrustContext,
-    genex_home: &Path,
+    ruxex_home: &Path,
     strict_config: bool,
 ) -> io::Result<LoadedProjectLayers> {
     let discovered = discover_project_layers(
@@ -1278,14 +1278,14 @@ async fn load_project_layers(
         cwd,
         project_root,
         trust_context,
-        genex_home,
+        ruxex_home,
         strict_config,
     )
     .await?;
     let mut layers = Vec::with_capacity(discovered.layers.len());
     for layer in discovered.layers {
         let config =
-            resolve_relative_paths_in_config_toml(layer.config, layer.dot_genex_folder.as_path())?;
+            resolve_relative_paths_in_config_toml(layer.config, layer.dot_ruxex_folder.as_path())?;
         let config = if layer.load_root_checkout_hooks {
             merge_root_checkout_project_hooks(
                 fs,
@@ -1298,7 +1298,7 @@ async fn load_project_layers(
             config
         };
         layers.push(project_layer_entry(
-            &layer.dot_genex_folder,
+            &layer.dot_ruxex_folder,
             config,
             layer.disabled_reason,
             layer.hooks_config_folder_override,
@@ -1316,12 +1316,12 @@ async fn discover_project_layers(
     cwd: &AbsolutePathBuf,
     project_root: &AbsolutePathBuf,
     trust_context: &ProjectTrustContext,
-    genex_home: &Path,
+    ruxex_home: &Path,
     strict_config: bool,
 ) -> io::Result<DiscoveredProjectLayers> {
-    let genex_home_abs = AbsolutePathBuf::from_absolute_path(genex_home)?;
-    let genex_home_normalized =
-        normalize_path(genex_home_abs.as_path()).unwrap_or_else(|_| genex_home_abs.to_path_buf());
+    let ruxex_home_abs = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
+    let ruxex_home_normalized =
+        normalize_path(ruxex_home_abs.as_path()).unwrap_or_else(|_| ruxex_home_abs.to_path_buf());
     let mut dirs = cwd
         .ancestors()
         .scan(false, |done, a| {
@@ -1340,10 +1340,10 @@ async fn discover_project_layers(
     let mut layers = Vec::new();
     let mut startup_warnings = Vec::new();
     for dir in dirs {
-        let dot_genex_abs = dir.join(".genex");
-        let dot_genex_uri = PathUri::from_abs_path(&dot_genex_abs);
+        let dot_ruxex_abs = dir.join(".ruxex");
+        let dot_ruxex_uri = PathUri::from_abs_path(&dot_ruxex_abs);
         if !fs
-            .get_metadata(&dot_genex_uri, Default::default(), /*sandbox*/ None)
+            .get_metadata(&dot_ruxex_uri, Default::default(), /*sandbox*/ None)
             .await
             .map(|metadata| metadata.is_directory)
             .unwrap_or(false)
@@ -1354,12 +1354,12 @@ async fn discover_project_layers(
         let decision = trust_context.decision_for_dir(&dir);
         let disabled_reason = trust_context.disabled_reason_for_decision(&decision);
         let hooks_config_folder_override = trust_context.root_checkout_hooks_folder_for_dir(&dir);
-        let dot_genex_normalized =
-            normalize_path(dot_genex_abs.as_path()).unwrap_or_else(|_| dot_genex_abs.to_path_buf());
-        if dot_genex_abs == genex_home_abs || dot_genex_normalized == genex_home_normalized {
+        let dot_ruxex_normalized =
+            normalize_path(dot_ruxex_abs.as_path()).unwrap_or_else(|_| dot_ruxex_abs.to_path_buf());
+        if dot_ruxex_abs == ruxex_home_abs || dot_ruxex_normalized == ruxex_home_normalized {
             continue;
         }
-        let config_file = dot_genex_abs.join(CONFIG_TOML_FILE);
+        let config_file = dot_ruxex_abs.join(CONFIG_TOML_FILE);
         let config_file_uri = PathUri::from_abs_path(&config_file);
         match fs
             .read_file_text(&config_file_uri, Default::default(), /*sandbox*/ None)
@@ -1379,7 +1379,7 @@ async fn discover_project_layers(
                             ));
                         }
                         layers.push(DiscoveredProjectLayer {
-                            dot_genex_folder: dot_genex_abs,
+                            dot_ruxex_folder: dot_ruxex_abs,
                             config: TomlValue::Table(toml::map::Map::new()),
                             disabled_reason,
                             hooks_config_folder_override,
@@ -1394,7 +1394,7 @@ async fn discover_project_layers(
                         config_file.as_path(),
                         &contents,
                         &config,
-                        dot_genex_abs.as_path(),
+                        dot_ruxex_abs.as_path(),
                     )?;
                 }
                 let ignored_project_config_keys = sanitize_project_config(
@@ -1404,12 +1404,12 @@ async fn discover_project_layers(
                 );
                 if disabled_reason.is_none() && !ignored_project_config_keys.is_empty() {
                     startup_warnings.push(project_ignored_config_keys_warning(
-                        &dot_genex_abs,
+                        &dot_ruxex_abs,
                         &ignored_project_config_keys,
                     ));
                 }
                 layers.push(DiscoveredProjectLayer {
-                    dot_genex_folder: dot_genex_abs,
+                    dot_ruxex_folder: dot_ruxex_abs,
                     config,
                     disabled_reason,
                     hooks_config_folder_override,
@@ -1422,7 +1422,7 @@ async fn discover_project_layers(
                     // for this project layer, as this may still have subfolders
                     // that are significant in the overall ConfigLayerStack.
                     layers.push(DiscoveredProjectLayer {
-                        dot_genex_folder: dot_genex_abs,
+                        dot_ruxex_folder: dot_ruxex_abs,
                         config: TomlValue::Table(toml::map::Map::new()),
                         disabled_reason,
                         hooks_config_folder_override,

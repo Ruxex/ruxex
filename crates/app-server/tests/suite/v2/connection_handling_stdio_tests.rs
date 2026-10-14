@@ -6,13 +6,13 @@ use app_test_support::DISABLE_PLUGIN_STARTUP_TASKS_ARG;
 use app_test_support::TestAppServer;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use genex_app_server_protocol::CommandExecParams;
-use genex_app_server_protocol::FsReadFileParams;
-use genex_app_server_protocol::FsWriteFileParams;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cargo_bin::cargo_bin;
+use ruxex_app_server_protocol::CommandExecParams;
+use ruxex_app_server_protocol::FsReadFileParams;
+use ruxex_app_server_protocol::FsWriteFileParams;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cargo_bin::cargo_bin;
 use core_test_support::skip_if_remote;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -51,16 +51,16 @@ async fn stdio_sigterm_exits_with_open_pipes() -> Result<()> {
 #[tokio::test]
 async fn stdio_sigterm_times_out_with_blocked_stderr() -> Result<()> {
     // TestAppServer drains stderr, so keep this subprocess's stderr pipe unread.
-    let genex_home = TempDir::new()?;
-    let mut process = tokio::process::Command::new(cargo_bin("genex-app-server")?)
+    let ruxex_home = TempDir::new()?;
+    let mut process = tokio::process::Command::new(cargo_bin("ruxex-app-server")?)
         .arg(DISABLE_PLUGIN_STARTUP_TASKS_ARG)
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(
-            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            genex_home.path().join("managed_config.toml"),
+            "RUXEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            ruxex_home.path().join("managed_config.toml"),
         )
-        .env("RUST_LOG", "genex_app_server_transport=error")
-        .current_dir(genex_home.path())
+        .env("RUST_LOG", "ruxex_app_server_transport=error")
+        .current_dir(ruxex_home.path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -113,8 +113,8 @@ async fn stdio_sigterm_times_out_with_blocked_stderr() -> Result<()> {
 #[test_case(Shutdown::Eof; "eof_then_sigterm")]
 #[tokio::test]
 async fn stdio_shutdown_times_out_with_blocked_file_write(shutdown: Shutdown) -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let path = genex_home.path().join("blocked-write");
+    let ruxex_home = TempDir::new()?;
+    let path = ruxex_home.path().join("blocked-write");
     let status = Command::new("mkfifo").arg(&path).status()?;
     assert!(status.success(), "failed to create FIFO: {status}");
     let mut reader = std::fs::File::from(
@@ -123,7 +123,7 @@ async fn stdio_shutdown_times_out_with_blocked_file_write(shutdown: Shutdown) ->
             .into_nonblocking_fd()?,
     );
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         // The FIFO belongs to the app-server's local filesystem, even in remote CI.
         .without_auto_env()
         .build_initialized()

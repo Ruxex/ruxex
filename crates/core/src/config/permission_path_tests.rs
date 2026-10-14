@@ -4,27 +4,27 @@ use super::super::permissions::CompiledPermissionProfile;
 use super::super::permissions::WorkspaceWriteSettings;
 use super::super::permissions::compile_permission_profile;
 use super::relative_subpath;
-use genex_config::ConfigPathContext;
-use genex_config::permissions_toml::FilesystemPermissionToml;
-use genex_config::permissions_toml::FilesystemPermissionToml::Access;
-use genex_config::permissions_toml::FilesystemPermissionsToml;
-use genex_config::permissions_toml::PermissionProfileToml;
-use genex_config::permissions_toml::PermissionsToml;
-use genex_config::permissions_toml::WorkspaceRootsToml;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemAccessMode::Deny;
-use genex_protocol::permissions::FileSystemAccessMode::Read;
-use genex_protocol::permissions::FileSystemAccessMode::Write;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::permissions::ReadDenyMatcher;
-use genex_protocol::permissions::project_roots_glob_pattern;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigPathContext;
+use ruxex_config::permissions_toml::FilesystemPermissionToml;
+use ruxex_config::permissions_toml::FilesystemPermissionToml::Access;
+use ruxex_config::permissions_toml::FilesystemPermissionsToml;
+use ruxex_config::permissions_toml::PermissionProfileToml;
+use ruxex_config::permissions_toml::PermissionsToml;
+use ruxex_config::permissions_toml::WorkspaceRootsToml;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemAccessMode::Deny;
+use ruxex_protocol::permissions::FileSystemAccessMode::Read;
+use ruxex_protocol::permissions::FileSystemAccessMode::Write;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::permissions::ReadDenyMatcher;
+use ruxex_protocol::permissions::project_roots_glob_pattern;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -311,13 +311,13 @@ fn interior_dot_workspace_glob_fails_closed_for_every_path_convention() {
         FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry::new(
                 FileSystemPath::Special {
-                    value: genex_protocol::permissions::FileSystemSpecialPath::project_roots(
+                    value: ruxex_protocol::permissions::FileSystemSpecialPath::project_roots(
                         /*subpath*/ None,
                     ),
                 },
                 Write,
             ),
-            deny_glob_entry("genex-project-roots://private/./*.env"),
+            deny_glob_entry("ruxex-project-roots://private/./*.env"),
         ]),
         NetworkSandboxPolicy::Restricted,
     );

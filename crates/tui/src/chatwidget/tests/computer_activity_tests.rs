@@ -2,7 +2,7 @@ use super::*;
 
 fn computer_item(
     id: &str,
-    status: genex_app_server_protocol::McpToolCallStatus,
+    status: ruxex_app_server_protocol::McpToolCallStatus,
 ) -> AppServerThreadItem {
     AppServerThreadItem::McpToolCall {
         id: id.to_string(),
@@ -15,7 +15,7 @@ fn computer_item(
         mcp_app_ui: None,
         plugin_id: None,
         read_only_hint: None,
-        result: Some(Box::new(genex_app_server_protocol::McpToolCallResult {
+        result: Some(Box::new(ruxex_app_server_protocol::McpToolCallResult {
             content: vec![json!({"type": "text", "text": format!("Full output for {id}")})],
             structured_content: None,
             meta: None,
@@ -28,7 +28,7 @@ fn computer_item(
 
 #[tokio::test]
 async fn computer_activity_preserves_boundaries_and_expanded_output() {
-    use genex_app_server_protocol::McpToolCallStatus;
+    use ruxex_app_server_protocol::McpToolCallStatus;
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.on_mcp_tool_call_completed(computer_item("1", McpToolCallStatus::Completed));
     chat.prepare_assistant_message();

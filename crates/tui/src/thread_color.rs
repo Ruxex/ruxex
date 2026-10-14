@@ -5,7 +5,7 @@
 
 use std::cell::RefCell;
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use ratatui::style::Color;
 use syntect::highlighting::Highlighter;
 use syntect::highlighting::Theme;

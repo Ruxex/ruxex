@@ -1,16 +1,16 @@
 //! Verifies catalog tool descriptions reach the V2 outbound tool without changing its parameters.
 
 use anyhow::Result;
-use genex_core::config::AgentRoleConfig;
-use genex_features::Feature;
-use genex_protocol::model_types::ToolMessages;
-use genex_protocol::protocol::MultiAgentVersion;
+use ruxex_core::config::AgentRoleConfig;
+use ruxex_features::Feature;
+use ruxex_protocol::model_types::ToolMessages;
+use ruxex_protocol::protocol::MultiAgentVersion;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::namespace_child_tool;
 use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -41,7 +41,7 @@ async fn spawn_agent_catalog_descriptions_preserve_outbound_schema(
         None,
         serde_json::from_value::<Option<ToolMessages>>(tool_messages.clone())?,
     ] {
-        let test = test_genex()
+        let test = test_ruxex()
             .with_model_info_override("example-model-2", move |model| {
                 model.multi_agent_version = Some(MultiAgentVersion::V2);
                 model.model_messages.as_mut().expect("model messages").tools = messages;

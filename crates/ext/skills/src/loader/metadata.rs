@@ -1,18 +1,18 @@
 use std::io;
 
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadFileOptions;
-use genex_protocol::protocol::Product;
-use genex_skills::SkillDependencies;
-use genex_skills::SkillInterface;
-use genex_skills::SkillInterfaceAssetPolicy;
-use genex_skills::SkillInterfaceFile;
-use genex_skills::SkillParseError;
-use genex_skills::SkillPolicy;
-use genex_skills::SkillToolDependency;
-use genex_skills::resolve_skill_interface;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_protocol::protocol::Product;
+use ruxex_skills::SkillDependencies;
+use ruxex_skills::SkillInterface;
+use ruxex_skills::SkillInterfaceAssetPolicy;
+use ruxex_skills::SkillInterfaceFile;
+use ruxex_skills::SkillParseError;
+use ruxex_skills::SkillPolicy;
+use ruxex_skills::SkillToolDependency;
+use ruxex_skills::resolve_skill_interface;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 
 use super::MAX_DEPENDENCY_COMMAND_LEN;

@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 

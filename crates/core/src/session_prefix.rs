@@ -1,7 +1,7 @@
-use genex_protocol::AgentPath;
-use genex_protocol::protocol::AgentStatus;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::truncate_text;
 
 use crate::context::ContextualUserFragment;
 use crate::context::InterAgentCompletionMessage;

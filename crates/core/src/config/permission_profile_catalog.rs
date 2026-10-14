@@ -1,11 +1,11 @@
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigPathContext;
-use genex_config::RequirementSource;
-use genex_config::SandboxModeRequirement;
-use genex_config::Sourced;
-use genex_config::permissions_toml::PermissionsToml;
-use genex_config::sandbox_mode_requirement_for_permission_profile;
-use genex_protocol::models::PermissionProfile;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigPathContext;
+use ruxex_config::RequirementSource;
+use ruxex_config::SandboxModeRequirement;
+use ruxex_config::Sourced;
+use ruxex_config::permissions_toml::PermissionsToml;
+use ruxex_config::sandbox_mode_requirement_for_permission_profile;
+use ruxex_protocol::models::PermissionProfile;
 
 use super::ConstraintError;
 use super::ConstraintResult;

@@ -5,79 +5,79 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
 use assert_matches::assert_matches;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirementsToml;
-use genex_exec_server::CapabilityRootDiscovery;
-use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use genex_exec_server::LOCAL_FS;
-use genex_extension_api::ConversationHistory;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionEventSink;
-use genex_extension_api::ExtensionMetrics;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::ExtensionWarning;
-use genex_extension_api::FunctionCallError;
-use genex_extension_api::NoopTurnItemEmitter;
-use genex_extension_api::PreviousWorldStateSection;
-use genex_extension_api::RenderedWorldStateFragment;
-use genex_extension_api::SkillInvocationInput;
-use genex_extension_api::SkillInvocationKind;
-use genex_extension_api::ThreadStartInput;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolCallSource;
-use genex_extension_api::ToolPayload;
-use genex_extension_api::TurnInputContext;
-use genex_extension_api::WorldStateContributionInput;
-use genex_extension_api::WorldStateSectionContribution;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
-use genex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
-use genex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
-use genex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
-use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SkillScope;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::user_input::UserInput;
-use genex_skills::SkillMetadata;
-use genex_skills_extension::HostSkillProvider;
-use genex_skills_extension::HostSkillsLoadInput;
-use genex_skills_extension::HostSkillsService;
-use genex_skills_extension::HostSkillsSnapshot;
-use genex_skills_extension::InjectedHostSkillPrompts;
-use genex_skills_extension::SkillLoadOutcome;
-use genex_skills_extension::SkillProviders;
-use genex_skills_extension::SkillsExtensionConfig;
-use genex_skills_extension::catalog::SkillAuthority;
-use genex_skills_extension::catalog::SkillCatalog;
-use genex_skills_extension::catalog::SkillCatalogEntry;
-use genex_skills_extension::catalog::SkillPackageId;
-use genex_skills_extension::catalog::SkillProviderError;
-use genex_skills_extension::catalog::SkillReadResult;
-use genex_skills_extension::catalog::SkillResourceId;
-use genex_skills_extension::catalog::SkillSearchResult;
-use genex_skills_extension::catalog::SkillSourceKind;
-use genex_skills_extension::install;
-use genex_skills_extension::install_with_providers;
-use genex_skills_extension::install_with_providers_and_metrics;
-use genex_skills_extension::provider::SkillListQuery;
-use genex_skills_extension::provider::SkillProvider;
-use genex_skills_extension::provider::SkillProviderFuture;
-use genex_skills_extension::provider::SkillReadRequest;
-use genex_skills_extension::provider::SkillSearchRequest;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_exec_server::CapabilityRootDiscovery;
+use ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_extension_api::ConversationHistory;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionEventSink;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::ExtensionWarning;
+use ruxex_extension_api::FunctionCallError;
+use ruxex_extension_api::NoopTurnItemEmitter;
+use ruxex_extension_api::PreviousWorldStateSection;
+use ruxex_extension_api::RenderedWorldStateFragment;
+use ruxex_extension_api::SkillInvocationInput;
+use ruxex_extension_api::SkillInvocationKind;
+use ruxex_extension_api::ThreadStartInput;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolCallSource;
+use ruxex_extension_api::ToolPayload;
+use ruxex_extension_api::TurnInputContext;
+use ruxex_extension_api::WorldStateContributionInput;
+use ruxex_extension_api::WorldStateSectionContribution;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
+use ruxex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
+use ruxex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
+use ruxex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
+use ruxex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
+use ruxex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills_extension::HostSkillProvider;
+use ruxex_skills_extension::HostSkillsLoadInput;
+use ruxex_skills_extension::HostSkillsService;
+use ruxex_skills_extension::HostSkillsSnapshot;
+use ruxex_skills_extension::InjectedHostSkillPrompts;
+use ruxex_skills_extension::SkillLoadOutcome;
+use ruxex_skills_extension::SkillProviders;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::catalog::SkillAuthority;
+use ruxex_skills_extension::catalog::SkillCatalog;
+use ruxex_skills_extension::catalog::SkillCatalogEntry;
+use ruxex_skills_extension::catalog::SkillPackageId;
+use ruxex_skills_extension::catalog::SkillProviderError;
+use ruxex_skills_extension::catalog::SkillReadResult;
+use ruxex_skills_extension::catalog::SkillResourceId;
+use ruxex_skills_extension::catalog::SkillSearchResult;
+use ruxex_skills_extension::catalog::SkillSourceKind;
+use ruxex_skills_extension::install;
+use ruxex_skills_extension::install_with_providers;
+use ruxex_skills_extension::install_with_providers_and_metrics;
+use ruxex_skills_extension::provider::SkillListQuery;
+use ruxex_skills_extension::provider::SkillProvider;
+use ruxex_skills_extension::provider::SkillProviderFuture;
+use ruxex_skills_extension::provider::SkillReadRequest;
+use ruxex_skills_extension::provider::SkillSearchRequest;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;
@@ -88,7 +88,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 #[path = "skills_extension/shadow_task_context_tests.rs"]
 mod shadow_task_context_tests;
 
-static NEXT_GENEX_HOME_ID: AtomicUsize = AtomicUsize::new(0);
+static NEXT_RUXEX_HOME_ID: AtomicUsize = AtomicUsize::new(0);
 const SKILLS_INTRO_WITH_ABSOLUTE_PATHS: &str = "A skill is a set of instructions provided through a `SKILL.md` source. Below is the list of skills that can be used. Each entry includes a name, description, and source locator. `file` locators are on the host filesystem, `executor package` locators are owned by their execution environment, `orchestrator package` locators are opaque package identifiers, and `custom resource` locators use their provider's access mechanism.";
 const DEMO_SKILL_CONTENTS: &str =
     "---\nname: demo\ndescription: Demo skill.\n---\n# Demo\n\nUse the demo skill.\n";
@@ -113,7 +113,7 @@ fn world_state_section<'a>(
 }
 
 async fn skill_world_state_fragments(
-    registry: &genex_extension_api::ExtensionRegistry<TestConfig>,
+    registry: &ruxex_extension_api::ExtensionRegistry<TestConfig>,
     session_store: &ExtensionData,
     thread_store: &ExtensionData,
     turn_id: &str,
@@ -129,7 +129,7 @@ async fn skill_world_state_fragments(
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id,
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -152,8 +152,8 @@ async fn skill_world_state_fragments(
 
 #[tokio::test]
 async fn installed_extension_uses_host_service_snapshot() -> TestResult {
-    let genex_home = test_genex_home();
-    let skill_path = genex_home.join("skills").join("demo").join("SKILL.md");
+    let ruxex_home = test_ruxex_home();
+    let skill_path = ruxex_home.join("skills").join("demo").join("SKILL.md");
     std::fs::create_dir_all(
         skill_path
             .parent()
@@ -237,7 +237,7 @@ async fn installed_extension_uses_host_service_snapshot() -> TestResult {
         .ok_or("host skill prompt marker should be set")?;
     assert!(injected_host_skill_prompts.contains_path(&skill_path_string));
 
-    std::fs::remove_dir_all(genex_home)?;
+    std::fs::remove_dir_all(ruxex_home)?;
     Ok(())
 }
 
@@ -264,7 +264,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
         })
         .await;
 
-    let skill_path = AbsolutePathBuf::try_from(test_genex_home().join("skills/demo/SKILL.md"))?;
+    let skill_path = AbsolutePathBuf::try_from(test_ruxex_home().join("skills/demo/SKILL.md"))?;
     let mut outcome = SkillLoadOutcome::default();
     outcome.skills.push(SkillMetadata {
         name: "demo".to_string(),
@@ -284,7 +284,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -311,7 +311,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -331,7 +331,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     assert_eq!(turn_metrics.samples(), expected);
 
     let second_skill_path =
-        AbsolutePathBuf::try_from(test_genex_home().join("skills/other/SKILL.md"))?;
+        AbsolutePathBuf::try_from(test_ruxex_home().join("skills/other/SKILL.md"))?;
     outcome.skills.push(SkillMetadata {
         name: "other".to_string(),
         description: "Other skill.".to_string(),
@@ -348,7 +348,7 @@ async fn host_world_state_records_catalog_metrics_on_publish_and_change() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -383,7 +383,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let registry = builder.build();
     let session_store = ExtensionData::new("session");
     let config = default_config();
-    let skill_path = AbsolutePathBuf::try_from(test_genex_home().join("skills/demo/SKILL.md"))?;
+    let skill_path = AbsolutePathBuf::try_from(test_ruxex_home().join("skills/demo/SKILL.md"))?;
     let mut outcome = SkillLoadOutcome::default();
     outcome.skills.push(SkillMetadata {
         name: "demo".to_string(),
@@ -419,7 +419,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -460,7 +460,7 @@ async fn persisted_host_snapshot_deduplicates_warning_after_reinitialization() -
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-2",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -549,7 +549,7 @@ async fn executor_orchestrator_and_host_share_catalog_world_state_flow() -> Test
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -657,7 +657,7 @@ async fn nonempty_executor_empty_host_records_catalog_metrics() -> TestResult {
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -735,7 +735,7 @@ async fn host_world_state_uses_provider_catalog_with_core_compatible_rendering()
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -776,7 +776,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "genex-skills-extension",
+            "ruxex-skills-extension",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -815,7 +815,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -853,7 +853,7 @@ async fn shadow_selection_uses_host_catalog_when_instructions_are_disabled() -> 
     let catalog_entry_counts = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == "genex.skills.shadow_selection.catalog_entries")
+        .find(|metric| metric.name() == "ruxex.skills.shadow_selection.catalog_entries")
         .map(|metric| match metric.data() {
             AggregatedMetrics::F64(MetricData::Histogram(histogram)) => histogram
                 .data_points()
@@ -890,7 +890,7 @@ async fn shadow_lru_selector_recovers_a_skill_invoked_on_an_earlier_turn() -> Te
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "genex-skills-extension",
+            "ruxex-skills-extension",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -957,7 +957,7 @@ async fn shadow_lru_selector_recovers_a_skill_invoked_on_an_earlier_turn() -> Te
     let metric = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == "genex.skills.shadow_selection.invocation")
+        .find(|metric| metric.name() == "ruxex.skills.shadow_selection.invocation")
         .ok_or("shadow invocation metric should be recorded")?;
     let mut selector_hits = match metric.data() {
         AggregatedMetrics::U64(MetricData::Sum(sum)) => sum
@@ -1073,7 +1073,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let available_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: std::slice::from_ref(&turn_environment),
             ready_selected_capability_roots: &selected_roots,
@@ -1129,7 +1129,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let unavailable_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-2",
             environments: &[],
             ready_selected_capability_roots: &[],
@@ -1154,7 +1154,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let restored_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-3",
             environments: &[turn_environment],
             ready_selected_capability_roots: &selected_roots,
@@ -1198,7 +1198,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
         registry.context_contributors()[0]
             .contribute_world_state(WorldStateContributionInput {
                 model_info: &catalog_model_info(),
-                thread_id: genex_protocol::ThreadId::new(),
+                thread_id: ruxex_protocol::ThreadId::new(),
                 turn_id,
                 environments: &[],
                 ready_selected_capability_roots: &selected_roots,
@@ -1224,7 +1224,7 @@ async fn selected_executor_catalog_follows_step_availability_and_reuses_its_cach
     let listing_disabled_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-4",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -1995,7 +1995,7 @@ async fn root_qualified_locator_selects_only_the_matching_executor_skill() -> Te
     registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[TurnEnvironmentSelection {
                 environment_id: "env-1".to_string(),
@@ -2123,7 +2123,7 @@ async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> Tes
     let sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -2138,7 +2138,7 @@ async fn model_context_window_scales_executor_and_orchestrator_catalogs() -> Tes
     let _repeated_sections = registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &model_info,
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -2238,7 +2238,7 @@ async fn executor_catalog_emits_at_most_four_warnings() -> TestResult {
     registry.context_contributors()[0]
         .contribute_world_state(WorldStateContributionInput {
             model_info: &catalog_model_info(),
-            thread_id: genex_protocol::ThreadId::new(),
+            thread_id: ruxex_protocol::ThreadId::new(),
             turn_id: "turn-1",
             environments: &[],
             ready_selected_capability_roots: &selected_roots,
@@ -2277,7 +2277,7 @@ async fn executor_catalog_emits_at_most_four_warnings() -> TestResult {
 
 #[tokio::test]
 async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResult {
-    let test_root = test_genex_home();
+    let test_root = test_ruxex_home();
     let root = test_root.join(
         "plugins/cache/test-curated/example/hash1234567890/skills-with-a-very-long-shared-prefix",
     );
@@ -2311,16 +2311,16 @@ async fn host_catalog_compacts_shared_paths_under_budget_pressure() -> TestResul
         Default::default(),
         ConfigRequirementsToml::default(),
     )?;
-    let genex_home = AbsolutePathBuf::try_from(test_root.clone())?;
+    let ruxex_home = AbsolutePathBuf::try_from(test_root.clone())?;
     let service = HostSkillsService::new_with_restriction_product(
-        genex_home.clone(),
+        ruxex_home.clone(),
         /*bundled_skills_enabled*/ false,
         /*restriction_product*/ None,
     );
     service.set_extra_roots(vec![root]);
     let snapshot = service
         .snapshot_for_config(
-            &HostSkillsLoadInput::new(genex_home, Vec::new(), config_layer_stack),
+            &HostSkillsLoadInput::new(ruxex_home, Vec::new(), config_layer_stack),
             Some(Arc::clone(&LOCAL_FS)),
         )
         .await;
@@ -2670,10 +2670,10 @@ fn skills_extension_config(config: &TestConfig) -> SkillsExtensionConfig {
     }
 }
 
-fn test_genex_home() -> PathBuf {
-    let id = NEXT_GENEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
+fn test_ruxex_home() -> PathBuf {
+    let id = NEXT_RUXEX_HOME_ID.fetch_add(1, Ordering::Relaxed);
     std::env::temp_dir().join(format!(
-        "genex-skills-extension-test-{}-{id}",
+        "ruxex-skills-extension-test-{}-{id}",
         std::process::id(),
     ))
 }

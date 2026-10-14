@@ -1,11 +1,11 @@
 [package]
-name = "genex-sandboxing"
+name = "ruxex-sandboxing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_sandboxing"
+name = "ruxex_sandboxing"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,12 +14,12 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-protocol = { workspace = true }
-genex-uds = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
-genex-utils-pty = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-pty = { workspace = true }
 dunce = { workspace = true }
 libc = { workspace = true }
 serde_json = { workspace = true }

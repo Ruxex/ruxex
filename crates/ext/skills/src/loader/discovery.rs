@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 use std::io;
 
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::WalkEntryKind;
-use genex_exec_server::WalkOptions;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
-use genex_utils_plugins::SkillDiscoveryMode;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::WalkEntryKind;
+use ruxex_exec_server::WalkOptions;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+use ruxex_utils_plugins::SkillDiscoveryMode;
 
 use super::MAX_SCAN_DEPTH;
 use super::MAX_SKILLS_DIRS_PER_ROOT;

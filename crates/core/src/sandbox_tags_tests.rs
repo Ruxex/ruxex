@@ -1,17 +1,17 @@
 use super::permission_profile_policy_tag;
 use super::permission_profile_sandbox_tag;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxKind;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::get_platform_sandbox;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxKind;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::get_platform_sandbox;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 
@@ -86,7 +86,7 @@ fn root_write_managed_profile_with_enabled_network_is_untagged() {
         file_system: ManagedFileSystemPermissions::Restricted {
             entries: vec![FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
-                    value: genex_protocol::permissions::FileSystemSpecialPath::Root,
+                    value: ruxex_protocol::permissions::FileSystemSpecialPath::Root,
                 },
                 access: FileSystemAccessMode::Write,
                 missing_path_behavior: None,
@@ -120,8 +120,8 @@ fn managed_network_enforcement_tags_unrestricted_profiles_as_sandboxed() {
 
 #[test]
 fn profile_policy_tag_reports_closest_legacy_mode() {
-    let cwd = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/genex")).expect("absolute cwd");
-    let writable_root = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/genex/work"))
+    let cwd = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/ruxex")).expect("absolute cwd");
+    let writable_root = AbsolutePathBuf::from_absolute_path(Path::new("/tmp/ruxex/work"))
         .expect("absolute writable root");
     let profile = PermissionProfile::from_runtime_permissions(
         &FileSystemSandboxPolicy {

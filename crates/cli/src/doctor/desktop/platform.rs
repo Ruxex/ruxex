@@ -85,7 +85,7 @@ async fn installed_macos_app() -> Result<Option<InstalledApp>, DiscoveryError> {
     let applications = std::iter::once(PathBuf::from("/Applications"))
         .chain(std::env::var_os("HOME").map(|home| PathBuf::from(home).join("Applications")))
         .flat_map(|directory| {
-            ["Genex.app"]
+            ["Ruxex.app"]
                 .into_iter()
                 .map(move |application| directory.join(application))
         });
@@ -124,7 +124,7 @@ pub(in crate::doctor) async fn inspect_macos_bundle(
         return Err(DiscoveryError);
     }
     let metadata: Value = serde_json::from_slice(&output.stdout).map_err(|_| DiscoveryError)?;
-    if metadata.get("CFBundleIdentifier").and_then(Value::as_str) != Some("com.genex.genex") {
+    if metadata.get("CFBundleIdentifier").and_then(Value::as_str) != Some("com.ruxex.ruxex") {
         return Ok(None);
     }
     let version = metadata
@@ -139,7 +139,7 @@ pub(in crate::doctor) async fn inspect_macos_bundle(
         .ok_or(DiscoveryError)?;
 
     Ok(Some(InstalledApp {
-        identity: "com.genex.genex",
+        identity: "com.ruxex.ruxex",
         version: version.to_string(),
         bundle: bundle.to_path_buf(),
         build,

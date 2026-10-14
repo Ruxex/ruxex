@@ -9,9 +9,9 @@ use std::sync::Arc;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::HttpClient;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::HttpClient;
 use http::Method;
 use http::header::CONTENT_LENGTH;
 use http::header::CONTENT_TYPE;
@@ -42,7 +42,7 @@ use crate::perform_oauth_login::OauthLoginFlow;
 
 /// An exclusive credential mutation guard. Hold it through primary account logout
 /// so a competing process cannot commit between deleting the grant and signing out.
-/// Coordination, like ordinary OAuth refresh, is scoped to the same GENEX_HOME.
+/// Coordination, like ordinary OAuth refresh, is scoped to the same RUXEX_HOME.
 pub struct EnterpriseOAuthCredentialGuard {
     credential_name: String,
     issuer: String,

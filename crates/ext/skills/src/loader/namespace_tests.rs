@@ -4,12 +4,12 @@ use std::path::Path;
 #[cfg(unix)]
 use std::sync::Arc;
 
-use genex_exec_server::LOCAL_FS;
+use ruxex_exec_server::LOCAL_FS;
 #[cfg(unix)]
-use genex_protocol::protocol::SkillScope;
+use ruxex_protocol::protocol::SkillScope;
 #[cfg(unix)]
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -34,7 +34,7 @@ fn write_skill(root: &Path, directory: &str) -> PathUri {
 }
 
 fn write_manifest(root: &Path, contents: &str) -> PathUri {
-    let path = root.join(".genex-plugin/plugin.json");
+    let path = root.join(".ruxex-plugin/plugin.json");
     fs::create_dir_all(path.parent().expect("manifest parent"))
         .expect("create plugin manifest directory");
     fs::write(path, contents).expect("write plugin manifest");

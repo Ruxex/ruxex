@@ -3,22 +3,22 @@ use super::SandboxPolicy;
 use super::Turn;
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::MultiAgentMode;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference as CoreImageReference;
-use genex_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
-use genex_protocol::plan_tool::StepStatus as CorePlanStepStatus;
-use genex_protocol::turn_input::CyberAccessProgram as CoreCyberAccessProgram;
-use genex_protocol::user_input::ByteRange as CoreByteRange;
-use genex_protocol::user_input::TextElement as CoreTextElement;
-use genex_protocol::user_input::UserInput as CoreUserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::MultiAgentMode;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference as CoreImageReference;
+use ruxex_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
+use ruxex_protocol::plan_tool::StepStatus as CorePlanStepStatus;
+use ruxex_protocol::turn_input::CyberAccessProgram as CoreCyberAccessProgram;
+use ruxex_protocol::user_input::ByteRange as CoreByteRange;
+use ruxex_protocol::user_input::TextElement as CoreTextElement;
+use ruxex_protocol::user_input::UserInput as CoreUserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -115,7 +115,7 @@ pub struct AdditionalContextEntry {
     pub kind: AdditionalContextKind,
 }
 
-/// Requested cyber treatment for a provider-authorized Genex turn.
+/// Requested cyber treatment for a provider-authorized Ruxex turn.
 /// Authorization and model-tier restrictions remain server-owned.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "camelCase")]
@@ -176,10 +176,10 @@ pub struct TurnStartParams {
     pub turn_trigger: Option<String>,
     #[ts(optional = nullable)]
     pub tool_output: Option<Box<TurnToolOutput>>,
-    /// Optional metadata to enrich Genex's ResponsesAPI turn metadata.
+    /// Optional metadata to enrich Ruxex's ResponsesAPI turn metadata.
     ///
     /// Entries are flattened into the JSON string sent as
-    /// `client_metadata["x-genex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
+    /// `client_metadata["x-ruxex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
     ///
     /// They are not sent as top-level ResponsesAPI `client_metadata` keys, and reserved keys
     /// such as `session_id`, `thread_id`, `turn_id`, and `window_id` cannot be overridden.
@@ -287,10 +287,10 @@ pub struct TurnSteerParams {
     #[ts(optional = nullable)]
     pub client_user_message_id: Option<String>,
     pub input: Vec<UserInput>,
-    /// Optional metadata to enrich Genex's ResponsesAPI turn metadata.
+    /// Optional metadata to enrich Ruxex's ResponsesAPI turn metadata.
     ///
     /// Entries are flattened into the JSON string sent as
-    /// `client_metadata["x-genex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
+    /// `client_metadata["x-ruxex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
     ///
     /// They are not sent as top-level ResponsesAPI `client_metadata` keys, and reserved keys
     /// such as `session_id`, `thread_id`, `turn_id`, and `window_id` cannot be overridden.

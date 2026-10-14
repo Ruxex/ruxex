@@ -112,15 +112,15 @@ mod tests {
     use super::StateRuntime;
     use super::test_support::unique_temp_dir;
     use chrono::Utc;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use sqlx::Connection;
 
     #[tokio::test]
     async fn backfill_state_persists_progress_and_completion() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -168,13 +168,13 @@ mod tests {
         );
         assert!(completed.last_success_at.is_some());
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn get_backfill_state_succeeds_while_another_connection_holds_writer_slot() {
-        let genex_home = unique_temp_dir();
-        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
+        let ruxex_home = unique_temp_dir();
+        let sqlite = crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs());
         let runtime = StateRuntime::init(sqlite.clone())
             .await
             .expect("initialize runtime");
@@ -198,14 +198,14 @@ mod tests {
             .rollback()
             .await
             .expect("release write lock");
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn get_backfill_state_repairs_a_missing_singleton_row() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -226,14 +226,14 @@ mod tests {
                 .expect("count repaired backfill state rows");
         assert_eq!(row_count, 1);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn backfill_claim_is_singleton_until_stale_and_blocked_when_complete() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-            genex_home.as_path().abs(),
+            ruxex_home.as_path().abs(),
         ))
         .await
         .expect("initialize runtime");
@@ -280,6 +280,6 @@ WHERE id = 1
             .expect("claim after complete");
         assert_eq!(claim_after_complete, false);
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 }

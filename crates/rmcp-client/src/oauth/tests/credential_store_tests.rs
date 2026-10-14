@@ -5,7 +5,7 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
 use anyhow::Result;
-use genex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::AuthKeyringBackendKind;
 use keyring::Error as KeyringError;
 use oauth2::AccessToken;
 use oauth2::RefreshToken;
@@ -15,7 +15,7 @@ use rmcp::transport::auth::AuthError;
 use rmcp::transport::auth::CredentialStore;
 
 use super::MockKeyringStore;
-use super::TempGenexHome;
+use super::TempRuxexHome;
 use super::assert_tokens_match_without_expiry;
 use super::sample_tokens;
 use crate::oauth::OAuthCredentialStore;
@@ -31,7 +31,7 @@ use crate::oauth::store_lock::OAuthStoreLock;
 #[tokio::test(flavor = "current_thread")]
 async fn mutations_require_and_retain_the_transaction_guard() -> Result<()> {
     for clear in [false, true] {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let initial = sample_tokens();
         save_oauth_tokens_to_file(&initial)?;
         let store = OAuthCredentialStore::new(
@@ -93,7 +93,7 @@ async fn mutations_require_and_retain_the_transaction_guard() -> Result<()> {
 #[tokio::test(flavor = "current_thread")]
 async fn save_publishes_only_persisted_credentials() -> Result<()> {
     for fail_save in [false, true] {
-        let _env = TempGenexHome::new();
+        let _env = TempRuxexHome::new();
         let initial = sample_tokens();
         let keyring = MockKeyringStore::default();
         let authority = ResolvedOAuthCredentialStore::Keyring(AuthKeyringBackendKind::Direct);
@@ -153,7 +153,7 @@ async fn save_publishes_only_persisted_credentials() -> Result<()> {
 
 #[tokio::test(flavor = "current_thread")]
 async fn pinned_read_failure_does_not_adopt_fallback_credentials() -> Result<()> {
-    let _env = TempGenexHome::new();
+    let _env = TempRuxexHome::new();
     let initial = sample_tokens();
     save_oauth_tokens_to_file(&initial)?;
     let keyring = MockKeyringStore::default();
@@ -182,7 +182,7 @@ async fn pinned_read_failure_does_not_adopt_fallback_credentials() -> Result<()>
 
 #[tokio::test(flavor = "current_thread")]
 async fn replacement_or_removal_does_not_acknowledge_a_new_runtime_snapshot() -> Result<()> {
-    let _env = TempGenexHome::new();
+    let _env = TempRuxexHome::new();
     let initial = sample_tokens();
     save_oauth_tokens_to_file(&initial)?;
     let store = OAuthCredentialStore::new(
@@ -225,7 +225,7 @@ async fn replacement_or_removal_does_not_acknowledge_a_new_runtime_snapshot() ->
 
 #[tokio::test(flavor = "current_thread")]
 async fn storage_roundtrip_preserves_absolute_and_unknown_expiry() -> Result<()> {
-    let _env = TempGenexHome::new();
+    let _env = TempRuxexHome::new();
     let initial = sample_tokens();
     save_oauth_tokens_to_file(&initial)?;
     let store = OAuthCredentialStore::new(

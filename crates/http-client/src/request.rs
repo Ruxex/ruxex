@@ -125,7 +125,7 @@ impl Request {
             Some(RequestBody::Json(_) | RequestBody::EncodedJson(_))
         );
         let trace_bytes = if self.compression != RequestCompression::None
-            && tracing::enabled!(target: "genex_http_client::transport", tracing::Level::TRACE)
+            && tracing::enabled!(target: "ruxex_http_client::transport", tracing::Level::TRACE)
         {
             match self.body.as_ref() {
                 Some(RequestBody::Json(body)) => Some(Bytes::from(

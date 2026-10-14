@@ -1,5 +1,5 @@
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RolloutBudgetContext {

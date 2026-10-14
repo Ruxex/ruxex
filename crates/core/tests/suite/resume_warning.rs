@@ -5,25 +5,25 @@ use std::sync::Arc;
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
 use core_test_support::wait_for_event;
-use genex_core::NewThread;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_protocol::protocol::WarningEvent;
+use ruxex_core::NewThread;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_history::RolloutItem;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_protocol::protocol::WarningEvent;
 use tempfile::TempDir;
 
 fn resume_history(
-    config: &genex_core::config::Config,
+    config: &ruxex_core::config::Config,
     previous_model: &str,
     rollout_path: &std::path::Path,
 ) -> InitialHistory {
@@ -104,8 +104,8 @@ async fn emits_warning_when_resumed_model_differs() {
 
     let initial_history = resume_history(&config, "previous-model", &rollout_path);
 
-    let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        GenexAuth::from_api_key("test"),
+    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+        RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     // Act: resume the conversation.

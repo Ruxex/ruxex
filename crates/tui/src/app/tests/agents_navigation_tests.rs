@@ -7,7 +7,7 @@ async fn agents_navigation_requires_local_daemon() -> Result<()> {
     let mut tui = crate::tui::test_support::make_test_tui()?;
     let mut app_server = start_config_write_test_app_server(&app).await?;
     let endpoint = crate::RemoteAppServerEndpoint::UnixSocket {
-        socket_path: AbsolutePathBuf::relative_to_current_dir("genex.sock")?,
+        socket_path: AbsolutePathBuf::relative_to_current_dir("ruxex.sock")?,
     };
     for target in [
         AppServerTarget::Embedded,

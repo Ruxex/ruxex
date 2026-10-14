@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelInfo;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fmt;
@@ -78,7 +78,7 @@ pub struct ModelsCacheEntry {
     pub identity: Option<String>,
     /// Models returned by the catalog endpoint.
     #[serde(
-        deserialize_with = "genex_protocol::model_types::deserialize_model_infos_with_legacy_base"
+        deserialize_with = "ruxex_protocol::model_types::deserialize_model_infos_with_legacy_base"
     )]
     pub models: Vec<ModelInfo>,
 }

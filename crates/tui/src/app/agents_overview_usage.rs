@@ -13,11 +13,11 @@ use crate::status::format_credit_micros;
 use crate::status::format_estimated_usd_micros;
 use crate::status::format_tokens_compact;
 use crate::tui::FrameRequester;
-use genex_app_server_protocol::ThreadUsage;
-use genex_app_server_protocol::ThreadUsageBreakdownGroup;
-use genex_app_server_protocol::TokenUsageBreakdown;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
+use ruxex_app_server_protocol::ThreadUsage;
+use ruxex_app_server_protocol::ThreadUsageBreakdownGroup;
+use ruxex_app_server_protocol::TokenUsageBreakdown;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use std::time::Duration;
@@ -42,7 +42,7 @@ impl App {
         if self.reconnect.offline
             || self.agents_overview.usage_disabled
             || self.agents_overview.pending_usage.is_some()
-            || !self.chat_widget.has_genex_backend_auth()
+            || !self.chat_widget.has_ruxex_backend_auth()
             || !matches!(
                 self.chat_widget.current_plan_type(),
                 Some(

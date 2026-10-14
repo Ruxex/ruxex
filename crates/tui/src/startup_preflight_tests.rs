@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tempfile::TempDir;
 
 use super::has_only_search_config_override;
@@ -7,61 +7,61 @@ use super::should_delay_startup_composer_for_first_login;
 #[test]
 fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::Result<()> {
     let temporary_directory = TempDir::new()?;
-    let genex_home = temporary_directory.path().join("genex-home");
+    let ruxex_home = temporary_directory.path().join("ruxex-home");
     let system_config_path =
         AbsolutePathBuf::from_absolute_path(temporary_directory.path().join("system.toml"))?;
 
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
         |_| None,
     ));
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| (name == genex_login::GENEX_ACCESS_TOKEN_ENV_VAR).then(|| "  ".into()),
+        |name| (name == ruxex_login::RUXEX_ACCESS_TOKEN_ENV_VAR).then(|| "  ".into()),
     ));
 
-    std::fs::create_dir_all(genex_home.join("tmp").join("arg0"))?;
+    std::fs::create_dir_all(ruxex_home.join("tmp").join("arg0"))?;
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
         |_| None,
     ));
-    let helper_directory = genex_home
+    let helper_directory = ruxex_home
         .join("tmp")
         .join("arg0")
-        .join("genex-arg0-session");
+        .join("ruxex-arg0-session");
     std::fs::create_dir(&helper_directory)?;
     std::fs::write(helper_directory.join("apply_patch"), "")?;
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
         |_| None,
     ));
 
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| (name == "GENEX_HOME").then(|| "/custom/home".into()),
+        |name| (name == "RUXEX_HOME").then(|| "/custom/home".into()),
     ));
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| { (name == genex_login::GENEX_ACCESS_TOKEN_ENV_VAR).then(|| "access-token".into()) },
+        |name| { (name == ruxex_login::RUXEX_ACCESS_TOKEN_ENV_VAR).then(|| "access-token".into()) },
     ));
     for disabled_credential in [
-        genex_login::PROVIDER_API_KEY_ENV_VAR,
-        genex_login::GENEX_API_KEY_ENV_VAR,
+        ruxex_login::PROVIDER_API_KEY_ENV_VAR,
+        ruxex_login::RUXEX_API_KEY_ENV_VAR,
     ] {
         assert!(should_delay_startup_composer_for_first_login(
-            &genex_home,
+            &ruxex_home,
             Ok(system_config_path.clone()),
             || Ok(false),
             |name| (name == disabled_credential).then(|| "disabled-key".into()),
@@ -69,41 +69,41 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
     }
 
     for existing_state in ["history.jsonl", "log", "sessions"] {
-        let state_path = genex_home.join(existing_state);
+        let state_path = ruxex_home.join(existing_state);
         if existing_state == "history.jsonl" {
             std::fs::write(&state_path, "")?;
         } else {
             std::fs::create_dir(&state_path)?;
         }
         assert!(should_delay_startup_composer_for_first_login(
-            &genex_home,
+            &ruxex_home,
             Ok(system_config_path.clone()),
             || Ok(false),
             |_| None,
         ));
     }
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
-        |name| (name == "GENEX_HOME").then(|| "/custom/home".into()),
+        |name| (name == "RUXEX_HOME").then(|| "/custom/home".into()),
     ));
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || panic!("process credentials should not probe managed configuration"),
         |name| match name {
-            "GENEX_HOME" => Some("/custom/home".into()),
-            genex_login::GENEX_ACCESS_TOKEN_ENV_VAR => Some("access-token".into()),
+            "RUXEX_HOME" => Some("/custom/home".into()),
+            ruxex_login::RUXEX_ACCESS_TOKEN_ENV_VAR => Some("access-token".into()),
             _ => None,
         },
     ));
 
     for existing_state in ["auth.json", "config.toml", "environments.toml"] {
-        let state_path = genex_home.join(existing_state);
+        let state_path = ruxex_home.join(existing_state);
         std::fs::write(&state_path, "")?;
         assert!(!should_delay_startup_composer_for_first_login(
-            &genex_home,
+            &ruxex_home,
             Ok(system_config_path.clone()),
             || panic!("configured homes should not probe managed configuration"),
             |_| None,
@@ -111,17 +111,17 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
         std::fs::remove_file(state_path)?;
     }
 
-    let daemon_directory = genex_home.join("app-server-control");
+    let daemon_directory = ruxex_home.join("app-server-control");
     std::fs::create_dir(&daemon_directory)?;
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
         |_| None,
     ));
     std::fs::write(daemon_directory.join("app-server-control.sock"), "")?;
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || panic!("daemon-owned homes should not probe managed configuration"),
         |_| None,
@@ -129,10 +129,10 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
     std::fs::remove_file(daemon_directory.join("app-server-control.sock"))?;
     std::fs::remove_dir(daemon_directory)?;
 
-    let additional_temporary_state = genex_home.join("tmp").join("other");
+    let additional_temporary_state = ruxex_home.join("tmp").join("other");
     std::fs::write(&additional_temporary_state, "")?;
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(false),
         |_| None,
@@ -152,13 +152,13 @@ fn startup_delays_composer_for_homes_without_authentication_state() -> std::io::
 #[test]
 fn startup_keeps_composer_when_home_state_cannot_be_confirmed() -> std::io::Result<()> {
     let temporary_directory = TempDir::new()?;
-    let genex_home = temporary_directory.path().join("genex-home");
+    let ruxex_home = temporary_directory.path().join("ruxex-home");
     let system_config_path =
         AbsolutePathBuf::from_absolute_path(temporary_directory.path().join("system.toml"))?;
 
-    std::fs::create_dir(&genex_home)?;
+    std::fs::create_dir(&ruxex_home)?;
     assert!(should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path),
         || Ok(false),
         |_| None,
@@ -168,10 +168,10 @@ fn startup_keeps_composer_when_home_state_cannot_be_confirmed() -> std::io::Resu
     {
         let system_config_path =
             AbsolutePathBuf::from_absolute_path(temporary_directory.path().join("system.toml"))?;
-        let daemon_directory = genex_home.join("app-server-control");
+        let daemon_directory = ruxex_home.join("app-server-control");
         std::fs::write(&daemon_directory, "not a directory")?;
         assert!(!should_delay_startup_composer_for_first_login(
-            &genex_home,
+            &ruxex_home,
             Ok(system_config_path.clone()),
             || panic!("ambiguous daemon state should not probe managed configuration"),
             |_| None,
@@ -181,7 +181,7 @@ fn startup_keeps_composer_when_home_state_cannot_be_confirmed() -> std::io::Resu
         let blocking_parent = temporary_directory.path().join("blocking-home-parent");
         std::fs::write(&blocking_parent, "not a directory")?;
         assert!(!should_delay_startup_composer_for_first_login(
-            &blocking_parent.join("genex-home"),
+            &blocking_parent.join("ruxex-home"),
             Ok(system_config_path),
             || panic!("ambiguous home state should not probe managed configuration"),
             |_| None,
@@ -221,12 +221,12 @@ fn startup_only_accepts_the_synthetic_search_override() {
 #[test]
 fn startup_keeps_composer_when_system_configuration_is_possible() -> std::io::Result<()> {
     let temporary_directory = TempDir::new()?;
-    let genex_home = temporary_directory.path().join("genex-home");
+    let ruxex_home = temporary_directory.path().join("ruxex-home");
     let system_config_path =
         AbsolutePathBuf::from_absolute_path(temporary_directory.path().join("system.toml"))?;
 
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Err(std::io::Error::other(
             "system configuration path is unavailable"
         )),
@@ -239,7 +239,7 @@ fn startup_keeps_composer_when_system_configuration_is_possible() -> std::io::Re
         let blocking_parent = temporary_directory.path().join("blocking-parent");
         std::fs::write(&blocking_parent, "not a directory")?;
         assert!(!should_delay_startup_composer_for_first_login(
-            &genex_home,
+            &ruxex_home,
             AbsolutePathBuf::from_absolute_path(blocking_parent.join("system.toml")),
             || Ok(false),
             |_| None,
@@ -248,7 +248,7 @@ fn startup_keeps_composer_when_system_configuration_is_possible() -> std::io::Re
 
     std::fs::write(system_config_path.as_path(), "model_provider.id = 'local'")?;
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path),
         || Ok(false),
         |_| None,
@@ -259,18 +259,18 @@ fn startup_keeps_composer_when_system_configuration_is_possible() -> std::io::Re
 #[test]
 fn startup_keeps_composer_when_managed_configuration_is_possible() -> std::io::Result<()> {
     let temporary_directory = TempDir::new()?;
-    let genex_home = temporary_directory.path().join("genex-home");
+    let ruxex_home = temporary_directory.path().join("ruxex-home");
     let system_config_path =
         AbsolutePathBuf::from_absolute_path(temporary_directory.path().join("system.toml"))?;
 
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path.clone()),
         || Ok(true),
         |_| None,
     ));
     assert!(!should_delay_startup_composer_for_first_login(
-        &genex_home,
+        &ruxex_home,
         Ok(system_config_path),
         || Err(std::io::Error::other(
             "managed configuration is inaccessible"

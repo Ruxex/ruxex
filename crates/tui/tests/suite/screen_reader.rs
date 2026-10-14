@@ -1,6 +1,6 @@
 //! Checks that interactive startup persists detection without replacing a user preference.
 
-use super::focus_palette::PtyGenex;
+use super::focus_palette::PtyRuxex;
 use super::focus_palette::write_test_config;
 use anyhow::Result;
 use pretty_assertions::assert_eq;
@@ -9,13 +9,13 @@ use std::time::Instant;
 
 #[test]
 fn startup_records_screen_reader_detection() -> Result<()> {
-    let repo_root = genex_utils_cargo_bin::repo_root()?;
+    let repo_root = ruxex_utils_cargo_bin::repo_root()?;
     let home = tempfile::tempdir()?;
     write_test_config(home.path(), &repo_root)?;
     let path = home.path().join("config.toml");
     let contents = std::fs::read_to_string(&path)?;
     std::fs::write(&path, format!("{contents}\n[tui]\nanimations = true\n"))?;
-    let mut terminal = PtyGenex::start(&repo_root, home, &[])?;
+    let mut terminal = PtyRuxex::start(&repo_root, home, &[])?;
     terminal.wait_for_startup()?;
     let deadline = Instant::now() + Duration::from_secs(/*secs*/ 30);
     loop {

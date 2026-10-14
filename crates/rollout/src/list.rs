@@ -1,6 +1,6 @@
 #![allow(warnings, clippy::all)]
 
-use genex_utils_path as path_utils;
+use ruxex_utils_path as path_utils;
 use std::cmp::Reverse;
 use std::ffi::OsStr;
 use std::io;
@@ -22,16 +22,16 @@ use super::rollout_file_name::RolloutFileName;
 use crate::RolloutItem;
 use crate::protocol::EventMsg;
 use crate::state_db;
-use genex_file_search as file_search;
-use genex_protocol::RolloutId;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::items::TurnItem;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::user_message_preview;
+use ruxex_file_search as file_search;
+use ruxex_protocol::RolloutId;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::user_message_preview;
 use serde_json::Value;
 
 /// Returned page of thread (thread) summaries.
@@ -61,7 +61,7 @@ pub struct ThreadItem {
     /// Best available user-facing preview for discovery and list display.
     pub preview: Option<String>,
     /// The user-selected section in SQLite-owned metadata.
-    pub section: Option<genex_state::ThreadSection>,
+    pub section: Option<ruxex_state::ThreadSection>,
     /// Canonical project assignment in SQLite-owned metadata.
     pub project_id: Option<String>,
     /// Saved Daybreak choice in SQLite-owned metadata, when available.
@@ -319,8 +319,8 @@ impl<'de> serde::Deserialize<'de> for Cursor {
     }
 }
 
-impl From<genex_state::Anchor> for Cursor {
-    fn from(anchor: genex_state::Anchor) -> Self {
+impl From<ruxex_state::Anchor> for Cursor {
+    fn from(anchor: ruxex_state::Anchor) -> Self {
         let ts = anchor
             .ts
             .timestamp_nanos_opt()
@@ -335,14 +335,14 @@ impl From<genex_state::Anchor> for Cursor {
 /// concurrent new sessions being appended. Ordering is stable by the requested sort key
 /// (timestamp desc).
 pub async fn get_threads(
-    genex_home: &Path,
+    ruxex_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     allowed_sources: &[SessionSource],
     cwd_filters: Option<&[PathBuf]>,
 ) -> io::Result<ThreadsPage> {
-    let root = genex_home.join(SESSIONS_SUBDIR);
+    let root = ruxex_home.join(SESSIONS_SUBDIR);
     get_threads_in_root(
         root,
         page_size,
@@ -404,7 +404,7 @@ pub async fn get_threads_in_root(
 
 /// Load thread file paths from disk using directory traversal.
 ///
-/// Directory layout: `~/.genex/sessions/YYYY/MM/DD/rollout-YYYY-MM-DDThh-mm-ss-<uuid>.jsonl`
+/// Directory layout: `~/.ruxex/sessions/YYYY/MM/DD/rollout-YYYY-MM-DDThh-mm-ss-<uuid>.jsonl`
 /// Returned newest (based on sort key) first.
 async fn traverse_directories_for_paths(
     root: PathBuf,
@@ -1248,10 +1248,10 @@ fn truncate_to_millis(dt: OffsetDateTime) -> Option<OffsetDateTime> {
 }
 
 async fn find_thread_path_by_id_str_in_subdir(
-    genex_home: &Path,
+    ruxex_home: &Path,
     subdir: &str,
     id_str: &str,
-    state_db_ctx: Option<&genex_state::StateRuntime>,
+    state_db_ctx: Option<&ruxex_state::StateRuntime>,
 ) -> io::Result<Option<PathBuf>> {
     // Validate UUID format early.
     if Uuid::parse_str(id_str).is_err() {
@@ -1292,7 +1292,7 @@ async fn find_thread_path_by_id_str_in_subdir(
                             tracing::warn!(
                                 "state db discrepancy during find_thread_path_by_id_str_in_subdir: mismatched_db_path"
                             );
-                            genex_state::record_fallback(
+                            ruxex_state::record_fallback(
                                 "find_thread_path",
                                 "mismatch",
                                 /*telemetry_override*/ None,
@@ -1314,7 +1314,7 @@ async fn find_thread_path_by_id_str_in_subdir(
                     tracing::warn!(
                         "state db discrepancy during find_thread_path_by_id_str_in_subdir: stale_db_path"
                     );
-                    genex_state::record_fallback(
+                    ruxex_state::record_fallback(
                         "find_thread_path",
                         "stale_path",
                         /*telemetry_override*/ None,
@@ -1331,7 +1331,7 @@ async fn find_thread_path_by_id_str_in_subdir(
         }
     }
 
-    let mut root = genex_home.to_path_buf();
+    let mut root = ruxex_home.to_path_buf();
     root.push(subdir);
     if !root.exists() {
         return Ok(unverified_db_path);
@@ -1393,7 +1393,7 @@ async fn find_thread_path_by_id_str_in_subdir(
             "state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back"
         );
         if let Some(reason) = fallback_reason {
-            genex_state::record_fallback(
+            ruxex_state::record_fallback(
                 "find_thread_path",
                 reason,
                 /*telemetry_override*/ None,
@@ -1501,20 +1501,20 @@ async fn find_rollout_path_by_rollout_id_from_filenames(
 /// SQLite can return its selected path directly. Returns `Ok(Some(path))` if found, `Ok(None)`
 /// if not present or the ID is invalid.
 pub async fn find_thread_path_by_id_str(
-    genex_home: &Path,
+    ruxex_home: &Path,
     id_str: &str,
-    state_db_ctx: Option<&genex_state::StateRuntime>,
+    state_db_ctx: Option<&ruxex_state::StateRuntime>,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(genex_home, SESSIONS_SUBDIR, id_str, state_db_ctx).await
+    find_thread_path_by_id_str_in_subdir(ruxex_home, SESSIONS_SUBDIR, id_str, state_db_ctx).await
 }
 
 /// Locate the newest archived rollout file owned by a thread ID.
 pub async fn find_archived_thread_path_by_id_str(
-    genex_home: &Path,
+    ruxex_home: &Path,
     id_str: &str,
-    state_db_ctx: Option<&genex_state::StateRuntime>,
+    state_db_ctx: Option<&ruxex_state::StateRuntime>,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(genex_home, ARCHIVED_SESSIONS_SUBDIR, id_str, state_db_ctx)
+    find_thread_path_by_id_str_in_subdir(ruxex_home, ARCHIVED_SESSIONS_SUBDIR, id_str, state_db_ctx)
         .await
 }
 
@@ -1523,12 +1523,12 @@ pub async fn find_archived_thread_path_by_id_str(
 /// Unlike [`find_thread_path_by_id_str`], this does not consult SQLite or choose among several
 /// rollout files owned by one thread. It is for following `SessionMeta.history_base`.
 pub async fn find_rollout_path_by_rollout_id(
-    genex_home: &Path,
+    ruxex_home: &Path,
     rollout_id: RolloutId,
 ) -> io::Result<Option<PathBuf>> {
     for subdir in [SESSIONS_SUBDIR, ARCHIVED_SESSIONS_SUBDIR] {
         let path = find_rollout_path_by_rollout_id_from_filenames(
-            genex_home.join(subdir).as_path(),
+            ruxex_home.join(subdir).as_path(),
             rollout_id,
         )
         .await?;

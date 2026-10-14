@@ -1,13 +1,13 @@
-use genex_protocol::ThreadId;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::user_input::UserInput;
-use genex_rollout::RolloutItem;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout::RolloutItem;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -134,11 +134,11 @@ async fn pending_thread_metadata_rejects_rollout_path() {
 async fn store_with_runtime() -> (
     TempDir,
     Arc<LocalThreadStore>,
-    Arc<genex_state::StateRuntime>,
+    Arc<ruxex_state::StateRuntime>,
 ) {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state db should initialize");
     let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));

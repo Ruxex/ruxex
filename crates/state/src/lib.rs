@@ -2,7 +2,7 @@
 //!
 //! This crate is intentionally small and focused: it extracts rollout metadata
 //! from JSONL rollouts and mirrors it into a local SQLite database. Backfill
-//! orchestration and rollout scanning live in `genex-core`.
+//! orchestration and rollout scanning live in `ruxex-core`.
 
 const _: () = assert!(
     libsqlite3_sys::SQLITE_VERSION_NUMBER >= 3_051_003,
@@ -107,29 +107,29 @@ pub const PINNED_THREAD_SECTION_ID: &str = "01984de2-8f74-7c91-a3b2-5c5e937cf318
 pub const PINNED_THREAD_SECTION_NAME: &str = "Pinned";
 
 /// Environment variable for overriding the SQLite state database home directory.
-pub const SQLITE_HOME_ENV: &str = "GENEX_SQLITE_HOME";
+pub const SQLITE_HOME_ENV: &str = "RUXEX_SQLITE_HOME";
 
 /// Errors encountered during DB operations. Tags: [stage]
-pub const DB_ERROR_METRIC: &str = "genex.db.error";
+pub const DB_ERROR_METRIC: &str = "ruxex.db.error";
 /// Metrics on backfill process. Tags: [status]
-pub const DB_METRIC_BACKFILL: &str = "genex.db.backfill";
+pub const DB_METRIC_BACKFILL: &str = "ruxex.db.backfill";
 /// Metrics on backfill duration. Tags: [status]
-pub const DB_METRIC_BACKFILL_DURATION_MS: &str = "genex.db.backfill.duration_ms";
+pub const DB_METRIC_BACKFILL_DURATION_MS: &str = "ruxex.db.backfill.duration_ms";
 /// SQLite initialization attempts. Tags: [status, phase, db, error]
-pub const DB_INIT_METRIC: &str = "genex.sqlite.init.count";
+pub const DB_INIT_METRIC: &str = "ruxex.sqlite.init.count";
 /// SQLite initialization latency. Tags: [status, phase, db, error]
-pub const DB_INIT_DURATION_METRIC: &str = "genex.sqlite.init.duration_ms";
+pub const DB_INIT_DURATION_METRIC: &str = "ruxex.sqlite.init.duration_ms";
 /// Rollout fallback attempts. Tags: [caller, reason]
-pub const DB_FALLBACK_METRIC: &str = "genex.sqlite.fallback.count";
+pub const DB_FALLBACK_METRIC: &str = "ruxex.sqlite.fallback.count";
 /// SQLite log batch write attempts. Tags: [status, error]
-pub const LOG_WRITE_METRIC: &str = "genex.sqlite.logs.write.count";
+pub const LOG_WRITE_METRIC: &str = "ruxex.sqlite.logs.write.count";
 /// SQLite log batch write latency. Tags: [status, error]
-pub const LOG_WRITE_DURATION_METRIC: &str = "genex.sqlite.logs.write.duration_ms";
+pub const LOG_WRITE_DURATION_METRIC: &str = "ruxex.sqlite.logs.write.duration_ms";
 /// Estimated bytes in each SQLite log batch. Tags: [status, error]
-pub const LOG_WRITE_BYTES_METRIC: &str = "genex.sqlite.logs.write.bytes";
+pub const LOG_WRITE_BYTES_METRIC: &str = "ruxex.sqlite.logs.write.bytes";
 /// Number of entries in each SQLite log batch. Tags: [status, error]
-pub const LOG_WRITE_ENTRIES_METRIC: &str = "genex.sqlite.logs.write.entries";
+pub const LOG_WRITE_ENTRIES_METRIC: &str = "ruxex.sqlite.logs.write.entries";
 /// Largest estimated entry size in each SQLite log batch. Tags: [status, error]
-pub const LOG_WRITE_MAX_ENTRY_BYTES_METRIC: &str = "genex.sqlite.logs.write.max_entry_bytes";
+pub const LOG_WRITE_MAX_ENTRY_BYTES_METRIC: &str = "ruxex.sqlite.logs.write.max_entry_bytes";
 /// SQLite log entries discarded before they can be queued. Tags: [reason]
-pub const LOG_QUEUE_DROPPED_METRIC: &str = "genex.sqlite.logs.queue.dropped";
+pub const LOG_QUEUE_DROPPED_METRIC: &str = "ruxex.sqlite.logs.queue.dropped";

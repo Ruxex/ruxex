@@ -11,12 +11,12 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::LoginAccountParams;
-use genex_app_server_protocol::LoginAccountResponse;
-use genex_app_server_protocol::ModelProviderAuthField;
-use genex_login::AuthConfig;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::LoginAccountParams;
+use ruxex_app_server_protocol::LoginAccountResponse;
+use ruxex_app_server_protocol::ModelProviderAuthField;
+use ruxex_login::AuthConfig;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -33,7 +33,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
-use genex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ForcedLoginMethod;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -59,8 +59,8 @@ pub(crate) enum SignInState {
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
-pub(super) fn onboarding_request_id() -> genex_app_server_protocol::RequestId {
-    genex_app_server_protocol::RequestId::String(uuid::Uuid::new_v4().to_string())
+pub(super) fn onboarding_request_id() -> ruxex_app_server_protocol::RequestId {
+    ruxex_app_server_protocol::RequestId::String(uuid::Uuid::new_v4().to_string())
 }
 
 #[derive(Clone, Default)]
@@ -230,7 +230,7 @@ impl AuthModeWidget {
         let lines = vec![
             "✓ API key configured".fg(Color::Green).into(),
             "".into(),
-            "  Genex will use usage-based billing with your API key.".into(),
+            "  Ruxex will use usage-based billing with your API key.".into(),
         ];
 
         Paragraph::new(lines)

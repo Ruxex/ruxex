@@ -1,5 +1,5 @@
 {
-  "name": "@genex/desktop",
+  "name": "@ruxex/desktop",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -17,7 +17,7 @@
     "lint:fix": "biome lint --write . && eslint src --fix",
     "preview": "vite preview",
     "tauri": "tauri",
-    "stage:runtime": "python3 scripts/stage-genex-package.py"
+    "stage:runtime": "python3 scripts/stage-ruxex-package.py"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",

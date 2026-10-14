@@ -1,7 +1,7 @@
 use crate::message_processor::ConnectionSessionState;
 use crate::outgoing_message::OutgoingEnvelope;
-use genex_app_server_protocol::ExperimentalApi;
-use genex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ExperimentalApi;
+use ruxex_app_server_protocol::ServerRequest;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -12,21 +12,21 @@ use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 
-pub use genex_app_server_transport::AppServerTransport;
-pub(crate) use genex_app_server_transport::CHANNEL_CAPACITY;
-pub(crate) use genex_app_server_transport::ConnectionId;
-pub(crate) use genex_app_server_transport::ConnectionOrigin;
-pub(crate) use genex_app_server_transport::DaemonShutdownAccess;
-pub(crate) use genex_app_server_transport::OutgoingMessage;
-pub(crate) use genex_app_server_transport::QueuedOutgoingMessage;
-pub(crate) use genex_app_server_transport::TransportEvent;
-pub(crate) use genex_app_server_transport::acquire_app_server_startup_lock;
-pub use genex_app_server_transport::app_server_control_socket_path;
-pub(crate) use genex_app_server_transport::app_server_startup_lock_path;
-pub use genex_app_server_transport::auth;
-pub(crate) use genex_app_server_transport::start_control_socket_acceptor;
-pub(crate) use genex_app_server_transport::start_stdio_connection;
-pub(crate) use genex_app_server_transport::start_websocket_acceptor;
+pub use ruxex_app_server_transport::AppServerTransport;
+pub(crate) use ruxex_app_server_transport::CHANNEL_CAPACITY;
+pub(crate) use ruxex_app_server_transport::ConnectionId;
+pub(crate) use ruxex_app_server_transport::ConnectionOrigin;
+pub(crate) use ruxex_app_server_transport::DaemonShutdownAccess;
+pub(crate) use ruxex_app_server_transport::OutgoingMessage;
+pub(crate) use ruxex_app_server_transport::QueuedOutgoingMessage;
+pub(crate) use ruxex_app_server_transport::TransportEvent;
+pub(crate) use ruxex_app_server_transport::acquire_app_server_startup_lock;
+pub use ruxex_app_server_transport::app_server_control_socket_path;
+pub(crate) use ruxex_app_server_transport::app_server_startup_lock_path;
+pub use ruxex_app_server_transport::auth;
+pub(crate) use ruxex_app_server_transport::start_control_socket_acceptor;
+pub(crate) use ruxex_app_server_transport::start_stdio_connection;
+pub(crate) use ruxex_app_server_transport::start_websocket_acceptor;
 
 pub(crate) struct ConnectionState {
     pub(crate) origin: ConnectionOrigin,

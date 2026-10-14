@@ -1,5 +1,5 @@
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::models::ResponseItem;
 
 use crate::context::ContextualUserFragment;
 use crate::context::UserShellCommand;

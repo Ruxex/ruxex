@@ -5,18 +5,18 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
 
-use genex_core::exec_env::create_env;
-use genex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
-use genex_network_proxy::write_attribution_frame;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core::exec_env::create_env;
+use ruxex_network_proxy::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;
+use ruxex_network_proxy::write_attribution_frame;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::io::Read;
@@ -180,7 +180,7 @@ fn linux_sandbox_command(
     args.push("--".to_string());
     args.extend(command.iter().map(|entry| (*entry).to_string()));
 
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_genex-linux-sandbox"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_ruxex-linux-sandbox"));
     cmd.args(args)
         .current_dir(cwd)
         .env_clear()
@@ -310,7 +310,7 @@ async fn namespace_reaper_collects_orphaned_descendants() {
 
 #[tokio::test]
 async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
-    if option_env!("GENEX_BWRAP_SHA256")
+    if option_env!("RUXEX_BWRAP_SHA256")
         .is_some_and(|digest| digest.chars().any(|character| character != '0'))
     {
         eprintln!("skipping system bwrap fallback test: bundled binaries require a release digest");
@@ -322,7 +322,7 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
         return;
     }
 
-    let Some(system_bwrap) = genex_sandboxing::find_system_bwrap_in_path(
+    let Some(system_bwrap) = ruxex_sandboxing::find_system_bwrap_in_path(
         &PermissionProfile::read_only().file_system_sandbox_policy(),
         &std::env::current_dir().expect("current directory"),
     ) else {
@@ -331,13 +331,13 @@ async fn unsupported_system_bwrap_falls_back_to_bundled_bwrap() {
     };
 
     let tempdir = tempfile::tempdir().expect("create isolated sandbox installation");
-    let sandbox_executable = tempdir.path().join("genex-linux-sandbox");
-    let original_executable = env!("CARGO_BIN_EXE_genex-linux-sandbox");
+    let sandbox_executable = tempdir.path().join("ruxex-linux-sandbox");
+    let original_executable = env!("CARGO_BIN_EXE_ruxex-linux-sandbox");
     if std::fs::hard_link(original_executable, &sandbox_executable).is_err() {
         std::fs::copy(original_executable, &sandbox_executable).expect("copy sandbox executable");
     }
 
-    let resources_dir = tempdir.path().join("genex-resources");
+    let resources_dir = tempdir.path().join("ruxex-resources");
     std::fs::create_dir(&resources_dir).expect("create bundled resource directory");
     std::os::unix::fs::symlink(&system_bwrap, resources_dir.join("bwrap"))
         .expect("install bundled bubblewrap");
@@ -420,7 +420,7 @@ async fn managed_proxy_full_filesystem_uses_minimal_dev_nodes() {
     env.insert("HTTP_PROXY".to_string(), "http://127.0.0.1:9".to_string());
     if let Some(file) = &shared_memory_file {
         env.insert(
-            "GENEX_TEST_SHM_PATH".to_string(),
+            "RUXEX_TEST_SHM_PATH".to_string(),
             file.path().to_string_lossy().into_owned(),
         );
     }
@@ -438,9 +438,9 @@ async fn managed_proxy_full_filesystem_uses_minimal_dev_nodes() {
                 "if command -v python3 >/dev/null 2>&1; then ",
                 "python3 -c 'import os; assert len(os.urandom(16)) == 16'; ",
                 "fi; ",
-                "if [ -n \"${GENEX_TEST_SHM_PATH:-}\" ]; then ",
-                "test \"$(cat \"$GENEX_TEST_SHM_PATH\")\" = host-before; ",
-                "printf sandbox-after >\"$GENEX_TEST_SHM_PATH\"; ",
+                "if [ -n \"${RUXEX_TEST_SHM_PATH:-}\" ]; then ",
+                "test \"$(cat \"$RUXEX_TEST_SHM_PATH\")\" = host-before; ",
+                "printf sandbox-after >\"$RUXEX_TEST_SHM_PATH\"; ",
                 "fi; ",
                 "stat -c '%d:%i' /dev",
             ),
@@ -598,7 +598,7 @@ async fn managed_proxy_mode_routes_through_bridge_and_blocks_direct_egress() {
         format!("http://127.0.0.1:{proxy_port}"),
     );
 
-    let sandbox_helper_dir = std::path::Path::new(env!("CARGO_BIN_EXE_genex-linux-sandbox"))
+    let sandbox_helper_dir = std::path::Path::new(env!("CARGO_BIN_EXE_ruxex-linux-sandbox"))
         .parent()
         .expect("sandbox helper should have a parent");
     let file_system_sandbox_policy =
@@ -716,7 +716,7 @@ async fn managed_proxy_mode_denies_af_unix_socket_but_allows_socketpair() {
 #[test]
 #[ignore = "invoked inside the managed proxy sandbox"]
 fn handoff_client() {
-    let Ok(label) = std::env::var("GENEX_TEST_HANDOFF_LABEL") else {
+    let Ok(label) = std::env::var("RUXEX_TEST_HANDOFF_LABEL") else {
         return;
     };
     assert!(std::env::var_os(PROXY_ATTRIBUTION_TOKEN_ENV_KEY).is_none());
@@ -740,9 +740,9 @@ fn handoff_client() {
         Err(error) => panic!("enumerate inherited descriptors: {error}"),
     }
 
-    let shared = std::env::var("GENEX_TEST_HANDOFF_SHARED").expect("shared directory");
+    let shared = std::env::var("RUXEX_TEST_HANDOFF_SHARED").expect("shared directory");
     let shared = Path::new(&shared);
-    let peer = std::env::var("GENEX_TEST_HANDOFF_PEER").expect("peer label");
+    let peer = std::env::var("RUXEX_TEST_HANDOFF_PEER").expect("peer label");
     std::fs::write(shared.join(&label), b"ready").expect("announce sandbox readiness");
     let deadline = Instant::now() + OPERATION_TIMEOUT;
     while !shared.join(&peer).exists() {
@@ -810,10 +810,10 @@ async fn handoff_isolates_concurrent_endpoints_and_closes_privileged_descriptors
             PROXY_ATTRIBUTION_TOKEN_ENV_KEY.to_string(),
             format!("handoff-{label}"),
         );
-        env.insert("GENEX_TEST_HANDOFF_LABEL".to_string(), label.to_string());
-        env.insert("GENEX_TEST_HANDOFF_PEER".to_string(), peer.to_string());
+        env.insert("RUXEX_TEST_HANDOFF_LABEL".to_string(), label.to_string());
+        env.insert("RUXEX_TEST_HANDOFF_PEER".to_string(), peer.to_string());
         env.insert(
-            "GENEX_TEST_HANDOFF_SHARED".to_string(),
+            "RUXEX_TEST_HANDOFF_SHARED".to_string(),
             shared.path().to_string_lossy().into_owned(),
         );
 

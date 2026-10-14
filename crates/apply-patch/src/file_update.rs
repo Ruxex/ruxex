@@ -1,7 +1,7 @@
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::ReadFileOptions;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_utils_path_uri::PathUri;
 use similar::TextDiff;
 
 use crate::ApplyPatchError;

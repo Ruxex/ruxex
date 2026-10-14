@@ -1,20 +1,20 @@
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
-use genex_agent_extension::AgentInvocation;
-use genex_agent_extension::AgentRun;
-use genex_agent_extension::AgentRunner;
-use genex_app_server_protocol::ImageReference as V2ImageReference;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageReference as CoreImageReference;
-use genex_protocol::protocol::AdditionalContextEntry as CoreAdditionalContextEntry;
-use genex_protocol::protocol::AdditionalContextKind as CoreAdditionalContextKind;
-use genex_protocol::protocol::TurnSettingsUpdate;
-use genex_protocol::protocol::TurnSettingsUpdateOutcome;
-use genex_skills::system_cache_root_dir;
+use ruxex_agent_extension::AgentInvocation;
+use ruxex_agent_extension::AgentRun;
+use ruxex_agent_extension::AgentRunner;
+use ruxex_app_server_protocol::ImageReference as V2ImageReference;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageReference as CoreImageReference;
+use ruxex_protocol::protocol::AdditionalContextEntry as CoreAdditionalContextEntry;
+use ruxex_protocol::protocol::AdditionalContextKind as CoreAdditionalContextKind;
+use ruxex_protocol::protocol::TurnSettingsUpdate;
+use ruxex_protocol::protocol::TurnSettingsUpdateOutcome;
+use ruxex_skills::system_cache_root_dir;
 
 use crate::image_url::REMOTE_IMAGE_URL_ERROR;
 use crate::image_url::is_remote_image_url;
@@ -125,8 +125,8 @@ struct ThreadSettingsBuildParams {
     method: &'static str,
     disabled_plugin_ids: Option<Vec<String>>,
     environment_override: ThreadEnvironmentOverride,
-    approval_policy: Option<genex_app_server_protocol::AskForApproval>,
-    sandbox_policy: Option<genex_app_server_protocol::SandboxPolicy>,
+    approval_policy: Option<ruxex_app_server_protocol::AskForApproval>,
+    sandbox_policy: Option<ruxex_app_server_protocol::SandboxPolicy>,
     permissions: Option<String>,
     model: Option<String>,
     service_tier: Option<Option<String>>,
@@ -284,7 +284,7 @@ impl TurnRequestProcessor {
     async fn load_thread(
         &self,
         thread_id: &str,
-    ) -> Result<(ThreadId, Arc<GenexThread>), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Arc<RuxexThread>), JSONRPCErrorError> {
         // Resolve the core conversation handle from a v2 thread id string.
         let thread_id = ThreadId::from_string(thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
@@ -301,7 +301,7 @@ impl TurnRequestProcessor {
     async fn ensure_direct_input_allowed(
         &self,
         _request_id: &ConnectionRequestId,
-        thread: &GenexThread,
+        thread: &RuxexThread,
     ) -> Result<(), JSONRPCErrorError> {
         ensure_direct_input_allowed(thread).await
     }
@@ -378,7 +378,7 @@ impl TurnRequestProcessor {
             CoreReviewTarget::Custom { instructions } => instructions.clone(),
         };
 
-        let hint = genex_core::review_prompts::user_facing_hint(&core_target);
+        let hint = ruxex_core::review_prompts::user_facing_hint(&core_target);
         let review_request = ReviewRequest {
             target: core_target,
             user_facing_hint: Some(hint.clone()),
@@ -390,16 +390,16 @@ impl TurnRequestProcessor {
     async fn request_trace_context(
         &self,
         request_id: &ConnectionRequestId,
-    ) -> Option<genex_protocol::protocol::W3cTraceContext> {
+    ) -> Option<ruxex_protocol::protocol::W3cTraceContext> {
         self.outgoing.request_trace_context(request_id).await
     }
 
     async fn submit_core_op(
         &self,
         request_id: &ConnectionRequestId,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         op: Op,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         thread
             .submit_with_trace(op, self.request_trace_context(request_id).await)
             .await
@@ -583,7 +583,7 @@ impl TurnRequestProcessor {
 
     async fn build_environment_override(
         &self,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         cwd: Option<AbsolutePathBuf>,
         workspace_roots: Option<Vec<AbsolutePathBuf>>,
         environment_selections: Option<Vec<TurnEnvironmentSelection>>,
@@ -641,9 +641,9 @@ impl TurnRequestProcessor {
 
     async fn build_thread_settings_overrides(
         &self,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         params: ThreadSettingsBuildParams,
-    ) -> Result<genex_protocol::protocol::ThreadSettingsOverrides, JSONRPCErrorError> {
+    ) -> Result<ruxex_protocol::protocol::ThreadSettingsOverrides, JSONRPCErrorError> {
         let ThreadSettingsBuildParams {
             method,
             disabled_plugin_ids,
@@ -692,7 +692,7 @@ impl TurnRequestProcessor {
             || collaboration_mode.is_some();
 
         let approval_policy =
-            approval_policy.map(genex_app_server_protocol::AskForApproval::to_core);
+            approval_policy.map(ruxex_app_server_protocol::AskForApproval::to_core);
         let sandbox_policy = sandbox_policy.map(|policy| policy.to_core());
         let (permission_profile, active_permission_profile, profile_workspace_roots) =
             if let Some(permissions) = permissions {
@@ -733,7 +733,7 @@ impl TurnRequestProcessor {
 
         if has_any_overrides {
             thread
-                .preview_thread_settings_overrides(GenexThreadSettingsOverrides {
+                .preview_thread_settings_overrides(RuxexThreadSettingsOverrides {
                     disabled_plugin_ids: disabled_plugin_ids.clone(),
                     environments: environments.clone(),
                     runtime_workspace_roots: runtime_workspace_roots.clone(),
@@ -754,7 +754,7 @@ impl TurnRequestProcessor {
                 })?;
         }
 
-        Ok(genex_protocol::protocol::ThreadSettingsOverrides {
+        Ok(ruxex_protocol::protocol::ThreadSettingsOverrides {
             disabled_plugin_ids,
             environments,
             runtime_workspace_roots,
@@ -807,7 +807,7 @@ impl TurnRequestProcessor {
             )
             .await?;
 
-        if thread_settings != genex_protocol::protocol::ThreadSettingsOverrides::default() {
+        if thread_settings != ruxex_protocol::protocol::ThreadSettingsOverrides::default() {
             self.submit_core_op(
                 request_id,
                 thread.as_ref(),
@@ -845,14 +845,14 @@ impl TurnRequestProcessor {
             .inject_response_items(items)
             .await
             .map_err(|err| match err.details() {
-                GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                 _ => internal_error(format!("failed to inject response items: {err}")),
             })?;
         Ok(ThreadInjectItemsResponse {})
     }
 
     async fn set_app_server_client_info(
-        thread: &GenexThread,
+        thread: &RuxexThread,
         app_server_client_name: Option<String>,
         app_server_client_version: Option<String>,
     ) -> Result<(), JSONRPCErrorError> {
@@ -923,17 +923,17 @@ impl TurnRequestProcessor {
                     ),
                     NotSubmittedReason::ActiveTurnNotSteerable { turn_kind } => {
                         let message = match turn_kind {
-                            genex_protocol::protocol::NonSteerableTurnKind::Review => {
+                            ruxex_protocol::protocol::NonSteerableTurnKind::Review => {
                                 "cannot steer a review turn".to_string()
                             }
-                            genex_protocol::protocol::NonSteerableTurnKind::Compact => {
+                            ruxex_protocol::protocol::NonSteerableTurnKind::Compact => {
                                 "cannot steer a compact turn".to_string()
                             }
                         };
                         let error = TurnError {
                             misalignment: None,
                             message: message.clone(),
-                            genex_error_info: Some(GenexErrorInfo::ActiveTurnNotSteerable {
+                            ruxex_error_info: Some(RuxexErrorInfo::ActiveTurnNotSteerable {
                                 turn_kind: turn_kind.into(),
                             }),
                             additional_details: None,
@@ -1014,7 +1014,7 @@ impl TurnRequestProcessor {
     async fn start_inline_review(
         &self,
         request_id: &ConnectionRequestId,
-        parent_thread: Arc<GenexThread>,
+        parent_thread: Arc<RuxexThread>,
         review_request: ReviewRequest,
         display_text: &str,
         parent_thread_id: String,
@@ -1036,7 +1036,7 @@ impl TurnRequestProcessor {
     async fn start_detached_review(
         &self,
         request_id: &ConnectionRequestId,
-        parent_thread: Arc<GenexThread>,
+        parent_thread: Arc<RuxexThread>,
         prompt: &str,
     ) -> std::result::Result<(), JSONRPCErrorError> {
         // AgentRunner::start still delegates to spawn_subagent, which forks from the parent's
@@ -1044,7 +1044,7 @@ impl TurnRequestProcessor {
         // closed until detached review has a bounded fork path.
         if matches!(
             parent_thread.config_snapshot().await.history_mode,
-            genex_protocol::protocol::ThreadHistoryMode::Paginated
+            ruxex_protocol::protocol::ThreadHistoryMode::Paginated
         ) {
             return Err(invalid_request(
                 "paginated threads do not support detached review",
@@ -1151,7 +1151,7 @@ impl TurnRequestProcessor {
                 .await?;
             }
             CoreReviewDelivery::Detached => {
-                let review_skill_path = system_cache_root_dir(&self.config.genex_home)
+                let review_skill_path = system_cache_root_dir(&self.config.ruxex_home)
                     .join("review-agent")
                     .join("SKILL.md");
                 let prompt = format!(
@@ -1241,7 +1241,7 @@ impl TurnRequestProcessor {
             outgoing: Arc::clone(&self.outgoing),
             pending_thread_unloads: Arc::clone(&self.pending_thread_unloads),
             thread_watch_manager: self.thread_watch_manager.clone(),
-            genex_home: self.config.genex_home.to_path_buf(),
+            ruxex_home: self.config.ruxex_home.to_path_buf(),
             thread_unload_delay: self.config.thread_unload_delay,
             skills_watcher: Arc::clone(&self.skills_watcher),
             turn_cost_worker: self.turn_cost_worker.clone(),

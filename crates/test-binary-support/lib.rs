@@ -1,14 +1,14 @@
 use std::path::Path;
 
-use genex_arg0::Arg0DispatchPaths;
-use genex_arg0::Arg0PathEntryGuard;
-use genex_arg0::arg0_dispatch;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::Arg0PathEntryGuard;
+use ruxex_arg0::arg0_dispatch;
 use tempfile::TempDir;
 
 pub struct TestBinaryDispatchGuard {
-    _genex_home: TempDir,
+    _ruxex_home: TempDir,
     arg0: Arg0PathEntryGuard,
-    _previous_genex_home: Option<std::ffi::OsString>,
+    _previous_ruxex_home: Option<std::ffi::OsString>,
 }
 
 impl TestBinaryDispatchGuard {
@@ -24,7 +24,7 @@ pub enum TestBinaryDispatchMode {
 }
 
 pub fn configure_test_binary_dispatch<F>(
-    genex_home_prefix: &str,
+    ruxex_home_prefix: &str,
     classify: F,
 ) -> Option<TestBinaryDispatchGuard>
 where
@@ -44,33 +44,33 @@ where
         }
         TestBinaryDispatchMode::Skip => None,
         TestBinaryDispatchMode::InstallAliases => {
-            let genex_home = match tempfile::Builder::new().prefix(genex_home_prefix).tempdir() {
-                Ok(genex_home) => genex_home,
-                Err(error) => panic!("failed to create test GENEX_HOME: {error}"),
+            let ruxex_home = match tempfile::Builder::new().prefix(ruxex_home_prefix).tempdir() {
+                Ok(ruxex_home) => ruxex_home,
+                Err(error) => panic!("failed to create test RUXEX_HOME: {error}"),
             };
-            let previous_genex_home = std::env::var_os("GENEX_HOME");
+            let previous_ruxex_home = std::env::var_os("RUXEX_HOME");
             // Safety: this runs from a test ctor before test threads begin.
             unsafe {
-                std::env::set_var("GENEX_HOME", genex_home.path());
+                std::env::set_var("RUXEX_HOME", ruxex_home.path());
             }
 
             let arg0 = match arg0_dispatch() {
                 Some(arg0) => arg0,
                 None => panic!("failed to configure arg0 dispatch aliases for test binary"),
             };
-            match previous_genex_home.as_ref() {
+            match previous_ruxex_home.as_ref() {
                 Some(value) => unsafe {
-                    std::env::set_var("GENEX_HOME", value);
+                    std::env::set_var("RUXEX_HOME", value);
                 },
                 None => unsafe {
-                    std::env::remove_var("GENEX_HOME");
+                    std::env::remove_var("RUXEX_HOME");
                 },
             }
 
             Some(TestBinaryDispatchGuard {
-                _genex_home: genex_home,
+                _ruxex_home: ruxex_home,
                 arg0,
-                _previous_genex_home: previous_genex_home,
+                _previous_ruxex_home: previous_ruxex_home,
             })
         }
     }

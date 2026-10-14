@@ -6,12 +6,12 @@ mod render;
 pub(crate) mod test_support;
 
 use crate::config::Config;
-use genex_core_plugins::PluginsManager;
-use genex_credential_broker::SharedCredentialBroker;
-use genex_skills_extension::HostSkillsService;
+use ruxex_core_plugins::PluginsManager;
+use ruxex_credential_broker::SharedCredentialBroker;
+use ruxex_skills_extension::HostSkillsService;
 use std::sync::Arc;
 
-pub(crate) use genex_plugin::PluginCapabilitySummary;
+pub(crate) use ruxex_plugin::PluginCapabilitySummary;
 
 pub(crate) use injection::build_plugin_injections;
 pub(crate) use render::render_explicit_plugin_instructions;
@@ -28,11 +28,11 @@ pub fn plugins_manager_for_config(
     credential_broker: SharedCredentialBroker,
 ) -> PluginsManager {
     let skill_root_loader = Arc::new(HostSkillsService::new(
-        config.genex_home.clone(),
+        config.ruxex_home.clone(),
         /*bundled_skills_enabled*/ false,
     ));
     PluginsManager::new(
-        config.genex_home.to_path_buf(),
+        config.ruxex_home.to_path_buf(),
         credential_broker,
         skill_root_loader,
     )

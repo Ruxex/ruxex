@@ -2,116 +2,116 @@ use crate::context::world_state::validate_managed_developer_instructions;
 use crate::path_utils::normalize_for_native_workdir;
 use crate::unified_exec::DEFAULT_MAX_BACKGROUND_TERMINAL_TIMEOUT_MS;
 use crate::unified_exec::MIN_EMPTY_YIELD_TIME_MS;
-use genex_agent_roles::load_agent_roles;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigPathContext;
-use genex_config::ConfigRequirements;
-use genex_config::ConfigRequirementsToml;
-use genex_config::ConstrainedWithSource;
-use genex_config::FeatureRequirementsToml;
-use genex_config::ManagedAuthPolicy;
-use genex_config::McpEnterpriseManagedAuthConfig;
-use genex_config::McpServerRequirement;
-use genex_config::PluginRequirementsToml;
-use genex_config::ProfileV2Name;
-use genex_config::ResidencyRequirement;
-use genex_config::SandboxModeRequirement;
-use genex_config::Sourced;
-use genex_config::ThreadConfigLoader;
-use genex_config::config_toml::ConfigToml;
-use genex_config::config_toml::DEFAULT_PROJECT_DOC_MAX_BYTES;
-use genex_config::config_toml::ProjectConfig;
-use genex_config::config_toml::ThreadStoreToml;
-use genex_config::loader::load_config_layers_state;
-use genex_config::loader::project_trust_key;
-use genex_config::permissions_toml::PermissionProfileToml;
-use genex_config::permissions_toml::PermissionsToml;
-use genex_config::sandbox_mode_requirement_for_permission_profile;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::History;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerDisabledReason;
-use genex_config::types::ModelAvailabilityNuxConfig;
-use genex_config::types::Notice;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_config::types::ResumeCwdMode;
-use genex_config::types::SessionPickerViewMode;
-use genex_config::types::TuiKeymap;
-use genex_config::types::TuiNotificationSettings;
-use genex_config::types::UriBasedFileOpener;
-use genex_core_plugins::PluginLoadOutcome;
-use genex_core_plugins::PluginsConfigInput;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::LOCAL_FS;
-use genex_exec_server::ReadFileOptions;
-use genex_features::CodeModeConfigToml;
-use genex_features::CurrentTimeReminderConfigToml;
-use genex_features::CurrentTimeReminderDeliveryMode;
-use genex_features::CurrentTimeSource;
-use genex_features::Feature;
-use genex_features::FeatureConfigSource;
-use genex_features::FeatureOverrides;
-use genex_features::FeatureToml;
-use genex_features::Features;
-use genex_features::FeaturesToml;
-use genex_features::NetworkProxyConfigToml;
+use ruxex_agent_roles::load_agent_roles;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigPathContext;
+use ruxex_config::ConfigRequirements;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::ConstrainedWithSource;
+use ruxex_config::FeatureRequirementsToml;
+use ruxex_config::ManagedAuthPolicy;
+use ruxex_config::McpEnterpriseManagedAuthConfig;
+use ruxex_config::McpServerRequirement;
+use ruxex_config::PluginRequirementsToml;
+use ruxex_config::ProfileV2Name;
+use ruxex_config::ResidencyRequirement;
+use ruxex_config::SandboxModeRequirement;
+use ruxex_config::Sourced;
+use ruxex_config::ThreadConfigLoader;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_config::config_toml::DEFAULT_PROJECT_DOC_MAX_BYTES;
+use ruxex_config::config_toml::ProjectConfig;
+use ruxex_config::config_toml::ThreadStoreToml;
+use ruxex_config::loader::load_config_layers_state;
+use ruxex_config::loader::project_trust_key;
+use ruxex_config::permissions_toml::PermissionProfileToml;
+use ruxex_config::permissions_toml::PermissionsToml;
+use ruxex_config::sandbox_mode_requirement_for_permission_profile;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::History;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerDisabledReason;
+use ruxex_config::types::ModelAvailabilityNuxConfig;
+use ruxex_config::types::Notice;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_config::types::ResumeCwdMode;
+use ruxex_config::types::SessionPickerViewMode;
+use ruxex_config::types::TuiKeymap;
+use ruxex_config::types::TuiNotificationSettings;
+use ruxex_config::types::UriBasedFileOpener;
+use ruxex_core_plugins::PluginLoadOutcome;
+use ruxex_core_plugins::PluginsConfigInput;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_features::CodeModeConfigToml;
+use ruxex_features::CurrentTimeReminderConfigToml;
+use ruxex_features::CurrentTimeReminderDeliveryMode;
+use ruxex_features::CurrentTimeSource;
+use ruxex_features::Feature;
+use ruxex_features::FeatureConfigSource;
+use ruxex_features::FeatureOverrides;
+use ruxex_features::FeatureToml;
+use ruxex_features::Features;
+use ruxex_features::FeaturesToml;
+use ruxex_features::NetworkProxyConfigToml;
 #[cfg(test)]
-use genex_features::RolloutBudgetConfigToml;
-use genex_features::SleepToolMode;
-use genex_features::TokenBudgetConfigToml;
-use genex_git_utils::resolve_root_git_project_for_trust;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_login::AuthRouteConfig;
-use genex_login::CredentialManagerConfig;
-use genex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
-use genex_mcp::McpConfig;
-use genex_mcp::McpPluginAttribution;
-use genex_mcp::McpProtocolMode;
-use genex_mcp::McpServerRegistration;
-use genex_mcp::ResolvedMcpCatalog;
-use genex_model_provider::ProviderCapabilities;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::resolve_model_provider;
-use genex_models_manager::ModelsManagerConfig;
-use genex_prompts::ResolvedModelMessages;
-use genex_protocol::config_types::AltScreenMode;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::config_types::WebSearchConfig;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::PermissionProfile;
-pub use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::models::ProfileWorkspaceRoot;
-use genex_protocol::models::SandboxEnforcement;
-use genex_protocol::permissions::DenyReadValidator;
-use genex_protocol::permissions::DenyReadViolation;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_rmcp_client::McpOAuthRefreshMode;
-pub use genex_thread_store::ExtraConfig;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_features::RolloutBudgetConfigToml;
+use ruxex_features::SleepToolMode;
+use ruxex_features::TokenBudgetConfigToml;
+use ruxex_git_utils::resolve_root_git_project_for_trust;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_login::AuthRouteConfig;
+use ruxex_login::CredentialManagerConfig;
+use ruxex_mcp::DEFAULT_OPTIONAL_MCP_STARTUP_GRACE;
+use ruxex_mcp::McpConfig;
+use ruxex_mcp::McpPluginAttribution;
+use ruxex_mcp::McpProtocolMode;
+use ruxex_mcp::McpServerRegistration;
+use ruxex_mcp::ResolvedMcpCatalog;
+use ruxex_model_provider::ProviderCapabilities;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider_info::resolve_model_provider;
+use ruxex_models_manager::ModelsManagerConfig;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_protocol::config_types::AltScreenMode;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::config_types::WebSearchConfig;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BaseInstructionsProvenance;
+use ruxex_protocol::models::PermissionProfile;
+pub use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::models::ProfileWorkspaceRoot;
+use ruxex_protocol::models::SandboxEnforcement;
+use ruxex_protocol::permissions::DenyReadValidator;
+use ruxex_protocol::permissions::DenyReadViolation;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_rmcp_client::McpOAuthRefreshMode;
+pub use ruxex_thread_store::ExtraConfig;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use rmcp::model::ElicitationCapability;
 use rmcp::model::FormElicitationCapability;
 use rmcp::model::UrlElicitationCapability;
@@ -134,7 +134,7 @@ use crate::config::permissions::default_builtin_permission_profile_name;
 use crate::config::permissions::network_proxy_config_for_profile_selection;
 use crate::config::permissions::validate_user_permission_profile_names;
 use crate::responses_metadata::validate_extra_metadata;
-use genex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConfig;
 use toml::Value as TomlValue;
 use toml_edit::DocumentMut;
 
@@ -156,15 +156,15 @@ mod schema;
 mod token_budget_startup;
 pub use auth_keyring::bootstrap_auth_config;
 pub use auth_keyring::resolve_bootstrap_auth_keyring_backend_kind;
-pub use genex_agent_roles::AgentRoleConfig;
-pub use genex_config::ConfigLoadOptions;
-pub use genex_config::Constrained;
-pub use genex_config::ConstraintError;
-pub use genex_config::ConstraintResult;
-pub use genex_config::LoaderOverrides;
-pub use genex_network_proxy::NetworkProxyAuditMetadata;
-use genex_sandboxing::compatibility_sandbox_policy_for_permission_profile;
-pub use genex_sandboxing::system_bwrap_warning;
+pub use ruxex_agent_roles::AgentRoleConfig;
+pub use ruxex_config::ConfigLoadOptions;
+pub use ruxex_config::Constrained;
+pub use ruxex_config::ConstraintError;
+pub use ruxex_config::ConstraintResult;
+pub use ruxex_config::LoaderOverrides;
+pub use ruxex_network_proxy::NetworkProxyAuditMetadata;
+use ruxex_sandboxing::compatibility_sandbox_policy_for_permission_profile;
+pub use ruxex_sandboxing::system_bwrap_warning;
 pub use managed_features::ManagedFeatures;
 pub(crate) use metrics::emit_session_start_metrics;
 pub use network_config::EnvironmentNetworkConfigError;
@@ -216,7 +216,7 @@ pub const CONFIG_TOML_FILE: &str = "config.toml";
 const CONFIG_PROFILE_V2_SUFFIX: &str = ".config.toml";
 
 fn resolve_sqlite_home_env(resolved_cwd: &Path) -> Option<AbsolutePathBuf> {
-    let raw = std::env::var(genex_state::SQLITE_HOME_ENV).ok()?;
+    let raw = std::env::var(ruxex_state::SQLITE_HOME_ENV).ok()?;
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return None;
@@ -255,14 +255,14 @@ fn resolve_mcp_oauth_credentials_store_mode(
 
 #[cfg(test)]
 pub(crate) async fn test_config() -> Config {
-    let genex_home = tempfile::tempdir().expect("create temp dir");
+    let ruxex_home = tempfile::tempdir().expect("create temp dir");
     Config::load_from_base_config_with_overrides(
         ConfigToml {
             model: Some("test-model".to_string()),
             ..Default::default()
         },
         ConfigOverrides::default(),
-        AbsolutePathBuf::from_absolute_path(genex_home.path()).expect("temp dir should resolve"),
+        AbsolutePathBuf::from_absolute_path(ruxex_home.path()).expect("temp dir should resolve"),
     )
     .await
     .expect("load default test config")
@@ -378,7 +378,7 @@ impl Permissions {
     }
 
     /// Workspace roots that came from user-visible configuration or runtime
-    /// selection. Internal Genex-only writable roots are intentionally excluded.
+    /// selection. Internal Ruxex-only writable roots are intentionally excluded.
     pub fn user_visible_workspace_roots(&self) -> &[AbsolutePathBuf] {
         &self.workspace_roots
     }
@@ -511,7 +511,7 @@ impl Permissions {
 }
 
 // A profile override only inherits the selected profile's proxy/allowlist config
-// when Genex is still responsible for the network policy. `Disabled` means no
+// when Ruxex is still responsible for the network policy. `Disabled` means no
 // outer sandbox, so starting the managed proxy would narrow the override.
 fn profile_allows_configured_network_proxy(permission_profile: &PermissionProfile) -> bool {
     match permission_profile {
@@ -524,7 +524,7 @@ fn profile_allows_configured_network_proxy(permission_profile: &PermissionProfil
 
 fn build_network_proxy_spec(
     mut configured_network_proxy_config: NetworkProxyConfig,
-    network_requirements: Option<Sourced<genex_config::NetworkConstraints>>,
+    network_requirements: Option<Sourced<ruxex_config::NetworkConstraints>>,
     permission_profile: &PermissionProfile,
     environment_overrides: &HashMap<String, String>,
 ) -> std::io::Result<Option<NetworkProxySpec>> {
@@ -636,23 +636,23 @@ pub struct Config {
     /// Compact prompt override.
     pub compact_prompt: Option<String>,
 
-    /// Optional external notifier command. When set, Genex will spawn this
+    /// Optional external notifier command. When set, Ruxex will spawn this
     /// program after each completed *turn* (i.e. when the agent finishes
     /// processing a user submission). The value must be the full command
-    /// broken into argv tokens **without** the trailing JSON argument - Genex
+    /// broken into argv tokens **without** the trailing JSON argument - Ruxex
     /// appends one extra argument containing a JSON payload describing the
     /// event.
     ///
-    /// Example `~/.genex/config.toml` snippet:
+    /// Example `~/.ruxex/config.toml` snippet:
     ///
     /// ```toml
-    /// notify = ["notify-send", "Genex"]
+    /// notify = ["notify-send", "Ruxex"]
     /// ```
     ///
     /// which will be invoked as:
     ///
     /// ```shell
-    /// notify-send Genex '{"type":"agent-turn-complete","turn-id":"12345"}'
+    /// notify-send Ruxex '{"type":"agent-turn-complete","turn-id":"12345"}'
     /// ```
     ///
     /// If unset the feature is disabled.
@@ -747,12 +747,12 @@ pub struct Config {
     pub workspace_roots_explicit: bool,
 
     /// Preferred store for CLI auth credentials.
-    /// file (default): Use a file in the Genex home directory.
+    /// file (default): Use a file in the Ruxex home directory.
     /// keyring: Use an OS-specific keyring service.
     /// auto: Use the OS-specific keyring service if available, otherwise use a file.
     pub cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 
-    /// Definition for MCP servers that Genex can reach out to for tool calls.
+    /// Definition for MCP servers that Ruxex can reach out to for tool calls.
     pub mcp_servers: Constrained<HashMap<String, McpServerConfig>>,
 
     /// Trusted IdP shared by all permitted EMA MCP registrations.
@@ -763,16 +763,16 @@ pub struct Config {
 
     /// Preferred store for MCP OAuth credentials.
     /// keyring: Use an OS-specific keyring service.
-    ///          Credentials stored in the keyring will only be readable by Genex unless the user explicitly grants access via OS-level keyring access.
+    ///          Credentials stored in the keyring will only be readable by Ruxex unless the user explicitly grants access via OS-level keyring access.
     ///          https://github.com/codex/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2
-    /// file: GENEX_HOME/.credentials.json
-    ///       This file will be readable to Genex and other applications running as the same user.
+    /// file: RUXEX_HOME/.credentials.json
+    ///       This file will be readable to Ruxex and other applications running as the same user.
     /// auto (default): keyring if available, otherwise file.
     pub mcp_oauth_credentials_store_mode: OAuthCredentialsStoreMode,
 
     /// Optional fixed port to use for the local HTTP callback server used during MCP OAuth login.
     ///
-    /// When unset, Genex will bind to an ephemeral port chosen by the OS.
+    /// When unset, Ruxex will bind to an ephemeral port chosen by the OS.
     pub mcp_oauth_callback_port: Option<u16>,
 
     /// Optional redirect URI to use during MCP OAuth login.
@@ -815,17 +815,17 @@ pub struct Config {
     /// Maximum token budget allowed for a goal and default budget for new goals.
     pub max_goal_token_budget: Option<i64>,
 
-    /// Directory containing all Genex state (defaults to `~/.genex` but can be
-    /// overridden by the `GENEX_HOME` environment variable).
-    pub genex_home: AbsolutePathBuf,
+    /// Directory containing all Ruxex state (defaults to `~/.ruxex` but can be
+    /// overridden by the `RUXEX_HOME` environment variable).
+    pub ruxex_home: AbsolutePathBuf,
 
-    /// Resolved configuration shared by all Genex SQLite databases.
-    pub sqlite: genex_state::SqliteConfig,
+    /// Resolved configuration shared by all Ruxex SQLite databases.
+    pub sqlite: ruxex_state::SqliteConfig,
 
-    /// Directory where Genex writes log files (defaults to `$GENEX_HOME/log`).
+    /// Directory where Ruxex writes log files (defaults to `$RUXEX_HOME/log`).
     pub log_dir: PathBuf,
 
-    /// Settings that govern if and what will be written to `~/.genex/history.jsonl`.
+    /// Settings that govern if and what will be written to `~/.ruxex/history.jsonl`.
     pub history: History,
 
     /// When true, session is not persisted on disk. Default to `false`
@@ -843,17 +843,17 @@ pub struct Config {
     /// output will be hyperlinked using the specified URI scheme.
     pub file_opener: UriBasedFileOpener,
 
-    /// Path to the current Genex executable. This cannot be set in the config
+    /// Path to the current Ruxex executable. This cannot be set in the config
     /// file: it must be set in code via [`ConfigOverrides`].
-    pub genex_self_exe: Option<PathBuf>,
+    pub ruxex_self_exe: Option<PathBuf>,
 
-    /// Path to the `genex-linux-sandbox` executable. This must be set if
-    /// [`genex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
+    /// Path to the `ruxex-linux-sandbox` executable. This must be set if
+    /// [`ruxex_sandboxing::SandboxType::LinuxSeccomp`] is used. Note that this
     /// cannot be set in the config file: it must be set in code via
     /// [`ConfigOverrides`].
     ///
-    /// When this program is invoked, arg0 will be set to `genex-linux-sandbox`.
-    pub genex_linux_sandbox_exe: Option<PathBuf>,
+    /// When this program is invoked, arg0 will be set to `ruxex-linux-sandbox`.
+    pub ruxex_linux_sandbox_exe: Option<PathBuf>,
 
     /// Value to use for `reasoning.effort` when making a request using the
     /// Responses API.
@@ -882,7 +882,7 @@ pub struct Config {
     /// An empty value means that managed authentication is not configured.
     pub managed_auth_base_url: String,
 
-    /// Whether Genex-owned clients should respect host system proxy settings.
+    /// Whether Ruxex-owned clients should respect host system proxy settings.
     pub respect_system_proxy: bool,
 
     /// Bounded, product-owned metadata attached to every Responses API request.
@@ -953,12 +953,12 @@ pub struct Config {
     /// or placeholder replacement will occur for fast keypress bursts.
     pub disable_paste_burst: bool,
 
-    /// When `false`, disables metrics across Genex product surfaces in this machine.
+    /// When `false`, disables metrics across Ruxex product surfaces in this machine.
     /// Voluntarily left as Optional because the default value might depend on the client.
     pub metrics_enabled: Option<bool>,
 
     /// OTEL configuration (exporter type, endpoint, headers, etc.).
-    pub otel: genex_config::types::OtelConfig,
+    pub otel: ruxex_config::types::OtelConfig,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
@@ -1194,8 +1194,8 @@ pub struct TerminalResizeReflowConfig {
 }
 
 impl CredentialManagerConfig for Config {
-    fn genex_home(&self) -> PathBuf {
-        self.genex_home.to_path_buf()
+    fn ruxex_home(&self) -> PathBuf {
+        self.ruxex_home.to_path_buf()
     }
 
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode {
@@ -1229,7 +1229,7 @@ impl CredentialManagerConfig for Config {
 
 #[derive(Clone, Default)]
 pub struct ConfigBuilder {
-    genex_home: Option<PathBuf>,
+    ruxex_home: Option<PathBuf>,
     cli_overrides: Option<Vec<(String, TomlValue)>>,
     harness_overrides: Option<ConfigOverrides>,
     loader_overrides: Option<LoaderOverrides>,
@@ -1239,8 +1239,8 @@ pub struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
-    pub fn genex_home(mut self, genex_home: PathBuf) -> Self {
-        self.genex_home = Some(genex_home);
+    pub fn ruxex_home(mut self, ruxex_home: PathBuf) -> Self {
+        self.ruxex_home = Some(ruxex_home);
         self
     }
 
@@ -1284,7 +1284,7 @@ impl ConfigBuilder {
 
     async fn build_inner(self) -> std::io::Result<Config> {
         let Self {
-            genex_home,
+            ruxex_home,
             cli_overrides,
             harness_overrides,
             loader_overrides,
@@ -1292,9 +1292,9 @@ impl ConfigBuilder {
             thread_config_loader,
             fallback_cwd,
         } = self;
-        let genex_home = match genex_home {
-            Some(genex_home) => AbsolutePathBuf::from_absolute_path(genex_home)?,
-            None => find_genex_home()?,
+        let ruxex_home = match ruxex_home {
+            Some(ruxex_home) => AbsolutePathBuf::from_absolute_path(ruxex_home)?,
+            None => find_ruxex_home()?,
         };
         let cli_overrides = cli_overrides.unwrap_or_default();
         let mut harness_overrides = harness_overrides.unwrap_or_default();
@@ -1307,7 +1307,7 @@ impl ConfigBuilder {
         harness_overrides.cwd = Some(cwd.to_path_buf());
         let config_layer_stack = load_config_layers_state(
             LOCAL_FS.as_ref(),
-            &genex_home,
+            &ruxex_home,
             Some(cwd),
             &cli_overrides,
             ConfigLoadOptions {
@@ -1316,7 +1316,7 @@ impl ConfigBuilder {
             },
             thread_config_loader
                 .as_deref()
-                .unwrap_or(&genex_config::NoopThreadConfigLoader),
+                .unwrap_or(&ruxex_config::NoopThreadConfigLoader),
         )
         .await?;
         let merged_toml = config_layer_stack.effective_config();
@@ -1328,13 +1328,13 @@ impl ConfigBuilder {
         let config_toml: ConfigToml = match merged_toml.try_into() {
             Ok(config_toml) => config_toml,
             Err(err) => {
-                if let Some(config_error) = genex_config::first_layer_config_error::<ConfigToml>(
+                if let Some(config_error) = ruxex_config::first_layer_config_error::<ConfigToml>(
                     &config_layer_stack,
-                    genex_config::CONFIG_TOML_FILE,
+                    ruxex_config::CONFIG_TOML_FILE,
                 )
                 .await
                 {
-                    return Err(genex_config::io_error_from_config_error(
+                    return Err(ruxex_config::io_error_from_config_error(
                         std::io::ErrorKind::InvalidData,
                         config_error,
                         Some(err),
@@ -1347,7 +1347,7 @@ impl ConfigBuilder {
             LOCAL_FS.as_ref(),
             config_toml,
             harness_overrides,
-            genex_home,
+            ruxex_home,
             config_layer_stack,
         )
         .await
@@ -1360,7 +1360,7 @@ impl ConfigBuilder {
 }
 
 impl Config {
-    pub fn sqlite_config(&self) -> &genex_state::SqliteConfig {
+    pub fn sqlite_config(&self) -> &ruxex_state::SqliteConfig {
         &self.sqlite
     }
 
@@ -1506,7 +1506,7 @@ impl Config {
 
     pub async fn to_mcp_config(
         &self,
-        plugins_manager: &genex_core_plugins::PluginsManager,
+        plugins_manager: &ruxex_core_plugins::PluginsManager,
     ) -> McpConfig {
         self.to_mcp_config_with_plugin_registrations(
             plugins_manager,
@@ -1517,7 +1517,7 @@ impl Config {
 
     pub(crate) async fn to_mcp_config_with_plugin_registrations(
         &self,
-        plugins_manager: &genex_core_plugins::PluginsManager,
+        plugins_manager: &ruxex_core_plugins::PluginsManager,
         additional_plugin_registrations: impl IntoIterator<Item = McpServerRegistration>,
     ) -> McpConfig {
         let plugins_input = self.plugins_config_input();
@@ -1577,7 +1577,7 @@ impl Config {
 
         McpConfig {
             requires_read_only_mcp_tools: false,
-            genex_home: self.genex_home.to_path_buf(),
+            ruxex_home: self.ruxex_home.to_path_buf(),
             mcp_enterprise_managed_auth: self.mcp_enterprise_managed_auth.clone(),
             xaa_enabled: self.features.enabled(Feature::UseXaa)
                 && self.mcp_enterprise_managed_auth.is_some(),
@@ -1598,7 +1598,7 @@ impl Config {
             permission_profile: self.permissions.permission_profile().clone(),
             environment_cwds: HashMap::new(),
             server_permission_profiles: HashMap::new(),
-            genex_linux_sandbox_exe: self.genex_linux_sandbox_exe.clone(),
+            ruxex_linux_sandbox_exe: self.ruxex_linux_sandbox_exe.clone(),
             use_legacy_landlock: self.features.use_legacy_landlock(),
             prefix_mcp_tool_names: self.prefix_mcp_tool_names(),
             non_prefixed_mcp_tool_servers: if self
@@ -1652,7 +1652,7 @@ impl Config {
                 cwd: Some(cwd),
                 ..Default::default()
             },
-            refreshed_config.genex_home.clone(),
+            refreshed_config.ruxex_home.clone(),
             config_layer_stack,
         )
         .await
@@ -1699,18 +1699,18 @@ impl Config {
     pub async fn load_default_with_cli_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
     ) -> std::io::Result<Self> {
-        let genex_home = find_genex_home()?;
-        Self::load_default_with_cli_overrides_for_genex_home(
-            genex_home.to_path_buf(),
+        let ruxex_home = find_ruxex_home()?;
+        Self::load_default_with_cli_overrides_for_ruxex_home(
+            ruxex_home.to_path_buf(),
             cli_overrides,
         )
         .await
     }
 
-    /// Load a default configuration for a specific Genex home without reading
+    /// Load a default configuration for a specific Ruxex home without reading
     /// user, project, or system config layers.
-    pub async fn load_default_with_cli_overrides_for_genex_home(
-        genex_home: PathBuf,
+    pub async fn load_default_with_cli_overrides_for_ruxex_home(
+        ruxex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
     ) -> std::io::Result<Self> {
         let mut merged = toml::Value::try_from(ConfigToml::default()).map_err(|e| {
@@ -1719,26 +1719,26 @@ impl Config {
                 format!("failed to serialize default config: {e}"),
             )
         })?;
-        let cli_layer = genex_config::build_cli_overrides_layer(&cli_overrides);
-        genex_config::merge_toml_values(&mut merged, &cli_layer);
-        let genex_home = AbsolutePathBuf::from_absolute_path_checked(genex_home)?;
-        let config_toml = deserialize_config_toml_with_base(merged, &genex_home)?;
+        let cli_layer = ruxex_config::build_cli_overrides_layer(&cli_overrides);
+        ruxex_config::merge_toml_values(&mut merged, &cli_layer);
+        let ruxex_home = AbsolutePathBuf::from_absolute_path_checked(ruxex_home)?;
+        let config_toml = deserialize_config_toml_with_base(merged, &ruxex_home)?;
         Self::load_config_with_layer_stack(
             LOCAL_FS.as_ref(),
             config_toml,
             ConfigOverrides::default(),
-            genex_home,
+            ruxex_home,
             ConfigLayerStack::default(),
         )
         .await
     }
     /// This is a secondary way of creating [Config], which is appropriate when
     /// the harness is meant to be used with a specific configuration that
-    /// ignores user settings. For example, the `genex exec` subcommand is
+    /// ignores user settings. For example, the `ruxex exec` subcommand is
     /// designed to use [AskForApproval::Never] exclusively.
     ///
     /// Further, [ConfigOverrides] contains some options that are not supported
-    /// in [ConfigToml], such as `cwd`, `genex_self_exe`, `genex_linux_sandbox_exe`, and
+    /// in [ConfigToml], such as `cwd`, `ruxex_self_exe`, `ruxex_linux_sandbox_exe`, and
     pub async fn load_with_cli_overrides_and_harness_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
         harness_overrides: ConfigOverrides,
@@ -1752,12 +1752,12 @@ impl Config {
 }
 
 pub fn resolve_profile_v2_config_path(
-    genex_home: &Path,
+    ruxex_home: &Path,
     profile_name: &ProfileV2Name,
 ) -> AbsolutePathBuf {
     AbsolutePathBuf::resolve_path_against_base(
         format!("{profile_name}{CONFIG_PROFILE_V2_SUFFIX}"),
-        genex_home,
+        ruxex_home,
     )
 }
 
@@ -1765,13 +1765,13 @@ pub fn resolve_profile_v2_config_path(
 /// with [ConfigToml] directly means that [ConfigRequirements] have not been
 /// applied yet, which risks failing to enforce required constraints.
 pub async fn load_config_as_toml_with_cli_overrides(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     loader_overrides: LoaderOverrides,
 ) -> std::io::Result<ConfigToml> {
     load_config_as_toml_with_cli_and_loader_overrides(
-        genex_home,
+        ruxex_home,
         cwd,
         cli_overrides,
         loader_overrides,
@@ -1784,12 +1784,12 @@ pub async fn load_config_as_toml_with_cli_overrides(
 /// [ConfigRequirements] have not been applied yet, which risks skipping
 /// required constraints.
 pub async fn load_config_as_toml_with_cli_and_loader_overrides(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     loader_overrides: LoaderOverrides,
 ) -> std::io::Result<ConfigToml> {
-    load_config_as_toml_with_cli_and_load_options(genex_home, cwd, cli_overrides, loader_overrides)
+    load_config_as_toml_with_cli_and_load_options(ruxex_home, cwd, cli_overrides, loader_overrides)
         .await
 }
 
@@ -1798,12 +1798,12 @@ pub async fn load_config_as_toml_with_cli_and_loader_overrides(
 /// [ConfigRequirements] have not been applied yet, which risks skipping
 /// required constraints.
 pub async fn load_config_as_toml_with_cli_and_load_options(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     options: impl Into<ConfigLoadOptions>,
 ) -> std::io::Result<ConfigToml> {
-    load_config_toml_with_layer_stack(genex_home, cwd, cli_overrides, options)
+    load_config_toml_with_layer_stack(ruxex_home, cwd, cli_overrides, options)
         .await
         .map(|result| result.config_toml)
 }
@@ -1821,23 +1821,23 @@ pub struct ConfigTomlLoadResult {
 /// Loads the partially merged config together with the layer stack used to
 /// derive it, before constructing a full [`Config`].
 pub async fn load_config_toml_with_layer_stack(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
     cli_overrides: Vec<(String, TomlValue)>,
     options: impl Into<ConfigLoadOptions>,
 ) -> std::io::Result<ConfigTomlLoadResult> {
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        genex_home,
+        ruxex_home,
         cwd.cloned(),
         &cli_overrides,
         options,
-        &genex_config::NoopThreadConfigLoader,
+        &ruxex_config::NoopThreadConfigLoader,
     )
     .await?;
 
     let merged_toml = config_layer_stack.effective_config();
-    let cfg = deserialize_config_toml_with_base(merged_toml, genex_home).map_err(|e| {
+    let cfg = deserialize_config_toml_with_base(merged_toml, ruxex_home).map_err(|e| {
         tracing::error!("Failed to deserialize overridden config: {e}");
         e
     })?;
@@ -2013,7 +2013,7 @@ where
 }
 
 pub async fn load_global_mcp_servers(
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> std::io::Result<BTreeMap<String, McpServerConfig>> {
     // In general, Config::load_with_cli_overrides() should be used to load the
     // full config with requirements.toml applied, but in this case, we need
@@ -2024,15 +2024,15 @@ pub async fn load_global_mcp_servers(
     // result.
     let cli_overrides = Vec::<(String, TomlValue)>::new();
     // There is no cwd/project context for this query, so this will not include
-    // MCP servers defined in in-repo .genex/ folders.
+    // MCP servers defined in in-repo .ruxex/ folders.
     let cwd: Option<AbsolutePathBuf> = None;
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        genex_home,
+        ruxex_home,
         cwd,
         &cli_overrides,
         LoaderOverrides::default(),
-        &genex_config::NoopThreadConfigLoader,
+        &ruxex_config::NoopThreadConfigLoader,
     )
     .await?;
     let merged_toml = config_layer_stack.effective_config();
@@ -2138,16 +2138,16 @@ pub(crate) fn set_project_trust_level_inner(
     Ok(())
 }
 
-/// Patch `GENEX_HOME/config.toml` project state to set trust level.
+/// Patch `RUXEX_HOME/config.toml` project state to set trust level.
 /// Use with caution.
 pub fn set_project_trust_level(
-    genex_home: &Path,
+    ruxex_home: &Path,
     project_path: &Path,
     trust_level: TrustLevel,
 ) -> anyhow::Result<()> {
     use crate::config::edit::ConfigEditsBuilder;
 
-    ConfigEditsBuilder::new(genex_home)
+    ConfigEditsBuilder::new(ruxex_home)
         .set_project_trust_level(project_path, trust_level)
         .apply_blocking()
 }
@@ -2273,8 +2273,8 @@ pub struct ConfigOverrides {
     /// to the configured default.
     pub persisted_permission_profile_id: Option<String>,
     pub service_tier: Option<Option<String>>,
-    pub genex_self_exe: Option<PathBuf>,
-    pub genex_linux_sandbox_exe: Option<PathBuf>,
+    pub ruxex_self_exe: Option<PathBuf>,
+    pub ruxex_linux_sandbox_exe: Option<PathBuf>,
     pub base_instructions: Option<String>,
     pub developer_instructions: Option<String>,
     pub compact_prompt: Option<String>,
@@ -2334,7 +2334,7 @@ fn resolve_update_plan_enabled(config_toml: &ConfigToml) -> bool {
 }
 
 fn resolve_orchestrator_feature_enabled(
-    feature: Option<&genex_config::config_toml::OrchestratorFeatureToml>,
+    feature: Option<&ruxex_config::config_toml::OrchestratorFeatureToml>,
 ) -> bool {
     feature.and_then(|feature| feature.enabled).unwrap_or(true)
 }
@@ -2769,7 +2769,7 @@ impl Config {
     async fn load_from_base_config_with_overrides(
         cfg: ConfigToml,
         overrides: ConfigOverrides,
-        genex_home: AbsolutePathBuf,
+        ruxex_home: AbsolutePathBuf,
     ) -> std::io::Result<Self> {
         // Note this ignores requirements.toml enforcement for tests.
         let config_layer_stack = ConfigLayerStack::default();
@@ -2777,7 +2777,7 @@ impl Config {
             LOCAL_FS.as_ref(),
             cfg,
             overrides,
-            genex_home,
+            ruxex_home,
             config_layer_stack,
         )
         .await
@@ -2787,7 +2787,7 @@ impl Config {
         fs: &dyn ExecutorFileSystem,
         mut cfg: ConfigToml,
         overrides: ConfigOverrides,
-        genex_home: AbsolutePathBuf,
+        ruxex_home: AbsolutePathBuf,
         config_layer_stack: ConfigLayerStack,
     ) -> std::io::Result<Self> {
         // Keep the large config-construction future off small test thread stacks.
@@ -2858,8 +2858,8 @@ impl Config {
             default_permissions: default_permissions_override,
             persisted_permission_profile_id,
             service_tier: service_tier_override,
-            genex_self_exe,
-            genex_linux_sandbox_exe,
+            ruxex_self_exe,
+            ruxex_linux_sandbox_exe,
             base_instructions,
             developer_instructions,
             compact_prompt,
@@ -3371,7 +3371,7 @@ impl Config {
         let forced_managed_workspace_id = cfg
             .forced_managed_workspace_id
             .clone()
-            .map(genex_config::config_toml::ForcedManagedWorkspaceIds::into_vec)
+            .map(ruxex_config::config_toml::ForcedManagedWorkspaceIds::into_vec)
             .map(|values| {
                 values
                     .into_iter()
@@ -3442,7 +3442,7 @@ impl Config {
             .log_dir
             .as_ref()
             .map(AbsolutePathBuf::to_path_buf)
-            .unwrap_or_else(|| genex_home.join("log").to_path_buf());
+            .unwrap_or_else(|| ruxex_home.join("log").to_path_buf());
         let sqlite_home_env = resolve_sqlite_home_env(&resolved_cwd);
         requirements::push_sqlite_home_env_override_warning(
             configured_sqlite_home.as_ref(),
@@ -3455,7 +3455,7 @@ impl Config {
             .as_ref()
             .cloned()
             .or(sqlite_home_env)
-            .unwrap_or_else(|| genex_home.clone());
+            .unwrap_or_else(|| ruxex_home.clone());
         let original_permission_profile = permission_profile.clone();
         apply_requirement_constrained_value(
             "approval_policy",
@@ -3494,7 +3494,7 @@ impl Config {
         {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "`approval_policy = \"never\"` cannot be used because requirements do not allow `sandbox_mode = \"danger-full-access\"`; Genex would fall back to read-only permissions with approvals disabled. Choose an `approval_policy` based on what you need, such as `on-request`, or choose an allowed sandbox mode.",
+                "`approval_policy = \"never\"` cannot be used because requirements do not allow `sandbox_mode = \"danger-full-access\"`; Ruxex would fall back to read-only permissions with approvals disabled. Choose an `approval_policy` based on what you need, such as `on-request`, or choose an allowed sandbox mode.",
             ));
         }
         if permission_profile_was_constrained {
@@ -3533,7 +3533,7 @@ impl Config {
             .filter(|Sourced { value, .. }| !value.deny_read.is_empty())
             .map(|Sourced { value, .. }| -> std::io::Result<_> {
                 let mut policy = FileSystemSandboxPolicy::restricted(Vec::new());
-                value.apply_to_policy(&mut policy, genex_utils_path_uri::PathConvention::native())?;
+                value.apply_to_policy(&mut policy, ruxex_utils_path_uri::PathConvention::native())?;
                 Ok(Arc::new(policy))
             })
             .transpose()?;
@@ -3708,8 +3708,8 @@ impl Config {
                 })
                 .transpose()?,
             agent_interrupt_message_enabled,
-            genex_home,
-            sqlite: genex_state::SqliteConfig::from_sqlite_home(sqlite_home),
+            ruxex_home,
+            sqlite: ruxex_state::SqliteConfig::from_sqlite_home(sqlite_home),
             log_dir,
             config_layer_stack,
             history,
@@ -3717,8 +3717,8 @@ impl Config {
             extra_config: None,
             bypass_hook_trust,
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
-            genex_self_exe,
-            genex_linux_sandbox_exe,
+            ruxex_self_exe,
+            ruxex_linux_sandbox_exe,
             hide_agent_reasoning: cfg.hide_agent_reasoning.unwrap_or(false),
             show_raw_agent_reasoning: cfg
                 .show_raw_agent_reasoning
@@ -3949,7 +3949,7 @@ impl Config {
     }
 
     pub fn bundled_skills_enabled(&self) -> bool {
-        genex_config::bundled_skills_enabled_from_stack(&self.config_layer_stack)
+        ruxex_config::bundled_skills_enabled_from_stack(&self.config_layer_stack)
     }
 
     /// Returns whether effective requirements allow selecting a concrete profile.
@@ -4143,22 +4143,22 @@ fn is_permission_allowed(
         .unwrap_or(false)
 }
 
-/// Returns the path to the Genex configuration directory, which can be
-/// specified by the `GENEX_HOME` environment variable. If not set, defaults to
-/// the build-time configured Genex home directory name under the user's home directory.
+/// Returns the path to the Ruxex configuration directory, which can be
+/// specified by the `RUXEX_HOME` environment variable. If not set, defaults to
+/// the build-time configured Ruxex home directory name under the user's home directory.
 ///
-/// - If `GENEX_HOME` is set, the value must exist and be a directory. The
+/// - If `RUXEX_HOME` is set, the value must exist and be a directory. The
 ///   value will be canonicalized and this function will Err otherwise.
-/// - If `GENEX_HOME` is not set, this function does not verify that the
+/// - If `RUXEX_HOME` is not set, this function does not verify that the
 ///   directory exists.
-pub fn find_genex_home() -> std::io::Result<AbsolutePathBuf> {
-    genex_utils_home_dir::find_genex_home()
+pub fn find_ruxex_home() -> std::io::Result<AbsolutePathBuf> {
+    ruxex_utils_home_dir::find_ruxex_home()
 }
 
-/// Build-time configured fallback directory name used when `GENEX_HOME` is unset.
-pub const DEFAULT_GENEX_HOME_DIR_NAME: &str = genex_utils_home_dir::DEFAULT_GENEX_HOME_DIR_NAME;
+/// Build-time configured fallback directory name used when `RUXEX_HOME` is unset.
+pub const DEFAULT_RUXEX_HOME_DIR_NAME: &str = ruxex_utils_home_dir::DEFAULT_RUXEX_HOME_DIR_NAME;
 
-/// Returns the path to the folder where Genex logs are stored. Does not verify
+/// Returns the path to the folder where Ruxex logs are stored. Does not verify
 /// that the directory exists.
 pub fn log_dir(cfg: &Config) -> std::io::Result<PathBuf> {
     Ok(cfg.log_dir.clone())

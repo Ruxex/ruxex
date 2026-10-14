@@ -1,7 +1,7 @@
 use super::*;
-use crate::GenexHarnessMetadata;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
+use crate::RuxexHarnessMetadata;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 fn publish_answer() -> RetainedContextEvent {
@@ -236,7 +236,7 @@ fn restored_input_order_accounts_for_surviving_local_sources() {
                 phase: None,
                 internal_chat_message_metadata_passthrough: None,
             },
-            metadata: Some(GenexHarnessMetadata {
+            metadata: Some(RuxexHarnessMetadata {
                 user_input_order,
                 inherited_user_message,
                 ..Default::default()

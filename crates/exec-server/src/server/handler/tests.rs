@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_utils_path_uri::PathUri;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc;
 use uuid::Uuid;
@@ -60,7 +60,7 @@ fn shell_argv(script: &str) -> Vec<String> {
 fn test_runtime_paths() -> ExecServerRuntimePaths {
     ExecServerRuntimePaths::new(
         std::env::current_exe().expect("current exe"),
-        /*genex_linux_sandbox_exe*/ None,
+        /*ruxex_linux_sandbox_exe*/ None,
     )
     .expect("runtime paths")
 }

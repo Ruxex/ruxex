@@ -1,14 +1,14 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-utils-path"
+name = "ruxex-utils-path"
 version.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 dunce = { workspace = true }
 tempfile = { workspace = true }
 

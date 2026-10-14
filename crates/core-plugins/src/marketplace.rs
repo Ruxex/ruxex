@@ -1,12 +1,12 @@
 use crate::manifest::PluginManifestInterface;
 use crate::manifest::load_plugin_manifest;
-use genex_app_server_protocol::PluginAuthPolicy;
-use genex_app_server_protocol::PluginInstallPolicy;
-use genex_git_utils::get_git_repo_root;
-use genex_plugin::PluginId;
-use genex_plugin::PluginIdError;
-use genex_protocol::protocol::Product;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::PluginAuthPolicy;
+use ruxex_app_server_protocol::PluginInstallPolicy;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_plugin::PluginId;
+use ruxex_plugin::PluginIdError;
+use ruxex_protocol::protocol::Product;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde_json::Map as JsonMap;
 use serde_json::Value as JsonValue;
@@ -156,7 +156,7 @@ impl MarketplacePluginSource {
 pub struct MarketplacePluginPolicy {
     pub installation: MarketplacePluginInstallPolicy,
     pub authentication: MarketplacePluginAuthPolicy,
-    // TODO: Surface or enforce product gating at the Genex/plugin consumer boundary instead of
+    // TODO: Surface or enforce product gating at the Ruxex/plugin consumer boundary instead of
     // only carrying it through core marketplace metadata.
     pub products: Option<Vec<Product>>,
 }
@@ -516,7 +516,7 @@ fn resolve_marketplace_plugin_entry(
 
     let manifest = match &source {
         MarketplacePluginSource::Local { path } => {
-            if genex_utils_plugins::find_plugin_manifest_path(path.as_path()).is_some() {
+            if ruxex_utils_plugins::find_plugin_manifest_path(path.as_path()).is_some() {
                 load_plugin_manifest(path.as_path())
             } else if manifest_fallback.has_metadata {
                 manifest_fallback.parse_for_plugin_root(path.as_path())
@@ -1049,7 +1049,7 @@ fn resolve_marketplace_interface(
 }
 
 fn fallback_plugin_manifest_path(plugin_root: &Path) -> PathBuf {
-    plugin_root.join(".genex-plugin/plugin.json")
+    plugin_root.join(".ruxex-plugin/plugin.json")
 }
 
 fn marketplace_plugin_manifest_fallback(

@@ -12,7 +12,7 @@ use super::CompactionId;
 use super::CompactionRequestId;
 use super::ConversationItemId;
 use super::EdgeId;
-use super::GenexTurnId;
+use super::RuxexTurnId;
 use super::McpCallId;
 use super::ModelVisibleCallId;
 use super::TerminalId;
@@ -32,7 +32,7 @@ pub struct CodeCell {
     pub code_cell_id: CodeCellId,
     pub model_visible_call_id: ModelVisibleCallId,
     pub thread_id: AgentThreadId,
-    pub genex_turn_id: GenexTurnId,
+    pub ruxex_turn_id: RuxexTurnId,
     /// Conversation item containing the model-authored JavaScript.
     pub source_item_id: ConversationItemId,
     pub output_item_ids: Vec<ConversationItemId>,
@@ -79,7 +79,7 @@ pub enum CodeCellRuntimeStatus {
 pub struct Compaction {
     pub compaction_id: CompactionId,
     pub thread_id: AgentThreadId,
-    pub genex_turn_id: GenexTurnId,
+    pub ruxex_turn_id: RuxexTurnId,
     pub installed_at_unix_ms: i64,
     /// Structural conversation item marking where pre-compaction history ended.
     pub marker_item_id: ConversationItemId,
@@ -97,7 +97,7 @@ pub struct CompactionRequest {
     pub compaction_request_id: CompactionRequestId,
     pub compaction_id: CompactionId,
     pub thread_id: AgentThreadId,
-    pub genex_turn_id: GenexTurnId,
+    pub ruxex_turn_id: RuxexTurnId,
     pub execution: ExecutionWindow,
     pub model: String,
     pub raw_request_payload_id: RawPayloadId,
@@ -105,7 +105,7 @@ pub struct CompactionRequest {
     pub raw_response_payload_id: Option<RawPayloadId>,
 }
 
-/// Runtime operation requested by the model, a JS code cell, or Genex itself.
+/// Runtime operation requested by the model, a JS code cell, or Ruxex itself.
 ///
 /// A `ToolCall` is not a chat transcript row. Model-visible call/output items
 /// link to it through `model_visible_*_item_ids`; runtime-only tools can have
@@ -121,7 +121,7 @@ pub struct ToolCall {
     pub code_mode_runtime_tool_id: Option<CodeModeRuntimeToolId>,
     pub thread_id: AgentThreadId,
     /// Runtime activation that started the tool. Background work may outlive this turn.
-    pub started_by_genex_turn_id: Option<GenexTurnId>,
+    pub started_by_ruxex_turn_id: Option<RuxexTurnId>,
     pub execution: ExecutionWindow,
     pub requester: ToolCallRequester,
     pub kind: ToolCallKind,
@@ -130,12 +130,12 @@ pub struct ToolCall {
     /// Terminal operation started by this tool, when the tool touched a terminal.
     pub terminal_operation_id: Option<TerminalOperationId>,
     pub summary: ToolCallSummary,
-    /// Original invocation at the Genex tool boundary.
+    /// Original invocation at the Ruxex tool boundary.
     ///
     /// Direct model tools store the model's function/custom call payload here.
     /// Code-mode nested tools store the JSON call made by model-authored JS.
     /// Runtime protocol events are deliberately kept separate below because
-    /// they describe how Genex executed the request, not what the caller sent.
+    /// they describe how Ruxex executed the request, not what the caller sent.
     pub raw_invocation_payload_id: Option<RawPayloadId>,
     /// Result returned to the immediate requester.
     ///

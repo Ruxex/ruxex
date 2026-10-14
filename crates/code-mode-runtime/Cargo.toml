@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-code-mode-runtime"
+name = "ruxex-code-mode-runtime"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_code_mode_runtime"
+name = "ruxex_code_mode_runtime"
 path = "src/lib.rs"
 
 [lints]
@@ -14,8 +14,8 @@ workspace = true
 
 [dependencies]
 base64 = { workspace = true }
-genex-code-mode-protocol = { workspace = true }
-genex-protocol = { workspace = true }
+ruxex-code-mode-protocol = { workspace = true }
+ruxex-protocol = { workspace = true }
 deno_core_icudata = { workspace = true }
 futures = { workspace = true }
 opentelemetry = { workspace = true }

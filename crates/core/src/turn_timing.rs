@@ -4,9 +4,9 @@ use std::time::Instant;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use genex_otel::TURN_TTFM_DURATION_METRIC;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ResponseItem;
+use ruxex_otel::TURN_TTFM_DURATION_METRIC;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ResponseItem;
 use tokio::sync::Mutex;
 
 use crate::ResponseEvent;
@@ -190,13 +190,13 @@ fn response_item_records_turn_ttft(item: &ResponseItem) -> bool {
             summary, content, ..
         } => {
             summary.iter().any(|entry| match entry {
-                genex_protocol::models::ReasoningItemReasoningSummary::SummaryText { text } => {
+                ruxex_protocol::models::ReasoningItemReasoningSummary::SummaryText { text } => {
                     !text.is_empty()
                 }
             }) || content.as_ref().is_some_and(|entries| {
                 entries.iter().any(|entry| match entry {
-                    genex_protocol::models::ReasoningItemContent::ReasoningText { text }
-                    | genex_protocol::models::ReasoningItemContent::Text { text } => {
+                    ruxex_protocol::models::ReasoningItemContent::ReasoningText { text }
+                    | ruxex_protocol::models::ReasoningItemContent::Text { text } => {
                         !text.is_empty()
                     }
                 })

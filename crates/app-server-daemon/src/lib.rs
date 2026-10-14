@@ -19,10 +19,10 @@ use anyhow::Result;
 use anyhow::anyhow;
 pub use backend::BackendKind;
 use backend::BackendPaths;
-use genex_app_server_transport::app_server_control_socket_path;
-use genex_utils_home_dir::find_genex_home;
-use managed_install::managed_genex_bin;
-use managed_install::managed_genex_version;
+use ruxex_app_server_transport::app_server_control_socket_path;
+use ruxex_utils_home_dir::find_ruxex_home;
+use managed_install::managed_ruxex_bin;
+use managed_install::managed_ruxex_version;
 use serde::Serialize;
 use settings::DaemonSettings;
 use settings::MAX_SHUTDOWN_GRACE_SECONDS;
@@ -39,7 +39,7 @@ const OPERATION_LOCK_FILE_NAME: &str = "daemon.lock";
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const STATE_DIR_NAME: &str = "app-server-daemon";
 
-pub const HOST_APP_SERVER_DAEMON_MODE_ARG: &str = "__genex-app-server-daemon";
+pub const HOST_APP_SERVER_DAEMON_MODE_ARG: &str = "__ruxex-app-server-daemon";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LifecycleCommand {
@@ -68,8 +68,8 @@ pub struct LifecycleOutput {
     pub backend: Option<BackendKind>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pid: Option<u32>,
-    pub managed_genex_path: PathBuf,
-    pub managed_genex_version: Option<String>,
+    pub managed_ruxex_path: PathBuf,
+    pub managed_ruxex_version: Option<String>,
     pub socket_path: PathBuf,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cli_version: Option<String>,
@@ -97,8 +97,8 @@ pub enum BootstrapStatus {
 pub struct BootstrapOutput {
     pub status: BootstrapStatus,
     pub backend: BackendKind,
-    pub managed_genex_path: PathBuf,
-    pub managed_genex_version: Option<String>,
+    pub managed_ruxex_path: PathBuf,
+    pub managed_ruxex_version: Option<String>,
     pub socket_path: PathBuf,
     pub cli_version: String,
     pub app_server_version: String,
@@ -135,7 +135,7 @@ pub async fn bootstrap(options: BootstrapOptions) -> Result<BootstrapOutput> {
 }
 
 /// Bootstraps the managed app-server using an explicitly supplied complete
-/// Genex package. Desktop hosts use this entry point because their executable
+/// Ruxex package. Desktop hosts use this entry point because their executable
 /// lives inside an application bundle rather than directly under `bin/`.
 pub async fn bootstrap_from_package(package_source: &Path) -> Result<BootstrapOutput> {
     ensure_supported_platform()?;
@@ -172,21 +172,21 @@ struct Daemon {
     pid_file: PathBuf,
     operation_lock_file: PathBuf,
     settings_file: PathBuf,
-    managed_genex_bin: PathBuf,
+    managed_ruxex_bin: PathBuf,
     host_command_args: Option<Vec<OsString>>,
 }
 
 impl Daemon {
     fn from_environment() -> Result<Self> {
-        let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
-        let socket_path = app_server_control_socket_path(genex_home.as_path())?
+        let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
+        let socket_path = app_server_control_socket_path(ruxex_home.as_path())?
             .as_path()
             .to_path_buf();
-        let state_dir = genex_home.as_path().join(STATE_DIR_NAME);
-        let managed_genex_bin = managed_genex_bin(genex_home.as_path());
+        let state_dir = ruxex_home.as_path().join(STATE_DIR_NAME);
+        let managed_ruxex_bin = managed_ruxex_bin(ruxex_home.as_path());
         // Old CLIs must not mistake a daemon-owned installation for their backend.
         let pid_file =
-            if managed_genex_bin.starts_with(genex_home.as_path().join("packages/standalone")) {
+            if managed_ruxex_bin.starts_with(ruxex_home.as_path().join("packages/standalone")) {
                 LEGACY_PID_FILE_NAME
             } else {
                 DAEMON_PID_FILE_NAME
@@ -196,7 +196,7 @@ impl Daemon {
             pid_file: state_dir.join(pid_file),
             operation_lock_file: state_dir.join(OPERATION_LOCK_FILE_NAME),
             settings_file: state_dir.join(SETTINGS_FILE_NAME),
-            managed_genex_bin,
+            managed_ruxex_bin,
             host_command_args: None,
         })
     }
@@ -206,36 +206,36 @@ impl Daemon {
         command_args: Vec<OsString>,
     ) -> Result<Self> {
         let mut daemon = Self::from_environment()?;
-        daemon.managed_genex_bin = executable.to_path_buf();
+        daemon.managed_ruxex_bin = executable.to_path_buf();
         daemon.host_command_args = Some(command_args);
         Ok(daemon)
     }
 
     fn recovery_file(&self) -> Result<PathBuf> {
-        Ok(genex_app_server_transport::daemon_recovery_file_path(
+        Ok(ruxex_app_server_transport::daemon_recovery_file_path(
             self.settings_file
                 .parent()
                 .and_then(Path::parent)
-                .context("daemon settings path has no Genex home")?,
+                .context("daemon settings path has no Ruxex home")?,
         ))
     }
 
     // Call only after taking the operation lock: package selection may have
     // changed while this command was waiting.
     fn current_installation(&self) -> Result<Self> {
-        let managed_genex_bin = self.current_managed_genex_bin()?;
+        let managed_ruxex_bin = self.current_managed_ruxex_bin()?;
         let home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
-            .context("daemon settings path has no Genex home")?;
-        let pid = if managed_genex_bin.starts_with(home.join("packages/standalone")) {
+            .context("daemon settings path has no Ruxex home")?;
+        let pid = if managed_ruxex_bin.starts_with(home.join("packages/standalone")) {
             LEGACY_PID_FILE_NAME
         } else {
             DAEMON_PID_FILE_NAME
         };
         Ok(Self {
-            managed_genex_bin,
+            managed_ruxex_bin,
             pid_file: self.pid_file.with_file_name(pid),
             ..self.clone()
         })
@@ -286,9 +286,9 @@ impl Daemon {
             }
             if self.host_command_args.is_none() {
                 prepare_install::prepare(self, &settings, None).await?;
-                managed.managed_genex_bin = self.current_managed_genex_bin()?;
+                managed.managed_ruxex_bin = self.current_managed_ruxex_bin()?;
             }
-            managed.ensure_managed_genex_bin()?;
+            managed.ensure_managed_ruxex_bin()?;
             let pid = managed.start_managed_backend(&settings).await?;
             (
                 LifecycleStatus::Started,
@@ -308,7 +308,7 @@ impl Daemon {
             && self.running_backend(&settings).await?.is_none()
         {
             return Err(anyhow!(
-                "app server is running but is not managed by genex app-server daemon"
+                "app server is running but is not managed by ruxex app-server daemon"
             ));
         }
         if self.host_command_args.is_none() {
@@ -316,10 +316,10 @@ impl Daemon {
         }
         let mut managed = self.clone();
         if self.host_command_args.is_none() {
-            managed.managed_genex_bin = self.current_managed_genex_bin()?;
+            managed.managed_ruxex_bin = self.current_managed_ruxex_bin()?;
         }
 
-        managed.ensure_managed_genex_bin()?;
+        managed.ensure_managed_ruxex_bin()?;
         if let Some(backend) = self.running_backend_instance(&settings).await? {
             if let Err(err) = thread_recovery::discard_pending(self) {
                 eprintln!("warning: failed to clear stale daemon recovery before restart: {err}");
@@ -359,7 +359,7 @@ impl Daemon {
 
         if client::probe(&self.socket_path).await.is_ok() {
             return Err(anyhow!(
-                "app server is running but is not managed by genex app-server daemon"
+                "app server is running but is not managed by ruxex app-server daemon"
             ));
         }
 
@@ -414,13 +414,13 @@ impl Daemon {
     }
 
     async fn append_daemon_app_server_context(&self, context: &mut String) {
-        let managed_genex_version = self
-            .managed_genex_version_best_effort()
+        let managed_ruxex_version = self
+            .managed_ruxex_version_best_effort()
             .await
             .unwrap_or_else(|| "unknown".to_string());
         context.push_str(&format!(
-            "\n\nDaemon used app-server:\n  path: {}\n  version: {managed_genex_version}",
-            self.managed_genex_bin.display()
+            "\n\nDaemon used app-server:\n  path: {}\n  version: {managed_ruxex_version}",
+            self.managed_ruxex_bin.display()
         ));
     }
 
@@ -467,16 +467,16 @@ impl Daemon {
             && self.running_backend(&settings).await?.is_none()
         {
             return Err(anyhow!(
-                "app server is running but is not managed by genex app-server daemon"
+                "app server is running but is not managed by ruxex app-server daemon"
             ));
         }
         prepare_install::prepare(self, &settings, package_source).await?;
         let mut managed = self.clone();
-        managed.managed_genex_bin = self.current_managed_genex_bin()?;
+        managed.managed_ruxex_bin = self.current_managed_ruxex_bin()?;
         if !host_command_args.is_empty() {
             managed.host_command_args = Some(host_command_args.to_vec());
         }
-        managed.ensure_managed_genex_bin()?;
+        managed.ensure_managed_ruxex_bin()?;
         settings.save(&self.settings_file).await?;
 
         if let Some(backend) = self.running_backend_instance(&settings).await? {
@@ -491,12 +491,12 @@ impl Daemon {
         let backend = backend::pid_backend(managed.backend_paths(&settings));
         backend.start().await?;
         let info = self.wait_until_ready().await?;
-        let managed_genex_version = managed.managed_genex_version_best_effort().await;
+        let managed_ruxex_version = managed.managed_ruxex_version_best_effort().await;
         Ok(BootstrapOutput {
             status: BootstrapStatus::Bootstrapped,
             backend: BackendKind::Pid,
-            managed_genex_path: managed.managed_genex_bin,
-            managed_genex_version,
+            managed_ruxex_path: managed.managed_ruxex_bin,
+            managed_ruxex_version,
             socket_path: self.socket_path.clone(),
             cli_version: env!("CARGO_PKG_VERSION").to_string(),
             app_server_version: info.app_server_version,
@@ -522,62 +522,62 @@ impl Daemon {
     }
 
     async fn start_managed_backend(&self, settings: &DaemonSettings) -> Result<Option<u32>> {
-        self.start_managed_backend_with_bin(settings, &self.managed_genex_bin)
+        self.start_managed_backend_with_bin(settings, &self.managed_ruxex_bin)
             .await
     }
 
     async fn start_managed_backend_with_bin(
         &self,
         settings: &DaemonSettings,
-        managed_genex_bin: &Path,
+        managed_ruxex_bin: &Path,
     ) -> Result<Option<u32>> {
         let backend =
-            backend::pid_backend(self.backend_paths_with_bin(settings, managed_genex_bin));
+            backend::pid_backend(self.backend_paths_with_bin(settings, managed_ruxex_bin));
         backend.start().await
     }
 
-    fn current_managed_genex_bin(&self) -> Result<PathBuf> {
+    fn current_managed_ruxex_bin(&self) -> Result<PathBuf> {
         if self.host_command_args.is_some() {
-            return Ok(self.managed_genex_bin.clone());
+            return Ok(self.managed_ruxex_bin.clone());
         }
         let home = self
             .settings_file
             .parent()
             .and_then(Path::parent)
-            .context("daemon settings path has no Genex home")?;
-        Ok(managed_install::managed_genex_bin(home))
+            .context("daemon settings path has no Ruxex home")?;
+        Ok(managed_install::managed_ruxex_bin(home))
     }
 
-    fn ensure_managed_genex_bin(&self) -> Result<()> {
-        if self.managed_genex_bin.is_file() {
+    fn ensure_managed_ruxex_bin(&self) -> Result<()> {
+        if self.managed_ruxex_bin.is_file() {
             return Ok(());
         }
 
-        let managed_genex_path = self.managed_genex_bin.display();
+        let managed_ruxex_path = self.managed_ruxex_bin.display();
         Err(anyhow!(
-            "daemon executable not found at {managed_genex_path}; repair the existing installation, or run `genex app-server daemon start` to install a missing daemon"
+            "daemon executable not found at {managed_ruxex_path}; repair the existing installation, or run `ruxex app-server daemon start` to install a missing daemon"
         ))
     }
 
     #[cfg(unix)]
-    async fn managed_genex_version_best_effort(&self) -> Option<String> {
+    async fn managed_ruxex_version_best_effort(&self) -> Option<String> {
         if self.host_command_args.is_some() {
             return None;
         }
-        managed_genex_version(&self.managed_genex_bin).await.ok()
+        managed_ruxex_version(&self.managed_ruxex_bin).await.ok()
     }
 
     fn backend_paths(&self, _settings: &DaemonSettings) -> BackendPaths {
-        self.backend_paths_with_bin(_settings, &self.managed_genex_bin)
+        self.backend_paths_with_bin(_settings, &self.managed_ruxex_bin)
     }
 
     fn backend_paths_with_bin(
         &self,
         _settings: &DaemonSettings,
-        managed_genex_bin: &Path,
+        managed_ruxex_bin: &Path,
     ) -> BackendPaths {
         BackendPaths {
-            genex_bin: managed_genex_bin.to_path_buf(),
+            ruxex_bin: managed_ruxex_bin.to_path_buf(),
             pid_file: self.pid_file.clone(),
             command_args: self.host_command_args.clone(),
         }
@@ -608,7 +608,7 @@ impl Daemon {
             if let Some(home) = parent.parent() {
                 tokio::fs::create_dir_all(home).await?;
             }
-            genex_uds::prepare_private_socket_directory(parent)
+            ruxex_uds::prepare_private_socket_directory(parent)
                 .await
                 .with_context(|| {
                     format!(
@@ -638,13 +638,13 @@ impl Daemon {
         pid: Option<u32>,
         app_server_version: Option<String>,
     ) -> LifecycleOutput {
-        let managed_genex_version = self.managed_genex_version_best_effort().await;
+        let managed_ruxex_version = self.managed_ruxex_version_best_effort().await;
         LifecycleOutput {
             status,
             backend,
             pid,
-            managed_genex_path: self.managed_genex_bin.clone(),
-            managed_genex_version,
+            managed_ruxex_path: self.managed_ruxex_bin.clone(),
+            managed_ruxex_version,
             socket_path: self.socket_path.clone(),
             cli_version: Some(env!("CARGO_PKG_VERSION").to_string()),
             app_server_version,
@@ -686,7 +686,7 @@ mod tests {
             pid_file: state.join(super::LEGACY_PID_FILE_NAME),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_genex_bin: super::managed_genex_bin(home.path()),
+            managed_ruxex_bin: super::managed_ruxex_bin(home.path()),
             host_command_args: None,
         };
         let lock = daemon.acquire_operation_lock().await.expect("lock");
@@ -702,10 +702,10 @@ mod tests {
         drop(lock);
         let output = stop.await.expect("stop");
         assert_eq!(
-            (output.status, output.managed_genex_path),
+            (output.status, output.managed_ruxex_path),
             (
                 LifecycleStatus::NotRunning,
-                super::managed_genex_bin(home.path())
+                super::managed_ruxex_bin(home.path())
             )
         );
     }
@@ -719,7 +719,7 @@ mod tests {
             pid_file: state.join("server.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_genex_bin: state.join("missing-genex"),
+            managed_ruxex_bin: state.join("missing-ruxex"),
             host_command_args: None,
         };
         assert_eq!(
@@ -736,7 +736,7 @@ mod tests {
     async fn stop_and_fresh_start_discard_pending_thread_restore() {
         let home = TempDir::new().expect("home");
         let state = home.path().join("app-server-daemon");
-        genex_uds::prepare_private_socket_directory(&state)
+        ruxex_uds::prepare_private_socket_directory(&state)
             .await
             .expect("private state directory");
         let daemon = Daemon {
@@ -744,10 +744,10 @@ mod tests {
             pid_file: state.join("server.pid"),
             operation_lock_file: state.join("daemon.lock"),
             settings_file: state.join("settings.json"),
-            managed_genex_bin: home.path().join("genex"),
+            managed_ruxex_bin: home.path().join("ruxex"),
             host_command_args: None,
         };
-        genex_app_server_transport::daemon_recovery::write_candidates(
+        ruxex_app_server_transport::daemon_recovery::write_candidates(
             &daemon.recovery_file().expect("recovery path"),
             &["thread".to_string()].into_iter().collect(),
         )
@@ -782,7 +782,7 @@ mod tests {
             pid_file: temp_dir.path().join("app-server.pid"),
             operation_lock_file: temp_dir.path().join("daemon.lock"),
             settings_file: temp_dir.path().join("settings.json"),
-            managed_genex_bin: temp_dir.path().join("missing-genex"),
+            managed_ruxex_bin: temp_dir.path().join("missing-ruxex"),
             host_command_args: None,
         };
         let stderr_log = daemon.pid_file.with_extension("stderr.log");
@@ -797,7 +797,7 @@ mod tests {
                  Daemon used app-server:\n  path: {}\n  version: unknown\n\n\
                  Managed app-server stderr ({}):\n  unexpected argument",
                 daemon.socket_path.display(),
-                daemon.managed_genex_bin.display(),
+                daemon.managed_ruxex_bin.display(),
                 stderr_log.display()
             )
         );

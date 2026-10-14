@@ -32,13 +32,13 @@ mod view_image;
 pub(crate) mod view_image_spec;
 mod wait_for_environment;
 
-use genex_file_system::FileSystemSandboxContext;
-use genex_sandboxing::policy_transforms::materialize_additional_permissions_with_context;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_sandboxing::policy_transforms::normalize_additional_permissions_with_context;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_sandboxing::policy_transforms::materialize_additional_permissions_with_context;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_sandboxing::policy_transforms::normalize_additional_permissions_with_context;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde_json::Map;
 use serde_json::Value;
@@ -53,8 +53,8 @@ pub(crate) use crate::tools::code_mode::CodeModeWaitHandler;
 pub use apply_patch::ApplyPatchHandler;
 pub use current_time::CurrentTimeHandler;
 pub use dynamic::DynamicToolHandler;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::protocol::AskForApproval;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
 pub use get_context_remaining::GetContextRemainingHandler;
 pub use mcp::McpHandler;
 pub use mcp_resource::ListMcpResourceTemplatesHandler;
@@ -178,7 +178,7 @@ pub(crate) fn normalize_and_validate_additional_permissions(
     sandbox_permissions: SandboxPermissions,
     additional_permissions: Option<AdditionalPermissionProfile>,
     permissions_preapproved: bool,
-    context: &genex_protocol::permissions::FileSystemSandboxPolicyContext<'_>,
+    context: &ruxex_protocol::permissions::FileSystemSandboxPolicyContext<'_>,
 ) -> Result<Option<AdditionalPermissionProfile>, String> {
     let uses_additional_permissions = matches!(
         sandbox_permissions,
@@ -237,7 +237,7 @@ pub(super) struct EffectiveAdditionalPermissions {
 pub(super) fn file_system_sandbox_policy_context_for_cwd<'a>(
     sandbox_context: &'a FileSystemSandboxContext,
     cwd: &'a PathUri,
-) -> genex_protocol::permissions::FileSystemSandboxPolicyContext<'a> {
+) -> ruxex_protocol::permissions::FileSystemSandboxPolicyContext<'a> {
     let mut context = sandbox_context.policy_context();
     context.cwd = cwd;
     context
@@ -319,7 +319,7 @@ pub(super) async fn apply_granted_turn_permissions(
 fn preapproved_permission_profile(
     effective_permissions: &AdditionalPermissionProfile,
     granted_permissions: &AdditionalPermissionProfile,
-    context: &genex_protocol::permissions::FileSystemSandboxPolicyContext<'_>,
+    context: &ruxex_protocol::permissions::FileSystemSandboxPolicyContext<'_>,
 ) -> Option<AdditionalPermissionProfile> {
     if effective_permissions
         .file_system
@@ -328,16 +328,16 @@ fn preapproved_permission_profile(
             permissions.entries.iter().any(|entry| {
                 (matches!(
                     &entry.path,
-                    genex_protocol::permissions::FileSystemPath::Special {
-                        value: genex_protocol::permissions::FileSystemSpecialPath::Tmpdir,
+                    ruxex_protocol::permissions::FileSystemPath::Special {
+                        value: ruxex_protocol::permissions::FileSystemSpecialPath::Tmpdir,
                     }
                 ) && context
                     .temporary_directories
                     .is_none_or(<[PathUri]>::is_empty))
                     || matches!(
                     &entry.path,
-                    genex_protocol::permissions::FileSystemPath::Special {
-                        value: genex_protocol::permissions::FileSystemSpecialPath::ProjectRoots { .. },
+                    ruxex_protocol::permissions::FileSystemPath::Special {
+                        value: ruxex_protocol::permissions::FileSystemSpecialPath::ProjectRoots { .. },
                     } if context.workspace_roots.is_empty()
                 )
             })
@@ -380,20 +380,20 @@ mod tests {
     use super::normalize_and_validate_additional_permissions;
     use super::preapproved_permission_profile;
     use crate::sandboxing::SandboxPermissions;
-    use genex_protocol::models::AdditionalPermissionProfile;
-    use genex_protocol::models::FileSystemPermissions;
-    use genex_protocol::models::NetworkPermissions;
-    use genex_protocol::permissions::FileSystemAccessMode;
-    use genex_protocol::permissions::FileSystemPath;
-    use genex_protocol::permissions::FileSystemSandboxEntry;
-    use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-    use genex_protocol::permissions::FileSystemSpecialPath;
-    use genex_protocol::protocol::AskForApproval;
-    use genex_protocol::protocol::GranularApprovalConfig;
-    use genex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
-    use genex_sandboxing::policy_transforms::merge_permission_profiles;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_protocol::models::AdditionalPermissionProfile;
+    use ruxex_protocol::models::FileSystemPermissions;
+    use ruxex_protocol::models::NetworkPermissions;
+    use ruxex_protocol::permissions::FileSystemAccessMode;
+    use ruxex_protocol::permissions::FileSystemPath;
+    use ruxex_protocol::permissions::FileSystemSandboxEntry;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+    use ruxex_protocol::permissions::FileSystemSpecialPath;
+    use ruxex_protocol::protocol::AskForApproval;
+    use ruxex_protocol::protocol::GranularApprovalConfig;
+    use ruxex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
+    use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use tempfile::tempdir;
 

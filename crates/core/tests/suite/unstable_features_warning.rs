@@ -3,15 +3,15 @@
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
 use core_test_support::wait_for_event;
-use genex_config::CONFIG_TOML_FILE;
-use genex_core::NewThread;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_login::GenexAuth;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::WarningEvent;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_core::NewThread;
+use ruxex_features::Feature;
+use ruxex_history::InitialHistory;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tempfile::TempDir;
 use tokio::time::timeout;
 use toml::toml;
@@ -25,7 +25,7 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         .enable(Feature::ApplyPatchStreamingEvents)
         .expect("test config should allow feature update");
     let user_config_path =
-        AbsolutePathBuf::from_absolute_path(config.genex_home.join(CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config.ruxex_home.join(CONFIG_TOML_FILE))
             .expect("absolute user config path");
     config.config_layer_stack = config
         .config_layer_stack
@@ -35,8 +35,8 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        GenexAuth::from_api_key("test"),
+    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+        RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let NewThread {
@@ -71,7 +71,7 @@ async fn suppresses_warning_when_configured() {
         .expect("test config should allow feature update");
     config.suppress_unstable_features_warning = true;
     let user_config_path =
-        AbsolutePathBuf::from_absolute_path(config.genex_home.join(CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config.ruxex_home.join(CONFIG_TOML_FILE))
             .expect("absolute user config path");
     config.config_layer_stack = config
         .config_layer_stack
@@ -81,8 +81,8 @@ async fn suppresses_warning_when_configured() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = genex_core::test_support::thread_manager_with_models_provider(
-        GenexAuth::from_api_key("test"),
+    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+        RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let NewThread {

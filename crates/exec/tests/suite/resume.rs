@@ -1,11 +1,11 @@
 #![allow(clippy::unwrap_used)]
 use anyhow::Context;
-use genex_core::config::ConfigBuilder;
-use genex_core::init_state_db;
-use genex_protocol::ThreadId;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::init_state_db;
+use ruxex_protocol::ThreadId;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex_exec::test_genex_exec;
+use core_test_support::test_ruxex_exec::test_ruxex_exec;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::process::Stdio;
@@ -112,7 +112,7 @@ fn last_user_image_count(path: &std::path::Path) -> usize {
 }
 
 fn exec_repo_root() -> anyhow::Result<std::path::PathBuf> {
-    Ok(genex_utils_cargo_bin::repo_root()?)
+    Ok(ruxex_utils_cargo_bin::repo_root()?)
 }
 
 fn exec_sse_response(index: usize) -> String {
@@ -137,7 +137,7 @@ async fn exec_falls_back_to_legacy_history_when_thread_store_cannot_paginate() -
 {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 1).await;
     let store_id = Uuid::new_v4();
@@ -159,7 +159,7 @@ async fn exec_falls_back_to_legacy_history_when_thread_store_cannot_paginate() -
 async fn exec_resume_last_appends_to_existing_file() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let response_mock = responses::mount_sse_sequence(
         &server,
@@ -207,7 +207,7 @@ async fn exec_resume_last_appends_to_existing_file() -> anyhow::Result<()> {
 
     let output = test
         .cmd_with_server(&server)
-        .env("RUST_LOG", "genex_app_server::outgoing_message=trace")
+        .env("RUST_LOG", "ruxex_app_server::outgoing_message=trace")
         .arg("--skip-git-repo-check")
         .arg("-C")
         .arg(&repo_root)
@@ -248,7 +248,7 @@ async fn exec_resume_last_appends_to_existing_file() -> anyhow::Result<()> {
 async fn exec_resume_last_repairs_rollout_missing_from_state_db() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let repo_root = exec_repo_root()?;
@@ -267,7 +267,7 @@ async fn exec_resume_last_repairs_rollout_missing_from_state_db() -> anyhow::Res
         .expect("no session file found after first run");
     let thread_id = ThreadId::from_string(&extract_conversation_id(&path))?;
     let config = ConfigBuilder::default()
-        .genex_home(test.home_path().to_path_buf())
+        .ruxex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -300,7 +300,7 @@ async fn exec_resume_last_repairs_rollout_missing_from_state_db() -> anyhow::Res
 async fn exec_resume_last_trusts_usable_state_db_candidate() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 3).await;
     let repo_root = exec_repo_root()?;
@@ -330,7 +330,7 @@ async fn exec_resume_last_trusts_usable_state_db_candidate() -> anyhow::Result<(
     let newer_thread_id = ThreadId::from_string(&extract_conversation_id(&newer_path))?;
 
     let config = ConfigBuilder::default()
-        .genex_home(test.home_path().to_path_buf())
+        .ruxex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -371,7 +371,7 @@ async fn exec_resume_last_trusts_usable_state_db_candidate() -> anyhow::Result<(
 async fn exec_resume_last_skips_mismatched_state_db_candidate() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 3).await;
     let repo_root = exec_repo_root()?;
@@ -401,7 +401,7 @@ async fn exec_resume_last_skips_mismatched_state_db_candidate() -> anyhow::Resul
     let newer_thread_id = ThreadId::from_string(&extract_conversation_id(&newer_path))?;
 
     let config = ConfigBuilder::default()
-        .genex_home(test.home_path().to_path_buf())
+        .ruxex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)
@@ -435,7 +435,7 @@ async fn exec_resume_last_skips_mismatched_state_db_candidate() -> anyhow::Resul
 async fn exec_resume_last_accepts_prompt_after_flag_in_json_mode() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let repo_root = exec_repo_root()?;
@@ -488,7 +488,7 @@ async fn exec_resume_last_accepts_prompt_after_flag_in_json_mode() -> anyhow::Re
 async fn exec_resume_last_respects_cwd_filter_and_all_flag() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 5).await;
 
@@ -601,7 +601,7 @@ async fn exec_resume_last_respects_cwd_filter_and_all_flag() -> anyhow::Result<(
 async fn exec_resume_accepts_global_flags_after_subcommand() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
 
@@ -641,7 +641,7 @@ async fn exec_resume_accepts_global_flags_after_subcommand() -> anyhow::Result<(
 async fn exec_resume_includes_output_schema_in_request() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let response_mock = mount_exec_responses(&server, /*count*/ 2).await;
 
@@ -683,7 +683,7 @@ async fn exec_resume_includes_output_schema_in_request() -> anyhow::Result<()> {
     assert_eq!(
         format,
         &serde_json::json!({
-            "name": "genex_output_schema",
+            "name": "ruxex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": schema_contents,
@@ -697,7 +697,7 @@ async fn exec_resume_includes_output_schema_in_request() -> anyhow::Result<()> {
 async fn exec_resume_by_id_appends_to_existing_file() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let repo_root = exec_repo_root()?;
@@ -753,7 +753,7 @@ async fn exec_resume_by_id_appends_to_existing_file() -> anyhow::Result<()> {
 async fn exec_resume_preserves_cli_configuration_overrides() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let repo_root = exec_repo_root()?;
@@ -828,7 +828,7 @@ async fn exec_resume_preserves_cli_configuration_overrides() -> anyhow::Result<(
 async fn exec_resume_accepts_images_after_subcommand() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let _response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let repo_root = exec_repo_root()?;
@@ -888,7 +888,7 @@ async fn exec_resume_accepts_images_after_subcommand() -> anyhow::Result<()> {
 async fn exec_fork_creates_distinct_threads_with_and_without_a_prompt() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let server = MockServer::start().await;
     let response_mock = mount_exec_responses(&server, /*count*/ 2).await;
     let source_marker = format!("fork-source-{}", Uuid::new_v4());
@@ -987,7 +987,7 @@ async fn exec_fork_creates_distinct_threads_with_and_without_a_prompt() -> anyho
 
     let source_name = format!("fork-named-{}", Uuid::new_v4());
     let config = ConfigBuilder::default()
-        .genex_home(test.home_path().to_path_buf())
+        .ruxex_home(test.home_path().to_path_buf())
         .build()
         .await?;
     let state_db = init_state_db(&config)

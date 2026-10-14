@@ -1,27 +1,27 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-model-provider-info"
+name = "ruxex-model-provider-info"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_model_provider_info"
+name = "ruxex_model_provider_info"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-api = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-redacted-string = { workspace = true }
+ruxex-api = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-redacted-string = { workspace = true }
 http = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 maplit = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

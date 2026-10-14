@@ -2,10 +2,10 @@ use std::io::IsTerminal;
 use std::path::Path;
 
 use clap::Parser;
-use genex_file_search::Cli;
-use genex_file_search::FileMatch;
-use genex_file_search::Reporter;
-use genex_file_search::run_main;
+use ruxex_file_search::Cli;
+use ruxex_file_search::FileMatch;
+use ruxex_file_search::Reporter;
+use ruxex_file_search::run_main;
 use serde_json::json;
 
 #[tokio::main]

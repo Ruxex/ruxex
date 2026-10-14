@@ -9,14 +9,14 @@ use crate::tools::context::ToolPayload;
 use crate::tools::context::boxed_tool_output;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_features::Feature;
-use genex_protocol::models::ResponseInputItem;
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_features::Feature;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use serde_json::Value as JsonValue;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -82,7 +82,7 @@ impl ToolExecutor<ToolInvocation> for CurrentTimeHandler {
         })
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

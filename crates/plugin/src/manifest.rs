@@ -1,4 +1,4 @@
-use genex_config::HooksFile;
+use ruxex_config::HooksFile;
 
 /// Parsed plugin metadata parameterized by its resource locator representation.
 ///

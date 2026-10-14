@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-mcp-extension"
+name = "ruxex-mcp-extension"
 version.workspace = true
 
 [lib]
-name = "genex_mcp_extension"
+name = "ruxex_mcp_extension"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,17 +14,17 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-core = { workspace = true }
-genex-core-plugins = { workspace = true }
-genex-config = { workspace = true }
-genex-exec-server = { workspace = true }
-genex-extension-api = { workspace = true }
-genex-features = { workspace = true }
-genex-mcp = { workspace = true }
-genex-plugin = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-core-plugins = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-mcp = { workspace = true }
+ruxex-plugin = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
@@ -32,8 +32,8 @@ tokio = { workspace = true, features = ["sync"] }
 
 [dev-dependencies]
 axum = { workspace = true }
-genex-exec-server-test-support = { workspace = true }
-genex-login = { workspace = true }
+ruxex-exec-server-test-support = { workspace = true }
+ruxex-login = { workspace = true }
 futures = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }

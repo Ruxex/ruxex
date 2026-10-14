@@ -8,7 +8,7 @@ use crate::app::tests::session_lifecycle_requests::start_recording_app_server_wi
 use crate::model_catalog::ModelCatalog;
 use crate::test_support::PathBufExt;
 use crate::tui::test_support::make_test_tui;
-use genex_state::SqliteConfig;
+use ruxex_state::SqliteConfig;
 use pretty_assertions::assert_eq;
 
 async fn confirm_permission_selection(
@@ -39,7 +39,7 @@ fn trust_launch_folder(app: &mut App) {
         "projects".into(),
         TomlValue::try_from(projects).expect("trust fixture"),
     ));
-    app.config.active_project.trust_level = Some(genex_protocol::config_types::TrustLevel::Trusted);
+    app.config.active_project.trust_level = Some(ruxex_protocol::config_types::TrustLevel::Trusted);
 }
 
 
@@ -101,16 +101,16 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
                 }
             ),
         )?;
-        std::fs::create_dir(destination.path().join(".genex"))?;
+        std::fs::create_dir(destination.path().join(".ruxex"))?;
         std::fs::write(
-            destination.path().join(".genex/config.toml"),
+            destination.path().join(".ruxex/config.toml"),
             "model = \"destination-model\"\nservice_tier = \"flex\"\n",
         )?;
         for home in [client_home.path(), server_home.path()] {
             crate::legacy_core::config::set_project_trust_level(
                 home,
                 destination.path(),
-                genex_protocol::config_types::TrustLevel::Trusted,
+                ruxex_protocol::config_types::TrustLevel::Trusted,
             )
             .map_err(|error| color_eyre::eyre::eyre!(error.to_string()))?;
         }
@@ -129,7 +129,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
         app.chat_widget.set_service_tier(Some("flex".into()));
         app.harness_overrides.cwd = Some(launch.path().to_path_buf());
         app.config = ConfigBuilder::default()
-            .genex_home(client_home.path().to_path_buf())
+            .ruxex_home(client_home.path().to_path_buf())
             .loader_overrides(app.loader_overrides.clone())
             .cli_overrides(app.cli_kv_overrides.clone())
             .harness_overrides(app.harness_overrides.clone())
@@ -142,7 +142,7 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             ));
         trust_launch_folder(&mut app);
         let mut server_config = app.config.clone();
-        server_config.genex_home = server_home.path().to_path_buf().abs();
+        server_config.ruxex_home = server_home.path().to_path_buf().abs();
         server_config.sqlite = SqliteConfig::new_for_testing(server_home.path().abs());
         let thread_mode = if mode.starts_with("remote") {
             crate::app_server_session::ThreadParamsMode::Remote
@@ -174,12 +174,12 @@ async fn command_center_new_reads_server_defaults_for_actual_destination() -> Re
             let mut restored = app.config.clone();
             restored
                 .permissions
-                .set_permission_profile(genex_protocol::models::PermissionProfile::Disabled)?;
+                .set_permission_profile(ruxex_protocol::models::PermissionProfile::Disabled)?;
             app.runtime_permission_profile_override = Some(
                 RuntimePermissionProfileOverride::from_restored_config(&restored),
             );
             app.runtime_approval_policy_override = Some(RuntimeApprovalPolicyOverride::Restored(
-                genex_app_server_protocol::AskForApproval::Never,
+                ruxex_app_server_protocol::AskForApproval::Never,
             ));
         }
         let bootstrap = server.bootstrap(&app.config).await?;
@@ -301,7 +301,7 @@ async fn command_center_new_preserves_explicit_choices_and_managed_defaults() ->
             _ => {}
         }
         app.config = ConfigBuilder::default()
-            .genex_home(client_home.path().to_path_buf())
+            .ruxex_home(client_home.path().to_path_buf())
             .loader_overrides(app.loader_overrides.clone())
             .cli_overrides(app.cli_kv_overrides.clone())
             .harness_overrides(app.harness_overrides.clone())
@@ -309,7 +309,7 @@ async fn command_center_new_preserves_explicit_choices_and_managed_defaults() ->
             .await?;
         trust_launch_folder(&mut app);
         let mut server_config = app.config.clone();
-        server_config.genex_home = server_home.path().to_path_buf().abs();
+        server_config.ruxex_home = server_home.path().to_path_buf().abs();
         server_config.sqlite = SqliteConfig::new_for_testing(server_home.path().abs());
         let (mut server, requests, proxy) = start_recording_app_server_with_history(
             &server_config,
@@ -396,8 +396,8 @@ async fn command_center_new_preserves_permissions_across_sessions() -> Result<()
                     .active_permission_profile(),
             ),
             (
-                &genex_protocol::models::PermissionProfile::read_only(),
-                genex_protocol::protocol::AskForApproval::UnlessTrusted,
+                &ruxex_protocol::models::PermissionProfile::read_only(),
+                ruxex_protocol::protocol::AskForApproval::UnlessTrusted,
                 Some(ActivePermissionProfile::new(":read-only")),
             ),
         );

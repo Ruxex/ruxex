@@ -4,7 +4,7 @@
 //! catalog state into one-time TUI prompts or warning cells without owning the main event loop.
 
 use super::*;
-use genex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerSource;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -68,14 +68,14 @@ pub(super) fn project_config_warning(config: &Config) -> Option<String> {
     let mut disabled_folders = Vec::new();
 
     for layer in config.config_layer_stack.all_layers_low_to_high() {
-        let ConfigLayerSource::Project { dot_genex_folder } = &layer.name else {
+        let ConfigLayerSource::Project { dot_ruxex_folder } = &layer.name else {
             continue;
         };
         let Some(disabled_reason) = &layer.disabled_reason else {
             continue;
         };
         disabled_folders.push((
-            dot_genex_folder.as_path().display().to_string(),
+            dot_ruxex_folder.as_path().display().to_string(),
             disabled_reason.clone(),
         ));
     }
@@ -99,7 +99,7 @@ pub(super) fn project_config_warning(config: &Config) -> Option<String> {
 }
 
 pub(super) fn emit_system_bwrap_warning(app_event_tx: &AppEventSender, config: &Config) {
-    let Some(message) = genex_sandboxing::system_bwrap_warning(
+    let Some(message) = ruxex_sandboxing::system_bwrap_warning(
         &config.permissions.effective_permission_profile(),
         &config.cwd,
     ) else {

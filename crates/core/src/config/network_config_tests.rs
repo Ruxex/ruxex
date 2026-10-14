@@ -1,7 +1,7 @@
 //! Covers policy presence and the environment-only configuration projection.
 
 use super::*;
-use genex_config::RequirementSource;
+use ruxex_config::RequirementSource;
 use pretty_assertions::assert_eq;
 
 #[test]

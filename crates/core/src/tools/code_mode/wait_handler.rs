@@ -9,8 +9,8 @@ use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::PostToolUsePayload;
 use crate::tools::registry::PreToolUsePayload;
 use crate::tools::registry::ToolExecutor;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 
 use super::DEFAULT_WAIT_YIELD_TIME_MS;
 use super::ExecContext;
@@ -55,7 +55,7 @@ impl ToolExecutor<ToolInvocation> for CodeModeWaitHandler {
         create_wait_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -99,7 +99,7 @@ impl CodeModeWaitHandler {
                 let exec = ExecContext { session, turn };
                 let started_at = std::time::Instant::now();
                 let requested_cell_id = args.cell_id.clone();
-                let cell_id = genex_code_mode::CellId::new(args.cell_id);
+                let cell_id = ruxex_code_mode::CellId::new(args.cell_id);
                 let wait_response = if args.terminate {
                     exec.session
                         .services
@@ -110,25 +110,25 @@ impl CodeModeWaitHandler {
                     exec.session
                         .services
                         .code_mode_service
-                        .wait(genex_code_mode::WaitRequest {
+                        .wait(ruxex_code_mode::WaitRequest {
                             cell_id,
                             yield_time_ms: args.yield_time_ms,
                         })
                         .await
                 }
                 .map_err(FunctionCallError::RespondToModel)?;
-                if let genex_code_mode::WaitOutcome::LiveCell(response) = &wait_response {
+                if let ruxex_code_mode::WaitOutcome::LiveCell(response) = &wait_response {
                     let runtime_cell_id = match response {
-                        genex_code_mode::RuntimeResponse::Yielded { cell_id, .. }
-                        | genex_code_mode::RuntimeResponse::Terminated { cell_id, .. }
-                        | genex_code_mode::RuntimeResponse::Result { cell_id, .. } => cell_id,
+                        ruxex_code_mode::RuntimeResponse::Yielded { cell_id, .. }
+                        | ruxex_code_mode::RuntimeResponse::Terminated { cell_id, .. }
+                        | ruxex_code_mode::RuntimeResponse::Result { cell_id, .. } => cell_id,
                     };
                     tracing::Span::current().record("cell.id", trace_id(runtime_cell_id.as_str()));
                     exec.session
                         .services
                         .executed_tool_calls
                         .register_cell(runtime_cell_id, &call_id);
-                    if !matches!(response, genex_code_mode::RuntimeResponse::Yielded { .. }) {
+                    if !matches!(response, ruxex_code_mode::RuntimeResponse::Yielded { .. }) {
                         exec.session
                             .services
                             .rollout_thread_trace
@@ -175,7 +175,7 @@ impl CodeModeWaitHandler {
             "outcome",
             if result
                 .as_ref()
-                .is_ok_and(genex_tools::ToolOutput::success_for_logging)
+                .is_ok_and(ruxex_tools::ToolOutput::success_for_logging)
             {
                 "completed"
             } else {

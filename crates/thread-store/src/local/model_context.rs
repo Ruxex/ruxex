@@ -2,13 +2,13 @@
 
 use std::io;
 
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_rollout::ModelContextScan;
-use genex_rollout::ModelContextScanProgress;
-use genex_rollout::ReverseJsonlScanner;
-use genex_rollout::RolloutItem;
-use genex_rollout::ScanOutcome;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_rollout::ModelContextScan;
+use ruxex_rollout::ModelContextScanProgress;
+use ruxex_rollout::ReverseJsonlScanner;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::ScanOutcome;
 
 use super::LocalThreadStore;
 use super::rollout_lineage::RolloutLineage;
@@ -47,7 +47,7 @@ pub(super) async fn load_latest_model_context(
                 message: format!("no rollout found for thread id {}", params.thread_id),
             })?;
 
-    let session_meta = genex_rollout::read_session_meta_line(path.as_path())
+    let session_meta = ruxex_rollout::read_session_meta_line(path.as_path())
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to read session metadata {}: {err}", path.display()),
@@ -84,7 +84,7 @@ pub(super) async fn load_for_fork(
         .ok_or_else(|| ThreadStoreError::Internal {
             message: "fork lineage has no source segment".to_string(),
         })?;
-    let mut session_meta = genex_rollout::read_session_meta_line(source_path)
+    let mut session_meta = ruxex_rollout::read_session_meta_line(source_path)
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!(
@@ -99,7 +99,7 @@ pub(super) async fn load_for_fork(
         session_meta.meta.multi_agent_version = tokio::task::spawn_blocking(move || {
             for segment in source_lineage.segments().iter().rev() {
                 let file =
-                    genex_rollout::open_rollout_seekable_reader(segment.rollout_path.as_path())?;
+                    ruxex_rollout::open_rollout_seekable_reader(segment.rollout_path.as_path())?;
                 let mut scanner = match segment.end.map(|end| end.end_byte_offset) {
                     Some(end_byte_offset) => ReverseJsonlScanner::new_at(file, end_byte_offset)?,
                     None => ReverseJsonlScanner::new(file)?,
@@ -163,7 +163,7 @@ fn scan_model_context_from_lineage_blocking(
 ) -> io::Result<Vec<RolloutItem>> {
     let mut scan = ModelContextScan::default();
     'segments: for segment in lineage.segments().iter().rev() {
-        let file = genex_rollout::open_rollout_seekable_reader(segment.rollout_path.as_path())?;
+        let file = ruxex_rollout::open_rollout_seekable_reader(segment.rollout_path.as_path())?;
         let mut scanner = match segment.end.map(|end| end.end_byte_offset) {
             Some(end_byte_offset) => ReverseJsonlScanner::new_at(file, end_byte_offset)?,
             None => ReverseJsonlScanner::new(file)?,

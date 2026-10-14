@@ -16,7 +16,7 @@ use super::check_with_paths;
 fn disk_capacity_is_reported_without_loaded_configuration() {
     let check = check(/*config*/ None, Path::new("."));
 
-    for label in ["GENEX_HOME available: ", "worktree available: "] {
+    for label in ["RUXEX_HOME available: ", "worktree available: "] {
         assert!(
             check
                 .details
@@ -61,7 +61,7 @@ fn disk_capacity_thresholds_produce_complete_diagnostics() {
             "sufficient free disk space (6.0 GiB)",
         ),
     ] {
-        let issues = ["GENEX_HOME", "worktree"]
+        let issues = ["RUXEX_HOME", "worktree"]
             .into_iter()
             .filter(|_| status != "ok")
             .map(|label| {
@@ -88,7 +88,7 @@ fn disk_capacity_thresholds_produce_complete_diagnostics() {
                 "details": [
                     "warning threshold: 5.0 GiB",
                     "failure threshold: 1.0 GiB",
-                    format!("GENEX_HOME available: {measured}"),
+                    format!("RUXEX_HOME available: {measured}"),
                     format!("worktree available: {measured}"),
                 ],
                 "issues": issues,
@@ -106,7 +106,7 @@ fn disk_measurement_errors_produce_complete_warning_diagnostics() {
         Err(io::ErrorKind::PermissionDenied.into())
     });
 
-    let issues = ["GENEX_HOME", "worktree"]
+    let issues = ["RUXEX_HOME", "worktree"]
         .into_iter()
         .map(|label| {
             json!({
@@ -130,7 +130,7 @@ fn disk_measurement_errors_produce_complete_warning_diagnostics() {
             "details": [
                 "warning threshold: 5.0 GiB",
                 "failure threshold: 1.0 GiB",
-                "GENEX_HOME available: unavailable (PermissionDenied)",
+                "RUXEX_HOME available: unavailable (PermissionDenied)",
                 "worktree available: unavailable (PermissionDenied)",
             ],
             "issues": issues,
@@ -141,7 +141,7 @@ fn disk_measurement_errors_produce_complete_warning_diagnostics() {
 }
 
 #[test]
-fn nonexistent_relative_genex_home_uses_current_directory_capacity() {
+fn nonexistent_relative_ruxex_home_uses_current_directory_capacity() {
     let measured_paths = RefCell::new(Vec::new());
     let check = check_with_paths(
         Some(Path::new("doctor-nonexistent-relative-home/nested")),

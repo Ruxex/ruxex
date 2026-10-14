@@ -1,19 +1,19 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-response-debug-context"
+name = "ruxex-response-debug-context"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_response_debug_context"
+name = "ruxex_response_debug_context"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-api = { workspace = true }
+ruxex-api = { workspace = true }
 http = { workspace = true }
 
 [dev-dependencies]

@@ -5,27 +5,27 @@ use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_execpolicy::AmendError;
-use genex_execpolicy::Decision;
-use genex_execpolicy::Error as ExecPolicyRuleError;
-use genex_execpolicy::Evaluation;
-use genex_execpolicy::MatchOptions;
-use genex_execpolicy::NetworkRuleProtocol;
-use genex_execpolicy::Policy;
-use genex_execpolicy::PolicyParser;
-use genex_execpolicy::RequirementsExecPolicy;
-use genex_execpolicy::RuleMatch;
-use genex_execpolicy::blocking_append_allow_prefix_rule;
-use genex_execpolicy::blocking_append_network_rule;
-use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxKind;
-use genex_protocol::protocol::AskForApproval;
-use genex_shell_command::is_dangerous_command::DangerousCommandMatch;
-use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
-use genex_shell_command::is_dangerous_command::dangerous_command_match_for_platform;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_execpolicy::AmendError;
+use ruxex_execpolicy::Decision;
+use ruxex_execpolicy::Error as ExecPolicyRuleError;
+use ruxex_execpolicy::Evaluation;
+use ruxex_execpolicy::MatchOptions;
+use ruxex_execpolicy::NetworkRuleProtocol;
+use ruxex_execpolicy::Policy;
+use ruxex_execpolicy::PolicyParser;
+use ruxex_execpolicy::RequirementsExecPolicy;
+use ruxex_execpolicy::RuleMatch;
+use ruxex_execpolicy::blocking_append_allow_prefix_rule;
+use ruxex_execpolicy::blocking_append_network_rule;
+use ruxex_protocol::approvals::ExecPolicyAmendment;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemSandboxKind;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_shell_command::is_dangerous_command::DangerousCommandMatch;
+use ruxex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use ruxex_shell_command::is_dangerous_command::dangerous_command_match_for_platform;
 use thiserror::Error;
 use tokio::fs;
 use tokio::sync::Semaphore;
@@ -35,8 +35,8 @@ use tracing::instrument;
 use crate::config::Config;
 use crate::sandboxing::SandboxPermissions;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use genex_shell_command::bash::parse_shell_lc_plain_commands;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_shell_command::bash::parse_shell_lc_plain_commands;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use shlex::try_join as shlex_try_join;
 
 mod executable_identity;
@@ -154,7 +154,7 @@ pub(crate) fn child_uses_parent_exec_policy(parent_config: &Config, child_config
         config
             .config_layer_stack
             .layers_low_to_high()
-            .filter_map(genex_config::ConfigLayerEntry::config_folder)
+            .filter_map(ruxex_config::ConfigLayerEntry::config_folder)
             .collect()
     }
 
@@ -223,7 +223,7 @@ pub enum ExecPolicyError {
     #[error("failed to parse rules file {path}: {source}")]
     ParsePolicy {
         path: String,
-        source: genex_execpolicy::Error,
+        source: ruxex_execpolicy::Error,
     },
 }
 
@@ -427,7 +427,7 @@ impl ExecPolicyManager {
 
     pub(crate) async fn append_amendment_and_update(
         &self,
-        genex_home: &Path,
+        ruxex_home: &Path,
         amendment: &ExecPolicyAmendment,
     ) -> Result<(), ExecPolicyUpdateError> {
         let _update_guard =
@@ -439,7 +439,7 @@ impl ExecPolicyManager {
                         "exec policy update semaphore closed".to_string(),
                     ),
                 })?;
-        let policy_path = default_policy_path(genex_home);
+        let policy_path = default_policy_path(ruxex_home);
         spawn_blocking({
             let policy_path = policy_path.clone();
             let prefix = amendment.command.clone();
@@ -477,7 +477,7 @@ impl ExecPolicyManager {
 
     pub(crate) async fn append_network_rule_and_update(
         &self,
-        genex_home: &Path,
+        ruxex_home: &Path,
         host: &str,
         protocol: NetworkRuleProtocol,
         decision: Decision,
@@ -492,7 +492,7 @@ impl ExecPolicyManager {
                         "exec policy update semaphore closed".to_string(),
                     ),
                 })?;
-        let policy_path = default_policy_path(genex_home);
+        let policy_path = default_policy_path(ruxex_home);
         let host = host.to_string();
         spawn_blocking({
             let policy_path = policy_path.clone();
@@ -535,7 +535,7 @@ pub async fn check_execpolicy_for_warnings(
     Ok(warning)
 }
 
-fn exec_policy_message_for_display(source: &genex_execpolicy::Error) -> String {
+fn exec_policy_message_for_display(source: &ruxex_execpolicy::Error) -> String {
     let message = source.to_string();
     if let Some(line) = message
         .lines()
@@ -812,8 +812,8 @@ fn profile_has_managed_filesystem_restrictions(permission_profile: &PermissionPr
         && !file_system_sandbox_policy.has_full_disk_write_access()
 }
 
-pub(crate) fn default_policy_path(genex_home: &Path) -> PathBuf {
-    genex_home.join(RULES_DIR_NAME).join(DEFAULT_POLICY_FILE)
+pub(crate) fn default_policy_path(ruxex_home: &Path) -> PathBuf {
+    ruxex_home.join(RULES_DIR_NAME).join(DEFAULT_POLICY_FILE)
 }
 
 #[cfg(test)]
@@ -871,7 +871,7 @@ fn try_derive_execpolicy_amendment_for_prompt_rules(
         })
 }
 
-/// - Note: we only use this amendment when the command fails to run in sandbox and Genex prompts the user to run outside the sandbox
+/// - Note: we only use this amendment when the command fails to run in sandbox and Ruxex prompts the user to run outside the sandbox
 /// - The purpose of this amendment is to bypass sandbox for similar commands in the future
 /// - If any execpolicy rule matches, return None, because we would already be running command outside the sandbox
 fn try_derive_execpolicy_amendment_for_allow_rules(

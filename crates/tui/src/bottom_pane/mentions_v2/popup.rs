@@ -1,4 +1,4 @@
-use genex_file_search::FileMatch;
+use ruxex_file_search::FileMatch;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::WidgetRef;

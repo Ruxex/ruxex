@@ -1,28 +1,28 @@
 use anyhow::Result;
-use genex_config::Constrained;
-use genex_core::EnvironmentConfig;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::McpServerContribution;
-use genex_extension_api::McpServerContributionContext;
-use genex_extension_api::McpServerContributor;
-use genex_extension_api::ThreadLifecycleContributor;
-use genex_extension_api::ThreadStartInput;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_mcp::McpResourceClient;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_config::Constrained;
+use ruxex_core::EnvironmentConfig;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::McpServerContribution;
+use ruxex_extension_api::McpServerContributionContext;
+use ruxex_extension_api::McpServerContributor;
+use ruxex_extension_api::ThreadLifecycleContributor;
+use ruxex_extension_api::ThreadStartInput;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_mcp::McpResourceClient;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::SnapshotEntry;
@@ -277,7 +277,7 @@ async fn root_and_spawned_subagent_receive_distinct_mcp_session_sources() -> Res
     extensions.mcp_server_contributor(Arc::new(SessionSourceMcpContributor {
         observed_sources: observed_sources.clone(),
     }));
-    let test = core_test_support::test_genex::test_genex()
+    let test = core_test_support::test_ruxex::test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build(&server)
         .await?;
@@ -320,13 +320,13 @@ async fn rapid_mcp_refreshes_coalesce_to_the_latest_config() -> Result<()> {
     let contributor = Arc::new(CoalescingMcpContributor::new());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.mcp_server_contributor(contributor.clone());
-    let test = core_test_support::test_genex::test_genex()
+    let test = core_test_support::test_ruxex::test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .build(&server)
         .await?;
 
     contributor.block_next.store(true, Ordering::SeqCst);
-    test.genex
+    test.ruxex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-a"))
         .await;
     tokio::time::timeout(Duration::from_secs(5), contributor.entered.acquire())
@@ -335,10 +335,10 @@ async fn rapid_mcp_refreshes_coalesce_to_the_latest_config() -> Result<()> {
         .expect("entered semaphore should remain open")
         .forget();
 
-    test.genex
+    test.ruxex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-b"))
         .await;
-    test.genex
+    test.ruxex
         .refresh_runtime_config(config_with_mcp_marker(&test.config, "config-c"))
         .await;
     contributor.release.add_permits(1);

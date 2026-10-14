@@ -19,8 +19,8 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
 -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_auto_env_builder(
-        test_genex().with_auth(GenexAuth::from_api_key("test-api-key")),
+    let harness = TestRuxexHarness::with_auto_env_builder(
+        test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key")),
     )
     .await?;
     let escaped_text = "a \"quoted\" line\nand\\path";
@@ -46,7 +46,7 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
             }),
         ),
     ] {
-        let genex = harness
+        let ruxex = harness
             .test()
             .thread_manager
             .start_thread(StartThreadOptions {
@@ -64,14 +64,14 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
             "content": [{"type": "input_text", "text": text}],
             "internal_chat_message_metadata_passthrough": metadata,
         });
-        genex
+        ruxex
             .inject_response_items(vec![serde_json::from_value(message.clone())?])
             .await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        genex.submit(Op::Compact).await?;
-        wait_for_turn_complete(&genex).await;
+        ruxex.submit(Op::Compact).await?;
+        wait_for_turn_complete(&ruxex).await;
 
-        estimates.push(genex.token_usage_info().await.context("token usage")?);
+        estimates.push(ruxex.token_usage_info().await.context("token usage")?);
         assert_eq!(
             mock.single_request()
                 .input()
@@ -79,7 +79,7 @@ async fn remote_compact_v2_token_estimate_ignores_message_bookkeeping_and_json_e
                 .find(|item| item["id"] == id),
             Some(message),
         );
-        genex.shutdown_and_wait().await?;
+        ruxex.shutdown_and_wait().await?;
     }
 
     assert_eq!(estimates[0], estimates[1]);
@@ -92,7 +92,7 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
 
     let call_id = "tool-search-1";
     let tools = json!([{
-        "type": "namespace", "name": "genex_app", "description": "Genex app tools.",
+        "type": "namespace", "name": "ruxex_app", "description": "Ruxex app tools.",
         "tools": [{
             "type": "function", "name": "oversized_dynamic_tool", "description": "x".repeat(20_000),
             "parameters": {"type": "object", "properties": {}, "additionalProperties": false},
@@ -100,16 +100,16 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
         }],
     }]);
     for (context_window, expected_tools) in [(200_000, &tools), (2_000, &json!([]))] {
-        let harness = TestGenexHarness::with_builder(
-            test_genex()
-                .with_auth(GenexAuth::from_api_key("test-api-key"))
+        let harness = TestRuxexHarness::with_builder(
+            test_ruxex()
+                .with_auth(RuxexAuth::from_api_key("test-api-key"))
                 .with_config(move |config| {
                     configure_search_capable_model(config);
                     config.model_context_window = Some(context_window);
                 }),
         )
         .await?;
-        let genex = &harness.test().genex;
+        let ruxex = &harness.test().ruxex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "find the tool"}]}),
             json!({"type": "tool_search_call", "call_id": call_id, "execution": "client", "arguments": {"query": "oversized deferred tool"}}),
@@ -118,10 +118,10 @@ async fn remote_compact_v2_trims_tool_search_output_to_empty_tools_array() -> Re
         .into_iter()
         .map(serde_json::from_value)
         .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-        genex.inject_response_items(history).await?;
+        ruxex.inject_response_items(history).await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        genex.submit(Op::Compact).await?;
-        wait_for_turn_complete(genex).await;
+        ruxex.submit(Op::Compact).await?;
+        wait_for_turn_complete(ruxex).await;
 
         let request = mock.single_request();
         assert_eq!(request.path(), "/v1/responses");
@@ -155,9 +155,9 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
             CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE,
         ),
     ] {
-        let harness = TestGenexHarness::with_builder(
-            test_genex()
-                .with_auth(GenexAuth::from_api_key("test-api-key"))
+        let harness = TestRuxexHarness::with_builder(
+            test_ruxex()
+                .with_auth(RuxexAuth::from_api_key("test-api-key"))
                 .with_config({
                     let instructions = instructions.to_string();
                     move |config| {
@@ -167,7 +167,7 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
                 }),
         )
         .await?;
-        let genex = &harness.test().genex;
+        let ruxex = &harness.test().ruxex;
         let history = [
             json!({"type": "message", "role": "user", "content": [{"type": "input_text", "text": "older user"}]}),
             json!({"type": "function_call", "call_id": "retained", "name": "exec_command", "arguments": "{}"}),
@@ -179,10 +179,10 @@ async fn remote_compact_v2_trim_estimate_uses_session_base_instructions() -> Res
         .into_iter()
         .map(serde_json::from_value)
         .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-        genex.inject_response_items(history).await?;
+        ruxex.inject_response_items(history).await?;
         let mock = mount_sse_once(harness.server(), compact_response()).await;
-        genex.submit(Op::Compact).await?;
-        wait_for_turn_complete(genex).await;
+        ruxex.submit(Op::Compact).await?;
+        wait_for_turn_complete(ruxex).await;
 
         let request = mock.single_request();
         assert_eq!(request.path(), "/v1/responses");

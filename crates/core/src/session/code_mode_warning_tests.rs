@@ -1,9 +1,9 @@
 use super::unsupported_code_mode_warning;
-use genex_features::Feature;
-use genex_features::Features;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ToolMode;
+use ruxex_features::Feature;
+use ruxex_features::Features;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ToolMode;
 use pretty_assertions::assert_eq;
 
 const MODEL_SLUG: &str = "test-model";

@@ -4,9 +4,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use anyhow::Result;
-use genex_git_utils::get_git_repo_root;
-use genex_keyring_store::DefaultKeyringStore;
-use genex_keyring_store::KeyringStore;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_keyring_store::DefaultKeyringStore;
+use ruxex_keyring_store::KeyringStore;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -20,7 +20,7 @@ pub use local::LocalSecretsBackend;
 pub use local::LocalSecretsNamespace;
 pub use sanitizer::redact_secrets;
 
-const KEYRING_SERVICE: &str = "genex";
+const KEYRING_SERVICE: &str = "ruxex";
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SecretName(String);
@@ -100,38 +100,38 @@ pub struct SecretsManager {
 }
 
 impl SecretsManager {
-    pub fn new(genex_home: PathBuf, backend_kind: SecretsBackendKind) -> Self {
+    pub fn new(ruxex_home: PathBuf, backend_kind: SecretsBackendKind) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => {
                 let keyring_store: Arc<dyn KeyringStore> = Arc::new(DefaultKeyringStore);
-                Arc::new(LocalSecretsBackend::new(genex_home, keyring_store))
+                Arc::new(LocalSecretsBackend::new(ruxex_home, keyring_store))
             }
         };
         Self { backend }
     }
 
     pub fn new_with_keyring_store(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         backend_kind: SecretsBackendKind,
         keyring_store: Arc<dyn KeyringStore>,
     ) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => {
-                Arc::new(LocalSecretsBackend::new(genex_home, keyring_store))
+                Arc::new(LocalSecretsBackend::new(ruxex_home, keyring_store))
             }
         };
         Self { backend }
     }
 
     pub fn new_with_keyring_store_and_namespace(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         backend_kind: SecretsBackendKind,
         keyring_store: Arc<dyn KeyringStore>,
         namespace: LocalSecretsNamespace,
     ) -> Self {
         let backend: Arc<dyn SecretsBackend> = match backend_kind {
             SecretsBackendKind::Local => Arc::new(LocalSecretsBackend::new_with_namespace(
-                genex_home,
+                ruxex_home,
                 keyring_store,
                 namespace,
             )),
@@ -180,10 +180,10 @@ pub fn environment_id_from_cwd(cwd: &Path) -> String {
 }
 
 /// Computes the OS keyring account name used to store the local secrets passphrase.
-pub fn compute_keyring_account(genex_home: &Path) -> String {
-    let canonical = genex_home
+pub fn compute_keyring_account(ruxex_home: &Path) -> String {
+    let canonical = ruxex_home
         .canonicalize()
-        .unwrap_or_else(|_| genex_home.to_path_buf())
+        .unwrap_or_else(|_| ruxex_home.to_path_buf())
         .to_string_lossy()
         .into_owned();
     let mut hasher = Sha256::new();
@@ -201,7 +201,7 @@ pub(crate) fn keyring_service() -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_keyring_store::tests::MockKeyringStore;
+    use ruxex_keyring_store::tests::MockKeyringStore;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -224,10 +224,10 @@ mod tests {
 
     #[test]
     fn manager_round_trips_local_backend() -> Result<()> {
-        let genex_home = tempfile::tempdir().expect("tempdir");
+        let ruxex_home = tempfile::tempdir().expect("tempdir");
         let keyring = Arc::new(MockKeyringStore::default());
         let manager = SecretsManager::new_with_keyring_store(
-            genex_home.path().to_path_buf(),
+            ruxex_home.path().to_path_buf(),
             SecretsBackendKind::Local,
             keyring,
         );

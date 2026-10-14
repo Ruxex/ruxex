@@ -1,5 +1,5 @@
-use genex_config::ConfigRequirementsToml;
-use genex_config::permissions_toml::PermissionsToml;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::permissions_toml::PermissionsToml;
 
 /// A selected permission profile and its uncompiled configured and managed catalog.
 #[derive(Debug, Clone, PartialEq, Eq)]

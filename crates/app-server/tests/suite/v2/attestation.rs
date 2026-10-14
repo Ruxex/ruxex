@@ -5,19 +5,19 @@ use app_test_support::TestAppServer;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::AttestationGenerateResponse;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_config::types::AuthCredentialsStoreMode;
+use ruxex_app_server_protocol::AttestationGenerateResponse;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_config::types::AuthCredentialsStoreMode;
 use core_test_support::responses;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::start_websocket_server_with_headers;
@@ -55,20 +55,20 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
     }])
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     create_authenticated_websocket_config(
-        genex_home.path(),
+        ruxex_home.path(),
         &websocket_server.uri().replacen("ws://", "http://", 1),
     )?;
     write_api_key_auth(
-        genex_home.path(),
+        ruxex_home.path(),
         ApiKeyAuthFixture::new("test-token").plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
-    write_models_cache(genex_home.path()).await?;
+    write_models_cache(ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build()
         .await?;
@@ -76,8 +76,8 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_capabilities(
             ClientInfo {
-                name: "genex_desktop".to_string(),
-                title: Some("Genex Desktop".to_string()),
+                name: "ruxex_desktop".to_string(),
+                title: Some("Ruxex Desktop".to_string()),
                 version: "0.1.0".to_string(),
             },
             Some(InitializeCapabilities {
@@ -168,11 +168,11 @@ async fn attestation_generate_round_trip_adds_header_to_responses_websocket_hand
 }
 
 fn create_authenticated_websocket_config(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        genex_home.join("config.toml"),
+        ruxex_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

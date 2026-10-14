@@ -4,15 +4,15 @@ use std::sync::Mutex;
 use std::sync::Weak;
 use std::time::Instant;
 
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::TurnAbortInput;
-use genex_extension_api::TurnErrorInput;
-use genex_extension_api::TurnLifecycleContributor;
-use genex_extension_api::TurnStartInput;
-use genex_extension_api::TurnStopInput;
-use genex_otel::sanitize_metric_tag_value;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::TurnAbortInput;
+use ruxex_extension_api::TurnErrorInput;
+use ruxex_extension_api::TurnLifecycleContributor;
+use ruxex_extension_api::TurnStartInput;
+use ruxex_extension_api::TurnStopInput;
+use ruxex_otel::sanitize_metric_tag_value;
+use ruxex_protocol::model_types::ModelInfo;
 
 use crate::state::SkillsSessionState;
 
@@ -77,7 +77,7 @@ impl SkillTurnMetrics {
         for plugin_id in usage.plugins {
             let plugin_id = sanitize_metric_tag_value(&plugin_id);
             metrics.histogram(
-                "genex.skill.turn.duration_seconds",
+                "ruxex.skill.turn.duration_seconds",
                 duration_seconds,
                 &[
                     ("plugin_id", plugin_id.as_str()),

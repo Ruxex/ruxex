@@ -88,7 +88,7 @@ async fn plugin_runtime_event_streams_are_isolated_and_cancel_locally() -> anyho
                             .to_string();
                         assert_eq!(
                             message.pointer("/params/arguments"),
-                            Some(&json!({"project": "genex"}))
+                            Some(&json!({"project": "ruxex"}))
                         );
                         assert!(message["params"].get("cursor").is_none());
 
@@ -132,13 +132,13 @@ async fn plugin_runtime_event_streams_are_isolated_and_cancel_locally() -> anyho
     let mut first = client
         .send_event_stream_request(Some(json!({
             "name": "github.pull_request.opened",
-            "arguments": {"project": "genex"},
+            "arguments": {"project": "ruxex"},
         })))
         .await?;
     let mut second = client
         .send_event_stream_request(Some(json!({
             "name": "gmail.message.received",
-            "arguments": {"project": "genex"},
+            "arguments": {"project": "ruxex"},
         })))
         .await?;
 

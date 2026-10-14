@@ -3,17 +3,17 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::ARCHIVED_SESSIONS_SUBDIR;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use uuid::Uuid;
 
 use super::LocalThreadStoreConfig;
 
-pub(super) fn test_config(genex_home: &Path) -> LocalThreadStoreConfig {
+pub(super) fn test_config(ruxex_home: &Path) -> LocalThreadStoreConfig {
     LocalThreadStoreConfig {
-        genex_home: genex_home.to_path_buf(),
-        sqlite: genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
+        ruxex_home: ruxex_home.to_path_buf(),
+        sqlite: ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs()),
     }
 }
 

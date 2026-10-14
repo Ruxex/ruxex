@@ -8,7 +8,7 @@ use wiremock::matchers::path;
 pub async fn start_analytics_events_server() -> Result<MockServer> {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/genex/analytics-events/events"))
+        .and(path("/ruxex/analytics-events/events"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;

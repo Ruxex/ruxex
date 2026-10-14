@@ -13,22 +13,22 @@ use crate::state::SessionServices;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::network_approval::NetworkApprovalSpec;
 use futures::Future;
-use genex_file_system::FileSystemSandboxContext;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::error::GenexErr;
-use genex_protocol::permissions::FileSystemSandboxKind;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ReviewDecision;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxTransformRequest;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::SandboxablePreference;
-use genex_sandboxing::policy_transforms::effective_permission_profile;
-use genex_tools::ToolName;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::approvals::ExecPolicyAmendment;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::permissions::FileSystemSandboxKind;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxTransformRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxablePreference;
+use ruxex_sandboxing::policy_transforms::effective_permission_profile;
+use ruxex_tools::ToolName;
+use ruxex_utils_path_uri::PathUri;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -95,7 +95,7 @@ where
     let decision = fetch().await;
 
     services.session_telemetry.counter(
-        "genex.approval.requested",
+        "ruxex.approval.requested",
         /*inc*/ 1,
         &[
             ("tool", tool_name),
@@ -154,7 +154,7 @@ pub(crate) enum ExecApprovalRequirement {
         /// greenlit by policy).
         bypass_sandbox: bool,
         /// Proposed execpolicy amendment to skip future approvals for similar commands
-        /// Only applies if the command fails to run in sandbox and Genex prompts the user to run outside the sandbox.
+        /// Only applies if the command fails to run in sandbox and Ruxex prompts the user to run outside the sandbox.
         proposed_execpolicy_amendment: Option<ExecPolicyAmendment>,
     },
     /// Approval required for this tool call.
@@ -355,7 +355,7 @@ pub(crate) struct ToolCtx {
 #[derive(Debug)]
 pub(crate) enum ToolError {
     Rejected(String),
-    Genex(GenexErr),
+    Ruxex(RuxexErr),
 }
 
 pub(crate) trait ToolRuntime<Req, Out>: Approvable<Req> + Sandboxable {
@@ -385,9 +385,9 @@ pub(crate) struct SandboxAttempt<'a> {
     pub sandbox: SandboxType,
     /// Whether policy requested sandboxing, independent of this host's concrete wrapper.
     pub sandbox_requested: bool,
-    pub permissions: &'a genex_protocol::models::PermissionProfile,
+    pub permissions: &'a ruxex_protocol::models::PermissionProfile,
     /// Canonical permissions before this host materializes workspace roots.
-    pub exec_server_permissions: &'a genex_protocol::models::PermissionProfile,
+    pub exec_server_permissions: &'a ruxex_protocol::models::PermissionProfile,
     pub enforce_managed_network: bool,
     pub(crate) manager: &'a SandboxManager,
     pub(crate) sandbox_cwd: &'a PathUri,
@@ -428,7 +428,7 @@ impl<'a> SandboxAttempt<'a> {
         options: ExecOptions,
         network: Option<&NetworkProxy>,
         environment_id: Option<&str>,
-    ) -> Result<crate::sandboxing::ExecRequest, GenexErr> {
+    ) -> Result<crate::sandboxing::ExecRequest, RuxexErr> {
         let network = self.network_proxy(network);
         let request = self
             .manager
@@ -443,7 +443,7 @@ impl<'a> SandboxAttempt<'a> {
                 sandbox_exe: self.sandbox_exe.map(std::path::PathBuf::as_path),
                 use_legacy_landlock: self.use_legacy_landlock,
             })
-            .map_err(GenexErr::from)?;
+            .map_err(RuxexErr::from)?;
         crate::sandboxing::ExecRequest::from_sandbox_exec_request(request, options)
     }
 
@@ -451,7 +451,7 @@ impl<'a> SandboxAttempt<'a> {
         &self,
         command: SandboxCommand,
         options: ExecOptions,
-    ) -> Result<crate::sandboxing::ExecRequest, GenexErr> {
+    ) -> Result<crate::sandboxing::ExecRequest, RuxexErr> {
         let managed_network = command.managed_network.clone();
         let exec_server_permissions = effective_permission_profile(
             self.exec_server_permissions,
@@ -471,7 +471,7 @@ impl<'a> SandboxAttempt<'a> {
                 sandbox_exe: None,
                 use_legacy_landlock: self.use_legacy_landlock,
             })
-            .map_err(GenexErr::from)?;
+            .map_err(RuxexErr::from)?;
         let mut exec_request =
             crate::sandboxing::ExecRequest::from_sandbox_exec_request(request, options)?;
         exec_request.exec_server_managed_network = managed_network;

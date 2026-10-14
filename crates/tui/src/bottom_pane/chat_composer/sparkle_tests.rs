@@ -22,7 +22,7 @@ fn pane() -> BottomPane {
         frame_requester: FrameRequester::test_dummy(),
         has_input_focus: true,
         enhanced_keys_supported: false,
-        placeholder_text: "Ask Genex to do anything".into(),
+        placeholder_text: "Ask Ruxex to do anything".into(),
         disable_paste_burst: true,
         animations_enabled: true,
         skills: None,

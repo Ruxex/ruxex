@@ -6,11 +6,11 @@
 // integration tests that exercise the zsh fork behavior in app-server tests.
 //
 // This checked-in fixture is still pinned to the latest released bundle that
-// contains this binary. New releases publish standalone `genex-zsh-*.tar.gz`
-// assets plus a generated `genex-zsh` DotSlash release asset, so this file can
+// contains this binary. New releases publish standalone `ruxex-zsh-*.tar.gz`
+// assets plus a generated `ruxex-zsh` DotSlash release asset, so this file can
 // be retargeted when a newer fork build needs to be exercised in tests.
 {
-  "name": "genex-zsh",
+  "name": "ruxex-zsh",
   "platforms": {
     // macOS 13 builds (and therefore x86_64) were dropped in
     // https://github.com/codex/codex/pull/7295, so we only provide an

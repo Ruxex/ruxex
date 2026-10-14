@@ -1,7 +1,7 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-tools"
+name = "ruxex-tools"
 version.workspace = true
 
 [lints]
@@ -9,14 +9,14 @@ workspace = true
 
 [dependencies]
 bitflags = { workspace = true }
-genex-code-mode = { workspace = true }
-genex-features = { workspace = true }
-genex-file-system = { workspace = true }
-genex-extension-items = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-output-truncation = { workspace = true }
-genex-utils-string = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
+ruxex-utils-string = { workspace = true }
 jsonptr = { workspace = true }
 rmcp = { workspace = true, default-features = false, features = [
     "base64",
@@ -31,7 +31,7 @@ tracing = { workspace = true }
 urlencoding = { workspace = true }
 
 [dev-dependencies]
-genex-utils-cargo-bin = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 
 [lib]

@@ -1,4 +1,4 @@
-//! The main Genex TUI chat surface.
+//! The main Ruxex TUI chat surface.
 //!
 //! `ChatWidget` consumes protocol events, builds and updates history cells, and drives rendering
 //! for both the main viewport and overlay UIs.
@@ -77,80 +77,80 @@ use crate::terminal_title::set_terminal_title;
 use crate::text_formatting::proper_join;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
-use crate::version::GENEX_CLI_VERSION;
+use crate::version::RUXEX_CLI_VERSION;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_app_server_protocol::CollabAgentTool;
-use genex_app_server_protocol::CollabAgentToolCallStatus;
-use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use genex_app_server_protocol::CreditsSnapshot;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::FileChangeRequestApprovalParams;
-use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::McpServerElicitationRequest;
-use genex_app_server_protocol::McpServerElicitationRequestParams;
-use genex_app_server_protocol::McpServerStatusDetail;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::ModelProviderReadResponse;
-use genex_app_server_protocol::ModelVerification as AppServerModelVerification;
-use genex_app_server_protocol::RateLimitReachedType;
-use genex_app_server_protocol::RateLimitSnapshot;
-use genex_app_server_protocol::RequestId as AppServerRequestId;
-use genex_app_server_protocol::ReviewTarget;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SkillMetadata;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_app_server_protocol::ThreadGoal as AppThreadGoal;
-use genex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadSettings;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::ToolRequestUserInputParams;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnPlanStepStatus;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_config::Constrained;
-use genex_config::ConstraintResult;
-use genex_config::types::Notifications;
-use genex_features::Feature;
+use ruxex_app_server_protocol::CollabAgentTool;
+use ruxex_app_server_protocol::CollabAgentToolCallStatus;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use ruxex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use ruxex_app_server_protocol::CreditsSnapshot;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::FileChangeRequestApprovalParams;
+use ruxex_app_server_protocol::RuxexErrorInfo as AppServerRuxexErrorInfo;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::McpServerElicitationRequest;
+use ruxex_app_server_protocol::McpServerElicitationRequestParams;
+use ruxex_app_server_protocol::McpServerStatusDetail;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use ruxex_app_server_protocol::ModelProviderReadResponse;
+use ruxex_app_server_protocol::ModelVerification as AppServerModelVerification;
+use ruxex_app_server_protocol::RateLimitReachedType;
+use ruxex_app_server_protocol::RateLimitSnapshot;
+use ruxex_app_server_protocol::RequestId as AppServerRequestId;
+use ruxex_app_server_protocol::ReviewTarget;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SkillMetadata;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_app_server_protocol::ThreadGoal as AppThreadGoal;
+use ruxex_app_server_protocol::ThreadGoalStatus as AppThreadGoalStatus;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSettings;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::ToolRequestUserInputParams;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnPlanStepStatus;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_config::Constrained;
+use ruxex_config::ConstraintResult;
+use ruxex_config::types::Notifications;
+use ruxex_features::Feature;
 #[cfg(test)]
-use genex_git_utils::CommitLogEntry;
-use genex_git_utils::current_branch_name;
-use genex_git_utils::get_git_repo_root;
-use genex_git_utils::local_git_branches;
-use genex_git_utils::recent_commits;
-use genex_otel::RuntimeMetricsSummary;
-use genex_otel::SessionTelemetry;
-use genex_plugin::PluginCapabilitySummary;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::plan_tool::PlanItemArg as UpdatePlanItemArg;
-use genex_protocol::plan_tool::StepStatus as UpdatePlanItemStatus;
-use genex_protocol::request_permissions::RequestPermissionsEvent;
-use genex_protocol::user_input::ByteRange;
-use genex_protocol::user_input::TextElement;
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_git_utils::CommitLogEntry;
+use ruxex_git_utils::current_branch_name;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_git_utils::local_git_branches;
+use ruxex_git_utils::recent_commits;
+use ruxex_otel::RuntimeMetricsSummary;
+use ruxex_otel::SessionTelemetry;
+use ruxex_plugin::PluginCapabilitySummary;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::plan_tool::PlanItemArg as UpdatePlanItemArg;
+use ruxex_protocol::plan_tool::StepStatus as UpdatePlanItemStatus;
+use ruxex_protocol::request_permissions::RequestPermissionsEvent;
+use ruxex_protocol::user_input::ByteRange;
+use ruxex_protocol::user_input::TextElement;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
@@ -441,17 +441,17 @@ use crate::streaming::controller::StreamController;
 use crate::workspace_command::WorkspaceCommandRunner;
 
 use chrono::Local;
-use genex_app_server_protocol::AskForApproval;
-use genex_file_search::FileMatch;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::plan_tool::StepStatus;
-use genex_protocol::plan_tool::UpdatePlanArgs;
-use genex_utils_approval_presets::ApprovalPreset;
-use genex_utils_approval_presets::builtin_approval_presets;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_file_search::FileMatch;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::plan_tool::StepStatus;
+use ruxex_protocol::plan_tool::UpdatePlanArgs;
+use ruxex_utils_approval_presets::ApprovalPreset;
+use ruxex_utils_approval_presets::builtin_approval_presets;
 use strum::IntoEnumIterator;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -474,7 +474,7 @@ pub(crate) struct ChatWidgetInit {
     pub(crate) initial_user_message: Option<UserMessage>,
     pub(crate) enhanced_keys_supported: bool,
     pub(crate) has_managed_account: bool,
-    pub(crate) has_genex_backend_auth: bool,
+    pub(crate) has_ruxex_backend_auth: bool,
     pub(crate) model_catalog: Arc<ModelCatalog>,
     pub(crate) is_first_run: bool,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
@@ -503,7 +503,7 @@ pub(crate) enum ExternalEditorState {
 /// intent (`Op` submissions and `AppEvent` requests).
 ///
 /// It is not responsible for running the agent itself; it reflects progress by updating UI state
-/// and by sending requests back to genex-core.
+/// and by sending requests back to ruxex-core.
 ///
 /// Quit/interrupt behavior intentionally spans layers: the bottom pane owns local input routing
 /// (which view gets Ctrl+C), while `ChatWidget` owns process-level decisions such as interrupting
@@ -511,7 +511,7 @@ pub(crate) enum ExternalEditorState {
 pub(crate) struct ChatWidget {
     pub(crate) cyber_policy_notice: crate::daybreak::NoticeCache,
     app_event_tx: AppEventSender,
-    genex_op_target: GenexOpTarget,
+    ruxex_op_target: RuxexOpTarget,
     bottom_pane: BottomPane,
     transcript: TranscriptState,
     config: Config,
@@ -526,7 +526,7 @@ pub(crate) struct ChatWidget {
     /// The currently active collaboration mask, if any.
     active_collaboration_mask: Option<CollaborationModeMask>,
     has_managed_account: bool,
-    has_genex_backend_auth: bool,
+    has_ruxex_backend_auth: bool,
     model_catalog: Arc<ModelCatalog>,
     model_popup_request_id: Option<uuid::Uuid>,
     permission_popup_request_id: Option<uuid::Uuid>,
@@ -559,8 +559,8 @@ pub(crate) struct ChatWidget {
     available_rate_limit_reset_credits: Option<i64>,
     next_rate_limit_reset_request_id: u64,
     plan_type: Option<PlanType>,
-    genex_rate_limit_reached_type: Option<RateLimitReachedType>,
-    genex_spend_control_reached: Option<bool>,
+    ruxex_rate_limit_reached_type: Option<RateLimitReachedType>,
+    ruxex_spend_control_reached: Option<bool>,
     rate_limit_warnings: RateLimitWarningState,
     warning_display_state: WarningDisplayState,
     rate_limit_switch_prompt: RateLimitSwitchPromptState,
@@ -725,7 +725,7 @@ pub(crate) struct ChatWidget {
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
-enum GenexOpTarget {
+enum RuxexOpTarget {
     Direct(UnboundedSender<AppCommand>),
     AppEvent,
 }
@@ -844,7 +844,7 @@ fn patch_approval_request_from_params(
 }
 
 fn request_permissions_from_params(
-    params: genex_app_server_protocol::PermissionsRequestApprovalParams,
+    params: ruxex_app_server_protocol::PermissionsRequestApprovalParams,
 ) -> std::io::Result<RequestPermissionsEvent> {
     Ok(RequestPermissionsEvent {
         turn_id: params.turn_id,
@@ -1332,7 +1332,7 @@ impl ChatWidget {
                 placeholder_style,
                 /*reasoning_effort*/ None,
                 config.cwd.to_path_buf(),
-                GENEX_CLI_VERSION,
+                RUXEX_CLI_VERSION,
             )
             .with_yolo_mode(history_cell::is_yolo_mode(config)),
         )
@@ -1636,7 +1636,7 @@ impl ChatWidget {
         ));
     }
 
-    /// Forward a command directly to genex.
+    /// Forward a command directly to ruxex.
     pub(crate) fn submit_op<T>(&mut self, op: T) -> bool
     where
         T: Into<AppCommand>,
@@ -1663,11 +1663,11 @@ impl ChatWidget {
         if op.is_review() && !self.bottom_pane.is_task_running() {
             self.bottom_pane.set_task_running(/*running*/ true);
         }
-        match &self.genex_op_target {
-            GenexOpTarget::Direct(genex_op_tx) => {
+        match &self.ruxex_op_target {
+            RuxexOpTarget::Direct(ruxex_op_tx) => {
                 crate::session_log::log_outbound_op(&op);
                 let is_review = op.is_review();
-                if let Err(e) = genex_op_tx.send(op) {
+                if let Err(e) = ruxex_op_tx.send(op) {
                     tracing::error!("failed to submit op: {e}");
                     return false;
                 }
@@ -1675,8 +1675,8 @@ impl ChatWidget {
                     self.on_review_started();
                 }
             }
-            GenexOpTarget::AppEvent => {
-                self.app_event_tx.send(AppEvent::GenexOp(op));
+            RuxexOpTarget::AppEvent => {
+                self.app_event_tx.send(AppEvent::RuxexOp(op));
             }
         }
         true
@@ -1845,7 +1845,7 @@ impl Drop for ChatWidget {
     }
 }
 
-const PLACEHOLDER: &str = "Ask Genex to do anything";
+const PLACEHOLDER: &str = "Ask Ruxex to do anything";
 const SIDE_PLACEHOLDER: &str = "Ask a follow-up question";
 
 // Extract the first bold (Markdown) element in the form **...** from `s`.

@@ -2,24 +2,24 @@ use anyhow::Result;
 use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CyberAccessProgram;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadMetadataUpdateParams;
-use genex_app_server_protocol::ThreadMetadataUpdateResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_login::AuthCredentialsStoreMode;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CyberAccessProgram;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadMetadataUpdateParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_login::AuthCredentialsStoreMode;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -406,12 +406,12 @@ async fn turn_start_forwards_cyber_access_program_with_personal_access_token() -
     )?;
     let authapi_base_url = server.uri();
     let mut app = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .without_managed_config()
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
-            ("GENEX_ACCESS_TOKEN", Some("at-test-token")),
-            ("GENEX_AUTHAPI_BASE_URL", Some(authapi_base_url.as_str())),
+            ("RUXEX_ACCESS_TOKEN", Some("at-test-token")),
+            ("RUXEX_AUTHAPI_BASE_URL", Some(authapi_base_url.as_str())),
         ])
         .build_initialized()
         .await?;
@@ -454,7 +454,7 @@ async fn start_authenticated_app(home: &Path, server: &MockServer) -> Result<Tes
         AuthCredentialsStoreMode::File,
     )?;
     TestAppServer::builder()
-        .with_genex_home(home)
+        .with_ruxex_home(home)
         .without_managed_config()
         .build_initialized()
         .await

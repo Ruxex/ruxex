@@ -4,7 +4,7 @@
 //! verify the *public* contract of `ansi_escape_line()` which the widget now
 //! relies on.
 
-use genex_ansi_escape::ansi_escape_line;
+use ruxex_ansi_escape::ansi_escape_line;
 
 #[test]
 fn ansi_escape_line_strips_escape_sequences() {

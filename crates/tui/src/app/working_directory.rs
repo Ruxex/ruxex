@@ -7,8 +7,8 @@ use crate::app_event::ManagedWorktreeTransition;
 use crate::app_server_session::ForkGoalContinuation::DeferUntilNextTurn;
 use crate::history_cell::McpInventoryLoadingCell as LoadingCell;
 use crate::terminal_visualization_instructions::with_terminal_visualization_instructions;
-use genex_app_server_protocol::ThreadBackgroundTerminalsListParams;
-use genex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsListParams;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
 
 enum DestinationConfig {
     Load,
@@ -147,8 +147,8 @@ impl App {
         app_server: &mut AppServerSession,
         cwd: AbsolutePathBuf,
         managed_worktree: Option<(
-            genex_worktree::WorktreeManager,
-            genex_worktree::ManagedWorktree,
+            ruxex_worktree::WorktreeManager,
+            ruxex_worktree::ManagedWorktree,
             crate::app_event::ManagedWorktreeMode,
             Option<String>,
         )>,
@@ -212,7 +212,7 @@ impl App {
             },
         };
         if config.active_project.trust_level.is_none() {
-            return self.working_directory_error("This directory is not trusted; run Genex there.");
+            return self.working_directory_error("This directory is not trusted; run Ruxex there.");
         }
         if let Some((_, checkout, crate::app_event::ManagedWorktreeMode::Fork, _)) =
             managed_worktree.as_ref()
@@ -443,7 +443,7 @@ impl App {
             name_error,
         } = attach;
         self.local_settings = local_settings;
-        self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
+        self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
         self.config = *config;
         self.file_search
             .update_search_dir(self.config.cwd.to_path_buf());

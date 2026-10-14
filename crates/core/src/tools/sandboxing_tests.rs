@@ -1,18 +1,18 @@
 use super::*;
 use crate::sandboxing::SandboxPermissions;
 use crate::tools::hook_names::HookToolName;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::HashMap;
@@ -211,7 +211,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
         .try_into()
         .expect("absolute cwd");
     let cwd_uri = PathUri::from_abs_path(&cwd);
-    let exec_server_permissions = genex_protocol::models::PermissionProfile::workspace_write();
+    let exec_server_permissions = ruxex_protocol::models::PermissionProfile::workspace_write();
     let permissions = exec_server_permissions
         .clone()
         .materialize_project_roots_with_workspace_roots(std::slice::from_ref(&cwd));
@@ -264,7 +264,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
     assert_eq!(request.sandbox, SandboxType::None);
     assert_eq!(
         request.exec_server_sandbox,
-        Some(genex_exec_server::FileSystemSandboxContext {
+        Some(ruxex_exec_server::FileSystemSandboxContext {
             permissions: exec_server_permissions.clone(),
             cwd: cwd_uri.clone(),
             workspace_roots: vec![cwd_uri.clone()],
@@ -289,7 +289,7 @@ fn exec_server_env_keeps_command_native_and_carries_sandbox_context() {
     assert!(!request.exec_server_enforce_managed_network);
     assert_eq!(request.exec_server_managed_network, Some(managed_network));
 
-    let full_access = genex_protocol::models::PermissionProfile::Disabled;
+    let full_access = ruxex_protocol::models::PermissionProfile::Disabled;
     attempt.permissions = &full_access;
     attempt.exec_server_permissions = &full_access;
     attempt.enforce_managed_network = false;

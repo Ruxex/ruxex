@@ -35,12 +35,12 @@ mod pending_thread_metadata_tests;
 #[cfg(test)]
 mod test_support;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::StateDbHandle;
-use genex_rollout::WriterLockCoordinator;
-use genex_state::SqliteConfig;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::StateDbHandle;
+use ruxex_rollout::WriterLockCoordinator;
+use ruxex_state::SqliteConfig;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::path::PathBuf;
@@ -135,7 +135,7 @@ pub struct LocalThreadStore {
     thread_history_db: Arc<OnceCell<sqlx::SqlitePool>>,
 }
 
-type WriterLockGuard = Arc<genex_rollout::WriterLockGuard>;
+type WriterLockGuard = Arc<ruxex_rollout::WriterLockGuard>;
 
 struct LiveRecorderEntry {
     recorder: RolloutRecorder,
@@ -211,14 +211,14 @@ impl LiveWriterLocks {
 /// as cwd and memory mode is supplied when live persistence is opened.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LocalThreadStoreConfig {
-    pub genex_home: PathBuf,
+    pub ruxex_home: PathBuf,
     pub sqlite: SqliteConfig,
 }
 
 impl LocalThreadStoreConfig {
-    pub fn from_config(config: &impl genex_rollout::RolloutConfigView) -> Self {
+    pub fn from_config(config: &impl ruxex_rollout::RolloutConfigView) -> Self {
         Self {
-            genex_home: config.genex_home().to_path_buf(),
+            ruxex_home: config.ruxex_home().to_path_buf(),
             sqlite: config.sqlite_config().clone(),
         }
     }
@@ -235,7 +235,7 @@ impl std::fmt::Debug for LocalThreadStore {
 impl LocalThreadStore {
     /// Create a local store using an already initialized state DB handle.
     pub fn new(config: LocalThreadStoreConfig, state_db: Option<StateDbHandle>) -> Self {
-        let writer_lock_coordinator = Arc::new(WriterLockCoordinator::new(&config.genex_home));
+        let writer_lock_coordinator = Arc::new(WriterLockCoordinator::new(&config.ruxex_home));
         Self {
             config,
             live_recorders: Arc::new(Mutex::new(HashMap::new())),
@@ -261,7 +261,7 @@ impl LocalThreadStore {
         }
         self.thread_history_db
             .get_or_try_init(|| async {
-                genex_state::open_thread_history_db(&self.config.sqlite).await
+                ruxex_state::open_thread_history_db(&self.config.sqlite).await
             })
             .await
             .map_err(|err| ThreadStoreError::Internal {
@@ -364,7 +364,7 @@ impl LocalThreadStore {
         if let Ok(rollout_path) = live_writer::rollout_path(self, params.thread_id).await {
             if !params.include_archived
                 && helpers::rollout_path_is_archived(
-                    self.config.genex_home.as_path(),
+                    self.config.ruxex_home.as_path(),
                     rollout_path.as_path(),
                 )
             {
@@ -753,27 +753,27 @@ mod tests {
     mod acquisition_tests;
     use std::sync::Arc;
 
-    use genex_protocol::ThreadId;
-    use genex_protocol::config_types::ReasoningSummary;
-    use genex_protocol::items::TurnItem;
-    use genex_protocol::items::UserMessageItem;
-    use genex_protocol::models::BaseInstructions;
-    use genex_protocol::models::FunctionCallOutputPayload;
-    use genex_protocol::models::MessagePhase;
-    use genex_protocol::models::ResponseItem;
-    use genex_protocol::protocol::AgentMessageEvent;
-    use genex_protocol::protocol::AskForApproval;
-    use genex_protocol::protocol::EventMsg;
-    use genex_protocol::protocol::ItemCompletedEvent;
-    use genex_protocol::protocol::SandboxPolicy;
-    use genex_protocol::protocol::SessionSource;
-    use genex_protocol::protocol::ThreadHistoryMode;
-    use genex_protocol::protocol::TurnCompleteEvent;
-    use genex_protocol::protocol::TurnContextItem;
-    use genex_protocol::protocol::TurnStartedEvent;
-    use genex_protocol::protocol::UserMessageEvent;
-    use genex_protocol::user_input::UserInput;
-    use genex_rollout::RolloutItem;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::config_types::ReasoningSummary;
+    use ruxex_protocol::items::TurnItem;
+    use ruxex_protocol::items::UserMessageItem;
+    use ruxex_protocol::models::BaseInstructions;
+    use ruxex_protocol::models::FunctionCallOutputPayload;
+    use ruxex_protocol::models::MessagePhase;
+    use ruxex_protocol::models::ResponseItem;
+    use ruxex_protocol::protocol::AgentMessageEvent;
+    use ruxex_protocol::protocol::AskForApproval;
+    use ruxex_protocol::protocol::EventMsg;
+    use ruxex_protocol::protocol::ItemCompletedEvent;
+    use ruxex_protocol::protocol::SandboxPolicy;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_protocol::protocol::TurnCompleteEvent;
+    use ruxex_protocol::protocol::TurnContextItem;
+    use ruxex_protocol::protocol::TurnStartedEvent;
+    use ruxex_protocol::protocol::UserMessageEvent;
+    use ruxex_protocol::user_input::UserInput;
+    use ruxex_rollout::RolloutItem;
     use tempfile::TempDir;
 
     use super::*;
@@ -847,7 +847,7 @@ mod tests {
         // metadata updates must use LiveThread or call update_thread_metadata explicitly.
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = LocalThreadStore::new(config, Some(runtime.clone()));
@@ -879,7 +879,7 @@ mod tests {
     async fn live_thread_observes_appended_items_into_sqlite_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -911,7 +911,7 @@ mod tests {
     async fn paginated_resume_prefers_explicit_rollout_path_over_stale_sqlite_path() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -928,7 +928,7 @@ mod tests {
         tokio::fs::write(&stale_rollout_path, "malformed session metadata\n")
             .await
             .expect("write stale rollout");
-        let mut builder = genex_state::ThreadMetadataBuilder::new(
+        let mut builder = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             stale_rollout_path,
             chrono::Utc::now(),
@@ -989,7 +989,7 @@ mod tests {
     async fn live_thread_does_not_derive_metadata_from_inherited_items() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1061,7 +1061,7 @@ mod tests {
     async fn live_thread_output_advances_updated_at_but_not_recency_at() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1122,7 +1122,7 @@ mod tests {
                     .into(),
                 ),
                 RolloutItem::EventMsg(EventMsg::TokenCount(
-                    genex_protocol::protocol::TokenCountEvent {
+                    ruxex_protocol::protocol::TokenCountEvent {
                         info: None,
                         rate_limits: None,
                     },
@@ -1154,7 +1154,7 @@ mod tests {
     async fn live_thread_shutdown_does_not_materialize_empty_thread_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1187,7 +1187,7 @@ mod tests {
     async fn live_thread_shutdown_with_buffered_items_materializes_before_metadata_read() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1202,7 +1202,7 @@ mod tests {
 
         live_thread
             .append_items(&[RolloutItem::EventMsg(EventMsg::TokenCount(
-                genex_protocol::protocol::TokenCountEvent {
+                ruxex_protocol::protocol::TokenCountEvent {
                     info: None,
                     rate_limits: None,
                 },
@@ -1228,7 +1228,7 @@ mod tests {
     async fn live_thread_resume_loads_history_before_observing_metadata() {
         let home = TempDir::new().expect("temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1277,7 +1277,7 @@ mod tests {
         let home = TempDir::new().expect("temp dir");
         let external_home = TempDir::new().expect("external temp dir");
         let config = test_config(home.path());
-        let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+        let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
             .await
             .expect("state db should initialize");
         let store = Arc::new(LocalThreadStore::new(config, Some(runtime.clone())));
@@ -1712,7 +1712,7 @@ mod tests {
             })
             .await
             .expect_err("external rollouts cannot be referenced by thread id");
-        assert!(error.to_string().contains("must be in Genex home"));
+        assert!(error.to_string().contains("must be in Ruxex home"));
     }
 
     #[tokio::test]

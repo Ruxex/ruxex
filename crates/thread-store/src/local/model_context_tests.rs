@@ -3,28 +3,28 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::models::AgentMessageInputContent;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::WorldStateItem;
-use genex_protocol::user_input::UserInput;
-use genex_rollout::CompactedItem;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::models::AgentMessageInputContent;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::WorldStateItem;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout::CompactedItem;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -38,7 +38,7 @@ use crate::local::test_support::write_session_file_with_history_mode;
 async fn loads_latest_checkpoint_with_required_turn_metadata() {
     let home = TempDir::new().expect("temp dir");
     let uuid = Uuid::from_u128(/*v*/ 1001);
-    let thread_id = genex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
+    let thread_id = ruxex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
     write_paginated_rollout(
         home.path(),
         "2025-01-03T13-00-00",
@@ -119,7 +119,7 @@ async fn loads_recent_context_after_many_empty_wake_turns() {
         append_items(&path, items.clone());
         expected_suffix.extend(items);
     }
-    let session_meta = genex_rollout::read_session_meta_line(&path)
+    let session_meta = ruxex_rollout::read_session_meta_line(&path)
         .await
         .expect("read session metadata");
     let store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
@@ -210,7 +210,7 @@ async fn fork_context_excludes_items_after_frozen_cutoff() {
         .resolve_rollout_lineage(thread_id)
         .await
         .expect("resolve source lineage");
-    let session_meta = genex_rollout::read_session_meta_line(path.as_path())
+    let session_meta = ruxex_rollout::read_session_meta_line(path.as_path())
         .await
         .expect("read source metadata");
 
@@ -245,7 +245,7 @@ async fn fork_version_stops_before_older_segments_once_resolved() {
         let child_id = ThreadId::from_string(&child_uuid.to_string()).expect("child id");
         let child_path =
             write_ordinaled_paginated_rollout(home.path(), "2025-01-03T13-02-01", child_uuid, []);
-        let mut source_meta = genex_rollout::read_session_meta_line(&child_path)
+        let mut source_meta = ruxex_rollout::read_session_meta_line(&child_path)
             .await
             .expect("read child metadata");
         source_meta.meta.multi_agent_version = stored_version;
@@ -334,7 +334,7 @@ async fn fork_version_respects_inherited_segment_cutoffs() {
         .resolve_rollout_lineage(child_id)
         .await
         .expect("resolve source lineage");
-    let mut source_meta = genex_rollout::read_session_meta_line(&child_path)
+    let mut source_meta = ruxex_rollout::read_session_meta_line(&child_path)
         .await
         .expect("read child metadata");
 
@@ -353,7 +353,7 @@ async fn fork_version_respects_inherited_segment_cutoffs() {
 async fn loads_turn_metadata_across_an_older_checkpoint() {
     let home = TempDir::new().expect("temp dir");
     let uuid = Uuid::from_u128(/*v*/ 1006);
-    let thread_id = genex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
+    let thread_id = ruxex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
     write_paginated_rollout(
         home.path(),
         "2025-01-03T13-00-05",
@@ -442,7 +442,7 @@ async fn returns_scanned_full_history_at_bof_without_checkpoint() {
 async fn uses_agent_message_turn_context_without_scanning_older_turn() {
     let home = TempDir::new().expect("temp dir");
     let uuid = Uuid::from_u128(/*v*/ 1004);
-    let thread_id = genex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
+    let thread_id = ruxex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
     write_paginated_rollout(
         home.path(),
         "2025-01-03T13-00-03",
@@ -482,7 +482,7 @@ async fn uses_agent_message_turn_context_without_scanning_older_turn() {
 async fn ignores_contextual_user_messages_when_selecting_turn_context() {
     let home = TempDir::new().expect("temp dir");
     let uuid = Uuid::from_u128(/*v*/ 1005);
-    let thread_id = genex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
+    let thread_id = ruxex_protocol::ThreadId::from_string(&uuid.to_string()).expect("thread id");
     write_paginated_rollout(
         home.path(),
         "2025-01-03T13-00-04",
@@ -598,7 +598,7 @@ async fn replays_nested_archived_lineage_from_frozen_prefix() {
         context.items.first(),
         Some(RolloutItem::SessionMeta(meta)) if meta.meta.id == child_id
     ));
-    let child_meta = genex_rollout::read_session_meta_line(child_path.as_path())
+    let child_meta = ruxex_rollout::read_session_meta_line(child_path.as_path())
         .await
         .expect("read child metadata");
     let expected = vec![
@@ -732,7 +732,7 @@ fn rollout_end_byte_offset(path: &Path, end_ordinal_exclusive: u64) -> u64 {
     let contents = std::fs::read(path).expect("read rollout");
     let mut byte_offset = 0_u64;
     for line in contents.split_inclusive(|byte| *byte == b'\n') {
-        let parsed = genex_rollout::parse_rollout_line_bytes(line)
+        let parsed = ruxex_rollout::parse_rollout_line_bytes(line)
             .expect("parse rollout line for byte offset");
         if parsed.ordinal == Some(end_ordinal_exclusive) {
             return byte_offset;
@@ -743,7 +743,7 @@ fn rollout_end_byte_offset(path: &Path, end_ordinal_exclusive: u64) -> u64 {
 }
 
 async fn assert_reverse_scan_matches_full_history(home: &Path, path: &Path) {
-    let session_meta = genex_rollout::read_session_meta_line(path)
+    let session_meta = ruxex_rollout::read_session_meta_line(path)
         .await
         .expect("read session metadata");
     let store = LocalThreadStore::new(test_config(home), /*state_db*/ None);
@@ -755,7 +755,7 @@ async fn assert_reverse_scan_matches_full_history(home: &Path, path: &Path) {
         .await
         .expect("scan model context")
         .items;
-    let (full_items, _, _) = genex_rollout::RolloutRecorder::load_rollout_items(path)
+    let (full_items, _, _) = ruxex_rollout::RolloutRecorder::load_rollout_items(path)
         .await
         .expect("load full history");
 
@@ -829,7 +829,7 @@ fn contextual_user_message() -> RolloutItem {
 
 fn completed_user_message(turn_id: &str, message: &str) -> RolloutItem {
     RolloutItem::EventMsg(EventMsg::ItemCompleted(ItemCompletedEvent {
-        thread_id: genex_protocol::ThreadId::from_string("00000000-0000-0000-0000-000000000000")
+        thread_id: ruxex_protocol::ThreadId::from_string("00000000-0000-0000-0000-000000000000")
             .expect("fixture thread id"),
         turn_id: turn_id.to_string(),
         item: TurnItem::UserMessage(UserMessageItem {

@@ -175,16 +175,16 @@ fn experimental_precomputed_exports_match_generated() -> Result<()> {
 #[test]
 #[ignore = "invoked by `just write-app-server-schema`"]
 fn write_schema_fixtures_from_env() -> Result<()> {
-    let schema_root = std::env::var_os("GENEX_APP_SERVER_SCHEMA_ROOT")
+    let schema_root = std::env::var_os("RUXEX_APP_SERVER_SCHEMA_ROOT")
         .map(PathBuf::from)
-        .context("GENEX_APP_SERVER_SCHEMA_ROOT must be set")?;
-    let experimental = std::env::var("GENEX_APP_SERVER_SCHEMA_EXPERIMENTAL")
-        .context("GENEX_APP_SERVER_SCHEMA_EXPERIMENTAL must be set")?;
+        .context("RUXEX_APP_SERVER_SCHEMA_ROOT must be set")?;
+    let experimental = std::env::var("RUXEX_APP_SERVER_SCHEMA_EXPERIMENTAL")
+        .context("RUXEX_APP_SERVER_SCHEMA_EXPERIMENTAL must be set")?;
     let experimental_api = match experimental.as_str() {
         "0" => false,
         "1" => true,
         value => {
-            anyhow::bail!("GENEX_APP_SERVER_SCHEMA_EXPERIMENTAL must be 0 or 1, got {value:?}")
+            anyhow::bail!("RUXEX_APP_SERVER_SCHEMA_EXPERIMENTAL must be 0 or 1, got {value:?}")
         }
     };
 
@@ -283,7 +283,7 @@ Run `just write-app-server-schema` to overwrite with your changes.\n\n{diff}",
 }
 
 fn schema_root() -> Result<PathBuf> {
-    let typescript_index = genex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
+    let typescript_index = ruxex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
         .context("resolve TypeScript schema index.ts")?;
     let schema_root = typescript_index
         .parent()
@@ -292,12 +292,12 @@ fn schema_root() -> Result<PathBuf> {
         .to_path_buf();
 
     let json_bundle =
-        genex_utils_cargo_bin::find_resource!("schema/json/genex_app_server_protocol.schemas.json")
+        ruxex_utils_cargo_bin::find_resource!("schema/json/ruxex_app_server_protocol.schemas.json")
             .context("resolve JSON schema bundle")?;
     let json_root = json_bundle
         .parent()
         .and_then(|p| p.parent())
-        .context("derive schema root from schema/json/genex_app_server_protocol.schemas.json")?;
+        .context("derive schema root from schema/json/ruxex_app_server_protocol.schemas.json")?;
     anyhow::ensure!(
         schema_root == json_root,
         "schema roots disagree: typescript={} json={}",

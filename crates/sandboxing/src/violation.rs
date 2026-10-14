@@ -1,7 +1,7 @@
 use crate::SandboxType;
-use genex_network_proxy::BlockedRequest;
-use genex_network_proxy::NetworkMode;
-use genex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_network_proxy::BlockedRequest;
+use ruxex_network_proxy::NetworkMode;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
 use tracing::warn;
 
 #[cfg(unix)]
@@ -36,7 +36,7 @@ const SANDBOX_DENIED_KEYWORDS: [(FileSystemSandboxViolationReason, &str); 7] = [
 // 127: command not found
 const QUICK_REJECT_EXIT_CODES: [i32; 3] = [2, 126, 127];
 
-/// A normalized sandbox violation observed by Genex sandbox enforcement.
+/// A normalized sandbox violation observed by Ruxex sandbox enforcement.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SandboxViolationEvent {
     FileSystem(FileSystemSandboxViolation),

@@ -8,7 +8,7 @@ use crate::config::ThreadStoreConfig;
 use crate::current_time::TimeProvider;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::environment_selection::default_thread_environment_selections;
-use crate::genex_thread::GenexThread;
+use crate::ruxex_thread::RuxexThread;
 use crate::mcp::McpManager;
 use crate::rollout::truncation;
 use crate::session::ForkPersistence;
@@ -22,76 +22,76 @@ use crate::tasks::InterruptedTurnHistoryMarker;
 use crate::tasks::interrupted_turn_history_marker;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use genex_agent_graph_store::AgentGraphStore;
-use genex_agent_graph_store::LocalAgentGraphStore;
-use genex_app_server_protocol::ThreadHistoryBuilder;
-use genex_app_server_protocol::TurnStatus;
-use genex_attachment_store::AttachmentStore;
-use genex_attachment_store::InlineAttachmentStore;
-use genex_code_mode::CodeModeSessionProvider;
-use genex_code_mode::DisabledCodeModeSessionProvider;
-use genex_code_mode::ProcessOwnedCodeModeSessionProvider;
-use genex_core_plugins::PluginsManager;
-use genex_credential_broker::UnsupportedCredentialBroker;
-use genex_exec_server::EnvironmentManager;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::ExtensionRegistry;
-use genex_extension_api::LoadedUserInstructions;
-use genex_extension_api::ThreadInstructionsProvider;
-use genex_extension_api::UserInstructionsProvider;
-use genex_extension_api::empty_extension_registry;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_history::RolloutItem;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
-use genex_login::default_client::originator;
-use genex_model_provider::ProviderModelCatalogSource;
-use genex_model_provider::SharedModelProvider;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::manager::build_models_manager as build_catalog_models_manager;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionConfiguredEvent;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_providers::create_model_provider;
-use genex_rollout::state_db::StateDbHandle;
-use genex_skills_extension::HostSkillsService;
-use genex_thread_store::InMemoryThreadStore;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_thread_store::LocalThreadStore;
-use genex_thread_store::LocalThreadStoreConfig;
-use genex_thread_store::MoveThreadToSectionParams;
-use genex_thread_store::PreparedFork;
-use genex_thread_store::ReadThreadByRolloutPathParams;
-use genex_thread_store::ReadThreadParams;
-use genex_thread_store::StoredModelContext;
-use genex_thread_store::StoredThread;
-use genex_thread_store::ThreadMetadataPatch;
-use genex_thread_store::ThreadStore;
-use genex_thread_store::ThreadStoreError;
-use genex_thread_store::UpdateThreadMetadataParams;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_git_discovery::GitRootDiscovery;
+use ruxex_agent_graph_store::AgentGraphStore;
+use ruxex_agent_graph_store::LocalAgentGraphStore;
+use ruxex_app_server_protocol::ThreadHistoryBuilder;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_attachment_store::AttachmentStore;
+use ruxex_attachment_store::InlineAttachmentStore;
+use ruxex_code_mode::CodeModeSessionProvider;
+use ruxex_code_mode::DisabledCodeModeSessionProvider;
+use ruxex_code_mode::ProcessOwnedCodeModeSessionProvider;
+use ruxex_core_plugins::PluginsManager;
+use ruxex_credential_broker::UnsupportedCredentialBroker;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::LoadedUserInstructions;
+use ruxex_extension_api::ThreadInstructionsProvider;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_extension_api::empty_extension_registry;
+use ruxex_features::Feature;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_history::RolloutItem;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use ruxex_login::default_client::originator;
+use ruxex_model_provider::ProviderModelCatalogSource;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::manager::build_models_manager as build_catalog_models_manager;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_providers::create_model_provider;
+use ruxex_rollout::state_db::StateDbHandle;
+use ruxex_skills_extension::HostSkillsService;
+use ruxex_thread_store::InMemoryThreadStore;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_thread_store::LocalThreadStore;
+use ruxex_thread_store::LocalThreadStoreConfig;
+use ruxex_thread_store::MoveThreadToSectionParams;
+use ruxex_thread_store::PreparedFork;
+use ruxex_thread_store::ReadThreadByRolloutPathParams;
+use ruxex_thread_store::ReadThreadParams;
+use ruxex_thread_store::StoredModelContext;
+use ruxex_thread_store::StoredThread;
+use ruxex_thread_store::ThreadMetadataPatch;
+use ruxex_thread_store::ThreadStore;
+use ruxex_thread_store::ThreadStoreError;
+use ruxex_thread_store::UpdateThreadMetadataParams;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_git_discovery::GitRootDiscovery;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -148,21 +148,21 @@ fn should_use_test_thread_manager_behavior() -> bool {
     FORCE_TEST_THREAD_MANAGER_BEHAVIOR.load(Ordering::Relaxed)
 }
 
-struct TempGenexHomeGuard {
+struct TempRuxexHomeGuard {
     path: PathBuf,
 }
 
-impl Drop for TempGenexHomeGuard {
+impl Drop for TempRuxexHomeGuard {
     fn drop(&mut self) {
         let _ = std::fs::remove_dir_all(&self.path);
     }
 }
 
-/// Represents a newly created Genex thread (formerly called a conversation), including the first event
+/// Represents a newly created Ruxex thread (formerly called a conversation), including the first event
 /// (which is [`EventMsg::SessionConfigured`]).
 pub struct NewThread {
     pub thread_id: ThreadId,
-    pub thread: Arc<GenexThread>,
+    pub thread: Arc<RuxexThread>,
     pub session_configured: SessionConfiguredEvent,
 }
 
@@ -228,7 +228,7 @@ enum ShutdownOutcome {
 /// them in memory.
 pub struct ThreadManager {
     state: Arc<ThreadManagerState>,
-    _test_genex_home_guard: Option<TempGenexHomeGuard>,
+    _test_ruxex_home_guard: Option<TempRuxexHomeGuard>,
 }
 
 /// Captured parent identity for an internal child, including inline parents that
@@ -264,7 +264,7 @@ pub struct StartThreadOptions {
     pub history_mode: Option<ThreadHistoryMode>,
     pub session_source: Option<SessionSource>,
     pub thread_source: Option<ThreadSource>,
-    pub dynamic_tools: Vec<genex_protocol::dynamic_tools::DynamicToolSpec>,
+    pub dynamic_tools: Vec<ruxex_protocol::dynamic_tools::DynamicToolSpec>,
     pub metrics_service_name: Option<String>,
     pub parent_trace: Option<W3cTraceContext>,
     pub environments: Option<Vec<TurnEnvironmentSelection>>,
@@ -340,10 +340,10 @@ impl ThreadSpawnRequest {
 fn originator_from_service_name(service_name: Option<&str>) -> Option<String> {
     let service_name = service_name?.trim();
     for originator in [
-        "genex_work_desktop",
-        "genex_work_web",
-        "genex_work_mobile",
-        "genex_work_cca",
+        "ruxex_work_desktop",
+        "ruxex_work_web",
+        "ruxex_work_mobile",
+        "ruxex_work_cca",
     ] {
         if service_name.eq_ignore_ascii_case(originator) {
             return Some(originator.to_string());
@@ -383,7 +383,7 @@ pub(crate) struct ResumeThreadWithHistoryOptions {
 /// `Arc` reference that can be downgraded to by `AgentControl` while preventing every single
 /// function to require an `Arc<&Self>`.
 pub(crate) struct ThreadManagerState {
-    threads: Arc<RwLock<HashMap<ThreadId, Arc<GenexThread>>>>,
+    threads: Arc<RwLock<HashMap<ThreadId, Arc<RuxexThread>>>>,
     thread_created_tx: broadcast::Sender<ThreadId>,
     thread_id_generator: ThreadIdGenerator,
     provider: SharedModelProvider,
@@ -413,7 +413,7 @@ pub fn build_models_manager_with_provider(
     provider: SharedModelProvider,
 ) -> SharedModelsManager {
     let manager = build_catalog_models_manager(
-        config.genex_home.to_path_buf(),
+        config.ruxex_home.to_path_buf(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
         config.model_catalog.clone(),
     );
@@ -441,9 +441,9 @@ pub fn thread_store_from_config(
                 state_db,
             ));
             if compression_enabled {
-                genex_rollout::spawn_rollout_compression_worker(
-                    config.genex_home.to_path_buf(),
-                    genex_rollout::RolloutCompressionTrigger::Startup,
+                ruxex_rollout::spawn_rollout_compression_worker(
+                    config.ruxex_home.to_path_buf(),
+                    ruxex_rollout::RolloutCompressionTrigger::Startup,
                 );
             }
             store
@@ -518,16 +518,16 @@ impl ThreadManager {
         attestation_provider: Option<Arc<dyn AttestationProvider>>,
         external_time_provider: Option<Arc<dyn TimeProvider>>,
     ) -> Self {
-        let genex_home = config.genex_home.clone();
+        let ruxex_home = config.ruxex_home.clone();
         let restriction_product = session_source.restriction_product();
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
         let skills_service = Arc::new(HostSkillsService::new_with_restriction_product(
-            genex_home.clone(),
+            ruxex_home.clone(),
             config.bundled_skills_enabled(),
             restriction_product,
         ));
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
-            genex_home.to_path_buf(),
+            ruxex_home.to_path_buf(),
             restriction_product,
             UnsupportedCredentialBroker::shared(),
             skills_service.clone(),
@@ -570,7 +570,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_genex_home_guard: None,
+            _test_ruxex_home_guard: None,
         }
     }
 
@@ -612,69 +612,69 @@ impl ThreadManager {
         self
     }
 
-    /// Construct with a dummy CredentialManager containing the provided GenexAuth.
+    /// Construct with a dummy CredentialManager containing the provided RuxexAuth.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_for_tests(
-        auth: GenexAuth,
+        auth: RuxexAuth,
         provider: ModelProviderInfo,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
-        let genex_home = std::env::temp_dir().join(format!(
-            "genex-thread-manager-test-{}",
+        let ruxex_home = std::env::temp_dir().join(format!(
+            "ruxex-thread-manager-test-{}",
             uuid::Uuid::new_v4()
         ));
-        std::fs::create_dir_all(&genex_home)
-            .unwrap_or_else(|err| panic!("temp genex home dir create failed: {err}"));
+        std::fs::create_dir_all(&ruxex_home)
+            .unwrap_or_else(|err| panic!("temp ruxex home dir create failed: {err}"));
         let mut manager = Self::with_models_provider_and_home_for_tests(
             auth,
             provider,
-            genex_home.clone(),
+            ruxex_home.clone(),
             Arc::new(EnvironmentManager::default_for_tests()),
         );
-        manager._test_genex_home_guard = Some(TempGenexHomeGuard { path: genex_home });
+        manager._test_ruxex_home_guard = Some(TempRuxexHomeGuard { path: ruxex_home });
         manager
     }
 
-    /// Construct with a dummy CredentialManager containing the provided GenexAuth and genex home.
+    /// Construct with a dummy CredentialManager containing the provided RuxexAuth and ruxex home.
     /// Used for integration tests: should not be used by ordinary business logic.
     pub(crate) fn with_models_provider_and_home_for_tests(
-        auth: GenexAuth,
+        auth: RuxexAuth,
         provider: ModelProviderInfo,
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
     ) -> Self {
         Self::with_models_provider_home_and_state_for_tests(
             auth,
             provider,
-            genex_home,
+            ruxex_home,
             environment_manager,
             /*state_db*/ None,
         )
     }
 
     pub(crate) fn with_models_provider_home_and_state_for_tests(
-        auth: GenexAuth,
+        auth: RuxexAuth,
         provider: ModelProviderInfo,
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
         state_db: Option<StateDbHandle>,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
         let credential_manager = CredentialManager::from_auth_for_testing(auth);
         let installation_id = uuid::Uuid::new_v4().to_string();
-        let absolute_genex_home = match AbsolutePathBuf::from_absolute_path_checked(&genex_home) {
-            Ok(genex_home) => genex_home,
-            Err(err) => panic!("test genex_home should be absolute: {err}"),
+        let absolute_ruxex_home = match AbsolutePathBuf::from_absolute_path_checked(&ruxex_home) {
+            Ok(ruxex_home) => ruxex_home,
+            Err(err) => panic!("test ruxex_home should be absolute: {err}"),
         };
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
         let restriction_product = SessionSource::Exec.restriction_product();
         let skills_service = Arc::new(HostSkillsService::new_with_restriction_product(
-            absolute_genex_home.clone(),
+            absolute_ruxex_home.clone(),
             /*bundled_skills_enabled*/ true,
             restriction_product,
         ));
         let plugins_manager = Arc::new(PluginsManager::new_with_options(
-            genex_home.clone(),
+            ruxex_home.clone(),
             restriction_product,
             UnsupportedCredentialBroker::shared(),
             skills_service.clone(),
@@ -684,8 +684,8 @@ impl ThreadManager {
         // process store should construct ThreadManager::new with an explicit store.
         let thread_store: Arc<dyn ThreadStore> = Arc::new(LocalThreadStore::new(
             LocalThreadStoreConfig {
-                genex_home: genex_home.clone(),
-                sqlite: genex_state::SqliteConfig::new_for_testing(absolute_genex_home),
+                ruxex_home: ruxex_home.clone(),
+                sqlite: ruxex_state::SqliteConfig::new_for_testing(absolute_ruxex_home),
             },
             state_db.clone(),
         ));
@@ -698,7 +698,7 @@ impl ThreadManager {
                 thread_id_generator: default_thread_id_generator(),
                 provider: Arc::clone(&provider),
                 models_manager: build_catalog_models_manager(
-                    genex_home,
+                    ruxex_home,
                     Arc::new(ProviderModelCatalogSource::new(provider.clone())),
                     /*config_model_catalog*/ None,
                 ),
@@ -723,7 +723,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_genex_home_guard: None,
+            _test_ruxex_home_guard: None,
         }
     }
 
@@ -813,17 +813,17 @@ impl ThreadManager {
     pub fn validate_environment_selections(
         &self,
         environments: &[TurnEnvironmentSelection],
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         let mut environment_ids = HashSet::with_capacity(environments.len());
         for environment in environments {
             if environment.cwd.inferred_native_path_string().len() > MAX_TURN_ENVIRONMENT_CWD_BYTES
             {
-                return Err(GenexErr::InvalidRequest(
+                return Err(RuxexErr::InvalidRequest(
                     "turn environment working directory exceeds the maximum size".to_string(),
                 ));
             }
             if !environment_ids.insert(environment.environment_id.as_str()) {
-                return Err(GenexErr::InvalidRequest(format!(
+                return Err(RuxexErr::InvalidRequest(format!(
                     "duplicate turn environment id `{}`",
                     environment.environment_id
                 )));
@@ -832,7 +832,7 @@ impl ThreadManager {
                 .environment_manager
                 .get_environment(&environment.environment_id)
                 .ok_or_else(|| {
-                    GenexErr::InvalidRequest(format!(
+                    RuxexErr::InvalidRequest(format!(
                         "unknown turn environment id `{}`",
                         environment.environment_id
                     ))
@@ -856,7 +856,7 @@ impl ThreadManager {
     pub async fn list_models(
         &self,
         refresh_strategy: RefreshStrategy,
-        http_client_factory: genex_http_client::HttpClientFactory,
+        http_client_factory: ruxex_http_client::HttpClientFactory,
     ) -> Vec<ModelPreset> {
         self.state
             .models_manager
@@ -867,8 +867,8 @@ impl ThreadManager {
     pub async fn list_models_result(
         &self,
         refresh_strategy: RefreshStrategy,
-        http_client_factory: genex_http_client::HttpClientFactory,
-    ) -> GenexResult<Vec<ModelPreset>> {
+        http_client_factory: ruxex_http_client::HttpClientFactory,
+    ) -> RuxexResult<Vec<ModelPreset>> {
         self.state
             .models_manager
             .list_models_result(refresh_strategy, http_client_factory)
@@ -887,13 +887,13 @@ impl ThreadManager {
         self.state.thread_created_tx.subscribe()
     }
 
-    pub async fn get_thread(&self, thread_id: ThreadId) -> GenexResult<Arc<GenexThread>> {
+    pub async fn get_thread(&self, thread_id: ThreadId) -> RuxexResult<Arc<RuxexThread>> {
         self.state.get_thread(thread_id).await
     }
 
     /// Updates metadata for loaded and cold threads through one entrypoint.
     ///
-    /// Loaded threads route through `GenexThread`/`LiveThread`, so metadata changes stay ordered
+    /// Loaded threads route through `RuxexThread`/`LiveThread`, so metadata changes stay ordered
     /// with live rollout writes. Cold threads go directly to the store, which owns unloaded JSONL
     /// compatibility and SQLite metadata updates. This API always returns a materialized thread;
     /// if the store reports a successful no-op without one, it performs a fallback read.
@@ -902,10 +902,10 @@ impl ThreadManager {
         thread_id: ThreadId,
         patch: ThreadMetadataPatch,
         include_archived: bool,
-    ) -> GenexResult<StoredThread> {
+    ) -> RuxexResult<StoredThread> {
         if let Ok(thread) = self.get_thread(thread_id).await {
             if thread.config_snapshot().await.ephemeral {
-                return Err(GenexErr::InvalidRequest(format!(
+                return Err(RuxexErr::InvalidRequest(format!(
                     "ephemeral thread does not support metadata updates: {thread_id}"
                 )));
             }
@@ -925,7 +925,7 @@ impl ThreadManager {
             .await
             .map_err(|err| match err {
                 ThreadStoreError::ThreadNotFound { thread_id } => {
-                    GenexErr::ThreadNotFound(thread_id)
+                    RuxexErr::ThreadNotFound(thread_id)
                 }
                 err => thread_store_metadata_update_error(thread_id, err),
             })?;
@@ -950,10 +950,10 @@ impl ThreadManager {
         thread_id: ThreadId,
         section: Option<&str>,
         before_thread_id: Option<ThreadId>,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         if let Ok(thread) = self.get_thread(thread_id).await {
             if thread.config_snapshot().await.ephemeral {
-                return Err(GenexErr::InvalidRequest(format!(
+                return Err(RuxexErr::InvalidRequest(format!(
                     "ephemeral thread does not support section moves: {thread_id}"
                 )));
             }
@@ -977,7 +977,7 @@ impl ThreadManager {
     pub async fn list_agent_subtree_thread_ids(
         &self,
         thread_id: ThreadId,
-    ) -> GenexResult<Vec<ThreadId>> {
+    ) -> RuxexResult<Vec<ThreadId>> {
         let mut subtree_thread_ids = Vec::new();
         let mut seen_thread_ids = HashSet::new();
         subtree_thread_ids.push(thread_id);
@@ -988,7 +988,7 @@ impl ThreadManager {
                 .list_thread_spawn_descendants(thread_id, /*status_filter*/ None)
                 .await
                 .map_err(|err| {
-                    GenexErr::Fatal(format!("failed to load thread-spawn descendants: {err}"))
+                    RuxexErr::Fatal(format!("failed to load thread-spawn descendants: {err}"))
                 })?
             {
                 if seen_thread_ids.insert(descendant_id) {
@@ -1010,7 +1010,7 @@ impl ThreadManager {
         Ok(subtree_thread_ids)
     }
 
-    pub async fn start_thread(&self, options: StartThreadOptions) -> GenexResult<NewThread> {
+    pub async fn start_thread(&self, options: StartThreadOptions) -> RuxexResult<NewThread> {
         Box::pin(self.start_thread_inner(
             options, /*forked_from_thread_id*/ None, /*startup*/ None,
         ))
@@ -1022,7 +1022,7 @@ impl ThreadManager {
         &self,
         parent_thread_id: ThreadId,
         options: StartThreadOptions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         self.spawn_internal_session_with_history(
             parent_thread_id,
             options,
@@ -1041,7 +1041,7 @@ impl ThreadManager {
         parent_thread_id: ThreadId,
         options: StartThreadOptions,
         history: Vec<RolloutItem>,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         self.spawn_internal_session_with_history(
             parent_thread_id,
             options,
@@ -1057,9 +1057,9 @@ impl ThreadManager {
         mut options: StartThreadOptions,
         history: InitialHistory,
         inherited_instructions: Option<SessionInstructions>,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         if !matches!(options.session_source, Some(SessionSource::Internal(_))) {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "internal sessions require an internal session source".to_string(),
             ));
         }
@@ -1084,7 +1084,7 @@ impl ThreadManager {
         mut options: StartThreadOptions,
         forked_from_thread_id: Option<ThreadId>,
         startup: Option<Arc<crate::session::startup::SessionStartup>>,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let (resumed_session_source, resumed_thread_source) = options
             .initial_history
             .get_resumed_session_sources()
@@ -1101,7 +1101,7 @@ impl ThreadManager {
             && (!matches!(options.session_source, Some(SessionSource::Internal(_)))
                 || matches!(options.initial_history, InitialHistory::Resumed(_)))
         {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "a captured internal parent requires a new or forked internal session".to_owned(),
             ));
         }
@@ -1128,7 +1128,7 @@ impl ThreadManager {
         &self,
         forked_from_thread_id: ThreadId,
         mut options: StartThreadOptions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let fork_source = self.get_thread(forked_from_thread_id).await?;
         // Persist queued rollout updates before reading the fork snapshot.
         fork_source.ensure_rollout_materialized().await;
@@ -1139,7 +1139,7 @@ impl ThreadManager {
             )
             .await
             .map_err(|err| {
-                GenexErr::Fatal(format!(
+                RuxexErr::Fatal(format!(
                     "failed to read subagent fork source {forked_from_thread_id}: {err}"
                 ))
             })?;
@@ -1165,7 +1165,7 @@ impl ThreadManager {
         rollout_path: PathBuf,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let initial_history = self.initial_history_from_rollout_path(rollout_path).await?;
         Box::pin(self.resume_thread_with_history(
             config,
@@ -1183,7 +1183,7 @@ impl ThreadManager {
     pub async fn ensure_multi_agent_v2_child_loaded(
         &self,
         child_thread_id: ThreadId,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         let stored_thread = self
             .state
             .read_stored_thread(ReadThreadParams {
@@ -1193,12 +1193,12 @@ impl ThreadManager {
             })
             .await?;
         let Some(parent_thread_id) = stored_thread.parent_thread_id else {
-            return Err(GenexErr::InvalidRequest(format!(
+            return Err(RuxexErr::InvalidRequest(format!(
                 "thread {child_thread_id} is not a recorded multi-agent v2 child"
             )));
         };
         let parent = self.get_thread(parent_thread_id).await.map_err(|_| {
-            GenexErr::InvalidRequest(format!(
+            RuxexErr::InvalidRequest(format!(
                 "cannot resume multi-agent v2 child {child_thread_id}: parent {parent_thread_id} is not loaded; resume the parent first"
             ))
         })?;
@@ -1216,7 +1216,7 @@ impl ThreadManager {
         initial_history: InitialHistory,
         parent_trace: Option<W3cTraceContext>,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let (session_source, thread_source) = initial_history
             .get_resumed_session_sources()
@@ -1241,7 +1241,7 @@ impl ThreadManager {
         config: Config,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let options = StartThreadOptions {
             client_mcp_extensions,
@@ -1258,7 +1258,7 @@ impl ThreadManager {
         rollout_path: PathBuf,
         user_shell_override: crate::shell::Shell,
         client_mcp_extensions: ClientMcpExtensions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let agent_control = self.agent_control_for_config(&config);
         let initial_history = self.initial_history_from_rollout_path(rollout_path).await?;
         let (session_source, thread_source) = initial_history
@@ -1277,9 +1277,9 @@ impl ThreadManager {
     }
 
     /// Removes the thread from the manager's internal map, though the thread is stored
-    /// as `Arc<GenexThread>`, it is possible that other references to it exist elsewhere.
+    /// as `Arc<RuxexThread>`, it is possible that other references to it exist elsewhere.
     /// Returns the thread if the thread was found and removed.
-    pub async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<GenexThread>> {
+    pub async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<RuxexThread>> {
         self.state.threads.write().await.remove(thread_id)
     }
 
@@ -1288,13 +1288,13 @@ impl ThreadManager {
     pub async fn remove_thread_for_client(
         &self,
         thread_id: &ThreadId,
-    ) -> GenexResult<Option<Arc<GenexThread>>> {
+    ) -> RuxexResult<Option<Arc<RuxexThread>>> {
         let mut threads = self.state.threads.write().await;
         if threads
             .get(thread_id)
             .is_some_and(|thread| thread.session_source.is_internal())
         {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "live internal threads can only be removed by their owner".to_owned(),
             ));
         }
@@ -1308,8 +1308,8 @@ impl ThreadManager {
     pub async fn remove_thread_if_matches(
         &self,
         thread_id: &ThreadId,
-        expected: &Arc<GenexThread>,
-    ) -> Option<Arc<GenexThread>> {
+        expected: &Arc<RuxexThread>,
+    ) -> Option<Arc<RuxexThread>> {
         let mut threads = self.state.threads.write().await;
         if threads
             .get(thread_id)
@@ -1382,7 +1382,7 @@ impl ThreadManager {
         snapshot: S,
         options: StartThreadOptions,
         path: PathBuf,
-    ) -> GenexResult<NewThread>
+    ) -> RuxexResult<NewThread>
     where
         S: Into<ForkSnapshot>,
     {
@@ -1395,7 +1395,7 @@ impl ThreadManager {
     async fn initial_history_from_rollout_path(
         &self,
         rollout_path: PathBuf,
-    ) -> GenexResult<InitialHistory> {
+    ) -> RuxexResult<InitialHistory> {
         let requested_rollout_path = rollout_path.clone();
         let stored_thread = self
             .state
@@ -1416,7 +1416,7 @@ impl ThreadManager {
         snapshot: S,
         options: StartThreadOptions,
         history: InitialHistory,
-    ) -> GenexResult<NewThread>
+    ) -> RuxexResult<NewThread>
     where
         S: Into<ForkSnapshot>,
     {
@@ -1436,7 +1436,7 @@ impl ThreadManager {
         &self,
         options: StartThreadOptions,
         prepared: PreparedFork,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let history = InitialHistory::Resumed(ResumedHistory {
             conversation_id: prepared.source_thread_id,
             history: Arc::clone(&prepared.model_context),
@@ -1464,7 +1464,7 @@ impl ThreadManager {
         &self,
         mut options: StartThreadOptions,
         fork_history: ForkHistory,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let ForkHistory {
             snapshot,
             initial_history: history,
@@ -1586,52 +1586,52 @@ impl ThreadManagerState {
     }
 
     /// Fetch a thread by ID or return ThreadNotFound.
-    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> GenexResult<Arc<GenexThread>> {
+    pub(crate) async fn get_thread(&self, thread_id: ThreadId) -> RuxexResult<Arc<RuxexThread>> {
         let threads = self.threads.read().await;
         match threads.get(&thread_id) {
             Some(thread) if !thread.session_source.is_internal() => Ok(thread.clone()),
-            Some(_) | None => Err(GenexErr::ThreadNotFound(thread_id)),
+            Some(_) | None => Err(RuxexErr::ThreadNotFound(thread_id)),
         }
     }
 
     pub(crate) async fn read_stored_thread(
         &self,
         params: ReadThreadParams,
-    ) -> GenexResult<StoredThread> {
+    ) -> RuxexResult<StoredThread> {
         let thread_id = params.thread_id;
         self.thread_store
             .read_thread(params)
             .await
             .map_err(|err| match err {
                 ThreadStoreError::ThreadNotFound { thread_id } => {
-                    GenexErr::ThreadNotFound(thread_id)
+                    RuxexErr::ThreadNotFound(thread_id)
                 }
                 ThreadStoreError::InvalidRequest { message } => {
                     if message.starts_with("no rollout found for thread id ") {
-                        GenexErr::ThreadNotFound(thread_id)
+                        RuxexErr::ThreadNotFound(thread_id)
                     } else {
-                        GenexErr::Fatal(format!(
+                        RuxexErr::Fatal(format!(
                             "failed to read stored thread {thread_id}: invalid thread-store request: {message}"
                         ))
                     }
                 }
-                err => GenexErr::Fatal(format!("failed to read stored thread {thread_id}: {err}")),
+                err => RuxexErr::Fatal(format!("failed to read stored thread {thread_id}: {err}")),
             })
     }
 
     pub(crate) async fn load_latest_model_context(
         &self,
         params: LoadThreadHistoryParams,
-    ) -> GenexResult<StoredModelContext> {
+    ) -> RuxexResult<StoredModelContext> {
         let thread_id = params.thread_id;
         self.thread_store
             .load_latest_model_context(params)
             .await
             .map_err(|err| match err {
                 ThreadStoreError::ThreadNotFound { thread_id } => {
-                    GenexErr::ThreadNotFound(thread_id)
+                    RuxexErr::ThreadNotFound(thread_id)
                 }
-                err => GenexErr::Fatal(format!(
+                err => RuxexErr::Fatal(format!(
                     "failed to load model context for thread {thread_id}: {err}"
                 )),
             })
@@ -1644,7 +1644,7 @@ impl ThreadManagerState {
         op: Op,
         parent_turn_id: Option<String>,
         root_turn_id: Option<String>,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         let thread = self.get_thread(thread_id).await?;
         if let Some(ops_log) = &self.ops_log
             && let Ok(mut log) = ops_log.lock()
@@ -1659,7 +1659,7 @@ impl ThreadManagerState {
     }
 
     /// Remove a thread from the manager by ID, returning it when present.
-    pub(crate) async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<GenexThread>> {
+    pub(crate) async fn remove_thread(&self, thread_id: &ThreadId) -> Option<Arc<RuxexThread>> {
         self.threads.write().await.remove(thread_id)
     }
 
@@ -1816,7 +1816,7 @@ impl ThreadManagerState {
         &self,
         config: Config,
         agent_control: AgentControl,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         Box::pin(self.spawn_new_thread_with_source(
             config,
             agent_control,
@@ -1847,7 +1847,7 @@ impl ThreadManagerState {
         inherited_environments: Option<TurnEnvironmentSnapshot>,
         inherited_exec_policy: Option<Arc<crate::exec_policy::ExecPolicyManager>>,
         environments: Option<Vec<TurnEnvironmentSelection>>,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
         let options = StartThreadOptions {
             history_mode,
@@ -1869,7 +1869,7 @@ impl ThreadManagerState {
     pub(crate) async fn resume_thread_with_history_with_source(
         &self,
         options: ResumeThreadWithHistoryOptions,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let ResumeThreadWithHistoryOptions {
             config,
             initial_history,
@@ -1923,7 +1923,7 @@ impl ThreadManagerState {
         inherited_exec_policy: Option<Arc<crate::exec_policy::ExecPolicyManager>>,
         environments: Option<Vec<TurnEnvironmentSelection>>,
         thread_extension_init: ExtensionDataInit,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
         let options = StartThreadOptions {
             initial_history,
@@ -1957,7 +1957,7 @@ impl ThreadManagerState {
     }
 
     /// Spawn a new thread with optional history and register it with the manager.
-    async fn spawn_thread(&self, request: ThreadSpawnRequest) -> GenexResult<NewThread> {
+    async fn spawn_thread(&self, request: ThreadSpawnRequest) -> RuxexResult<NewThread> {
         let ThreadSpawnRequest {
             startup,
             options,
@@ -1996,9 +1996,9 @@ impl ThreadManagerState {
         // Older callers and saved reviewers identify isolation through their source.
         // New internal callers supply an explicit runtime policy before startup.
         let isolation = thread_extension_init
-            .get::<genex_extension_api::SessionIsolation>()
+            .get::<ruxex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
-            .unwrap_or_else(|| genex_extension_api::SessionIsolation::Inherit);
+            .unwrap_or_else(|| ruxex_extension_api::SessionIsolation::Inherit);
         thread_extension_init.insert(isolation);
         let environments = environments.unwrap_or_else(|| {
             default_thread_environment_selections(
@@ -2009,7 +2009,7 @@ impl ThreadManagerState {
         });
         let is_resumed_thread = matches!(&initial_history, InitialHistory::Resumed(_));
         if reserved_thread_id.is_some() && matches!(&initial_history, InitialHistory::Resumed(_)) {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "reserved thread ID cannot be used when resuming a thread".to_string(),
             ));
         }
@@ -2022,7 +2022,7 @@ impl ThreadManagerState {
                     if let Some(requested_rollout_path) = resumed.rollout_path.as_deref()
                         && thread.rollout_path().as_deref() != Some(requested_rollout_path)
                     {
-                        return Err(GenexErr::InvalidRequest(format!(
+                        return Err(RuxexErr::InvalidRequest(format!(
                             "thread {} is already running with a different rollout path",
                             resumed.conversation_id
                         )));
@@ -2046,7 +2046,7 @@ impl ThreadManagerState {
                 .await;
         }
         let (instructions, inherited_exec_policy, extensions, mcp_manager, multi_agent_version) =
-            if isolation == genex_extension_api::SessionIsolation::Isolated {
+            if isolation == ruxex_extension_api::SessionIsolation::Isolated {
                 (
                     inherited_instructions.unwrap_or_default(),
                     None,
@@ -2188,7 +2188,7 @@ impl ThreadManagerState {
         session: Arc<Session>,
         io: SessionIo,
         session_source: SessionSource,
-    ) -> GenexResult<NewThread> {
+    ) -> RuxexResult<NewThread> {
         let thread_id = session.thread_id();
         let event = io.next_event().await?;
         let session_configured = match event {
@@ -2197,14 +2197,14 @@ impl ThreadManagerState {
                 msg: EventMsg::SessionConfigured(session_configured),
             } if id == INITIAL_SUBMIT_ID => session_configured,
             _ => {
-                return Err(GenexErr::SessionConfiguredNotFirstEvent);
+                return Err(RuxexErr::SessionConfiguredNotFirstEvent);
             }
         };
 
         {
             let mut threads = self.threads.write().await;
             if let std::collections::hash_map::Entry::Vacant(e) = threads.entry(thread_id) {
-                let thread = Arc::new(GenexThread::new(
+                let thread = Arc::new(RuxexThread::new(
                     session,
                     io,
                     session_configured.clone(),
@@ -2223,7 +2223,7 @@ impl ThreadManagerState {
         if let Err(err) = io.shutdown_and_wait().await {
             warn!("failed to shut down duplicate thread {thread_id}: {err}");
         }
-        Err(GenexErr::InvalidRequest(format!(
+        Err(RuxexErr::InvalidRequest(format!(
             "thread {thread_id} is already running"
         )))
     }
@@ -2236,7 +2236,7 @@ impl ThreadManagerState {
         &self,
         session_source: &SessionSource,
         initial_history: &InitialHistory,
-    ) -> genex_rollout_trace::ThreadTraceContext {
+    ) -> ruxex_rollout_trace::ThreadTraceContext {
         // A fresh v2 child belongs to the same rollout tree as its parent, so
         // session startup derives its child trace from the parent's thread
         // context. Resumed children already have a prior `ThreadStarted` event
@@ -2246,10 +2246,10 @@ impl ThreadManagerState {
             parent_thread_id, ..
         }) = session_source
         else {
-            return genex_rollout_trace::ThreadTraceContext::disabled();
+            return ruxex_rollout_trace::ThreadTraceContext::disabled();
         };
         if matches!(initial_history, InitialHistory::Resumed(_)) {
-            return genex_rollout_trace::ThreadTraceContext::disabled();
+            return ruxex_rollout_trace::ThreadTraceContext::disabled();
         }
         // Parent lookup can fail if the parent was closed or released between
         // spawn preparation and session construction. Tracing is diagnostic, so
@@ -2259,17 +2259,17 @@ impl ThreadManagerState {
             .await
             .ok()
             .map(|thread| thread.session.services.rollout_thread_trace.clone())
-            .unwrap_or_else(genex_rollout_trace::ThreadTraceContext::disabled)
+            .unwrap_or_else(ruxex_rollout_trace::ThreadTraceContext::disabled)
     }
 }
 
 fn stored_thread_to_initial_history(
     stored_thread: StoredThread,
     rollout_path: Option<PathBuf>,
-) -> GenexResult<InitialHistory> {
+) -> RuxexResult<InitialHistory> {
     let thread_id = stored_thread.thread_id;
     let history = stored_thread.history.ok_or_else(|| {
-        GenexErr::Fatal(format!(
+        RuxexErr::Fatal(format!(
             "thread {thread_id} did not include persisted history"
         ))
     })?;
@@ -2280,22 +2280,22 @@ fn stored_thread_to_initial_history(
     }))
 }
 
-fn thread_store_rollout_read_error(err: ThreadStoreError) -> GenexErr {
+fn thread_store_rollout_read_error(err: ThreadStoreError) -> RuxexErr {
     match err {
-        ThreadStoreError::ThreadNotFound { thread_id } => GenexErr::ThreadNotFound(thread_id),
-        ThreadStoreError::InvalidRequest { message } => GenexErr::InvalidRequest(message),
-        err => GenexErr::Fatal(format!("failed to read thread by rollout path: {err}")),
+        ThreadStoreError::ThreadNotFound { thread_id } => RuxexErr::ThreadNotFound(thread_id),
+        ThreadStoreError::InvalidRequest { message } => RuxexErr::InvalidRequest(message),
+        err => RuxexErr::Fatal(format!("failed to read thread by rollout path: {err}")),
     }
 }
 
-fn thread_store_metadata_update_error(thread_id: ThreadId, err: ThreadStoreError) -> GenexErr {
+fn thread_store_metadata_update_error(thread_id: ThreadId, err: ThreadStoreError) -> RuxexErr {
     match err {
-        ThreadStoreError::ThreadNotFound { thread_id } => GenexErr::ThreadNotFound(thread_id),
-        ThreadStoreError::InvalidRequest { message } => GenexErr::InvalidRequest(message),
-        ThreadStoreError::Unsupported { operation } => GenexErr::UnsupportedOperation(format!(
+        ThreadStoreError::ThreadNotFound { thread_id } => RuxexErr::ThreadNotFound(thread_id),
+        ThreadStoreError::InvalidRequest { message } => RuxexErr::InvalidRequest(message),
+        ThreadStoreError::Unsupported { operation } => RuxexErr::UnsupportedOperation(format!(
             "thread metadata update is not supported by this store: {operation}"
         )),
-        err => GenexErr::Fatal(format!(
+        err => RuxexErr::Fatal(format!(
             "failed to update thread metadata {thread_id}: {err}"
         )),
     }
@@ -2488,8 +2488,8 @@ mod tests {
     #[test]
     fn recognizes_known_service_originators_case_insensitively() {
         assert_eq!(
-            originator_from_service_name(Some("  GENEX_WORK_WEB ")),
-            Some("genex_work_web".to_string())
+            originator_from_service_name(Some("  RUXEX_WORK_WEB ")),
+            Some("ruxex_work_web".to_string())
         );
         assert_eq!(originator_from_service_name(Some("unknown")), None);
         assert_eq!(originator_from_service_name(None), None);
@@ -2499,13 +2499,13 @@ mod tests {
     fn effective_originator_prefers_service_then_persisted_values() {
         assert_eq!(
             effective_originator_value(
-                Some("genex_work_mobile"),
+                Some("ruxex_work_mobile"),
                 Some("env".to_string()),
                 Some("persisted".to_string()),
                 Some("inherited".to_string()),
                 "default".to_string(),
             ),
-            "genex_work_mobile"
+            "ruxex_work_mobile"
         );
         assert_eq!(
             effective_originator_value(

@@ -1,15 +1,15 @@
-use genex_core::GenexThread;
-use genex_core::NewThread;
-use genex_core::StartIfIdleSubmission;
-use genex_core::StartThreadOptions;
-use genex_core::ThreadManager;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::RuxexThread;
+use ruxex_core::NewThread;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::ThreadManager;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::user_input::UserInput;
 use std::sync::Arc;
 use std::sync::Weak;
 
@@ -27,7 +27,7 @@ pub struct AgentInvocation {
 pub struct AgentRun {
     pub thread_id: ThreadId,
     pub turn_id: String,
-    pub thread: Arc<GenexThread>,
+    pub thread: Arc<RuxexThread>,
 }
 
 /// Runs resolved agents in threads forked by the owning [`ThreadManager`].
@@ -46,14 +46,14 @@ impl AgentRunner {
         &self,
         parent_thread_id: ThreadId,
         invocation: AgentInvocation,
-    ) -> GenexResult<AgentRun> {
+    ) -> RuxexResult<AgentRun> {
         let AgentInvocation {
             config,
             prompt,
             parent_trace,
         } = invocation;
         if prompt.trim().is_empty() {
-            return Err(GenexErr::InvalidRequest(
+            return Err(RuxexErr::InvalidRequest(
                 "agent prompt must not be empty".to_string(),
             ));
         }
@@ -61,7 +61,7 @@ impl AgentRunner {
         let thread_manager = self
             .thread_manager
             .upgrade()
-            .ok_or_else(|| GenexErr::UnsupportedOperation("thread manager dropped".to_string()))?;
+            .ok_or_else(|| RuxexErr::UnsupportedOperation("thread manager dropped".to_string()))?;
         let NewThread {
             thread_id, thread, ..
         } = thread_manager
@@ -85,7 +85,7 @@ impl AgentRunner {
         {
             StartIfIdleSubmission::Started { turn_id } => turn_id,
             StartIfIdleSubmission::NotSubmitted { reason } => {
-                return Err(GenexErr::InvalidRequest(format!(
+                return Err(RuxexErr::InvalidRequest(format!(
                     "agent prompt was not submitted: {reason:?}"
                 )));
             }

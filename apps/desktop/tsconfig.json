@@ -17,10 +17,10 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@genex/protocol": [
+      "@ruxex/protocol": [
         "../../crates/app-server-protocol/schema/typescript-experimental/index.ts"
       ],
-      "@genex/protocol/*": [
+      "@ruxex/protocol/*": [
         "../../crates/app-server-protocol/schema/typescript-experimental/*"
       ]
     }

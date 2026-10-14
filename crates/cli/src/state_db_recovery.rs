@@ -3,8 +3,8 @@
 //! This keeps user-facing backup and lock-contention handling out of the main
 //! CLI dispatch path while preserving the TUI startup error as the boundary type.
 
-use genex_state::RuntimeDbBackup;
-use genex_tui::LocalStateDbStartupError;
+use ruxex_state::RuntimeDbBackup;
+use ruxex_tui::LocalStateDbStartupError;
 use std::io::IsTerminal;
 use std::path::Path;
 
@@ -14,11 +14,11 @@ pub(crate) fn startup_error(err: &std::io::Error) -> Option<&LocalStateDbStartup
 }
 
 pub(crate) fn is_locked(detail: &str) -> bool {
-    genex_state::sqlite_error_detail_is_lock(detail)
+    ruxex_state::sqlite_error_detail_is_lock(detail)
 }
 
 pub(crate) fn is_corruption(detail: &str) -> bool {
-    genex_state::sqlite_error_detail_is_corruption(detail)
+    ruxex_state::sqlite_error_detail_is_corruption(detail)
 }
 
 pub(crate) fn is_auto_backup_recoverable(startup_error: &LocalStateDbStartupError) -> bool {
@@ -34,24 +34,24 @@ fn sqlite_home_is_blocking_file(startup_error: &LocalStateDbStartupError) -> boo
 }
 
 pub(crate) fn print_auto_backup_start(startup_error: &LocalStateDbStartupError) {
-    eprintln!("Genex couldn't start because its local database appears to be damaged.");
-    eprintln!("Moving the damaged local database aside so Genex can rebuild it from saved data.");
+    eprintln!("Ruxex couldn't start because its local database appears to be damaged.");
+    eprintln!("Moving the damaged local database aside so Ruxex can rebuild it from saved data.");
     print_technical_details(startup_error);
 }
 
 pub(crate) async fn backup_files_for_fresh_start(
     startup_error: &LocalStateDbStartupError,
 ) -> std::io::Result<Vec<RuntimeDbBackup>> {
-    genex_state::backup_runtime_db_for_fresh_start(startup_error.database_path()).await
+    ruxex_state::backup_runtime_db_for_fresh_start(startup_error.database_path()).await
 }
 
 pub(crate) fn confirm_fresh_start_rebuild(
     startup_error: &LocalStateDbStartupError,
     backups: &[RuntimeDbBackup],
 ) -> std::io::Result<()> {
-    eprintln!("Genex rebuilt its local database.");
+    eprintln!("Ruxex rebuilt its local database.");
     eprintln!(
-        "Genex detected a damaged local database, moved it into a backup folder, and will continue startup with a fresh database."
+        "Ruxex detected a damaged local database, moved it into a backup folder, and will continue startup with a fresh database."
     );
     eprintln!("Database path: {}", startup_error.database_path().display());
     if let Some(backup_folder) = backup_folder(backups) {
@@ -71,15 +71,15 @@ pub(crate) fn confirm_fresh_start_rebuild(
 }
 
 pub(crate) fn print_diagnostic_guidance(startup_error: &LocalStateDbStartupError) {
-    eprintln!("Genex couldn't start because its local database appears to be damaged.");
-    eprintln!("Run `genex doctor` to check your setup and get next-step guidance.");
+    eprintln!("Ruxex couldn't start because its local database appears to be damaged.");
+    eprintln!("Run `ruxex doctor` to check your setup and get next-step guidance.");
     eprintln!("If this keeps happening, share the technical details below when asking for help.");
     print_technical_details(startup_error);
 }
 
 pub(crate) fn print_locked_guidance(startup_error: &LocalStateDbStartupError) {
-    eprintln!("Genex couldn't start because another Genex process is using its local data.");
-    eprintln!("Quit any other copies of Genex that may still be running, then try again.");
+    eprintln!("Ruxex couldn't start because another Ruxex process is using its local data.");
+    eprintln!("Quit any other copies of Ruxex that may still be running, then try again.");
     print_technical_details(startup_error);
 }
 
@@ -96,7 +96,7 @@ fn backup_folder(backups: &[RuntimeDbBackup]) -> Option<&Path> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use tempfile::TempDir;
@@ -104,7 +104,7 @@ mod tests {
     #[tokio::test]
     async fn backup_backs_up_only_failed_database_file() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
-        let sqlite = genex_state::SqliteConfig::new_for_testing(temp_dir.path().abs());
+        let sqlite = ruxex_state::SqliteConfig::new_for_testing(temp_dir.path().abs());
         let state_path = sqlite.state_db_path();
         let failed_db_path = sqlite.logs_db_path();
         tokio::fs::write(state_path.as_path(), b"state").await?;
@@ -132,7 +132,7 @@ mod tests {
         let temp_dir = TempDir::new()?;
         let sqlite_home = temp_dir.path().join("sqlite-home");
         tokio::fs::write(sqlite_home.as_path(), b"not-a-directory").await?;
-        let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
+        let sqlite = ruxex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
         let startup_error =
             LocalStateDbStartupError::new(sqlite.state_db_path(), "File exists".to_string());
 

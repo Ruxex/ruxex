@@ -7,14 +7,14 @@ use std::path::PathBuf;
 
 use crate::app_command::AppCommand;
 use crate::app_command::UserVerificationResponse;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::FileChangeApprovalDecision;
-use genex_app_server_protocol::McpServerElicitationAction;
-use genex_app_server_protocol::RequestId as AppServerRequestId;
-use genex_app_server_protocol::ReviewTarget;
-use genex_app_server_protocol::ToolRequestUserInputResponse;
-use genex_protocol::ThreadId;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::FileChangeApprovalDecision;
+use ruxex_app_server_protocol::McpServerElicitationAction;
+use ruxex_app_server_protocol::RequestId as AppServerRequestId;
+use ruxex_app_server_protocol::ReviewTarget;
+use ruxex_app_server_protocol::ToolRequestUserInputResponse;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_event::AppEvent;
@@ -35,7 +35,7 @@ impl AppEventSender {
     pub(crate) fn send(&self, event: AppEvent) {
         // Record inbound events for high-fidelity session replay.
         // Avoid double-logging Ops; those are logged at the point of submission.
-        if !matches!(event, AppEvent::GenexOp(_)) {
+        if !matches!(event, AppEvent::RuxexOp(_)) {
             session_log::log_inbound_app_event(&event);
         }
         if let Err(e) = self.app_event_tx.send(event) {
@@ -44,30 +44,30 @@ impl AppEventSender {
     }
 
     pub(crate) fn interrupt(&self) {
-        self.send(AppEvent::GenexOp(AppCommand::interrupt()));
+        self.send(AppEvent::RuxexOp(AppCommand::interrupt()));
     }
 
     pub(crate) fn compact(&self) {
-        self.send(AppEvent::GenexOp(AppCommand::compact()));
+        self.send(AppEvent::RuxexOp(AppCommand::compact()));
     }
 
     pub(crate) fn set_thread_name(&self, name: String) {
-        self.send(AppEvent::GenexOp(AppCommand::set_thread_name(name)));
+        self.send(AppEvent::RuxexOp(AppCommand::set_thread_name(name)));
     }
 
     pub(crate) fn review(&self, target: ReviewTarget) {
-        self.send(AppEvent::GenexOp(AppCommand::review(target)));
+        self.send(AppEvent::RuxexOp(AppCommand::review(target)));
     }
 
     pub(crate) fn list_skills(&self, cwds: Vec<PathBuf>, force_reload: bool) {
-        self.send(AppEvent::GenexOp(AppCommand::list_skills(
+        self.send(AppEvent::RuxexOp(AppCommand::list_skills(
             cwds,
             force_reload,
         )));
     }
 
     pub(crate) fn user_input_answer(&self, id: String, response: ToolRequestUserInputResponse) {
-        self.send(AppEvent::GenexOp(AppCommand::user_input_answer(
+        self.send(AppEvent::RuxexOp(AppCommand::user_input_answer(
             id, response,
         )));
     }

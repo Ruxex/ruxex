@@ -3,16 +3,16 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_models_manager::manager::ModelCatalogFuture;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_models_manager::manager::ModelCatalogSource;
-use genex_models_manager::manager::RemoteModelsManager;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelCatalog;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_models_manager::manager::ModelCatalogFuture;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_models_manager::manager::ModelCatalogSource;
+use ruxex_models_manager::manager::RemoteModelsManager;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::model_types::ModelCatalog;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::Notify;
@@ -68,7 +68,7 @@ impl ModelCatalogSource for TestModelsEndpoint {
             let fetch_index = self.fetch_count.fetch_add(1, Ordering::SeqCst);
             self.fetched.notify_one();
             if fetch_index == 0 {
-                return Err(GenexErr::Io(std::io::Error::other("test failure")));
+                return Err(RuxexErr::Io(std::io::Error::other("test failure")));
             }
             if fetch_index == 1 {
                 self.release_second_fetch.notified().await;
@@ -84,10 +84,10 @@ impl ModelCatalogSource for TestModelsEndpoint {
 
 #[tokio::test]
 async fn refreshes_immediately_periodically_and_stops_when_dropped() {
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = TestModelsEndpoint::new();
     let models_manager: SharedModelsManager = Arc::new(RemoteModelsManager::new(
-        genex_home.path().to_path_buf(),
+        ruxex_home.path().to_path_buf(),
         endpoint.clone(),
     ));
     let worker = spawn_with_interval(

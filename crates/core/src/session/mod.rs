@@ -55,119 +55,119 @@ use chrono::Utc;
 use futures::future::BoxFuture;
 use futures::future::Shared;
 use futures::prelude::*;
-use genex_async_utils::OrCancelExt;
-use genex_attachment_store::AttachmentStore;
-use genex_attachment_store::InlineAttachmentStore;
-use genex_context_fragments::RenderedFragment;
-use genex_exec_server::Environment;
-use genex_exec_server::EnvironmentManager;
-use genex_execpolicy::prefix_rule_migration;
-use genex_extension_api::ConversationHistorySnapshot;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::PromptSlot;
-use genex_extension_api::TurnContextContributionInput;
-use genex_features::FEATURES;
-use genex_features::Feature;
-use genex_features::unstable_features_warning_event;
-use genex_history::RolloutItem;
-use genex_hooks::Hooks;
-use genex_hooks::HooksConfig;
-use genex_mcp::McpResourceClient;
-use genex_mcp::McpRuntime;
-use genex_mcp::McpRuntimeContext;
-use genex_mcp::McpRuntimeInput;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_network_proxy::ManagedProxyRouting;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyAuditMetadata;
-use genex_network_proxy::normalize_host;
-use genex_otel::current_span_trace_id;
-use genex_otel::current_span_w3c_trace_context;
-use genex_otel::set_parent_from_w3c_trace_context;
-use genex_prompts::render_model_instructions;
-use genex_protocol::ResponseUsageMetadata;
-use genex_protocol::ThreadId;
-use genex_protocol::approvals::ElicitationRequest;
-use genex_protocol::approvals::ElicitationRequestEvent;
-use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::dynamic_tools::DynamicToolResponse;
-use genex_protocol::dynamic_tools::DynamicToolSpec;
-use genex_protocol::items::EnteredReviewModeItem;
-use genex_protocol::items::ModelInvocationContext;
-use genex_protocol::items::SubAgentActivityItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::InternalChatMessageMetadataPassthrough;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::SandboxEnforcement;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::FileChange;
-use genex_protocol::protocol::HasLegacyEvent;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ItemStartedEvent;
-use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::RawResponseItemEvent;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentActivityKind;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::TurnContextNetworkItem;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_protocol::protocol::WorldStateItem;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsArgs;
-use genex_protocol::request_permissions::RequestPermissionsEvent;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputArgs;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rollout::state_db;
-use genex_rollout_trace::AgentResultTracePayload;
-use genex_rollout_trace::ThreadStartedTraceMetadata;
-use genex_rollout_trace::ThreadTraceContext;
-use genex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
-use genex_shell_command::parse_command::parse_command;
-use genex_terminal_detection::user_agent;
-use genex_thread_store::CreateThreadParams;
-use genex_thread_store::LiveThread;
-use genex_thread_store::LiveThreadInitGuard;
-use genex_thread_store::LocalThreadStore;
-use genex_thread_store::PersistContext;
-use genex_thread_store::ReadThreadParams;
-use genex_thread_store::ResumeThreadParams;
-use genex_thread_store::ThreadPersistenceMetadata;
-use genex_thread_store::ThreadStore;
-use genex_utils_audio::prepare_response_items as prepare_audio_response_items;
-use genex_utils_git_discovery::GitRootDiscovery;
-use genex_utils_output_truncation::with_serialization_allowance;
-use genex_utils_path_uri::PathUri;
+use ruxex_async_utils::OrCancelExt;
+use ruxex_attachment_store::AttachmentStore;
+use ruxex_attachment_store::InlineAttachmentStore;
+use ruxex_context_fragments::RenderedFragment;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_execpolicy::prefix_rule_migration;
+use ruxex_extension_api::ConversationHistorySnapshot;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::PromptSlot;
+use ruxex_extension_api::TurnContextContributionInput;
+use ruxex_features::FEATURES;
+use ruxex_features::Feature;
+use ruxex_features::unstable_features_warning_event;
+use ruxex_history::RolloutItem;
+use ruxex_hooks::Hooks;
+use ruxex_hooks::HooksConfig;
+use ruxex_mcp::McpResourceClient;
+use ruxex_mcp::McpRuntime;
+use ruxex_mcp::McpRuntimeContext;
+use ruxex_mcp::McpRuntimeInput;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_network_proxy::ManagedProxyRouting;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyAuditMetadata;
+use ruxex_network_proxy::normalize_host;
+use ruxex_otel::current_span_trace_id;
+use ruxex_otel::current_span_w3c_trace_context;
+use ruxex_otel::set_parent_from_w3c_trace_context;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::ResponseUsageMetadata;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::approvals::ElicitationRequest;
+use ruxex_protocol::approvals::ElicitationRequestEvent;
+use ruxex_protocol::approvals::ExecPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::dynamic_tools::DynamicToolResponse;
+use ruxex_protocol::dynamic_tools::DynamicToolSpec;
+use ruxex_protocol::items::EnteredReviewModeItem;
+use ruxex_protocol::items::ModelInvocationContext;
+use ruxex_protocol::items::SubAgentActivityItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::BaseInstructionsProvenance;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::InternalChatMessageMetadataPassthrough;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::SandboxEnforcement;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_protocol::protocol::HasLegacyEvent;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ItemStartedEvent;
+use ruxex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::RawResponseItemEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentActivityKind;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::TurnContextNetworkItem;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::protocol::WorldStateItem;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsArgs;
+use ruxex_protocol::request_permissions::RequestPermissionsEvent;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::request_user_input::RequestUserInputArgs;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rollout::state_db;
+use ruxex_rollout_trace::AgentResultTracePayload;
+use ruxex_rollout_trace::ThreadStartedTraceMetadata;
+use ruxex_rollout_trace::ThreadTraceContext;
+use ruxex_sandboxing::policy_transforms::intersect_permission_profiles_with_context;
+use ruxex_shell_command::parse_command::parse_command;
+use ruxex_terminal_detection::user_agent;
+use ruxex_thread_store::CreateThreadParams;
+use ruxex_thread_store::LiveThread;
+use ruxex_thread_store::LiveThreadInitGuard;
+use ruxex_thread_store::LocalThreadStore;
+use ruxex_thread_store::PersistContext;
+use ruxex_thread_store::ReadThreadParams;
+use ruxex_thread_store::ResumeThreadParams;
+use ruxex_thread_store::ThreadPersistenceMetadata;
+use ruxex_thread_store::ThreadStore;
+use ruxex_utils_audio::prepare_response_items as prepare_audio_response_items;
+use ruxex_utils_git_discovery::GitRootDiscovery;
+use ruxex_utils_output_truncation::with_serialization_allowance;
+use ruxex_utils_path_uri::PathUri;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
@@ -196,18 +196,18 @@ use crate::config::StartedNetworkProxy;
 use crate::config::resolve_web_search_mode_for_turn;
 use crate::context_manager::ContextManager;
 use crate::context_manager::HistoryReplacement;
-use crate::genex_thread::GenexThreadSettingsOverrides;
-use crate::genex_thread::ThreadConfigSnapshot;
+use crate::ruxex_thread::RuxexThreadSettingsOverrides;
+use crate::ruxex_thread::ThreadConfigSnapshot;
 use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerSource;
-use genex_config::types::McpServerConfig;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::types::McpServerConfig;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
 #[cfg(test)]
-use genex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::exec_output::StreamOutput;
 
 mod code_mode_warning;
 pub(crate) mod context_window;
@@ -301,65 +301,65 @@ use crate::tools::sandboxing::ApprovalStore;
 use crate::turn_timing::TurnTimingState;
 use crate::turn_timing::record_turn_ttfm_metric;
 use crate::unified_exec::UnifiedExecProcessManager;
-use genex_core_plugins::PluginCommandAttribution;
-use genex_core_plugins::PluginsManager;
-use genex_git_utils::get_git_repo_root;
-use genex_history::CompactedItem;
-use genex_history::GenexHarnessMetadata;
-use genex_history::InitialHistory;
-use genex_history::ResponseItemEnvelope;
-use genex_mcp::McpConfig;
-use genex_mcp::effective_mcp_servers;
-use genex_otel::SessionTelemetry;
-use genex_otel::THREAD_STARTED_METRIC;
-use genex_protocol::ResponseItemId;
-use genex_protocol::approvals::ExecApprovalKind;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use genex_protocol::config_types::Settings;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::LocalImagePreparation;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::DeprecationNoticeEvent;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecApprovalRequestEvent;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::ModelRerouteEvent;
-use genex_protocol::protocol::ModelRerouteReason;
-use genex_protocol::protocol::ModelVerification;
-use genex_protocol::protocol::ModelVerificationEvent;
-use genex_protocol::protocol::NetworkApprovalContext;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::RawResponseCompletedEvent;
-use genex_protocol::protocol::RequestUserInputEvent;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionConfiguredEvent;
-use genex_protocol::protocol::SessionNetworkProxyRuntime;
-use genex_protocol::protocol::StreamErrorEvent;
-use genex_protocol::protocol::Submission;
-use genex_protocol::protocol::TokenCountEvent;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TokenUsageInfo;
-use genex_protocol::protocol::TokenUsageRecord;
-use genex_protocol::protocol::WarningEvent;
-use genex_protocol::turn_input::TurnInputMode;
-use genex_protocol::turn_input::TurnInputRequest;
-use genex_protocol::turn_input::TurnInputSubmission;
-use genex_protocol::turn_input::TurnStartOptions;
-use genex_protocol::user_input::UserInput;
-use genex_skills_extension::HostSkillsService;
-use genex_tools::UnifiedExecShellMode;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core_plugins::PluginCommandAttribution;
+use ruxex_core_plugins::PluginsManager;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_history::CompactedItem;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_mcp::McpConfig;
+use ruxex_mcp::effective_mcp_servers;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::THREAD_STARTED_METRIC;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::approvals::ExecApprovalKind;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::LocalImagePreparation;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::DeprecationNoticeEvent;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecApprovalRequestEvent;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::ModelRerouteEvent;
+use ruxex_protocol::protocol::ModelRerouteReason;
+use ruxex_protocol::protocol::ModelVerification;
+use ruxex_protocol::protocol::ModelVerificationEvent;
+use ruxex_protocol::protocol::NetworkApprovalContext;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::RawResponseCompletedEvent;
+use ruxex_protocol::protocol::RequestUserInputEvent;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_protocol::protocol::SessionNetworkProxyRuntime;
+use ruxex_protocol::protocol::StreamErrorEvent;
+use ruxex_protocol::protocol::Submission;
+use ruxex_protocol::protocol::TokenCountEvent;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TokenUsageInfo;
+use ruxex_protocol::protocol::TokenUsageRecord;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_protocol::turn_input::TurnInputMode;
+use ruxex_protocol::turn_input::TurnInputRequest;
+use ruxex_protocol::turn_input::TurnInputSubmission;
+use ruxex_protocol::turn_input::TurnStartOptions;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::HostSkillsService;
+use ruxex_tools::UnifiedExecShellMode;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
-use genex_utils_stream_parser::ProposedPlanSegment;
+use ruxex_utils_stream_parser::ProposedPlanSegment;
 
 /// Queue and lifecycle endpoints for a running [`Session`].
 ///
@@ -407,8 +407,8 @@ pub(crate) struct SessionSpawnArgs {
     pub(crate) skills_service: Arc<HostSkillsService>,
     pub(crate) plugins_manager: Arc<PluginsManager>,
     pub(crate) mcp_manager: Arc<McpManager>,
-    pub(crate) code_mode_session_provider: Arc<dyn genex_code_mode::CodeModeSessionProvider>,
-    pub(crate) extensions: Arc<genex_extension_api::ExtensionRegistry<crate::config::Config>>,
+    pub(crate) code_mode_session_provider: Arc<dyn ruxex_code_mode::CodeModeSessionProvider>,
+    pub(crate) extensions: Arc<ruxex_extension_api::ExtensionRegistry<crate::config::Config>>,
     pub(crate) conversation_history: InitialHistory,
     pub(crate) disabled_plugin_ids: Option<Vec<String>>,
     pub(crate) requested_history_mode: Option<ThreadHistoryMode>,
@@ -469,11 +469,11 @@ impl Session {
     #[inline(never)]
     pub(crate) fn spawn(
         args: SessionSpawnArgs,
-    ) -> BoxFuture<'static, GenexResult<(Arc<Self>, SessionIo)>> {
+    ) -> BoxFuture<'static, RuxexResult<(Arc<Self>, SessionIo)>> {
         Box::pin(async move {
             let parent_trace = match args.parent_trace {
                 Some(trace) => {
-                    if genex_otel::context_from_w3c_trace_context(&trace).is_some() {
+                    if ruxex_otel::context_from_w3c_trace_context(&trace).is_some() {
                         Some(trace)
                     } else {
                         warn!("ignoring invalid thread spawn trace carrier");
@@ -495,7 +495,7 @@ impl Session {
         })
     }
 
-    async fn spawn_internal(args: SessionSpawnArgs) -> GenexResult<(Arc<Self>, SessionIo)> {
+    async fn spawn_internal(args: SessionSpawnArgs) -> RuxexResult<(Arc<Self>, SessionIo)> {
         let SessionSpawnArgs {
             startup,
             config,
@@ -543,16 +543,16 @@ impl Session {
         let (tx_event, rx_event) = async_channel::unbounded();
 
         let isolation = thread_extension_init
-            .get::<genex_extension_api::SessionIsolation>()
+            .get::<ruxex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let exec_policy = if isolation == genex_extension_api::SessionIsolation::Isolated {
+        let exec_policy = if isolation == ruxex_extension_api::SessionIsolation::Isolated {
             let managed_policy = config
                 .config_layer_stack
                 .requirements()
                 .exec_policy
                 .as_deref()
-                .map_or_else(genex_execpolicy::Policy::empty, |policy| {
+                .map_or_else(ruxex_execpolicy::Policy::empty, |policy| {
                     policy.as_ref().clone()
                 });
             Arc::new(ExecPolicyManager::new(Arc::new(managed_policy)))
@@ -563,10 +563,10 @@ impl Session {
                 .config_layer_stack
                 .ignore_user_and_project_exec_policy_rules()
             {
-                let genex_home = config.genex_home.clone();
-                let policy_path = default_policy_path(genex_home.as_path());
+                let ruxex_home = config.ruxex_home.clone();
+                let policy_path = default_policy_path(ruxex_home.as_path());
                 if let Err(err) = prefix_rule_migration(
-                    genex_home.as_path(),
+                    ruxex_home.as_path(),
                     policy_path.as_path(),
                     BANNED_PREFIX_SUGGESTIONS,
                 )
@@ -578,20 +578,20 @@ impl Session {
             Arc::new(
                 ExecPolicyManager::load(&config.config_layer_stack)
                     .await
-                    .map_err(|err| GenexErr::Fatal(format!("failed to load rules: {err}")))?,
+                    .map_err(|err| RuxexErr::Fatal(format!("failed to load rules: {err}")))?,
             )
         };
 
         let mut config = Arc::new(config);
         let refresh_strategy = if session_source.is_non_root_agent() {
-            genex_models_manager::manager::RefreshStrategy::Offline
+            ruxex_models_manager::manager::RefreshStrategy::Offline
         } else {
-            genex_models_manager::manager::RefreshStrategy::OnlineIfUncached
+            ruxex_models_manager::manager::RefreshStrategy::OnlineIfUncached
         };
         if config.model.is_none()
             || !matches!(
                 refresh_strategy,
-                genex_models_manager::manager::RefreshStrategy::Offline
+                ruxex_models_manager::manager::RefreshStrategy::Offline
             )
         {
             let _ = models_manager
@@ -632,7 +632,7 @@ impl Session {
         if !inherits_token_budget {
             Arc::make_mut(&mut config)
                 .prepare_token_budget_for_startup()
-                .map_err(|err| GenexErr::InvalidRequest(err.to_string()))?;
+                .map_err(|err| RuxexErr::InvalidRequest(err.to_string()))?;
             // Resolve activation for this runtime, including when resuming saved history.
             token_budget::apply_experimental_context(
                 Arc::make_mut(&mut config),
@@ -646,7 +646,7 @@ impl Session {
                 .is_some_and(|token_budget| token_budget.use_history_notes_extension)
                 && !model_info.supports_experimental_context
             {
-                return Err(GenexErr::InvalidRequest(format!(
+                return Err(RuxexErr::InvalidRequest(format!(
                     "features.token_budget.use_history_notes_extension is not supported by model `{model}`; disable it or select a model that supports experimental context"
                 )));
             }
@@ -678,7 +678,7 @@ impl Session {
             };
             settings_owner
                 .and_then(|thread_id| {
-                    genex_history::latest_disabled_plugin_ids(
+                    ruxex_history::latest_disabled_plugin_ids(
                         conversation_history.get_rollout_items(),
                         thread_id,
                     )
@@ -751,7 +751,7 @@ impl Session {
             use_legacy_landlock: config.features.use_legacy_landlock(),
             legacy_fallback_cwd: config.cwd.clone(),
             runtime_workspace_roots: config.workspace_roots.clone(),
-            genex_home: config.genex_home.clone(),
+            ruxex_home: config.ruxex_home.clone(),
             thread_name: None,
             disabled_plugin_ids,
             original_config_do_not_use: Arc::clone(&config),
@@ -769,7 +769,7 @@ impl Session {
         };
         session_configuration
             .validate(&environment_selections)
-            .map_err(|err| GenexErr::InvalidRequest(err.to_string()))?;
+            .map_err(|err| RuxexErr::InvalidRequest(err.to_string()))?;
 
         // Generate a unique ID for the lifetime of this session.
         let session_source_clone = session_configuration.session_source.clone();
@@ -813,9 +813,9 @@ impl Session {
         .await
         .map_err(|e| {
             error!("Failed to create session: {e:#}");
-            match e.downcast::<GenexErr>() {
+            match e.downcast::<RuxexErr>() {
                 Ok(error) => error,
-                Err(error) => map_session_init_error(&error, &config.genex_home),
+                Err(error) => map_session_init_error(&error, &config.ruxex_home),
             }
         })?;
         if let Some(message) = initial_service_tier_warning {
@@ -851,7 +851,7 @@ impl Session {
 
 impl SessionIo {
     /// Submit the `op` wrapped in a `Submission` with a unique ID.
-    pub(crate) async fn submit(&self, op: Op) -> GenexResult<String> {
+    pub(crate) async fn submit(&self, op: Op) -> RuxexResult<String> {
         self.submit_with_trace(
             op, /*trace*/ None, /*parent_turn_id*/ None, /*root_turn_id*/ None,
         )
@@ -864,7 +864,7 @@ impl SessionIo {
         trace: Option<W3cTraceContext>,
         parent_turn_id: Option<String>,
         root_turn_id: Option<String>,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         let id = new_submission_id();
         let sub = Submission {
             id: id.clone(),
@@ -878,14 +878,14 @@ impl SessionIo {
     }
 
     /// Use sparingly: prefer `submit()` so submission IDs are generated consistently.
-    pub(crate) async fn submit_with_id(&self, mut sub: Submission) -> GenexResult<()> {
+    pub(crate) async fn submit_with_id(&self, mut sub: Submission) -> RuxexResult<()> {
         if sub.trace.is_none() {
             sub.trace = current_span_w3c_trace_context();
         }
         self.tx_sub
             .send(sub)
             .await
-            .map_err(|_| GenexErr::InternalAgentDied)?;
+            .map_err(|_| RuxexErr::InternalAgentDied)?;
         Ok(())
     }
 
@@ -897,7 +897,7 @@ impl SessionIo {
         &self,
         mut request: TurnInputRequest,
         mode: TurnInputMode,
-    ) -> GenexResult<TurnInputSubmission> {
+    ) -> RuxexResult<TurnInputSubmission> {
         let id = new_submission_id();
         let (reply_tx, reply_rx) = oneshot::channel();
         let trace = request.trace.take();
@@ -913,7 +913,7 @@ impl SessionIo {
             root_turn_id: None,
         })
         .await?;
-        reply_rx.await.unwrap_or(Err(GenexErr::InternalAgentDied))
+        reply_rx.await.unwrap_or(Err(RuxexErr::InternalAgentDied))
     }
 
     pub(crate) async fn submit_recover_turn(
@@ -922,7 +922,7 @@ impl SessionIo {
         start_options: TurnStartOptions,
         trace: Option<W3cTraceContext>,
         turn_id: String,
-    ) -> GenexResult<TurnInputSubmission> {
+    ) -> RuxexResult<TurnInputSubmission> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.submit_with_id(Submission {
             id: turn_id,
@@ -936,26 +936,26 @@ impl SessionIo {
             root_turn_id: None,
         })
         .await?;
-        reply_rx.await.unwrap_or(Err(GenexErr::InternalAgentDied))
+        reply_rx.await.unwrap_or(Err(RuxexErr::InternalAgentDied))
     }
 
-    pub(crate) async fn shutdown_and_wait(&self) -> GenexResult<()> {
+    pub(crate) async fn shutdown_and_wait(&self) -> RuxexResult<()> {
         let session_loop_termination = self.session_loop_termination.clone();
         match self.submit(Op::Shutdown).await {
             Ok(_) => {}
-            Err(err) if matches!(err.details(), GenexErrorDetails::InternalAgentDied) => {}
+            Err(err) if matches!(err.details(), RuxexErrorDetails::InternalAgentDied) => {}
             Err(err) => return Err(err),
         }
         session_loop_termination.await;
         Ok(())
     }
 
-    pub(crate) async fn next_event(&self) -> GenexResult<Event> {
+    pub(crate) async fn next_event(&self) -> RuxexResult<Event> {
         let event = self
             .rx_event
             .recv()
             .await
-            .map_err(|_| GenexErr::InternalAgentDied)?;
+            .map_err(|_| RuxexErr::InternalAgentDied)?;
         Ok(event)
     }
 
@@ -999,7 +999,7 @@ fn unsupported_service_tier_warning(
 
 fn session_permission_profile_state_from_config(
     config: &Config,
-) -> GenexResult<PermissionProfileState> {
+) -> RuxexResult<PermissionProfileState> {
     Ok(config.permissions.permission_profile_state().clone())
 }
 
@@ -1065,7 +1065,7 @@ impl Session {
         !matches!(permission_profile, PermissionProfile::Disabled)
     }
 
-    /// Builds the `x-genex-beta-features` header value for this session.
+    /// Builds the `x-ruxex-beta-features` header value for this session.
     ///
     /// `ModelClient` is session-scoped and intentionally does not depend on the full `Config`, so
     /// we precompute the comma-separated list of enabled experimental feature keys at session
@@ -1090,10 +1090,10 @@ impl Session {
     #[allow(clippy::too_many_arguments)]
     async fn start_managed_network_proxy(
         spec: &crate::config::NetworkProxySpec,
-        exec_policy: &genex_execpolicy::Policy,
+        exec_policy: &ruxex_execpolicy::Policy,
         permission_profile: &PermissionProfile,
-        network_policy_decider: Option<Arc<dyn genex_network_proxy::NetworkPolicyDecider>>,
-        blocked_request_observer: Option<Arc<dyn genex_network_proxy::BlockedRequestObserver>>,
+        network_policy_decider: Option<Arc<dyn ruxex_network_proxy::NetworkPolicyDecider>>,
+        blocked_request_observer: Option<Arc<dyn ruxex_network_proxy::BlockedRequestObserver>>,
         managed_network_requirements_enabled: bool,
         audit_metadata: NetworkProxyAuditMetadata,
     ) -> anyhow::Result<(StartedNetworkProxy, SessionNetworkProxyRuntime)> {
@@ -1239,9 +1239,9 @@ impl Session {
     }
 
     #[cfg(test)]
-    pub(crate) async fn genex_home(&self) -> AbsolutePathBuf {
+    pub(crate) async fn ruxex_home(&self) -> AbsolutePathBuf {
         let state = self.state.lock().await;
-        state.session_configuration.genex_home().clone()
+        state.session_configuration.ruxex_home().clone()
     }
 
     pub(crate) fn subscribe_elicitation_pause_state(&self) -> watch::Receiver<bool> {
@@ -1373,7 +1373,7 @@ impl Session {
             )
         {
             BaseInstructions {
-                text: genex_prompts::without_update_plan_instructions(&instructions.text),
+                text: ruxex_prompts::without_update_plan_instructions(&instructions.text),
                 ..instructions
             }
         } else {
@@ -1438,7 +1438,7 @@ impl Session {
                         EventMsg::Warning(WarningEvent {
                             message: format!(
                                 "This session was recorded with model `{prev}` but is resuming with `{curr}`. \
-                         Consider switching back to `{prev}` as it may affect Genex performance."
+                         Consider switching back to `{prev}` as it may affect Ruxex performance."
                             ),
                         }),
                     )
@@ -1799,7 +1799,7 @@ impl Session {
             .thread_settings_snapshot(&self.services.turn_environments.selections())
     }
 
-    pub(crate) async fn restorable_thread_settings(&self) -> GenexThreadSettingsOverrides {
+    pub(crate) async fn restorable_thread_settings(&self) -> RuxexThreadSettingsOverrides {
         let state = self.state.lock().await;
         state
             .session_configuration
@@ -2057,7 +2057,7 @@ impl Session {
                 vec![
                     state
                         .session_configuration
-                        .genex_home
+                        .ruxex_home
                         .join(CONFIG_TOML_FILE),
                 ]
             } else {
@@ -2135,9 +2135,9 @@ impl Session {
         let legacy_source = msg.clone();
         if let EventMsg::Error(error) = &legacy_source
             && error
-                .genex_error_info
+                .ruxex_error_info
                 .as_ref()
-                .is_some_and(GenexErrorInfo::affects_turn_status)
+                .is_some_and(RuxexErrorInfo::affects_turn_status)
         {
             turn_context
                 .terminal_error
@@ -2147,7 +2147,7 @@ impl Session {
         }
         self.services
             .rollout_thread_trace
-            .record_genex_turn_event(&turn_context.sub_id, &legacy_source);
+            .record_ruxex_turn_event(&turn_context.sub_id, &legacy_source);
         self.services
             .rollout_thread_trace
             .record_tool_call_event(turn_context.sub_id.clone(), &legacy_source);
@@ -2225,13 +2225,13 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         parent_thread_id: ThreadId,
-        child_agent_path: &genex_protocol::AgentPath,
+        child_agent_path: &ruxex_protocol::AgentPath,
         status: AgentStatus,
     ) {
         let Some(parent_agent_path) = child_agent_path
             .as_str()
             .rsplit_once('/')
-            .and_then(|(parent, _)| genex_protocol::AgentPath::try_from(parent).ok())
+            .and_then(|(parent, _)| ruxex_protocol::AgentPath::try_from(parent).ok())
         else {
             return;
         };
@@ -2342,7 +2342,7 @@ impl Session {
     /// Delivers an event without creating a local rollout for a thread that has not materialized.
     pub(crate) async fn send_event_raw_without_materializing_rollout(&self, event: Event) {
         let persist = match self.current_rollout_path().await {
-            Ok(Some(path)) => genex_rollout::existing_rollout_path(&path).await.is_some(),
+            Ok(Some(path)) => ruxex_rollout::existing_rollout_path(&path).await.is_some(),
             Ok(None) => true,
             Err(err) => {
                 warn!("failed to check whether thread persistence is materialized: {err}");
@@ -2440,17 +2440,17 @@ impl Session {
         &self,
         amendment: &ExecPolicyAmendment,
     ) -> Result<(), ExecPolicyUpdateError> {
-        let genex_home = self
+        let ruxex_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .genex_home()
+            .ruxex_home()
             .clone();
 
         self.services
             .exec_policy
-            .append_amendment_and_update(&genex_home, amendment)
+            .append_amendment_and_update(&ruxex_home, amendment)
             .await?;
 
         Ok(())
@@ -2489,12 +2489,12 @@ impl Session {
             .map_err(|_| anyhow::anyhow!("managed network proxy refresh semaphore closed"))?;
         let host =
             Self::validated_network_policy_amendment_host(amendment, network_approval_context)?;
-        let genex_home = self
+        let ruxex_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .genex_home()
+            .ruxex_home()
             .clone();
         let execpolicy_amendment =
             execpolicy_network_rule_amendment(amendment, network_approval_context, &host);
@@ -2522,7 +2522,7 @@ impl Session {
         self.services
             .exec_policy
             .append_network_rule_and_update(
-                &genex_home,
+                &ruxex_home,
                 &host,
                 execpolicy_amendment.protocol,
                 execpolicy_amendment.decision,
@@ -3229,7 +3229,7 @@ impl Session {
     ) {
         // Save the originating history budget for replay.
         // Preserve any existing tool-specific override.
-        let policy: genex_utils_output_truncation::TruncationPolicy =
+        let policy: ruxex_utils_output_truncation::TruncationPolicy =
             model_info.truncation_policy.into();
         for envelope in &mut items {
             if matches!(
@@ -3267,7 +3267,7 @@ impl Session {
         &self,
         previous_world_state: &Arc<WorldState>,
         step_context: &step_context::StepContext,
-    ) -> GenexResult<Arc<WorldState>> {
+    ) -> RuxexResult<Arc<WorldState>> {
         let turn_context = step_context.turn.as_ref();
         // Render model-visible state from the same step used to build and run tools.
         let world_state = Arc::new(self.build_world_state_for_step(step_context).await?);
@@ -3325,7 +3325,7 @@ impl Session {
         self: &Arc<Self>,
         turn_context: Arc<TurnContext>,
         cancellation_token: &CancellationToken,
-    ) -> GenexResult<Arc<StepContext>> {
+    ) -> RuxexResult<Arc<StepContext>> {
         self.capture_step_context_with_required_mcp_servers(
             turn_context,
             cancellation_token,
@@ -3341,7 +3341,7 @@ impl Session {
         cancellation_token: &CancellationToken,
         required_servers: &[String],
         required_plugins: &HashSet<String>,
-    ) -> GenexResult<Arc<StepContext>> {
+    ) -> RuxexResult<Arc<StepContext>> {
         let step_context = self
             .capture_step_context_inner(
                 turn_context,
@@ -3360,7 +3360,7 @@ impl Session {
         self: &Arc<Self>,
         turn_context: Arc<TurnContext>,
         cancellation_token: &CancellationToken,
-    ) -> GenexResult<Arc<StepContext>> {
+    ) -> RuxexResult<Arc<StepContext>> {
         self.capture_step_context_inner(
             turn_context,
             cancellation_token,
@@ -3377,7 +3377,7 @@ impl Session {
         cancellation_token: &CancellationToken,
         required_servers: &[String],
         required_plugins: &HashSet<String>,
-    ) -> GenexResult<Arc<StepContext>> {
+    ) -> RuxexResult<Arc<StepContext>> {
         // Capture once before asynchronous planning; all request consumers
         // retain this immutable settings version even if the turn is updated.
         let mut settings = turn_context.current_settings.load_full();
@@ -3423,7 +3423,7 @@ impl Session {
             )
             .or_cancel(cancellation_token)
             .await?;
-        let extension_data = genex_extension_api::ExtensionData::new(turn_context.sub_id.clone());
+        let extension_data = ruxex_extension_api::ExtensionData::new(turn_context.sub_id.clone());
         extension_data.insert(selected_capability_roots.clone());
         if let Some(discovery) = &executor_capability_discovery {
             extension_data.insert(discovery.as_ref().clone());
@@ -3458,7 +3458,7 @@ impl Session {
         let mut selected_plugins = self
             .services
             .thread_extension_data
-            .get::<genex_extension_api::SelectedPluginSnapshot>()
+            .get::<ruxex_extension_api::SelectedPluginSnapshot>()
             .map(|snapshot| snapshot.as_ref().clone())
             .unwrap_or_default();
         selected_plugins.plugins.retain(|plugin| {
@@ -3655,7 +3655,7 @@ impl Session {
         self.persist_rollout_items(&rollout_items).await;
         {
             let mut state = self.state.lock().await;
-            state.queue_pending_session_start_source(genex_hooks::SessionStartSource::Compact);
+            state.queue_pending_session_start_source(ruxex_hooks::SessionStartSource::Compact);
         }
     }
 
@@ -3857,7 +3857,7 @@ impl Session {
                 crate::context::TokenBudgetContext::new(
                     session_source
                         .get_agent_path()
-                        .unwrap_or_else(genex_protocol::AgentPath::root),
+                        .unwrap_or_else(ruxex_protocol::AgentPath::root),
                     auto_compact_window_ids.first_window_id,
                     auto_compact_window_ids.previous_window_id,
                     auto_compact_window_ids.window_id,
@@ -4076,7 +4076,7 @@ impl Session {
     pub(crate) async fn record_context_updates_and_set_reference_context_item(
         &self,
         step_context: &StepContext,
-    ) -> GenexResult<Arc<WorldState>> {
+    ) -> RuxexResult<Arc<WorldState>> {
         let turn_context = step_context.turn.as_ref();
         let reference_context_item = {
             let state = self.state.lock().await;
@@ -4157,7 +4157,7 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         token_usage: Option<&TokenUsage>,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         let result = self
             .record_token_usage_info(turn_context, &turn_context.initial_settings, token_usage)
             .await;
@@ -4204,7 +4204,7 @@ impl Session {
         turn_context: &TurnContext,
         settings: &ResolvedStepSettings,
         token_usage: Option<&TokenUsage>,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         if let Some(token_usage) = token_usage {
             let token_info = {
                 let mut state = self.state.lock().await;
@@ -4270,7 +4270,7 @@ impl Session {
                 output_tokens: 0,
                 reasoning_output_tokens: 0,
                 total_tokens: estimated_total_tokens.max(0),
-                genex_rollout_budget_units: None,
+                ruxex_rollout_budget_units: None,
             };
 
             if let Some(model_context_window) = turn_context.model_context_window() {
@@ -4377,7 +4377,7 @@ impl Session {
             model_info,
             vec![ResponseItemEnvelope {
                 item: response_item,
-                metadata: acceptance_order.map(|order| GenexHarnessMetadata {
+                metadata: acceptance_order.map(|order| RuxexHarnessMetadata {
                     user_input_order: Some(order),
                     ..Default::default()
                 }),
@@ -4396,15 +4396,15 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         message: impl Into<String>,
-        genex_error: GenexErr,
+        ruxex_error: RuxexErr,
     ) {
-        let additional_details = genex_error.to_string();
-        let genex_error_info = GenexErrorInfo::ResponseStreamDisconnected {
-            http_status_code: genex_error.http_status_code_value(),
+        let additional_details = ruxex_error.to_string();
+        let ruxex_error_info = RuxexErrorInfo::ResponseStreamDisconnected {
+            http_status_code: ruxex_error.http_status_code_value(),
         };
         let event = EventMsg::StreamError(StreamErrorEvent {
             message: message.into(),
-            genex_error_info: Some(genex_error_info),
+            ruxex_error_info: Some(ruxex_error_info),
             additional_details: Some(additional_details),
         });
         self.send_event(turn_context, event).await;
@@ -4450,7 +4450,7 @@ impl Session {
 
     pub(crate) async fn take_pending_session_start_source(
         &self,
-    ) -> Option<genex_hooks::SessionStartSource> {
+    ) -> Option<ruxex_hooks::SessionStartSource> {
         let mut state = self.state.lock().await;
         state.take_pending_session_start_source()
     }
@@ -4485,7 +4485,7 @@ async fn build_hooks_config(
     let plugin_hook_load_warnings = plugin_outcome.effective_plugin_hook_warnings();
     HooksConfig {
         legacy_notify_argv: config.notify.clone(),
-        feature_enabled: config.features.enabled(Feature::GenexHooks),
+        feature_enabled: config.features.enabled(Feature::RuxexHooks),
         bypass_hook_trust: config.bypass_hook_trust,
         config_layer_stack: Some(config.config_layer_stack.clone()),
         plugin_hook_sources,
@@ -4498,7 +4498,7 @@ async fn build_hooks_config(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_history::ResumedHistory;
+    use ruxex_history::ResumedHistory;
     use std::path::PathBuf;
 
     #[test]

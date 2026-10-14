@@ -3,7 +3,7 @@
 
 use crate::JsonSchema;
 use crate::TS;
-use genex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::protocol::W3cTraceContext;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fmt;

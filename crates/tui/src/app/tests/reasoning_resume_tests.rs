@@ -2,8 +2,8 @@
 
 use super::*;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
 
 
 

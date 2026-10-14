@@ -5,15 +5,15 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_exec_server::Environment;
-use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::ExecutorStdioServerLauncher;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StdioServerLauncher;
+use ruxex_exec_server::Environment;
+use ruxex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::ExecutorStdioServerLauncher;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StdioServerLauncher;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
@@ -52,9 +52,9 @@ fn local_stdio_inherits_ca_certificate_variables() -> anyhow::Result<()> {
                 .into_iter()
                 .map(|name| (name, "certs/custom-ca.pem")),
         )
-        .env("GENEX_CA_CERTIFICATE", "")
+        .env("RUXEX_CA_CERTIFICATE", "")
         .env("REQUESTS_CA_BUNDLE", requests_ca_bundle)
-        .env("GENEX_MCP_TEST_SERVER_CWD", &server_dir)
+        .env("RUXEX_MCP_TEST_SERVER_CWD", &server_dir)
         .output()?;
 
     assert!(
@@ -69,9 +69,9 @@ fn local_stdio_inherits_ca_certificate_variables() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[ignore = "child process for local_stdio_inherits_ca_certificate_variables"]
 async fn local_stdio_inherits_ca_certificate_variables_child() -> anyhow::Result<()> {
-    let server = genex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
+    let server = ruxex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
     let source_dir = std::env::current_dir()?;
-    let server_dir = std::env::var("GENEX_MCP_TEST_SERVER_CWD")?;
+    let server_dir = std::env::var("RUXEX_MCP_TEST_SERVER_CWD")?;
     let expected = source_dir.join("certs").join("custom-ca.pem");
     let npm_override = HashMap::from([(
         OsString::from("NPM_CONFIG_CAFILE"),
@@ -89,7 +89,7 @@ async fn local_stdio_inherits_ca_certificate_variables_child() -> anyhow::Result
             "REQUESTS_CA_BUNDLE",
             Some(expected.to_string_lossy().into_owned()),
         ),
-        (None, "GENEX_CA_CERTIFICATE", None),
+        (None, "RUXEX_CA_CERTIFICATE", None),
         (
             Some(npm_override.clone()),
             "NPM_CONFIG_CAFILE",
@@ -151,7 +151,7 @@ async fn local_stdio_inherits_ca_certificate_variables_child() -> anyhow::Result
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn modern_local_and_executor_stdio_discover_metadata_identity_and_catalogs()
 -> anyhow::Result<()> {
-    let server = genex_utils_cargo_bin::cargo_bin("test_mcp_2026_discovery_stdio_server")?;
+    let server = ruxex_utils_cargo_bin::cargo_bin("test_mcp_2026_discovery_stdio_server")?;
 
     for executor in [false, true] {
         let launcher: Arc<dyn StdioServerLauncher> = if executor {
@@ -165,7 +165,7 @@ async fn modern_local_and_executor_stdio_discover_metadata_identity_and_catalogs
             server.clone().into(),
             Vec::new(),
             Some(HashMap::from([(
-                OsString::from("GENEX_MCP_PROTOCOL_VERSION"),
+                OsString::from("RUXEX_MCP_PROTOCOL_VERSION"),
                 OsString::from("2026-07-28"),
             )])),
             &[],
@@ -217,7 +217,7 @@ async fn modern_local_and_executor_stdio_discover_metadata_identity_and_catalogs
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn legacy_stdio_preserves_existing_protocol_marker_environment() -> anyhow::Result<()> {
-    let server = genex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
+    let server = ruxex_utils_cargo_bin::cargo_bin("test_stdio_server")?;
 
     for executor in [false, true] {
         for version in ["2026-07-28", "1999-01-01"] {
@@ -232,7 +232,7 @@ async fn legacy_stdio_preserves_existing_protocol_marker_environment() -> anyhow
                 server.clone().into(),
                 Vec::new(),
                 Some(HashMap::from([(
-                    OsString::from("GENEX_MCP_PROTOCOL_VERSION"),
+                    OsString::from("RUXEX_MCP_PROTOCOL_VERSION"),
                     OsString::from(version),
                 )])),
                 &[],
@@ -268,7 +268,7 @@ async fn legacy_stdio_preserves_existing_protocol_marker_environment() -> anyhow
                     "echo".to_string(),
                     Some(json!({
                         "message": "legacy environment",
-                        "env_var": "GENEX_MCP_PROTOCOL_VERSION",
+                        "env_var": "RUXEX_MCP_PROTOCOL_VERSION",
                     })),
                     /*meta*/ None,
                     Some(Duration::from_secs(10)),

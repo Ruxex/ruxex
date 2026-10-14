@@ -13,33 +13,33 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata_from_json;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
-use genex_core::TurnInputRequest;
-use genex_core::shell::default_user_shell;
-use genex_features::Feature;
-use genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
-use genex_models_manager::manager::ModelCatalogAuthContext;
-use genex_models_manager::manager::StaticModelsManager;
-use genex_models_manager::test_support::test_models_response;
-use genex_prompts::render_model_instructions;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::shell::default_user_shell;
+use ruxex_features::Feature;
+use ruxex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
+use ruxex_models_manager::manager::ModelCatalogAuthContext;
+use ruxex_models_manager::manager::StaticModelsManager;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -173,14 +173,14 @@ async fn prompt_tools_are_consistent_across_requests(
     )
     .await;
 
-    let TestGenex {
+    let TestRuxex {
         // Keep the file-backed instructions alive across request-boundary refreshes.
         home: _home,
-        genex,
+        ruxex,
         config,
         thread_manager,
         ..
-    } = test_genex()
+    } = test_ruxex()
         .with_models_manager(models_manager)
         .with_pre_build_hook(write_global_instructions)
         .with_config(move |config| {
@@ -238,7 +238,7 @@ async fn prompt_tools_are_consistent_across_requests(
             .and_then(|preset| preset.developer_instructions.flatten())
             .expect("built-in Plan mode instructions")
     };
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -257,15 +257,15 @@ async fn prompt_tools_are_consistent_across_requests(
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let mut expected_tools_names = vec!["exec_command", "write_stdin"];
     if expected_update_plan_enabled {
@@ -329,9 +329,9 @@ async fn model_5_tools_without_apply_patch_append_apply_patch_instructions() -> 
     )
     .await;
 
-    let TestGenex {
-        home: _home, genex, ..
-    } = test_genex()
+    let TestRuxex {
+        home: _home, ruxex, ..
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -343,22 +343,22 @@ async fn model_5_tools_without_apply_patch_append_apply_patch_instructions() -> 
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
-    genex
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body0 = req1.single_request().body_json();
     let instructions0 = body0["instructions"]
@@ -399,12 +399,12 @@ async fn prefixes_context_and_instructions_once_and_consistently_across_requests
     )
     .await;
 
-    let TestGenex {
+    let TestRuxex {
         home: _home,
-        genex,
+        ruxex,
         config,
         ..
-    } = test_genex()
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -415,21 +415,21 @@ async fn prefixes_context_and_instructions_once_and_consistently_across_requests
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body1 = req1.single_request().body_json();
     let input1 = body1["input"].as_array().expect("input array");
@@ -493,12 +493,12 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
     )
     .await;
 
-    let TestGenex {
+    let TestRuxex {
         home: _home,
-        genex,
+        ruxex,
         config,
         ..
-    } = test_genex()
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -510,13 +510,13 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
         .await?;
 
     // First turn
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let writable = TempDir::new().unwrap();
     let permission_profile = PermissionProfile::workspace_write_with(
@@ -529,7 +529,7 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
         .to_legacy_sandbox_policy(config.cwd.as_path())
         .expect("workspace profile should have legacy projection");
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             sandbox_policy: Some(sandbox_policy),
@@ -542,13 +542,13 @@ async fn overrides_turn_context_but_keeps_cached_prefix_and_key_constant() -> an
     .await?;
 
     // Second turn after overrides
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -613,7 +613,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, .. } = test_ruxex().build(&server).await?;
 
     let collaboration_mode = CollaborationMode {
         mode: ModeKind::Default,
@@ -625,7 +625,7 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     };
 
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             model: Some("legacy-model".to_string()),
@@ -636,14 +636,14 @@ async fn override_before_first_turn_emits_environment_context() -> anyhow::Resul
     )
     .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first message".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let body = req.single_request().body_json();
     assert_eq!(body["model"].as_str(), Some("legacy-model"));
@@ -766,9 +766,9 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
     )
     .await;
 
-    let TestGenex {
-        home: _home, genex, ..
-    } = test_genex()
+    let TestRuxex {
+        home: _home, ruxex, ..
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -780,13 +780,13 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
         .await?;
 
     // First turn
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Second turn using per-turn thread-settings overrides.
     let new_cwd = TempDir::new().unwrap();
@@ -799,7 +799,7 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
     );
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, new_cwd.path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -817,7 +817,7 @@ async fn per_turn_overrides_keep_cached_prefix_and_key_constant() -> anyhow::Res
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -895,13 +895,13 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
     )
     .await;
 
-    let TestGenex {
+    let TestRuxex {
         home: _home,
-        genex,
+        ruxex,
         config,
         session_configured,
         ..
-    } = test_genex()
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -919,7 +919,7 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
     let default_effort = config.model_reasoning_effort.clone();
     let default_summary = config.model_reasoning_summary;
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -942,9 +942,9 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -967,7 +967,7 @@ async fn send_user_turn_with_no_changes_does_not_send_environment_context() -> a
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();
@@ -1029,13 +1029,13 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
         sse(vec![ev_response_created("resp-2"), ev_completed("resp-2")]),
     )
     .await;
-    let TestGenex {
+    let TestRuxex {
         home: _home,
-        genex,
+        ruxex,
         config,
         session_configured,
         ..
-    } = test_genex()
+    } = test_ruxex()
         .with_pre_build_hook(write_global_instructions)
         .with_config(|config| {
             config
@@ -1053,7 +1053,7 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
     let default_effort = config.model_reasoning_effort.clone();
     let default_summary = config.model_reasoning_summary;
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 1".into(),
@@ -1076,11 +1076,11 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, default_cwd.as_path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello 2".into(),
@@ -1104,7 +1104,7 @@ async fn send_user_turn_with_changes_sends_environment_context() -> anyhow::Resu
             }),
         )
         .await?;
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request1 = req1.single_request();
     let request2 = req2.single_request();

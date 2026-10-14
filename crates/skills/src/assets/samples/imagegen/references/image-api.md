@@ -68,7 +68,7 @@ Model-specific note for `input_fidelity`:
 
 ## Transparent backgrounds
 
-`provider-image-model` does not currently support the Image API `background=transparent` parameter. In explicit CLI/API fallback mode, keep `provider-image-model` when a flat chroma-key background plus local alpha extraction with `python "${GENEX_HOME:-$HOME/.genex}/skills/.system/imagegen/scripts/remove_chroma_key.py"` is acceptable.
+`provider-image-model` does not currently support the Image API `background=transparent` parameter. In explicit CLI/API fallback mode, keep `provider-image-model` when a flat chroma-key background plus local alpha extraction with `python "${RUXEX_HOME:-$HOME/.ruxex}/skills/.system/imagegen/scripts/remove_chroma_key.py"` is acceptable.
 
 Use CLI `provider-image-model-transparent` with `background=transparent` and a transparent-capable output format such as `png` or `webp` only after the user explicitly confirms that fallback, unless they already requested `provider-image-model-transparent`, `scripts/image_gen.py`, or CLI fallback. If the user asks for true/native transparency, the subject is too complex for clean chroma-key removal, or local background removal fails validation, explain the tradeoff and ask before switching.
 

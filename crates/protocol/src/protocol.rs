@@ -1,4 +1,4 @@
-//! Defines the protocol for a Genex session between a client and an agent.
+//! Defines the protocol for a Ruxex session between a client and an agent.
 //!
 //! Uses a SQ (Submission Queue) / EQ (Event Queue) pattern to asynchronously communicate
 //! between user and agent.
@@ -28,7 +28,7 @@ use crate::dynamic_tools::DynamicToolCallOutputContentItem;
 use crate::dynamic_tools::DynamicToolCallRequest;
 use crate::dynamic_tools::DynamicToolResponse;
 use crate::dynamic_tools::DynamicToolSpec;
-use crate::error::Result as GenexResult;
+use crate::error::Result as RuxexResult;
 use crate::items::AgentMessageDelivery;
 use crate::items::AsyncUserInputQuestion;
 use crate::items::TurnItem;
@@ -60,9 +60,9 @@ use crate::turn_input::TurnInputMode;
 use crate::turn_input::TurnInputRequest;
 use crate::turn_input::TurnInputSubmission;
 use crate::turn_input::TurnStartOptions;
-use genex_extension_items::image_generation::ImageGenerationFailure;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_extension_items::image_generation::ImageGenerationFailure;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -122,7 +122,7 @@ pub const CONTEXT_WINDOW_OPEN_TAG: &str = "<context_window>";
 pub const CONTEXT_WINDOW_CLOSE_TAG: &str = "</context_window>";
 pub const CONTEXT_WINDOW_GUIDANCE_OPEN_TAG: &str = "<context_window_guidance>";
 pub const CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG: &str = "</context_window_guidance>";
-pub const USER_MESSAGE_BEGIN: &str = "## My request for Genex:";
+pub const USER_MESSAGE_BEGIN: &str = "## My request for Ruxex:";
 
 /// Removes the model-context prefix from a user message before displaying it.
 pub fn strip_user_message_prefix(text: &str) -> &str {
@@ -268,19 +268,19 @@ pub enum Op {
     TurnInput {
         request: Box<TurnInputRequest>,
         mode: TurnInputMode,
-        reply: oneshot::Sender<GenexResult<TurnInputSubmission>>,
+        reply: oneshot::Sender<RuxexResult<TurnInputSubmission>>,
     },
 
     /// Resume an interrupted regular turn.
     RecoverTurn {
         thread_settings: ThreadSettingsOverrides,
         start_options: TurnStartOptions,
-        reply: oneshot::Sender<GenexResult<TurnInputSubmission>>,
+        reply: oneshot::Sender<RuxexResult<TurnInputSubmission>>,
     },
 
     /// Stop the active root turn without recording a terminal turn event.
     SuspendTurnAndShutdown {
-        reply: oneshot::Sender<GenexResult<SuspendTurnOutcome>>,
+        reply: oneshot::Sender<RuxexResult<SuspendTurnOutcome>>,
     },
 
     /// Apply thread-settings overrides without starting a turn.
@@ -380,7 +380,7 @@ pub enum Op {
     /// Request a code review from the agent.
     Review { review_request: ReviewRequest },
 
-    /// Request to shut down Genex instance.
+    /// Request to shut down Ruxex instance.
     Shutdown,
 
     /// Execute a user-initiated one-off shell command (triggered by "!cmd").
@@ -578,7 +578,7 @@ impl Op {
 }
 
 /// Determines the conditions under which the user is consulted to approve
-/// running the command proposed by Genex.
+/// running the command proposed by Ruxex.
 #[derive(
     Debug,
     Clone,
@@ -734,7 +734,7 @@ pub enum SandboxPolicy {
 /// A writable root path accompanied by a list of subpaths that should remain
 /// read‑only even when the root is writable. This is primarily used to ensure
 /// that folders containing files that could be modified to escalate the
-/// privileges of the agent (e.g. `.genex`, `.git`, notably `.git/hooks`) under
+/// privileges of the agent (e.g. `.ruxex`, `.git`, notably `.git/hooks`) under
 /// a writable root are not modified by the agent.
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
 pub struct WritableRoot {
@@ -929,13 +929,13 @@ impl SandboxPolicy {
                 roots
                     .into_iter()
                     .map(|writable_root| {
-                        let protect_missing_dot_genex = cwd_root
+                        let protect_missing_dot_ruxex = cwd_root
                             .as_ref()
                             .is_some_and(|cwd_root| cwd_root == &writable_root);
                         WritableRoot {
                             read_only_subpaths: default_read_only_subpaths_for_writable_root(
                                 &writable_root,
-                                protect_missing_dot_genex,
+                                protect_missing_dot_ruxex,
                             ),
                             protected_metadata_names: Vec::new(),
                             root: writable_root,
@@ -1392,11 +1392,11 @@ pub enum NonSteerableTurnKind {
     Compact,
 }
 
-/// Genex errors that we expose to clients.
+/// Ruxex errors that we expose to clients.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
 #[serde(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
-pub enum GenexErrorInfo {
+pub enum RuxexErrorInfo {
     ContextWindowExceeded,
     SessionBudgetExceeded,
     UsageLimitExceeded,
@@ -1433,7 +1433,7 @@ pub enum GenexErrorInfo {
     Other,
 }
 
-impl GenexErrorInfo {
+impl RuxexErrorInfo {
     /// Whether this error should mark the current turn as failed when replaying history.
     pub fn affects_turn_status(&self) -> bool {
         match self {
@@ -1612,7 +1612,7 @@ impl fmt::Debug for MisalignmentSteer {
 pub struct ErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub genex_error_info: Option<GenexErrorInfo>,
+    pub ruxex_error_info: Option<RuxexErrorInfo>,
     /// Sensitive explanation and steering are delivered live but never enter rollout storage.
     #[serde(skip)]
     #[schemars(skip)]
@@ -1623,9 +1623,9 @@ pub struct ErrorEvent {
 impl ErrorEvent {
     /// Whether this error should mark the current turn as failed when replaying history.
     pub fn affects_turn_status(&self) -> bool {
-        self.genex_error_info
+        self.ruxex_error_info
             .as_ref()
-            .is_none_or(GenexErrorInfo::affects_turn_status)
+            .is_none_or(RuxexErrorInfo::affects_turn_status)
     }
 }
 
@@ -1784,7 +1784,7 @@ pub struct TokenUsage {
     #[serde(default, skip_serializing)]
     #[schemars(skip)]
     #[ts(skip)]
-    pub genex_rollout_budget_units: Option<serde_json::Number>,
+    pub ruxex_rollout_budget_units: Option<serde_json::Number>,
 }
 
 /// Best-effort Responses API usage observed for one completed response.
@@ -2871,7 +2871,7 @@ impl TruncationPolicy {
     pub fn token_budget(&self) -> usize {
         match self {
             TruncationPolicy::Bytes(bytes) => {
-                usize::try_from(genex_utils_string::approx_tokens_from_byte_count(*bytes))
+                usize::try_from(ruxex_utils_string::approx_tokens_from_byte_count(*bytes))
                     .unwrap_or(usize::MAX)
             }
             TruncationPolicy::Tokens(tokens) => *tokens,
@@ -2882,7 +2882,7 @@ impl TruncationPolicy {
         match self {
             TruncationPolicy::Bytes(bytes) => *bytes,
             TruncationPolicy::Tokens(tokens) => {
-                genex_utils_string::approx_bytes_for_tokens(*tokens)
+                ruxex_utils_string::approx_bytes_for_tokens(*tokens)
             }
         }
     }
@@ -3175,7 +3175,7 @@ pub struct ThreadRolledBackEvent {
 pub struct StreamErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub genex_error_info: Option<GenexErrorInfo>,
+    pub ruxex_error_info: Option<RuxexErrorInfo>,
     /// Optional details about the underlying stream failure (often the same
     /// human-readable message that is surfaced as the terminal error if retries
     /// are exhausted).
@@ -3992,9 +3992,9 @@ mod tests {
     use crate::permissions::FileSystemSpecialPath;
     use crate::permissions::NetworkSandboxPolicy;
     use anyhow::Result;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -4575,7 +4575,7 @@ mod tests {
     #[test]
     fn restricted_file_system_policy_treats_root_with_carveouts_as_scoped_access() {
         let cwd = TempDir::new().expect("tempdir");
-        let canonical_cwd = genex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
+        let canonical_cwd = ruxex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
             .expect("canonicalize cwd");
         let root = AbsolutePathBuf::from_absolute_path(&canonical_cwd)
             .expect("absolute canonical tempdir")
@@ -4586,7 +4586,7 @@ mod tests {
             .expect("filesystem root");
         let blocked = AbsolutePathBuf::resolve_path_against_base("blocked", cwd.path());
         let expected_blocked = AbsolutePathBuf::from_absolute_path(
-            genex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
+            ruxex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
                 .expect("canonicalize cwd")
                 .join("blocked"),
         )
@@ -4632,8 +4632,8 @@ mod tests {
     fn restricted_file_system_policy_derives_effective_paths() {
         let cwd = TempDir::new().expect("tempdir");
         std::fs::create_dir_all(cwd.path().join(".agents")).expect("create .agents");
-        std::fs::create_dir_all(cwd.path().join(".genex")).expect("create .genex");
-        let canonical_cwd = genex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
+        std::fs::create_dir_all(cwd.path().join(".ruxex")).expect("create .ruxex");
+        let canonical_cwd = ruxex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
             .expect("canonicalize cwd");
         let cwd_absolute =
             AbsolutePathBuf::from_absolute_path(&canonical_cwd).expect("absolute tempdir");
@@ -4642,8 +4642,8 @@ mod tests {
             .expect("canonical secret");
         let expected_agents = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".agents"))
             .expect("canonical .agents");
-        let expected_genex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
-            .expect("canonical .genex");
+        let expected_ruxex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".ruxex"))
+            .expect("canonical .ruxex");
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
@@ -4697,14 +4697,14 @@ mod tests {
             writable_roots[0]
                 .read_only_subpaths
                 .iter()
-                .any(|path| path.as_path() == expected_genex.as_path())
+                .any(|path| path.as_path() == expected_ruxex.as_path())
         );
     }
 
     #[test]
     fn restricted_file_system_policy_treats_read_entries_as_read_only_subpaths() {
         let cwd = TempDir::new().expect("tempdir");
-        let canonical_cwd = genex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
+        let canonical_cwd = ruxex_utils_absolute_path::canonicalize_preserving_symlinks(cwd.path())
             .expect("canonicalize cwd");
         let docs = AbsolutePathBuf::resolve_path_against_base("docs", cwd.path());
         let docs_public = AbsolutePathBuf::resolve_path_against_base("docs/public", cwd.path());
@@ -4713,8 +4713,8 @@ mod tests {
         let expected_docs_public =
             AbsolutePathBuf::from_absolute_path(canonical_cwd.join("docs/public"))
                 .expect("canonical docs/public");
-        let expected_dot_genex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".genex"))
-            .expect("canonical .genex");
+        let expected_dot_ruxex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".ruxex"))
+            .expect("canonical .ruxex");
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
@@ -4742,7 +4742,7 @@ mod tests {
                 (
                     canonical_cwd,
                     vec![
-                        expected_dot_genex.to_path_buf(),
+                        expected_dot_ruxex.to_path_buf(),
                         expected_docs.to_path_buf()
                     ],
                 ),
@@ -5343,7 +5343,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "rollback failed".into(),
-            genex_error_info: Some(GenexErrorInfo::ThreadRollbackFailed),
+            ruxex_error_info: Some(RuxexErrorInfo::ThreadRollbackFailed),
         };
         assert!(!event.affects_turn_status());
     }
@@ -5353,7 +5353,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "cannot steer a review turn".into(),
-            genex_error_info: Some(GenexErrorInfo::ActiveTurnNotSteerable {
+            ruxex_error_info: Some(RuxexErrorInfo::ActiveTurnNotSteerable {
                 turn_kind: NonSteerableTurnKind::Review,
             }),
         };
@@ -5365,7 +5365,7 @@ mod tests {
         let event = ErrorEvent {
             misalignment: None,
             message: "generic".into(),
-            genex_error_info: Some(GenexErrorInfo::Other),
+            ruxex_error_info: Some(RuxexErrorInfo::Other),
         };
         assert!(event.affects_turn_status());
     }
@@ -5374,7 +5374,7 @@ mod tests {
     fn misalignment_explanation_and_steer_are_never_serialized_into_error_events() {
         let event = ErrorEvent {
             message: "This request violated the misalignment policy.".to_string(),
-            genex_error_info: Some(GenexErrorInfo::MisalignmentPolicyViolation),
+            ruxex_error_info: Some(RuxexErrorInfo::MisalignmentPolicyViolation),
             misalignment: Some(MisalignmentErrorDetails {
                 error_type: Some("unauthorized_data_transfer".to_string()),
                 detailed_explanation: Some("Sensitive customer explanation".to_string()),
@@ -5389,7 +5389,7 @@ mod tests {
             serialized,
             json!({
                 "message": "This request violated the misalignment policy.",
-                "genex_error_info": "misalignment_policy_violation"
+                "ruxex_error_info": "misalignment_policy_violation"
             })
         );
         let restored: ErrorEvent =
@@ -5834,7 +5834,7 @@ mod tests {
             output_tokens: 0,
             reasoning_output_tokens: 0,
             total_tokens: 10,
-            genex_rollout_budget_units: None,
+            ruxex_rollout_budget_units: None,
         });
 
         let info = TokenUsageInfo::new_or_append(&initial, &last, Some(128_000))
@@ -5857,7 +5857,7 @@ mod tests {
             output_tokens: 0,
             reasoning_output_tokens: 0,
             total_tokens: 10,
-            genex_rollout_budget_units: None,
+            ruxex_rollout_budget_units: None,
         });
 
         let info =

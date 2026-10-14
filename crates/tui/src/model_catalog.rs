@@ -1,8 +1,8 @@
 //! TUI model and collaboration inventories; refreshing models preserves the server mode catalog.
 
-use genex_app_server_protocol::AppServerIdentity;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::model_types::ModelPreset;
+use ruxex_app_server_protocol::AppServerIdentity;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::model_types::ModelPreset;
 use std::convert::Infallible;
 
 /// Identity of the AppServer context that produced provider-derived catalog data.

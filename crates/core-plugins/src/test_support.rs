@@ -9,55 +9,55 @@ use crate::PluginsConfigInput;
 use crate::PluginsManager;
 use crate::TEST_API_CURATED_MARKETPLACE_NAME;
 use crate::TEST_CURATED_MARKETPLACE_NAME;
-use genex_config::LoaderOverrides;
-use genex_config::NoopThreadConfigLoader;
-use genex_config::loader::load_config_layers_state;
-use genex_exec_server::LOCAL_FS;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::LoadedSkillRoot;
-use genex_skills::LoadedSkills;
-use genex_skills::SkillError;
-use genex_skills::SkillLoadFuture;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillRootLoadRequest;
-use genex_skills::SkillRootLoader;
-use genex_skills::parse_skill_frontmatter_metadata;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::SkillDiscoveryMode;
-use genex_utils_plugins::migrated_command_skills_root;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_config::loader::load_config_layers_state;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::LoadedSkillRoot;
+use ruxex_skills::LoadedSkills;
+use ruxex_skills::SkillError;
+use ruxex_skills::SkillLoadFuture;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillRootLoadRequest;
+use ruxex_skills::SkillRootLoader;
+use ruxex_skills::parse_skill_frontmatter_metadata;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::SkillDiscoveryMode;
+use ruxex_utils_plugins::migrated_command_skills_root;
 use toml::Value;
 
 pub(crate) const TEST_CURATED_PLUGIN_SHA: &str = "0123456789abcdef0123456789abcdef01234567";
 pub(crate) const TEST_CURATED_PLUGIN_CACHE_VERSION: &str = "01234567";
 
-pub(crate) fn curated_plugins_repo_path(genex_home: &Path) -> PathBuf {
-    genex_home.join(".tmp/plugins")
+pub(crate) fn curated_plugins_repo_path(ruxex_home: &Path) -> PathBuf {
+    ruxex_home.join(".tmp/plugins")
 }
 
-pub(crate) fn test_plugins_manager(genex_home: PathBuf) -> PluginsManager {
+pub(crate) fn test_plugins_manager(ruxex_home: PathBuf) -> PluginsManager {
     PluginsManager::new(
-        genex_home,
-        genex_credential_broker::UnsupportedCredentialBroker::shared(),
+        ruxex_home,
+        ruxex_credential_broker::UnsupportedCredentialBroker::shared(),
         test_skill_root_loader(),
     )
 }
 
 pub(crate) fn test_plugins_manager_with_options(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     restriction_product: Option<Product>,
     auth_mode: Option<AuthMode>,
 ) -> PluginsManager {
     PluginsManager::new_with_options(
-        genex_home,
+        ruxex_home,
         restriction_product,
         {
             let _ = auth_mode;
-            genex_credential_broker::UnsupportedCredentialBroker::shared()
+            ruxex_credential_broker::UnsupportedCredentialBroker::shared()
         },
         test_skill_root_loader(),
     )
@@ -225,7 +225,7 @@ pub(crate) fn write_file(path: &Path, contents: &str) {
 pub(crate) fn write_curated_plugin(root: &Path, plugin_name: &str) {
     let plugin_root = root.join("plugins").join(plugin_name);
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         &format!(
             r#"{{
   "name": "{plugin_name}",
@@ -328,16 +328,16 @@ fn write_curated_marketplace(
     }
 }
 
-pub(crate) fn write_curated_plugin_sha_with(genex_home: &Path, sha: &str) {
-    write_file(&genex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
+pub(crate) fn write_curated_plugin_sha_with(ruxex_home: &Path, sha: &str) {
+    write_file(&ruxex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
 }
 
-pub(crate) async fn load_plugins_config(genex_home: &Path, cwd: &Path) -> PluginsConfigInput {
-    let genex_home = AbsolutePathBuf::try_from(genex_home).expect("genex home should be absolute");
+pub(crate) async fn load_plugins_config(ruxex_home: &Path, cwd: &Path) -> PluginsConfigInput {
+    let ruxex_home = AbsolutePathBuf::try_from(ruxex_home).expect("ruxex home should be absolute");
     let cwd = AbsolutePathBuf::try_from(cwd).expect("cwd should be absolute");
     let config_layer_stack = load_config_layers_state(
         LOCAL_FS.as_ref(),
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         Some(cwd),
         &[],
         LoaderOverrides::without_managed_config_for_tests(),

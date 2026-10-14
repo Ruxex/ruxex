@@ -2,8 +2,8 @@
 //! The segment owns rendering and attribution; consumers select and capture its inputs.
 
 use crate::without_update_plan_instructions;
-use genex_context_fragments::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_context_fragments::ContextualUserFragment;
+use ruxex_protocol::models::ContentItemKind;
 
 const DEFAULT_MULTI_AGENT_V2_MODEL_OVERRIDE_USAGE_HINT_TEXT: &str = "Full-history forks (`fork_turns` omitted or `\"all\"`) inherit the parent model and reasoning effort and do not accept overrides. Only set `model` or `reasoning_effort` when explicitly requested by the user, applicable `AGENTS.md` instructions, or skill instructions; when doing so, set `fork_turns` to `\"none\"` or a positive integer string.";
 const DEFAULT_MULTI_AGENT_V2_WAIT_AGENT_USAGE_HINT_TEXT: &str =

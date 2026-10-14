@@ -1,8 +1,8 @@
 //! Rate-limit warning, prompt, and notice surfaces, plus quota-aware account refresh cadence.
 
 use super::*;
-use genex_app_server_protocol::GenexErrorInfo as AppServerGenexErrorInfo;
-use genex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
+use ruxex_app_server_protocol::RuxexErrorInfo as AppServerRuxexErrorInfo;
+use ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_THRESHOLD: f64 = 90.0;
 pub(super) const RATE_LIMIT_SWITCH_PROMPT_VIEW_ID: &str = "rate-limit-switch-prompt";
@@ -147,20 +147,20 @@ pub(super) enum RateLimitErrorKind {
 }
 
 pub(super) fn app_server_rate_limit_error_kind(
-    info: &AppServerGenexErrorInfo,
+    info: &AppServerRuxexErrorInfo,
 ) -> Option<RateLimitErrorKind> {
     match info {
-        AppServerGenexErrorInfo::ServerOverloaded => Some(RateLimitErrorKind::ServerOverloaded),
-        AppServerGenexErrorInfo::UsageLimitExceeded => Some(RateLimitErrorKind::UsageLimit),
-        AppServerGenexErrorInfo::ResponseTooManyFailedAttempts {
+        AppServerRuxexErrorInfo::ServerOverloaded => Some(RateLimitErrorKind::ServerOverloaded),
+        AppServerRuxexErrorInfo::UsageLimitExceeded => Some(RateLimitErrorKind::UsageLimit),
+        AppServerRuxexErrorInfo::ResponseTooManyFailedAttempts {
             http_status_code: Some(429),
         } => Some(RateLimitErrorKind::Generic),
         _ => None,
     }
 }
 
-pub(super) fn is_app_server_cyber_policy_error(info: &AppServerGenexErrorInfo) -> bool {
-    matches!(info, AppServerGenexErrorInfo::CyberPolicy)
+pub(super) fn is_app_server_cyber_policy_error(info: &AppServerRuxexErrorInfo) -> bool {
+    matches!(info, AppServerRuxexErrorInfo::CyberPolicy)
 }
 
 #[derive(Clone, Copy)]
@@ -254,16 +254,16 @@ impl ChatWidget {
                 && (matches!(source, RateLimitSnapshotSource::AccountUsage)
                     || snapshot.spend_control_reached.is_some())
             {
-                self.genex_spend_control_reached = snapshot.spend_control_reached;
+                self.ruxex_spend_control_reached = snapshot.spend_control_reached;
             }
             if (is_default_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
                 || snapshot.rate_limit_reached_type.is_some()
             {
-                self.genex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
+                self.ruxex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
             }
-            let workspace_limit_reached = self.genex_spend_control_reached == Some(true)
+            let workspace_limit_reached = self.ruxex_spend_control_reached == Some(true)
                 || matches!(
-                    self.genex_rate_limit_reached_type,
+                    self.ruxex_rate_limit_reached_type,
                     Some(
                         RateLimitReachedType::WorkspaceOwnerCreditsDepleted
                             | RateLimitReachedType::WorkspaceMemberCreditsDepleted
@@ -356,8 +356,8 @@ impl ChatWidget {
             }
         } else {
             self.rate_limit_snapshots_by_limit_id.clear();
-            self.genex_rate_limit_reached_type = None;
-            self.genex_spend_control_reached = None;
+            self.ruxex_rate_limit_reached_type = None;
+            self.ruxex_spend_control_reached = None;
         }
         self.refresh_status_line();
     }
@@ -421,7 +421,7 @@ impl ChatWidget {
         let default_effort: ReasoningEffortConfig = preset.default_reasoning_effort;
 
         let switch_actions: Vec<SelectionAction> = vec![Box::new(move |tx| {
-            tx.send(AppEvent::GenexOp(AppCommand::override_turn_context(
+            tx.send(AppEvent::RuxexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 /*approval_policy*/ None,
                 /*permission_profile*/ None,

@@ -9,21 +9,21 @@ use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::encode_fixture_token;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::LoginAccountResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
-use genex_state::SqliteConfig;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::LoginAccountResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
+use ruxex_state::SqliteConfig;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -51,8 +51,8 @@ const READ_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[test]
 fn standalone_app_server_emits_json_info_events() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let event = app_server_json_shutdown_event("genex-app-server", &[], genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    let event = app_server_json_shutdown_event("ruxex-app-server", &[], ruxex_home.path())?;
 
     assert_eq!(
         event,
@@ -64,7 +64,7 @@ fn standalone_app_server_emits_json_info_events() -> Result<()> {
                 "remaining_connection_count": 0,
                 "shutdown_forced": false,
             },
-            "target": "genex_app_server",
+            "target": "ruxex_app_server",
         })
     );
 
@@ -73,7 +73,7 @@ fn standalone_app_server_emits_json_info_events() -> Result<()> {
 
 #[tokio::test]
 async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
-    let quiet_period = genex_state::log_db::LogSinkQueueConfig::default().flush_interval
+    let quiet_period = ruxex_state::log_db::LogSinkQueueConfig::default().flush_interval
         + Duration::from_millis(600);
     let export_timeout = quiet_period * 3;
 
@@ -85,17 +85,17 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             .mount(&collector)
             .await;
 
-        let genex_home = TempDir::new()?;
+        let ruxex_home = TempDir::new()?;
         let endpoint = format!("{}/v1/metrics", collector.uri());
         std::fs::write(
-            genex_home.path().join("config.toml"),
+            ruxex_home.path().join("config.toml"),
             format!(
                 "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-http]\nendpoint = {endpoint:?}\nprotocol = \"json\"\n"
             ),
         )?;
 
         let _app_server = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .with_env_overrides(&[
                 ("OTEL_METRIC_EXPORT_INTERVAL", Some("200")),
             ])
@@ -106,7 +106,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             loop {
                 let requests = collector.received_requests().await.unwrap_or_default();
                 if requests.iter().any(|request| {
-                    String::from_utf8_lossy(&request.body).contains(genex_state::LOG_WRITE_METRIC)
+                    String::from_utf8_lossy(&request.body).contains(ruxex_state::LOG_WRITE_METRIC)
                 }) {
                     break requests.len();
                 }
@@ -132,11 +132,11 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
         })?;
 
         let expected_metrics = [
-            (genex_state::LOG_WRITE_METRIC, "sum"),
-            (genex_state::LOG_WRITE_DURATION_METRIC, "histogram"),
-            (genex_state::LOG_WRITE_BYTES_METRIC, "histogram"),
-            (genex_state::LOG_WRITE_ENTRIES_METRIC, "histogram"),
-            (genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC, "histogram"),
+            (ruxex_state::LOG_WRITE_METRIC, "sum"),
+            (ruxex_state::LOG_WRITE_DURATION_METRIC, "histogram"),
+            (ruxex_state::LOG_WRITE_BYTES_METRIC, "histogram"),
+            (ruxex_state::LOG_WRITE_ENTRIES_METRIC, "histogram"),
+            (ruxex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC, "histogram"),
         ];
         let payloads = requests
             .iter()
@@ -173,7 +173,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
                     attributes,
                     BTreeMap::from([
                         ("error", "none"),
-                        ("originator", "genex-app-server"),
+                        ("originator", "ruxex-app-server"),
                         ("status", "success"),
                     ]),
                     "metric {name} must preserve its production dimensions"
@@ -197,8 +197,8 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
 
                 if matches!(
                     name,
-                    genex_state::LOG_WRITE_BYTES_METRIC
-                        | genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC
+                    ruxex_state::LOG_WRITE_BYTES_METRIC
+                        | ruxex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC
                 ) {
                     let bounds = point["explicitBounds"]
                         .as_array()
@@ -209,7 +209,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             }
         }
 
-        let write_count = observed_metrics[genex_state::LOG_WRITE_METRIC].0;
+        let write_count = observed_metrics[ruxex_state::LOG_WRITE_METRIC].0;
         assert!(write_count > 0, "at least one SQLite batch must be written");
         for (name, _) in expected_metrics {
             assert_eq!(
@@ -218,19 +218,19 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
             );
         }
 
-        let state = genex_state::StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        let state = ruxex_state::StateRuntime::init(
+            ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
         )
         .await?;
-        let persisted_logs = state.query_logs(&genex_state::LogQuery::default()).await?;
+        let persisted_logs = state.query_logs(&ruxex_state::LogQuery::default()).await?;
         assert_eq!(
-            observed_metrics[genex_state::LOG_WRITE_ENTRIES_METRIC].1,
+            observed_metrics[ruxex_state::LOG_WRITE_ENTRIES_METRIC].1,
             persisted_logs.len() as f64,
             "exported batch sizes must equal the number of persisted SQLite log rows"
         );
         assert!(
-            observed_metrics[genex_state::LOG_WRITE_BYTES_METRIC].1
-                >= observed_metrics[genex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC].1,
+            observed_metrics[ruxex_state::LOG_WRITE_BYTES_METRIC].1
+                >= observed_metrics[ruxex_state::LOG_WRITE_MAX_ENTRY_BYTES_METRIC].1,
             "each batch's largest entry cannot exceed the total batch size"
         );
     }
@@ -244,7 +244,7 @@ async fn sqlite_log_metrics_exports_do_not_create_log_cycles() -> Result<()> {
 #[test_case("14"; "unavailable")]
 #[tokio::test]
 async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &str) -> Result<()> {
-    let quiet_period = genex_state::log_db::LogSinkQueueConfig::default().flush_interval
+    let quiet_period = ruxex_state::log_db::LogSinkQueueConfig::default().flush_interval
         + Duration::from_millis(600);
     let export_timeout = quiet_period * 3;
     let (export_count, mut exports) = watch::channel(/*init*/ 0_usize);
@@ -263,7 +263,7 @@ async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &
             "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export",
         ))
         .respond_with(move |request: &wiremock::Request| {
-            let metric_name = genex_state::LOG_WRITE_METRIC.as_bytes();
+            let metric_name = ruxex_state::LOG_WRITE_METRIC.as_bytes();
             if request
                 .body
                 .windows(metric_name.len())
@@ -316,15 +316,15 @@ async fn sqlite_log_metrics_grpc_exports_do_not_create_log_cycles(grpc_status: &
         Ok::<(), std::io::Error>(())
     });
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             "[metrics]\nenabled = true\n\n[otel.metrics_exporter.otlp-grpc]\nendpoint = {endpoint:?}\n"
         ),
     )?;
     let _app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[
             ("OTEL_METRIC_EXPORT_INTERVAL", Some("200")),
         ])
@@ -373,16 +373,16 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::UnifiedExec)
         .with_root_config("compact_prompt = \"compact\"\nmodel_auto_compact_token_limit = 100000")
         .with_provider_config("supports_websockets = false")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .with_json_logging("warn,genex_core::tools::parallel=info")
+        .with_ruxex_home(ruxex_home.path())
+        .with_json_logging("warn,ruxex_core::tools::parallel=info")
         .build_initialized()
         .await?;
 
@@ -415,7 +415,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
     .await??;
 
     let mut tool_call = app_server
-        .wait_for_json_log_event("genex.tool_call")
+        .wait_for_json_log_event("ruxex.tool_call")
         .await?;
     let tool_call_object = tool_call
         .as_object_mut()
@@ -459,7 +459,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
             "level": "INFO",
             "fields": {
                 "message": "tool call completed",
-                "event.name": "genex.tool_call",
+                "event.name": "ruxex.tool_call",
                 "conversation.id": thread.id,
                 "turn_id": turn.id,
                 "tool_name": "exec_command",
@@ -467,7 +467,7 @@ async fn app_server_emits_structured_tool_call_timing_event() -> Result<()> {
                 "tool_source": "direct",
                 "execution_started": true,
             },
-            "target": "genex_core::tools::parallel",
+            "target": "ruxex_core::tools::parallel",
         })
     );
 

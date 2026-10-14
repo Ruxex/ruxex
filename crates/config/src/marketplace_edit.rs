@@ -25,27 +25,27 @@ pub enum RemoveMarketplaceConfigOutcome {
 }
 
 pub fn record_user_marketplace(
-    genex_home: &Path,
+    ruxex_home: &Path,
     marketplace_name: &str,
     update: &MarketplaceConfigUpdate<'_>,
 ) -> std::io::Result<()> {
-    let config_path = genex_home.join(CONFIG_TOML_FILE);
+    let config_path = ruxex_home.join(CONFIG_TOML_FILE);
     let mut doc = read_or_create_document(&config_path)?;
     upsert_marketplace(&mut doc, marketplace_name, update);
-    fs::create_dir_all(genex_home)?;
+    fs::create_dir_all(ruxex_home)?;
     fs::write(config_path, doc.to_string())
 }
 
-pub fn remove_user_marketplace(genex_home: &Path, marketplace_name: &str) -> std::io::Result<bool> {
-    let outcome = remove_user_marketplace_config(genex_home, marketplace_name)?;
+pub fn remove_user_marketplace(ruxex_home: &Path, marketplace_name: &str) -> std::io::Result<bool> {
+    let outcome = remove_user_marketplace_config(ruxex_home, marketplace_name)?;
     Ok(outcome == RemoveMarketplaceConfigOutcome::Removed)
 }
 
 pub fn remove_user_marketplace_config(
-    genex_home: &Path,
+    ruxex_home: &Path,
     marketplace_name: &str,
 ) -> std::io::Result<RemoveMarketplaceConfigOutcome> {
-    let config_path = genex_home.join(CONFIG_TOML_FILE);
+    let config_path = ruxex_home.join(CONFIG_TOML_FILE);
     let mut doc = match fs::read_to_string(&config_path) {
         Ok(raw) => raw
             .parse::<DocumentMut>()
@@ -61,7 +61,7 @@ pub fn remove_user_marketplace_config(
         return Ok(outcome);
     }
 
-    fs::create_dir_all(genex_home)?;
+    fs::create_dir_all(ruxex_home)?;
     fs::write(config_path, doc.to_string())?;
     Ok(RemoveMarketplaceConfigOutcome::Removed)
 }
@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn record_user_marketplace_omits_runtime_update_metadata() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         let update = MarketplaceConfigUpdate {
             source_type: "git",
             source: "https://github.com/owner/repo.git",
@@ -190,10 +190,10 @@ mod tests {
             sparse_paths: &[],
         };
 
-        record_user_marketplace(genex_home.path(), "debug", &update).unwrap();
+        record_user_marketplace(ruxex_home.path(), "debug", &update).unwrap();
 
         let config: toml::Value =
-            toml::from_str(&fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE)).unwrap())
+            toml::from_str(&fs::read_to_string(ruxex_home.path().join(CONFIG_TOML_FILE)).unwrap())
                 .unwrap();
         let marketplace = config
             .get("marketplaces")
@@ -217,21 +217,21 @@ mod tests {
 
     #[test]
     fn remove_user_marketplace_removes_requested_entry() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         let update = MarketplaceConfigUpdate {
             source_type: "git",
             source: "https://github.com/owner/repo.git",
             ref_name: Some("main"),
             sparse_paths: &[],
         };
-        record_user_marketplace(genex_home.path(), "debug", &update).unwrap();
-        record_user_marketplace(genex_home.path(), "other", &update).unwrap();
+        record_user_marketplace(ruxex_home.path(), "debug", &update).unwrap();
+        record_user_marketplace(ruxex_home.path(), "other", &update).unwrap();
 
-        let removed = remove_user_marketplace(genex_home.path(), "debug").unwrap();
+        let removed = remove_user_marketplace(ruxex_home.path(), "debug").unwrap();
 
         assert!(removed);
         let config: toml::Value =
-            toml::from_str(&fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE)).unwrap())
+            toml::from_str(&fs::read_to_string(ruxex_home.path().join(CONFIG_TOML_FILE)).unwrap())
                 .unwrap();
         let marketplaces = config
             .get("marketplaces")
@@ -243,25 +243,25 @@ mod tests {
 
     #[test]
     fn remove_user_marketplace_returns_false_when_missing() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
 
-        let removed = remove_user_marketplace(genex_home.path(), "debug").unwrap();
+        let removed = remove_user_marketplace(ruxex_home.path(), "debug").unwrap();
 
         assert!(!removed);
     }
 
     #[test]
     fn remove_user_marketplace_config_reports_case_mismatch() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         let update = MarketplaceConfigUpdate {
             source_type: "git",
             source: "https://github.com/owner/repo.git",
             ref_name: Some("main"),
             sparse_paths: &[],
         };
-        record_user_marketplace(genex_home.path(), "debug", &update).unwrap();
+        record_user_marketplace(ruxex_home.path(), "debug", &update).unwrap();
 
-        let outcome = remove_user_marketplace_config(genex_home.path(), "Debug").unwrap();
+        let outcome = remove_user_marketplace_config(ruxex_home.path(), "Debug").unwrap();
 
         assert_eq!(
             outcome,
@@ -273,9 +273,9 @@ mod tests {
 
     #[test]
     fn remove_user_marketplace_config_removes_inline_table_entry() {
-        let genex_home = TempDir::new().unwrap();
+        let ruxex_home = TempDir::new().unwrap();
         fs::write(
-            genex_home.path().join(CONFIG_TOML_FILE),
+            ruxex_home.path().join(CONFIG_TOML_FILE),
             r#"
 marketplaces = {
   debug = { source_type = "git", source = "https://github.com/owner/repo.git" },
@@ -285,11 +285,11 @@ marketplaces = {
         )
         .unwrap();
 
-        let outcome = remove_user_marketplace_config(genex_home.path(), "debug").unwrap();
+        let outcome = remove_user_marketplace_config(ruxex_home.path(), "debug").unwrap();
 
         assert_eq!(outcome, RemoveMarketplaceConfigOutcome::Removed);
         let config: toml::Value =
-            toml::from_str(&fs::read_to_string(genex_home.path().join(CONFIG_TOML_FILE)).unwrap())
+            toml::from_str(&fs::read_to_string(ruxex_home.path().join(CONFIG_TOML_FILE)).unwrap())
                 .unwrap();
         let marketplaces = config
             .get("marketplaces")

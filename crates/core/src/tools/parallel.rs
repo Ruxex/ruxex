@@ -26,10 +26,10 @@ use crate::tools::registry::AnyToolResult;
 use crate::tools::registry::ToolArgumentDiffConsumer;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::error::GenexErr;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ToolResultMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ToolResultMetadata;
 
 struct ToolCallTimingGuard {
     started_at: Instant,
@@ -37,7 +37,7 @@ struct ToolCallTimingGuard {
     conversation_id: String,
     turn_id: String,
     call_id: String,
-    tool_name: genex_tools::ToolName,
+    tool_name: ruxex_tools::ToolName,
 }
 
 #[derive(Clone)]
@@ -65,7 +65,7 @@ impl ToolCallRuntime {
 
     pub(crate) fn create_diff_consumer(
         &self,
-        tool_name: &genex_tools::ToolName,
+        tool_name: &ruxex_tools::ToolName,
     ) -> Option<Box<dyn ToolArgumentDiffConsumer>> {
         self.step_context
             .tool_router
@@ -77,7 +77,7 @@ impl ToolCallRuntime {
         self,
         call: ToolCall,
         cancellation_token: CancellationToken,
-    ) -> impl std::future::Future<Output = Result<ResponseItemEnvelope, GenexErr>> {
+    ) -> impl std::future::Future<Output = Result<ResponseItemEnvelope, RuxexErr>> {
         let error_call = call.clone();
         let source = call.direct_source();
         let recorder = self.session.services.executed_tool_calls.clone();
@@ -98,7 +98,7 @@ impl ToolCallRuntime {
                     }
                     result.into_response()
                 }
-                Err(FunctionCallError::Fatal(message)) => return Err(GenexErr::Fatal(message)),
+                Err(FunctionCallError::Fatal(message)) => return Err(RuxexErr::Fatal(message)),
                 Err(other) => {
                     ResponseItemEnvelope::new(Self::failure_response(error_call, other).into())
                 }
@@ -270,15 +270,15 @@ impl ToolCallRuntime {
             ToolPayload::Custom { .. } => ResponseInputItem::CustomToolCallOutput {
                 call_id: call.call_id,
                 name: None,
-                output: genex_protocol::models::FunctionCallOutputPayload {
-                    body: genex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: ruxex_protocol::models::FunctionCallOutputPayload {
+                    body: ruxex_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },
             _ => ResponseInputItem::FunctionCallOutput {
                 call_id: call.call_id,
-                output: genex_protocol::models::FunctionCallOutputPayload {
-                    body: genex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: ruxex_protocol::models::FunctionCallOutputPayload {
+                    body: ruxex_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },
@@ -360,8 +360,8 @@ impl Drop for ToolCallTimingGuard {
         macro_rules! log_tool_call {
             ($dispatch_duration_ms:expr, $handler_duration_ms:expr, $total_duration_ms:expr) => {
                 info!(
-                    event.name = "genex.tool_call",
-                    trace_id = %genex_otel::current_span_trace_id().unwrap_or_default(),
+                    event.name = "ruxex.tool_call",
+                    trace_id = %ruxex_otel::current_span_trace_id().unwrap_or_default(),
                     conversation.id = %self.conversation_id,
                     turn_id = %self.turn_id,
                     tool_name = %self.tool_name,

@@ -1,16 +1,16 @@
 use crate::ResolvedPluginMetricsOperation;
 use futures::StreamExt;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::Environment;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::FileSystemReadStream;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WriteFileOptions;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FileSystemReadStream;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -22,7 +22,7 @@ use std::sync::Arc;
 use tempfile::NamedTempFile;
 use uuid::Uuid;
 
-pub const PLUGIN_METRICS_OUTPUT_ENV_VAR: &str = "GENEX_PLUGIN_METRICS_OUTPUT";
+pub const PLUGIN_METRICS_OUTPUT_ENV_VAR: &str = "RUXEX_PLUGIN_METRICS_OUTPUT";
 const MAX_OUTPUT_BYTES: u64 = 64 * 1024;
 const MAX_OUTPUT_ROWS: usize = 100;
 
@@ -107,7 +107,7 @@ struct OutputMeasurement {
 impl PluginMetricsSidecar {
     pub fn create(resolved: ResolvedPluginMetricsOperation) -> Option<Self> {
         let sidecar_dir = tempfile::Builder::new()
-            .prefix("genex-plugin-metrics-")
+            .prefix("ruxex-plugin-metrics-")
             .tempdir()
             .ok()?;
         let output_file = tempfile::Builder::new()
@@ -146,7 +146,7 @@ impl PluginMetricsSidecar {
         }
         let execution_id = Uuid::new_v4().to_string();
         let directory_path = temp_dir
-            .join(&format!("genex-plugin-metrics-{execution_id}"))
+            .join(&format!("ruxex-plugin-metrics-{execution_id}"))
             .ok()?;
         let absolute_output_dir = directory_path.to_abs_path().ok()?;
         let filesystem = environment.get_filesystem();

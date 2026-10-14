@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 v2_enum_from_core!(
-    pub enum ReviewDelivery from genex_protocol::protocol::ReviewDelivery {
+    pub enum ReviewDelivery from ruxex_protocol::protocol::ReviewDelivery {
         Inline, Detached
     }
 );

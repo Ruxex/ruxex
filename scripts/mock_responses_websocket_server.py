@@ -168,7 +168,7 @@ model = "example-model"
 model_reasoning_effort = "medium"
 
 
-start genex with `genex --model example-model`
+start ruxex with `ruxex --model example-model`
 """)
     sys.stdout.flush()
 

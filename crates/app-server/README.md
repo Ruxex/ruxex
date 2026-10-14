@@ -57,9 +57,9 @@ deleted normally. Ordinary client-controlled threads keep their existing behavio
 
 ## User verification (experimental)
 
-Genex app-server advertises `provider/elicitation.userVerification` to the
-host-owned plugin service for bundled, in-process TUI sessions (`genex-tui`) and
-local stdio desktop sessions (`Genex Desktop`) on devices with supported biometric
+Ruxex app-server advertises `provider/elicitation.userVerification` to the
+host-owned plugin service for bundled, in-process TUI sessions (`ruxex-tui`) and
+local stdio desktop sessions (`Ruxex Desktop`) on devices with supported biometric
 hardware and the `experimentalApi` opt-in. This is an app-server decision,
 independent of whether a key exists; TUI/Desktop/mobile do not advertise this MCP
 capability. Mobile integration requires a separate rollout. Other clients and
@@ -136,7 +136,7 @@ The worker retains its existing cold-file checks, maintenance and writer locks,
 concurrency limit, and cooldown. Acknowledgement does not imply completion or that
 any files were compressed; failures are reported through existing logs and metrics.
 There are no progress notifications or cancellation API. Clients sharing this
-Genex home must support compressed rollout files, including shared histories.
+Ruxex home must support compressed rollout files, including shared histories.
 
 ## Stored thread attachments
 

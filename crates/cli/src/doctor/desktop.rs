@@ -196,7 +196,7 @@ impl DesktopLog {
         let name = entry.file_name();
         let name = name
             .to_str()?
-            .strip_prefix("genex-desktop-")?
+            .strip_prefix("ruxex-desktop-")?
             .strip_suffix(".log")?;
         let (session_and_pid, _) = name.split_once("-t")?;
         let (session_id, process_id) = session_and_pid.rsplit_once('-')?;
@@ -288,7 +288,7 @@ fn stopped_desktop_check() -> DoctorCheck {
 
 fn unavailable(id: &'static str, summary: &'static str) -> DoctorCheck {
     platform::desktop_check(id, CheckStatus::Warning, summary)
-        .remediation("restore desktop diagnostic access and rerun genex doctor")
+        .remediation("restore desktop diagnostic access and rerun ruxex doctor")
 }
 
 fn redacted_path(path: &Path) -> String {

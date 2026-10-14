@@ -3,7 +3,7 @@
 //! Both modes use cached expiry to prepare credentials before the MCP request budget.
 //! Coordinated preparation owns a task so caller cancellation cannot interrupt persistence.
 //! It locks the manager before the credential store, matching RMCP's lock order.
-//! RMCP commits through the pinned store while Legacy retains Genex's persistor.
+//! RMCP commits through the pinned store while Legacy retains Ruxex's persistor.
 
 use std::sync::Arc;
 

@@ -10,7 +10,7 @@ use tokio::sync::OwnedSemaphorePermit;
 use tracing::debug;
 use tracing::warn;
 
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 
 use crate::ExecServerClient;
 use crate::ExecServerError;
@@ -20,7 +20,7 @@ use crate::client_api::StdioExecServerCommand;
 use crate::client_api::StdioExecServerConnectArgs;
 use crate::connection::JsonRpcConnection;
 
-const ENVIRONMENT_CLIENT_NAME: &str = "genex-environment";
+const ENVIRONMENT_CLIENT_NAME: &str = "ruxex-environment";
 
 pub(crate) struct ReconnectAttempt {
     connection: JsonRpcConnection,
@@ -54,7 +54,7 @@ impl ExecServerReconnectStrategy {
 impl ExecServerClient {
     pub(crate) async fn connect_for_transport(
         transport_params: ExecServerTransportParams,
-        _http_client_factory: genex_http_client::HttpClientFactory,
+        _http_client_factory: ruxex_http_client::HttpClientFactory,
     ) -> Result<Self, ExecServerError> {
         match transport_params {
             ExecServerTransportParams::StdioCommand {
@@ -101,7 +101,7 @@ impl ExecServerClient {
         unsafe {
             process
                 .as_std_mut()
-                .pre_exec(genex_utils_pty::process_group::set_process_group);
+                .pre_exec(ruxex_utils_pty::process_group::set_process_group);
         }
         process
             .stdin(Stdio::piped())

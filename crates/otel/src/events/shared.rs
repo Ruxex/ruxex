@@ -1,7 +1,7 @@
 use chrono::SecondsFormat;
 use chrono::Utc;
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_protocol::ToolName;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_protocol::ToolName;
 
 pub(crate) fn tool_namespace(tool_name: &ToolName) -> &str {
     tool_name

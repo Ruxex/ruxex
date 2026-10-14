@@ -6,45 +6,45 @@ use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::ListMcpServerStatusParams;
-use genex_app_server_protocol::ListMcpServerStatusResponse;
-use genex_app_server_protocol::McpServerStartupState;
-use genex_app_server_protocol::McpServerStatusDetail;
-use genex_app_server_protocol::McpServerStatusUpdatedNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxMode;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::ListMcpServerStatusParams;
+use ruxex_app_server_protocol::ListMcpServerStatusResponse;
+use ruxex_app_server_protocol::McpServerStartupState;
+use ruxex_app_server_protocol::McpServerStatusDetail;
+use ruxex_app_server_protocol::McpServerStatusUpdatedNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxMode;
 #[cfg(not(windows))]
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::TextPosition;
-use genex_app_server_protocol::TextRange;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadSource;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStartedNotification;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_app_server_protocol::TurnEnvironmentParams;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_config::loader::project_trust_key;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_core::config::set_project_trust_level;
-use genex_exec_server::LOCAL_FS;
-use genex_git_utils::resolve_root_git_project_for_trust;
-use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::TextPosition;
+use ruxex_app_server_protocol::TextRange;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStartedNotification;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_app_server_protocol::TurnEnvironmentParams;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_config::loader::project_trust_key;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_git_utils::resolve_root_git_project_for_trust;
+use ruxex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::model_types::ReasoningEffort;
 use core_test_support::stdio_server_bin;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -94,13 +94,13 @@ async fn start_thread_with_model(
 }
 #[tokio::test]
 async fn thread_start_warns_for_exec_policy_parse_failure_after_initialize() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
-    let rules_dir = genex_home.path().join("rules");
+    let rules_dir = ruxex_home.path().join("rules");
     std::fs::create_dir_all(&rules_dir)?;
     let rules_path = rules_dir.join("broken.rules");
     std::fs::write(&rules_path, "prefix_rule(")?;
@@ -162,13 +162,13 @@ async fn thread_start_warns_for_exec_policy_parse_failure_after_initialize() -> 
 
 #[tokio::test]
 async fn thread_start_does_not_repeat_initialize_exec_policy_warning() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let rules_dir = genex_home.path().join("rules");
+    let ruxex_home = TempDir::new()?;
+    let rules_dir = ruxex_home.path().join("rules");
     std::fs::create_dir_all(&rules_dir)?;
     std::fs::write(rules_dir.join("broken.rules"), "prefix_rule(")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     timeout(
@@ -200,10 +200,10 @@ async fn thread_start_does_not_repeat_initialize_exec_policy_warning() -> Result
 #[tokio::test]
 async fn thread_start_provider_model_fallback_ignores_dynamic_catalog() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -223,9 +223,9 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     // Provide a mock server and config so model wiring is valid.
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     create_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         &server.uri(),
         "sandbox_mode = \"read-only\"\nmodel_reasoning_effort = \"high\"",
         "",
@@ -233,7 +233,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
 
     // Start server and initialize.
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -242,7 +242,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
         .send_thread_start_request_with_auto_env(ThreadStartParams {
             model: Some("example-model-2".to_string()),
             thread_source: Some(ThreadSource::User),
-            service_name: Some("genex_work_desktop".to_string()),
+            service_name: Some("ruxex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -278,7 +278,7 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
     );
     assert_eq!(thread.status, ThreadStatus::Idle);
     assert_eq!(thread.thread_source, Some(ThreadSource::User));
-    assert_eq!(thread.originator.as_deref(), Some("genex_work_desktop"));
+    assert_eq!(thread.originator.as_deref(), Some("ruxex_work_desktop"));
     let thread_path = thread.path.clone().expect("thread path should be present");
     assert!(thread_path.is_absolute(), "thread path should be absolute");
     assert!(
@@ -379,11 +379,11 @@ async fn thread_start_creates_thread_and_emits_started() -> Result<()> {
 #[tokio::test]
 async fn thread_start_history_mode_is_paginated() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -401,8 +401,8 @@ async fn thread_start_history_mode_is_paginated() -> Result<()> {
 #[tokio::test]
 async fn thread_start_accepts_absolute_runtime_workspace_roots() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let cwd_tmp = TempDir::new()?;
     let cwd = cwd_tmp.path().to_path_buf();
@@ -410,7 +410,7 @@ async fn thread_start_accepts_absolute_runtime_workspace_roots() -> Result<()> {
     std::fs::create_dir_all(&extra_root)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -483,17 +483,17 @@ async fn thread_start_accepts_absolute_runtime_workspace_roots() -> Result<()> {
 async fn thread_start_excludes_profile_workspace_roots_from_runtime_workspace_roots() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let profile_root = TempDir::new()?;
     create_config_toml_with_profile_workspace_root(
-        genex_home.path(),
+        ruxex_home.path(),
         &server.uri(),
         profile_root.path(),
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -521,15 +521,15 @@ async fn thread_start_excludes_profile_workspace_roots_from_runtime_workspace_ro
 async fn thread_start_rejects_unknown_environment_as_invalid_request() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
-    let config_path = genex_home.path().join("config.toml");
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
+    let config_path = ruxex_home.path().join("config.toml");
     let config_before = std::fs::read_to_string(&config_path)?;
     let workspace = TempDir::new()?;
     let workspace = workspace.path().to_path_buf().abs();
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -563,11 +563,11 @@ async fn thread_start_rejects_unknown_environment_as_invalid_request() -> Result
 #[tokio::test]
 async fn thread_start_rejects_relative_environment_cwd_as_invalid_request() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let environment_id = mcp.auto_env_params()?.environment_id;
@@ -603,11 +603,11 @@ async fn thread_start_rejects_relative_environment_cwd_as_invalid_request() -> R
 #[tokio::test]
 async fn thread_start_rejects_oversized_environment_cwd_as_invalid_request() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let environment_id = mcp.auto_env_params()?.environment_id;
@@ -641,16 +641,16 @@ async fn thread_start_rejects_oversized_environment_cwd_as_invalid_request() -> 
 #[tokio::test]
 async fn thread_start_response_includes_loaded_instruction_sources() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
-    let global_agents_path = genex_home.path().join("AGENTS.md");
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
+    let global_agents_path = ruxex_home.path().join("AGENTS.md");
     std::fs::write(&global_agents_path, "global instructions")?;
     let workspace = TempDir::new()?;
     let project_agents_path = workspace.path().join("AGENTS.md");
     std::fs::write(&project_agents_path, "project instructions")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         // TODO(anp): Move the instruction-source fixture into the auto environment cwd.
         .without_auto_env()
         .build_initialized()
@@ -687,16 +687,16 @@ async fn thread_start_response_includes_loaded_instruction_sources() -> Result<(
 #[tokio::test]
 async fn thread_start_response_excludes_empty_project_instruction_source() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
-    let global_agents_path = genex_home.path().join("AGENTS.md");
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
+    let global_agents_path = ruxex_home.path().join("AGENTS.md");
     std::fs::write(&global_agents_path, "global instructions")?;
     let workspace = TempDir::new()?;
     let project_agents_path = workspace.path().join("AGENTS.md");
     std::fs::write(project_agents_path, "")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         // TODO(anp): Move the instruction-source fixture into the auto environment cwd.
         .without_auto_env()
         .build_initialized()
@@ -730,15 +730,15 @@ async fn thread_start_response_excludes_empty_project_instruction_source() -> Re
 async fn thread_start_without_selected_environment_includes_only_global_instruction_source()
 -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
-    let global_agents_path = genex_home.path().join("AGENTS.md");
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
+    let global_agents_path = ruxex_home.path().join("AGENTS.md");
     std::fs::write(&global_agents_path, "global instructions")?;
     let workspace = TempDir::new()?;
     std::fs::write(workspace.path().join("AGENTS.md"), "project instructions")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -820,12 +820,12 @@ fn normalize_path_for_comparison(path: impl AsRef<Path>) -> PathBuf {
 async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_with_managed_auth_base_url(genex_home.path(), &server.uri(), &server.uri())?;
-    mount_analytics_capture(&server, genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_with_managed_auth_base_url(ruxex_home.path(), &server.uri(), &server.uri())?;
+    mount_analytics_capture(&server, ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;
@@ -833,7 +833,7 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
             thread_source: Some(ThreadSource::User),
-            service_name: Some("genex_work_desktop".to_string()),
+            service_name: Some("ruxex_work_desktop".to_string()),
             ..Default::default()
         })
         .await?;
@@ -845,7 +845,7 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
         event,
         &thread.id,
         &thread.session_id,
-        "genex_work_desktop",
+        "ruxex_work_desktop",
         "mock-model",
         "new",
         "user",
@@ -857,11 +857,11 @@ async fn thread_start_tracks_thread_initialized_analytics() -> Result<()> {
 async fn thread_start_respects_project_config_from_cwd() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let workspace = TempDir::new()?;
-    let project_config_dir = workspace.path().join(".genex");
+    let project_config_dir = workspace.path().join(".ruxex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -869,10 +869,10 @@ async fn thread_start_respects_project_config_from_cwd() -> Result<()> {
 model_reasoning_effort = "high"
 "#,
     )?;
-    set_project_trust_level(genex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(ruxex_home.path(), workspace.path(), TrustLevel::Trusted)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -893,11 +893,11 @@ model_reasoning_effort = "high"
 async fn thread_start_drops_unsupported_service_tier_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -918,11 +918,11 @@ async fn thread_start_drops_unsupported_service_tier_id() -> Result<()> {
 async fn thread_start_accepts_default_service_tier() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -944,11 +944,11 @@ async fn thread_start_accepts_default_service_tier() -> Result<()> {
 async fn thread_start_accepts_metrics_service_name() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -966,11 +966,11 @@ async fn thread_start_accepts_metrics_service_name() -> Result<()> {
 #[tokio::test]
 async fn thread_start_ephemeral_remains_pathless() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1015,11 +1015,11 @@ async fn thread_start_ephemeral_remains_pathless() -> Result<()> {
 async fn thread_start_fails_when_required_mcp_server_fails_to_initialize() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_with_required_broken_mcp(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_with_required_broken_mcp(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1052,10 +1052,10 @@ async fn thread_start_fails_when_required_mcp_server_fails_to_initialize() -> Re
 #[tokio::test]
 async fn thread_start_fails_when_managed_hook_matcher_is_invalid() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         r#"[hooks]
 
 [[hooks.PreToolUse]]
@@ -1068,7 +1068,7 @@ command = "echo managed"
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let request_id = app_server
@@ -1092,10 +1092,10 @@ command = "echo managed"
 #[tokio::test]
 async fn thread_start_fails_when_managed_hook_handler_is_unsupported() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         r#"[hooks]
 
 [[hooks.PreToolUse]]
@@ -1107,7 +1107,7 @@ type = "prompt"
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let request_id = app_server
@@ -1131,10 +1131,10 @@ type = "prompt"
 #[tokio::test]
 async fn thread_start_succeeds_when_managed_mcp_hook_is_supported() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         r#"[hooks]
 
 [[hooks.PreToolUse]]
@@ -1148,7 +1148,7 @@ tool = "scan"
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let response = app_server
@@ -1164,11 +1164,11 @@ tool = "scan"
 async fn thread_start_emits_mcp_server_status_updated_notifications() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_with_optional_broken_mcp(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_with_optional_broken_mcp(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1268,15 +1268,15 @@ async fn thread_start_does_not_wait_for_optional_http_mcp_auth_discovery() -> Re
         std::future::pending::<()>().await;
     });
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     create_config_toml_with_optional_http_mcp(
-        genex_home.path(),
+        ruxex_home.path(),
         &server.uri(),
         &format!("http://{mcp_addr}/mcp"),
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1321,16 +1321,16 @@ async fn thread_start_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
         .mount(&server)
         .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     create_config_toml_with_managed_auth_base_url(
-        genex_home.path(),
+        ruxex_home.path(),
         &model_server.uri(),
         &managed_auth_base_url,
     )?;
     write_api_key_auth(
-        genex_home.path(),
+        ruxex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
@@ -1342,7 +1342,7 @@ async fn thread_start_surfaces_cloud_config_bundle_load_errors() -> Result<()> {
 
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[
             ("PROVIDER_API_KEY", None),
             (
@@ -1387,11 +1387,11 @@ async fn thread_start_workspace_write_respects_effective_permissions_for_project
 -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let workspace = TempDir::new()?;
-    let project_config_dir = workspace.path().join(".genex");
+    let project_config_dir = workspace.path().join(".ruxex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -1401,10 +1401,10 @@ model_reasoning_effort = "high"
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
-    let config_before = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_before = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
 
     let first_response = mcp
         .start_thread(ThreadStartParams {
@@ -1425,11 +1425,11 @@ model_reasoning_effort = "high"
         })
         .await?;
 
-    let config_toml = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_toml = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     if cfg!(windows) {
         assert_eq!(
             first_response.sandbox,
-            genex_app_server_protocol::SandboxPolicy::ReadOnly {
+            ruxex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             }
         );
@@ -1454,16 +1454,16 @@ model_reasoning_effort = "high"
 async fn thread_start_with_managed_read_only_does_not_trust_or_load_project_mcp() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
     std::fs::write(
-        genex_home.path().join("managed_config.toml"),
+        ruxex_home.path().join("managed_config.toml"),
         r#"sandbox_mode = "read-only""#,
     )?;
 
     let workspace = TempDir::new()?;
     std::fs::create_dir(workspace.path().join(".git"))?;
-    let project_config_dir = workspace.path().join(".genex");
+    let project_config_dir = workspace.path().join(".ruxex");
     std::fs::create_dir(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -1477,11 +1477,11 @@ required = true
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
-    let config_before = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_before = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
 
     let request_id = mcp
         .send_thread_start_request(ThreadStartParams {
@@ -1497,12 +1497,12 @@ required = true
 
     assert_eq!(
         sandbox,
-        genex_app_server_protocol::SandboxPolicy::ReadOnly {
+        ruxex_app_server_protocol::SandboxPolicy::ReadOnly {
             network_access: false,
         }
     );
     assert_eq!(
-        std::fs::read_to_string(genex_home.path().join("config.toml"))?,
+        std::fs::read_to_string(ruxex_home.path().join("config.toml"))?,
         config_before
     );
     let mcp_status: ListMcpServerStatusResponse = mcp
@@ -1532,8 +1532,8 @@ async fn thread_start_with_nested_git_cwd_respects_effective_permissions_for_pro
 -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let repo_root = TempDir::new()?;
     std::fs::create_dir(repo_root.path().join(".git"))?;
@@ -1542,10 +1542,10 @@ async fn thread_start_with_nested_git_cwd_respects_effective_permissions_for_pro
     std::fs::create_dir_all(nested.join(".git"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
-    let config_before = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_before = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
 
     let ThreadStartResponse { sandbox, .. } = mcp
         .start_thread(ThreadStartParams {
@@ -1555,11 +1555,11 @@ async fn thread_start_with_nested_git_cwd_respects_effective_permissions_for_pro
         })
         .await?;
 
-    let config_toml = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_toml = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     if cfg!(windows) {
         assert_eq!(
             sandbox,
-            genex_app_server_protocol::SandboxPolicy::ReadOnly {
+            ruxex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             }
         );
@@ -1582,13 +1582,13 @@ async fn thread_start_with_nested_git_cwd_respects_effective_permissions_for_pro
 async fn thread_start_with_read_only_sandbox_does_not_persist_project_trust() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let workspace = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1598,7 +1598,7 @@ async fn thread_start_with_read_only_sandbox_does_not_persist_project_trust() ->
     })
     .await?;
 
-    let config_toml = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_toml = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert!(!config_toml.contains("trust_level = \"trusted\""));
     assert!(!config_toml.contains(&workspace.path().display().to_string()));
 
@@ -1609,11 +1609,11 @@ async fn thread_start_with_read_only_sandbox_does_not_persist_project_trust() ->
 async fn thread_start_preserves_untrusted_project_trust() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let workspace = TempDir::new()?;
-    let config_path = genex_home.path().join("config.toml");
+    let config_path = ruxex_home.path().join("config.toml");
     let workspace_key = workspace.path().display().to_string();
     let mut config_toml =
         std::fs::read_to_string(&config_path)?.parse::<toml_edit::DocumentMut>()?;
@@ -1622,7 +1622,7 @@ async fn thread_start_preserves_untrusted_project_trust() -> Result<()> {
     let config_before = std::fs::read_to_string(&config_path)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1643,11 +1643,11 @@ async fn thread_start_preserves_untrusted_project_trust() -> Result<()> {
 async fn thread_start_skips_trust_write_when_project_is_already_trusted() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml_without_approval_policy(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml_without_approval_policy(ruxex_home.path(), &server.uri())?;
 
     let workspace = TempDir::new()?;
-    let project_config_dir = workspace.path().join(".genex");
+    let project_config_dir = workspace.path().join(".ruxex");
     std::fs::create_dir_all(&project_config_dir)?;
     std::fs::write(
         project_config_dir.join("config.toml"),
@@ -1655,11 +1655,11 @@ async fn thread_start_skips_trust_write_when_project_is_already_trusted() -> Res
 model_reasoning_effort = "high"
 "#,
     )?;
-    set_project_trust_level(genex_home.path(), workspace.path(), TrustLevel::Trusted)?;
-    let config_before = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    set_project_trust_level(ruxex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    let config_before = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -1678,27 +1678,27 @@ model_reasoning_effort = "high"
     assert_eq!(approval_policy, AskForApproval::OnRequest);
     assert_eq!(reasoning_effort, Some(ReasoningEffort::High));
 
-    let config_after = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config_after = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert_eq!(config_after, config_before);
 
     Ok(())
 }
 
 fn create_config_toml_without_approval_policy(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
-    create_config_toml(genex_home, server_uri, "sandbox_mode = \"read-only\"", "")
+    create_config_toml(ruxex_home, server_uri, "sandbox_mode = \"read-only\"", "")
 }
 
 fn create_config_toml(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     top_level_config: &str,
     additional_tables: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        genex_home.join("config.toml"),
+        ruxex_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -1719,7 +1719,7 @@ stream_max_retries = 0
 }
 
 fn create_config_toml_with_profile_workspace_root(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     profile_root: &Path,
 ) -> std::io::Result<()> {
@@ -1729,7 +1729,7 @@ fn create_config_toml_with_profile_workspace_root(
         .replace('\\', "\\\\")
         .replace('"', "\\\"");
     create_config_toml(
-        genex_home,
+        ruxex_home,
         server_uri,
         "default_permissions = \"dev\"",
         &format!(
@@ -1750,12 +1750,12 @@ fn create_config_toml_with_profile_workspace_root(
 }
 
 fn create_config_toml_with_managed_auth_base_url(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     managed_auth_base_url: &str,
 ) -> std::io::Result<()> {
     create_config_toml(
-        genex_home,
+        ruxex_home,
         server_uri,
         &format!(
             "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\nmanaged_auth_base_url = \"{managed_auth_base_url}\""
@@ -1765,11 +1765,11 @@ fn create_config_toml_with_managed_auth_base_url(
 }
 
 fn create_config_toml_with_required_broken_mcp(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
     create_config_toml(
-        genex_home,
+        ruxex_home,
         server_uri,
         "approval_policy = \"never\"\nsandbox_mode = \"read-only\"",
         &format!(
@@ -1784,11 +1784,11 @@ required = true
 }
 
 fn create_config_toml_with_optional_broken_mcp(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
     create_config_toml(
-        genex_home,
+        ruxex_home,
         server_uri,
         "approval_policy = \"never\"\nsandbox_mode = \"read-only\"",
         &format!(
@@ -1802,12 +1802,12 @@ fn create_config_toml_with_optional_broken_mcp(
 }
 
 fn create_config_toml_with_optional_http_mcp(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     mcp_uri: &str,
 ) -> std::io::Result<()> {
     create_config_toml(
-        genex_home,
+        ruxex_home,
         server_uri,
         "approval_policy = \"never\"\nsandbox_mode = \"read-only\"",
         &format!(

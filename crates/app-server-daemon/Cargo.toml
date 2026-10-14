@@ -1,11 +1,11 @@
 [package]
-name = "genex-app-server-daemon"
+name = "ruxex-app-server-daemon"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_app_server_daemon"
+name = "ruxex_app_server_daemon"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,12 +14,12 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-app-server-protocol = { workspace = true }
-genex-app-server-transport = { workspace = true }
-genex-http-client = { workspace = true }
-genex-install-context = { workspace = true }
-genex-utils-home-dir = { workspace = true }
-genex-uds = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-app-server-transport = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-uds = { workspace = true }
 futures = { workspace = true }
 libc = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

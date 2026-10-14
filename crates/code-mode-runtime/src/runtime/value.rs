@@ -1,8 +1,8 @@
 use serde_json::Value as JsonValue;
 
-use genex_code_mode_protocol::DEFAULT_IMAGE_DETAIL;
-use genex_code_mode_protocol::FunctionCallOutputContentItem;
-use genex_code_mode_protocol::ImageDetail;
+use ruxex_code_mode_protocol::DEFAULT_IMAGE_DETAIL;
+use ruxex_code_mode_protocol::FunctionCallOutputContentItem;
+use ruxex_code_mode_protocol::ImageDetail;
 
 use super::audio::wav_duration_seconds;
 
@@ -13,7 +13,7 @@ const INVALID_IMAGE_URL_ERROR: &str =
     "Tool call failed: invalid image output. Pass a base64 data URI instead";
 const INVALID_AUDIO_URL_ERROR: &str =
     "Tool call failed: invalid audio output. Pass a base64 data URI instead";
-const GENEX_IMAGE_DETAIL_META_KEY: &str = "genex/imageDetail";
+const RUXEX_IMAGE_DETAIL_META_KEY: &str = "ruxex/imageDetail";
 
 pub(super) fn serialize_output_text(
     scope: &mut v8::PinScope<'_, '_>,
@@ -168,7 +168,7 @@ fn parse_mcp_output_image(
     let detail = result
         .get("_meta")
         .and_then(JsonValue::as_object)
-        .and_then(|meta| meta.get(GENEX_IMAGE_DETAIL_META_KEY))
+        .and_then(|meta| meta.get(RUXEX_IMAGE_DETAIL_META_KEY))
         .and_then(JsonValue::as_str)
         .filter(|detail| matches!(*detail, "auto" | "low" | "high" | "original"))
         .map(str::to_string);

@@ -1,9 +1,9 @@
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseInputItem;
 use serde_json::Value as JsonValue;
 
 use crate::ToolPayload;
@@ -155,7 +155,7 @@ impl ToolOutput for JsonToolOutput {
     }
 }
 
-impl ToolOutput for genex_protocol::mcp::CallToolResult {
+impl ToolOutput for ruxex_protocol::mcp::CallToolResult {
     fn log_output(&self) -> String {
         let output = self.as_function_call_output_payload();
         // Do not fall back to serializing media or encrypted content into logs.
@@ -191,17 +191,17 @@ fn response_input_to_code_mode_result(response: ResponseInputItem) -> JsonValue 
             &content
                 .into_iter()
                 .map(|item| match item {
-                    genex_protocol::models::ContentItem::InputText { text }
-                    | genex_protocol::models::ContentItem::OutputText { text } => {
+                    ruxex_protocol::models::ContentItem::InputText { text }
+                    | ruxex_protocol::models::ContentItem::OutputText { text } => {
                         FunctionCallOutputContentItem::InputText { text }
                     }
-                    genex_protocol::models::ContentItem::InputImage { image, detail } => {
+                    ruxex_protocol::models::ContentItem::InputImage { image, detail } => {
                         FunctionCallOutputContentItem::InputImage {
                             image,
                             detail: detail.or(Some(DEFAULT_IMAGE_DETAIL)),
                         }
                     }
-                    genex_protocol::models::ContentItem::InputAudio { audio_url } => {
+                    ruxex_protocol::models::ContentItem::InputAudio { audio_url } => {
                         FunctionCallOutputContentItem::InputAudio { audio_url }
                     }
                 })

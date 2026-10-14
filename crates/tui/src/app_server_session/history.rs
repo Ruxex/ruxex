@@ -10,20 +10,20 @@ use crate::thread_transcript::RawReasoningVisibility;
 use crate::thread_transcript::thread_items_to_transcript_cells;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadItemsListParams;
-use genex_app_server_protocol::ThreadItemsListResponse;
-use genex_app_server_protocol::ThreadRevertParams;
-use genex_app_server_protocol::ThreadRevertResponse;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadTurnsListResponse;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnItemsView;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadItemsListParams;
+use ruxex_app_server_protocol::ThreadItemsListResponse;
+use ruxex_app_server_protocol::ThreadRevertParams;
+use ruxex_app_server_protocol::ThreadRevertResponse;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadTurnsListResponse;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_protocol::ThreadId;
 
 pub(crate) const INITIAL_HISTORY_TURN_LIMIT: u32 = 5;
 pub(crate) const HISTORY_ITEM_PAGE_LIMIT: u32 = 100;
@@ -78,7 +78,7 @@ impl AppServerSession {
         thread_id: ThreadId,
         before_turn_id: String,
         retained_turns: &[Turn],
-    ) -> std::result::Result<ThreadRevertResponse, genex_app_server_client::TypedRequestError> {
+    ) -> std::result::Result<ThreadRevertResponse, ruxex_app_server_client::TypedRequestError> {
         let request_id = self.next_request_id();
         let response: ThreadRevertResponse = self
             .client

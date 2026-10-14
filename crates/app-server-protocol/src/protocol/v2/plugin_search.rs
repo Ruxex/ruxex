@@ -1,7 +1,7 @@
 use super::PluginSummary;
 use crate::JsonSchema;
 use crate::TS;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 

@@ -1,29 +1,29 @@
 use anyhow::Result;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_core::config::TokenBudgetConfig;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::items::TurnItem;
-use genex_protocol::model_types::ModelTokenBudgetConfig;
-use genex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ItemStartedEvent;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_skills_extension::SkillsExtensionConfig;
-use genex_skills_extension::install;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_core::config::TokenBudgetConfig;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::model_types::ModelTokenBudgetConfig;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ItemStartedEvent;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::install;
 use core_test_support::PathBufExt;
 use core_test_support::assert_regex_match;
 use core_test_support::context_snapshot;
@@ -43,8 +43,8 @@ use core_test_support::responses::sse_completed;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
-use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::local;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -161,12 +161,12 @@ fn write_token_budget_compact_hooks(home: &Path) {
     std::fs::write(home.join("hooks.json"), hooks.to_string()).expect("write hooks.json");
 }
 
-async fn assert_context_compaction_item_lifecycle(genex: &std::sync::Arc<genex_core::GenexThread>) {
+async fn assert_context_compaction_item_lifecycle(ruxex: &std::sync::Arc<ruxex_core::RuxexThread>) {
     let mut saw_compaction_started = false;
     let mut saw_compaction_completed = false;
 
     loop {
-        let event = genex.next_event().await.expect("next event");
+        let event = ruxex.next_event().await.expect("next event");
         match event.msg {
             EventMsg::ItemStarted(ItemStartedEvent {
                 item: TurnItem::ContextCompaction(_),
@@ -198,7 +198,7 @@ async fn token_budget_context_is_only_emitted_with_full_context() -> Result<()> 
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
             config
@@ -252,12 +252,12 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     )
     .await;
     let guidance_message = "Preserve important state before compaction.";
-    let backend_url = format!("{}/backend-api/genex", server.uri());
-    let test = test_genex()
+    let backend_url = format!("{}/backend-api/ruxex", server.uri());
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model| {
             model.supports_experimental_context = true;
         })
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
             std::fs::write(
                 home.join("config.toml"),
@@ -301,13 +301,13 @@ async fn token_budget_guidance_precedes_standalone_context_window(
     Ok(())
 }
 
-#[test_case("provider", "/backend-api/genex", None, true, true; "genex_backend")]
-#[test_case("provider", "/backend-api/genex", None, false, false; "unsupported_model")]
-#[test_case("Custom", "/backend-api/genex", None, true, false; "custom_provider")]
-#[test_case("provider", "/v1", None, true, false; "non_genex_endpoint")]
-#[test_case("provider", "/backend-api/genex", Some("test-provider-token"), true, false; "provider_credentials")]
+#[test_case("provider", "/backend-api/ruxex", None, true, true; "ruxex_backend")]
+#[test_case("provider", "/backend-api/ruxex", None, false, false; "unsupported_model")]
+#[test_case("Custom", "/backend-api/ruxex", None, true, false; "custom_provider")]
+#[test_case("provider", "/v1", None, true, false; "non_ruxex_endpoint")]
+#[test_case("provider", "/backend-api/ruxex", Some("test-provider-token"), true, false; "provider_credentials")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn experimental_context_requires_capable_model_and_genex_backend(
+async fn experimental_context_requires_capable_model_and_ruxex_backend(
     provider_name: &'static str,
     base_path: &'static str,
     bearer_token: Option<&'static str>,
@@ -319,11 +319,11 @@ async fn experimental_context_requires_capable_model_and_genex_backend(
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
     let base_url = format!("{}{base_path}", server.uri());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model| {
             model.supports_experimental_context = supports_context;
         })
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_provider.name = provider_name.to_string();
             config.model_provider.base_url = Some(base_url);
@@ -370,9 +370,9 @@ async fn token_budget_history_notes_requires_capable_starting_model(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let backend_url = format!("{}/backend-api/genex", server.uri());
-    let result = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let backend_url = format!("{}/backend-api/ruxex", server.uri());
+    let result = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_pre_build_hook(move |home| {
             let config = if use_model_defaults {
                 "[features.context_management]\nexperimental_mode = false\n".to_string()
@@ -435,7 +435,7 @@ async fn token_budget_uses_model_message_defaults() -> Result<()> {
     model_defaults.enabled = true;
     model_defaults.use_history_notes_extension = true;
     let expected_guidance = model_defaults.guidance_message.clone();
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model_info| {
             model_info.supports_experimental_context = true;
             model_info
@@ -476,7 +476,7 @@ async fn token_budget_explicit_default_template_overrides_model_defaults() -> Re
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             let default_template = TokenBudgetConfig::default().reminder_message_template;
             std::fs::write(
@@ -527,9 +527,9 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
         vec![sse_completed("resp-1"), sse_completed("resp-2")],
     )
     .await;
-    let backend_url = format!("{}/backend-api/genex", server.uri());
-    let test = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let backend_url = format!("{}/backend-api/ruxex", server.uri());
+    let test = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model_info_override("example-model-2", |model_info| {
             model_info.supports_experimental_context = true;
             let mut defaults = model_token_budget_config();
@@ -563,20 +563,20 @@ async fn token_budget_defaults_follow_the_active_model(activation: Feature) -> R
 
     test.submit_turn("inspect first-model guidance").await?;
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some("legacy-model".to_string()),
             ..Default::default()
         },
     )
     .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "inspect second-model guidance".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -635,7 +635,7 @@ async fn token_budget_ignores_invalid_model_message_defaults() -> Result<()> {
     ] {
         let server = start_mock_server().await;
         let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-        let test = test_genex()
+        let test = test_ruxex()
             .with_model_info_override("example-model-2", move |model_info| {
                 model_info
                     .model_messages
@@ -675,7 +675,7 @@ async fn model_token_budget_defaults_do_not_enable_disabled_feature() -> Result<
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse_completed("resp-1")).await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model_info| {
             model_info
                 .model_messages
@@ -713,7 +713,7 @@ async fn token_budget_context_injects_plain_thread_hint_text() -> Result<()> {
 
     let server = start_mock_server().await;
     let rmcp_test_server_bin = stdio_server_bin()?;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(move |config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
             config
@@ -756,7 +756,7 @@ async fn token_budget_context_injects_plain_thread_hint_text() -> Result<()> {
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&test.genex, "notes").await?;
+    wait_for_mcp_server(&test.ruxex, "notes").await?;
     let responses = mount_sse_sequence(
         &server,
         vec![sse(vec![
@@ -808,7 +808,7 @@ async fn token_budget_reminder_emits_after_crossing_compaction_threshold() -> Re
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.token_budget = Some(TokenBudgetConfig {
@@ -864,7 +864,7 @@ async fn token_budget_reminder_uses_body_after_prefix_window() -> Result<()> {
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.model_auto_compact_token_limit = Some(1_000);
@@ -935,7 +935,7 @@ async fn get_context_remaining_returns_token_budget_remaining_fragment() -> Resu
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config
@@ -999,7 +999,7 @@ async fn get_context_remaining_uses_body_after_prefix_window() -> Result<()> {
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_context_window = Some(10_000);
             config.model_auto_compact_token_limit = Some(7_000);
@@ -1056,7 +1056,7 @@ async fn get_context_remaining_returns_unknown_when_threshold_is_unbounded() -> 
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model_info| {
             model_info.context_window = None;
             model_info.max_context_window = None;
@@ -1119,7 +1119,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(move |config| {
             config.model_provider = model_provider;
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
@@ -1138,7 +1138,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
         .await?;
 
     if retain_client_developer_messages {
-        test.genex
+        test.ruxex
             .inject_response_items(vec![serde_json::from_value(json!({
                 "type": "message",
                 "role": "developer",
@@ -1147,8 +1147,8 @@ async fn token_budget_context_uses_new_window_after_compaction(
             .await?;
     }
     test.submit_turn("before compact").await?;
-    test.genex.submit(Op::Compact).await?;
-    assert_context_compaction_item_lifecycle(&test.genex).await;
+    test.ruxex.submit(Op::Compact).await?;
+    assert_context_compaction_item_lifecycle(&test.ruxex).await;
     test.submit_turn("after compact").await?;
 
     let requests = responses.requests();
@@ -1160,7 +1160,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
         token_budget_window_ids(&initial_token_budget[0], "/root");
     let initial_turn_metadata: Value = serde_json::from_str(
         &requests[0]
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("initial context window metadata"),
     )?;
     assert_eq!(
@@ -1176,7 +1176,7 @@ async fn token_budget_context_uses_new_window_after_compaction(
     ) = token_budget_window_ids(&post_compaction_token_budget[0], "/root");
     let post_compaction_turn_metadata: Value = serde_json::from_str(
         &requests[1]
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("post-compaction context window metadata"),
     )?;
     assert_eq!(
@@ -1217,7 +1217,7 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(write_token_budget_compact_hooks)
         .with_config(|config| {
             config.model_context_window = Some(CONFIGURED_CONTEXT_WINDOW);
@@ -1230,9 +1230,9 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
         .build(&server)
         .await?;
 
-    test.genex.submit(Op::Compact).await?;
+    test.ruxex.submit(Op::Compact).await?;
 
-    let pre_compact = wait_for_event_match(&test.genex, |event| match event {
+    let pre_compact = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::PreCompact =>
         {
@@ -1243,7 +1243,7 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
     .await;
     assert_eq!(pre_compact.run.status, HookRunStatus::Completed);
 
-    let post_compact = wait_for_event_match(&test.genex, |event| match event {
+    let post_compact = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::PostCompact =>
         {
@@ -1253,7 +1253,7 @@ async fn token_budget_compaction_runs_compact_hooks() -> Result<()> {
     })
     .await;
     assert_eq!(post_compact.run.status, HookRunStatus::Completed);
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1291,7 +1291,7 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
     model_provider.name = "provider (test)".into();
     model_provider.base_url = Some(format!("{}/v1", server.uri()));
     model_provider.supports_websockets = false;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model_info| {
             model_info
                 .model_messages
@@ -1323,7 +1323,7 @@ async fn token_budget_mid_turn_auto_compaction_resets_before_active_follow_up(
         .await?;
 
     if retain_client_developer_messages {
-        test.genex
+        test.ruxex
             .inject_response_items(vec![serde_json::from_value(json!({
                 "type": "message",
                 "role": "developer",
@@ -1424,7 +1424,7 @@ async fn token_budget_auto_compact_fallback_uses_buffer_until_new_context() -> R
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
@@ -1517,7 +1517,7 @@ async fn token_budget_auto_compact_fallback_rolls_over_after_buffer() -> Result<
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.model_provider.name = "provider (test)".into();
             config.model_context_window = Some(50_000);
@@ -1595,7 +1595,7 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
         orchestrator_skills_enabled: config.orchestrator_skills_enabled,
         shadow_selection_enabled: config.features.enabled(Feature::SkillSearch),
     });
-    let test = test_genex()
+    let test = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| {
             config.update_plan_enabled = true;

@@ -1,11 +1,11 @@
 [package]
-name = "genex-terminal-detection"
+name = "ruxex-terminal-detection"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_terminal_detection"
+name = "ruxex_terminal_detection"
 path = "src/lib.rs"
 doctest = false
 

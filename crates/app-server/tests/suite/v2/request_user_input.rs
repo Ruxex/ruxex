@@ -3,19 +3,19 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ServerRequestResolvedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ServerRequestResolvedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::ReasoningEffort;
 use core_test_support::responses;
 use serde_json::json;
 use tokio::time::timeout;
@@ -70,7 +70,7 @@ async fn request_user_input_round_trip_for_mode(
     enable_default_mode_feature: bool,
     expected_is_blocking: bool,
 ) -> Result<()> {
-    let genex_home = tempfile::TempDir::new()?;
+    let ruxex_home = tempfile::TempDir::new()?;
     let responses = vec![
         create_request_user_input_sse_response("call1")?,
         create_final_assistant_message_sse_response("done")?,
@@ -78,10 +78,10 @@ async fn request_user_input_round_trip_for_mode(
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 

@@ -2,9 +2,9 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_config::ConfigLayerSource;
-use genex_core::config::Config;
-use genex_git_utils::get_git_repo_root;
+use ruxex_config::ConfigLayerSource;
+use ruxex_core::config::Config;
+use ruxex_git_utils::get_git_repo_root;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::CheckStatus;
@@ -136,7 +136,7 @@ fn terminal_title_item_id(item: &str) -> Option<&'static str> {
         "weekly-limit" => Some("weekly-limit"),
         "thread-credits" => Some("thread-credits"),
         "estimated-thread-cost" => Some("estimated-thread-cost"),
-        "genex-version" => Some("genex-version"),
+        "ruxex-version" => Some("ruxex-version"),
         "used-tokens" => Some("used-tokens"),
         "total-input-tokens" => Some("total-input-tokens"),
         "total-output-tokens" => Some("total-output-tokens"),
@@ -174,7 +174,7 @@ fn terminal_title_project_root(config: &Config, cwd: &Path) -> Option<ProjectTit
         .config_layer_stack
         .all_layers_low_to_high()
         .find_map(|layer| match &layer.name {
-            ConfigLayerSource::Project { dot_genex_folder } => dot_genex_folder
+            ConfigLayerSource::Project { dot_ruxex_folder } => dot_ruxex_folder
                 .as_path()
                 .parent()
                 .map(|root| ProjectTitleRoot {

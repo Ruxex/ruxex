@@ -1,5 +1,5 @@
 #![allow(clippy::unwrap_used)]
-use core_test_support::TestGenexResponsesRequestKind;
+use core_test_support::TestRuxexResponsesRequestKind;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::WebSocketTestServer;
@@ -10,60 +10,60 @@ use core_test_support::responses::start_websocket_server;
 use core_test_support::responses::start_websocket_server_with_headers;
 use core_test_support::responses_metadata as test_responses_metadata;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::tracing::install_test_tracing;
 use core_test_support::wait_for_event;
 use futures::StreamExt;
-use genex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
-use genex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
-use genex_core::GenexResponsesMetadata;
-use genex_core::ModelClient;
-use genex_core::ModelClientSession;
-use genex_core::Prompt;
-use genex_core::ResponseEvent;
-use genex_core::TurnInputRequest;
-use genex_core::X_GENEX_ROUTING_HINT_HEADER;
-use genex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
-use genex_core::test_support::with_parent_turn;
-use genex_features::Feature;
-use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::WireApi;
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_otel::SessionTelemetry;
-use genex_otel::TelemetryAuthMode;
-use genex_otel::current_span_w3c_trace_context;
-use genex_protocol::ResponseItemId;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ExecutedToolCall;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::ToolResultMetadata;
-use genex_protocol::models::ToolResultSource;
-use genex_protocol::models::ToolResultSources;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_protocol::user_input::UserInput;
-use genex_providers::create_model_provider;
-use genex_rollout_trace::ConversationPart;
-use genex_rollout_trace::InferenceTraceContext;
-use genex_rollout_trace::RawTraceEventPayload;
-use genex_rollout_trace::TraceWriter;
-use genex_rollout_trace::replay_bundle;
+use ruxex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
+use ruxex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
+use ruxex_core::RuxexResponsesMetadata;
+use ruxex_core::ModelClient;
+use ruxex_core::ModelClientSession;
+use ruxex_core::Prompt;
+use ruxex_core::ResponseEvent;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::X_RUXEX_ROUTING_HINT_HEADER;
+use ruxex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
+use ruxex_core::test_support::with_parent_turn;
+use ruxex_features::Feature;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider_info::WireApi;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_otel::current_span_w3c_trace_context;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelServiceTier;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ExecutedToolCall;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ToolResultMetadata;
+use ruxex_protocol::models::ToolResultSource;
+use ruxex_protocol::models::ToolResultSources;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::create_model_provider;
+use ruxex_rollout_trace::ConversationPart;
+use ruxex_rollout_trace::InferenceTraceContext;
+use ruxex_rollout_trace::RawTraceEventPayload;
+use ruxex_rollout_trace::TraceWriter;
+use ruxex_rollout_trace::replay_bundle;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -77,11 +77,11 @@ const MODEL: &str = "legacy-model";
 const USER_AGENT_HEADER: &str = "user-agent";
 const X_CLIENT_REQUEST_ID_HEADER: &str = "x-client-request-id";
 const WS_REQUEST_HEADER_RESPONSES_LITE_CLIENT_METADATA_KEY: &str =
-    "ws_request_header_x_provider_internal_genex_responses_lite";
+    "ws_request_header_x_provider_internal_ruxex_responses_lite";
 const TEST_INSTALLATION_ID: &str = "11111111-1111-4111-8111-111111111111";
 const TEST_WINDOW_ID: &str = "test-thread:0";
-const X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
-    "x-genex-ws-stream-request-start-ms";
+const X_RUXEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY: &str =
+    "x-ruxex-ws-stream-request-start-ms";
 
 fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTraceContext) {
     let client_metadata = body["client_metadata"]
@@ -110,7 +110,7 @@ fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTr
 }
 
 struct WebsocketTestHarness {
-    genex_home: TempDir,
+    ruxex_home: TempDir,
     credential_manager: Arc<CredentialManager>,
     client: ModelClient,
     outbound_proxy_policy: OutboundProxyPolicy,
@@ -125,8 +125,8 @@ struct WebsocketTestHarness {
 fn responses_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
-    request_kind: TestGenexResponsesRequestKind,
-) -> GenexResponsesMetadata {
+    request_kind: TestRuxexResponsesRequestKind,
+) -> RuxexResponsesMetadata {
     test_responses_metadata(
         TEST_INSTALLATION_ID,
         &harness.session_id.to_string(),
@@ -139,22 +139,22 @@ fn responses_metadata(
     )
 }
 
-fn turn_metadata(harness: &WebsocketTestHarness, turn_id: Option<&str>) -> GenexResponsesMetadata {
-    responses_metadata(harness, turn_id, TestGenexResponsesRequestKind::Turn)
+fn turn_metadata(harness: &WebsocketTestHarness, turn_id: Option<&str>) -> RuxexResponsesMetadata {
+    responses_metadata(harness, turn_id, TestRuxexResponsesRequestKind::Turn)
 }
 
 fn prewarm_metadata(
     harness: &WebsocketTestHarness,
     turn_id: Option<&str>,
-) -> GenexResponsesMetadata {
-    responses_metadata(harness, turn_id, TestGenexResponsesRequestKind::Prewarm)
+) -> RuxexResponsesMetadata {
+    responses_metadata(harness, turn_id, TestRuxexResponsesRequestKind::Prewarm)
 }
 
-fn websocket_connection_metadata(harness: &WebsocketTestHarness) -> GenexResponsesMetadata {
+fn websocket_connection_metadata(harness: &WebsocketTestHarness) -> RuxexResponsesMetadata {
     responses_metadata(
         harness,
         /*turn_id*/ None,
-        TestGenexResponsesRequestKind::WebsocketConnection,
+        TestRuxexResponsesRequestKind::WebsocketConnection,
     )
 }
 
@@ -167,7 +167,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
     let expected_metadata = completed["response"]["usage"].clone();
     let server =
         start_websocket_server(vec![vec![vec![ev_response_created("resp-1"), completed]]]).await;
-    let harness = websocket_harness_for_genex_backend(&server).await;
+    let harness = websocket_harness_for_ruxex_backend(&server).await;
     let mut client_session = harness.client.new_session();
     let prompt = prompt_with_input(vec![message_item("hello")]);
     let responses_metadata = turn_metadata(&harness, /*turn_id*/ None);
@@ -198,7 +198,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
     }
     assert_eq!(
         usage_metadata,
-        Some(genex_protocol::ResponseUsageMetadata {
+        Some(ruxex_protocol::ResponseUsageMetadata {
             amount: Some("0.12345678901234567890".to_string()),
             metadata: Some(expected_metadata),
         }),
@@ -216,7 +216,7 @@ async fn responses_websocket_omits_raw_tool_metadata_for_provider_named_custom_e
         ev_completed("resp-1"),
     ]]])
     .await;
-    let harness = websocket_harness_for_genex_backend(&server).await;
+    let harness = websocket_harness_for_ruxex_backend(&server).await;
     let mut call = ExecutedToolCall::new("test_tool".to_string(), json!({ "query": "keep" }));
     call.set_tool_result_sources(ToolResultSources::new(vec![ToolResultSource {
         r#type: "test_resource".to_string(),
@@ -267,7 +267,7 @@ async fn responses_websocket_streams_request() {
     ]]])
     .await;
 
-    let harness = websocket_harness_for_genex_backend(&server).await;
+    let harness = websocket_harness_for_ruxex_backend(&server).await;
     let mut client_session = harness.client.new_session();
     let prompt = prompt_with_input(vec![message_item("hello")]);
 
@@ -283,7 +283,7 @@ async fn responses_websocket_streams_request() {
     assert_eq!(body["input"].as_array().map(Vec::len), Some(1));
     let handshake = server.single_handshake();
     assert_eq!(
-        handshake.header(X_GENEX_ROUTING_HINT_HEADER),
+        handshake.header(X_RUXEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL}"))
     );
     assert_eq!(
@@ -300,14 +300,14 @@ async fn responses_websocket_streams_request() {
     );
     assert_eq!(
         handshake.header(USER_AGENT_HEADER),
-        Some(genex_login::default_client::get_user_agent())
+        Some(ruxex_login::default_client::get_user_agent())
     );
     assert_eq!(
-        body["client_metadata"]["x-genex-installation-id"].as_str(),
+        body["client_metadata"]["x-ruxex-installation-id"].as_str(),
         Some(TEST_INSTALLATION_ID)
     );
     let stream_request_start_ms = body["client_metadata"]
-        [X_GENEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY]
+        [X_RUXEX_WS_STREAM_REQUEST_START_MS_CLIENT_METADATA_KEY]
         .as_str()
         .expect("missing websocket stream request start timestamp")
         .parse::<i64>()
@@ -335,7 +335,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(GenexAuth::from_api_key("test-api-key")),
+        Some(RuxexAuth::from_api_key("test-api-key")),
     )
     .await;
     let mut client_session = harness.client.new_session();
@@ -348,7 +348,7 @@ async fn responses_websocket_omits_routing_hint_for_provider_with_own_credential
         handshake.header("authorization"),
         Some("Bearer provider-specific-token".to_string())
     );
-    assert_eq!(handshake.header(X_GENEX_ROUTING_HINT_HEADER), None);
+    assert_eq!(handshake.header(X_RUXEX_ROUTING_HINT_HEADER), None);
 
     server.shutdown().await;
 }
@@ -503,7 +503,7 @@ async fn responses_websocket_reuses_connection_with_per_turn_trace_payloads() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(genex_login::default_client::get_user_agent())
+        Some(ruxex_login::default_client::get_user_agent())
     );
     let connection = server.single_connection();
     assert_eq!(connection.len(), 2);
@@ -602,10 +602,10 @@ async fn responses_websocket_preconnect_reuses_connection() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(genex_login::default_client::get_user_agent())
+        Some(ruxex_login::default_client::get_user_agent())
     );
     assert_eq!(
-        server.single_handshake().header("x-genex-window-id"),
+        server.single_handshake().header("x-ruxex-window-id"),
         Some(TEST_WINDOW_ID.to_string())
     );
     let connection = server.single_connection();
@@ -653,7 +653,7 @@ async fn responses_websocket_request_prewarm_reuses_connection() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(
         server.single_handshake().header(USER_AGENT_HEADER),
-        Some(genex_login::default_client::get_user_agent())
+        Some(ruxex_login::default_client::get_user_agent())
     );
     let connection = server.single_connection();
     assert_eq!(connection.len(), 2);
@@ -674,7 +674,7 @@ async fn responses_websocket_request_prewarm_reuses_connection() {
     );
     assert_eq!(warmup["tools"], serde_json::json!([]));
     let warmup_turn_metadata: serde_json::Value = serde_json::from_str(
-        warmup["client_metadata"]["x-genex-turn-metadata"]
+        warmup["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )
@@ -735,7 +735,7 @@ async fn responses_websocket_request_prewarm_uses_caller_supplied_metadata() {
         .expect("missing warmup request")
         .body_json();
     let warmup_turn_metadata: serde_json::Value = serde_json::from_str(
-        warmup["client_metadata"]["x-genex-turn-metadata"]
+        warmup["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )
@@ -791,8 +791,8 @@ async fn responses_websocket_request_prewarm_traces_logical_request() {
         })
         .expect("thread started");
     writer
-        .append(RawTraceEventPayload::GenexTurnStarted {
-            genex_turn_id: "turn-1".to_string(),
+        .append(RawTraceEventPayload::RuxexTurnStarted {
+            ruxex_turn_id: "turn-1".to_string(),
             thread_id: harness.thread_id.to_string(),
         })
         .expect("turn started");
@@ -901,7 +901,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
                             ev_response_created(&id),
                             json!({
                                 "type": "response.metadata",
-                                "headers": {"x-genex-turn-state": turn_state},
+                                "headers": {"x-ruxex-turn-state": turn_state},
                             }),
                             ev_completed(&id),
                         ]
@@ -911,17 +911,17 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
             .collect(),
         )
         .await;
-        let harness = websocket_harness_for_genex_backend(&server).await;
+        let harness = websocket_harness_for_ruxex_backend(&server).await;
         let mut client_session = harness.client.new_session();
         let mut input = Vec::new();
 
         for index in 1..=5 {
             if index == 3 {
-                genex_login::login_with_api_key(
-                    harness.genex_home.path(),
+                ruxex_login::login_with_api_key(
+                    harness.ruxex_home.path(),
                     "second-account-token",
-                    genex_login::AuthCredentialsStoreMode::File,
-                    genex_login::AuthKeyringBackendKind::default(),
+                    ruxex_login::AuthCredentialsStoreMode::File,
+                    ruxex_login::AuthKeyringBackendKind::default(),
                 )
                 .unwrap();
                 harness.credential_manager.reload().await;
@@ -963,7 +963,7 @@ async fn responses_websocket_reconnects_after_api_key_switch() {
                         (
                             body["previous_response_id"].clone(),
                             body["input"].as_array().unwrap().len(),
-                            body["client_metadata"]["x-genex-turn-state"].clone(),
+                            body["client_metadata"]["x-ruxex-turn-state"].clone(),
                         )
                     })
                     .collect::<Vec<_>>())
@@ -1103,7 +1103,7 @@ async fn responses_websocket_preconnect_is_reused_even_with_header_changes() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1156,7 +1156,7 @@ async fn responses_websocket_request_prewarm_is_reused_even_with_header_changes(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1198,7 +1198,7 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
     ]]])
     .await;
 
-    let harness = websocket_harness_for_genex_backend(&server).await;
+    let harness = websocket_harness_for_ruxex_backend(&server).await;
     let mut model_info = harness.model_info.clone();
     let service_tier = ServiceTier::Flex.request_value();
     model_info.service_tiers.push(ModelServiceTier {
@@ -1224,7 +1224,7 @@ async fn responses_websocket_prewarm_includes_model_and_tier_routing_hint() {
 
     let handshake = server.single_handshake();
     assert_eq!(
-        handshake.header(X_GENEX_ROUTING_HINT_HEADER),
+        handshake.header(X_RUXEX_ROUTING_HINT_HEADER),
         Some(format!("model={MODEL};tier={service_tier}"))
     );
     let connection = server.single_connection();
@@ -1311,13 +1311,13 @@ async fn responses_websocket_preconnect_runs_when_only_v2_feature_enabled() {
     assert_eq!(server.handshakes().len(), 1);
     assert_eq!(server.single_connection().len(), 0);
     assert_eq!(
-        server.single_handshake().header("x-genex-turn-metadata"),
+        server.single_handshake().header("x-ruxex-turn-metadata"),
         None
     );
     assert_eq!(
         server
             .single_handshake()
-            .header(X_GENEX_ROUTING_HINT_HEADER),
+            .header(X_RUXEX_ROUTING_HINT_HEADER),
         None
     );
 
@@ -1645,7 +1645,7 @@ async fn responses_websocket_emits_reasoning_included_event() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1670,7 +1670,7 @@ async fn responses_websocket_emits_rate_limit_events() {
     skip_if_no_network!();
 
     let rate_limit_event = json!({
-        "type": "genex.rate_limits",
+        "type": "ruxex.rate_limits",
         "plan_type": "plus",
         "rate_limits": {
             "allowed": true,
@@ -1694,7 +1694,7 @@ async fn responses_websocket_emits_rate_limit_events() {
     let server = start_websocket_server_with_headers(vec![WebSocketConnectionConfig {
         requests: vec![vec![
             json!({
-                "type": "genex.response.metadata",
+                "type": "ruxex.response.metadata",
                 "headers": {"x-models-etag": "etag-123"},
             }),
             rate_limit_event,
@@ -1721,7 +1721,7 @@ async fn responses_websocket_emits_rate_limit_events() {
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -1777,15 +1777,15 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
             "resets_in_seconds": 1234
         },
         "headers": {
-            "x-genex-primary-used-percent": "100.0",
-            "x-genex-secondary-used-percent": "87.5",
-            "x-genex-primary-over-secondary-limit-percent": "95.0",
-            "x-genex-primary-window-minutes": "15",
-            "x-genex-secondary-window-minutes": "60",
-            "x-genex-credits-has-credits": "true",
-            "x-genex-credits-unlimited": "false",
-            "x-genex-credits-balance": "",
-            "x-genex-rate-limit-reached-type": "workspace_member_usage_limit_reached"
+            "x-ruxex-primary-used-percent": "100.0",
+            "x-ruxex-secondary-used-percent": "87.5",
+            "x-ruxex-primary-over-secondary-limit-percent": "95.0",
+            "x-ruxex-primary-window-minutes": "15",
+            "x-ruxex-secondary-window-minutes": "60",
+            "x-ruxex-credits-has-credits": "true",
+            "x-ruxex-credits-unlimited": "false",
+            "x-ruxex-credits-balance": "",
+            "x-ruxex-rate-limit-reached-type": "workspace_member_usage_limit_reached"
         }
     });
 
@@ -1797,17 +1797,17 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
         vec![usage_limit_error],
     ]])
     .await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(0);
     });
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket genex");
+        .expect("build websocket ruxex");
 
     let submission = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1816,7 +1816,7 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
         .expect("submission should succeed while emitting usage limit error events");
 
     let token_event =
-        wait_for_event(&test.genex, |msg| matches!(msg, EventMsg::TokenCount(_))).await;
+        wait_for_event(&test.ruxex, |msg| matches!(msg, EventMsg::TokenCount(_))).await;
     let EventMsg::TokenCount(event) = token_event else {
         unreachable!();
     };
@@ -1852,7 +1852,7 @@ async fn responses_websocket_usage_limit_error_emits_rate_limit_event() {
         })
     );
 
-    let error_event = wait_for_event(&test.genex, |msg| matches!(msg, EventMsg::Error(_))).await;
+    let error_event = wait_for_event(&test.ruxex, |msg| matches!(msg, EventMsg::Error(_))).await;
     let EventMsg::Error(error_event) = error_event else {
         unreachable!();
     };
@@ -1886,17 +1886,17 @@ async fn responses_websocket_invalid_request_error_with_status_is_forwarded() {
         vec![invalid_request_error],
     ]])
     .await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(0);
     });
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket genex");
+        .expect("build websocket ruxex");
 
     let submission = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
@@ -1904,7 +1904,7 @@ async fn responses_websocket_invalid_request_error_with_status_is_forwarded() {
         .await
         .expect("submission should succeed while emitting invalid request events");
 
-    let error_event = wait_for_event(&test.genex, |msg| matches!(msg, EventMsg::Error(_))).await;
+    let error_event = wait_for_event(&test.ruxex, |msg| matches!(msg, EventMsg::Error(_))).await;
     let EventMsg::Error(error_event) = error_event else {
         unreachable!();
     };
@@ -1939,14 +1939,14 @@ async fn responses_websocket_connection_limit_error_reconnects_and_completes() {
         vec![vec![ev_response_created("resp-1"), ev_completed("resp-1")]],
     ])
     .await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.model_provider.request_max_retries = Some(0);
         config.model_provider.stream_max_retries = Some(1);
     });
     let test = builder
         .build_with_websocket_server(&server)
         .await
-        .expect("build websocket genex");
+        .expect("build websocket ruxex");
 
     test.submit_turn("hello")
         .await
@@ -1962,8 +1962,8 @@ async fn responses_websocket_connection_limit_error_reconnects_and_completes() {
     assert_eq!(
         handshake_user_agents,
         vec![
-            Some(genex_login::default_client::get_user_agent()),
-            Some(genex_login::default_client::get_user_agent()),
+            Some(ruxex_login::default_client::get_user_agent()),
+            Some(ruxex_login::default_client::get_user_agent()),
         ]
     );
 
@@ -2139,13 +2139,13 @@ async fn responses_websocket_forwards_turn_metadata_on_initial_and_incremental_c
     assert_eq!(second["type"].as_str(), Some("response.create"));
     assert_eq!(second["previous_response_id"].as_str(), Some("resp-1"));
     let first_metadata: serde_json::Value = serde_json::from_str(
-        first["client_metadata"]["x-genex-turn-metadata"]
+        first["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("first turn metadata"),
     )
     .expect("first metadata should be valid json");
     let second_metadata: serde_json::Value = serde_json::from_str(
-        second["client_metadata"]["x-genex-turn-metadata"]
+        second["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("second turn metadata"),
     )
@@ -2201,7 +2201,7 @@ async fn responses_websocket_sends_canonical_turn_metadata() {
 
     assert_eq!(body["type"].as_str(), Some("response.create"));
     let turn_metadata: serde_json::Value = serde_json::from_str(
-        body["client_metadata"]["x-genex-turn-metadata"]
+        body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )
@@ -2460,7 +2460,7 @@ async fn responses_websocket_v2_after_error_uses_full_create_without_previous_re
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2558,7 +2558,7 @@ async fn responses_websocket_v2_surfaces_terminal_error_without_close_handshake(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2666,7 +2666,7 @@ async fn websocket_harness(server: &WebSocketTestServer) -> WebsocketTestHarness
     websocket_harness_with_runtime_metrics(server, /*runtime_metrics_enabled*/ false).await
 }
 
-async fn websocket_harness_for_genex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
+async fn websocket_harness_for_ruxex_backend(server: &WebSocketTestServer) -> WebsocketTestHarness {
     let provider =
         ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri())));
     websocket_harness_with_provider_options_and_auth(
@@ -2674,7 +2674,7 @@ async fn websocket_harness_for_genex_backend(server: &WebSocketTestServer) -> We
         /*runtime_metrics_enabled*/ false,
         /*concurrent_reasoning_summaries_enabled*/ false,
         /*enabled_features*/ &[],
-        Some(GenexAuth::from_api_key("test-api-key")),
+        Some(RuxexAuth::from_api_key("test-api-key")),
     )
     .await
 }
@@ -2727,10 +2727,10 @@ async fn websocket_harness_with_provider_options_and_auth(
     runtime_metrics_enabled: bool,
     concurrent_reasoning_summaries_enabled: bool,
     enabled_features: &[Feature],
-    auth: Option<GenexAuth>,
+    auth: Option<RuxexAuth>,
 ) -> WebsocketTestHarness {
-    let genex_home = TempDir::new().unwrap();
-    let mut config = load_default_config_for_test(&genex_home).await;
+    let ruxex_home = TempDir::new().unwrap();
+    let mut config = load_default_config_for_test(&ruxex_home).await;
     config.model = Some(MODEL.to_string());
     if runtime_metrics_enabled {
         config
@@ -2754,23 +2754,23 @@ async fn websocket_harness_with_provider_options_and_auth(
     let http_client_factory = config.http_client_factory();
     let outbound_proxy_policy = http_client_factory.outbound_proxy_policy();
     let config = Arc::new(config);
-    let model_info = genex_core::test_support::construct_model_info_offline(MODEL, &config);
+    let model_info = ruxex_core::test_support::construct_model_info_offline(MODEL, &config);
     let thread_id = ThreadId::new();
     let session_id = SessionId::new();
     let client_credential_manager = auth.map(|auth| {
-        genex_core::test_support::credential_manager_from_auth_with_home(
+        ruxex_core::test_support::credential_manager_from_auth_with_home(
             auth,
-            genex_home.path().to_path_buf(),
+            ruxex_home.path().to_path_buf(),
         )
     });
     let credential_manager = client_credential_manager.clone().unwrap_or_else(|| {
-        genex_core::test_support::credential_manager_from_auth(GenexAuth::from_api_key(
+        ruxex_core::test_support::credential_manager_from_auth(RuxexAuth::from_api_key(
             "Test API Key",
         ))
     });
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
-        MetricsConfig::in_memory("test", "genex-core", env!("CARGO_PKG_VERSION"), exporter)
+        MetricsConfig::in_memory("test", "ruxex-core", env!("CARGO_PKG_VERSION"), exporter)
             .with_runtime_reader(),
     )
     .expect("in-memory metrics client");
@@ -2807,7 +2807,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     );
 
     WebsocketTestHarness {
-        genex_home,
+        ruxex_home,
         credential_manager,
         client,
         outbound_proxy_policy,
@@ -2828,32 +2828,32 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
 
     let exporter = InMemoryMetricExporter::default();
     let config =
-        MetricsConfig::in_memory("test", "genex-core", "test", exporter).with_runtime_reader();
+        MetricsConfig::in_memory("test", "ruxex-core", "test", exporter).with_runtime_reader();
     let metrics = MetricsClient::new(config)?;
     let warmup = vec![ev_response_created("warmup"), ev_completed("warmup")];
     let turn = vec![ev_response_created("turn"), ev_completed("turn")];
     let server = start_websocket_server(vec![vec![warmup, turn]; 2]).await;
-    let mut initial = test_genex().build_with_websocket_server(&server).await?;
+    let mut initial = test_ruxex().build_with_websocket_server(&server).await?;
     initial.submit_text_turn("original history marker").await?;
-    let rollout_path = initial.genex.rollout_path().expect("persisted history");
-    initial.genex.shutdown_and_wait().await?;
+    let rollout_path = initial.ruxex.rollout_path().expect("persisted history");
+    initial.ruxex.shutdown_and_wait().await?;
 
     let manager = &initial.thread_manager;
-    let mut options = genex_core::StartThreadOptions::new(initial.config.clone());
+    let mut options = ruxex_core::StartThreadOptions::new(initial.config.clone());
     options.thread_extension_init.insert(metrics);
     let restored = if fork {
         manager
-            .fork_thread(genex_core::ForkSnapshot::Interrupted, options, rollout_path)
+            .fork_thread(ruxex_core::ForkSnapshot::Interrupted, options, rollout_path)
             .await?
     } else {
         options.initial_history =
-            genex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
+            ruxex_rollout::RolloutRecorder::get_rollout_history(&rollout_path).await?;
         manager.start_thread(options).await?
     };
-    initial.genex = restored.thread;
+    initial.ruxex = restored.thread;
     initial.submit_text_turn("continue").await?;
     assert_continuation_metrics(
-        &initial.genex.session_telemetry(),
+        &initial.ruxex.session_telemetry(),
         &[
             (["full", "restored_history", "warmup"], 1),
             (["incremental", "incremental", "generation"], 1),
@@ -2864,7 +2864,7 @@ async fn responses_websocket_restored_history_metric(fork: bool) -> anyhow::Resu
             .to_string()
             .contains("original history marker")
     }));
-    initial.genex.shutdown_and_wait().await?;
+    initial.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -2877,7 +2877,7 @@ fn assert_continuation_metrics(telemetry: &SessionTelemetry, expected: &[([&str;
     let metric = snapshot
         .scope_metrics()
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
-        .find(|metric| metric.name() == genex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC)
+        .find(|metric| metric.name() == ruxex_otel::WEBSOCKET_CONTINUATION_COUNT_METRIC)
         .expect("continuation counter");
     let AggregatedMetrics::U64(MetricData::Sum(sum)) = metric.data() else {
         panic!("expected counter");
@@ -2936,7 +2936,7 @@ async fn stream_until_complete_with_model_info(
             harness.summary,
             /*service_tier*/ None,
             &responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");
@@ -2974,7 +2974,7 @@ async fn stream_until_complete_with_metadata(
     harness: &WebsocketTestHarness,
     prompt: &Prompt,
     service_tier: Option<ServiceTier>,
-    responses_metadata: &GenexResponsesMetadata,
+    responses_metadata: &RuxexResponsesMetadata,
 ) {
     let mut stream = client_session
         .stream(
@@ -2985,7 +2985,7 @@ async fn stream_until_complete_with_metadata(
             harness.summary,
             service_tier.map(|service_tier| service_tier.request_value().to_string()),
             responses_metadata,
-            &genex_rollout_trace::InferenceTraceContext::disabled(),
+            &ruxex_rollout_trace::InferenceTraceContext::disabled(),
         )
         .await
         .expect("websocket stream failed");

@@ -1,77 +1,77 @@
-//! Mapping from Genex protocol events into raw rollout-trace events.
+//! Mapping from Ruxex protocol events into raw rollout-trace events.
 //!
 //! The session layer already emits protocol events for turn lifecycle, terminal
 //! sessions, patch application, MCP calls, and collaboration tools. Rollout
 //! tracing reuses those observations instead of adding another set of hooks in
-//! `genex-core`: this module translates the protocol surface into the smaller
-//! trace vocabulary and keeps the mapping isolated inside `genex-rollout-trace`.
+//! `ruxex-core`: this module translates the protocol surface into the smaller
+//! trace vocabulary and keeps the mapping isolated inside `ruxex-rollout-trace`.
 //!
 //! The long explicit `EventMsg` matches are intentional. Most protocol events
 //! are not trace runtime boundaries, but spelling them out makes new protocol
 //! variants a compile-time prompt to decide whether the trace should capture
 //! them.
 
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandBeginEvent;
-use genex_protocol::protocol::ExecCommandEndEvent;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::ExecCommandStatus;
-use genex_protocol::protocol::McpToolCallBeginEvent;
-use genex_protocol::protocol::McpToolCallEndEvent;
-use genex_protocol::protocol::PatchApplyBeginEvent;
-use genex_protocol::protocol::PatchApplyEndEvent;
-use genex_protocol::protocol::PatchApplyStatus;
-use genex_protocol::protocol::SubAgentActivityEvent;
-use genex_protocol::protocol::SubAgentActivityKind;
-use genex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandBeginEvent;
+use ruxex_protocol::protocol::ExecCommandEndEvent;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_protocol::protocol::ExecCommandStatus;
+use ruxex_protocol::protocol::McpToolCallBeginEvent;
+use ruxex_protocol::protocol::McpToolCallEndEvent;
+use ruxex_protocol::protocol::PatchApplyBeginEvent;
+use ruxex_protocol::protocol::PatchApplyEndEvent;
+use ruxex_protocol::protocol::PatchApplyStatus;
+use ruxex_protocol::protocol::SubAgentActivityEvent;
+use ruxex_protocol::protocol::SubAgentActivityKind;
+use ruxex_protocol::protocol::TurnAbortReason;
 use serde::Serialize;
 use std::time::Duration;
 
 use crate::AgentThreadId;
 use crate::ExecutionStatus;
-use crate::GenexTurnId;
+use crate::RuxexTurnId;
 use crate::RawTraceEventPayload;
 
-pub(crate) struct GenexTurnTraceEvent {
-    pub context_turn_id: GenexTurnId,
+pub(crate) struct RuxexTurnTraceEvent {
+    pub context_turn_id: RuxexTurnId,
     pub payload: RawTraceEventPayload,
 }
 
-pub(crate) fn genex_turn_trace_event(
+pub(crate) fn ruxex_turn_trace_event(
     thread_id: AgentThreadId,
     default_turn_id: &str,
     event: &EventMsg,
-) -> Option<GenexTurnTraceEvent> {
+) -> Option<RuxexTurnTraceEvent> {
     match event {
         EventMsg::TurnStarted(event) => {
-            let genex_turn_id = event.turn_id.clone();
-            Some(GenexTurnTraceEvent {
-                context_turn_id: genex_turn_id.clone(),
-                payload: RawTraceEventPayload::GenexTurnStarted {
-                    genex_turn_id,
+            let ruxex_turn_id = event.turn_id.clone();
+            Some(RuxexTurnTraceEvent {
+                context_turn_id: ruxex_turn_id.clone(),
+                payload: RawTraceEventPayload::RuxexTurnStarted {
+                    ruxex_turn_id,
                     thread_id,
                 },
             })
         }
         EventMsg::TurnComplete(event) => {
-            let genex_turn_id = event.turn_id.clone();
-            Some(GenexTurnTraceEvent {
-                context_turn_id: genex_turn_id.clone(),
-                payload: RawTraceEventPayload::GenexTurnEnded {
-                    genex_turn_id,
+            let ruxex_turn_id = event.turn_id.clone();
+            Some(RuxexTurnTraceEvent {
+                context_turn_id: ruxex_turn_id.clone(),
+                payload: RawTraceEventPayload::RuxexTurnEnded {
+                    ruxex_turn_id,
                     status: ExecutionStatus::Completed,
                 },
             })
         }
         EventMsg::TurnAborted(event) => {
-            let genex_turn_id = event
+            let ruxex_turn_id = event
                 .turn_id
                 .clone()
                 .unwrap_or_else(|| default_turn_id.to_string());
-            Some(GenexTurnTraceEvent {
-                context_turn_id: genex_turn_id.clone(),
-                payload: RawTraceEventPayload::GenexTurnEnded {
-                    genex_turn_id,
+            Some(RuxexTurnTraceEvent {
+                context_turn_id: ruxex_turn_id.clone(),
+                payload: RawTraceEventPayload::RuxexTurnEnded {
+                    ruxex_turn_id,
                     status: execution_status_for_abort_reason(&event.reason),
                 },
             })
@@ -105,14 +105,14 @@ pub(crate) enum ToolRuntimePayload<'a> {
     PatchApplyEnd(&'a PatchApplyEndEvent),
     McpToolCallBegin(&'a McpToolCallBeginEvent),
     McpToolCallEnd(&'a McpToolCallEndEvent),
-    CollabAgentSpawnBegin(&'a genex_protocol::protocol::CollabAgentSpawnBeginEvent),
-    CollabAgentSpawnEnd(&'a genex_protocol::protocol::CollabAgentSpawnEndEvent),
-    CollabAgentInteractionBegin(&'a genex_protocol::protocol::CollabAgentInteractionBeginEvent),
-    CollabAgentInteractionEnd(&'a genex_protocol::protocol::CollabAgentInteractionEndEvent),
-    CollabWaitingBegin(&'a genex_protocol::protocol::CollabWaitingBeginEvent),
-    CollabWaitingEnd(&'a genex_protocol::protocol::CollabWaitingEndEvent),
-    CollabCloseBegin(&'a genex_protocol::protocol::CollabCloseBeginEvent),
-    CollabCloseEnd(&'a genex_protocol::protocol::CollabCloseEndEvent),
+    CollabAgentSpawnBegin(&'a ruxex_protocol::protocol::CollabAgentSpawnBeginEvent),
+    CollabAgentSpawnEnd(&'a ruxex_protocol::protocol::CollabAgentSpawnEndEvent),
+    CollabAgentInteractionBegin(&'a ruxex_protocol::protocol::CollabAgentInteractionBeginEvent),
+    CollabAgentInteractionEnd(&'a ruxex_protocol::protocol::CollabAgentInteractionEndEvent),
+    CollabWaitingBegin(&'a ruxex_protocol::protocol::CollabWaitingBeginEvent),
+    CollabWaitingEnd(&'a ruxex_protocol::protocol::CollabWaitingEndEvent),
+    CollabCloseBegin(&'a ruxex_protocol::protocol::CollabCloseBeginEvent),
+    CollabCloseEnd(&'a ruxex_protocol::protocol::CollabCloseEndEvent),
     SubAgentActivity(&'a SubAgentActivityEvent),
 }
 
@@ -162,7 +162,7 @@ struct ExecCommandBeginTracePayload<'a> {
     started_at_ms: i64,
     command: &'a [String],
     cwd: String,
-    parsed_cmd: &'a [genex_protocol::parse_command::ParsedCommand],
+    parsed_cmd: &'a [ruxex_protocol::parse_command::ParsedCommand],
     source: ExecCommandSource,
     #[serde(skip_serializing_if = "Option::is_none")]
     interaction_input: Option<&'a str>,
@@ -216,7 +216,7 @@ struct ExecCommandEndTracePayload<'a> {
     completed_at_ms: i64,
     command: &'a [String],
     cwd: String,
-    parsed_cmd: &'a [genex_protocol::parse_command::ParsedCommand],
+    parsed_cmd: &'a [ruxex_protocol::parse_command::ParsedCommand],
     source: ExecCommandSource,
     #[serde(skip_serializing_if = "Option::is_none")]
     interaction_input: Option<&'a str>,

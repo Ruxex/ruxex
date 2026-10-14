@@ -18,7 +18,7 @@ const SECURITY_LOG_PREDICATE: &str = concat!(
     "OR process BEGINSWITH 'XProtect' OR subsystem BEGINSWITH 'com.apple.syspolicy' ",
     "OR subsystem CONTAINS[c] 'XProtect' ",
     "OR subsystem == 'com.apple.security.assessment') AND ",
-    "(eventMessage CONTAINS[c] 'genex' ",
+    "(eventMessage CONTAINS[c] 'ruxex' ",
     "OR eventMessage CONTAINS[c] '.plugin-appserver' ",
     "OR eventMessage CONTAINS[c] '100024' OR eventMessage CONTAINS[c] 'EMFILE' ",
     "OR eventMessage CONTAINS[c] 'ENFILE' ",
@@ -95,10 +95,10 @@ fn classify_security_events(output: &str) -> Evidence {
     for line in output.lines().map(str::to_ascii_lowercase) {
         let contains = |values: &[&str]| values.iter().any(|value| line.contains(value));
         if !contains(&[
-            "com.genex.genex",
-            "genex.app",
+            "com.ruxex.ruxex",
+            "ruxex.app",
             ".plugin-appserver",
-            "genex-command-runner",
+            "ruxex-command-runner",
         ]) || contains(&["not blocked", "not denied"])
         {
             continue;
@@ -143,7 +143,7 @@ fn enforcement_check(gatekeeper: Evidence, events: Evidence) -> DoctorCheck {
         (
             CheckStatus::Fail,
             "macos XProtect blocked or remediated the desktop application",
-            "collect the XProtect detection and ask your security administrator to review the official Genex installation",
+            "collect the XProtect detection and ask your security administrator to review the official Ruxex installation",
         )
     } else if gatekeeper == Evidence::Blocked {
         (
@@ -161,7 +161,7 @@ fn enforcement_check(gatekeeper: Evidence, events: Evidence) -> DoctorCheck {
         (
             CheckStatus::Warning,
             "macos system-policy diagnostics indicate file descriptor exhaustion",
-            "restart your Mac, retry Genex once, and contact support if the problem returns",
+            "restart your Mac, retry Ruxex once, and contact support if the problem returns",
         )
     } else if events == Evidence::Audit {
         (
@@ -179,7 +179,7 @@ fn enforcement_check(gatekeeper: Evidence, events: Evidence) -> DoctorCheck {
         (
             CheckStatus::Warning,
             "recent macos security enforcement history was unavailable",
-            "check access to macos unified security logs and rerun genex doctor",
+            "check access to macos unified security logs and rerun ruxex doctor",
         )
     } else {
         return desktop_check(

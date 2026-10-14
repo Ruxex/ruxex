@@ -10,12 +10,12 @@ use std::time::Duration;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::future::BoxFuture;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::RouteAwareClientPool;
-use genex_http_client::RouteAwareRequestError;
-use genex_protocol::shell_environment::GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::RouteAwareClientPool;
+use ruxex_http_client::RouteAwareRequestError;
+use ruxex_protocol::shell_environment::RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -38,11 +38,11 @@ use crate::rpc::internal_error;
 use crate::rpc::invalid_params;
 
 const HTTP_HEADER_ENV_DENYLIST: &[&str] = &[
-    GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
+    RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
     "PROVIDER_API_KEY",
-    "GENEX_API_KEY",
-    "GENEX_ACCESS_TOKEN",
-    "GENEX_CONNECTORS_TOKEN",
+    "RUXEX_API_KEY",
+    "RUXEX_ACCESS_TOKEN",
+    "RUXEX_CONNECTORS_TOKEN",
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_SESSION_TOKEN",
@@ -62,7 +62,7 @@ pub struct RouteAwareHttpClient {
 /// downstream body-delta forwarding.
 pub(crate) struct PendingRouteAwareHttpBodyStream {
     pub(crate) request_id: String,
-    pub(crate) response: genex_http_client::HttpResponse,
+    pub(crate) response: ruxex_http_client::HttpResponse,
 }
 
 /// Validates `http/request` parameters and runs the actual HTTP call used
@@ -172,7 +172,7 @@ impl RouteAwareHttpRequestRunner {
         }
 
         let request_span = tracing::info_span!(
-            "genex.exec_server.http_request",
+            "ruxex.exec_server.http_request",
             otel.kind = "client",
             http.request.method = method.as_str(),
             server.address = url.host_str().unwrap_or_default(),
@@ -181,7 +181,7 @@ impl RouteAwareHttpRequestRunner {
             error.type = tracing::field::Empty,
         );
         let mut headers = Self::build_headers(params.headers)?;
-        genex_otel::inject_span_w3c_trace_headers(&request_span, &mut headers);
+        ruxex_otel::inject_span_w3c_trace_headers(&request_span, &mut headers);
         let mut request = self.client.request(method.clone(), url).headers(headers);
         if let Some(body) = params.body {
             request = request.body(body.into_inner());

@@ -1,20 +1,20 @@
-//! Entry-point for the `genex-exec` binary.
+//! Entry-point for the `ruxex-exec` binary.
 //!
-//! When this CLI is invoked normally, it parses the standard `genex-exec` CLI
-//! options and launches the non-interactive Genex agent. However, if it is
-//! invoked with arg0 as `genex-linux-sandbox`, we instead treat the invocation
-//! as a request to run the logic for the standalone `genex-linux-sandbox`
+//! When this CLI is invoked normally, it parses the standard `ruxex-exec` CLI
+//! options and launches the non-interactive Ruxex agent. However, if it is
+//! invoked with arg0 as `ruxex-linux-sandbox`, we instead treat the invocation
+//! as a request to run the logic for the standalone `ruxex-linux-sandbox`
 //! executable (i.e., parse any -s args and then run a *sandboxed* command under
 //! Landlock + seccomp.
 //!
 //! This allows us to ship a completely separate set of functionality as part
-//! of the `genex-exec` binary.
+//! of the `ruxex-exec` binary.
 use clap::Parser;
-use genex_arg0::Arg0DispatchPaths;
-use genex_arg0::arg0_dispatch_or_else;
-use genex_exec::Cli;
-use genex_exec::run_main;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::arg0_dispatch_or_else;
+use ruxex_exec::Cli;
+use ruxex_exec::run_main;
+use ruxex_utils_cli::CliConfigOverrides;
 
 #[derive(Parser, Debug)]
 struct TopCli {

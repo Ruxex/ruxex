@@ -9,12 +9,12 @@
 
 use super::*;
 use crate::chatwidget::InterruptedTurnNoticeMode;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
 
 const SIDE_RENAME_BLOCK_MESSAGE: &str = "Side conversations are ephemeral and cannot be renamed.";
 const SIDE_MAIN_THREAD_UNAVAILABLE_MESSAGE: &str =
@@ -646,7 +646,7 @@ impl App {
         }
 
         self.session_telemetry.counter(
-            "genex.thread.side",
+            "ruxex.thread.side",
             /*inc*/ 1,
             &[("source", "slash_command")],
         );

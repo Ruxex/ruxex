@@ -6,8 +6,8 @@ use crate::tools::handlers::multi_agents_spec::create_wait_agent_tool_v1;
 use futures::FutureExt;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use genex_protocol::error::GenexErrorDetails;
-use genex_tools::ToolSpec;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_tools::ToolSpec;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -43,7 +43,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -128,7 +128,7 @@ impl Handler {
                     }
                     status_rxs.push((*id, rx));
                 }
-                Err(err) if matches!(err.details(), GenexErrorDetails::ThreadNotFound(_)) => {
+                Err(err) if matches!(err.details(), RuxexErrorDetails::ThreadNotFound(_)) => {
                     initial_final_statuses.push((*id, AgentStatus::NotFound));
                 }
                 Err(err) => {

@@ -4,18 +4,18 @@ use super::App;
 use crate::app_command::AppCommand;
 use crate::app_server_session::AppServerSession;
 use crate::session_state::ThreadSessionState;
-use genex_app_server_protocol::ThreadSettings;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::models::PermissionProfile;
+use ruxex_app_server_protocol::ThreadSettings;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::models::PermissionProfile;
 
 impl App {
     pub(super) async fn sync_active_thread_model_setting(
         &mut self,
         app_server: &mut AppServerSession,
         model: String,
-        effort: Option<genex_protocol::model_types::ReasoningEffort>,
+        effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
     ) {
         let Some(mut params) = self.active_thread_model_setting_update_params(model) else {
             return;
@@ -40,7 +40,7 @@ impl App {
     pub(super) async fn sync_active_thread_reasoning_setting(
         &mut self,
         app_server: &mut AppServerSession,
-        effort: Option<genex_protocol::model_types::ReasoningEffort>,
+        effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
     ) {
         let Some(params) = self.active_thread_reasoning_setting_update_params(effort) else {
             return;
@@ -50,7 +50,7 @@ impl App {
 
     pub(super) fn active_thread_reasoning_setting_update_params(
         &self,
-        effort: Option<genex_protocol::model_types::ReasoningEffort>,
+        effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
     ) -> Option<ThreadSettingsUpdateParams> {
         let thread_id = self.active_thread_id?;
         Some(ThreadSettingsUpdateParams {

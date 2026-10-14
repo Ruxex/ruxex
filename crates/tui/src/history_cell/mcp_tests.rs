@@ -1,6 +1,6 @@
 use super::*;
 use base64::Engine;
-use genex_protocol::mcp::CallToolResult;
+use ruxex_protocol::mcp::CallToolResult;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;

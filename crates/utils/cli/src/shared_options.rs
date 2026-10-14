@@ -1,8 +1,8 @@
-//! Shared command-line flags used by both interactive and non-interactive Genex entry points.
+//! Shared command-line flags used by both interactive and non-interactive Ruxex entry points.
 
 use crate::SandboxModeCliArg;
 use clap::Args;
-use genex_protocol::config_types::ProfileV2Name;
+use ruxex_protocol::config_types::ProfileV2Name;
 use std::path::PathBuf;
 
 #[derive(Args, Clone, Debug, Default)]
@@ -21,7 +21,7 @@ pub struct SharedCliOptions {
     #[arg(long, short = 'm')]
     pub model: Option<String>,
 
-    /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
+    /// Layer $RUXEX_HOME/<name>.config.toml on top of the base user config.
     #[arg(long = "profile", short = 'p')]
     pub config_profile_v2: Option<ProfileV2Name>,
 

@@ -4,11 +4,11 @@ use super::CheckStatus;
 use super::Config;
 use super::DoctorCheck;
 use super::DoctorIssue;
-use genex_history::RolloutItem;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_state::ThreadStateAuditRow;
-use genex_utils_path::normalize_for_path_comparison;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_state::ThreadStateAuditRow;
+use ruxex_utils_path::normalize_for_path_comparison;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -90,7 +90,7 @@ impl RolloutScan {
 
 pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
     thread_inventory_check_for_roots(
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         config.sqlite_config(),
         config.model_provider_id.as_str(),
     )
@@ -98,11 +98,11 @@ pub(super) async fn thread_inventory_check(config: &Config) -> DoctorCheck {
 }
 
 async fn thread_inventory_check_for_roots(
-    genex_home: &Path,
-    sqlite: &genex_state::SqliteConfig,
+    ruxex_home: &Path,
+    sqlite: &ruxex_state::SqliteConfig,
     mounted_provider: &str,
 ) -> DoctorCheck {
-    let scan = scan_rollout_files(genex_home).await;
+    let scan = scan_rollout_files(ruxex_home).await;
     let state_db_path = sqlite.state_db_path();
 
     let mut details = vec![
@@ -134,7 +134,7 @@ async fn thread_inventory_check_for_roots(
         return missing_state_db_check(scan, details);
     }
 
-    let rows = match genex_state::read_thread_state_audit_rows(sqlite).await {
+    let rows = match ruxex_state::read_thread_state_audit_rows(sqlite).await {
         Ok(rows) => rows,
         Err(err) => {
             details.push(format!("rollout DB read error: {err}"));
@@ -156,7 +156,7 @@ async fn thread_inventory_check_for_roots(
         }
     };
 
-    parity_check_from_scan_and_rows(genex_home, scan, rows, details)
+    parity_check_from_scan_and_rows(ruxex_home, scan, rows, details)
 }
 
 fn missing_state_db_check(scan: RolloutScan, details: Vec<String>) -> DoctorCheck {
@@ -191,10 +191,10 @@ fn missing_state_db_check(scan: RolloutScan, details: Vec<String>) -> DoctorChec
                 )
                 .measured(format!("{} rollout files", scan.files.len()))
                 .expected("state DB contains matching thread rows")
-                .remedy("Start Genex with no state DB present so startup backfill can create it from rollout files."),
+                .remedy("Start Ruxex with no state DB present so startup backfill can create it from rollout files."),
         )
             .remediation(
-                "Start Genex with no state DB present so startup backfill can create it from rollout files.",
+                "Start Ruxex with no state DB present so startup backfill can create it from rollout files.",
             );
     }
     if !scan.scan_errors.is_empty() || !scan.malformed_names.is_empty() || scan.reached_scan_cap {
@@ -210,14 +210,14 @@ fn missing_state_db_check(scan: RolloutScan, details: Vec<String>) -> DoctorChec
                 scan.reached_scan_cap
             ))
             .expected("rollout directories are fully scannable")
-            .remedy("Check file permissions and unexpected files under GENEX_HOME sessions."),
+            .remedy("Check file permissions and unexpected files under RUXEX_HOME sessions."),
         );
     }
     check
 }
 
 fn parity_check_from_scan_and_rows(
-    genex_home: &Path,
+    ruxex_home: &Path,
     scan: RolloutScan,
     rows: Vec<ThreadStateAuditRow>,
     mut details: Vec<String>,
@@ -261,7 +261,7 @@ fn parity_check_from_scan_and_rows(
                             .existing_keys
                             .contains(&rollout_path_key(&row.rollout_path))
                             || row.rollout_path.is_file())
-                        .then(|| archived_from_rollout_path(genex_home, &row.rollout_path))
+                        .then(|| archived_from_rollout_path(ruxex_home, &row.rollout_path))
                         .flatten()
                     })?;
                 (expected_archived != row.archived).then_some(row)
@@ -424,22 +424,22 @@ fn parity_check_from_scan_and_rows(
                 scan.reached_scan_cap
             ))
             .expected("rollout directories are fully scannable")
-            .remedy("Check file permissions and unexpected files under GENEX_HOME sessions."),
+            .remedy("Check file permissions and unexpected files under RUXEX_HOME sessions."),
         );
     }
     check
 }
 
-async fn scan_rollout_files(genex_home: &Path) -> RolloutScan {
+async fn scan_rollout_files(ruxex_home: &Path) -> RolloutScan {
     let mut scan = RolloutScan::default();
     scan_rollout_root(
-        &genex_home.join("sessions"),
+        &ruxex_home.join("sessions"),
         /*archived*/ false,
         &mut scan,
     )
     .await;
     scan_rollout_root(
-        &genex_home.join("archived_sessions"),
+        &ruxex_home.join("archived_sessions"),
         /*archived*/ true,
         &mut scan,
     )
@@ -484,7 +484,7 @@ async fn scan_rollout_root(root: &Path, archived: bool, scan: &mut RolloutScan) 
                 dirs.push(path);
                 continue;
             }
-            let logical_path = genex_rollout::plain_rollout_path(&path);
+            let logical_path = ruxex_rollout::plain_rollout_path(&path);
             if !file_type.is_file()
                 || !is_rollout_file(&logical_path)
                 || (path != logical_path && logical_path.is_file())
@@ -519,7 +519,7 @@ async fn scan_rollout_root(root: &Path, archived: bool, scan: &mut RolloutScan) 
 }
 
 async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
-    let mut lines = match genex_rollout::open_rollout_line_reader(path).await {
+    let mut lines = match ruxex_rollout::open_rollout_line_reader(path).await {
         Ok(lines) => lines,
         Err(err) => return RolloutThreadId::Unusable(err.to_string()),
     };
@@ -537,7 +537,7 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
             Err(_) => continue,
         };
         if item_type == "session_meta" {
-            return match genex_rollout::parse_rollout_line(line.trim()) {
+            return match ruxex_rollout::parse_rollout_line(line.trim()) {
                 Ok(line) => match line.item {
                     RolloutItem::SessionMeta(session_meta) => {
                         RolloutThreadId::Id(session_meta.meta.id.to_string())
@@ -554,7 +554,7 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
             };
         }
         if !has_legacy_item {
-            has_legacy_item = genex_rollout::parse_rollout_line(line.trim()).is_ok();
+            has_legacy_item = ruxex_rollout::parse_rollout_line(line.trim()).is_ok();
         }
     }
 
@@ -566,8 +566,8 @@ async fn thread_id_from_rollout(path: &Path) -> RolloutThreadId {
     }
     // Legacy rollouts can omit session metadata, so use the validated filename fallback after
     // the bounded prefix without retaining the first item or loading the full history.
-    let logical_path = genex_rollout::plain_rollout_path(path);
-    genex_rollout::builder_from_items(&[], &logical_path)
+    let logical_path = ruxex_rollout::plain_rollout_path(path);
+    ruxex_rollout::builder_from_items(&[], &logical_path)
         .map(|builder| RolloutThreadId::Id(builder.id.to_string()))
         .unwrap_or(RolloutThreadId::MalformedName)
 }
@@ -593,15 +593,15 @@ fn path_key(path: &Path) -> PathBuf {
 }
 
 fn rollout_path_key(path: &Path) -> PathBuf {
-    path_key(&genex_rollout::plain_rollout_path(path))
+    path_key(&ruxex_rollout::plain_rollout_path(path))
 }
 
-fn archived_from_rollout_path(genex_home: &Path, path: &Path) -> Option<bool> {
+fn archived_from_rollout_path(ruxex_home: &Path, path: &Path) -> Option<bool> {
     let key = path_key(path);
-    if key.starts_with(path_key(&genex_home.join("archived_sessions"))) {
+    if key.starts_with(path_key(&ruxex_home.join("archived_sessions"))) {
         return Some(true);
     }
-    if key.starts_with(path_key(&genex_home.join("sessions"))) {
+    if key.starts_with(path_key(&ruxex_home.join("sessions"))) {
         return Some(false);
     }
     None
@@ -732,9 +732,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_history::RolloutLine;
-    use genex_protocol::ThreadId;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_history::RolloutLine;
+    use ruxex_protocol::ThreadId;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
@@ -767,7 +767,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -795,7 +795,7 @@ mod tests {
             "00000000-0000-0000-0000-000000000002",
         );
         let stale_path = fixture
-            .genex_home
+            .ruxex_home
             .path()
             .join("sessions/2025/01/02/rollout-2025-01-02T12-00-00-00000000-0000-0000-0000-000000000003.jsonl");
         fixture
@@ -814,7 +814,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -830,7 +830,7 @@ mod tests {
             !issue
                 .remedy
                 .as_deref()
-                .is_some_and(|remedy| remedy.starts_with("Restart Genex"))
+                .is_some_and(|remedy| remedy.starts_with("Restart Ruxex"))
         }));
         let missing_sample = check
             .details
@@ -850,7 +850,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            ruxex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -864,7 +864,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -890,7 +890,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -920,7 +920,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -947,7 +947,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -969,7 +969,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&metadata_path).expect("rollout file");
         let mut rollout_line =
-            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            ruxex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -987,7 +987,7 @@ mod tests {
             .await;
 
         let legacy_id = "00000000-0000-0000-0000-000000000003";
-        let legacy_path = fixture.genex_home.path().join(format!(
+        let legacy_path = fixture.ruxex_home.path().join(format!(
             "sessions/2025/01/02/rollout-2025-01-02T11-00-00-{legacy_id}.jsonl"
         ));
         std::fs::write(
@@ -1001,7 +1001,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1033,7 +1033,7 @@ mod tests {
             .await;
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1047,7 +1047,7 @@ mod tests {
     #[tokio::test]
     async fn thread_inventory_check_ignores_compression_temp_files() {
         let fixture = Fixture::new().await;
-        let temp_path = fixture.genex_home.path().join(
+        let temp_path = fixture.ruxex_home.path().join(
             "sessions/2025/01/02/rollout-2025-01-02T10-00-00-00000000-0000-0000-0000-000000000001.jsonl.zst.compress.1.0.tmp",
         );
         std::fs::create_dir_all(temp_path.parent().expect("rollout temp parent"))
@@ -1055,7 +1055,7 @@ mod tests {
         std::fs::write(temp_path, "not a completed rollout").expect("rollout temp file");
 
         let check = thread_inventory_check_for_roots(
-            fixture.genex_home.path(),
+            fixture.ruxex_home.path(),
             &fixture.sqlite(),
             "test-provider",
         )
@@ -1102,7 +1102,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            ruxex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -1136,7 +1136,7 @@ mod tests {
             fixture.write_rollout(/*archived*/ false, "2025-01-02T10-00-00", filename_id);
         let contents = std::fs::read_to_string(&path).expect("rollout file");
         let mut rollout_line =
-            genex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
+            ruxex_rollout::parse_rollout_line(contents.trim()).expect("rollout line");
         let RolloutItem::SessionMeta(session_meta) = &mut rollout_line.item else {
             panic!("expected session metadata");
         };
@@ -1268,7 +1268,7 @@ mod tests {
     }
 
     struct Fixture {
-        genex_home: TempDir,
+        ruxex_home: TempDir,
         sqlite_home: TempDir,
     }
 
@@ -1288,28 +1288,28 @@ mod tests {
 
     impl Fixture {
         async fn new() -> Self {
-            let genex_home = TempDir::new().expect("genex home");
+            let ruxex_home = TempDir::new().expect("ruxex home");
             let sqlite_home = TempDir::new().expect("sqlite home");
-            let _runtime = genex_state::StateRuntime::init(
-                genex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
+            let _runtime = ruxex_state::StateRuntime::init(
+                ruxex_state::SqliteConfig::new_for_testing(sqlite_home.path().abs()),
             )
             .await
             .expect("state runtime");
             Self {
-                genex_home,
+                ruxex_home,
                 sqlite_home,
             }
         }
 
-        fn sqlite(&self) -> genex_state::SqliteConfig {
-            genex_state::SqliteConfig::new_for_testing(self.sqlite_home.path().abs())
+        fn sqlite(&self) -> ruxex_state::SqliteConfig {
+            ruxex_state::SqliteConfig::new_for_testing(self.sqlite_home.path().abs())
         }
 
         fn write_rollout(&self, archived: bool, timestamp: &str, thread_id: &str) -> PathBuf {
             let root = if archived {
-                self.genex_home.path().join("archived_sessions")
+                self.ruxex_home.path().join("archived_sessions")
             } else {
-                self.genex_home.path().join("sessions/2025/01/02")
+                self.ruxex_home.path().join("sessions/2025/01/02")
             };
             std::fs::create_dir_all(&root).expect("rollout dir");
             let path = root.join(format!("rollout-{timestamp}-{thread_id}.jsonl"));
@@ -1317,12 +1317,12 @@ mod tests {
             let rollout_line = RolloutLine {
                 timestamp: timestamp.to_string(),
                 ordinal: None,
-                item: RolloutItem::SessionMeta(genex_protocol::protocol::SessionMetaLine {
-                    meta: genex_protocol::protocol::SessionMeta {
+                item: RolloutItem::SessionMeta(ruxex_protocol::protocol::SessionMetaLine {
+                    meta: ruxex_protocol::protocol::SessionMeta {
                         session_id: parsed_thread_id.into(),
                         id: parsed_thread_id,
                         timestamp: timestamp.to_string(),
-                        cwd: self.genex_home.path().to_path_buf(),
+                        cwd: self.ruxex_home.path().to_path_buf(),
                         originator: "test".to_string(),
                         cli_version: "test".to_string(),
                         source: SessionSource::Cli,
@@ -1366,7 +1366,7 @@ INSERT INTO threads (
             .bind(1_i64)
             .bind("cli")
             .bind("test-provider")
-            .bind(self.genex_home.path().display().to_string())
+            .bind(self.ruxex_home.path().display().to_string())
             .bind("test title")
             .bind("read-only")
             .bind("on-request")

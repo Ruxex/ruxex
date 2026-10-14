@@ -1,12 +1,12 @@
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_app_server_protocol::HookEventName;
-use genex_app_server_protocol::HookHandlerMetadata;
-use genex_app_server_protocol::HookMetadata;
-use genex_app_server_protocol::HookSource;
-use genex_app_server_protocol::HookTrustStatus;
-use genex_app_server_protocol::HooksListEntry;
+use ruxex_app_server_protocol::HookEventName;
+use ruxex_app_server_protocol::HookHandlerMetadata;
+use ruxex_app_server_protocol::HookMetadata;
+use ruxex_app_server_protocol::HookSource;
+use ruxex_app_server_protocol::HookTrustStatus;
+use ruxex_app_server_protocol::HooksListEntry;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -62,7 +62,7 @@ impl HooksBrowserView {
     pub(crate) fn new(
         hooks: Vec<HookMetadata>,
         warnings: Vec<String>,
-        errors: Vec<genex_app_server_protocol::HookErrorInfo>,
+        errors: Vec<ruxex_app_server_protocol::HookErrorInfo>,
         app_event_tx: AppEventSender,
     ) -> Self {
         Self::from_entry(
@@ -103,7 +103,7 @@ impl HooksBrowserView {
     }
 
     fn event_rows(&self) -> Vec<EventRow> {
-        genex_protocol::protocol::HookEventName::iter()
+        ruxex_protocol::protocol::HookEventName::iter()
             .map(|event_name| {
                 let event_name: HookEventName = event_name.into();
                 let installed = self
@@ -144,7 +144,7 @@ impl HooksBrowserView {
     fn selected_event(&self) -> Option<HookEventName> {
         self.state
             .selected_idx
-            .and_then(|idx| genex_protocol::protocol::HookEventName::iter().nth(idx))
+            .and_then(|idx| ruxex_protocol::protocol::HookEventName::iter().nth(idx))
             .map(Into::into)
     }
 
@@ -198,7 +198,7 @@ impl HooksBrowserView {
 
     fn page_len(&self) -> usize {
         match self.page {
-            HooksBrowserPage::Events => genex_protocol::protocol::HookEventName::iter().count(),
+            HooksBrowserPage::Events => ruxex_protocol::protocol::HookEventName::iter().count(),
             HooksBrowserPage::Handlers(event_name) => self.handlers_for_event(event_name).count(),
         }
     }
@@ -288,7 +288,7 @@ impl HooksBrowserView {
         self.state = ScrollState::new();
         self.state.selected_idx = selected_event_name
             .and_then(|event_name| {
-                genex_protocol::protocol::HookEventName::iter()
+                ruxex_protocol::protocol::HookEventName::iter()
                     .position(|candidate| HookEventName::from(candidate) == event_name)
             })
             .or_else(|| (self.page_len() > 0).then_some(0));
@@ -795,7 +795,7 @@ fn event_description(event_name: HookEventName) -> &'static str {
         HookEventName::UserPromptSubmit => "When the user submits a prompt",
         HookEventName::SubagentStart => "When a subagent is created",
         HookEventName::SubagentStop => "Right before a subagent ends its turn",
-        HookEventName::Stop => "Right before Genex ends its turn",
+        HookEventName::Stop => "Right before Ruxex ends its turn",
         HookEventName::Interrupt => "Right before an interrupted turn is aborted",
     }
 }

@@ -1,6 +1,6 @@
-use genex_http_client::OutboundProxyPolicy;
-use genex_http_client::RouteAwareClientPool;
-use genex_http_client::RouteAwareRequestBuilder;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_http_client::RouteAwareClientPool;
+use ruxex_http_client::RouteAwareRequestBuilder;
 use http::Method;
 use std::fmt::Debug;
 

@@ -1,10 +1,10 @@
 #![cfg(unix)]
-use genex_core::spawn::StdioPolicy;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::spawn::StdioPolicy;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::future::Future;
 use std::io;
@@ -20,19 +20,19 @@ pub(super) async fn spawn_command_under_sandbox(
     stdio_policy: StdioPolicy,
     env: HashMap<String, String>,
 ) -> std::io::Result<Child> {
-    use genex_core::exec::ExecCapturePolicy;
-    use genex_core::exec::ExecParams;
-    use genex_core::exec::build_exec_request;
-    use genex_core::sandboxing::SandboxPermissions;
+    use ruxex_core::exec::ExecCapturePolicy;
+    use ruxex_core::exec::ExecParams;
+    use ruxex_core::exec::build_exec_request;
+    use ruxex_core::sandboxing::SandboxPermissions;
     use std::process::Stdio;
 
     #[cfg(target_os = "linux")]
-    let genex_linux_sandbox_exe = Some(
-        core_test_support::find_genex_linux_sandbox_exe()
+    let ruxex_linux_sandbox_exe = Some(
+        core_test_support::find_ruxex_linux_sandbox_exe()
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?,
     );
     #[cfg(target_os = "macos")]
-    let genex_linux_sandbox_exe = None;
+    let ruxex_linux_sandbox_exe = None;
     let exec_request = build_exec_request(
         ExecParams {
             command,
@@ -49,8 +49,8 @@ pub(super) async fn spawn_command_under_sandbox(
         permission_profile,
         sandbox_cwd,
         &[PathUri::from_abs_path(sandbox_cwd)],
-        &genex_linux_sandbox_exe,
-        /*genex_self_exe*/ &None,
+        &ruxex_linux_sandbox_exe,
+        /*ruxex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
     )
     .map_err(|err| io::Error::other(err.to_string()))?;
@@ -349,7 +349,7 @@ async fn sandbox_distinguishes_command_and_policy_cwds() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_first_time_dot_genex_creation() {
+async fn sandbox_blocks_first_time_dot_ruxex_creation() {
     core_test_support::skip_if_sandbox!();
     #[cfg(target_os = "linux")]
     let sandbox_env = match linux_sandbox_test_env().await {
@@ -362,8 +362,8 @@ async fn sandbox_blocks_first_time_dot_genex_creation() {
     let temp = tempfile::tempdir().expect("should be able to create temp dir");
     let repo_root = temp.path().join("repo").abs();
     create_dir_all(&repo_root).await.expect("mkdir repo");
-    let dot_genex = repo_root.join(".genex");
-    let config_toml = dot_genex.join("config.toml");
+    let dot_ruxex = repo_root.join(".ruxex");
+    let config_toml = dot_ruxex.join("config.toml");
     let permission_profile = PermissionProfile::workspace_write_with(
         &[],
         NetworkSandboxPolicy::Restricted,
@@ -375,7 +375,7 @@ async fn sandbox_blocks_first_time_dot_genex_creation() {
         vec![
             "bash".to_string(),
             "-lc".to_string(),
-            "mkdir -p .genex && echo 'sandbox_mode = \"danger-full-access\"' > .genex/config.toml"
+            "mkdir -p .ruxex && echo 'sandbox_mode = \"danger-full-access\"' > .ruxex/config.toml"
                 .to_string(),
         ],
         repo_root.clone(),
@@ -385,26 +385,26 @@ async fn sandbox_blocks_first_time_dot_genex_creation() {
         sandbox_env,
     )
     .await
-    .expect("should spawn command creating .genex");
+    .expect("should spawn command creating .ruxex");
 
-    let status = child.wait().await.expect("should wait for .genex command");
+    let status = child.wait().await.expect("should wait for .ruxex command");
     assert!(
         !status.success(),
-        "sandbox unexpectedly allowed first-time .genex creation: {status:?}"
+        "sandbox unexpectedly allowed first-time .ruxex creation: {status:?}"
     );
-    let dot_genex_metadata = tokio::fs::symlink_metadata(&dot_genex).await;
-    if let Ok(metadata) = dot_genex_metadata {
+    let dot_ruxex_metadata = tokio::fs::symlink_metadata(&dot_ruxex).await;
+    if let Ok(metadata) = dot_ruxex_metadata {
         assert!(
             !metadata.is_dir(),
             "{} should not be creatable as a directory",
-            dot_genex.display()
+            dot_ruxex.display()
         );
-    } else if let Err(err) = &dot_genex_metadata {
+    } else if let Err(err) = &dot_ruxex_metadata {
         assert_eq!(
             err.kind(),
             io::ErrorKind::NotFound,
             "unexpected metadata error for {}: {err}",
-            dot_genex.display()
+            dot_ruxex.display()
         );
     }
     let config_toml_exists = match tokio::fs::try_exists(&config_toml).await {

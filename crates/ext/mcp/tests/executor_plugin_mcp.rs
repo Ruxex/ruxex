@@ -1,17 +1,17 @@
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecutorCapabilityDiscoveryCache;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::McpServerContribution;
-use genex_extension_api::McpServerContributionContext;
-use genex_features::Feature;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecutorCapabilityDiscoveryCache;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::McpServerContribution;
+use ruxex_extension_api::McpServerContributionContext;
+use ruxex_features::Feature;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
@@ -25,12 +25,12 @@ struct PackageSummary {
 
 #[tokio::test]
 async fn selected_plugin_package_is_contributed_without_servers() -> TestResult {
-    let genex_home = tempfile::tempdir()?;
+    let ruxex_home = tempfile::tempdir()?;
     let plugin_root = tempfile::tempdir()?;
-    std::fs::create_dir_all(plugin_root.path().join(".genex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.path().join(".ruxex-plugin"))?;
     std::fs::create_dir_all(plugin_root.path().join("skills/deploy"))?;
     std::fs::write(
-        plugin_root.path().join(".genex-plugin/plugin.json"),
+        plugin_root.path().join(".ruxex-plugin/plugin.json"),
         r#"{"name":"skill-only","interface":{"displayName":"Skill Only"}}"#,
     )?;
     std::fs::write(
@@ -38,8 +38,8 @@ async fn selected_plugin_package_is_contributed_without_servers() -> TestResult 
         "---\nname: deploy\ndescription: Deploy the project.\n---\n",
     )?;
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
-        .fallback_cwd(Some(genex_home.path().to_path_buf()))
+        .ruxex_home(ruxex_home.path().to_path_buf())
+        .fallback_cwd(Some(ruxex_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -75,7 +75,7 @@ async fn raw_selected_plugin_contributions(
 ) -> Result<Vec<McpServerContribution>, Box<dyn std::error::Error>> {
     let mut builder = ExtensionRegistryBuilder::new();
     let environment_manager = Arc::new(EnvironmentManager::default_for_tests());
-    genex_mcp_extension::install_executor_plugins(&mut builder, Arc::clone(&environment_manager));
+    ruxex_mcp_extension::install_executor_plugins(&mut builder, Arc::clone(&environment_manager));
     let registry = builder.build();
     let thread_init = ExtensionDataInit::new();
     let selected_capability_roots = vec![SelectedCapabilityRoot {

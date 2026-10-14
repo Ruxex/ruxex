@@ -3,9 +3,9 @@
 //! This module is only for the new paginated rollout format that persists canonical
 //! `ItemCompleted(TurnItem)` records, not legacy event-only rollouts.
 
-use genex_protocol::protocol::EventMsg;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
 
 use crate::protocol::thread_history::ThreadHistoryChangeSet;
 use crate::protocol::thread_history::ThreadHistoryItemChange;
@@ -44,7 +44,7 @@ pub fn project_rollout_line(line: &RolloutLine) -> ThreadHistoryChangeSet {
                 error: event.error.as_ref().map(|error| TurnError {
                     misalignment: error.misalignment.clone().map(Into::into),
                     message: error.message.clone(),
-                    genex_error_info: error.genex_error_info.clone().map(Into::into),
+                    ruxex_error_info: error.ruxex_error_info.clone().map(Into::into),
                     additional_details: None,
                 }),
                 started_at: event.started_at,

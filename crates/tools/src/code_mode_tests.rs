@@ -114,7 +114,7 @@ declare const tools: { lookup_order(args: { order_id: string; }): Promise<{ ok: 
 fn augment_tool_spec_for_code_mode_preserves_exec_tool_description() {
     assert_eq!(
         augment_tool_spec_for_code_mode(ToolSpec::Freeform(FreeformTool {
-            name: genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+            name: ruxex_code_mode::PUBLIC_TOOL_NAME.to_string(),
             description: "Run code".to_string(),
             defer_loading: None,
             format: FreeformToolFormat {
@@ -124,7 +124,7 @@ fn augment_tool_spec_for_code_mode_preserves_exec_tool_description() {
             },
         })),
         ToolSpec::Freeform(FreeformTool {
-            name: genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+            name: ruxex_code_mode::PUBLIC_TOOL_NAME.to_string(),
             description: "Run code".to_string(),
             defer_loading: None,
             format: FreeformToolFormat {
@@ -151,7 +151,7 @@ fn tool_spec_to_code_mode_tool_definition_returns_augmented_nested_tools() {
 
     assert_eq!(
         tool_spec_to_code_mode_tool_definition(&spec),
-        Some(genex_code_mode::ToolDefinition {
+        Some(ruxex_code_mode::ToolDefinition {
             name: "apply_patch".to_string(),
             tool_name: ToolName::plain("apply_patch"),
             description: r#"Apply a patch
@@ -161,7 +161,7 @@ exec tool declaration:
 declare const tools: { apply_patch(input: string): Promise<unknown>; };
 ```"#
                 .to_string(),
-            kind: genex_code_mode::CodeModeToolKind::Freeform,
+            kind: ruxex_code_mode::CodeModeToolKind::Freeform,
             input_schema: None,
             output_schema: None,
         })
@@ -187,7 +187,7 @@ fn tool_spec_to_code_mode_tool_definition_supports_namespaced_custom_tools() {
 
     assert_eq!(
         tool_spec_to_code_mode_tool_definition(&spec),
-        Some(genex_code_mode::ToolDefinition {
+        Some(ruxex_code_mode::ToolDefinition {
             name: "editor__apply_patch".to_string(),
             tool_name: ToolName::namespaced("editor", "apply_patch"),
             description: r#"Apply a patch
@@ -197,7 +197,7 @@ exec tool declaration:
 declare const tools: { editor__apply_patch(input: string): Promise<unknown>; };
 ```"#
                 .to_string(),
-            kind: genex_code_mode::CodeModeToolKind::Freeform,
+            kind: ruxex_code_mode::CodeModeToolKind::Freeform,
             input_schema: None,
             output_schema: None,
         })

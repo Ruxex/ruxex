@@ -8,18 +8,18 @@ use super::app_server_event_targets::server_request_thread_id;
 use crate::app_event::AppEvent;
 use crate::app_server_session::AppServerSession;
 use crate::app_server_session::status_account_display_from_auth_mode;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadSource;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SubAgentSource;
 
 impl App {
     pub(super) fn refresh_mcp_startup_expected_servers_from_config(&mut self) {
@@ -143,7 +143,7 @@ impl App {
                 .agents_overview
                 .dispatched_requests
                 .contains_key(parent_thread_id)
-            && let Ok(thread_id) = genex_protocol::ThreadId::from_string(&started.thread.id)
+            && let Ok(thread_id) = ruxex_protocol::ThreadId::from_string(&started.thread.id)
         {
             self.agents_overview
                 .dispatched_requests
@@ -170,7 +170,7 @@ impl App {
                     task.abort();
                 }
                 let notification_thread_id =
-                    genex_protocol::ThreadId::from_string(&notification.thread_id).ok();
+                    ruxex_protocol::ThreadId::from_string(&notification.thread_id).ok();
                 self.pending_primary_events.retain(|event| {
                     !matches!(event, ThreadBufferedEvent::Request(request)
                         if request.id() == &notification.request_id
@@ -208,7 +208,7 @@ impl App {
                 // the newly authenticated identity, even when both accounts share one thread.
                 self.last_thread_usage_status_cell = None;
                 self.pending_thread_usage_history_refresh = false;
-                let has_genex_backend_auth = false;
+                let has_ruxex_backend_auth = false;
                 self.chat_widget.update_account_state(
                     status_account_display_from_auth_mode(
                         notification.auth_mode,
@@ -216,7 +216,7 @@ impl App {
                     ),
                     notification.plan_type,
                     false,
-                    has_genex_backend_auth,
+                    has_ruxex_backend_auth,
                 );
                 if self.chat_widget.has_managed_account() {
                     crate::daybreak::prefetch_notice(
@@ -343,7 +343,7 @@ impl App {
                 );
             if app_server_client.uses_embedded_app_server()
                 || requires_mcp
-                || genex_protocol::ThreadId::from_string(&params.thread_id)
+                || ruxex_protocol::ThreadId::from_string(&params.thread_id)
                     .is_ok_and(|thread_id| self.abandoned_side_threads.contains(&thread_id))
             {
                 let response = crate::dynamic_tools::failure_response(if requires_mcp {
@@ -394,7 +394,7 @@ impl App {
                 if inherits_task_tools
                     && response.success
                     && let [
-                        genex_app_server_protocol::DynamicToolCallOutputContentItem::InputText {
+                        ruxex_app_server_protocol::DynamicToolCallOutputContentItem::InputText {
                             text,
                         },
                     ] = response.content_items.as_slice()

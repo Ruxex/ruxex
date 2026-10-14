@@ -29,108 +29,108 @@ use crate::terminal_visualization_instructions::with_terminal_visualization_inst
 use color_eyre::eyre::ContextCompat;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
-use genex_app_server_client::AppServerClient;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_client::AppServerPath;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::Account;
-use genex_app_server_protocol::AppServerIdentity;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::AuthMode;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigRequirementsReadResponse;
-use genex_app_server_protocol::ConfigWriteResponse;
-use genex_app_server_protocol::GetAccountParams;
-use genex_app_server_protocol::GetAccountResponse;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::LogoutAccountResponse;
-use genex_app_server_protocol::Model as ApiModel;
-use genex_app_server_protocol::ModelListParams;
-use genex_app_server_protocol::ModelListResponse;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::ModelProviderReadResponse;
-use genex_app_server_protocol::NewThreadModelDefaults;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ReviewDelivery;
-use genex_app_server_protocol::ReviewStartParams;
-use genex_app_server_protocol::ReviewStartResponse;
-use genex_app_server_protocol::ReviewTarget;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::SkillsListParams;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadArchiveResponse;
-use genex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
-use genex_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
-use genex_app_server_protocol::ThreadCompactStartParams;
-use genex_app_server_protocol::ThreadCompactStartResponse;
-use genex_app_server_protocol::ThreadDeleteParams;
-use genex_app_server_protocol::ThreadDeleteResponse;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadGoalClearParams;
-use genex_app_server_protocol::ThreadGoalClearResponse;
-use genex_app_server_protocol::ThreadGoalGetParams;
-use genex_app_server_protocol::ThreadGoalGetResponse;
-use genex_app_server_protocol::ThreadGoalSetParams;
-use genex_app_server_protocol::ThreadGoalSetResponse;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadInjectItemsParams;
-use genex_app_server_protocol::ThreadInjectItemsResponse;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use genex_app_server_protocol::ThreadMetadataUpdateParams;
-use genex_app_server_protocol::ThreadMetadataUpdateResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSetNameParams;
-use genex_app_server_protocol::ThreadSetNameResponse;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadSettingsUpdateResponse;
-use genex_app_server_protocol::ThreadShellCommandParams;
-use genex_app_server_protocol::ThreadShellCommandResponse;
-use genex_app_server_protocol::ThreadSource;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStartSource;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnSteerParams;
-use genex_app_server_protocol::TurnSteerResponse;
-use genex_app_server_protocol::UserInput;
-use genex_config::ConfigLayerSource;
-use genex_otel::TelemetryAuthMode;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::model_types::ModelAvailabilityNux;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ModelUpgrade;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BaseInstructionsProvenance;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::SubAgentSource;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_client::AppServerClient;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_client::AppServerPath;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::Account;
+use ruxex_app_server_protocol::AppServerIdentity;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::AuthMode;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+use ruxex_app_server_protocol::ConfigWriteResponse;
+use ruxex_app_server_protocol::GetAccountParams;
+use ruxex_app_server_protocol::GetAccountResponse;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::LogoutAccountResponse;
+use ruxex_app_server_protocol::Model as ApiModel;
+use ruxex_app_server_protocol::ModelListParams;
+use ruxex_app_server_protocol::ModelListResponse;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use ruxex_app_server_protocol::ModelProviderReadResponse;
+use ruxex_app_server_protocol::NewThreadModelDefaults;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ReviewDelivery;
+use ruxex_app_server_protocol::ReviewStartParams;
+use ruxex_app_server_protocol::ReviewStartResponse;
+use ruxex_app_server_protocol::ReviewTarget;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::SkillsListParams;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadArchiveResponse;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
+use ruxex_app_server_protocol::ThreadCompactStartParams;
+use ruxex_app_server_protocol::ThreadCompactStartResponse;
+use ruxex_app_server_protocol::ThreadDeleteParams;
+use ruxex_app_server_protocol::ThreadDeleteResponse;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadGoalClearParams;
+use ruxex_app_server_protocol::ThreadGoalClearResponse;
+use ruxex_app_server_protocol::ThreadGoalGetParams;
+use ruxex_app_server_protocol::ThreadGoalGetResponse;
+use ruxex_app_server_protocol::ThreadGoalSetParams;
+use ruxex_app_server_protocol::ThreadGoalSetResponse;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadInjectItemsParams;
+use ruxex_app_server_protocol::ThreadInjectItemsResponse;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSetNameParams;
+use ruxex_app_server_protocol::ThreadSetNameResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateResponse;
+use ruxex_app_server_protocol::ThreadShellCommandParams;
+use ruxex_app_server_protocol::ThreadShellCommandResponse;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStartSource;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnarchiveResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnSteerParams;
+use ruxex_app_server_protocol::TurnSteerResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_config::ConfigLayerSource;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::model_types::ModelAvailabilityNux;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelServiceTier;
+use ruxex_protocol::model_types::ModelUpgrade;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BaseInstructionsProvenance;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -222,7 +222,7 @@ pub(crate) async fn request_thread_start_with_history_fallback(
                     || params
                         .config
                         .as_ref()
-                        .is_some_and(|config| config.contains_key("mcp_servers.genex_tui"));
+                        .is_some_and(|config| config.contains_key("mcp_servers.ruxex_tui"));
                 return Ok((response, history_support, task_tools_available));
             }
             Err(TypedRequestError::Server { source, .. })
@@ -274,11 +274,11 @@ pub(crate) struct AppServerBootstrap {
     pub(crate) account_email: Option<String>,
     pub(crate) auth_mode: Option<TelemetryAuthMode>,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
-    pub(crate) plan_type: Option<genex_protocol::account::PlanType>,
+    pub(crate) plan_type: Option<ruxex_protocol::account::PlanType>,
     pub(crate) default_model: String,
     pub(crate) has_managed_account: bool,
     pub(crate) available_models: Vec<ModelPreset>,
-    pub(crate) collaboration_modes: Vec<genex_protocol::config_types::CollaborationModeMask>,
+    pub(crate) collaboration_modes: Vec<ruxex_protocol::config_types::CollaborationModeMask>,
     pub(crate) app_server_identity: Option<AppServerIdentity>,
     pub(crate) provider_status: ModelProviderReadResponse,
     pub(crate) provider_capabilities: ModelProviderCapabilitiesReadResponse,
@@ -415,7 +415,7 @@ impl AppServerSession {
         {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                "a user-configured MCP server already owns the genex_tui namespace",
+                "a user-configured MCP server already owns the ruxex_tui namespace",
             ));
         }
         let managed_requirement = config
@@ -515,11 +515,11 @@ impl AppServerSession {
         Arc::clone(&self.task_search_generation)
     }
 
-    pub(crate) fn genex_home_path(
+    pub(crate) fn ruxex_home_path(
         &self,
-        local_genex_home: &AbsolutePathBuf,
+        local_ruxex_home: &AbsolutePathBuf,
     ) -> Option<AppServerPath> {
-        self.client.genex_home(local_genex_home)
+        self.client.ruxex_home(local_ruxex_home)
     }
 
     pub(crate) fn server_version(&self) -> Option<&str> {
@@ -529,11 +529,11 @@ impl AppServerSession {
         client.server_version()
     }
 
-    pub(crate) fn server_genex_home(&self) -> Option<&str> {
+    pub(crate) fn server_ruxex_home(&self) -> Option<&str> {
         let AppServerClient::Remote(client) = &self.client else {
             return None;
         };
-        client.genex_home()
+        client.ruxex_home()
     }
 
     pub(crate) fn app_server_identity(&self) -> Option<&AppServerIdentity> {
@@ -1213,10 +1213,10 @@ impl AppServerSession {
         permissions_override: TurnPermissionsOverride,
         workspace_roots: &[AbsolutePathBuf],
         model: String,
-        effort: Option<genex_protocol::model_types::ReasoningEffort>,
-        summary: Option<genex_protocol::config_types::ReasoningSummary>,
+        effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
+        summary: Option<ruxex_protocol::config_types::ReasoningSummary>,
         service_tier: Option<Option<String>>,
-        collaboration_mode: Option<genex_protocol::config_types::CollaborationMode>,
+        collaboration_mode: Option<ruxex_protocol::config_types::CollaborationMode>,
         output_schema: Option<serde_json::Value>,
     ) -> Result<TurnStartResponse> {
         let request_id = self.next_request_id();
@@ -1570,7 +1570,7 @@ pub(crate) async fn start_thread_with_request_handle(
 
 pub(crate) fn status_account_display_from_auth_mode(
     auth_mode: Option<AuthMode>,
-    _plan_type: Option<genex_protocol::account::PlanType>,
+    _plan_type: Option<ruxex_protocol::account::PlanType>,
 ) -> Option<StatusAccountDisplay> {
     match auth_mode {
         Some(AuthMode::ApiKey) => Some(StatusAccountDisplay::ApiKey),
@@ -1647,7 +1647,7 @@ fn config_request_overrides_from_config(
     let mut session_config = toml::Value::Table(toml::Table::new());
     for layer in config.config_layer_stack.layers_low_to_high() {
         if matches!(&layer.name, ConfigLayerSource::SessionFlags) {
-            genex_config::merge_toml_values(&mut session_config, &layer.config);
+            ruxex_config::merge_toml_values(&mut session_config, &layer.config);
         }
     }
     let mut overrides: HashMap<_, _> = session_config
@@ -1726,7 +1726,7 @@ fn new_thread_reasoning_overrides(config: &Config) -> Option<HashMap<String, ser
     let mut overrides = config_request_overrides_from_config(config).unwrap_or_default();
     let summary = config
         .model_reasoning_summary
-        .unwrap_or(genex_protocol::config_types::ReasoningSummary::Detailed);
+        .unwrap_or(ruxex_protocol::config_types::ReasoningSummary::Detailed);
     overrides.insert(
         "model_reasoning_summary".to_string(),
         serde_json::Value::String(summary.to_string()),
@@ -1744,7 +1744,7 @@ fn new_thread_reasoning_overrides(config: &Config) -> Option<HashMap<String, ser
         features.insert(
             "concurrent_reasoning_summaries".to_string(),
             serde_json::Value::Bool(
-                summary != genex_protocol::config_types::ReasoningSummary::None
+                summary != ruxex_protocol::config_types::ReasoningSummary::None
                     && explicit_feature.unwrap_or(/*default*/ false),
             ),
         );
@@ -1759,10 +1759,10 @@ fn service_tier_override_from_config(config: &Config) -> Option<Option<String>> 
 fn sandbox_mode_from_permission_profile(
     permission_profile: &PermissionProfile,
     cwd: &std::path::Path,
-) -> Option<genex_app_server_protocol::SandboxMode> {
+) -> Option<ruxex_app_server_protocol::SandboxMode> {
     match permission_profile {
         PermissionProfile::Disabled => {
-            Some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
+            Some(ruxex_app_server_protocol::SandboxMode::DangerFullAccess)
         }
         PermissionProfile::External { .. } => None,
         PermissionProfile::Managed { .. } => {
@@ -1771,11 +1771,11 @@ fn sandbox_mode_from_permission_profile(
                 permission_profile
                     .network_sandbox_policy()
                     .is_enabled()
-                    .then_some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
+                    .then_some(ruxex_app_server_protocol::SandboxMode::DangerFullAccess)
             } else if file_system_policy.can_write_local_path_with_cwd(cwd, cwd) {
-                Some(genex_app_server_protocol::SandboxMode::WorkspaceWrite)
+                Some(ruxex_app_server_protocol::SandboxMode::WorkspaceWrite)
             } else {
-                Some(genex_app_server_protocol::SandboxMode::ReadOnly)
+                Some(ruxex_app_server_protocol::SandboxMode::ReadOnly)
             }
         }
     }
@@ -1789,14 +1789,14 @@ pub(crate) fn permission_profile_is_safely_represented_by_sandbox_mode(
         return false;
     };
     let projected_profile = match sandbox_mode {
-        genex_app_server_protocol::SandboxMode::ReadOnly => PermissionProfile::read_only(),
-        genex_app_server_protocol::SandboxMode::WorkspaceWrite => {
+        ruxex_app_server_protocol::SandboxMode::ReadOnly => PermissionProfile::read_only(),
+        ruxex_app_server_protocol::SandboxMode::WorkspaceWrite => {
             PermissionProfile::from_legacy_sandbox_policy_for_cwd(
-                &genex_protocol::protocol::SandboxPolicy::new_workspace_write_policy(),
+                &ruxex_protocol::protocol::SandboxPolicy::new_workspace_write_policy(),
                 cwd,
             )
         }
-        genex_app_server_protocol::SandboxMode::DangerFullAccess => PermissionProfile::Disabled,
+        ruxex_app_server_protocol::SandboxMode::DangerFullAccess => PermissionProfile::Disabled,
     };
     permission_profile.network_sandbox_policy() == projected_profile.network_sandbox_policy()
         && permission_profile
@@ -1812,7 +1812,7 @@ pub(crate) fn turn_permissions_overrides(
     permissions_override: TurnPermissionsOverride,
     cwd: &std::path::Path,
 ) -> Result<(
-    Option<genex_app_server_protocol::SandboxPolicy>,
+    Option<ruxex_app_server_protocol::SandboxPolicy>,
     Option<String>,
 )> {
     Ok(match permissions_override {
@@ -2185,7 +2185,7 @@ async fn thread_session_state_from_thread_fork_response(
 }
 
 fn display_permission_profile_from_thread_response(
-    sandbox: &genex_app_server_protocol::SandboxPolicy,
+    sandbox: &ruxex_app_server_protocol::SandboxPolicy,
     cwd: &std::path::Path,
     config: &Config,
     thread_params_mode: ThreadParamsMode,
@@ -2197,7 +2197,7 @@ fn display_permission_profile_from_thread_response(
                 PermissionProfile::Disabled
             ) && !matches!(
                 sandbox,
-                genex_app_server_protocol::SandboxPolicy::DangerFullAccess
+                ruxex_app_server_protocol::SandboxPolicy::DangerFullAccess
             ) =>
         {
             PermissionProfile::from_legacy_sandbox_policy_for_cwd(&sandbox.to_core(), cwd)
@@ -2226,7 +2226,7 @@ async fn thread_session_state_from_thread_response(
     cwd: AbsolutePathBuf,
     runtime_workspace_roots: Vec<AbsolutePathBuf>,
     instruction_source_paths: Vec<PathUri>,
-    reasoning_effort: Option<genex_protocol::model_types::ReasoningEffort>,
+    reasoning_effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
     local_settings: &LocalSettings,
 ) -> Result<ThreadSessionState, String> {
     let thread_id = ThreadId::from_string(thread_id)
@@ -2236,11 +2236,11 @@ async fn thread_session_state_from_thread_response(
         .map(ThreadId::from_string)
         .transpose()
         .map_err(|err| format!("forked_from_id is invalid: {err}"))?;
-    let history_config = genex_message_history::HistoryConfig::new(
-        local_settings.genex_home.clone(),
+    let history_config = ruxex_message_history::HistoryConfig::new(
+        local_settings.ruxex_home.clone(),
         &local_settings.history,
     );
-    let (log_id, entry_count) = genex_message_history::history_metadata(&history_config).await;
+    let (log_id, entry_count) = ruxex_message_history::history_metadata(&history_config).await;
     Ok(ThreadSessionState {
         thread_id,
         forked_from_id,

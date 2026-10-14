@@ -12,23 +12,23 @@ use super::thread_input::can_accept_direct_input;
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
 use crate::error_code::method_not_found;
-use genex_app_server_protocol::SelectedCapabilityRoot;
-use genex_app_server_protocol::ThreadHistoryMode as ApiThreadHistoryMode;
-use genex_app_server_protocol::ThreadRevertParams;
-use genex_app_server_protocol::ThreadRevertResponse;
-use genex_app_server_protocol::ThreadRevertedNotification;
-use genex_app_server_protocol::ThreadSection;
-use genex_app_server_protocol::ThreadSectionAppearance;
-use genex_app_server_protocol::ThreadSectionMoveParams;
-use genex_app_server_protocol::ThreadSectionMoveResponse;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::ThreadIdleCause;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::config_types::MultiAgentMode;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_thread_store::PersistContext;
+use ruxex_app_server_protocol::SelectedCapabilityRoot;
+use ruxex_app_server_protocol::ThreadHistoryMode as ApiThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadRevertParams;
+use ruxex_app_server_protocol::ThreadRevertResponse;
+use ruxex_app_server_protocol::ThreadRevertedNotification;
+use ruxex_app_server_protocol::ThreadSection;
+use ruxex_app_server_protocol::ThreadSectionAppearance;
+use ruxex_app_server_protocol::ThreadSectionMoveParams;
+use ruxex_app_server_protocol::ThreadSectionMoveResponse;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::ThreadIdleCause;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::config_types::MultiAgentMode;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_thread_store::PersistContext;
 use std::ops::ControlFlow;
 
 pub(super) const THREAD_LIST_DEFAULT_LIMIT: usize = 25;
@@ -98,7 +98,7 @@ struct PreparedResumeConfig {
 
 struct ThreadRevertRuntimeSnapshot {
     config: Config,
-    settings: GenexThreadSettingsOverrides,
+    settings: RuxexThreadSettingsOverrides,
     client_mcp_extensions: ClientMcpExtensions,
 }
 
@@ -157,16 +157,16 @@ fn collect_resume_override_mismatches(
             (requested_sandbox, &active_sandbox),
             (
                 SandboxMode::ReadOnly,
-                genex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
+                ruxex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
             ) | (
                 SandboxMode::WorkspaceWrite,
-                genex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
+                ruxex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
             ) | (
                 SandboxMode::DangerFullAccess,
-                genex_protocol::protocol::SandboxPolicy::DangerFullAccess
+                ruxex_protocol::protocol::SandboxPolicy::DangerFullAccess
             ) | (
                 SandboxMode::DangerFullAccess,
-                genex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
+                ruxex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
             )
         );
         if !sandbox_matches {
@@ -344,7 +344,7 @@ fn validate_dynamic_tools(tools: &[DynamicToolSpec]) -> Result<(), String> {
             ));
         }
 
-        if let Err(err) = genex_tools::parse_tool_input_schema(&tool.input_schema) {
+        if let Err(err) = ruxex_tools::parse_tool_input_schema(&tool.input_schema) {
             return Err(format!(
                 "dynamic tool input schema is not supported for {name}: {err}"
             ));
@@ -433,7 +433,7 @@ pub(crate) struct ThreadRequestProcessor {
 /// Whether resume attaches a client or restores a cold runtime during daemon startup.
 pub(crate) enum ThreadResumeTarget {
     Client(ConnectionRequestId),
-    DaemonRecovery(Option<genex_app_server_transport::daemon_recovery::InterruptedTurn>),
+    DaemonRecovery(Option<ruxex_app_server_transport::daemon_recovery::InterruptedTurn>),
 }
 
 /// Outcome of trying to satisfy a resume request from an already loaded thread.
@@ -888,7 +888,7 @@ impl ThreadRequestProcessor {
     async fn load_thread(
         &self,
         thread_id: &str,
-    ) -> Result<(ThreadId, Arc<GenexThread>), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Arc<RuxexThread>), JSONRPCErrorError> {
         // Resolve the core conversation handle from a v2 thread id string.
         let thread_id = ThreadId::from_string(thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
@@ -914,7 +914,7 @@ impl ThreadRequestProcessor {
     }
 
     async fn set_app_server_client_info(
-        thread: &GenexThread,
+        thread: &RuxexThread,
         app_server_client_name: Option<String>,
         app_server_client_version: Option<String>,
     ) -> Result<(), JSONRPCErrorError> {
@@ -1015,7 +1015,7 @@ impl ThreadRequestProcessor {
             outgoing: Arc::clone(&self.outgoing),
             pending_thread_unloads: Arc::clone(&self.pending_thread_unloads),
             thread_watch_manager: self.thread_watch_manager.clone(),
-            genex_home: self.config.genex_home.to_path_buf(),
+            ruxex_home: self.config.ruxex_home.to_path_buf(),
             thread_unload_delay: self.config.thread_unload_delay,
             skills_watcher: Arc::clone(&self.skills_watcher),
             turn_cost_worker: self.turn_cost_worker.clone(),
@@ -1040,7 +1040,7 @@ impl ThreadRequestProcessor {
     async fn ensure_listener_task_running(
         &self,
         conversation_id: ThreadId,
-        conversation: Arc<GenexThread>,
+        conversation: Arc<RuxexThread>,
         thread_state: Arc<Mutex<ThreadState>>,
     ) -> Result<(), JSONRPCErrorError> {
         super::thread_lifecycle::ensure_listener_task_running(
@@ -1089,7 +1089,7 @@ impl ThreadRequestProcessor {
         } = params;
         if matches!(
             history_mode,
-            Some(genex_app_server_protocol::ThreadHistoryMode::Paginated)
+            Some(ruxex_app_server_protocol::ThreadHistoryMode::Paginated)
         ) && !self.thread_store.supports_paginated_history_lists()
         {
             return Err(invalid_request(
@@ -1140,7 +1140,7 @@ impl ThreadRequestProcessor {
             outgoing: Arc::clone(&self.outgoing),
             pending_thread_unloads: Arc::clone(&self.pending_thread_unloads),
             thread_watch_manager: self.thread_watch_manager.clone(),
-            genex_home: self.config.genex_home.to_path_buf(),
+            ruxex_home: self.config.ruxex_home.to_path_buf(),
             thread_unload_delay: self.config.thread_unload_delay,
             skills_watcher: Arc::clone(&self.skills_watcher),
             turn_cost_worker: self.turn_cost_worker.clone(),
@@ -1218,16 +1218,16 @@ impl ThreadRequestProcessor {
     async fn request_trace_context(
         &self,
         request_id: &ConnectionRequestId,
-    ) -> Option<genex_protocol::protocol::W3cTraceContext> {
+    ) -> Option<ruxex_protocol::protocol::W3cTraceContext> {
         self.outgoing.request_trace_context(request_id).await
     }
 
     async fn submit_core_op(
         &self,
         request_id: &ConnectionRequestId,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         op: Op,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         thread
             .submit_with_trace(op, self.request_trace_context(request_id).await)
             .await
@@ -1247,8 +1247,8 @@ impl ThreadRequestProcessor {
         dynamic_tools: Option<Vec<DynamicToolSpec>>,
         selected_capability_roots: Vec<SelectedCapabilityRoot>,
         history_mode: Option<ThreadHistoryMode>,
-        session_start_source: Option<genex_app_server_protocol::ThreadStartSource>,
-        thread_source: Option<genex_protocol::protocol::ThreadSource>,
+        session_start_source: Option<ruxex_app_server_protocol::ThreadStartSource>,
+        thread_source: Option<ruxex_protocol::protocol::ThreadSource>,
         project_id: Option<String>,
         daybreak_enabled: Option<bool>,
         environment_selections: Option<Vec<TurnEnvironmentSelection>>,
@@ -1273,9 +1273,9 @@ impl ThreadRequestProcessor {
         // permissions after managed constraints can imply project trust.
         let effective_permission_profile = config.permissions.effective_permission_profile();
         let effective_permissions_trust_project = match &effective_permission_profile {
-            genex_protocol::models::PermissionProfile::Disabled
-            | genex_protocol::models::PermissionProfile::External { .. } => true,
-            genex_protocol::models::PermissionProfile::Managed { .. } => {
+            ruxex_protocol::models::PermissionProfile::Disabled
+            | ruxex_protocol::models::PermissionProfile::External { .. } => true,
+            ruxex_protocol::models::PermissionProfile::Managed { .. } => {
                 effective_permission_profile
                     .file_system_sandbox_policy()
                     .can_write_local_path_with_cwd(config.cwd.as_path(), config.cwd.as_path())
@@ -1292,8 +1292,8 @@ impl ThreadRequestProcessor {
             let current_cli_overrides = config_manager.current_cli_overrides();
             let cli_overrides_with_trust;
             let cli_overrides_for_reload = if let Err(err) =
-                genex_core::config::set_project_trust_level(
-                    &listener_task_context.genex_home,
+                ruxex_core::config::set_project_trust_level(
+                    &listener_task_context.ruxex_home,
                     trust_target.as_path(),
                     TrustLevel::Trusted,
                 ) {
@@ -1347,7 +1347,7 @@ impl ThreadRequestProcessor {
             })
             .collect::<Vec<_>>();
         if let Ok(Some(err)) =
-            genex_core::check_execpolicy_for_warnings(&config.config_layer_stack).await
+            ruxex_core::check_execpolicy_for_warnings(&config.config_layer_stack).await
         {
             config_warnings.push(crate::exec_policy_config_warning(&err));
         }
@@ -1411,10 +1411,10 @@ impl ThreadRequestProcessor {
             .start_thread(StartThreadOptions {
                 allow_model_fallback,
                 initial_history: match session_start_source
-                    .unwrap_or(genex_app_server_protocol::ThreadStartSource::Startup)
+                    .unwrap_or(ruxex_app_server_protocol::ThreadStartSource::Startup)
                 {
-                    genex_app_server_protocol::ThreadStartSource::Startup => InitialHistory::New,
-                    genex_app_server_protocol::ThreadStartSource::Clear => InitialHistory::Cleared,
+                    ruxex_app_server_protocol::ThreadStartSource::Startup => InitialHistory::New,
+                    ruxex_app_server_protocol::ThreadStartSource::Clear => InitialHistory::Cleared,
                 },
                 history_mode,
                 thread_source,
@@ -1442,8 +1442,8 @@ impl ThreadRequestProcessor {
             Err(err) => {
                 remove_pending_thread_metadata(thread_store.as_ref(), reserved_thread_id).await;
                 return Err(match err.details() {
-                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
-                    GenexErrorDetails::UnsupportedOperation(message) => {
+                    RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    RuxexErrorDetails::UnsupportedOperation(message) => {
                         method_not_found(message.clone())
                     }
                     _ => internal_error(format!("error creating thread: {err}")),
@@ -1575,7 +1575,7 @@ impl ThreadRequestProcessor {
         service_tier: Option<Option<String>>,
         cwd: Option<String>,
         runtime_workspace_roots: Option<Vec<AbsolutePathBuf>>,
-        approval_policy: Option<genex_app_server_protocol::AskForApproval>,
+        approval_policy: Option<ruxex_app_server_protocol::AskForApproval>,
         sandbox: Option<SandboxMode>,
         permissions: Option<String>,
         base_instructions: Option<String>,
@@ -1588,9 +1588,9 @@ impl ThreadRequestProcessor {
             workspace_roots: runtime_workspace_roots,
             default_permissions: permissions,
             approval_policy: approval_policy
-                .map(genex_app_server_protocol::AskForApproval::to_core),
+                .map(ruxex_app_server_protocol::AskForApproval::to_core),
             sandbox_mode: sandbox.map(SandboxMode::to_core),
-            genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
+            ruxex_linux_sandbox_exe: self.arg0_paths.ruxex_linux_sandbox_exe.clone(),
             base_instructions,
             developer_instructions,
             ..Default::default()
@@ -1722,7 +1722,7 @@ impl ThreadRequestProcessor {
             .decrement_out_of_band_elicitation_count()
             .await
             .map_err(|err| match err.details() {
-                GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                 _ => internal_error(format!(
                     "failed to decrement out-of-band elicitation counter: {err}"
                 )),
@@ -1741,7 +1741,7 @@ impl ThreadRequestProcessor {
         let ThreadSetNameParams { thread_id, name } = params;
         let thread_id = ThreadId::from_string(&thread_id)
             .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
-        let Some(name) = genex_core::util::normalize_thread_name(&name) else {
+        let Some(name) = ruxex_core::util::normalize_thread_name(&name) else {
             return Err(invalid_request("thread name must not be empty"));
         };
 
@@ -2066,7 +2066,7 @@ impl ThreadRequestProcessor {
 
         let revert_result = self
             .thread_store
-            .revert_thread(genex_thread_store::RevertThreadParams {
+            .revert_thread(ruxex_thread_store::RevertThreadParams {
                 thread_id,
                 before_turn_id,
                 multi_agent_version: thread.multi_agent_version(),
@@ -2113,7 +2113,7 @@ impl ThreadRequestProcessor {
         let response_history = thread_history.clone();
         let NewThread {
             thread_id: resumed_thread_id,
-            thread: genex_thread,
+            thread: ruxex_thread,
             session_configured,
             ..
         } = self
@@ -2131,7 +2131,7 @@ impl ThreadRequestProcessor {
                 "thread {thread_id} reloaded as {resumed_thread_id} after revert"
             )));
         }
-        genex_thread
+        ruxex_thread
             .restore_thread_settings(settings)
             .await
             .map_err(|err| {
@@ -2140,7 +2140,7 @@ impl ThreadRequestProcessor {
                 ))
             })?;
         // Replace the resume-time checkpoint written from the original config.
-        genex_thread
+        ruxex_thread
             .checkpoint_thread_settings()
             .await
             .map_err(|err| {
@@ -2149,7 +2149,7 @@ impl ThreadRequestProcessor {
                 ))
             })?;
         Self::set_app_server_client_info(
-            genex_thread.as_ref(),
+            ruxex_thread.as_ref(),
             app_server_client_name,
             app_server_client_version,
         )
@@ -2164,12 +2164,12 @@ impl ThreadRequestProcessor {
         // Start the replacement listener from that state instead of depending on the requesting
         // connection still being open.
         let thread_state = self.thread_state_manager.thread_state(thread_id).await;
-        self.ensure_listener_task_running(thread_id, Arc::clone(&genex_thread), thread_state)
+        self.ensure_listener_task_running(thread_id, Arc::clone(&ruxex_thread), thread_state)
             .await?;
         let mut thread = self
             .load_thread_from_resume_source_or_send_internal(
                 thread_id,
-                genex_thread.as_ref(),
+                ruxex_thread.as_ref(),
                 &response_history,
                 rollout_path.as_path(),
                 Some(resume_source_thread),
@@ -2798,7 +2798,7 @@ impl ThreadRequestProcessor {
         &self,
         thread_id: ThreadId,
         include_turns: bool,
-        loaded_thread: &GenexThread,
+        loaded_thread: &RuxexThread,
         persisted_thread: Option<Thread>,
     ) -> Result<Thread, ThreadReadViewError> {
         let config_snapshot = loaded_thread.config_snapshot().await;
@@ -2831,14 +2831,14 @@ impl ThreadRequestProcessor {
         thread_id: ThreadId,
         thread: &mut Thread,
         include_turns: bool,
-        loaded_thread: &GenexThread,
+        loaded_thread: &RuxexThread,
     ) -> Result<(), ThreadReadViewError> {
         self.attach_thread_name(thread_id, thread).await;
 
         if include_turns {
             if matches!(
                 thread.history_mode,
-                genex_app_server_protocol::ThreadHistoryMode::Paginated
+                ruxex_app_server_protocol::ThreadHistoryMode::Paginated
             ) {
                 self.thread_store
                     .persist_thread(thread_id, PersistContext::Standard)
@@ -3150,7 +3150,7 @@ impl ThreadRequestProcessor {
         &self,
         thread_id: ThreadId,
         params: &ThreadResumeInitialTurnsPageParams,
-    ) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+    ) -> Result<ruxex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
         self.paginated_thread_turns_list_response(
             thread_id,
             /*cursor*/ None,
@@ -3166,7 +3166,7 @@ impl ThreadRequestProcessor {
         &self,
         thread_id: ThreadId,
         params: &ThreadResumeInitialTurnsPageParams,
-    ) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+    ) -> Result<ruxex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
         // A running resume overlays the newest live turn on this durable page.
         // Reserve one row so the overlay keeps the requested limit and the
         // durable next cursor still starts after the last returned stored turn.
@@ -3745,7 +3745,7 @@ impl ThreadRequestProcessor {
         {
             Ok(NewThread {
                 thread_id,
-                thread: genex_thread,
+                thread: ruxex_thread,
                 session_configured,
                 ..
             }) => {
@@ -3755,7 +3755,7 @@ impl ThreadRequestProcessor {
                         .upsert_thread(&thread_id.to_string())
                         .await;
                     // Invoke idle work before arming subscriber-based unloading.
-                    genex_thread
+                    ruxex_thread
                         .emit_thread_idle_lifecycle_if_idle(ThreadIdleCause::Completed)
                         .await;
                     if let ThreadResumeTarget::DaemonRecovery(Some(saved)) = target {
@@ -3763,13 +3763,13 @@ impl ThreadRequestProcessor {
                             .await;
                     }
                     let state = self.thread_state_manager.thread_state(thread_id).await;
-                    self.ensure_listener_task_running(thread_id, Arc::clone(&genex_thread), state)
+                    self.ensure_listener_task_running(thread_id, Arc::clone(&ruxex_thread), state)
                         .await?;
                     return Ok(ControlFlow::Break(()));
                 };
                 let request_id = request_id.clone();
                 if let Err(err) = Self::set_app_server_client_info(
-                    genex_thread.as_ref(),
+                    ruxex_thread.as_ref(),
                     app_server_client_name,
                     app_server_client_version,
                 )
@@ -3778,7 +3778,7 @@ impl ThreadRequestProcessor {
                     self.outgoing.send_error(request_id, err).await;
                     return Ok(ControlFlow::Break(()));
                 }
-                let instruction_sources = genex_thread.legacy_instruction_sources().await;
+                let instruction_sources = ruxex_thread.legacy_instruction_sources().await;
                 let SessionConfiguredEvent { rollout_path, .. } = session_configured;
                 let Some(rollout_path) = rollout_path else {
                     let error =
@@ -3826,7 +3826,7 @@ impl ThreadRequestProcessor {
                 let mut thread = match self
                     .load_thread_from_resume_source_or_send_internal(
                         thread_id,
-                        genex_thread.as_ref(),
+                        ruxex_thread.as_ref(),
                         &response_history,
                         rollout_path.as_path(),
                         resume_source_thread,
@@ -3842,7 +3842,7 @@ impl ThreadRequestProcessor {
                         return Ok(ControlFlow::Break(()));
                     }
                 };
-                thread.thread_source = genex_thread
+                thread.thread_source = ruxex_thread
                     .config_snapshot()
                     .await
                     .thread_source
@@ -3863,7 +3863,7 @@ impl ThreadRequestProcessor {
                     thread_status,
                     /*has_live_in_progress_turn*/ false,
                 );
-                let config_snapshot = genex_thread.config_snapshot().await;
+                let config_snapshot = ruxex_thread.config_snapshot().await;
                 let (turns_backwards_cursor, items_backwards_cursor) =
                     if matches!(config_snapshot.history_mode, ThreadHistoryMode::Paginated) {
                         match Self::paginated_resume_backwards_cursors(
@@ -3954,7 +3954,7 @@ impl ThreadRequestProcessor {
                         &self.outgoing,
                         connection_id,
                         thread_id,
-                        genex_thread.as_ref(),
+                        ruxex_thread.as_ref(),
                         token_usage_turn_id,
                     )
                     .await;
@@ -3962,13 +3962,13 @@ impl ThreadRequestProcessor {
                 self.thread_goal_processor
                     .emit_resume_goal_snapshot(thread_id)
                     .await;
-                genex_thread
+                ruxex_thread
                     .emit_thread_idle_lifecycle_if_idle(ThreadIdleCause::Completed)
                     .await;
             }
             Err(err) => {
                 let error = match err.details() {
-                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                     _ => internal_error(format!("error resuming thread: {err}")),
                 };
                 return Err(error);
@@ -4388,8 +4388,8 @@ impl ThreadRequestProcessor {
                 .map_err(thread_store_resume_read_error)?;
             if let Some(current_path) = current_thread.rollout_path.as_ref()
                 && !path_utils::paths_match_after_normalization(
-                    genex_rollout::plain_rollout_path(requested_path).as_path(),
-                    genex_rollout::plain_rollout_path(current_path).as_path(),
+                    ruxex_rollout::plain_rollout_path(requested_path).as_path(),
+                    ruxex_rollout::plain_rollout_path(current_path).as_path(),
                 )
             {
                 return Err(invalid_request(format!(
@@ -4403,7 +4403,7 @@ impl ThreadRequestProcessor {
         if stored_thread.archived_at.is_some() {
             let thread_id = stored_thread.thread_id;
             return Err(invalid_request(format!(
-                "session {thread_id} is archived. Run `genex unarchive {thread_id}` to unarchive it first."
+                "session {thread_id} is archived. Run `ruxex unarchive {thread_id}` to unarchive it first."
             )));
         }
 
@@ -4466,7 +4466,7 @@ impl ThreadRequestProcessor {
     async fn load_thread_from_resume_source_or_send_internal(
         &self,
         thread_id: ThreadId,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         thread_history: &InitialHistory,
         rollout_path: &Path,
         resume_source_thread: Option<StoredThread>,
@@ -4648,21 +4648,21 @@ impl ThreadRequestProcessor {
         let source_thread_name = source_thread
             .name
             .as_deref()
-            .and_then(genex_core::util::normalize_thread_name);
+            .and_then(ruxex_core::util::normalize_thread_name);
         let mut prepared_fork = if paginated_source {
             let boundary = match (last_turn_id.as_deref(), before_turn_id.as_deref()) {
                 (Some(turn_id), None) => {
-                    genex_thread_store::ForkBoundary::ThroughTurn(turn_id.to_string())
+                    ruxex_thread_store::ForkBoundary::ThroughTurn(turn_id.to_string())
                 }
                 (None, Some(turn_id)) => {
-                    genex_thread_store::ForkBoundary::BeforeTurn(turn_id.to_string())
+                    ruxex_thread_store::ForkBoundary::BeforeTurn(turn_id.to_string())
                 }
-                (None, None) => genex_thread_store::ForkBoundary::Latest,
+                (None, None) => ruxex_thread_store::ForkBoundary::Latest,
                 (Some(_), Some(_)) => unreachable!("fork boundaries are mutually exclusive"),
             };
             Some(
                 self.thread_store
-                    .prepare_fork(genex_thread_store::PrepareForkParams {
+                    .prepare_fork(ruxex_thread_store::PrepareForkParams {
                         thread_id: source_thread_id,
                         boundary,
                     })
@@ -4904,10 +4904,10 @@ impl ThreadRequestProcessor {
                 remove_pending_thread_metadata(self.thread_store.as_ref(), reserved_thread_id)
                     .await;
                 return Err(match err.details() {
-                    GenexErrorDetails::Io(_) | GenexErrorDetails::Json(_) => {
+                    RuxexErrorDetails::Io(_) | RuxexErrorDetails::Json(_) => {
                         invalid_request(format!("failed to load thread {source_thread_id}: {err}"))
                     }
-                    GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+                    RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
                     _ => internal_error(format!("error forking thread: {err}")),
                 });
             }
@@ -5399,7 +5399,7 @@ pub(super) fn build_thread_resume_initial_turns_page(
     has_live_running_thread: bool,
     active_turn: Option<Turn>,
     params: &ThreadResumeInitialTurnsPageParams,
-) -> Result<genex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
+) -> Result<ruxex_app_server_protocol::TurnsPage, JSONRPCErrorError> {
     build_thread_turns_page_response(
         items,
         loaded_status,
@@ -5519,7 +5519,7 @@ fn paginated_history_list_error(err: ThreadStoreError) -> JSONRPCErrorError {
 }
 
 fn deserialize_stored_thread_item(
-    item: genex_thread_store::StoredThreadItem,
+    item: ruxex_thread_store::StoredThreadItem,
 ) -> Result<ThreadItem, JSONRPCErrorError> {
     serde_json::from_slice::<ThreadItem>(&item.item_json).map_err(|err| {
         internal_error(format!(
@@ -5542,7 +5542,7 @@ fn stored_turn_to_api_turn(
     let error = turn.error.map(|error| TurnError {
         misalignment: None,
         message: error.message,
-        genex_error_info: error.genex_error_info,
+        ruxex_error_info: error.ruxex_error_info,
         additional_details: error.additional_details,
     });
     let items = turn
@@ -5638,13 +5638,13 @@ fn thread_read_history_load_error(
     }
 }
 
-pub(super) fn core_thread_write_error(operation: &str, err: GenexErr) -> JSONRPCErrorError {
+pub(super) fn core_thread_write_error(operation: &str, err: RuxexErr) -> JSONRPCErrorError {
     match err.details() {
-        GenexErrorDetails::ThreadNotFound(thread_id) => {
+        RuxexErrorDetails::ThreadNotFound(thread_id) => {
             invalid_request(format!("thread not found: {thread_id}"))
         }
-        GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
-        GenexErrorDetails::UnsupportedOperation(message) => method_not_found(message.clone()),
+        RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+        RuxexErrorDetails::UnsupportedOperation(message) => method_not_found(message.clone()),
         _ => internal_error(format!("failed to {operation}: {err}")),
     }
 }
@@ -5671,7 +5671,7 @@ fn set_thread_name_from_title(thread: &mut Thread, title: String) {
 pub(crate) fn thread_from_stored_thread(
     thread: StoredThread,
     fallback_cwd: &AbsolutePathBuf,
-) -> (Thread, Option<genex_thread_store::StoredThreadHistory>) {
+) -> (Thread, Option<ruxex_thread_store::StoredThreadHistory>) {
     let path = thread.rollout_path;
     let git_info = thread.git_info.map(|info| ApiGitInfo {
         sha: info.commit_hash.map(|sha| sha.0),
@@ -5743,8 +5743,8 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
     items
         .iter()
         .find_map(|item| match item {
-            RolloutItem::ResponseItem(item) => match genex_core::parse_turn_item(&item.item) {
-                Some(genex_protocol::items::TurnItem::UserMessage(user)) => Some(user.message()),
+            RolloutItem::ResponseItem(item) => match ruxex_core::parse_turn_item(&item.item) {
+                Some(ruxex_protocol::items::TurnItem::UserMessage(user)) => Some(user.message()),
                 _ => None,
             },
             _ => None,
@@ -5756,7 +5756,7 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
 fn build_thread_from_snapshot(
     thread_id: ThreadId,
     session_id: String,
-    multi_agent_version: Option<genex_protocol::protocol::MultiAgentVersion>,
+    multi_agent_version: Option<ruxex_protocol::protocol::MultiAgentVersion>,
     config_snapshot: &ThreadConfigSnapshot,
     path: Option<PathBuf>,
 ) -> Thread {
@@ -5837,7 +5837,7 @@ fn paginate_background_terminals(
 fn build_thread_from_loaded_snapshot(
     thread_id: ThreadId,
     config_snapshot: &ThreadConfigSnapshot,
-    loaded_thread: &GenexThread,
+    loaded_thread: &RuxexThread,
 ) -> Thread {
     build_thread_from_snapshot(
         thread_id,

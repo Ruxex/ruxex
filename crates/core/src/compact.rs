@@ -16,7 +16,7 @@ use crate::responses_metadata::CompactionReason;
 use crate::responses_metadata::CompactionStrategy;
 use crate::responses_metadata::CompactionTrigger;
 use crate::responses_metadata::CompactionTurnMetadata;
-use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesMetadata;
 use crate::session::RequestEffortUsage;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
@@ -25,33 +25,33 @@ use crate::session::turn_context::TurnContext;
 use crate::state::AutoCompactWindowIds;
 use crate::util::backoff;
 use futures::prelude::*;
-use genex_context_fragments::AnnotatedContent;
-use genex_context_fragments::set_annotated_content;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::ResponseItemId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::items::ContextCompactionItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::AgentMessageInputContent;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::InternalChatMessageMetadataPassthrough;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::WarningEvent;
-use genex_protocol::user_input::UserInput;
-use genex_rollout_trace::InferenceTraceContext;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_context_fragments::set_annotated_content;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::items::ContextCompactionItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::AgentMessageInputContent;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::InternalChatMessageMetadataPassthrough;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout_trace::InferenceTraceContext;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::truncate_text;
 use tracing::error;
 
-pub use genex_prompts::SUMMARIZATION_PROMPT;
-pub use genex_prompts::SUMMARY_PREFIX;
+pub use ruxex_prompts::SUMMARIZATION_PROMPT;
+pub use ruxex_prompts::SUMMARY_PREFIX;
 const COMPACT_USER_MESSAGE_MAX_TOKENS: usize = 20_000;
 
 /// Controls whether compaction replacement history must include initial context.
@@ -111,7 +111,7 @@ pub(crate) async fn run_inline_auto_compact_task(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let prompt = turn_context
         .config
         .compact_prompt
@@ -141,7 +141,7 @@ pub(crate) async fn run_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
     input: Vec<UserInput>,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     sess.emit_turn_started(&turn_context).await;
     run_compact_task_inner(
         sess.clone(),
@@ -164,14 +164,14 @@ async fn run_compact_task_inner(
     trigger: CompactionTrigger,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let compaction_metadata =
         CompactionTurnMetadata::new(trigger, reason, CompactionImplementation::Responses, phase);
     let pre_compact_outcome = run_pre_compact_hooks(&sess, &turn_context, trigger).await;
     match pre_compact_outcome {
         PreCompactHookOutcome::Continue => {}
         PreCompactHookOutcome::Stopped => {
-            let error = GenexErr::TurnAborted;
+            let error = RuxexErr::TurnAborted;
             return Err(error);
         }
     }
@@ -186,7 +186,7 @@ async fn run_compact_task_inner(
     if result.is_ok() {
         let post_compact_outcome = run_post_compact_hooks(&sess, &turn_context, trigger).await;
         if let PostCompactHookOutcome::Stopped = post_compact_outcome {
-            return Err(GenexErr::TurnAborted);
+            return Err(RuxexErr::TurnAborted);
         }
     }
     result.map(|_| ())
@@ -198,7 +198,7 @@ async fn run_compact_task_inner_impl(
     input: Vec<UserInput>,
     initial_context_injection: InitialContextInjection,
     mut compaction_metadata: CompactionTurnMetadata,
-) -> GenexResult<String> {
+) -> RuxexResult<String> {
     let compaction_item = TurnItem::ContextCompaction(ContextCompactionItem::new());
     sess.emit_turn_item_started(&turn_context, &compaction_item)
         .await;
@@ -249,12 +249,12 @@ async fn run_compact_task_inner_impl(
             Err(err)
                 if matches!(
                     err.details(),
-                    GenexErrorDetails::Interrupted | GenexErrorDetails::TurnAborted
+                    RuxexErrorDetails::Interrupted | RuxexErrorDetails::TurnAborted
                 ) =>
             {
                 return Err(err);
             }
-            Err(e) if matches!(e.details(), GenexErrorDetails::SessionBudgetExceeded) => {
+            Err(e) if matches!(e.details(), RuxexErrorDetails::SessionBudgetExceeded) => {
                 // Pre-turn failures are reported after preserving the incoming prompt.
                 if !matches!(compaction_metadata.phase(), CompactionPhase::PreTurn) {
                     let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));
@@ -262,7 +262,7 @@ async fn run_compact_task_inner_impl(
                 }
                 return Err(e);
             }
-            Err(e) if matches!(e.details(), GenexErrorDetails::ContextWindowExceeded) => {
+            Err(e) if matches!(e.details(), RuxexErrorDetails::ContextWindowExceeded) => {
                 if turn_input_len > 1 {
                     // Trim from the beginning to preserve cache (prefix-based) and keep recent messages intact.
                     error!(
@@ -382,7 +382,7 @@ pub(crate) struct CompactedUserMessage {
     id: Option<ResponseItemId>,
     message: String,
     internal_chat_message_metadata_passthrough: Option<InternalChatMessageMetadataPassthrough>,
-    harness_metadata: Option<GenexHarnessMetadata>,
+    harness_metadata: Option<RuxexHarnessMetadata>,
 }
 
 #[cfg(test)]
@@ -416,7 +416,7 @@ pub(crate) fn collect_annotated_user_messages(
 
 fn compacted_user_message(
     item: &ResponseItem,
-    harness_metadata: Option<GenexHarnessMetadata>,
+    harness_metadata: Option<RuxexHarnessMetadata>,
 ) -> Option<CompactedUserMessage> {
     let Some(TurnItem::UserMessage(user)) = crate::event_mapping::parse_turn_item(item) else {
         return None;
@@ -606,9 +606,9 @@ async fn drain_to_completed(
     sess: &Session,
     turn_context: &TurnContext,
     client_session: &mut ModelClientSession,
-    responses_metadata: &GenexResponsesMetadata,
+    responses_metadata: &RuxexResponsesMetadata,
     prompt: &Prompt,
-) -> GenexResult<String> {
+) -> RuxexResult<String> {
     let mut stream = client_session
         .stream(
             prompt,
@@ -630,7 +630,7 @@ async fn drain_to_completed(
     loop {
         let maybe_event = stream.next().await;
         let Some(event) = maybe_event else {
-            return Err(GenexErr::Stream(
+            return Err(RuxexErr::Stream(
                 "stream closed before response.completed".into(),
             ));
         };
@@ -675,7 +675,7 @@ async fn drain_to_completed(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::models::ImageReference;
+    use ruxex_protocol::models::ImageReference;
 
     fn user(text: &str) -> ResponseItem {
         ResponseItem::Message {

@@ -1,11 +1,11 @@
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::protocol::NetworkAccess;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::protocol::NetworkAccess;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 
 pub fn summarize_sandbox_policy(sandbox_policy: &SandboxPolicy) -> String {
     match sandbox_policy {
@@ -150,12 +150,12 @@ pub fn summarize_permission_profile(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::permissions::FileSystemAccessMode;
-    use genex_protocol::permissions::FileSystemSandboxEntry;
-    use genex_protocol::permissions::FileSystemSandboxPolicy;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_path_uri::LegacyAppPathString;
+    use ruxex_protocol::permissions::FileSystemAccessMode;
+    use ruxex_protocol::permissions::FileSystemSandboxEntry;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_path_uri::LegacyAppPathString;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -205,7 +205,7 @@ mod tests {
     fn permission_profile_summary_uses_runtime_workspace_roots_and_hides_internal_writes() {
         let cwd = AbsolutePathBuf::try_from("/repo").unwrap();
         let extra_root = AbsolutePathBuf::try_from("/repo-extra").unwrap();
-        let hidden_root = AbsolutePathBuf::try_from("/Users/test/.genex/state").unwrap();
+        let hidden_root = AbsolutePathBuf::try_from("/Users/test/.ruxex/state").unwrap();
         let profile = PermissionProfile::workspace_write_with(
             std::slice::from_ref(&hidden_root),
             NetworkSandboxPolicy::Restricted,

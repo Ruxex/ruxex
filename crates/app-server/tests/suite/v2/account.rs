@@ -12,40 +12,40 @@ use app_test_support::write_models_cache;
 use chrono::Duration as ChronoDuration;
 use chrono::Utc;
 use core_test_support::responses;
-use genex_app_server_protocol::Account;
-use genex_app_server_protocol::AccountLoginCompletedNotification;
-use genex_app_server_protocol::AccountUpdatedNotification;
-use genex_app_server_protocol::AuthMode;
-use genex_app_server_protocol::CancelLoginAccountParams;
-use genex_app_server_protocol::CancelLoginAccountResponse;
-use genex_app_server_protocol::CancelLoginAccountStatus;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::DesktopOnboardingEntrypoint;
-use genex_app_server_protocol::GetAccountParams;
-use genex_app_server_protocol::GetAccountResponse;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::LoginAccountResponse;
-use genex_app_server_protocol::LogoutAccountResponse;
-use genex_app_server_protocol::ProviderAuthStatus;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_http_client::HttpClientBuilder;
-use genex_login::AuthDotJson;
-use genex_login::AuthKeyringBackendKind;
-use genex_login::CLIENT_ID_OVERRIDE_ENV_VAR;
-use genex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use genex_login::load_auth_dot_json;
-use genex_login::login_with_api_key;
-use genex_protocol::account::PlanType as AccountPlanType;
+use ruxex_app_server_protocol::Account;
+use ruxex_app_server_protocol::AccountLoginCompletedNotification;
+use ruxex_app_server_protocol::AccountUpdatedNotification;
+use ruxex_app_server_protocol::AuthMode;
+use ruxex_app_server_protocol::CancelLoginAccountParams;
+use ruxex_app_server_protocol::CancelLoginAccountResponse;
+use ruxex_app_server_protocol::CancelLoginAccountStatus;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::DesktopOnboardingEntrypoint;
+use ruxex_app_server_protocol::GetAccountParams;
+use ruxex_app_server_protocol::GetAccountResponse;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::LoginAccountResponse;
+use ruxex_app_server_protocol::LogoutAccountResponse;
+use ruxex_app_server_protocol::ProviderAuthStatus;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_http_client::HttpClientBuilder;
+use ruxex_login::AuthDotJson;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::CLIENT_ID_OVERRIDE_ENV_VAR;
+use ruxex_login::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use ruxex_login::load_auth_dot_json;
+use ruxex_login::login_with_api_key;
+use ruxex_protocol::account::PlanType as AccountPlanType;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -64,8 +64,8 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
-const LOGIN_ISSUER_ENV_VAR: &str = "GENEX_APP_SERVER_LOGIN_ISSUER";
-const LOGIN_OPEN_APP_URL_ENV_VAR: &str = "GENEX_APP_SERVER_DEV_OPEN_APP_URL";
+const LOGIN_ISSUER_ENV_VAR: &str = "RUXEX_APP_SERVER_LOGIN_ISSUER";
+const LOGIN_OPEN_APP_URL_ENV_VAR: &str = "RUXEX_APP_SERVER_DEV_OPEN_APP_URL";
 const WORKSPACE_ID_ALLOWED: &str = "123e4567-e89b-42d3-a456-426614174000";
 const WORKSPACE_ID_SECOND_ALLOWED: &str = "123e4567-e89b-42d3-a456-426614174001";
 const WORKSPACE_ID_DISALLOWED: &str = "123e4567-e89b-42d3-a456-426614174002";
@@ -87,8 +87,8 @@ struct CreateConfigTomlParams {
     extra_provider_config: Option<String>,
 }
 
-fn create_config_toml(genex_home: &Path, params: CreateConfigTomlParams) -> std::io::Result<()> {
-    let config_toml = genex_home.join("config.toml");
+fn create_config_toml(ruxex_home: &Path, params: CreateConfigTomlParams) -> std::io::Result<()> {
+    let config_toml = ruxex_home.join("config.toml");
     let base_url = params
         .base_url
         .unwrap_or_else(|| "http://127.0.0.1:0/v1".to_string());
@@ -149,15 +149,15 @@ shell_snapshot = false
     std::fs::write(config_toml, contents)
 }
 
-fn read_config_toml(genex_home: &Path) -> Result<toml::Value> {
+fn read_config_toml(ruxex_home: &Path) -> Result<toml::Value> {
     Ok(toml::from_str(&std::fs::read_to_string(
-        genex_home.join("config.toml"),
+        ruxex_home.join("config.toml"),
     )?)?)
 }
 
-fn load_file_auth(genex_home: &Path) -> Result<Option<AuthDotJson>> {
+fn load_file_auth(ruxex_home: &Path) -> Result<Option<AuthDotJson>> {
     Ok(load_auth_dot_json(
-        genex_home,
+        ruxex_home,
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?)
@@ -245,19 +245,19 @@ async fn mock_oauth_token(server: &MockServer, id_token: &str) {
 
 #[tokio::test]
 async fn logout_account_removes_auth_and_notifies() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), CreateConfigTomlParams::default())?;
 
     login_with_api_key(
-        genex_home.path(),
+        ruxex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
-    assert!(genex_home.path().join("auth.json").exists());
+    assert!(ruxex_home.path().join("auth.json").exists());
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -282,7 +282,7 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
     assert_eq!(payload.plan_type, None);
 
     assert!(
-        !genex_home.path().join("auth.json").exists(),
+        !ruxex_home.path().join("auth.json").exists(),
         "auth.json should be deleted"
     );
 
@@ -299,23 +299,23 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
 
 #[tokio::test]
 async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), CreateConfigTomlParams::default())?;
     login_with_api_key(
-        genex_home.path(),
+        ruxex_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
-    std::fs::write(genex_home.path().join("config.toml"), "invalid = [")?;
+    std::fs::write(ruxex_home.path().join("config.toml"), "invalid = [")?;
 
     let request_id = mcp.send_logout_account_request().await?;
     let response = timeout(
@@ -327,7 +327,7 @@ async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
         to_response::<LogoutAccountResponse>(response)?,
         LogoutAccountResponse {}
     );
-    assert_eq!(load_file_auth(genex_home.path())?, None);
+    assert_eq!(load_file_auth(ruxex_home.path())?, None);
     assert_account_updated(&mut mcp, /*auth_mode*/ None).await?;
 
     Ok(())
@@ -335,21 +335,21 @@ async fn logout_account_succeeds_when_config_reload_fails() -> Result<()> {
 
 #[tokio::test]
 async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         CreateConfigTomlParams {
             managed_auth_base_url: Some(format!("{}/backend-api", mock_server.uri())),
             ..Default::default()
         },
     )?;
     std::fs::write(
-        genex_home.path().join("requirements.toml"),
+        ruxex_home.path().join("requirements.toml"),
         "allowed_login_methods = [\"api\"]\n",
     )?;
     write_api_key_auth(
-        genex_home.path(),
+        ruxex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .plan_type("enterprise")
             .user_id("user-123")
@@ -359,7 +359,7 @@ async fn startup_enforces_local_auth_requirements_before_cloud_fetch() -> Result
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -397,11 +397,11 @@ async fn mount_disabled_attribution_settings(mock_server: &MockServer) {
 // Refresh returns a malformed access token; turn fails.
 #[tokio::test]
 async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -438,7 +438,7 @@ async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
     pretty_assertions::assert_eq!(payload.auth_mode, Some(AuthMode::ApiKey));
     pretty_assertions::assert_eq!(payload.plan_type, None);
 
-    assert!(genex_home.path().join("auth.json").exists());
+    assert!(ruxex_home.path().join("auth.json").exists());
     Ok(())
 }
 
@@ -450,16 +450,16 @@ enum LoginRefreshTrigger {
 
 #[tokio::test]
 async fn get_account_no_auth() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     create_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         CreateConfigTomlParams {
             ..Default::default()
         },
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
@@ -479,16 +479,16 @@ async fn get_account_no_auth() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_api_key() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     create_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         CreateConfigTomlParams {
             ..Default::default()
         },
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
@@ -521,16 +521,16 @@ async fn get_account_with_api_key() -> Result<()> {
 
 #[tokio::test]
 async fn account_reads_use_startup_config_when_config_reload_fails() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), CreateConfigTomlParams::default())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), CreateConfigTomlParams::default())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
-    std::fs::write(genex_home.path().join("config.toml"), "invalid = [")?;
+    std::fs::write(ruxex_home.path().join("config.toml"), "invalid = [")?;
 
     assert_eq!(
         read_account(&mut mcp).await?,

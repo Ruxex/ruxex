@@ -155,7 +155,7 @@ impl App {
             Err(external_editor::EditorError::MissingEditor) => {
                 self.chat_widget
                     .add_to_history(history_cell::new_error_event(
-                    "Cannot open external editor: set $VISUAL or $EDITOR before starting Genex."
+                    "Cannot open external editor: set $VISUAL or $EDITOR before starting Ruxex."
                         .to_string(),
                 ));
                 self.reset_external_editor_state(tui);
@@ -179,7 +179,7 @@ impl App {
                 external_editor::run_editor(
                     &seed,
                     &editor_cmd,
-                    config.genex_home.as_path(),
+                    config.ruxex_home.as_path(),
                     &file_system_policy,
                     config.cwd.as_path(),
                 )
@@ -385,17 +385,17 @@ impl App {
                     items: [
                         (
                             "Cancel task",
-                            "Stop the current task and stay in Genex",
+                            "Stop the current task and stay in Ruxex",
                             RunningTaskExitAction::CancelTask,
                         ),
                         (
                             "Run in background",
-                            "Exit Genex and leave the task running",
+                            "Exit Ruxex and leave the task running",
                             RunningTaskExitAction::RunInBackground,
                         ),
                         (
                             "Exit",
-                            "Stop the current task and exit Genex",
+                            "Stop the current task and exit Ruxex",
                             RunningTaskExitAction::Exit,
                         ),
                     ]

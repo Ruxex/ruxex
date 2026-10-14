@@ -1,37 +1,37 @@
 use crate::config_layer::config_layer_metadata_to_api;
 use crate::config_layer::config_layer_to_api;
 use crate::config_manager::ConfigManager;
-use genex_app_server_protocol::Config as ApiConfig;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigReadParams;
-use genex_app_server_protocol::ConfigReadResponse;
-use genex_app_server_protocol::ConfigValueWriteParams;
-use genex_app_server_protocol::ConfigWriteErrorCode;
-use genex_app_server_protocol::ConfigWriteResponse;
-use genex_app_server_protocol::MergeStrategy;
-use genex_app_server_protocol::OverriddenMetadata;
-use genex_app_server_protocol::WriteStatus;
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerMetadata;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirementsToml;
-use genex_config::ShellEnvironmentPolicyFilterRepresentation;
-use genex_config::config_toml::ConfigToml;
-use genex_config::is_structured_feature_path;
-use genex_config::merge_toml_values;
-use genex_config::shell_environment_filter_entry;
-use genex_config::validate_shell_environment_policy_filter_config;
-use genex_core::config::deserialize_config_toml_with_base;
-use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::validate_feature_requirements_for_config_toml;
-use genex_core::path_utils;
-use genex_core::path_utils::SymlinkWritePaths;
-use genex_core::path_utils::resolve_symlink_write_paths;
-use genex_core::path_utils::write_atomically;
-use genex_protocol::protocol::AskForApproval;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::Config as ApiConfig;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigReadParams;
+use ruxex_app_server_protocol::ConfigReadResponse;
+use ruxex_app_server_protocol::ConfigValueWriteParams;
+use ruxex_app_server_protocol::ConfigWriteErrorCode;
+use ruxex_app_server_protocol::ConfigWriteResponse;
+use ruxex_app_server_protocol::MergeStrategy;
+use ruxex_app_server_protocol::OverriddenMetadata;
+use ruxex_app_server_protocol::WriteStatus;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerMetadata;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::ShellEnvironmentPolicyFilterRepresentation;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_config::is_structured_feature_path;
+use ruxex_config::merge_toml_values;
+use ruxex_config::shell_environment_filter_entry;
+use ruxex_config::validate_shell_environment_policy_filter_config;
+use ruxex_core::config::deserialize_config_toml_with_base;
+use ruxex_core::config::edit::ConfigEditsBuilder;
+use ruxex_core::config::validate_feature_requirements_for_config_toml;
+use ruxex_core::path_utils;
+use ruxex_core::path_utils::SymlinkWritePaths;
+use ruxex_core::path_utils::resolve_symlink_write_paths;
+use ruxex_core::path_utils::write_atomically;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde_json::Value as JsonValue;
 use std::borrow::Cow;
 use std::path::Path;
@@ -381,7 +381,7 @@ impl ConfigManager {
             )
         })?;
         let user_config_toml =
-            deserialize_config_toml_with_base(user_config.clone(), self.genex_home()).map_err(
+            deserialize_config_toml_with_base(user_config.clone(), self.ruxex_home()).map_err(
                 |err| {
                     ConfigManagerError::write(
                         ConfigWriteErrorCode::ConfigValidationError,
@@ -455,7 +455,7 @@ impl ConfigManager {
     }
 
     /// Loads a "thread-agnostic" config, which means the config layers do not
-    /// include any in-repo .genex/ folders because there is no cwd/project root
+    /// include any in-repo .ruxex/ folders because there is no cwd/project root
     /// associated with this query.
     async fn load_thread_agnostic_config(&self) -> std::io::Result<ConfigLayerStack> {
         self.load_config_layers(/*cwd*/ None).await
@@ -813,9 +813,9 @@ fn override_message(layer: &ConfigLayerSource) -> String {
         ConfigLayerSource::EnterpriseManaged { id: _, name } => {
             format!("Overridden by enterprise-managed config: {name}")
         }
-        ConfigLayerSource::Project { dot_genex_folder } => format!(
+        ConfigLayerSource::Project { dot_ruxex_folder } => format!(
             "Overridden by project config: {}/{CONFIG_TOML_FILE}",
-            dot_genex_folder.display(),
+            dot_ruxex_folder.display(),
         ),
         ConfigLayerSource::SessionFlags => "Overridden by session flags".to_string(),
         ConfigLayerSource::User { file, .. } => {

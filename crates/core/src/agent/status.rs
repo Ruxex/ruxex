@@ -1,5 +1,5 @@
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::EventMsg;
 
 /// Derive the next agent status from a single emitted event.
 /// Returns `None` when the event does not affect status tracking.
@@ -11,8 +11,8 @@ pub(crate) fn agent_status_from_event(msg: &EventMsg) -> Option<AgentStatus> {
             None => AgentStatus::Completed(ev.last_agent_message.clone()),
         }),
         EventMsg::TurnAborted(ev) => match ev.reason {
-            genex_protocol::protocol::TurnAbortReason::Interrupted
-            | genex_protocol::protocol::TurnAbortReason::BudgetLimited => {
+            ruxex_protocol::protocol::TurnAbortReason::Interrupted
+            | ruxex_protocol::protocol::TurnAbortReason::BudgetLimited => {
                 Some(AgentStatus::Interrupted)
             }
             _ => Some(AgentStatus::Errored(format!("{:?}", ev.reason))),

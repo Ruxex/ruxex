@@ -1,32 +1,32 @@
-use genex_api::SearchCommands;
-use genex_api::SearchInput;
-use genex_api::SearchQuery;
-use genex_api::SearchSettings;
-use genex_core::X_GENEX_TURN_METADATA_HEADER;
-use genex_core::web_search_action_detail;
-use genex_extension_api::ExtensionTurnItem;
-use genex_extension_api::FunctionCallError;
-use genex_extension_api::ResponsesApiTool;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolName;
-use genex_extension_api::ToolOutput;
-use genex_extension_api::ToolSpec;
-use genex_extension_api::parse_tool_input_schema_without_compaction;
-use genex_extension_items::ExtensionItem;
-use genex_extension_items::web_search::WebSearchAction;
-use genex_extension_items::web_search::WebSearchItem;
-use genex_login::default_client::add_originator_header;
-use genex_model_provider::ProviderSearchRequest;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::models::WebSearchAction as CoreWebSearchAction;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::WebSearchBeginEvent;
-use genex_protocol::protocol::WebSearchEndEvent;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ToolExposure;
-use genex_tools::default_namespace_description;
+use ruxex_api::SearchCommands;
+use ruxex_api::SearchInput;
+use ruxex_api::SearchQuery;
+use ruxex_api::SearchSettings;
+use ruxex_core::X_RUXEX_TURN_METADATA_HEADER;
+use ruxex_core::web_search_action_detail;
+use ruxex_extension_api::ExtensionTurnItem;
+use ruxex_extension_api::FunctionCallError;
+use ruxex_extension_api::ResponsesApiTool;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolName;
+use ruxex_extension_api::ToolOutput;
+use ruxex_extension_api::ToolSpec;
+use ruxex_extension_api::parse_tool_input_schema_without_compaction;
+use ruxex_extension_items::ExtensionItem;
+use ruxex_extension_items::web_search::WebSearchAction;
+use ruxex_extension_items::web_search::WebSearchItem;
+use ruxex_login::default_client::add_originator_header;
+use ruxex_model_provider::ProviderSearchRequest;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::models::WebSearchAction as CoreWebSearchAction;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::WebSearchBeginEvent;
+use ruxex_protocol::protocol::WebSearchEndEvent;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ToolExposure;
+use ruxex_tools::default_namespace_description;
 use http::HeaderMap;
 use http::HeaderValue;
 use url::Url;
@@ -38,7 +38,7 @@ use crate::schema::commands_schema;
 pub(crate) const WEB_NAMESPACE: &str = "web";
 pub(crate) const RUN_TOOL_NAME: &str = "run";
 const WEB_RUN_DESCRIPTION: &str = include_str!("../web_run_description.md");
-const RESULTS_PAYLOAD_BYTES_METRIC: &str = "genex.web_search.results.payload_bytes";
+const RESULTS_PAYLOAD_BYTES_METRIC: &str = "ruxex.web_search.results.payload_bytes";
 
 pub(crate) struct WebSearchTool {
     pub(crate) session_id: String,
@@ -81,7 +81,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for WebSearchTool {
         true
     }
 
-    fn handle<'a>(&'a self, call: ToolCall<'call>) -> genex_extension_api::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, call: ToolCall<'call>) -> ruxex_extension_api::ToolExecutorFuture<'a>
     where
         'call: 'a,
     {
@@ -136,7 +136,7 @@ impl WebSearchTool {
         let output = response.output;
         let results = response.results;
         if let Some(results) = results.as_ref()
-            && let Some(metrics) = genex_otel::global()
+            && let Some(metrics) = ruxex_otel::global()
             && let Ok(payload) = serde_json::to_vec(results)
         {
             let payload_bytes = i64::try_from(payload.len()).unwrap_or(i64::MAX);
@@ -181,7 +181,7 @@ fn search_request_headers(originator: Option<&str>, turn_metadata: Option<&str>)
     if let Some(turn_metadata) = turn_metadata
         && let Ok(header_value) = HeaderValue::from_str(turn_metadata)
     {
-        headers.insert(X_GENEX_TURN_METADATA_HEADER, header_value);
+        headers.insert(X_RUXEX_TURN_METADATA_HEADER, header_value);
     }
 
     if let Some(originator) = originator {
@@ -267,26 +267,26 @@ fn extension_turn_item(item: WebSearchItem, legacy_event: EventMsg) -> Extension
 
 #[cfg(test)]
 mod tests {
-    use genex_api::SearchCommands;
-    use genex_extension_items::web_search::WebSearchAction;
+    use ruxex_api::SearchCommands;
+    use ruxex_extension_items::web_search::WebSearchAction;
     use pretty_assertions::assert_eq;
 
     use super::command_action;
     use super::search_request_headers;
-    use genex_core::X_GENEX_TURN_METADATA_HEADER;
+    use ruxex_core::X_RUXEX_TURN_METADATA_HEADER;
 
     #[test]
     fn search_request_headers_forward_thread_originator_and_turn_metadata() {
-        let headers = search_request_headers(Some("genex_work_cca"), Some("turn-metadata"));
+        let headers = search_request_headers(Some("ruxex_work_cca"), Some("turn-metadata"));
         assert_eq!(
             headers
                 .get("originator")
                 .and_then(|value| value.to_str().ok()),
-            Some("genex_work_cca")
+            Some("ruxex_work_cca")
         );
         assert_eq!(
             headers
-                .get(X_GENEX_TURN_METADATA_HEADER)
+                .get(X_RUXEX_TURN_METADATA_HEADER)
                 .and_then(|value| value.to_str().ok()),
             Some("turn-metadata")
         );

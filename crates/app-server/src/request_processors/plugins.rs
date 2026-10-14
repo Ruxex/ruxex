@@ -1,27 +1,27 @@
 use super::*;
-use genex_app_server_protocol::PluginAvailability;
-use genex_app_server_protocol::PluginDetail;
-use genex_app_server_protocol::PluginInstallParams;
-use genex_app_server_protocol::PluginInstallResponse;
-use genex_app_server_protocol::PluginInstalledParams;
-use genex_app_server_protocol::PluginInstalledResponse;
-use genex_app_server_protocol::PluginListParams;
-use genex_app_server_protocol::PluginListResponse;
-use genex_app_server_protocol::PluginMarketplaceEntry;
-use genex_app_server_protocol::PluginReadParams;
-use genex_app_server_protocol::PluginReadResponse;
-use genex_app_server_protocol::PluginSource;
-use genex_app_server_protocol::PluginSummary;
-use genex_app_server_protocol::PluginUninstallParams;
-use genex_app_server_protocol::PluginUninstallResponse;
-use genex_core::ThreadManager;
-use genex_core::config::Config;
-use genex_core_plugins::ConfiguredMarketplace;
-use genex_core_plugins::ConfiguredMarketplacePlugin;
-use genex_core_plugins::PluginInstallRequest;
-use genex_core_plugins::PluginMarketplaceContext;
-use genex_core_plugins::PluginReadRequest;
-use genex_core_plugins::marketplace::MarketplacePluginSource;
+use ruxex_app_server_protocol::PluginAvailability;
+use ruxex_app_server_protocol::PluginDetail;
+use ruxex_app_server_protocol::PluginInstallParams;
+use ruxex_app_server_protocol::PluginInstallResponse;
+use ruxex_app_server_protocol::PluginInstalledParams;
+use ruxex_app_server_protocol::PluginInstalledResponse;
+use ruxex_app_server_protocol::PluginListParams;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::PluginMarketplaceEntry;
+use ruxex_app_server_protocol::PluginReadParams;
+use ruxex_app_server_protocol::PluginReadResponse;
+use ruxex_app_server_protocol::PluginSource;
+use ruxex_app_server_protocol::PluginSummary;
+use ruxex_app_server_protocol::PluginUninstallParams;
+use ruxex_app_server_protocol::PluginUninstallResponse;
+use ruxex_core::ThreadManager;
+use ruxex_core::config::Config;
+use ruxex_core_plugins::ConfiguredMarketplace;
+use ruxex_core_plugins::ConfiguredMarketplacePlugin;
+use ruxex_core_plugins::PluginInstallRequest;
+use ruxex_core_plugins::PluginMarketplaceContext;
+use ruxex_core_plugins::PluginReadRequest;
+use ruxex_core_plugins::marketplace::MarketplacePluginSource;
 use std::sync::Arc;
 
 mod local;
@@ -33,7 +33,7 @@ pub(crate) struct PluginRequestProcessor {
     thread_manager: Arc<ThreadManager>,
     config_manager: ConfigManager,
     on_effective_plugins_changed:
-        Arc<dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync>,
+        Arc<dyn Fn(ruxex_core_plugins::EffectivePluginsChange) + Send + Sync>,
 }
 
 impl PluginRequestProcessor {
@@ -51,7 +51,7 @@ impl PluginRequestProcessor {
         thread_manager: Arc<ThreadManager>,
         config_manager: ConfigManager,
         on_effective_plugins_changed: Arc<
-            dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync,
+            dyn Fn(ruxex_core_plugins::EffectivePluginsChange) + Send + Sync,
         >,
     ) -> Self {
         Self {
@@ -63,7 +63,7 @@ impl PluginRequestProcessor {
 
     pub(crate) fn effective_plugins_changed_callback(
         &self,
-    ) -> Arc<dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync> {
+    ) -> Arc<dyn Fn(ruxex_core_plugins::EffectivePluginsChange) + Send + Sync> {
         Arc::clone(&self.on_effective_plugins_changed)
     }
 
@@ -159,7 +159,7 @@ impl PluginRequestProcessor {
             )
             .await
             .map_err(|err| internal_error(format!("failed to install plugin: {err}")))?;
-        (self.on_effective_plugins_changed)(genex_core_plugins::EffectivePluginsChange::default());
+        (self.on_effective_plugins_changed)(ruxex_core_plugins::EffectivePluginsChange::default());
         Ok(Some(
             PluginInstallResponse {
                 auth_policy: outcome.auth_policy.into(),
@@ -177,7 +177,7 @@ impl PluginRequestProcessor {
             .uninstall_plugin(params.plugin_id)
             .await
             .map_err(|err| internal_error(format!("failed to uninstall plugin: {err}")))?;
-        (self.on_effective_plugins_changed)(genex_core_plugins::EffectivePluginsChange::default());
+        (self.on_effective_plugins_changed)(ruxex_core_plugins::EffectivePluginsChange::default());
         Ok(Some(PluginUninstallResponse {}.into()))
     }
 
@@ -187,7 +187,7 @@ impl PluginRequestProcessor {
     ) -> Result<
         (
             Vec<PluginMarketplaceEntry>,
-            Vec<genex_app_server_protocol::MarketplaceLoadErrorInfo>,
+            Vec<ruxex_app_server_protocol::MarketplaceLoadErrorInfo>,
         ),
         JSONRPCErrorError,
     > {
@@ -206,7 +206,7 @@ impl PluginRequestProcessor {
                 .errors
                 .into_iter()
                 .map(
-                    |error| genex_app_server_protocol::MarketplaceLoadErrorInfo {
+                    |error| ruxex_app_server_protocol::MarketplaceLoadErrorInfo {
                         marketplace_path: error.path,
                         message: error.message,
                     },
@@ -221,7 +221,7 @@ fn marketplace_to_api(marketplace: ConfiguredMarketplace) -> PluginMarketplaceEn
         name: marketplace.name,
         path: Some(marketplace.path),
         interface: marketplace.interface.map(|interface| {
-            genex_app_server_protocol::MarketplaceInterface {
+            ruxex_app_server_protocol::MarketplaceInterface {
                 display_name: interface.display_name,
             }
         }),
@@ -271,7 +271,7 @@ fn plugin_to_summary(plugin: ConfiguredMarketplacePlugin) -> PluginSummary {
     }
 }
 
-fn plugin_detail_to_api(outcome: genex_core_plugins::PluginReadOutcome) -> PluginDetail {
+fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> PluginDetail {
     let summary = PluginSummary {
         id: outcome.plugin.id.clone(),
         local_version: outcome.plugin.local_version.clone(),

@@ -8,16 +8,16 @@ use crate::plugin_metrics::ResolvedPluginMetricsOperation;
 use crate::plugin_metrics::load_plugin_metrics_operations;
 use crate::store::PluginStore;
 use crate::store::plugin_version_for_source;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadFileOptions;
-use genex_plugin::PluginId;
-use genex_protocol::items::is_safe_plugin_relative_path;
-use genex_shell_command::bash::extract_bash_command;
-use genex_shell_command::bash::parse_shell_lc_plain_commands;
-use genex_shell_command::parse_command::is_pathish;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::items::is_safe_plugin_relative_path;
+use ruxex_shell_command::bash::extract_bash_command;
+use ruxex_shell_command::bash::parse_shell_lc_plain_commands;
+use ruxex_shell_command::parse_command::is_pathish;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::path::Component;
@@ -55,9 +55,9 @@ pub struct TrustedPluginRoots {
 }
 
 impl TrustedPluginRoots {
-    pub fn from_plugin_load_outcome(loaded_plugins: &PluginLoadOutcome, genex_home: &Path) -> Self {
+    pub fn from_plugin_load_outcome(loaded_plugins: &PluginLoadOutcome, ruxex_home: &Path) -> Self {
         let primary_runtime_marketplace_root = primary_runtime_marketplace_root();
-        let Ok(store) = PluginStore::try_new(genex_home.to_path_buf()) else {
+        let Ok(store) = PluginStore::try_new(ruxex_home.to_path_buf()) else {
             return Self::default();
         };
         let mut seen = HashSet::new();
@@ -69,7 +69,7 @@ impl TrustedPluginRoots {
                 let plugin_id = PluginId::parse(&plugin.config_name).ok()?;
                 let expected_root = Self::expected_plugin_root(
                     &store,
-                    genex_home,
+                    ruxex_home,
                     &plugin_id,
                     primary_runtime_marketplace_root.as_deref(),
                 )?;
@@ -91,7 +91,7 @@ impl TrustedPluginRoots {
 
     fn expected_plugin_root(
         store: &PluginStore,
-        _genex_home: &Path,
+        _ruxex_home: &Path,
         plugin_id: &PluginId,
         primary_runtime_marketplace_root: Option<&Path>,
     ) -> Option<AbsolutePathBuf> {

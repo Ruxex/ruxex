@@ -1,10 +1,10 @@
 use anyhow::Context;
-use genex_config::types::AppToolApproval;
-use genex_config::types::McpServerAuth;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerEnvVar;
-use genex_config::types::McpServerToolConfig;
-use genex_config::types::McpServerTransportConfig;
+use ruxex_config::types::AppToolApproval;
+use ruxex_config::types::McpServerAuth;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerEnvVar;
+use ruxex_config::types::McpServerToolConfig;
+use ruxex_config::types::McpServerTransportConfig;
 use toml_edit::Array as TomlArray;
 use toml_edit::InlineTable;
 use toml_edit::Item as TomlItem;

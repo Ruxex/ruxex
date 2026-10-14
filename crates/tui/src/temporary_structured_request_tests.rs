@@ -3,12 +3,12 @@ use super::TemporaryStructuredThreadOptions;
 use super::collect_structured_response;
 use super::start_temporary_thread;
 use crate::test_support::PathBufExt;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStatus;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::mpsc::unbounded_channel;
@@ -50,11 +50,11 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
     let (chat_widget, _, _, _) =
         crate::chatwidget::tests::make_chatwidget_manual_with_sender().await;
     let mut config = chat_widget.config_ref().clone();
-    let genex_home = tempdir()?;
-    let denied_path = genex_home.path().join("denied");
+    let ruxex_home = tempdir()?;
+    let denied_path = ruxex_home.path().join("denied");
     let denied_key = toml::Value::String(denied_path.display().to_string());
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             "default_permissions = \"title-restricted\"\n\n\
              [permissions.title-restricted.filesystem]\n\
@@ -65,9 +65,9 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
              required = true\n"
         ),
     )?;
-    config.genex_home = genex_home.path().to_path_buf().abs();
+    config.ruxex_home = ruxex_home.path().to_path_buf().abs();
     config.sqlite =
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().to_path_buf().abs());
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().to_path_buf().abs());
 
     let app_server = crate::start_embedded_app_server_for_picker(&config).await?;
     let response = start_temporary_thread(

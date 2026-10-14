@@ -1,7 +1,7 @@
 //! User-message and shell-prompt submission behavior for `ChatWidget`.
 
 use super::*;
-use genex_app_server_protocol::ImageReference;
+use ruxex_app_server_protocol::ImageReference;
 
 impl ChatWidget {
     pub(crate) fn set_task_mentions_enabled(&mut self, enabled: bool) {
@@ -421,7 +421,7 @@ impl ChatWidget {
             self.clear_recap_loading();
         }
         let render_before_submit =
-            render_in_history && matches!(&self.genex_op_target, GenexOpTarget::AppEvent);
+            render_in_history && matches!(&self.ruxex_op_target, RuxexOpTarget::AppEvent);
         if render_before_submit {
             self.on_user_message_display(user_message_display_for_history(
                 submitted_message.clone(),

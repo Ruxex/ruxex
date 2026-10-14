@@ -1,33 +1,33 @@
 use anyhow::Result;
-use genex_core::StartThreadOptions;
-use genex_core::ThreadConfigSnapshot;
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_core::config::AgentRoleConfig;
-use genex_core::config::CurrentTimeReminderConfig;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_models_manager::test_support::test_models_response;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::items::SubAgentActivityItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::MultiAgentMessages;
-use genex_protocol::model_types::MultiAgentRoleMessages;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentActivityKind;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::ThreadConfigSnapshot;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnStartOptions;
+use ruxex_core::config::AgentRoleConfig;
+use ruxex_core::config::CurrentTimeReminderConfig;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::items::SubAgentActivityItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::MultiAgentMessages;
+use ruxex_protocol::model_types::MultiAgentRoleMessages;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentActivityKind;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::assert_parent_turn;
@@ -49,10 +49,10 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata_from_json;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -169,8 +169,8 @@ fn role_block(description: &str, role_name: &str) -> Option<String> {
     Some(block.join("\n"))
 }
 
-fn write_home_skill(genex_home: &Path, dir: &str, name: &str, description: &str) -> Result<()> {
-    let skill_dir = genex_home.join("skills").join(dir);
+fn write_home_skill(ruxex_home: &Path, dir: &str, name: &str, description: &str) -> Result<()> {
+    let skill_dir = ruxex_home.join("skills").join(dir);
     fs::create_dir_all(&skill_dir)?;
     let contents = format!("---\nname: {name}\ndescription: {description}\n---\n\n# Body\n");
     fs::write(skill_dir.join("SKILL.md"), contents)?;
@@ -353,7 +353,7 @@ async fn wait_for_hook_log(
     }
 }
 
-async fn wait_for_spawned_thread_id(test: &TestGenex) -> Result<String> {
+async fn wait_for_spawned_thread_id(test: &TestRuxex) -> Result<String> {
     let deadline = Instant::now() + Duration::from_secs(2);
     loop {
         let ids = test.thread_manager.list_thread_ids().await;
@@ -409,7 +409,7 @@ async fn wait_for_request_with_model(
 async fn setup_turn_one_with_spawned_child(
     server: &MockServer,
     child_response_delay: Option<Duration>,
-) -> Result<(TestGenex, String)> {
+) -> Result<(TestRuxex, String)> {
     let (test, spawned_id, _child_request_log) = setup_turn_one_with_custom_spawned_child(
         server,
         json!({
@@ -431,10 +431,10 @@ async fn setup_turn_one_with_custom_spawned_child(
     wait_for_parent_notification: bool,
     turn_reasoning_effort: ReasoningEffort,
     configure_test: impl FnOnce(
-        core_test_support::test_genex::TestGenexBuilder,
-    ) -> core_test_support::test_genex::TestGenexBuilder,
+        core_test_support::test_ruxex::TestRuxexBuilder,
+    ) -> core_test_support::test_ruxex::TestRuxexBuilder,
 ) -> Result<(
-    TestGenex,
+    TestRuxex,
     String,
     core_test_support::responses::ResponseMock,
 )> {
@@ -493,7 +493,7 @@ async fn setup_turn_one_with_custom_spawned_child(
     .await;
 
     let configured_reasoning_effort = turn_reasoning_effort.clone();
-    let mut builder = configure_test(test_genex().with_config(move |config| {
+    let mut builder = configure_test(test_ruxex().with_config(move |config| {
         config
             .features
             .enable(Feature::Collab)
@@ -502,7 +502,7 @@ async fn setup_turn_one_with_custom_spawned_child(
         config.model_reasoning_effort = Some(configured_reasoning_effort);
     }));
     let test = builder.build_with_auto_env(server).await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: TURN_1_PROMPT.to_string(),
@@ -514,14 +514,14 @@ async fn setup_turn_one_with_custom_spawned_child(
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     if child_response_delay.is_none() && wait_for_parent_notification {
         let _ = wait_for_requests(&child_request_log).await?;
         let rollout_path = test
-            .genex
+            .ruxex
             .rollout_path()
             .ok_or_else(|| anyhow::anyhow!("expected parent rollout path"))?;
         let deadline = Instant::now() + Duration::from_secs(6);
@@ -549,8 +549,8 @@ async fn spawn_child_and_capture_snapshot(
     server: &MockServer,
     spawn_args: serde_json::Value,
     configure_test: impl FnOnce(
-        core_test_support::test_genex::TestGenexBuilder,
-    ) -> core_test_support::test_genex::TestGenexBuilder,
+        core_test_support::test_ruxex::TestRuxexBuilder,
+    ) -> core_test_support::test_ruxex::TestRuxexBuilder,
 ) -> Result<ThreadConfigSnapshot> {
     let (test, spawned_id, _child_request_log) = setup_turn_one_with_custom_spawned_child(
         server,
@@ -675,7 +675,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             write_subagent_lifecycle_hooks(home, /*stop_prompts*/ &[], "worker")
                 .expect("failed to write subagent hook fixture");
@@ -695,7 +695,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     let _ = wait_for_requests(&child_request_log).await?;
 
     let start_inputs = wait_for_hook_log(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         "subagent_start_hook_log.jsonl",
         /*expected_len*/ 1,
     )
@@ -712,7 +712,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     );
 
     let user_prompt_submit_inputs = wait_for_hook_log(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         "user_prompt_submit_hook_log.jsonl",
         /*expected_len*/ 2,
     )
@@ -738,7 +738,7 @@ async fn subagent_start_replaces_session_start_and_injects_context(
     );
 
     let session_start_inputs = wait_for_hook_log(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         "session_start_hook_log.jsonl",
         /*expected_len*/ 1,
     )
@@ -826,7 +826,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             write_subagent_lifecycle_hooks(
                 home,
@@ -850,7 +850,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     let _ = wait_for_requests(&second_child_request).await?;
 
     let subagent_stop_inputs = wait_for_hook_log(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         "subagent_stop_hook_log.jsonl",
         /*expected_len*/ 2,
     )
@@ -887,7 +887,7 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
         Some("child done first")
     );
 
-    let stop_inputs = read_hook_log(test.genex_home_path(), "stop_hook_log.jsonl")?;
+    let stop_inputs = read_hook_log(test.ruxex_home_path(), "stop_hook_log.jsonl")?;
     assert!(
         stop_inputs
             .iter()
@@ -940,10 +940,10 @@ async fn subagent_stop_replaces_stop_and_skips_internal_subagents() -> Result<()
     assert_eq!(requests.len(), 1);
 
     let subagent_stop_inputs_after_internal =
-        read_hook_log(test.genex_home_path(), "subagent_stop_hook_log.jsonl")?;
+        read_hook_log(test.ruxex_home_path(), "subagent_stop_hook_log.jsonl")?;
     assert_eq!(subagent_stop_inputs_after_internal, subagent_stop_inputs);
 
-    let stop_inputs_after_internal = read_hook_log(test.genex_home_path(), "stop_hook_log.jsonl")?;
+    let stop_inputs_after_internal = read_hook_log(test.ruxex_home_path(), "stop_hook_log.jsonl")?;
     assert_eq!(stop_inputs_after_internal.len(), stop_input_count);
 
     Ok(())
@@ -1043,7 +1043,7 @@ async fn spawned_child_receives_forked_parent_context(
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model_info_override(INHERITED_MODEL, |model| model.comp_hash = None)
         .with_history_mode(history_mode)
         .with_config(|config| {
@@ -1068,7 +1068,7 @@ async fn spawned_child_receives_forked_parent_context(
     assert!(child_request.body_contains_text(TURN_0_FORK_PROMPT));
     let child_body = child_request.body_json();
     let child_metadata: serde_json::Value = serde_json::from_str(
-        child_body["client_metadata"]["x-genex-turn-metadata"]
+        child_body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("child turn metadata"),
     )?;
@@ -1152,7 +1152,7 @@ async fn spawned_child_receives_forked_parent_context(
     assert_root_turn(&followup_parent_body, Some(followup_parent_turn_id))?;
     assert_root_turn(&reused_child_body, Some(followup_parent_turn_id))?;
     let reused_metadata: Value = serde_json::from_str(
-        reused_child_body["client_metadata"]["x-genex-turn-metadata"]
+        reused_child_body["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("reused child turn metadata"),
     )?;
@@ -1160,8 +1160,8 @@ async fn spawned_child_receives_forked_parent_context(
     Ok(())
 }
 
-async fn submit_turn_with_trigger(test: &TestGenex, prompt: &str, trigger: &str) -> Result<()> {
-    test.genex
+async fn submit_turn_with_trigger(test: &TestRuxex, prompt: &str, trigger: &str) -> Result<()> {
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -1173,7 +1173,7 @@ async fn submit_turn_with_trigger(test: &TestGenex, prompt: &str, trigger: &str)
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1331,7 +1331,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
         .with_priority(/*p*/ 6)
         .mount(&server)
         .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_history_mode(history_mode)
         .with_config(move |config| {
             config
@@ -1367,7 +1367,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
         let request = timeout(Duration::from_secs(/*secs*/ 10), async {
             loop {
                 let request = mock.requests().into_iter().find(|request| {
-                    request.body_json()["client_metadata"]["x-genex-turn-metadata"]
+                    request.body_json()["client_metadata"]["x-ruxex-turn-metadata"]
                         .as_str()
                         .and_then(|text| serde_json::from_str::<Value>(text).ok())
                         .is_some_and(|metadata| metadata["agent_name"] == agent_name)
@@ -1399,7 +1399,7 @@ async fn grandchild_full_fork_preserves_context_baseline(
             );
         }
         let metadata: Value = serde_json::from_str(
-            request.body_json()["client_metadata"]["x-genex-turn-metadata"]
+            request.body_json()["client_metadata"]["x-ruxex-turn-metadata"]
                 .as_str()
                 .expect("descendant turn metadata"),
         )?;
@@ -1562,7 +1562,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         ]),
     )
     .await;
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config
             .features
             .enable(Feature::Collab)
@@ -1630,7 +1630,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
             config.include_environment_context = false;
             config.current_time_reminder = Some(CurrentTimeReminderConfig {
                 reminder_interval_seconds: 0,
-                clock_source: genex_features::CurrentTimeSource::External,
+                clock_source: ruxex_features::CurrentTimeSource::External,
                 ..CurrentTimeReminderConfig::default()
             });
         }
@@ -1662,8 +1662,8 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         #[derive(Default)]
         struct FailFirstClockRead(std::sync::atomic::AtomicBool);
 
-        impl genex_core::TimeProvider for FailFirstClockRead {
-            fn current_time(&self, _thread_id: ThreadId) -> genex_core::TimeFuture<'_> {
+        impl ruxex_core::TimeProvider for FailFirstClockRead {
+            fn current_time(&self, _thread_id: ThreadId) -> ruxex_core::TimeFuture<'_> {
                 let already_read = self.0.swap(true, std::sync::atomic::Ordering::Relaxed);
                 Box::pin(async move {
                     anyhow::ensure!(already_read, "parent clock unavailable");
@@ -1675,7 +1675,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                 &self,
                 _thread_id: ThreadId,
                 _duration: Duration,
-            ) -> genex_core::SleepFuture<'_> {
+            ) -> ruxex_core::SleepFuture<'_> {
                 Box::pin(async { Ok(()) })
             }
         }
@@ -1685,8 +1685,8 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
     }
     let test = builder.build(&server).await?;
     if matches!(selection, FullHistoryV2ModelSelection::WorldStateIdentity) {
-        test.genex.submit(Op::Compact).await?;
-        wait_for_event(&test.genex, |event| {
+        test.ruxex.submit(Op::Compact).await?;
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -1703,7 +1703,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
             ),
             (FULL_HISTORY_EXPLICIT_PROMPT, ReasoningEffort::High, None),
         ] {
-            test.genex
+            test.ruxex
                 .start_or_steer_turn(
                     TurnInputRequest::user_input(vec![UserInput::Text {
                         text: prompt.to_string(),
@@ -1716,7 +1716,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
                     }),
                 )
                 .await?;
-            wait_for_event(&test.genex, |event| {
+            wait_for_event(&test.ruxex, |event| {
                 matches!(event, EventMsg::TurnComplete(_))
             })
             .await;
@@ -1864,7 +1864,7 @@ async fn spawned_full_history_v2_child_uses_model_precedence_without_dropping_co
         )?;
         let child_thread = test.thread_manager.get_thread(child_thread_id).await?;
         child_thread.flush_rollout().await?;
-        let child_rollout = genex_rollout::RolloutRecorder::get_rollout_history(
+        let child_rollout = ruxex_rollout::RolloutRecorder::get_rollout_history(
             &child_thread
                 .rollout_path()
                 .expect("child rollout should exist"),
@@ -2171,7 +2171,7 @@ async fn spawned_multi_agent_v2_child_inherits_parent_developer_context() -> Res
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::Collab)
@@ -2281,7 +2281,7 @@ async fn multi_agent_v2_spawn_sends_agent_message_to_child(
     } else {
         "koffing"
     };
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(parent_model)
         .with_config(move |config| {
             config
@@ -2490,7 +2490,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
                 && decoded_body(req)
                     .and_then(|body| serde_json::from_slice::<Value>(&body).ok())
                     .and_then(|body| {
-                        body["client_metadata"]["x-genex-turn-metadata"]
+                        body["client_metadata"]["x-ruxex-turn-metadata"]
                             .as_str()
                             .and_then(|metadata| serde_json::from_str::<Value>(metadata).ok())
                     })
@@ -2562,7 +2562,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         ]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("koffing")
         .with_config(|config| {
             config
@@ -2587,7 +2587,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         let child_request = child_request.requests().into_iter().find_map(|request| {
             let body = request.body_json();
             let turn_metadata: Value =
-                serde_json::from_str(body["client_metadata"]["x-genex-turn-metadata"].as_str()?)
+                serde_json::from_str(body["client_metadata"]["x-ruxex-turn-metadata"].as_str()?)
                     .ok()?;
             turn_metadata
                 .get("parent_turn_id")
@@ -2622,7 +2622,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
     } else {
         None
     };
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: TURN_2_NO_WAIT_PROMPT.to_string(),
             text_elements: Vec::new(),
@@ -2635,7 +2635,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
             let mut completed_activity_completed = None;
             loop {
                 let event = test
-                    .genex
+                    .ruxex
                     .next_event()
                     .await
                     .expect("event stream should remain open");
@@ -2723,10 +2723,10 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
         );
         assert_eq!(started.turn_id, parent_turn_id);
 
-        test.genex.ensure_rollout_materialized().await;
-        test.genex.flush_rollout().await?;
-        let rollout = genex_rollout::RolloutRecorder::get_rollout_history(
-            &test.genex.rollout_path().expect("parent rollout path"),
+        test.ruxex.ensure_rollout_materialized().await;
+        test.ruxex.flush_rollout().await?;
+        let rollout = ruxex_rollout::RolloutRecorder::get_rollout_history(
+            &test.ruxex.rollout_path().expect("parent rollout path"),
         )
         .await?;
         assert!(
@@ -2766,7 +2766,7 @@ async fn plaintext_multi_agent_v2_completion_sends_agent_message(
                 id: format!("subagent-completed-{child_turn_id}"),
                 kind: SubAgentActivityKind::Completed,
                 agent_thread_id: child_thread_id,
-                agent_path: genex_protocol::AgentPath::root()
+                agent_path: ruxex_protocol::AgentPath::root()
                     .join("worker")
                     .expect("worker path"),
             }
@@ -2792,7 +2792,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
     const FOLLOWUP_CALL_ID: &str = "request-peer-followup";
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-b")
         .with_config(|config| {
             for feature in [Feature::Collab, Feature::MultiAgentV2] {
@@ -2989,7 +2989,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
                 && request.body_contains_text(WORKER_FOLLOWUP_TASK))
             .then(|| {
                 let metadata: Value = serde_json::from_str(
-                    body["client_metadata"]["x-genex-turn-metadata"]
+                    body["client_metadata"]["x-ruxex-turn-metadata"]
                         .as_str()
                         .expect("worker turn metadata"),
                 )
@@ -3031,7 +3031,7 @@ async fn multi_agent_v2_peer_followup_completion_notifies_initiating_turn() -> R
                 id: format!("subagent-completed-{worker_followup_turn_id}"),
                 kind: SubAgentActivityKind::Completed,
                 agent_thread_id: worker_thread_id,
-                agent_path: genex_protocol::AgentPath::root()
+                agent_path: ruxex_protocol::AgentPath::root()
                     .join("worker")
                     .expect("worker path"),
             },
@@ -3135,7 +3135,7 @@ async fn skills_toggle_skips_instructions_for_parent_and_spawned_child() -> Resu
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_home_skill(home, "demo", "demo-skill", "demo skill").expect("write home skill");
         })
@@ -3182,7 +3182,7 @@ async fn spawn_agent_role_overrides_requested_model_and_reasoning_settings() -> 
         }),
         |builder| {
             builder.with_config(|config| {
-                let role_path = config.genex_home.join("custom-role.toml");
+                let role_path = config.ruxex_home.join("custom-role.toml");
                 std::fs::write(
                     &role_path,
                     format!(
@@ -3222,7 +3222,7 @@ async fn spawn_agent_preserves_configured_defaults_through_unrelated_role() -> R
         }),
         |builder| {
             builder.with_config(|config| {
-                let role_path = config.genex_home.join("instructions-only-role.toml");
+                let role_path = config.ruxex_home.join("instructions-only-role.toml");
                 std::fs::write(&role_path, "developer_instructions = \"Stay focused\"\n")
                     .expect("write role config");
                 config.agent_roles.insert(
@@ -3284,13 +3284,13 @@ async fn spawn_agent_rejects_reasoning_effort_unsupported_by_role_model() -> Res
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config
                 .features
                 .enable(Feature::Collab)
                 .expect("test config should allow feature update");
-            let role_path = config.genex_home.join("model-only-role.toml");
+            let role_path = config.ruxex_home.join("model-only-role.toml");
             std::fs::write(&role_path, format!("model = \"{ROLE_MODEL}\"\n"))
                 .expect("write role config");
             config.agent_roles.insert(
@@ -3351,13 +3351,13 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::Collab)
             .expect("test config should allow feature update");
         config.multi_agent_v2.hide_spawn_agent_metadata = false;
-        let role_path = config.genex_home.join("custom-role.toml");
+        let role_path = config.ruxex_home.join("custom-role.toml");
         std::fs::write(
             &role_path,
             format!(

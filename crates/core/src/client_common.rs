@@ -1,14 +1,14 @@
 use futures::Stream;
-pub use genex_model_provider::ProviderChatEvent as ResponseEvent;
-use genex_protocol::error::Result;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ResponseItem;
-use genex_tools::ToolSpec;
+pub use ruxex_model_provider::ProviderChatEvent as ResponseEvent;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_tools::ToolSpec;
 use serde_json::Value;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -38,7 +38,7 @@ pub struct Prompt {
     /// Whether the Responses API should strictly validate `output_schema`.
     pub output_schema_strict: bool,
 
-    pub(crate) cyber_access_program: Option<genex_protocol::turn_input::CyberAccessProgram>,
+    pub(crate) cyber_access_program: Option<ruxex_protocol::turn_input::CyberAccessProgram>,
 }
 
 impl Default for Prompt {

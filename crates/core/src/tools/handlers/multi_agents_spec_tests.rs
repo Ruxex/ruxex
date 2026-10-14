@@ -1,10 +1,10 @@
 use super::*;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_tools::JsonSchemaPrimitiveType;
-use genex_tools::JsonSchemaType;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelServiceTier;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_tools::JsonSchemaPrimitiveType;
+use ruxex_tools::JsonSchemaType;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

@@ -1,19 +1,19 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::ensure;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
 #[cfg(not(target_os = "windows"))]
-use genex_core::config::Constrained;
+use ruxex_core::config::Constrained;
 #[cfg(not(target_os = "windows"))]
-use genex_core::sandboxing::SandboxPermissions;
+use ruxex_core::sandboxing::SandboxPermissions;
 #[cfg(not(target_os = "windows"))]
-use genex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::ApprovalsReviewer;
 #[cfg(not(target_os = "windows"))]
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses::assert_root_turn;
 use core_test_support::responses::ev_assistant_message;
@@ -22,7 +22,7 @@ use core_test_support::responses::ev_function_call;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -75,7 +75,7 @@ fn create_git_repo() -> Result<(TempDir, String)> {
 
 fn turn_metadata(request: &Value) -> Result<Value> {
     serde_json::from_str(
-        request["client_metadata"]["x-genex-turn-metadata"]
+        request["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .context("turn metadata")?,
     )
@@ -129,7 +129,7 @@ async fn startup_prewarm_skips_git_enrichment_and_user_turn_observes_fresh_state
     ]])
     .await;
     let cwd = repo.path().to_path_buf();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(move |config| {
             config.cwd = cwd.abs();
@@ -160,7 +160,7 @@ async fn startup_prewarm_skips_git_enrichment_and_user_turn_observes_fresh_state
         expected_workspace(repo.path(), &head, /*has_changes*/ true)
     );
 
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -199,7 +199,7 @@ async fn user_turn_git_enrichment_redacts_remote_credentials() -> Result<()> {
     ]])
     .await;
     let cwd = repo.path().to_path_buf();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(move |config| {
             config.cwd = cwd.abs();
@@ -220,7 +220,7 @@ async fn user_turn_git_enrichment_redacts_remote_credentials() -> Result<()> {
         expected_workspace(repo.path(), &head, /*has_changes*/ false)
     );
 
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -261,7 +261,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
     ])
     .await;
     let cwd = repo.path().to_path_buf();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(move |config| {
             config.cwd = cwd.abs();
@@ -283,7 +283,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
     }
 
     std::fs::write(repo.path().join("untracked.txt"), "dirty\n")?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "run a command that requires Guardian review".into(),
             text_elements: Vec::new(),
@@ -322,7 +322,7 @@ async fn guardian_prewarm_and_review_skip_redundant_git_enrichment() -> Result<(
     );
     assert!(turn_metadata(&guardian_turn)?.get("workspaces").is_none());
 
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -361,7 +361,7 @@ async fn ephemeral_system_thread_prewarm_skips_and_turn_observes_fresh_state(
     ])
     .await;
     let cwd = repo.path().to_path_buf();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(move |config| {
             config.cwd = cwd.abs();
@@ -408,7 +408,7 @@ async fn ephemeral_system_thread_prewarm_skips_and_turn_observes_fresh_state(
         .and_then(|connection| connection.get(2))
         .context("system turn follow-up request")?
         .body_json();
-    let genex_core::TurnInputSubmission::Started { turn_id } = submission else {
+    let ruxex_core::TurnInputSubmission::Started { turn_id } = submission else {
         panic!("background input should start a turn");
     };
     assert_root_turn(&turn, Some(&turn_id))?;
@@ -418,7 +418,7 @@ async fn ephemeral_system_thread_prewarm_skips_and_turn_observes_fresh_state(
     );
 
     system_thread.thread.shutdown_and_wait().await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
@@ -491,7 +491,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
     .await;
 
     let repo_cwd = repo.path().to_path_buf();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(move |config| {
             config.cwd = repo_cwd.abs();
@@ -536,7 +536,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
         }])
     };
     tokio::try_join!(
-        test.genex
+        test.ruxex
             .start_or_steer_turn(user_turn("inspect the main worktree")),
         worktree_thread
             .thread
@@ -546,7 +546,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
             .start_or_steer_turn(user_turn("inspect the other repository"))
     )?;
     tokio::join!(
-        wait_for_event(test.genex.as_ref(), |event| matches!(
+        wait_for_event(test.ruxex.as_ref(), |event| matches!(
             event,
             EventMsg::TurnComplete(_)
         )),
@@ -596,7 +596,7 @@ async fn concurrent_turns_keep_distinct_worktree_and_repository_metadata() -> Re
 
     worktree_thread.thread.shutdown_and_wait().await?;
     other_thread.thread.shutdown_and_wait().await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }

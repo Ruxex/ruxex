@@ -2,7 +2,7 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_code_mode_protocol::CodeModeSessionProvider;
+use ruxex_code_mode_protocol::CodeModeSessionProvider;
 use pretty_assertions::assert_eq;
 
 use super::ProcessOwnedCodeModeSession;
@@ -22,7 +22,7 @@ fn provider_reuses_its_live_process_host() {
 
 #[test]
 fn missing_host_error_limits_the_displayed_path_to_512_bytes() {
-    let executable = "genex-code-mode-host-does-not-exist";
+    let executable = "ruxex-code-mode-host-does-not-exist";
     let host_program = format!("{}{executable}", "missing-directory/".repeat(/*n*/ 64));
     let expected_suffix = &host_program[host_program.len() - (512 - "...".len())..];
     let error = ConnectionError::Spawn {
@@ -38,7 +38,7 @@ fn missing_host_error_limits_the_displayed_path_to_512_bytes() {
 
 #[test]
 fn missing_host_error_preserves_utf8_boundaries_when_truncating_the_path() {
-    let executable = "genex-code-mode-host-does-not-exist";
+    let executable = "ruxex-code-mode-host-does-not-exist";
     let host_program = format!("{}{executable}", "🦀".repeat(/*n*/ 256));
     let error = ConnectionError::Spawn {
         host_program: PathBuf::from(host_program),
@@ -58,7 +58,7 @@ fn missing_host_error_preserves_utf8_boundaries_when_truncating_the_path() {
 #[tokio::test]
 async fn provider_returns_missing_host_error() {
     let provider = ProcessOwnedCodeModeSessionProvider::with_host_program(
-        "genex-code-mode-host-does-not-exist".into(),
+        "ruxex-code-mode-host-does-not-exist".into(),
     );
 
     let error = provider
@@ -67,7 +67,7 @@ async fn provider_returns_missing_host_error() {
         .err()
         .expect("missing host should fail");
 
-    assert!(error.contains("failed to spawn code-mode host genex-code-mode-host-does-not-exist"));
+    assert!(error.contains("failed to spawn code-mode host ruxex-code-mode-host-does-not-exist"));
 }
 
 #[tokio::test]
@@ -77,7 +77,7 @@ async fn shutdown_before_open_does_not_spawn_the_host() {
     session.shutdown().await.expect("shutdown session");
     let error = session
         .execute(
-            genex_code_mode_protocol::ExecuteRequest {
+            ruxex_code_mode_protocol::ExecuteRequest {
                 tool_call_id: "call-1".to_string(),
                 enabled_tools: Vec::new(),
                 source: "text('unreachable')".to_string(),

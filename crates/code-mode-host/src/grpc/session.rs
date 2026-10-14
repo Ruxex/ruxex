@@ -9,12 +9,12 @@ use std::sync::Mutex;
 use std::sync::PoisonError;
 use std::sync::Weak;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::grpc as proto;
-use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
-use genex_code_mode_runtime::InProcessCodeModeSession;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::grpc as proto;
+use ruxex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use ruxex_code_mode_runtime::InProcessCodeModeSession;
 use serde_json::Value as JsonValue;
 use tokio::sync::Notify;
 use tokio::sync::OwnedSemaphorePermit;

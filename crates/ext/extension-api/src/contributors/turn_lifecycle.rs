@@ -1,7 +1,7 @@
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TurnAbortReason;
 
 use crate::ExtensionData;
 
@@ -48,7 +48,7 @@ pub struct TurnErrorInput<'a> {
     /// Stable host-owned turn identifier.
     pub turn_id: &'a str,
     /// Error surfaced by the host for this turn.
-    pub error: GenexErrorInfo,
+    pub error: RuxexErrorInfo,
     /// Store scoped to the host session runtime.
     pub session_store: &'a ExtensionData,
     /// Store scoped to this thread runtime.

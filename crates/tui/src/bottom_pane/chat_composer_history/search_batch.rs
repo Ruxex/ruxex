@@ -7,7 +7,7 @@ use super::PendingHistorySearch;
 use crate::app_event::AppEvent;
 use crate::app_event::HistoryBatchEntryResponse;
 use crate::app_event_sender::AppEventSender;
-use genex_message_history::HistoryBatchCursor;
+use ruxex_message_history::HistoryBatchCursor;
 
 impl ChatComposerHistory {
     /// Applies a query-independent batch to the persistent cache and, when still applicable,

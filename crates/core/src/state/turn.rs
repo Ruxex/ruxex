@@ -7,13 +7,13 @@ use tokio::sync::Notify;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
 
-use genex_diagnostics::GaugeGuard;
-use genex_protocol::dynamic_tools::DynamicToolResponse;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_rmcp_client::ElicitationResponse;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_diagnostics::GaugeGuard;
+use ruxex_protocol::dynamic_tools::DynamicToolResponse;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
 use rmcp::model::RequestId;
 use tokio::sync::oneshot;
 
@@ -24,9 +24,9 @@ use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
 use crate::session::turn_context::TurnEnvironment;
 use crate::tasks::AnySessionTask;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::TokenUsage;
 
 /// Metadata about the currently running turn.
 pub(crate) struct ActiveTurn {
@@ -81,7 +81,7 @@ pub(crate) struct RunningTask {
     pub(crate) _agent_execution_guard: Option<AgentExecutionGuard>,
     pub(crate) _diagnostics_guard: GaugeGuard,
     // Timer recorded when the task drops to capture the full turn duration.
-    pub(crate) _timer: Option<genex_otel::Timer>,
+    pub(crate) _timer: Option<ruxex_otel::Timer>,
 }
 
 /// Mutable state for a single turn.

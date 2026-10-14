@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 #[test]
 fn ignored_toml_field_errors_accept_non_file_source_names() {
-    let source_name = "com.genex.genex:config_toml_base64";
+    let source_name = "com.ruxex.ruxex:config_toml_base64";
     let contents = r#"
 model = "example-model"
 unknown_key = true"#;
@@ -246,6 +246,6 @@ include_view_image_tool = false
     .unwrap();
     assert_eq!(
         ignored_config_warning(&config, &[]).unwrap(),
-        "Genex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_provider.unknown_timeout` is ignored.\n  session-flags: `model_provider.unknown_timeout` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
+        "Ruxex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_provider.unknown_timeout` is ignored.\n  session-flags: `model_provider.unknown_timeout` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
     );
 }

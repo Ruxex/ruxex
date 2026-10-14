@@ -1,7 +1,7 @@
 use crate::metrics::Result;
 use crate::metrics::validation::validate_tag_key;
 use crate::metrics::validation::validate_tag_value;
-use genex_utils_string::sanitize_metric_tag_value;
+use ruxex_utils_string::sanitize_metric_tag_value;
 
 pub const APP_VERSION_TAG: &str = "app.version";
 pub const AUTH_MODE_TAG: &str = "auth_mode";
@@ -12,15 +12,15 @@ pub const SESSION_SOURCE_TAG: &str = "session_source";
 
 const OTHER_ORIGINATOR_TAG_VALUE: &str = "other";
 const KNOWN_ORIGINATOR_TAG_VALUES: &[&str] = &[
-    "genex_desktop",
-    "genex-app-server",
-    "genex_mcp_server",
-    "genex_cli_rs",
-    "genex-tui",
+    "ruxex_desktop",
+    "ruxex-app-server",
+    "ruxex_mcp_server",
+    "ruxex_cli_rs",
+    "ruxex-tui",
     "codex_vscode",
     "none",
-    "genex_exec",
-    "genex-cli",
+    "ruxex_exec",
+    "ruxex-cli",
     "codex_sdk_ts",
     "codex-app-server-sdk",
 ];
@@ -87,7 +87,7 @@ mod tests {
         let tags = SessionMetricTagValues {
             auth_mode: Some("api_key"),
             session_source: "cli",
-            originator: "genex_cli",
+            originator: "ruxex_cli",
             service_name: Some("desktop_app"),
             model: "example-model-1",
             app_version: "1.2.3",
@@ -100,7 +100,7 @@ mod tests {
             vec![
                 (AUTH_MODE_TAG, "api_key"),
                 (SESSION_SOURCE_TAG, "cli"),
-                (ORIGINATOR_TAG, "genex_cli"),
+                (ORIGINATOR_TAG, "ruxex_cli"),
                 (SERVICE_NAME_TAG, "desktop_app"),
                 (MODEL_TAG, "example-model-1"),
                 (APP_VERSION_TAG, "1.2.3"),
@@ -113,7 +113,7 @@ mod tests {
         let tags = SessionMetricTagValues {
             auth_mode: None,
             session_source: "exec",
-            originator: "genex_exec",
+            originator: "ruxex_exec",
             service_name: None,
             model: "example-model-1",
             app_version: "1.2.3",
@@ -125,7 +125,7 @@ mod tests {
             tags,
             vec![
                 (SESSION_SOURCE_TAG, "exec"),
-                (ORIGINATOR_TAG, "genex_exec"),
+                (ORIGINATOR_TAG, "ruxex_exec"),
                 (MODEL_TAG, "example-model-1"),
                 (APP_VERSION_TAG, "1.2.3"),
             ]

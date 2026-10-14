@@ -1,15 +1,15 @@
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::TruncationMode;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::WebSearchToolType;
-use genex_protocol::model_types::default_input_modalities;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::TruncationMode;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::WebSearchToolType;
+use ruxex_protocol::model_types::default_input_modalities;
 
 use crate::config::ModelsManagerConfig;
-use genex_utils_output_truncation::approx_bytes_for_tokens;
+use ruxex_utils_output_truncation::approx_bytes_for_tokens;
 use tracing::warn;
 
 pub const BASE_INSTRUCTIONS: &str = include_str!("../prompt.md");

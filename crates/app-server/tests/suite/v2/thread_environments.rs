@@ -2,19 +2,19 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server_protocol::ThreadEnvironment;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::ThreadEnvironment;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -34,7 +34,7 @@ async fn thread_environments_follow_the_loaded_thread_selection() -> Result<()> 
     let home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri()).write(home.path())?;
     let mut first = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized()
         .await?;
     let selection = first.auto_env_params()?;
@@ -95,7 +95,7 @@ async fn thread_environments_follow_the_loaded_thread_selection() -> Result<()> 
 
     // Unloaded reads have no live selection. Resume reports its newly selected defaults.
     let mut second = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized()
         .await?;
     assert_read_and_list_environments(&mut second, &thread_id, &None).await?;

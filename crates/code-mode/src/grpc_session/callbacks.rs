@@ -5,9 +5,9 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::grpc;
-use genex_protocol::protocol::W3cTraceContext;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_protocol::protocol::W3cTraceContext;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 use tracing::warn;
@@ -123,7 +123,7 @@ impl SessionInner {
             invocation.id = %call.invocation_id,
         );
         if let Some(traceparent) = call.traceparent.as_ref() {
-            genex_otel::set_parent_from_w3c_trace_context(
+            ruxex_otel::set_parent_from_w3c_trace_context(
                 &callback_span,
                 &W3cTraceContext {
                     traceparent: Some(traceparent.clone()),

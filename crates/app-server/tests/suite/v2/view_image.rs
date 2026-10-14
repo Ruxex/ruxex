@@ -6,20 +6,20 @@ use app_test_support::TestAppServer;
 use app_test_support::create_fake_parented_rollout_with_source;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
 use core_test_support::responses;
 use serde_json::json;
 use tempfile::TempDir;
@@ -42,18 +42,18 @@ async fn fresh_context_subagent_inherits_disabled_view_image_and_mcp_tools() -> 
 
     let responses_server = responses::start_mock_server().await;
     let (mcp_server_url, mcp_server_handle) = start_mcp_server(/*sensitive_action*/ None).await?;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_model("legacy-model")
         .with_provider_config("supports_websockets = false")
         .with_extra_config(&format!(
             "[mcp_servers.{TEST_SERVER_NAME}]\nurl = \"{mcp_server_url}/mcp\"\n\n[features.multi_agent_v2]\nenabled = true"
         ))
-        .write(genex_home.path())?;
-    write_models_cache(genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    write_models_cache(ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -202,13 +202,13 @@ async fn guardian_reviewer_inherits_disabled_view_image() -> Result<()> {
         create_final_assistant_message_sse_response("review complete")?,
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses_server.uri())
         .with_provider_config("supports_websockets = false")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let guardian_thread_id = create_fake_parented_rollout_with_source(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "review a requested action",
@@ -218,7 +218,7 @@ async fn guardian_reviewer_inherits_disabled_view_image() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let resume_id = mcp

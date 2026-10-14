@@ -14,38 +14,38 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::model_info::BASE_INSTRUCTIONS;
-use genex_models_manager::test_support::test_models_response;
-use genex_prompts::render_model_instructions;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::model_info::BASE_INSTRUCTIONS;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::default_input_modalities;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -61,7 +61,7 @@ use wiremock::ResponseTemplate;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 
-const REMOTE_MODEL_SLUG: &str = "genex-test";
+const REMOTE_MODEL_SLUG: &str = "ruxex-test";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn disabled_update_plan_preserves_custom_catalog_instructions() -> Result<()> {
@@ -84,7 +84,7 @@ async fn disabled_update_plan_preserves_custom_catalog_instructions() -> Result<
         .as_mut()
         .expect("model prompt templates");
     messages.instructions_template = Some(INSTRUCTIONS.to_string());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("example-model")
         .with_config(move |config| {
             config.update_plan_enabled = false;
@@ -109,7 +109,7 @@ async fn unknown_model_sends_builtin_instructions() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("future-custom-model")
         .with_config(|config| config.update_plan_enabled = true);
     let test = builder.build_with_auto_env(&server).await?;
@@ -175,24 +175,24 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     )
     .await;
 
-    let genex_home = TempDir::new()?;
-    let config = load_default_config_for_test(&genex_home).await;
+    let ruxex_home = TempDir::new()?;
+    let config = load_default_config_for_test(&ruxex_home).await;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
     manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -240,8 +240,8 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let TestRuxex { ruxex, .. } = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
             config.model_context_window = Some(1_000_000);
@@ -249,14 +249,14 @@ async fn remote_models_config_context_window_override_clamps_to_max_context_wind
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&genex, |event| {
+    let turn_started_event = wait_for_event(&ruxex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -304,8 +304,8 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let TestRuxex { ruxex, .. } = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
             config.model_context_window = Some(500_000);
@@ -313,14 +313,14 @@ async fn remote_models_config_override_above_max_uses_max_context_window() -> Re
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&genex, |event| {
+    let turn_started_event = wait_for_event(&ruxex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -368,22 +368,22 @@ async fn remote_models_use_context_window_when_config_override_is_absent() -> Re
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let TestRuxex { ruxex, .. } = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
         })
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check context window".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let turn_started_event = wait_for_event(&genex, |event| {
+    let turn_started_event = wait_for_event(&ruxex, |event| {
         matches!(
             event,
             EventMsg::TurnStarted(started)
@@ -455,8 +455,8 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let TestRuxex { ruxex, .. } = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(requested_model.to_string());
             config.developer_instructions = Some(developer_instructions.to_string());
@@ -464,14 +464,14 @@ async fn remote_models_long_model_slug_is_sent_with_supported_reasoning(
         .build_with_auto_env(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check model slug".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let request = response_mock.single_request();
     let body = request.body_json();
@@ -531,12 +531,12 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
     )
     .await;
 
-    let TestGenex { genex, .. } = test_genex()
+    let TestRuxex { ruxex, .. } = test_ruxex()
         .with_model(requested_model)
         .build(&server)
         .await?;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check namespaced model metadata".into(),
             text_elements: Vec::new(),
@@ -545,7 +545,7 @@ async fn namespaced_model_slug_uses_catalog_metadata_without_fallback_warning() 
 
     let mut fallback_warning_count = 0;
     loop {
-        let event = wait_for_event(&genex, |_| true).await;
+        let event = wait_for_event(&ruxex, |_| true).await;
         match event {
             EventMsg::Warning(warning)
                 if warning.message.contains("Defaulting to fallback metadata") =>
@@ -637,13 +637,13 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         .mount(&server)
         .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("legacy-model".to_string());
         });
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         config,
         thread_manager,
@@ -661,7 +661,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     assert_eq!(model_info.shell_type, ConfigShellToolType::UnifiedExec);
 
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             model: Some(REMOTE_MODEL_SLUG.to_string()),
             ..Default::default()
@@ -691,7 +691,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
     let cwd_path = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run call".into(),
@@ -708,7 +708,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         )
         .await?;
 
-    let begin_event = wait_for_event_match(&genex, |msg| match msg {
+    let begin_event = wait_for_event_match(&ruxex, |msg| match msg {
         EventMsg::ExecCommandBegin(event) if event.call_id == call_id => Some(event.clone()),
         _ => None,
     })
@@ -716,7 +716,7 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
 
     assert_eq!(begin_event.source, ExecCommandSource::UnifiedExecStartup);
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let request = response_mock
         .requests()
@@ -749,7 +749,7 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
         .start()
         .await;
 
-    let slug = "genex-test-truncation-policy";
+    let slug = "ruxex-test-truncation-policy";
     let remote_model = test_remote_model_with_policy(
         slug,
         ModelVisibility::List,
@@ -764,8 +764,8 @@ async fn remote_models_truncation_policy_without_override_preserves_remote() -> 
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("legacy-model".to_string());
         });
@@ -795,7 +795,7 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
         .start()
         .await;
 
-    let slug = "genex-test-truncation-override";
+    let slug = "ruxex-test-truncation-override";
     let remote_model = test_remote_model_with_policy(
         slug,
         ModelVisibility::List,
@@ -810,8 +810,8 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("legacy-model".to_string());
             config.tool_output_token_limit = Some(50);
@@ -832,10 +832,10 @@ async fn remote_models_truncation_policy_with_tool_output_override() -> Result<(
     Ok(())
 }
 
-#[test_case(GenexAuth::from_api_key("test-api-key"); "api key")]
-#[test_case(GenexAuth::from_api_key("test-api-key"); "api key")]
+#[test_case(RuxexAuth::from_api_key("test-api-key"); "api key")]
+#[test_case(RuxexAuth::from_api_key("test-api-key"); "api key")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> {
+async fn remote_models_apply_legacy_instructions(auth: RuxexAuth) -> Result<()> {
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
 
@@ -931,7 +931,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
     )
     .await;
 
-    let mut builder = test_genex().with_auth(auth).with_config(|config| {
+    let mut builder = test_ruxex().with_auth(auth).with_config(|config| {
         config
             .features
             .enable(Feature::ApiKeyModelDiscovery)
@@ -939,8 +939,8 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         config.update_plan_enabled = true;
         config.model = Some("example-model-2".to_string());
     });
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         config,
         thread_manager,
@@ -953,7 +953,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
     let cwd_path = cwd.abs();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello base".into(),
@@ -970,10 +970,10 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             model: Some(model.to_string()),
             ..Default::default()
@@ -983,7 +983,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd_path.as_path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello remote".into(),
@@ -1000,7 +1000,7 @@ async fn remote_models_apply_legacy_instructions(auth: GenexAuth) -> Result<()> 
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let base_model_info = models_manager
         .get_model_info("example-model-2", &config.to_models_manager_config())
@@ -1039,23 +1039,23 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     let remote = available
@@ -1105,23 +1105,23 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(
@@ -1157,23 +1157,23 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     let overridden = available
@@ -1206,23 +1206,23 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
     let server = MockServer::start().await;
     let _models_mock = mount_models_once(&server, ModelCatalog { models: Vec::new() }).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     let bundled_slug = bundled_model_slug();
@@ -1253,16 +1253,16 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1273,7 +1273,7 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
             &None,
             /*allow_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         ),
     )
     .await;
@@ -1325,16 +1325,16 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
-    let auth = GenexAuth::from_api_key("test-api-key");
+    let auth = RuxexAuth::from_api_key("test-api-key");
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = genex_core::test_support::models_manager_with_provider(
-        genex_home.path().to_path_buf(),
-        genex_core::test_support::credential_manager_from_auth(auth),
+    let manager = ruxex_core::test_support::models_manager_with_provider(
+        ruxex_home.path().to_path_buf(),
+        ruxex_core::test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1343,7 +1343,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
             &None,
             /*allow_model_fallback*/ false,
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(selected, bundled_default_model_slug());
@@ -1351,7 +1351,7 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     let available = manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     let hidden = available
@@ -1377,7 +1377,7 @@ async fn wait_for_model_available(manager: &SharedModelsManager, slug: &str) -> 
             let guard = manager
                 .list_models(
                     RefreshStrategy::OnlineIfUncached,
-                    genex_core::test_support::default_http_client_factory(),
+                    ruxex_core::test_support::default_http_client_factory(),
                 )
                 .await;
             guard.iter().find(|model| model.model == slug).cloned()
@@ -1402,7 +1402,7 @@ fn bundled_model_slug() -> String {
 }
 
 fn bundled_default_model_slug() -> String {
-    genex_core::test_support::all_model_presets()
+    ruxex_core::test_support::all_model_presets()
         .iter()
         .find(|preset| preset.is_default)
         .expect("bundled models should include a default")

@@ -1,10 +1,10 @@
 use super::*;
-use genex_model_provider::build_provider_text_controls;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
+use ruxex_model_provider::build_provider_text_controls;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
 use pretty_assertions::assert_eq;
 
 fn prompt_with_image_outputs(detail: Option<ImageDetail>) -> Prompt {
@@ -98,10 +98,10 @@ fn request_copies_project_image_details_for_receiving_model(
 }
 
 fn chat_request(
-    text: Option<genex_model_provider::ProviderTextControls>,
+    text: Option<ruxex_model_provider::ProviderTextControls>,
     service_tier: Option<String>,
-) -> genex_model_provider::ChatRequest {
-    genex_model_provider::ChatRequest {
+) -> ruxex_model_provider::ChatRequest {
+    ruxex_model_provider::ChatRequest {
         model: "legacy-model".to_string(),
         instructions: "i".to_string(),
         input: vec![],
@@ -121,11 +121,11 @@ fn chat_request(
         text,
         client_metadata: None,
         access_programs: None,
-        transport: genex_model_provider::ChatTransportOptions {
+        transport: ruxex_model_provider::ChatTransportOptions {
             session_id: None,
             thread_id: None,
             extra_headers: std::collections::BTreeMap::new(),
-            compression: genex_model_provider::ProviderRequestCompression::None,
+            compression: ruxex_model_provider::ProviderRequestCompression::None,
             turn_state: None,
             connection_key: None,
             credential_snapshot: None,
@@ -136,7 +136,7 @@ fn chat_request(
 #[test]
 fn builds_text_verbosity_when_set() {
     let text = build_provider_text_controls(
-        Some(genex_protocol::config_types::Verbosity::Low),
+        Some(ruxex_protocol::config_types::Verbosity::Low),
         &None,
         false,
     );
@@ -161,7 +161,7 @@ fn builds_text_schema_with_strict_format() {
 
     assert_eq!(
         format.get("name"),
-        Some(&serde_json::Value::String("genex_output_schema".into()))
+        Some(&serde_json::Value::String("ruxex_output_schema".into()))
     );
     assert_eq!(
         format.get("type"),

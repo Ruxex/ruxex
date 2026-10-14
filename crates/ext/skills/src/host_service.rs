@@ -6,28 +6,28 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::Weak;
 
-use genex_config::ConfigLayerStack;
-use genex_config::SkillConfigRules;
-use genex_config::bundled_skills_enabled_from_stack;
-use genex_config::skill_config_rules_from_stack;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::SkillConfigRules;
+use ruxex_config::bundled_skills_enabled_from_stack;
+use ruxex_config::skill_config_rules_from_stack;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
 use tokio::sync::OnceCell;
 use tokio::sync::Semaphore;
 use tracing::info;
 use tracing::instrument;
 
-use genex_skills::LoadedSkills;
-use genex_skills::SkillLoadFuture;
-use genex_skills::SkillRootLoadRequest;
-use genex_skills::SkillRootLoader;
-use genex_skills::SkillRootSnapshots;
-use genex_skills::install_system_skills;
+use ruxex_skills::LoadedSkills;
+use ruxex_skills::SkillLoadFuture;
+use ruxex_skills::SkillRootLoadRequest;
+use ruxex_skills::SkillRootLoader;
+use ruxex_skills::SkillRootSnapshots;
+use ruxex_skills::install_system_skills;
 
 use crate::HostSkillsSnapshot;
 use crate::SkillLoadOutcome;
@@ -81,7 +81,7 @@ impl HostSkillsLoadInput {
 ///
 /// Source-specific model exposure remains the responsibility of the skills extension.
 pub struct HostSkillsService {
-    genex_home: AbsolutePathBuf,
+    ruxex_home: AbsolutePathBuf,
     restriction_product: Option<Product>,
     extra_roots: RwLock<Vec<AbsolutePathBuf>>,
     cache_by_cwd: RwLock<HashMap<AbsolutePathBuf, HostSkillsSnapshot>>,
@@ -118,24 +118,24 @@ impl HostSkillsRequest<'_> {
 }
 
 impl HostSkillsService {
-    pub fn new(genex_home: AbsolutePathBuf, bundled_skills_enabled: bool) -> Self {
-        Self::new_with_restriction_product(genex_home, bundled_skills_enabled, Some(Product::Codex))
+    pub fn new(ruxex_home: AbsolutePathBuf, bundled_skills_enabled: bool) -> Self {
+        Self::new_with_restriction_product(ruxex_home, bundled_skills_enabled, Some(Product::Codex))
     }
 
     pub fn new_with_restriction_product(
-        genex_home: AbsolutePathBuf,
+        ruxex_home: AbsolutePathBuf,
         bundled_skills_enabled: bool,
         restriction_product: Option<Product>,
     ) -> Self {
         let service = Self {
-            genex_home,
+            ruxex_home,
             restriction_product,
             extra_roots: RwLock::new(Vec::new()),
             cache_by_cwd: RwLock::new(HashMap::new()),
             cache_by_config: RwLock::new(VecDeque::new()),
             root_scan_slots: Arc::new(Semaphore::new(MAX_CONCURRENT_ROOT_SCANS)),
         };
-        // The cache is shared by every process using this GENEX_HOME. Disabled services filter
+        // The cache is shared by every process using this RUXEX_HOME. Disabled services filter
         // system roots when loading rather than mutating shared state.
         if bundled_skills_enabled {
             service.ensure_system_skills_installed();
@@ -410,7 +410,7 @@ impl HostSkillsService {
     }
 
     fn ensure_system_skills_installed(&self) {
-        if let Err(err) = install_system_skills(&self.genex_home) {
+        if let Err(err) = install_system_skills(&self.ruxex_home) {
             tracing::error!("failed to install system skills: {err}");
         }
     }

@@ -1,8 +1,8 @@
 use super::*;
 use crate::context::world_state::WorldStateSnapshot;
 use crate::context_manager::is_user_turn_boundary;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::protocol::SessionContextWindow;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::protocol::SessionContextWindow;
 use uuid::Uuid;
 
 // Return value of `Session::reconstruct_history_from_rollout`, bundling the rebuilt history with
@@ -10,7 +10,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub(super) struct RolloutReconstruction {
     pub(super) history: Vec<ResponseItemEnvelope>,
-    pub(super) retained_context: genex_history::RetainedContext,
+    pub(super) retained_context: ruxex_history::RetainedContext,
     pub(super) previous_turn_settings: Option<PreviousTurnSettings>,
     pub(super) reference_context_item: Option<TurnContextItem>,
     pub(super) world_state_baseline: Option<WorldStateSnapshot>,

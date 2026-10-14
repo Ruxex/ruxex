@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
-use genex_code_mode_protocol::CodeModeSessionDelegate;
-use genex_code_mode_protocol::ExecuteRequest;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::WaitRequest;
-use genex_code_mode_protocol::host::ClientToHost;
-use genex_code_mode_protocol::host::EncodedFrame;
-use genex_code_mode_protocol::host::HostRequest;
-use genex_code_mode_protocol::host::WireSessionCellExecutionLimits;
-use genex_code_mode_protocol::host::WireWaitRequest;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::ExecuteRequest;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::WaitRequest;
+use ruxex_code_mode_protocol::host::ClientToHost;
+use ruxex_code_mode_protocol::host::EncodedFrame;
+use ruxex_code_mode_protocol::host::HostRequest;
+use ruxex_code_mode_protocol::host::WireSessionCellExecutionLimits;
+use ruxex_code_mode_protocol::host::WireWaitRequest;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 

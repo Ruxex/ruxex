@@ -13,11 +13,11 @@ use crate::marketplace::validate_marketplace_root;
 use crate::marketplace_add::MarketplaceSource;
 use crate::marketplace_policy::MarketplacePolicy;
 use crate::marketplace_policy::validate_marketplace_name_for_add;
-use genex_config::ConfigLayerStack;
-use genex_config::types::MarketplaceConfig;
-use genex_config::types::MarketplaceSourceType;
-use genex_plugin::validate_plugin_segment;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::types::MarketplaceConfig;
+use ruxex_config::types::MarketplaceSourceType;
+use ruxex_plugin::validate_plugin_segment;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
@@ -61,13 +61,13 @@ impl ConfiguredMarketplaceUpgradeOutcome {
 }
 
 pub fn upgrade_configured_git_marketplaces(
-    genex_home: &Path,
+    ruxex_home: &Path,
     config_layer_stack: &ConfigLayerStack,
     marketplace_name: Option<&str>,
     reload_config: &ConfigLayerReload,
 ) -> ConfiguredMarketplaceUpgradeOutcome {
     upgrade_configured_git_marketplaces_with_mode(
-        genex_home,
+        ruxex_home,
         config_layer_stack,
         marketplace_name,
         PluginGitMode::Manual,
@@ -77,7 +77,7 @@ pub fn upgrade_configured_git_marketplaces(
 
 /// Applies the initiating operation's Git trust policy to every selected marketplace.
 pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
-    genex_home: &Path,
+    ruxex_home: &Path,
     config_layer_stack: &ConfigLayerStack,
     marketplace_name: Option<&str>,
     mode: PluginGitMode,
@@ -98,7 +98,7 @@ pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
         return ConfiguredMarketplaceUpgradeOutcome::default();
     }
 
-    let install_root = marketplace_install_root(genex_home);
+    let install_root = marketplace_install_root(ruxex_home);
     let mut selected_marketplaces = marketplaces
         .iter()
         .map(|marketplace| marketplace.name.clone())
@@ -124,7 +124,7 @@ pub(crate) fn upgrade_configured_git_marketplaces_with_mode(
                 }
             };
         match upgrade_configured_git_marketplace(
-            genex_home,
+            ruxex_home,
             &install_root,
             &marketplace,
             reload_config,
@@ -213,7 +213,7 @@ fn parse_configured_git_marketplace(
 }
 
 fn upgrade_configured_git_marketplace(
-    genex_home: &Path,
+    ruxex_home: &Path,
     install_root: &Path,
     marketplace: &ConfiguredGitMarketplace,
     reload_config: &ConfigLayerReload,
@@ -229,7 +229,7 @@ fn upgrade_configured_git_marketplace(
         None => (marketplace.source.as_str(), marketplace.ref_name.as_deref()),
     };
     let remote_revision = git_remote_revision(
-        genex_home,
+        ruxex_home,
         source,
         ref_name,
         MARKETPLACE_UPGRADE_GIT_TIMEOUT,
@@ -262,7 +262,7 @@ fn upgrade_configured_git_marketplace(
         })?;
 
     let activated_revision = clone_git_source(
-        genex_home,
+        ruxex_home,
         source,
         ref_name,
         &marketplace.sparse_paths,

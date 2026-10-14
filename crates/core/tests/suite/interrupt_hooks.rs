@@ -4,15 +4,15 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::HookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::HookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::fs_wait;
 use core_test_support::hooks::trust_discovered_hooks;
 use core_test_support::responses::ev_completed;
@@ -23,8 +23,8 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -86,9 +86,9 @@ fn read_interrupt_hook_inputs(home: &Path) -> Result<Vec<Value>> {
         .collect()
 }
 
-async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result<TestGenex> {
+async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result<TestRuxex> {
     let system_message = system_message.map(str::to_string);
-    test_genex()
+    test_ruxex()
         .with_model("legacy-model")
         .with_pre_build_hook(move |home| {
             write_interrupt_hook(home, system_message.as_deref())
@@ -102,7 +102,7 @@ async fn build_test(server: &MockServer, system_message: Option<&str>) -> Result
         .await
 }
 
-async fn start_interruptible_turn(test: &TestGenex, server: &MockServer) -> Result<()> {
+async fn start_interruptible_turn(test: &TestRuxex, server: &MockServer) -> Result<()> {
     let tool_args = json!({
         "cmd": "sleep 60",
         "yield_time_ms": 60_000,
@@ -118,13 +118,13 @@ async fn start_interruptible_turn(test: &TestGenex, server: &MockServer) -> Resu
     )
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "interrupt me".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let _ = wait_for_event_match(&test.genex, |event| match event {
+    let _ = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::ExecCommandBegin(begin) => Some(begin.clone()),
         _ => None,
     })
@@ -145,16 +145,16 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
     let test = build_test(&server, Some("watch the tide")).await?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.genex.submit(Op::Interrupt).await?;
+    test.ruxex.submit(Op::Interrupt).await?;
 
-    let started = wait_for_event_match(&test.genex, |event| match event {
+    let started = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookStarted(started) if started.run.event_name == HookEventName::Interrupt => {
             Some(started.clone())
         }
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(&test.genex, |event| match event {
+    let completed = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::Interrupt =>
         {
@@ -163,7 +163,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
         _ => None,
     })
     .await;
-    let _aborted = wait_for_event_match(&test.genex, |event| match event {
+    let _aborted = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
             Some(aborted.clone())
         }
@@ -182,7 +182,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
         }]
     );
 
-    let hook_inputs = read_interrupt_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_interrupt_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     let payload = &hook_inputs[0];
     assert_eq!(
@@ -208,7 +208,7 @@ async fn interrupt_hook_runs_before_turn_aborted_and_records_payload() -> Result
     assert!(payload.get("last_assistant_message").is_none());
 
     let transcript_snapshot = fs::read_to_string(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("interrupt_transcript_snapshot.jsonl"),
     )?;
     assert!(
@@ -234,15 +234,15 @@ async fn timed_out_interrupt_hook_fails_before_turn_aborted() -> Result<()> {
     let server = start_mock_server().await;
     let test = build_test(&server, /*system_message*/ None).await?;
     fs::write(
-        test.genex_home_path().join("interrupt_hook.py"),
+        test.ruxex_home_path().join("interrupt_hook.py"),
         "import time\ntime.sleep(60)\n",
     )?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.genex.submit(Op::Interrupt).await?;
+    test.ruxex.submit(Op::Interrupt).await?;
     let completed = timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.genex, |event| match event {
+        wait_for_event_match(&test.ruxex, |event| match event {
             EventMsg::HookCompleted(completed)
                 if completed.run.event_name == HookEventName::Interrupt =>
             {
@@ -265,7 +265,7 @@ async fn timed_out_interrupt_hook_fails_before_turn_aborted() -> Result<()> {
 
     timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.genex, |event| match event {
+        wait_for_event_match(&test.ruxex, |event| match event {
             EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
                 Some(aborted.clone())
             }
@@ -287,7 +287,7 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
     );
 
     let server = start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             write_interrupt_hook(home, Some("async interrupt completed"))
                 .expect("write interrupt hook fixture");
@@ -316,10 +316,10 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
         .await?;
     start_interruptible_turn(&test, &server).await?;
 
-    test.genex.submit(Op::Interrupt).await?;
+    test.ruxex.submit(Op::Interrupt).await?;
     timeout(
         Duration::from_secs(5),
-        wait_for_event_match(&test.genex, |event| match event {
+        wait_for_event_match(&test.ruxex, |event| match event {
             EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
                 Some(aborted.clone())
             }
@@ -331,23 +331,23 @@ async fn async_interrupt_hook_runs_without_delaying_turn_aborted() -> Result<()>
 
     assert!(
         !test
-            .genex_home_path()
+            .ruxex_home_path()
             .join("interrupt_hook_log.jsonl")
             .exists(),
         "the gated async hook must not finish before the turn abort is emitted"
     );
 
     fs::write(
-        test.genex_home_path().join("async_interrupt_release"),
+        test.ruxex_home_path().join("async_interrupt_release"),
         "ready",
     )?;
     fs_wait::wait_for_path_exists(
-        test.genex_home_path().join("async_interrupt_finished"),
+        test.ruxex_home_path().join("async_interrupt_finished"),
         Duration::from_secs(5),
     )
     .await
     .context("async interrupt hook should finish after the turn abort")?;
-    assert_eq!(read_interrupt_hook_inputs(test.genex_home_path())?.len(), 1);
+    assert_eq!(read_interrupt_hook_inputs(test.ruxex_home_path())?.len(), 1);
 
     Ok(())
 }
@@ -361,7 +361,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     );
 
     let server = start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("legacy-model")
         .with_pre_build_hook(|home| {
             write_interrupt_hook(home, Some("compaction was interrupted"))
@@ -384,8 +384,8 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
         .build_with_auto_env(&server)
         .await?;
 
-    test.genex.submit(Op::Compact).await?;
-    let pre_compact = wait_for_event_match(&test.genex, |event| match event {
+    test.ruxex.submit(Op::Compact).await?;
+    let pre_compact = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::PreCompact =>
         {
@@ -396,7 +396,7 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     .await;
     assert_eq!(pre_compact.run.status, HookRunStatus::Stopped);
 
-    let interrupt = wait_for_event_match(&test.genex, |event| match event {
+    let interrupt = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::HookCompleted(completed)
             if completed.run.event_name == HookEventName::Interrupt =>
         {
@@ -407,14 +407,14 @@ async fn self_aborted_turn_runs_interrupt_hook_before_turn_aborted() -> Result<(
     .await;
     assert_eq!(interrupt.run.status, HookRunStatus::Completed);
 
-    let _aborted = wait_for_event_match(&test.genex, |event| match event {
+    let _aborted = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::TurnAborted(aborted) if aborted.reason == TurnAbortReason::Interrupted => {
             Some(aborted.clone())
         }
         _ => None,
     })
     .await;
-    assert_eq!(read_interrupt_hook_inputs(test.genex_home_path())?.len(), 1);
+    assert_eq!(read_interrupt_hook_inputs(test.ruxex_home_path())?.len(), 1);
 
     Ok(())
 }
@@ -426,12 +426,12 @@ async fn startup_interrupt_without_active_turn_does_not_run_interrupt_hook() -> 
     let server = start_mock_server().await;
     let test = build_test(&server, Some("should not run")).await?;
 
-    test.genex.submit(Op::Interrupt).await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.submit(Op::Interrupt).await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     assert!(
         !test
-            .genex_home_path()
+            .ruxex_home_path()
             .join("interrupt_hook_log.jsonl")
             .exists(),
         "startup interrupt should not invoke Interrupt hooks without an active turn",

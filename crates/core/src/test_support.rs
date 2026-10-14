@@ -7,33 +7,33 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_extension_api::LoadInstructionsFuture;
-use genex_extension_api::LoadedUserInstructions;
-use genex_extension_api::UserInstructionsProvider;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider::ProviderModelCatalogSource;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::collaboration_mode_presets;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::manager::build_models_manager;
-use genex_models_manager::test_support::construct_model_info_offline_for_tests;
-use genex_models_manager::test_support::test_models_response;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::protocol::SessionSource;
-use genex_providers::create_model_provider;
+use ruxex_extension_api::LoadInstructionsFuture;
+use ruxex_extension_api::LoadedUserInstructions;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider::ProviderModelCatalogSource;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::collaboration_mode_presets;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::manager::build_models_manager;
+use ruxex_models_manager::test_support::construct_model_info_offline_for_tests;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_providers::create_model_provider;
 use once_cell::sync::Lazy;
 
 use crate::ThreadManager;
 use crate::config::Config;
-use crate::responses_metadata::GenexResponsesMetadata;
-use crate::responses_metadata::GenexResponsesRequestKind;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesRequestKind;
 use crate::responses_metadata::subagent_metadata_kind;
 use crate::thread_manager;
 use crate::unified_exec;
@@ -65,15 +65,15 @@ pub fn set_deterministic_process_ids(enabled: bool) {
     unified_exec::set_deterministic_process_ids_for_tests(enabled);
 }
 
-pub fn credential_manager_from_auth(auth: GenexAuth) -> Arc<CredentialManager> {
+pub fn credential_manager_from_auth(auth: RuxexAuth) -> Arc<CredentialManager> {
     CredentialManager::from_auth_for_testing(auth)
 }
 
 pub fn credential_manager_from_auth_with_home(
-    auth: GenexAuth,
-    genex_home: PathBuf,
+    auth: RuxexAuth,
+    ruxex_home: PathBuf,
 ) -> Arc<CredentialManager> {
-    CredentialManager::from_auth_for_testing_with_home(auth, genex_home)
+    CredentialManager::from_auth_for_testing_with_home(auth, ruxex_home)
 }
 
 pub fn with_code_mode_host_program(
@@ -85,7 +85,7 @@ pub fn with_code_mode_host_program(
 }
 
 pub fn thread_manager_with_models_provider(
-    auth: GenexAuth,
+    auth: RuxexAuth,
     provider: ModelProviderInfo,
 ) -> ThreadManager {
     ThreadManager::with_models_provider_for_tests(auth, provider)
@@ -96,7 +96,7 @@ pub async fn start_thread_with_user_shell_override(
     config: Config,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
-) -> genex_protocol::error::Result<crate::NewThread> {
+) -> ruxex_protocol::error::Result<crate::NewThread> {
     thread_manager
         .start_thread_with_user_shell_override_for_tests(
             config,
@@ -112,7 +112,7 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
     rollout_path: PathBuf,
     user_shell_override: crate::shell::Shell,
     _supports_provider_form_elicitation: bool,
-) -> genex_protocol::error::Result<crate::NewThread> {
+) -> ruxex_protocol::error::Result<crate::NewThread> {
     thread_manager
         .resume_thread_from_rollout_with_user_shell_override_for_tests(
             config,
@@ -124,13 +124,13 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
 }
 
 pub fn models_manager_with_provider(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     credential_manager: Arc<CredentialManager>,
     provider: ModelProviderInfo,
 ) -> SharedModelsManager {
     let provider = create_model_provider(provider, Some(credential_manager.clone()));
     build_models_manager(
-        genex_home,
+        ruxex_home,
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),
         /*config_model_catalog*/ None,
     )
@@ -145,7 +145,7 @@ pub fn construct_model_info_offline(model: &str, config: &Config) -> ModelInfo {
 }
 
 #[derive(Clone, Copy)]
-pub enum TestGenexResponsesRequestKind {
+pub enum TestRuxexResponsesRequestKind {
     Turn,
     Prewarm,
     WebsocketConnection,
@@ -160,19 +160,19 @@ pub fn responses_metadata(
     window_id: String,
     session_source: &SessionSource,
     parent_thread_id: Option<ThreadId>,
-    request_kind: TestGenexResponsesRequestKind,
-) -> GenexResponsesMetadata {
+    request_kind: TestRuxexResponsesRequestKind,
+) -> RuxexResponsesMetadata {
     let request_kind = match request_kind {
-        TestGenexResponsesRequestKind::Turn => Some(GenexResponsesRequestKind::Turn),
-        TestGenexResponsesRequestKind::Prewarm => Some(GenexResponsesRequestKind::Prewarm),
-        TestGenexResponsesRequestKind::WebsocketConnection => None,
+        TestRuxexResponsesRequestKind::Turn => Some(RuxexResponsesRequestKind::Turn),
+        TestRuxexResponsesRequestKind::Prewarm => Some(RuxexResponsesRequestKind::Prewarm),
+        TestRuxexResponsesRequestKind::WebsocketConnection => None,
     };
-    GenexResponsesMetadata {
+    RuxexResponsesMetadata {
         turn_id: request_kind.and(turn_id.map(ToString::to_string)),
         request_kind,
         parent_thread_id,
         subagent_kind: request_kind.and_then(|_| subagent_metadata_kind(session_source)),
-        ..GenexResponsesMetadata::new(
+        ..RuxexResponsesMetadata::new(
             installation_id.to_string(),
             session_id.to_string(),
             thread_id.to_string(),
@@ -181,7 +181,7 @@ pub fn responses_metadata(
     }
 }
 
-pub fn with_parent_turn(mut metadata: GenexResponsesMetadata, id: &str) -> GenexResponsesMetadata {
+pub fn with_parent_turn(mut metadata: RuxexResponsesMetadata, id: &str) -> RuxexResponsesMetadata {
     metadata.parent_turn_id = Some(id.to_string());
     metadata
 }

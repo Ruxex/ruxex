@@ -5,24 +5,24 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_core::ForkSnapshot;
-use genex_core::NewThread;
-use genex_core::TurnInputRequest;
-use genex_core::parse_turn_item;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_history::RolloutItem;
-use genex_protocol::ThreadId;
-use genex_protocol::items::TurnItem;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSettingsAppliedEvent;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::ForkSnapshot;
+use ruxex_core::NewThread;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::parse_turn_item;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsAppliedEvent;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_protocol::user_input::UserInput;
 use wiremock::Mock;
 use wiremock::MockServer;
 use wiremock::ResponseTemplate;
@@ -48,26 +48,26 @@ async fn fork_thread_twice_drops_to_first_message() {
         .mount(&server)
         .await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await.expect("create conversation");
-    let genex = test.genex.clone();
+    let ruxex = test.ruxex.clone();
     let thread_manager = test.thread_manager.clone();
     let config_for_fork = test.config.clone();
 
     // Send three user messages; wait for three completed turns.
     for text in ["first", "second", "third"] {
-        genex
+        ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
                 text_elements: Vec::new(),
             }]))
             .await
             .unwrap();
-        let _ = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        let _ = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     }
 
     // Request history from the base conversation to obtain rollout path.
-    let base_path = genex.rollout_path().expect("rollout path");
+    let base_path = ruxex.rollout_path().expect("rollout path");
 
     // GetHistory flushes before returning the path; no wait needed.
 
@@ -98,21 +98,21 @@ async fn fork_thread_twice_drops_to_first_message() {
     // Fork once with n=1 → drops the last user input and everything after.
     let NewThread {
         thread_id: fork1_thread_id,
-        thread: genex_fork1,
+        thread: ruxex_fork1,
         ..
     } = thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(1),
-            genex_core::StartThreadOptions::new(config_for_fork.clone()),
+            ruxex_core::StartThreadOptions::new(config_for_fork.clone()),
             base_path.clone(),
         )
         .await
         .expect("fork 1");
 
-    let fork1_path = genex_fork1.rollout_path().expect("rollout path");
+    let fork1_path = ruxex_fork1.rollout_path().expect("rollout path");
     expected_after_first.push(thread_settings_applied_item(
         fork1_thread_id,
-        genex_fork1.thread_settings_snapshot().await,
+        ruxex_fork1.thread_settings_snapshot().await,
     ));
 
     // GetHistory on fork1 flushed; the file is ready.
@@ -125,18 +125,18 @@ async fn fork_thread_twice_drops_to_first_message() {
     // Fork again with n=0 → drops the (new) last user message, leaving only the first.
     let NewThread {
         thread_id: fork2_thread_id,
-        thread: genex_fork2,
+        thread: ruxex_fork2,
         ..
     } = thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(0),
-            genex_core::StartThreadOptions::new(config_for_fork.clone()),
+            ruxex_core::StartThreadOptions::new(config_for_fork.clone()),
             fork1_path.clone(),
         )
         .await
         .expect("fork 2");
 
-    let fork2_path = genex_fork2.rollout_path().expect("rollout path");
+    let fork2_path = ruxex_fork2.rollout_path().expect("rollout path");
     // GetHistory on fork2 flushed; the file is ready.
     let fork1_items = read_rollout_items(&fork1_path);
     let fork1_user_inputs = find_user_input_positions(&fork1_items);
@@ -147,7 +147,7 @@ async fn fork_thread_twice_drops_to_first_message() {
     let mut expected_after_second: Vec<RolloutItem> = fork1_items[..cut_last_on_fork1].to_vec();
     expected_after_second.push(thread_settings_applied_item(
         fork2_thread_id,
-        genex_fork2.thread_settings_snapshot().await,
+        ruxex_fork2.thread_settings_snapshot().await,
     ));
     let fork2_items = read_rollout_items(&fork2_path);
     pretty_assertions::assert_eq!(
@@ -174,11 +174,11 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
     let selected = vec!["slack@provider".to_string()];
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(selected.clone()),
             ..Default::default()
@@ -189,12 +189,12 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         conversation_id: test.session_configured.thread_id,
         history: Arc::new(vec![thread_settings_applied_item(
             test.session_configured.thread_id,
-            test.genex.thread_settings_snapshot().await,
+            test.ruxex.thread_settings_snapshot().await,
         )]),
         rollout_path: None,
     });
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             disabled_plugin_ids: Some(Vec::new()),
             ..Default::default()
@@ -206,7 +206,7 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         .thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            genex_core::StartThreadOptions::new(test.config.clone()),
+            ruxex_core::StartThreadOptions::new(test.config.clone()),
             history.clone(),
         )
         .await?;
@@ -223,9 +223,9 @@ async fn fork_thread_restores_history_selection_and_preserves_explicit_clear() -
         .thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            genex_core::StartThreadOptions {
+            ruxex_core::StartThreadOptions {
                 disabled_plugin_ids: Some(Vec::new()),
-                ..genex_core::StartThreadOptions::new(test.config.clone())
+                ..ruxex_core::StartThreadOptions::new(test.config.clone())
             },
             history,
         )
@@ -271,23 +271,23 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
         .mount(&server)
         .await;
 
-    let mut builder = test_genex().with_history_mode(history_mode);
+    let mut builder = test_ruxex().with_history_mode(history_mode);
     let test = builder.build(&server).await.expect("create conversation");
-    let genex = test.genex.clone();
+    let ruxex = test.ruxex.clone();
     let thread_manager = test.thread_manager.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "fork me from stored history".to_string(),
             text_elements: Vec::new(),
         }]))
         .await
         .expect("submit initial user turn");
-    let _ = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _ = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let source_path = genex.rollout_path().expect("source rollout path");
+    let source_path = ruxex.rollout_path().expect("source rollout path");
     let source_items = read_rollout_items(&source_path);
-    let source_meta = genex_rollout::read_session_meta_line(source_path.as_path())
+    let source_meta = ruxex_rollout::read_session_meta_line(source_path.as_path())
         .await
         .expect("read source session metadata");
     let mut supplied_history = vec![RolloutItem::SessionMeta(source_meta)];
@@ -298,7 +298,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
     } = thread_manager
         .fork_thread_from_history(
             ForkSnapshot::Interrupted,
-            genex_core::StartThreadOptions::new(test.config.clone()),
+            ruxex_core::StartThreadOptions::new(test.config.clone()),
             InitialHistory::Resumed(ResumedHistory {
                 conversation_id: test.session_configured.thread_id,
                 history: Arc::new(supplied_history),
@@ -328,7 +328,7 @@ async fn assert_copied_fork_persists_inherited_history(history_mode: ThreadHisto
             .shutdown_and_wait()
             .await
             .expect("shutdown copied paginated fork");
-        let resumed_history = genex_rollout::RolloutRecorder::get_rollout_history(&forked_path)
+        let resumed_history = ruxex_rollout::RolloutRecorder::get_rollout_history(&forked_path)
             .await
             .expect("load copied paginated fork history");
         let resumed = thread_manager
@@ -374,7 +374,7 @@ fn read_rollout_items(path: &std::path::Path) -> Vec<RolloutItem> {
         let parse_json_message = format!("failed to parse rollout JSON line `{line}`");
         let v: serde_json::Value = serde_json::from_str(line).expect(&parse_json_message);
         let parse_line_message = format!("failed to parse rollout line `{line}`");
-        let rl = genex_rollout::decode_rollout_line(v).expect(&parse_line_message);
+        let rl = ruxex_rollout::decode_rollout_line(v).expect(&parse_line_message);
         match rl.item {
             RolloutItem::SessionMeta(_) => {}
             other => items.push(other),

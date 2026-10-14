@@ -2,11 +2,11 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
-use genex_extension_api::ContentItemKind;
-use genex_extension_api::ContextContributor;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::PromptFragment;
+use ruxex_extension_api::ContentItemKind;
+use ruxex_extension_api::ContextContributor;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::PromptFragment;
 
 /// Installs the tutorial contributors used by the example host.
 pub fn install(registry: &mut ExtensionRegistryBuilder<()>) {

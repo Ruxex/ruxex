@@ -116,7 +116,7 @@ pub(crate) fn receive_listener(channel: &UnixStream) -> io::Result<TcpListener> 
 pub(crate) fn harden_bridge_process(expected_parent_pid: libc::pid_t) -> io::Result<()> {
     detach_bridge_stdio()?;
     set_parent_death_signal(expected_parent_pid)?;
-    genex_process_hardening::disable_process_dumping()
+    ruxex_process_hardening::disable_process_dumping()
 }
 
 fn set_parent_death_signal(expected_parent_pid: libc::pid_t) -> io::Result<()> {

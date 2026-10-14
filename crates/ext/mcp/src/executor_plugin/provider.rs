@@ -1,14 +1,14 @@
-use genex_config::McpServerConfig;
-use genex_core_plugins::ResolvedExecutorPlugin;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::ReadFileOptions;
-use genex_mcp::parse_executor_plugin_mcp_config;
-use genex_plugin::PluginResourceLocator;
-use genex_plugin::ResolvedPlugin;
-use genex_plugin::ResolvedPluginLocation;
-use genex_plugin::manifest::PluginManifestMcpServers;
-use genex_utils_path_uri::PathUri;
-use genex_utils_path_uri::PathUriParseError;
+use ruxex_config::McpServerConfig;
+use ruxex_core_plugins::ResolvedExecutorPlugin;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_mcp::parse_executor_plugin_mcp_config;
+use ruxex_plugin::PluginResourceLocator;
+use ruxex_plugin::ResolvedPlugin;
+use ruxex_plugin::ResolvedPluginLocation;
+use ruxex_plugin::manifest::PluginManifestMcpServers;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUriParseError;
 use std::io;
 use thiserror::Error;
 

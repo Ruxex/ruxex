@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use genex_exec_server::ExecParams;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::ShellInfo;
-use genex_exec_server::ShellSnapshotRequest;
-use genex_features::Feature;
-use genex_protocol::protocol::AskForApproval;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxablePreference;
-use genex_tools::ToolName;
-use genex_tools::UnifiedExecShellMode;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecParams;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::ShellInfo;
+use ruxex_exec_server::ShellSnapshotRequest;
+use ruxex_features::Feature;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxablePreference;
+use ruxex_tools::ToolName;
+use ruxex_tools::UnifiedExecShellMode;
+use ruxex_utils_path_uri::PathUri;
 use tokio_util::task::AbortOnDropHandle;
 use uuid::Uuid;
 
@@ -20,7 +20,7 @@ use super::UnifiedExecContext;
 use super::process_manager::apply_unified_exec_env;
 use super::process_manager::exec_env_policy_from_shell_policy;
 use crate::config::NetworkProxySpec;
-use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::RUXEX_THREAD_ID_ENV_VAR;
 use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
@@ -100,7 +100,7 @@ impl Session {
                     });
                 let mut env = apply_unified_exec_env(HashMap::new());
                 env.insert(
-                    GENEX_THREAD_ID_ENV_VAR.to_string(),
+                    RUXEX_THREAD_ID_ENV_VAR.to_string(),
                     session.thread_id().to_string(),
                 );
                 inject_session_env(&mut env, session.session_id());

@@ -4,14 +4,14 @@ use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
-use genex_async_utils::THREAD_STACK_SIZE_BYTES;
+use ruxex_apply_patch::RUXEX_CORE_APPLY_PATCH_ARG1;
+use ruxex_async_utils::THREAD_STACK_SIZE_BYTES;
 #[cfg(unix)]
-use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::GENEX_FS_HELPER_ARG1;
-use genex_install_context::InstallContext;
-use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
-use genex_utils_home_dir::find_genex_home;
+use ruxex_exec_server::RUXEX_ARG0_EXEC_HELPER_ARG1;
+use ruxex_exec_server::RUXEX_FS_HELPER_ARG1;
+use ruxex_install_context::InstallContext;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
+use ruxex_utils_home_dir::find_ruxex_home;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 use tempfile::TempDir;
@@ -22,13 +22,13 @@ const LOCK_FILENAME: &str = ".lock";
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Arg0DispatchPaths {
-    /// Stable path to the current Genex executable for child re-execs.
+    /// Stable path to the current Ruxex executable for child re-execs.
     ///
     /// Prefer this over [`std::env::current_exe()`] in code that may run under
     /// a test harness, where `current_exe()` can point at the harness binary
-    /// instead of the real Genex CLI.
-    pub genex_self_exe: Option<PathBuf>,
-    pub genex_linux_sandbox_exe: Option<PathBuf>,
+    /// instead of the real Ruxex CLI.
+    pub ruxex_self_exe: Option<PathBuf>,
+    pub ruxex_linux_sandbox_exe: Option<PathBuf>,
 }
 
 /// Keeps the per-session PATH entry alive and locked for the process lifetime.
@@ -61,28 +61,28 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
         .and_then(|s| s.to_str())
         .unwrap_or("");
 
-    if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
+    if exe_name == RUXEX_LINUX_SANDBOX_ARG0 {
         // Safety: [`run_main`] never returns.
-        genex_linux_sandbox::run_main();
+        ruxex_linux_sandbox::run_main();
     } else if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
-        genex_apply_patch::main();
+        ruxex_apply_patch::main();
     }
 
     let argv1 = args.next().unwrap_or_default();
     #[cfg(unix)]
-    if argv1 == GENEX_ARG0_EXEC_HELPER_ARG1 {
-        genex_exec_server::run_arg0_exec_helper_main();
+    if argv1 == RUXEX_ARG0_EXEC_HELPER_ARG1 {
+        ruxex_exec_server::run_arg0_exec_helper_main();
     }
-    if argv1 == GENEX_FS_HELPER_ARG1 {
-        genex_exec_server::run_fs_helper_main();
+    if argv1 == RUXEX_FS_HELPER_ARG1 {
+        ruxex_exec_server::run_fs_helper_main();
     }
-    if argv1 == GENEX_CORE_APPLY_PATCH_ARG1 {
+    if argv1 == RUXEX_CORE_APPLY_PATCH_ARG1 {
         let patch_arg = args.next().and_then(|s| s.to_str().map(str::to_owned));
         let exit_code = match patch_arg {
             Some(patch_arg) => {
                 let mut stdout = std::io::stdout();
                 let mut stderr = std::io::stderr();
-                let cwd = match genex_utils_absolute_path::AbsolutePathBuf::current_dir() {
+                let cwd = match ruxex_utils_absolute_path::AbsolutePathBuf::current_dir() {
                     Ok(cwd) => cwd,
                     Err(_) => std::process::exit(1),
                 };
@@ -94,12 +94,12 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
                     Err(_) => std::process::exit(1),
                 };
                 let cwd = cwd.into();
-                match runtime.block_on(genex_apply_patch::apply_patch(
+                match runtime.block_on(ruxex_apply_patch::apply_patch(
                     &patch_arg,
                     &cwd,
                     &mut stdout,
                     &mut stderr,
-                    genex_exec_server::LOCAL_FS.as_ref(),
+                    ruxex_exec_server::LOCAL_FS.as_ref(),
                     /*sandbox*/ None,
                 )) {
                     Ok(_) => 0,
@@ -107,7 +107,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
                 }
             }
             None => {
-                eprintln!("Error: {GENEX_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
+                eprintln!("Error: {RUXEX_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
                 1
             }
         };
@@ -121,7 +121,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
     let (path_entry_guard, updated_path_env_var) = prepare_path_env_var_with_aliases(
         InstallContext::current(),
         std::env::var_os("PATH"),
-        prepare_path_entry_for_genex_aliases,
+        prepare_path_entry_for_ruxex_aliases,
     );
     if let Some(updated_path_env_var) = updated_path_env_var {
         // It is safe to call set_var() because our process is single-threaded at
@@ -144,7 +144,7 @@ fn prepare_path_env_var_with_aliases(
     match prepare_aliases(path_for_aliases) {
         Ok((path_entry, updated_path_env_var)) => (Some(path_entry), Some(updated_path_env_var)),
         Err(err) => {
-            // It is possible that Genex will proceed successfully even if
+            // It is possible that Ruxex will proceed successfully even if
             // creating helper aliases fails, so warn the user and move on.
             eprintln!("WARNING: proceeding, even though we could not create PATH aliases: {err}");
             (None, package_path)
@@ -152,27 +152,27 @@ fn prepare_path_env_var_with_aliases(
     }
 }
 
-/// While we want to deploy the Genex CLI as a single executable for simplicity,
+/// While we want to deploy the Ruxex CLI as a single executable for simplicity,
 /// we also want to expose some of its functionality as distinct CLIs, so we use
 /// the "arg0 trick" to determine which CLI to dispatch. This effectively allows
 /// us to simulate deploying multiple executables as a single binary on Mac and
 /// Linux.
 ///
 /// When the current executable is invoked through the hard-link or alias named
-/// `genex-linux-sandbox` we *directly* execute
-/// [`genex_linux_sandbox::run_main`] (which never returns). Otherwise we:
+/// `ruxex-linux-sandbox` we *directly* execute
+/// [`ruxex_linux_sandbox::run_main`] (which never returns). Otherwise we:
 ///
-/// 1.  Load `.env` values from `~/.genex/.env` before creating any threads.
+/// 1.  Load `.env` values from `~/.ruxex/.env` before creating any threads.
 /// 2.  Spawn a main runtime thread with a controlled stack size.
 /// 3.  Construct a Tokio multi-thread runtime.
 /// 4.  Capture the current executable path and derive the
-///     `genex-linux-sandbox` helper path (falling back to the current
+///     `ruxex-linux-sandbox` helper path (falling back to the current
 ///     executable if needed) so children can re-invoke the sandbox when running
 ///     on Linux.
 /// 5.  Execute the provided async `main_fn` inside that runtime, forwarding any
 ///     error. Note that `main_fn` receives [`Arg0DispatchPaths`], which
 ///     contains the helper executable paths needed to construct
-///     [`genex_core::config::Config`].
+///     [`ruxex_core::config::Config`].
 ///
 /// This function should be used to wrap any `main()` function in binary crates
 /// in this workspace that depends on these helper CLIs.
@@ -191,7 +191,7 @@ where
     // stack budget as Tokio workers; `Runtime::block_on` otherwise runs the
     // top-level future on the caller's OS stack.
     let handle = std::thread::Builder::new()
-        .name("genex-main".to_string())
+        .name("ruxex-main".to_string())
         .stack_size(THREAD_STACK_SIZE_BYTES)
         .spawn(move || {
             let runtime = build_runtime()?;
@@ -217,8 +217,8 @@ where
     Fut: Future<Output = anyhow::Result<()>>,
 {
     let paths = Arg0DispatchPaths {
-        genex_self_exe: current_exe.clone(),
-        genex_linux_sandbox_exe: if cfg!(target_os = "linux") {
+        ruxex_self_exe: current_exe.clone(),
+        ruxex_linux_sandbox_exe: if cfg!(target_os = "linux") {
             linux_sandbox_exe_path(path_entry_guard.as_ref(), current_exe)
         } else {
             None
@@ -236,11 +236,11 @@ fn linux_sandbox_exe_path(
     path_entry_guard: Option<&Arg0PathEntryGuard>,
     current_exe: Option<PathBuf>,
 ) -> Option<PathBuf> {
-    // Prefer the `genex-linux-sandbox` alias when available so callers can
+    // Prefer the `ruxex-linux-sandbox` alias when available so callers can
     // re-exec through a path whose basename still triggers arg0 dispatch on
     // bubblewrap builds that do not support `--argv0`.
     path_entry_guard
-        .and_then(|path_entry| path_entry.paths().genex_linux_sandbox_exe.clone())
+        .and_then(|path_entry| path_entry.paths().ruxex_linux_sandbox_exe.clone())
         .or(current_exe)
 }
 
@@ -251,15 +251,15 @@ fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
     Ok(builder.build()?)
 }
 
-const PROTECTED_ENV_VAR_PREFIX: &str = "GENEX_";
+const PROTECTED_ENV_VAR_PREFIX: &str = "RUXEX_";
 
-/// Load env vars from ~/.genex/.env.
+/// Load env vars from ~/.ruxex/.env.
 ///
 /// Security: Do not allow `.env` files to create or modify protected runtime
-/// variables with names starting with `GENEX_`.
+/// variables with names starting with `RUXEX_`.
 fn load_dotenv() {
-    if let Ok(genex_home) = find_genex_home()
-        && let Ok(iter) = dotenvy::from_path_iter(genex_home.join(".env"))
+    if let Ok(ruxex_home) = find_ruxex_home()
+        && let Ok(iter) = dotenvy::from_path_iter(ruxex_home.join(".env"))
     {
         set_filtered(iter);
     }
@@ -288,32 +288,32 @@ where
 ///
 /// Returns the temporary directory guard and the PATH value that prepends the
 /// temporary directory so `apply_patch` can be on the PATH without requiring the
-/// user to install a separate executable, simplifying the deployment of Genex
+/// user to install a separate executable, simplifying the deployment of Ruxex
 /// CLI.
 /// Note: In debug builds the temp-dir guard is disabled to ease local testing.
 ///
 /// IMPORTANT: Callers must update PATH before multiple threads are spawned.
-fn prepare_path_entry_for_genex_aliases(
+fn prepare_path_entry_for_ruxex_aliases(
     existing_path: Option<OsString>,
 ) -> std::io::Result<(Arg0PathEntryGuard, OsString)> {
-    let genex_home = find_genex_home()?;
+    let ruxex_home = find_ruxex_home()?;
     #[cfg(not(debug_assertions))]
     {
         // Guard against placing helpers in system temp directories outside debug builds.
         let temp_root = std::env::temp_dir();
-        if genex_home.starts_with(&temp_root) {
+        if ruxex_home.starts_with(&temp_root) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!(
-                    "Refusing to create helper binaries under temporary dir {temp_root:?} (genex_home: {genex_home:?})"
+                    "Refusing to create helper binaries under temporary dir {temp_root:?} (ruxex_home: {ruxex_home:?})"
                 ),
             ));
         }
     }
 
-    std::fs::create_dir_all(&genex_home)?;
-    // Use a GENEX_HOME-scoped temp root to avoid cluttering the top-level directory.
-    let temp_root = genex_home.join("tmp").join("arg0");
+    std::fs::create_dir_all(&ruxex_home)?;
+    // Use a RUXEX_HOME-scoped temp root to avoid cluttering the top-level directory.
+    let temp_root = ruxex_home.join("tmp").join("arg0");
     std::fs::create_dir_all(&temp_root)?;
     #[cfg(unix)]
     {
@@ -329,7 +329,7 @@ fn prepare_path_entry_for_genex_aliases(
     }
 
     let temp_dir = tempfile::Builder::new()
-        .prefix("genex-arg0")
+        .prefix("ruxex-arg0")
         .tempdir_in(&temp_root)?;
     let path = temp_dir.path();
 
@@ -346,7 +346,7 @@ fn prepare_path_entry_for_genex_aliases(
         APPLY_PATCH_ARG0,
         MISSPELLED_APPLY_PATCH_ARG0,
         #[cfg(target_os = "linux")]
-        GENEX_LINUX_SANDBOX_ARG0,
+        RUXEX_LINUX_SANDBOX_ARG0,
     ] {
         let exe = std::env::current_exe()?;
 
@@ -360,11 +360,11 @@ fn prepare_path_entry_for_genex_aliases(
     let updated_path_env_var = path_env_with_entry(path, existing_path);
 
     let paths = Arg0DispatchPaths {
-        genex_self_exe: std::env::current_exe().ok(),
-        genex_linux_sandbox_exe: {
+        ruxex_self_exe: std::env::current_exe().ok(),
+        ruxex_linux_sandbox_exe: {
             #[cfg(target_os = "linux")]
             {
-                Some(path.join(GENEX_LINUX_SANDBOX_ARG0))
+                Some(path.join(RUXEX_LINUX_SANDBOX_ARG0))
             }
             #[cfg(not(target_os = "linux"))]
             {
@@ -462,10 +462,10 @@ mod tests {
     use super::run_main_with_arg0_guard;
     #[cfg(unix)]
     use anyhow::ensure;
-    use genex_install_context::GenexPackageLayout;
-    use genex_install_context::InstallContext;
-    use genex_install_context::InstallMethod;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_install_context::RuxexPackageLayout;
+    use ruxex_install_context::InstallContext;
+    use ruxex_install_context::InstallMethod;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::fs::File;
@@ -496,7 +496,7 @@ mod tests {
         let arg0_dir = temp_dir.path().join("arg0");
         let package_dir = temp_dir.path().join("package");
         let bin_dir = package_dir.join("bin");
-        let path_dir = package_dir.join("genex-path");
+        let path_dir = package_dir.join("ruxex-path");
         let existing_dir = temp_dir.path().join("existing-bin");
         fs::create_dir_all(&arg0_dir)?;
         fs::create_dir_all(&bin_dir)?;
@@ -505,7 +505,7 @@ mod tests {
         let path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
         let install_context = InstallContext {
             method: InstallMethod::Other,
-            package_layout: Some(GenexPackageLayout {
+            package_layout: Some(RuxexPackageLayout {
                 package_dir: AbsolutePathBuf::from_absolute_path(package_dir.canonicalize()?)?,
                 bin_dir: AbsolutePathBuf::from_absolute_path(bin_dir.canonicalize()?)?,
                 resources_dir: None,
@@ -523,21 +523,21 @@ mod tests {
     }
 
     #[test]
-    fn linux_sandbox_exe_path_prefers_genex_linux_sandbox_alias() -> std::io::Result<()> {
+    fn linux_sandbox_exe_path_prefers_ruxex_linux_sandbox_alias() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
         let lock_file = create_lock(temp_dir.path())?;
-        let alias_path = temp_dir.path().join("genex-linux-sandbox");
+        let alias_path = temp_dir.path().join("ruxex-linux-sandbox");
         let path_entry = Arg0PathEntryGuard::new(
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
-                genex_linux_sandbox_exe: Some(alias_path.clone()),
+                ruxex_self_exe: Some(PathBuf::from("/usr/bin/ruxex")),
+                ruxex_linux_sandbox_exe: Some(alias_path.clone()),
             },
         );
 
         assert_eq!(
-            linux_sandbox_exe_path(Some(&path_entry), Some(PathBuf::from("/usr/bin/genex"))),
+            linux_sandbox_exe_path(Some(&path_entry), Some(PathBuf::from("/usr/bin/ruxex"))),
             Some(alias_path),
         );
         Ok(())
@@ -604,24 +604,24 @@ mod tests {
     #[test]
     fn run_main_with_arg0_guard_keeps_aliases_alive_until_main_returns() -> anyhow::Result<()> {
         let temp_dir = TempDir::new()?;
-        let alias_path = temp_dir.path().join("genex-helper-alias");
+        let alias_path = temp_dir.path().join("ruxex-helper-alias");
         fs::write(&alias_path, b"")?;
         let lock_file = create_lock(temp_dir.path())?;
         let path_entry = Arg0PathEntryGuard::new(
             temp_dir,
             lock_file,
             Arg0DispatchPaths {
-                genex_self_exe: Some(PathBuf::from("/usr/bin/genex")),
-                genex_linux_sandbox_exe: Some(alias_path.clone()),
+                ruxex_self_exe: Some(PathBuf::from("/usr/bin/ruxex")),
+                ruxex_linux_sandbox_exe: Some(alias_path.clone()),
             },
         );
 
         super::build_runtime()?.block_on(run_main_with_arg0_guard(
             /*path_entry_guard*/ Some(path_entry),
-            Some(PathBuf::from("/usr/bin/genex")),
+            Some(PathBuf::from("/usr/bin/ruxex")),
             |paths| async move {
                 let alias_path = paths
-                    .genex_linux_sandbox_exe
+                    .ruxex_linux_sandbox_exe
                     .expect("unix dispatch should create at least one alias path");
                 ensure!(
                     alias_path.exists(),

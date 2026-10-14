@@ -1,5 +1,5 @@
 [package]
-name = "genex-config"
+name = "ruxex-config"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -10,16 +10,16 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 base64 = { workspace = true }
-genex-execpolicy = { workspace = true }
-genex-features = { workspace = true }
-genex-file-system = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-model-provider-info = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 dunce = { workspace = true }
 futures = { workspace = true, features = ["alloc", "std"] }
 gethostname = { workspace = true }

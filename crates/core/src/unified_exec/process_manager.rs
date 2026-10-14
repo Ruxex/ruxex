@@ -14,15 +14,15 @@ use uuid::Uuid;
 
 use super::oneshot::Completion;
 
-use crate::exec_env::GENEX_PERMISSION_PROFILE_ENV_VAR;
-use crate::exec_env::GENEX_THREAD_ID_ENV_VAR;
-use crate::exec_env::GENEX_VERSION_ENV_VAR;
+use crate::exec_env::RUXEX_PERMISSION_PROFILE_ENV_VAR;
+use crate::exec_env::RUXEX_THREAD_ID_ENV_VAR;
+use crate::exec_env::RUXEX_VERSION_ENV_VAR;
 use crate::exec_env::create_env;
 use crate::exec_env::inject_apply_patch_env;
 use crate::exec_env::inject_permission_profile_env;
 use crate::exec_env::inject_session_env;
 use crate::exec_policy::ExecApprovalRequest;
-use crate::genex_thread::BackgroundTerminalInfo;
+use crate::ruxex_thread::BackgroundTerminalInfo;
 use crate::plugins::metrics::finish_and_track_measurements;
 use crate::sandboxing::ExecOptions;
 use crate::sandboxing::ExecRequest;
@@ -68,25 +68,25 @@ use crate::unified_exec::process::UnifiedExecProcess;
 use crate::unified_exec::shell_snapshot::shell_snapshot_request;
 use crate::unified_exec::take_plugin_metrics_sidecar;
 use crate::unified_exec::trace_id;
-use genex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
-use genex_core_plugins::PluginCommandAttribution;
-use genex_core_plugins::PluginMetricsSidecar;
-use genex_core_plugins::strip_output_env;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandSource;
-use genex_protocol::protocol::TerminalInteractionEvent;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
-use genex_sandboxing::SandboxCommand;
-use genex_shell_command::is_dangerous_command::DangerousCommandPlatform;
-use genex_tools::ToolName;
-use genex_utils_output_truncation::approx_tokens_from_byte_count;
-use genex_utils_path_uri::PathUri;
+use ruxex_core_plugins::PLUGIN_METRICS_OUTPUT_ENV_VAR;
+use ruxex_core_plugins::PluginCommandAttribution;
+use ruxex_core_plugins::PluginMetricsSidecar;
+use ruxex_core_plugins::strip_output_env;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandSource;
+use ruxex_protocol::protocol::TerminalInteractionEvent;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_shell_command::is_dangerous_command::DangerousCommandPlatform;
+use ruxex_tools::ToolName;
+use ruxex_utils_output_truncation::approx_tokens_from_byte_count;
+use ruxex_utils_path_uri::PathUri;
 
 const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("NO_COLOR", "1"),
@@ -98,10 +98,10 @@ const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("PAGER", "cat"),
     ("GIT_PAGER", "cat"),
     ("GH_PAGER", "cat"),
-    ("GENEX_CI", "1"),
+    ("RUXEX_CI", "1"),
 ];
 const NETWORK_ACCESS_DENIED_MESSAGE: &str =
-    "Network access was denied by the Genex sandbox network proxy.";
+    "Network access was denied by the Ruxex sandbox network proxy.";
 const LATE_NETWORK_DENIAL_GRACE_PERIOD: Duration = Duration::from_millis(100);
 const MAX_STDIN_APPROVAL_BYTES: usize = 8_000;
 const INTERRUPT: &str = "\u{3}";
@@ -133,31 +133,31 @@ pub(super) fn apply_unified_exec_env(mut env: HashMap<String, String>) -> HashMa
 
 pub(super) fn exec_env_policy_from_shell_policy(
     policy: &ShellEnvironmentPolicy,
-) -> genex_exec_server::ExecEnvPolicy {
+) -> ruxex_exec_server::ExecEnvPolicy {
     let mut exclude = policy
         .exclude
         .iter()
         .map(std::string::ToString::to_string)
         .collect::<Vec<_>>();
     exclude.extend([
-        GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
-        GENEX_VERSION_ENV_VAR.to_string(),
-        genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        RUXEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+        RUXEX_VERSION_ENV_VAR.to_string(),
+        ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         PLUGIN_METRICS_OUTPUT_ENV_VAR.to_string(),
     ]);
     let mut r#set = policy.r#set.clone();
     r#set.retain(|key, _| {
         ![
-            GENEX_PERMISSION_PROFILE_ENV_VAR,
-            GENEX_VERSION_ENV_VAR,
-            genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
+            RUXEX_PERMISSION_PROFILE_ENV_VAR,
+            RUXEX_VERSION_ENV_VAR,
+            ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR,
             PLUGIN_METRICS_OUTPUT_ENV_VAR,
         ]
         .iter()
         .any(|runtime_key| key.eq_ignore_ascii_case(runtime_key))
             && !is_non_inheritable_env_var(key)
     });
-    genex_exec_server::ExecEnvPolicy {
+    ruxex_exec_server::ExecEnvPolicy {
         inherit: policy.inherit.clone(),
         ignore_default_excludes: policy.ignore_default_excludes,
         exclude,
@@ -180,9 +180,9 @@ fn env_overlay_for_exec_server(
             !is_non_inheritable_env_var(key)
                 && (matches!(
                     key.as_str(),
-                    GENEX_PERMISSION_PROFILE_ENV_VAR
-                        | GENEX_VERSION_ENV_VAR
-                        | genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
+                    RUXEX_PERMISSION_PROFILE_ENV_VAR
+                        | RUXEX_VERSION_ENV_VAR
+                        | ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR
                 ) || local_policy_env.get(*key) != Some(*value))
         })
         .map(|(key, value)| (key.clone(), value.clone()))
@@ -192,7 +192,7 @@ fn env_overlay_for_exec_server(
 fn exec_server_env_for_request(
     request: &ExecRequest,
 ) -> (
-    Option<genex_exec_server::ExecEnvPolicy>,
+    Option<ruxex_exec_server::ExecEnvPolicy>,
     HashMap<String, String>,
 ) {
     if let Some(exec_server_env_config) = &request.exec_server_env_config {
@@ -221,7 +221,7 @@ fn exec_server_params_for_request(
     request: &ExecRequest,
     tool_ctx: Option<&ToolCtx>,
     tty: bool,
-) -> genex_exec_server::ExecParams {
+) -> ruxex_exec_server::ExecParams {
     let (env_policy, env) = exec_server_env_for_request(request);
     let sandbox = request.exec_server_sandbox.clone();
     // Sandbox retries and memory-backed local launches can reuse a unified-exec
@@ -232,9 +232,9 @@ fn exec_server_params_for_request(
         } else {
             process_id.to_string()
         };
-    genex_exec_server::ExecParams {
+    ruxex_exec_server::ExecParams {
         process_id: exec_server_process_id.into(),
-        metadata: tool_ctx.map(|ctx| genex_exec_server::ExecMetadata {
+        metadata: tool_ctx.map(|ctx| ruxex_exec_server::ExecMetadata {
             thread_id: Some(ctx.session.thread_id()),
             tool_call_id: Some(ctx.call_id.clone()),
         }),
@@ -332,7 +332,7 @@ async fn finish_deferred_network_approval_for_session(
 fn network_approval_error_message(err: ToolError) -> String {
     match err {
         ToolError::Rejected(message) => message,
-        ToolError::Genex(err) => err.to_string(),
+        ToolError::Ruxex(err) => err.to_string(),
     }
 }
 
@@ -923,7 +923,7 @@ impl UnifiedExecProcessManager {
                 "text"
             };
             context.step_context.session_telemetry.counter(
-                "genex.unified_exec.stdin_review.size_check",
+                "ruxex.unified_exec.stdin_review.size_check",
                 /*inc*/ 1,
                 &[("result", size_check_result), ("input_kind", input_kind)],
             );
@@ -1241,20 +1241,20 @@ impl UnifiedExecProcessManager {
         options: ExecOptions,
         attempt: &SandboxAttempt<'_>,
         network: Option<&NetworkProxy>,
-        network_proxy_launch: Option<genex_network_proxy::RemoteNetworkProxyLaunchConfig>,
+        network_proxy_launch: Option<ruxex_network_proxy::RemoteNetworkProxyLaunchConfig>,
         environment_id: Option<&str>,
         exec_server_env_config: Option<ExecServerEnvConfig>,
-        shell_snapshot: Option<genex_exec_server::ShellSnapshotRequest>,
+        shell_snapshot: Option<ruxex_exec_server::ShellSnapshotRequest>,
         tty: bool,
         spawn_lifecycle: SpawnLifecycleHandle,
-        environment: &genex_exec_server::Environment,
+        environment: &ruxex_exec_server::Environment,
     ) -> Result<UnifiedExecProcess, ToolError> {
         let mut request = if environment.is_remote() || shell_snapshot.is_some() {
             attempt.env_for_exec_server(command, options)
         } else {
             attempt.env_for(command, options, network, environment_id)
         }
-        .map_err(ToolError::Genex)?;
+        .map_err(ToolError::Ruxex)?;
         let network_policy_decider = network_proxy_launch
             .as_ref()
             .filter(|launch| launch.policy_decision_timeout_ms.is_some())
@@ -1277,7 +1277,7 @@ impl UnifiedExecProcessManager {
         .await
         .map_err(|err| match err {
             UnifiedExecError::SandboxDenied { output, .. } => {
-                ToolError::Genex(GenexErr::Sandbox(SandboxErr::Denied {
+                ToolError::Ruxex(RuxexErr::Sandbox(SandboxErr::Denied {
                     output: Box::new(output),
                     network_policy_decision: None,
                 }))
@@ -1295,7 +1295,7 @@ impl UnifiedExecProcessManager {
         network_policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
         tty: bool,
         mut spawn_lifecycle: SpawnLifecycleHandle,
-        environment: &genex_exec_server::Environment,
+        environment: &ruxex_exec_server::Environment,
     ) -> Result<UnifiedExecProcess, UnifiedExecError> {
         let inherited_fds = spawn_lifecycle.inherited_fds();
 
@@ -1310,10 +1310,10 @@ impl UnifiedExecProcessManager {
             let params = exec_server_params_for_request(process_id, request, tool_ctx, tty);
             // Sandbox retries can reuse the public ID for a new executor process.
             tracing::event!(
-                name: "genex.unified_exec.process_start_requested",
-                target: "genex_otel.trace_safe",
+                name: "ruxex.unified_exec.process_start_requested",
+                target: "ruxex_otel.trace_safe",
                 tracing::Level::INFO,
-                event.name = "genex.unified_exec.process_start_requested",
+                event.name = "ruxex.unified_exec.process_start_requested",
                 unified_exec_process_id = process_id,
                 process.id = params.process_id.as_str(),
             );
@@ -1341,7 +1341,7 @@ impl UnifiedExecProcessManager {
         if request.command.is_empty() {
             return Err(UnifiedExecError::MissingCommandLine);
         }
-        let spawn_result = genex_sandboxing::spawn_process(genex_sandboxing::SpawnRequest {
+        let spawn_result = ruxex_sandboxing::spawn_process(ruxex_sandboxing::SpawnRequest {
             command: &request.command,
             cwd: native_cwd.as_path(),
             env: &request.env,
@@ -1373,7 +1373,7 @@ impl UnifiedExecProcessManager {
         let local_policy_env = create_env(shell_environment_policy, /*thread_id*/ None);
         let mut env = local_policy_env.clone();
         env.insert(
-            GENEX_THREAD_ID_ENV_VAR.to_string(),
+            RUXEX_THREAD_ID_ENV_VAR.to_string(),
             context.session.thread_id.to_string(),
         );
         inject_session_env(&mut env, context.session.session_id());
@@ -1458,8 +1458,8 @@ impl UnifiedExecProcessManager {
             .await
             .map(|result| (result.output, result.deferred_network_approval))
             .map_err(|err| match err {
-                ToolError::Genex(err) => match err.details() {
-                    GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+                ToolError::Ruxex(err) => match err.details() {
+                    RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                         let output = output.as_ref().clone();
                         let message = if output.aggregated_output.text.is_empty() {
                             let exit_code = output.exit_code;

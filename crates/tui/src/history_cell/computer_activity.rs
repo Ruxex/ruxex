@@ -26,7 +26,7 @@ impl ComputerActivityCell {
         &mut self,
         call: McpToolCallCell,
         duration: Duration,
-        result: Result<genex_protocol::mcp::CallToolResult, String>,
+        result: Result<ruxex_protocol::mcp::CallToolResult, String>,
     ) {
         let id = call.call_id.clone();
         self.start(call);

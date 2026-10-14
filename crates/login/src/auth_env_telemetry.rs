@@ -1,7 +1,7 @@
-use genex_model_provider_info::ModelProviderInfo;
-use genex_otel::AuthEnvTelemetryMetadata;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_otel::AuthEnvTelemetryMetadata;
 
-use crate::GENEX_API_KEY_ENV_VAR;
+use crate::RUXEX_API_KEY_ENV_VAR;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AuthEnvTelemetry {
@@ -14,8 +14,8 @@ pub struct AuthEnvTelemetry {
 impl AuthEnvTelemetry {
     pub fn to_otel_metadata(&self) -> AuthEnvTelemetryMetadata {
         AuthEnvTelemetryMetadata {
-            genex_api_key_env_present: self.api_key_env_present,
-            genex_api_key_env_enabled: self.api_key_env_enabled,
+            ruxex_api_key_env_present: self.api_key_env_present,
+            ruxex_api_key_env_enabled: self.api_key_env_enabled,
             provider_env_key_name: self.provider_env_key_name.clone(),
             provider_env_key_present: self.provider_env_key_present,
         }
@@ -27,7 +27,7 @@ pub fn collect_auth_env_telemetry(
     api_key_env_enabled: bool,
 ) -> AuthEnvTelemetry {
     AuthEnvTelemetry {
-        api_key_env_present: env_var_present(GENEX_API_KEY_ENV_VAR),
+        api_key_env_present: env_var_present(RUXEX_API_KEY_ENV_VAR),
         api_key_env_enabled,
         provider_env_key_name: provider.env_key.as_ref().map(|_| "configured".to_string()),
         provider_env_key_present: provider.env_key.as_deref().map(env_var_present),
@@ -45,7 +45,7 @@ fn env_var_present(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_model_provider_info::WireApi;
+    use ruxex_model_provider_info::WireApi;
     use pretty_assertions::assert_eq;
 
     #[test]

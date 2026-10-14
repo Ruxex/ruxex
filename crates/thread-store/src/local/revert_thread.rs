@@ -1,8 +1,8 @@
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutConfig;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::RolloutRecorderParams;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutConfig;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::RolloutRecorderParams;
 
 use super::LocalThreadStore;
 use super::paginated_fork;
@@ -49,7 +49,7 @@ pub(super) async fn revert(
         .await?
         .ok_or(ThreadStoreError::ThreadNotFound { thread_id })?;
     let source_path = current_rollout.path;
-    let mut source_meta = genex_rollout::read_session_meta_line(source_path.as_path())
+    let mut source_meta = ruxex_rollout::read_session_meta_line(source_path.as_path())
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!(
@@ -70,7 +70,7 @@ pub(super) async fn revert(
         if segment.rollout_id() == current_rollout.rollout_id && source_meta.history_base.is_none()
         {
             segment.rollout_path =
-                genex_rollout::materialize_rollout_for_reference(segment.rollout_path.as_path())
+                ruxex_rollout::materialize_rollout_for_reference(segment.rollout_path.as_path())
                     .await
                     .map_err(|err| ThreadStoreError::Internal {
                         message: format!(
@@ -95,7 +95,7 @@ pub(super) async fn revert(
     .await?;
 
     let forked_from_ordinal_exclusive =
-        genex_rollout::forked_from_ordinal_exclusive(&source_meta, Some(source_path.as_path()))
+        ruxex_rollout::forked_from_ordinal_exclusive(&source_meta, Some(source_path.as_path()))
             .map(|cutoff| {
                 // Reverting into inherited history can shrink, but never grow, the parent prefix.
                 cutoff.min(history_base.map_or(0, |base| base.end_ordinal_exclusive))
@@ -137,14 +137,14 @@ pub(super) async fn revert(
 
 async fn create_replacement_recorder(
     store: &LocalThreadStore,
-    source_meta: genex_rollout::SessionMeta,
+    source_meta: ruxex_rollout::SessionMeta,
     rollout_id: ThreadId,
-    history_base: Option<genex_protocol::protocol::HistoryPosition>,
+    history_base: Option<ruxex_protocol::protocol::HistoryPosition>,
     forked_from_ordinal_exclusive: Option<u64>,
     writer_lock: super::WriterLockGuard,
 ) -> ThreadStoreResult<RolloutRecorder> {
     let config = RolloutConfig {
-        genex_home: store.config.genex_home.clone(),
+        ruxex_home: store.config.ruxex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd: source_meta.cwd.clone(),
     };

@@ -1,14 +1,14 @@
 use anyhow::Result;
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::Row;
@@ -690,9 +690,9 @@ mod tests {
     use super::ThreadRow;
     use chrono::DateTime;
     use chrono::Utc;
-    use genex_protocol::ThreadId;
-    use genex_protocol::model_types::ReasoningEffort;
-    use genex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::model_types::ReasoningEffort;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 

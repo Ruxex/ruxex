@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use ratatui::text::Line;
 
 use super::status_line_from_segments;
@@ -25,7 +25,7 @@ pub(crate) enum StatusSurfacePreviewItem {
     ContextUsed,
     FiveHourLimit,
     WeeklyLimit,
-    GenexVersion,
+    RuxexVersion,
     ContextWindowSize,
     UsedTokens,
     TotalInputTokens,
@@ -43,7 +43,7 @@ pub(crate) enum StatusSurfacePreviewItem {
 impl StatusSurfacePreviewItem {
     fn placeholder(self) -> &'static str {
         match self {
-            StatusSurfacePreviewItem::AppName => "genex",
+            StatusSurfacePreviewItem::AppName => "ruxex",
             StatusSurfacePreviewItem::ProjectName => "my-project",
             StatusSurfacePreviewItem::ProjectRoot => "my-project",
             StatusSurfacePreviewItem::CurrentDir => "~/my-project/subdir",
@@ -60,7 +60,7 @@ impl StatusSurfacePreviewItem {
             StatusSurfacePreviewItem::ContextUsed => "Context 0% used",
             StatusSurfacePreviewItem::FiveHourLimit => "primary 0%",
             StatusSurfacePreviewItem::WeeklyLimit => "secondary 0%",
-            StatusSurfacePreviewItem::GenexVersion => "0.0.0",
+            StatusSurfacePreviewItem::RuxexVersion => "0.0.0",
             StatusSurfacePreviewItem::ContextWindowSize => "0 window",
             StatusSurfacePreviewItem::UsedTokens => "0 used",
             StatusSurfacePreviewItem::TotalInputTokens => "0 in",
@@ -95,7 +95,7 @@ impl StatusSurfacePreviewItem {
             Self::ContextUsed,
             Self::FiveHourLimit,
             Self::WeeklyLimit,
-            Self::GenexVersion,
+            Self::RuxexVersion,
             Self::ContextWindowSize,
             Self::UsedTokens,
             Self::TotalInputTokens,

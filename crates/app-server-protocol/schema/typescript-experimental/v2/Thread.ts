@@ -15,7 +15,7 @@ import type { Turn } from "./Turn";
 
 export type Thread = {
 /**
- * Identifier for this thread. Genex-generated thread IDs are UUIDv7.
+ * Identifier for this thread. Ruxex-generated thread IDs are UUIDv7.
  */
 id: string,
 /**
@@ -108,7 +108,7 @@ cliVersion: string,
  */
 originator: string | null,
 /**
- * Origin of the thread (CLI, VSCode, genex exec, genex app-server, etc.).
+ * Origin of the thread (CLI, VSCode, ruxex exec, ruxex app-server, etc.).
  */
 source: SessionSource,
 /**

@@ -4,18 +4,18 @@ use app_test_support::TestAppServer;
 use app_test_support::to_response;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use genex_app_server_protocol::FsChangedNotification;
-use genex_app_server_protocol::FsCopyParams;
-use genex_app_server_protocol::FsGetMetadataResponse;
-use genex_app_server_protocol::FsReadDirectoryEntry;
-use genex_app_server_protocol::FsReadFileResponse;
-use genex_app_server_protocol::FsUnwatchParams;
-use genex_app_server_protocol::FsWatchResponse;
-use genex_app_server_protocol::FsWriteFileParams;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::RequestId;
-use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::FsChangedNotification;
+use ruxex_app_server_protocol::FsCopyParams;
+use ruxex_app_server_protocol::FsGetMetadataResponse;
+use ruxex_app_server_protocol::FsReadDirectoryEntry;
+use ruxex_app_server_protocol::FsReadFileResponse;
+use ruxex_app_server_protocol::FsUnwatchParams;
+use ruxex_app_server_protocol::FsWatchResponse;
+use ruxex_app_server_protocol::FsWriteFileParams;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_exec_server::RUXEX_EXEC_SERVER_URL_ENV_VAR;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::path::PathBuf;
@@ -36,9 +36,9 @@ const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(60);
 const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const OPTIONAL_FS_CHANGE_TIMEOUT: Duration = Duration::from_secs(2);
 
-async fn initialized_mcp(genex_home: &TempDir) -> Result<TestAppServer> {
+async fn initialized_mcp(ruxex_home: &TempDir) -> Result<TestAppServer> {
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -71,13 +71,13 @@ fn absolute_path(path: PathBuf) -> AbsolutePathBuf {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_get_metadata_returns_only_used_fields() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let file_path = genex_home.path().join("note.txt");
+    let ruxex_home = TempDir::new()?;
+    let file_path = ruxex_home.path().join("note.txt");
     std::fs::write(&file_path, "hello")?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
-        .send_fs_get_metadata_request(genex_app_server_protocol::FsGetMetadataParams {
+        .send_fs_get_metadata_request(ruxex_app_server_protocol::FsGetMetadataParams {
             path: absolute_path(file_path.clone()),
         })
         .await?;
@@ -125,19 +125,19 @@ async fn fs_get_metadata_returns_only_used_fields() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_methods_return_error_when_local_environment_is_disabled() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let absolute_file = genex_home.path().join("absolute.txt");
+    let ruxex_home = TempDir::new()?;
+    let absolute_file = ruxex_home.path().join("absolute.txt");
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(RUXEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let read_id = mcp
-        .send_fs_read_file_request(genex_app_server_protocol::FsReadFileParams {
+        .send_fs_read_file_request(ruxex_app_server_protocol::FsReadFileParams {
             path: absolute_path(absolute_file),
         })
         .await?;
@@ -149,15 +149,15 @@ async fn fs_methods_return_error_when_local_environment_is_disabled() -> Result<
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_get_metadata_reports_symlink() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let file_path = genex_home.path().join("note.txt");
-    let symlink_path = genex_home.path().join("note-link.txt");
+    let ruxex_home = TempDir::new()?;
+    let file_path = ruxex_home.path().join("note.txt");
+    let symlink_path = ruxex_home.path().join("note-link.txt");
     std::fs::write(&file_path, "hello")?;
     symlink(&file_path, &symlink_path)?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
-        .send_fs_get_metadata_request(genex_app_server_protocol::FsGetMetadataParams {
+        .send_fs_get_metadata_request(ruxex_app_server_protocol::FsGetMetadataParams {
             path: absolute_path(symlink_path),
         })
         .await?;
@@ -177,18 +177,18 @@ async fn fs_get_metadata_reports_symlink() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let source_dir = genex_home.path().join("source");
+    let ruxex_home = TempDir::new()?;
+    let source_dir = ruxex_home.path().join("source");
     let nested_dir = source_dir.join("nested");
     let source_file = source_dir.join("root.txt");
-    let copied_dir = genex_home.path().join("copied");
-    let copy_file_path = genex_home.path().join("copy.txt");
+    let copied_dir = ruxex_home.path().join("copied");
+    let copy_file_path = ruxex_home.path().join("copy.txt");
     let nested_file = nested_dir.join("note.txt");
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
 
     let create_directory_request_id = mcp
-        .send_fs_create_directory_request(genex_app_server_protocol::FsCreateDirectoryParams {
+        .send_fs_create_directory_request(ruxex_app_server_protocol::FsCreateDirectoryParams {
             path: absolute_path(nested_dir.clone()),
             recursive: None,
         })
@@ -224,7 +224,7 @@ async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
     .await??;
 
     let read_request_id = mcp
-        .send_fs_read_file_request(genex_app_server_protocol::FsReadFileParams {
+        .send_fs_read_file_request(ruxex_app_server_protocol::FsReadFileParams {
             path: absolute_path(nested_file.clone()),
         })
         .await?;
@@ -277,7 +277,7 @@ async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
     );
 
     let read_directory_request_id = mcp
-        .send_fs_read_directory_request(genex_app_server_protocol::FsReadDirectoryParams {
+        .send_fs_read_directory_request(ruxex_app_server_protocol::FsReadDirectoryParams {
             path: absolute_path(source_dir.clone()),
         })
         .await?;
@@ -287,7 +287,7 @@ async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
     )
     .await??;
     let mut entries =
-        to_response::<genex_app_server_protocol::FsReadDirectoryResponse>(readdir_response)?
+        to_response::<ruxex_app_server_protocol::FsReadDirectoryResponse>(readdir_response)?
             .entries;
     entries.sort_by(|left, right| left.file_name.cmp(&right.file_name));
     assert_eq!(
@@ -307,7 +307,7 @@ async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
     );
 
     let remove_request_id = mcp
-        .send_fs_remove_request(genex_app_server_protocol::FsRemoveParams {
+        .send_fs_remove_request(ruxex_app_server_protocol::FsRemoveParams {
             path: absolute_path(copied_dir.clone()),
             recursive: None,
             force: None,
@@ -328,11 +328,11 @@ async fn fs_methods_cover_current_fs_utils_surface() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_write_file_accepts_base64_bytes() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let file_path = genex_home.path().join("blob.bin");
+    let ruxex_home = TempDir::new()?;
+    let file_path = ruxex_home.path().join("blob.bin");
     let bytes = [0_u8, 1, 2, 255];
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let write_request_id = mcp
         .send_fs_write_file_request(FsWriteFileParams {
             path: absolute_path(file_path.clone()),
@@ -347,7 +347,7 @@ async fn fs_write_file_accepts_base64_bytes() -> Result<()> {
     assert_eq!(std::fs::read(&file_path)?, bytes);
 
     let read_request_id = mcp
-        .send_fs_read_file_request(genex_app_server_protocol::FsReadFileParams {
+        .send_fs_read_file_request(ruxex_app_server_protocol::FsReadFileParams {
             path: absolute_path(file_path),
         })
         .await?;
@@ -370,10 +370,10 @@ async fn fs_write_file_accepts_base64_bytes() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_write_file_rejects_invalid_base64() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let file_path = genex_home.path().join("blob.bin");
+    let ruxex_home = TempDir::new()?;
+    let file_path = ruxex_home.path().join("blob.bin");
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_write_file_request(FsWriteFileParams {
             path: absolute_path(file_path),
@@ -399,11 +399,11 @@ async fn fs_write_file_rejects_invalid_base64() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_methods_reject_relative_paths() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let absolute_file = genex_home.path().join("absolute.txt");
+    let ruxex_home = TempDir::new()?;
+    let absolute_file = ruxex_home.path().join("absolute.txt");
     std::fs::write(&absolute_file, "hello")?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
 
     let read_id = mcp
         .send_raw_request("fs/readFile", Some(json!({ "path": "relative.txt" })))
@@ -523,15 +523,15 @@ async fn fs_methods_reject_relative_paths() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_copy_rejects_directory_without_recursive() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let source_dir = genex_home.path().join("source");
+    let ruxex_home = TempDir::new()?;
+    let source_dir = ruxex_home.path().join("source");
     std::fs::create_dir_all(&source_dir)?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_copy_request(FsCopyParams {
             source_path: absolute_path(source_dir),
-            destination_path: absolute_path(genex_home.path().join("dest")),
+            destination_path: absolute_path(ruxex_home.path().join("dest")),
             recursive: false,
         })
         .await?;
@@ -550,11 +550,11 @@ async fn fs_copy_rejects_directory_without_recursive() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_copy_rejects_copying_directory_into_descendant() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let source_dir = genex_home.path().join("source");
+    let ruxex_home = TempDir::new()?;
+    let source_dir = ruxex_home.path().join("source");
     std::fs::create_dir_all(source_dir.join("nested"))?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_copy_request(FsCopyParams {
             source_path: absolute_path(source_dir.clone()),
@@ -578,14 +578,14 @@ async fn fs_copy_rejects_copying_directory_into_descendant() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_copy_preserves_symlinks_in_recursive_copy() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let source_dir = genex_home.path().join("source");
+    let ruxex_home = TempDir::new()?;
+    let source_dir = ruxex_home.path().join("source");
     let nested_dir = source_dir.join("nested");
-    let copied_dir = genex_home.path().join("copied");
+    let copied_dir = ruxex_home.path().join("copied");
     std::fs::create_dir_all(&nested_dir)?;
     symlink("nested", source_dir.join("nested-link"))?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_copy_request(FsCopyParams {
             source_path: absolute_path(source_dir),
@@ -610,9 +610,9 @@ async fn fs_copy_preserves_symlinks_in_recursive_copy() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_copy_ignores_unknown_special_files_in_recursive_copy() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let source_dir = genex_home.path().join("source");
-    let copied_dir = genex_home.path().join("copied");
+    let ruxex_home = TempDir::new()?;
+    let source_dir = ruxex_home.path().join("source");
+    let copied_dir = ruxex_home.path().join("copied");
     std::fs::create_dir_all(&source_dir)?;
     std::fs::write(source_dir.join("note.txt"), "hello")?;
     let fifo_path = source_dir.join("named-pipe");
@@ -625,7 +625,7 @@ async fn fs_copy_ignores_unknown_special_files_in_recursive_copy() -> Result<()>
         );
     }
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_copy_request(FsCopyParams {
             source_path: absolute_path(source_dir),
@@ -651,8 +651,8 @@ async fn fs_copy_ignores_unknown_special_files_in_recursive_copy() -> Result<()>
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_copy_rejects_standalone_fifo_source() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let fifo_path = genex_home.path().join("named-pipe");
+    let ruxex_home = TempDir::new()?;
+    let fifo_path = ruxex_home.path().join("named-pipe");
     let output = Command::new("mkfifo").arg(&fifo_path).output()?;
     if !output.status.success() {
         anyhow::bail!(
@@ -662,11 +662,11 @@ async fn fs_copy_rejects_standalone_fifo_source() -> Result<()> {
         );
     }
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let request_id = mcp
         .send_fs_copy_request(FsCopyParams {
             source_path: absolute_path(fifo_path),
-            destination_path: absolute_path(genex_home.path().join("copied")),
+            destination_path: absolute_path(ruxex_home.path().join("copied")),
             recursive: false,
         })
         .await?;
@@ -683,16 +683,16 @@ async fn fs_copy_rejects_standalone_fifo_source() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_watch_directory_reports_changed_child_paths_and_unwatch_stops_notifications()
 -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let git_dir = genex_home.path().join("repo").join(".git");
+    let ruxex_home = TempDir::new()?;
+    let git_dir = ruxex_home.path().join("repo").join(".git");
     let fetch_head = git_dir.join("FETCH_HEAD");
     std::fs::create_dir_all(&git_dir)?;
     std::fs::write(&fetch_head, "old\n")?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let watch_id = "watch-git-dir".to_string();
     let watch_request_id = mcp
-        .send_fs_watch_request(genex_app_server_protocol::FsWatchParams {
+        .send_fs_watch_request(ruxex_app_server_protocol::FsWatchParams {
             watch_id: watch_id.clone(),
             path: absolute_path(git_dir.clone()),
         })
@@ -751,16 +751,16 @@ async fn fs_watch_directory_reports_changed_child_paths_and_unwatch_stops_notifi
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_watch_file_reports_atomic_replace_events() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let git_dir = genex_home.path().join("repo").join(".git");
+    let ruxex_home = TempDir::new()?;
+    let git_dir = ruxex_home.path().join("repo").join(".git");
     let head_path = git_dir.join("HEAD");
     std::fs::create_dir_all(&git_dir)?;
     std::fs::write(&head_path, "ref: refs/heads/main\n")?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let watch_id = "watch-head".to_string();
     let watch_request_id = mcp
-        .send_fs_watch_request(genex_app_server_protocol::FsWatchParams {
+        .send_fs_watch_request(ruxex_app_server_protocol::FsWatchParams {
             watch_id: watch_id.clone(),
             path: absolute_path(head_path.clone()),
         })
@@ -791,15 +791,15 @@ async fn fs_watch_file_reports_atomic_replace_events() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_watch_allows_missing_file_targets() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let git_dir = genex_home.path().join("repo").join(".git");
+    let ruxex_home = TempDir::new()?;
+    let git_dir = ruxex_home.path().join("repo").join(".git");
     let fetch_head = git_dir.join("FETCH_HEAD");
     std::fs::create_dir_all(&git_dir)?;
 
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
     let watch_id = "watch-fetch-head".to_string();
     let watch_request_id = mcp
-        .send_fs_watch_request(genex_app_server_protocol::FsWatchParams {
+        .send_fs_watch_request(ruxex_app_server_protocol::FsWatchParams {
             watch_id: watch_id.clone(),
             path: absolute_path(fetch_head.clone()),
         })
@@ -830,8 +830,8 @@ async fn fs_watch_allows_missing_file_targets() -> Result<()> {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn fs_watch_rejects_relative_paths() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let mut mcp = initialized_mcp(&genex_home).await?;
+    let ruxex_home = TempDir::new()?;
+    let mut mcp = initialized_mcp(&ruxex_home).await?;
 
     let watch_id = mcp
         .send_raw_request(

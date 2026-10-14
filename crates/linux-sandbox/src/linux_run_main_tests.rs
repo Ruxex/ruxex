@@ -5,15 +5,15 @@ use crate::linux_run_main::install_bwrap_signal_forwarders;
 #[cfg(test)]
 use crate::linux_run_main::wait_for_bwrap_child;
 #[cfg(test)]
-use genex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
 #[cfg(test)]
-use genex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 #[cfg(test)]
-use genex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
 #[cfg(test)]
-use genex_protocol::protocol::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::NetworkSandboxPolicy;
 #[cfg(test)]
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 #[cfg(test)]
@@ -70,9 +70,9 @@ fn inserts_bwrap_argv0_before_command_separator() {
     apply_inner_command_argv0_for_launcher(
         &mut argv,
         /*supports_argv0*/ true,
-        "/tmp/genex-arg0-session/genex-linux-sandbox".to_string(),
+        "/tmp/ruxex-arg0-session/ruxex-linux-sandbox".to_string(),
     );
-    let daemon_directory = genex_uds::shared_daemon_socket_directory()
+    let daemon_directory = ruxex_uds::shared_daemon_socket_directory()
         .unwrap()
         .display()
         .to_string();
@@ -101,7 +101,7 @@ fn inserts_bwrap_argv0_before_command_separator() {
             "--cap-drop".to_string(),
             "ALL".to_string(),
             "--argv0".to_string(),
-            "genex-linux-sandbox".to_string(),
+            "ruxex-linux-sandbox".to_string(),
             "--".to_string(),
             "/bin/true".to_string(),
         ]
@@ -127,13 +127,13 @@ fn rewrites_inner_command_path_when_bwrap_lacks_argv0() {
     apply_inner_command_argv0_for_launcher(
         &mut argv,
         /*supports_argv0*/ false,
-        "/tmp/genex-arg0-session/genex-linux-sandbox".to_string(),
+        "/tmp/ruxex-arg0-session/ruxex-linux-sandbox".to_string(),
     );
 
     assert!(!argv.iter().any(|arg| arg == "--argv0"));
     assert!(
         argv.windows(2)
-            .any(|window| { window == ["--", "/tmp/genex-arg0-session/genex-linux-sandbox"] })
+            .any(|window| { window == ["--", "/tmp/ruxex-arg0-session/ruxex-linux-sandbox"] })
     );
 }
 
@@ -151,7 +151,7 @@ fn rewrites_bwrap_helper_command_not_nested_user_command_when_current_exe_appear
         "/tmp/cwd".to_string(),
         "--".to_string(),
         nested_current_exe.clone(),
-        "--genex-run-as-apply-patch".to_string(),
+        "--ruxex-run-as-apply-patch".to_string(),
         "patch".to_string(),
     ];
 
@@ -171,7 +171,7 @@ fn rewrites_bwrap_helper_command_not_nested_user_command_when_current_exe_appear
             "/tmp/cwd".to_string(),
             "--".to_string(),
             nested_current_exe,
-            "--genex-run-as-apply-patch".to_string(),
+            "--ruxex-run-as-apply-patch".to_string(),
             "patch".to_string(),
         ]
     );
@@ -273,18 +273,18 @@ fn split_only_filesystem_policy_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        genex_protocol::permissions::FileSystemSandboxEntry {
-            path: genex_protocol::permissions::FileSystemPath::Special {
-                value: genex_protocol::permissions::FileSystemSpecialPath::project_roots(
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
+            path: ruxex_protocol::permissions::FileSystemPath::Special {
+                value: ruxex_protocol::permissions::FileSystemSpecialPath::project_roots(
                     /*subpath*/ None,
                 ),
             },
-            access: genex_protocol::permissions::FileSystemAccessMode::Write,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
-        genex_protocol::permissions::FileSystemSandboxEntry {
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: genex_protocol::permissions::FileSystemAccessMode::Read,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
     ]);
@@ -301,16 +301,16 @@ fn root_write_read_only_carveout_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        genex_protocol::permissions::FileSystemSandboxEntry {
-            path: genex_protocol::permissions::FileSystemPath::Special {
-                value: genex_protocol::permissions::FileSystemSpecialPath::Root,
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
+            path: ruxex_protocol::permissions::FileSystemPath::Special {
+                value: ruxex_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: genex_protocol::permissions::FileSystemAccessMode::Write,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
-        genex_protocol::permissions::FileSystemSandboxEntry {
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: genex_protocol::permissions::FileSystemAccessMode::Read,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
     ]);
@@ -417,7 +417,7 @@ fn synthetic_mount_registry_root_is_unique_to_effective_user() {
             .canonicalize()
             .expect("resolve temp directory")
             .join(format!(
-                "genex-bwrap-synthetic-mount-targets-{effective_uid}"
+                "ruxex-bwrap-synthetic-mount-targets-{effective_uid}"
             ))
     );
 }
@@ -625,7 +625,7 @@ fn managed_proxy_inner_command_includes_route_spec() {
 #[test]
 fn managed_network_policy_alone_enables_proxy_mode() {
     let parsed = LandlockCommand::try_parse_from([
-        "genex-linux-sandbox",
+        "ruxex-linux-sandbox",
         "--sandbox-policy-cwd",
         "/tmp",
         "--managed-network",
@@ -643,7 +643,7 @@ fn managed_network_policy_alone_enables_proxy_mode() {
 #[test]
 fn malformed_managed_network_policy_is_rejected() {
     let error = LandlockCommand::try_parse_from([
-        "genex-linux-sandbox",
+        "ruxex-linux-sandbox",
         "--sandbox-policy-cwd",
         "/tmp",
         "--managed-network",
@@ -732,16 +732,16 @@ fn resolve_permission_profile_preserves_direct_runtime_profile() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
-        genex_protocol::permissions::FileSystemSandboxEntry {
-            path: genex_protocol::permissions::FileSystemPath::Special {
-                value: genex_protocol::permissions::FileSystemSpecialPath::Root,
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
+            path: ruxex_protocol::permissions::FileSystemPath::Special {
+                value: ruxex_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: genex_protocol::permissions::FileSystemAccessMode::Read,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Read,
             missing_path_behavior: None,
         },
-        genex_protocol::permissions::FileSystemSandboxEntry {
+        ruxex_protocol::permissions::FileSystemSandboxEntry {
             path: docs.into(),
-            access: genex_protocol::permissions::FileSystemAccessMode::Write,
+            access: ruxex_protocol::permissions::FileSystemAccessMode::Write,
             missing_path_behavior: None,
         },
     ]);

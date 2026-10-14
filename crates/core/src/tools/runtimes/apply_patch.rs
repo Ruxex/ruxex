@@ -13,23 +13,23 @@ use crate::tools::sandboxing::Sandboxable;
 use crate::tools::sandboxing::ToolCtx;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::ToolRuntime;
-use genex_apply_patch::AppliedPatchDelta;
-use genex_apply_patch::ApplyPatchAction;
-use genex_apply_patch::ApplyPatchOptions;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::FileChange;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::SandboxablePreference;
-use genex_sandboxing::is_likely_executor_managed_sandbox_denied;
-use genex_sandboxing::policy_transforms::effective_permission_profile;
-use genex_sandboxing::record_filesystem_sandbox_violation;
-use genex_utils_path_uri::PathUri;
+use ruxex_apply_patch::AppliedPatchDelta;
+use ruxex_apply_patch::ApplyPatchAction;
+use ruxex_apply_patch::ApplyPatchOptions;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxablePreference;
+use ruxex_sandboxing::is_likely_executor_managed_sandbox_denied;
+use ruxex_sandboxing::policy_transforms::effective_permission_profile;
+use ruxex_sandboxing::record_filesystem_sandbox_violation;
+use ruxex_utils_path_uri::PathUri;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -169,7 +169,7 @@ impl ToolRuntime<ApplyPatchRequest, ApplyPatchRuntimeOutput> for ApplyPatchRunti
         let sandbox = Self::file_system_sandbox_context_for_attempt(req, attempt);
         let mut stdout = Vec::new();
         let mut stderr = Vec::new();
-        let result = genex_apply_patch::apply_patch_with_options(
+        let result = ruxex_apply_patch::apply_patch_with_options(
             &req.action.patch,
             ApplyPatchOptions {
                 // Only reject links when an otherwise-required sandbox was bypassed.
@@ -217,7 +217,7 @@ impl ToolRuntime<ApplyPatchRequest, ApplyPatchRuntimeOutput> for ApplyPatchRunti
             if attempt.sandbox != SandboxType::None {
                 record_filesystem_sandbox_violation(attempt.sandbox, &output);
             }
-            return Err(ToolError::Genex(GenexErr::Sandbox(SandboxErr::Denied {
+            return Err(ToolError::Ruxex(RuxexErr::Sandbox(SandboxErr::Denied {
                 output: Box::new(output),
                 network_policy_decision: None,
             })));

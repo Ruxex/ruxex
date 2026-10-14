@@ -1,9 +1,9 @@
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_config::ConfigLayerStack;
-use genex_plugin::validate_plugin_segment;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::ConfigLayerStack;
+use ruxex_plugin::validate_plugin_segment;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tracing::warn;
 
 use crate::marketplace::find_marketplace_manifest_path;
@@ -11,15 +11,15 @@ use crate::marketplace_policy::policy_filtered_plugin_config;
 
 pub const INSTALLED_MARKETPLACES_DIR: &str = ".tmp/marketplaces";
 
-pub fn marketplace_install_root(genex_home: &Path) -> PathBuf {
-    genex_home.join(INSTALLED_MARKETPLACES_DIR)
+pub fn marketplace_install_root(ruxex_home: &Path) -> PathBuf {
+    ruxex_home.join(INSTALLED_MARKETPLACES_DIR)
 }
 
 pub fn installed_marketplace_roots_from_layer_stack(
     config_layer_stack: &ConfigLayerStack,
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> Vec<AbsolutePathBuf> {
-    let Some(effective_config) = policy_filtered_plugin_config(config_layer_stack, genex_home)
+    let Some(effective_config) = policy_filtered_plugin_config(config_layer_stack, ruxex_home)
     else {
         return Vec::new();
     };
@@ -30,7 +30,7 @@ pub fn installed_marketplace_roots_from_layer_stack(
         warn!("invalid marketplaces config: expected table");
         return Vec::new();
     };
-    let default_install_root = marketplace_install_root(genex_home);
+    let default_install_root = marketplace_install_root(ruxex_home);
     let mut roots = marketplaces
         .iter()
         .filter_map(|(marketplace_name, marketplace)| {

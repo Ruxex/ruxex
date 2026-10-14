@@ -2,15 +2,15 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use genex_config::McpServerConfig;
-use genex_mcp::McpServerSource;
-use genex_mcp::PreparedMcpCall;
-use genex_mcp::ResolvedMcpServer;
-use genex_protocol::mcp::CallToolResult;
-use genex_tools::ToolCallSource;
-use genex_tools::ToolName;
-use genex_tools::ToolPayload;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::McpServerConfig;
+use ruxex_mcp::McpServerSource;
+use ruxex_mcp::PreparedMcpCall;
+use ruxex_mcp::ResolvedMcpServer;
+use ruxex_protocol::mcp::CallToolResult;
+use ruxex_tools::ToolCallSource;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolPayload;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::ConversationHistorySnapshot;
 use crate::ExtensionData;
@@ -42,7 +42,7 @@ pub enum ToolCallOutcome {
 /// Provenance captured from the immutable MCP call selected for one tool invocation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum McpToolSource {
-    /// An MCP server whose frozen registration matches the active Genex configuration.
+    /// An MCP server whose frozen registration matches the active Ruxex configuration.
     Config,
     /// An MCP server registered by a locally loaded plugin.
     Plugin {
@@ -125,7 +125,7 @@ pub struct ToolStartInput<'a> {
     pub call_id: &'a str,
     /// Responses item that issued this call or started its code-mode cell.
     /// Hosts preserve the original wrapper identity across yields and waits.
-    pub originating_item_id: Option<&'a genex_protocol::ResponseItemId>,
+    pub originating_item_id: Option<&'a ruxex_protocol::ResponseItemId>,
     /// Tool name as routed by the host.
     pub tool_name: &'a ToolName,
     /// Read-only metadata and provenance from the exact MCP call that will execute.

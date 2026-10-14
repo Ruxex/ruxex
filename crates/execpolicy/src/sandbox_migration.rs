@@ -9,32 +9,32 @@ use tokio::io::AsyncWriteExt;
 
 const MIGRATION_MARKER_FILENAME: &str = ".sandbox_migration";
 
-/// Removes legacy allow rules that newer Genex versions no longer offer.
+/// Removes legacy allow rules that newer Ruxex versions no longer offer.
 ///
-/// This migration is intentionally one-shot. Once complete, a marker in `genex_home` prevents
-/// policies saved by newer Genex versions from being removed on later startups.
+/// This migration is intentionally one-shot. Once complete, a marker in `ruxex_home` prevents
+/// policies saved by newer Ruxex versions from being removed on later startups.
 pub async fn prefix_rule_migration(
-    genex_home: &Path,
+    ruxex_home: &Path,
     policy_path: &Path,
     banned_prefixes: &[&[&str]],
 ) -> io::Result<()> {
-    let marker_path = genex_home.join(MIGRATION_MARKER_FILENAME);
+    let marker_path = ruxex_home.join(MIGRATION_MARKER_FILENAME);
     if tokio::fs::try_exists(&marker_path).await? {
         return Ok(());
     }
     clean_rules_file(policy_path, banned_prefixes).await?;
 
-    write_migration_marker(genex_home, &marker_path).await?;
+    write_migration_marker(ruxex_home, &marker_path).await?;
     Ok(())
 }
 
-// Atomically writes the marker after creating the Genex home when needed.
-async fn write_migration_marker(genex_home: &Path, marker_path: &Path) -> io::Result<()> {
-    tokio::fs::create_dir_all(genex_home).await?;
-    let genex_home = genex_home.to_owned();
+// Atomically writes the marker after creating the Ruxex home when needed.
+async fn write_migration_marker(ruxex_home: &Path, marker_path: &Path) -> io::Result<()> {
+    tokio::fs::create_dir_all(ruxex_home).await?;
+    let ruxex_home = ruxex_home.to_owned();
     let marker_path = marker_path.to_owned();
     tokio::task::spawn_blocking(move || {
-        let mut marker = tempfile::NamedTempFile::new_in(genex_home)?;
+        let mut marker = tempfile::NamedTempFile::new_in(ruxex_home)?;
         marker.write_all(b"v1\n")?;
         match marker.persist_noclobber(marker_path) {
             Ok(_) => Ok(()),

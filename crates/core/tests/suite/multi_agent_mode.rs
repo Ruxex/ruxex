@@ -1,17 +1,17 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::MultiAgentMessages;
-use genex_protocol::model_types::MultiAgentModeMessages;
-use genex_protocol::model_types::MultiAgentRoleMessages;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::MultiAgentMessages;
+use ruxex_protocol::model_types::MultiAgentModeMessages;
+use ruxex_protocol::model_types::MultiAgentRoleMessages;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MULTI_AGENT_MODE_OPEN_TAG;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
@@ -19,7 +19,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -108,11 +108,11 @@ fn count_containing(texts: &[&str], target: &str) -> usize {
 }
 
 async fn submit_turn(
-    genex: &genex_core::GenexThread,
+    ruxex: &ruxex_core::RuxexThread,
     prompt: &str,
     effort: Option<ReasoningEffort>,
 ) -> Result<()> {
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -124,7 +124,7 @@ async fn submit_turn(
             }),
         )
         .await?;
-    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     Ok(())
 }
 
@@ -138,13 +138,13 @@ async fn ultra_reasoning_uses_highest_non_ultra_and_proactive_mode() -> Result<(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", add_ultra_reasoning)
         .with_config(configure_ultra)
         .build(&server)
         .await?;
 
-    submit_turn(&test.genex, "hello", /*effort*/ None).await?;
+    submit_turn(&test.ruxex, "hello", /*effort*/ None).await?;
 
     let request = response.single_request();
     assert_eq!(
@@ -183,7 +183,7 @@ async fn mode_hints_override_reasoning_effort(source: ModeHintSource) -> Result<
             .collect(),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -200,8 +200,8 @@ async fn mode_hints_override_reasoning_effort(source: ModeHintSource) -> Result<
         })
         .build(&server)
         .await?;
-    submit_turn(&test.genex, "explicit", Some(ReasoningEffort::High)).await?;
-    submit_turn(&test.genex, "proactive", Some(ReasoningEffort::Ultra)).await?;
+    submit_turn(&test.ruxex, "explicit", Some(ReasoningEffort::High)).await?;
+    submit_turn(&test.ruxex, "proactive", Some(ReasoningEffort::Ultra)).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -247,7 +247,7 @@ async fn catalog_proactive_mode_is_ultra_only(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", move |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -262,7 +262,7 @@ async fn catalog_proactive_mode_is_ultra_only(
         .build_with_auto_env(&server)
         .await?;
 
-    submit_turn(&test.genex, "hello", Some(effort)).await?;
+    submit_turn(&test.ruxex, "hello", Some(effort)).await?;
 
     let input = response.single_request().input();
     let texts = developer_texts(&input);
@@ -303,7 +303,7 @@ async fn model_switch_refreshes_catalog_role_and_mode(
             .collect(),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -327,16 +327,16 @@ async fn model_switch_refreshes_catalog_role_and_mode(
         .with_config(configure_multi_agent_v2)
         .build_with_auto_env(&server)
         .await?;
-    submit_turn(&test.genex, "first model", Some(effort.clone())).await?;
+    submit_turn(&test.ruxex, "first model", Some(effort.clone())).await?;
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some("example-model-2".to_string()),
             ..Default::default()
         },
     )
     .await?;
-    submit_turn(&test.genex, "second model", Some(effort)).await?;
+    submit_turn(&test.ruxex, "second model", Some(effort)).await?;
 
     let requests = responses.requests();
     for (index, request) in requests.iter().enumerate() {
@@ -396,7 +396,7 @@ async fn empty_configured_mode_hint_emits_no_mode_message(effort: ReasoningEffor
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", |model_info| {
             add_ultra_reasoning(model_info);
             set_multi_agent_mode(
@@ -414,7 +414,7 @@ async fn empty_configured_mode_hint_emits_no_mode_message(effort: ReasoningEffor
         .build_with_auto_env(&server)
         .await?;
 
-    submit_turn(&test.genex, "hello", Some(effort)).await?;
+    submit_turn(&test.ruxex, "hello", Some(effort)).await?;
 
     let input = response.single_request().input();
     let texts = developer_texts(&input);
@@ -447,20 +447,20 @@ async fn changing_configured_mode_hint_to_empty_emits_no_update() -> Result<()> 
             .collect(),
     )
     .await;
-    let initial = test_genex()
+    let initial = test_ruxex()
         .with_config(configure_custom_mode_hint)
         .build(&server)
         .await?;
 
-    submit_turn(&initial.genex, "before resume", /*effort*/ None).await?;
+    submit_turn(&initial.ruxex, "before resume", /*effort*/ None).await?;
 
-    let mut resume_builder = test_genex().with_config(|config| {
+    let mut resume_builder = test_ruxex().with_config(|config| {
         configure_multi_agent_v2(config);
         config.multi_agent_v2.multi_agent_mode_hint_text = Some(String::new());
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     drop(initial);
-    submit_turn(&resumed.genex, "after resume", /*effort*/ None).await?;
+    submit_turn(&resumed.ruxex, "after resume", /*effort*/ None).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -496,7 +496,7 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
             .collect(),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", add_ultra_reasoning)
         .with_config(|config| {
             configure_ultra(config);
@@ -511,8 +511,8 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
         .clone()
         .expect("rollout path");
 
-    submit_turn(&test.genex, "proactive", /*effort*/ None).await?;
-    submit_turn(&test.genex, "explicit", Some(ReasoningEffort::High)).await?;
+    submit_turn(&test.ruxex, "proactive", /*effort*/ None).await?;
+    submit_turn(&test.ruxex, "explicit", Some(ReasoningEffort::High)).await?;
 
     let requests = responses.requests();
     let first_input = requests[0].input();
@@ -537,8 +537,8 @@ async fn live_mode_change_appends_mode_without_reappending_usage_hint() -> Resul
         ),
         (1, 1, 1),
     );
-    test.genex.ensure_rollout_materialized().await;
-    test.genex.flush_rollout().await?;
+    test.ruxex.ensure_rollout_materialized().await;
+    test.ruxex.flush_rollout().await?;
     let rollout_values = std::fs::read_to_string(rollout_path)?
         .lines()
         .map(serde_json::from_str::<Value>)
@@ -577,20 +577,20 @@ async fn leaving_ultra_after_cold_resume_emits_explicit_mode() -> Result<()> {
             .collect(),
     )
     .await;
-    let initial = test_genex()
+    let initial = test_ruxex()
         .with_model_info_override("legacy-model", add_ultra_reasoning)
         .with_config(configure_ultra)
         .build(&server)
         .await?;
 
-    submit_turn(&initial.genex, "before resume", /*effort*/ None).await?;
+    submit_turn(&initial.ruxex, "before resume", /*effort*/ None).await?;
 
-    let mut resume_builder = test_genex()
+    let mut resume_builder = test_ruxex()
         .with_model_info_override("legacy-model", add_ultra_reasoning)
         .with_config(configure_ultra);
     let resumed = resume_builder.restart(&server, &initial).await?;
     drop(initial);
-    submit_turn(&resumed.genex, "after resume", Some(ReasoningEffort::High)).await?;
+    submit_turn(&resumed.ruxex, "after resume", Some(ReasoningEffort::High)).await?;
 
     let requests = responses.requests();
     assert_eq!(
@@ -628,7 +628,7 @@ async fn ultra_on_multi_agent_v1_uses_highest_non_ultra_without_mode_instruction
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("legacy-model", add_ultra_reasoning)
         .with_config(|config| {
             config.model_reasoning_effort = Some(ReasoningEffort::Ultra);
@@ -636,7 +636,7 @@ async fn ultra_on_multi_agent_v1_uses_highest_non_ultra_without_mode_instruction
         .build(&server)
         .await?;
 
-    submit_turn(&test.genex, "hello", /*effort*/ None).await?;
+    submit_turn(&test.ruxex, "hello", /*effort*/ None).await?;
 
     let request = response.single_request();
     assert_eq!(

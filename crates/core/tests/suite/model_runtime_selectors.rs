@@ -9,25 +9,25 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use tokio::time::Duration;
@@ -76,7 +76,7 @@ async fn wait_for_model_available(manager: &SharedModelsManager, slug: &str) -> 
         if let Some(model) = manager
             .list_models(
                 RefreshStrategy::Online,
-                genex_core::test_support::default_http_client_factory(),
+                ruxex_core::test_support::default_http_client_factory(),
             )
             .await
             .iter()
@@ -115,8 +115,8 @@ async fn response_for_remote_model(
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(configure);
     let test = builder.build(&server).await?;
     let models_manager = test.thread_manager.get_models_manager();
@@ -125,14 +125,14 @@ async fn response_for_remote_model(
     assert_eq!(models_mock.requests().len(), 1);
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(model_slug),
             ..Default::default()
         },
     )
     .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "list tools".into(),
             text_elements: Vec::new(),
@@ -140,7 +140,7 @@ async fn response_for_remote_model(
         .await?;
     let mut warnings = Vec::new();
     loop {
-        match wait_for_event(&test.genex, |_| true).await {
+        match wait_for_event(&test.ruxex, |_| true).await {
             EventMsg::Warning(warning) => warnings.push(warning.message),
             EventMsg::TurnComplete(_) => break,
             _ => {}
@@ -179,8 +179,8 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
     assert!(
         direct_tools
             .iter()
-            .all(|name| name != genex_code_mode::PUBLIC_TOOL_NAME
-                && name != genex_code_mode::WAIT_TOOL_NAME),
+            .all(|name| name != ruxex_code_mode::PUBLIC_TOOL_NAME
+                && name != ruxex_code_mode::WAIT_TOOL_NAME),
         "direct mode should override enabled code mode flags: {direct_tools:?}"
     );
 
@@ -192,8 +192,8 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
         tool_names(&code_mode_only_body),
         vec![
             // Code-mode entrypoints.
-            genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
-            genex_code_mode::WAIT_TOOL_NAME.to_string(),
+            ruxex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+            ruxex_code_mode::WAIT_TOOL_NAME.to_string(),
             "request_user_input".to_string(),
             // Hosted Responses tool.
             "web_search".to_string(),
@@ -211,7 +211,7 @@ async fn remote_tool_mode_selector_overrides_feature_flags() -> Result<()> {
     assert!(
         tool_names(&unsupported_response.body)
             .iter()
-            .any(|name| name == genex_code_mode::PUBLIC_TOOL_NAME)
+            .any(|name| name == ruxex_code_mode::PUBLIC_TOOL_NAME)
     );
     assert_eq!(
         unsupported_response
@@ -243,10 +243,10 @@ async fn remote_code_mode_only_selector_fails_closed_when_host_is_disabled() -> 
     assert!(
         tools
             .iter()
-            .any(|name| name == genex_code_mode::PUBLIC_TOOL_NAME)
+            .any(|name| name == ruxex_code_mode::PUBLIC_TOOL_NAME)
             && tools
                 .iter()
-                .any(|name| name == genex_code_mode::WAIT_TOOL_NAME),
+                .any(|name| name == ruxex_code_mode::WAIT_TOOL_NAME),
         "code-mode-only must retain code-mode tools: {tools:?}"
     );
     assert!(
@@ -296,8 +296,8 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
         ],
     )
     .await;
-    let test = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let test = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config
                 .features
@@ -312,7 +312,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
     assert_eq!(models_mock.requests().len(), 1);
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(model_slug.to_string()),
             ..Default::default()
@@ -322,7 +322,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
 
     let mut warning_counts = Vec::new();
     for prompt in ["first turn", "second turn"] {
-        test.genex
+        test.ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
                 text_elements: Vec::new(),
@@ -331,7 +331,7 @@ async fn unsupported_code_mode_warning_is_emitted_each_turn() -> Result<()> {
 
         let mut warning_count = 0;
         loop {
-            match wait_for_event(&test.genex, |_| true).await {
+            match wait_for_event(&test.ruxex, |_| true).await {
                 EventMsg::Warning(warning)
                     if warning.message.contains(UNSUPPORTED_CODE_MODE_WARNING) =>
                 {
@@ -434,8 +434,8 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(ROOT_MODEL.to_string());
         });
@@ -443,28 +443,28 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     assert_eq!(
         (
             models_mock.requests().len(),
-            test.genex.multi_agent_version(),
+            test.ruxex.multi_agent_version(),
         ),
         (1, None)
     );
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(CHILD_MODEL.to_string()),
             ..Default::default()
         },
     )
     .await?;
-    assert_eq!(test.genex.multi_agent_version(), None);
+    assert_eq!(test.ruxex.multi_agent_version(), None);
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: ROOT_PROMPT.into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -472,7 +472,7 @@ async fn remote_multi_agent_selector_uses_model_selected_before_first_turn() -> 
     assert_eq!(
         (
             models_mock.requests().len(),
-            test.genex.multi_agent_version(),
+            test.ruxex.multi_agent_version(),
             tool_names(
                 &response_mock
                     .last_request()

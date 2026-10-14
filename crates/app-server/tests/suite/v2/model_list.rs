@@ -6,22 +6,22 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::TestAppServer;
 use app_test_support::write_api_key_auth;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::Model;
-use genex_app_server_protocol::ModelListParams;
-use genex_app_server_protocol::ModelListResponse;
-use genex_app_server_protocol::ModelServiceTier;
-use genex_app_server_protocol::ModelUpgradeInfo;
-use genex_app_server_protocol::ReasoningEffortOption;
-use genex_app_server_protocol::RequestId;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_login::AuthKeyringBackendKind;
-use genex_login::login_with_api_key;
-use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelPreset;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::Model;
+use ruxex_app_server_protocol::ModelListParams;
+use ruxex_app_server_protocol::ModelListResponse;
+use ruxex_app_server_protocol::ModelServiceTier;
+use ruxex_app_server_protocol::ModelUpgradeInfo;
+use ruxex_app_server_protocol::ReasoningEffortOption;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::login_with_api_key;
+use ruxex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelPreset;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -47,11 +47,11 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
     app_enablement: bool,
 ) -> Result<()> {
     let server = MockServer::start().await;
-    let mut remote_model = genex_models_manager::test_support::test_models_response()?
+    let mut remote_model = ruxex_models_manager::test_support::test_models_response()?
         .models
         .remove(0);
     remote_model.slug = "rollout-model".into();
-    remote_model.visibility = genex_protocol::model_types::ModelVisibility::List;
+    remote_model.visibility = ruxex_protocol::model_types::ModelVisibility::List;
     remote_model.supported_in_api = true;
     Mock::given(method("GET"))
         .and(path("/v1/models"))
@@ -62,28 +62,28 @@ async fn api_key_model_discovery_startup_enablement_respects_user_config(
         )
         .mount(&server)
         .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let server_uri = server.uri();
     let feature_config = format!(
         "[features]\napi_key_model_discovery = {}\n",
         user_enablement.unwrap_or(app_enablement)
     );
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!("[model_provider]\nid = \"provider\"\nbase_url = \"{server_uri}/v1\"\n{feature_config}"),
     )?;
     login_with_api_key(
-        genex_home.path(),
+        ruxex_home.path(),
         "test-key",
         AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
-        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("GENEX_API_KEY", None)])
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("RUXEX_API_KEY", None)])
         .build_initialized()
         .await?;
-    let mut bundled = genex_models_manager::test_support::test_models_response()?.models;
+    let mut bundled = ruxex_models_manager::test_support::test_models_response()?.models;
     bundled.sort_by_key(|model| model.priority);
     let mut bundled = ModelPreset::filter_by_auth(
         bundled.into_iter().map(Into::into).collect(),
@@ -178,7 +178,7 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
 fn expected_visible_models() -> Vec<Model> {
     // Filter by supported_in_api to cover both managed and direct provider auth modes.
     let mut presets = ModelPreset::filter_by_auth(
-        genex_core::test_support::all_model_presets().clone(),
+        ruxex_core::test_support::all_model_presets().clone(),
         /*uses_managed_auth*/ false,
     );
 
@@ -194,10 +194,10 @@ fn expected_visible_models() -> Vec<Model> {
 
 #[tokio::test]
 async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    write_models_cache(ruxex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -224,10 +224,10 @@ async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_includes_hidden_models() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    write_models_cache(ruxex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -317,10 +317,10 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
         .mount_as_scoped(&server)
         .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let server_uri = server.uri();
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -336,23 +336,23 @@ api_key_model_discovery = true
     )?;
     if let Some(api_key) = api_key {
         login_with_api_key(
-            genex_home.path(),
+            ruxex_home.path(),
             api_key,
             AuthCredentialsStoreMode::File,
             AuthKeyringBackendKind::default(),
         )?;
     } else {
         write_api_key_auth(
-            genex_home.path(),
+            ruxex_home.path(),
             ApiKeyAuthFixture::new(bearer_token).plan_type("pro"),
             AuthCredentialsStoreMode::File,
         )?;
     }
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("GENEX_API_KEY", None)])
+        .with_env_overrides(&[("PROVIDER_API_KEY", None), ("RUXEX_API_KEY", None)])
         .build_initialized()
         .await?;
     let request_id = mcp
@@ -420,10 +420,10 @@ api_key_model_discovery = true
 
 #[tokio::test]
 async fn list_models_pagination_works() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    write_models_cache(ruxex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -466,10 +466,10 @@ async fn list_models_pagination_works() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_rejects_invalid_cursor() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    write_models_cache(ruxex_home.path()).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;

@@ -1,7 +1,7 @@
 //! Session listing preserves grouped filters while tolerating older single-CWD daemons.
 
 use super::*;
-use genex_app_server_protocol::ThreadListCwdFilter;
+use ruxex_app_server_protocol::ThreadListCwdFilter;
 
 impl AppServerSession {
     pub(crate) async fn thread_list(

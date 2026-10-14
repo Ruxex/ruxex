@@ -1,7 +1,7 @@
 use super::*;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_absolute_path::test_support::test_path_buf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_absolute_path::test_support::test_path_buf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -36,7 +36,7 @@ fn make_skill(name: &str, path: &str) -> SkillMetadata {
         dependencies: None,
         policy: None,
         path_to_skills_md: test_path_buf(path).abs(),
-        scope: genex_protocol::protocol::SkillScope::User,
+        scope: ruxex_protocol::protocol::SkillScope::User,
         plugin_id: None,
         remote_plugin_id: None,
     }

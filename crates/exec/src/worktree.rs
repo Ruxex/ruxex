@@ -2,9 +2,9 @@
 //! The temporary app-server never starts a thread or executes a turn.
 
 use super::*;
-use genex_app_server_client::AppServerRuntime;
-use genex_app_server_client::configured_app_server_runtime_from_config;
-use genex_app_server_client::provider_init_from_config_with_descriptor;
+use ruxex_app_server_client::AppServerRuntime;
+use ruxex_app_server_client::configured_app_server_runtime_from_config;
+use ruxex_app_server_client::provider_init_from_config_with_descriptor;
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
@@ -12,7 +12,7 @@ pub(super) async fn fork_source(
     args: &mut crate::cli::ForkArgs,
     config: &Config,
     arg0_paths: &Arg0DispatchPaths,
-    cli_overrides: &[(String, genex_config::TomlValue)],
+    cli_overrides: &[(String, ruxex_config::TomlValue)],
     loader_overrides: &LoaderOverrides,
     strict_config: bool,
     provider_factory: Option<ProviderRuntimeFactory>,
@@ -24,12 +24,12 @@ pub(super) async fn fork_source(
     } else {
         configured_app_server_runtime_from_config(config, true).await?
     };
-    let state_db = genex_core::init_state_db(config).await;
-    let environment_manager = EnvironmentManager::from_genex_home(
-        config.genex_home.clone(),
+    let state_db = ruxex_core::init_state_db(config).await;
+    let environment_manager = EnvironmentManager::from_ruxex_home(
+        config.ruxex_home.clone(),
         Some(ExecServerRuntimePaths::from_optional_paths(
-            arg0_paths.genex_self_exe.clone(),
-            arg0_paths.genex_linux_sandbox_exe.clone(),
+            arg0_paths.ruxex_self_exe.clone(),
+            arg0_paths.ruxex_linux_sandbox_exe.clone(),
         )?),
         config.http_client_factory(),
     )
@@ -50,7 +50,7 @@ pub(super) async fn fork_source(
         session_source: SessionSource::Exec,
         enable_api_key_env: true,
         runtime: Some(runtime),
-        client_name: "genex_exec".to_string(),
+        client_name: "ruxex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
         opt_out_notification_methods: Vec::new(),

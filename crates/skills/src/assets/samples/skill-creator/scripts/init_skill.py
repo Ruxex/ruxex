@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-from generate_genex_yaml import write_genex_yaml
+from generate_ruxex_yaml import write_ruxex_yaml
 
 MAX_SKILL_NAME_LENGTH = 64
 ALLOWED_RESOURCES = {"scripts", "references", "assets"}
@@ -30,7 +30,7 @@ description: "[TODO: Briefly describe what this skill does and when it applies.]
 
 # {skill_title}
 
-[TODO: Add the task-specific guidance Genex needs. Reference supporting files only when they are relevant.]
+[TODO: Add the task-specific guidance Ruxex needs. Reference supporting files only when they are relevant.]
 """
 
 EXAMPLE_SCRIPT = '''#!/usr/bin/env python3
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
 EXAMPLE_REFERENCE = """# Reference for {skill_title}
 
-Replace this placeholder with maintained, task-specific details that Genex
+Replace this placeholder with maintained, task-specific details that Ruxex
 would not reliably know, such as operational constraints, local schemas, or
 fragile integration behavior.
 
@@ -69,7 +69,7 @@ This placeholder represents where asset files would be stored.
 Replace with actual asset files (templates, images, fonts, etc.) or delete if not needed.
 
 Asset files are NOT intended to be loaded into context, but rather used within
-the output Genex produces.
+the output Ruxex produces.
 
 Example asset files from other skills:
 - Brand guidelines: logo.png, slides_template.pptx
@@ -198,13 +198,13 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
         print(f"[ERROR] Error creating SKILL.md: {e}")
         return None
 
-    # Create agents/genex.yaml
+    # Create agents/ruxex.yaml
     try:
-        result = write_genex_yaml(skill_dir, skill_name, interface_overrides)
+        result = write_ruxex_yaml(skill_dir, skill_name, interface_overrides)
         if not result:
             return None
     except Exception as e:
-        print(f"[ERROR] Error creating agents/genex.yaml: {e}")
+        print(f"[ERROR] Error creating agents/ruxex.yaml: {e}")
         return None
 
     # Create resource directories if requested
@@ -232,7 +232,7 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
         print(
             "2. Create resource directories only if needed (scripts/, references/, assets/)"
         )
-    print("3. Update agents/genex.yaml if the UI metadata should differ")
+    print("3. Update agents/ruxex.yaml if the UI metadata should differ")
     print("4. Run the validator when ready to check the skill structure")
     print(
         "5. Consider independent forward-testing only when complexity or risk warrants it"

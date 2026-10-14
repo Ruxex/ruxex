@@ -1,12 +1,12 @@
 use std::collections::BTreeSet;
 
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ResponseItem;
 
 use crate::context::ContextualUserFragment;
 use crate::context::PluginInstructions;
 use crate::plugins::PluginCapabilitySummary;
 use crate::plugins::render_explicit_plugin_instructions;
-use genex_mcp::ToolInfo;
+use ruxex_mcp::ToolInfo;
 
 pub(crate) fn build_plugin_injections(
     mentioned_plugins: &[PluginCapabilitySummary],

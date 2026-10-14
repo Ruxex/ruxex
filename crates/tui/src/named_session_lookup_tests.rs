@@ -1,17 +1,17 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_app_server_client::RemoteAppServerClient;
-use genex_app_server_client::RemoteAppServerConnectArgs;
-use genex_app_server_client::RemoteAppServerEndpoint;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_state::ThreadMetadataBuilder;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_client::RemoteAppServerClient;
+use ruxex_app_server_client::RemoteAppServerConnectArgs;
+use ruxex_app_server_client::RemoteAppServerEndpoint;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_state::ThreadMetadataBuilder;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -30,14 +30,14 @@ use crate::tests::start_test_embedded_app_server;
 
 async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
     ConfigBuilder::default()
-        .genex_home(temp_dir.path().to_path_buf())
+        .ruxex_home(temp_dir.path().to_path_buf())
         .build()
         .await
 }
 
-async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(config.genex_home.as_path().abs()),
+async fn state_runtime(config: &Config) -> std::io::Result<Arc<ruxex_state::StateRuntime>> {
+    let runtime = ruxex_state::StateRuntime::init(
+        ruxex_state::SqliteConfig::new_for_testing(config.ruxex_home.as_path().abs()),
     )
     .await
     .map_err(std::io::Error::other)?;
@@ -53,16 +53,16 @@ async fn lookup_name(
     name: &str,
     collections: &[SessionCollection],
     mode: ThreadParamsMode,
-) -> color_eyre::Result<Option<genex_app_server_protocol::Thread>> {
+) -> color_eyre::Result<Option<ruxex_app_server_protocol::Thread>> {
     let mut app_server = AppServerSession::new(
-        genex_app_server_client::AppServerClient::InProcess(
+        ruxex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         mode,
     );
     let target = lookup(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         name,
         collections,
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -73,8 +73,8 @@ async fn lookup_name(
 }
 
 async fn upsert_thread(
-    runtime: &genex_state::StateRuntime,
-    metadata: genex_state::ThreadMetadata,
+    runtime: &ruxex_state::StateRuntime,
+    metadata: ruxex_state::ThreadMetadata,
 ) -> std::io::Result<()> {
     runtime
         .upsert_thread(&metadata)
@@ -87,7 +87,7 @@ fn thread_metadata(
     thread_id: ThreadId,
     rollout_path: PathBuf,
     title: &str,
-) -> genex_state::ThreadMetadata {
+) -> ruxex_state::ThreadMetadata {
     let created_at = chrono::DateTime::parse_from_rfc3339("2025-02-01T10:00:00Z")
         .expect("timestamp should parse")
         .with_timezone(&chrono::Utc);
@@ -98,7 +98,7 @@ fn thread_metadata(
         serde_json::from_value(serde_json::json!("cli"))
             .expect("cli session source should deserialize"),
     );
-    builder.cwd = config.genex_home.join("project").to_path_buf();
+    builder.cwd = config.ruxex_home.join("project").to_path_buf();
     let mut metadata = builder.build();
     metadata.title = title.to_string();
     metadata.first_user_message = Some("preview text".to_string());
@@ -115,7 +115,7 @@ fn write_rollout(
     history_mode: ThreadHistoryMode,
 ) -> color_eyre::Result<PathBuf> {
     let rollout_path = config
-        .genex_home
+        .ruxex_home
         .join("sessions/2025/02/01")
         .join(format!("rollout-2025-02-01T10-00-00-{thread_id}.jsonl"));
     std::fs::create_dir_all(rollout_path.parent().expect("rollout parent"))?;
@@ -124,8 +124,8 @@ fn write_rollout(
             session_id: thread_id.into(),
             id: thread_id,
             timestamp: timestamp.to_string(),
-            cwd: config.genex_home.join("project").to_path_buf(),
-            originator: "genex".to_string(),
+            cwd: config.ruxex_home.join("project").to_path_buf(),
+            originator: "ruxex".to_string(),
             cli_version: "0.0.0".to_string(),
             source,
             history_mode,
@@ -261,14 +261,14 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
     }
 
     let mut app_server = AppServerSession::new(
-        genex_app_server_client::AppServerClient::InProcess(
+        ruxex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         ThreadParamsMode::Embedded,
     );
     let error = lookup(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "same-label",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -277,7 +277,7 @@ async fn rejects_duplicate_labels_across_server_pages() -> color_eyre::Result<()
     .expect_err("duplicate labels should require an ID");
     let unverified = lookup(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "other-1",
         &[SessionCollection::Active],
         &[resume_source_kinds(/*include_non_interactive*/ false)],
@@ -391,7 +391,7 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
     )
     .await?;
     let mut embedded = AppServerSession::new(
-        genex_app_server_client::AppServerClient::InProcess(
+        ruxex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config.clone()).await?,
         ),
         ThreadParamsMode::Embedded,
@@ -452,12 +452,12 @@ async fn uses_listed_thread_when_older_server_cannot_read_it() -> color_eyre::Re
         })
         .await?;
         let mut remote = AppServerSession::new(
-            genex_app_server_client::AppServerClient::Remote(client),
+            ruxex_app_server_client::AppServerClient::Remote(client),
             mode,
         );
         let found = lookup(
             &mut remote,
-            config.genex_home.as_path(),
+            config.ruxex_home.as_path(),
             "saved-session",
             &[SessionCollection::Active],
             &[resume_source_kinds(/*include_non_interactive*/ false)],

@@ -30,17 +30,17 @@ pub mod toggles;
 pub(crate) use git_policy::PluginGitMode;
 pub(crate) use git_policy::configure_trusted_git_repository;
 
-pub const BUNDLED_MARKETPLACE_NAME: &str = "genex-bundled";
-pub(crate) const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "genex-bundled-alpha";
-pub(crate) const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "genex-primary-runtime";
+pub const BUNDLED_MARKETPLACE_NAME: &str = "ruxex-bundled";
+pub(crate) const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "ruxex-bundled-alpha";
+pub(crate) const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "ruxex-primary-runtime";
 
 #[cfg(test)]
 pub(crate) const TEST_CURATED_MARKETPLACE_NAME: &str = "test-curated";
 #[cfg(test)]
 pub(crate) const TEST_API_CURATED_MARKETPLACE_NAME: &str = "test-api-curated";
 
-pub type LoadedPlugin = genex_plugin::LoadedPlugin<genex_config::McpServerConfig>;
-pub type PluginLoadOutcome = genex_plugin::PluginLoadOutcome<genex_config::McpServerConfig>;
+pub type LoadedPlugin = ruxex_plugin::LoadedPlugin<ruxex_config::McpServerConfig>;
+pub type PluginLoadOutcome = ruxex_plugin::PluginLoadOutcome<ruxex_config::McpServerConfig>;
 
 pub use artifact_operation::ArtifactOperation;
 pub use artifact_operation::recognize_artifact_operation;

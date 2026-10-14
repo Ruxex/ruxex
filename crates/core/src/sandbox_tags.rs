@@ -1,11 +1,11 @@
 //! Captures configuration-derived sandbox labels and writes them to diagnostics.
 //! Labels never inspect the filesystem and must not be used for authorization.
 
-use crate::responses_metadata::GenexResponsesMetadata;
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::get_platform_sandbox;
-use genex_sandboxing::policy_transforms::should_require_platform_sandbox;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::get_platform_sandbox;
+use ruxex_sandboxing::policy_transforms::should_require_platform_sandbox;
 use std::path::Path;
 
 /// Diagnostic labels captured with a turn's permission configuration.
@@ -34,7 +34,7 @@ impl SandboxTags {
     }
 
     /// Records the same captured labels in model and MCP request metadata.
-    pub(crate) fn record_metadata(&self, metadata: &mut GenexResponsesMetadata) {
+    pub(crate) fn record_metadata(&self, metadata: &mut RuxexResponsesMetadata) {
         metadata.sandbox = Some(self.sandbox.to_string());
         metadata.sandbox_mode = Some(self.policy.to_string());
     }

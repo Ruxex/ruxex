@@ -1,12 +1,12 @@
-# genex-otel
+# ruxex-otel
 
-`genex-otel` is the OpenTelemetry integration crate for Genex. It provides:
+`ruxex-otel` is the OpenTelemetry integration crate for Ruxex. It provides:
 
-- Provider wiring for log/trace/metric exporters (`genex_otel::OtelProvider`
-  and `genex_otel::provider`).
-- Session-scoped business event emission via `genex_otel::SessionTelemetry`.
-- Low-level metrics APIs via `genex_otel::metrics`.
-- Trace-context helpers via `genex_otel::trace_context` and crate-root re-exports.
+- Provider wiring for log/trace/metric exporters (`ruxex_otel::OtelProvider`
+  and `ruxex_otel::provider`).
+- Session-scoped business event emission via `ruxex_otel::SessionTelemetry`.
+- Low-level metrics APIs via `ruxex_otel::metrics`.
+- Trace-context helpers via `ruxex_otel::trace_context` and crate-root re-exports.
 
 ## Tracing and logs
 
@@ -15,17 +15,17 @@ metrics (when enabled), then attach its layers to your `tracing_subscriber`
 registry:
 
 ```rust
-use genex_otel::config::OtelExporter;
-use genex_otel::config::OtelHttpProtocol;
-use genex_otel::config::OtelSettings;
-use genex_otel::OtelProvider;
+use ruxex_otel::config::OtelExporter;
+use ruxex_otel::config::OtelHttpProtocol;
+use ruxex_otel::config::OtelSettings;
+use ruxex_otel::OtelProvider;
 use tracing_subscriber::prelude::*;
 
 let settings = OtelSettings {
     environment: "dev".to_string(),
-    service_name: "genex-cli".to_string(),
+    service_name: "ruxex-cli".to_string(),
     service_version: env!("CARGO_PKG_VERSION").to_string(),
-    genex_home: std::path::PathBuf::from("/tmp"),
+    ruxex_home: std::path::PathBuf::from("/tmp"),
     exporter: OtelExporter::OtlpHttp {
         endpoint: "https://otlp.example.com".to_string(),
         headers: std::collections::HashMap::new(),
@@ -65,7 +65,7 @@ beta = "two"
 
 Configured tracestate members and encoded values must be valid W3C tracestate.
 Each nested table is encoded as semicolon-separated `key:value` fields inside
-that member. If propagated trace context already has the named member, Genex
+that member. If propagated trace context already has the named member, Ruxex
 upserts configured fields and preserves other fields in that member. This
 config shape does not support setting opaque tracestate member values. Invalid
 trace metadata entries are ignored during config load and reported as startup
@@ -74,11 +74,11 @@ warnings.
 ## SessionTelemetry (events)
 
 `SessionTelemetry` adds consistent metadata to tracing events and helps record
-Genex-specific session events. Rich session/business events should go through
+Ruxex-specific session events. Rich session/business events should go through
 `SessionTelemetry`; subsystem-owned audit events can stay with the owning subsystem.
 
 ```rust
-use genex_otel::SessionTelemetry;
+use ruxex_otel::SessionTelemetry;
 
 let manager = SessionTelemetry::new(
     conversation_id,
@@ -109,17 +109,17 @@ In-memory (tests):
 let exporter = InMemoryMetricExporter::default();
 let metrics = MetricsClient::new(MetricsConfig::in_memory(
     "test",
-    "genex-cli",
+    "ruxex-cli",
     env!("CARGO_PKG_VERSION"),
     exporter.clone(),
 ))?;
-metrics.counter("genex.turns", 1, &[("model", "example-model")])?;
+metrics.counter("ruxex.turns", 1, &[("model", "example-model")])?;
 metrics.shutdown()?; // flushes in-memory exporter
 ```
 
 ## WebSocket continuation
 
-`genex.websocket.continuation` counts `response.create` send attempts, including
+`ruxex.websocket.continuation` counts `response.create` send attempts, including
 failed sends. It carries existing session tags plus `mode` (`incremental`/`full`),
 `phase` (`warmup`/`generation`), and `reason`:
 
@@ -142,8 +142,8 @@ This measures client send attempts, not disconnect rates or engine cache reuse.
 Trace propagation helpers remain separate from the session event emitter:
 
 ```rust
-use genex_otel::current_span_w3c_trace_context;
-use genex_otel::set_parent_from_w3c_trace_context;
+use ruxex_otel::current_span_w3c_trace_context;
+use ruxex_otel::set_parent_from_w3c_trace_context;
 ```
 
 ## Shutdown

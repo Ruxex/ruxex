@@ -14,7 +14,7 @@ use tempfile::tempdir;
 use wiremock::MockServer;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built ruxex binary; run with --ignored for manual resize smoke"]
 async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -25,16 +25,16 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
         return Ok(());
     }
 
-    let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let genex = genex_binary(&repo_root)?;
-    let genex_home = tempdir()?;
+    let repo_root = ruxex_utils_cargo_bin::repo_root()?;
+    let ruxex = ruxex_binary(&repo_root)?;
+    let ruxex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config = format!("model_provider.base_url=\"{}/v1\"", server.uri());
-    write_config(genex_home.path(), &repo_root)?;
-    write_auth(genex_home.path())?;
+    write_config(ruxex_home.path(), &repo_root)?;
+    write_auth(ruxex_home.path())?;
 
-    let session_name = format!("genex-resize-reflow-smoke-{}", std::process::id());
+    let session_name = format!("ruxex-resize-reflow-smoke-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -55,9 +55,9 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
+            .arg(format!("RUXEX_HOME={}", ruxex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(genex)
+            .arg(ruxex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -67,16 +67,16 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg(&repo_root)
             .arg(prompt),
     )?;
-    let genex_pane = stdout_text(&start_output).trim().to_string();
-    anyhow::ensure!(!genex_pane.is_empty(), "tmux did not report a pane id");
+    let ruxex_pane = stdout_text(&start_output).trim().to_string();
+    anyhow::ensure!(!ruxex_pane.is_empty(), "tmux did not report a pane id");
 
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "resize reflow sentinel",
         Duration::from_secs(/*secs*/ 15),
     )?;
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
@@ -85,12 +85,12 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
         Command::new("tmux")
             .arg("send-keys")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("-l")
             .arg(draft),
     )?;
     let baseline_capture =
-        wait_for_capture_contains(&genex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
+        wait_for_capture_contains(&ruxex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
     let baseline_row = last_composer_row(&baseline_capture).context("composer row before split")?;
     let baseline_history_row = first_row_containing(&baseline_capture, "resize reflow sentinel")
         .context("history row before split")?;
@@ -106,18 +106,18 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
             .arg("-l")
             .arg("12")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("sleep")
             .arg("30"),
     )?;
     let split_pane = stdout_text(&split_output).trim().to_string();
 
     sleep(Duration::from_millis(/*millis*/ 250));
-    let first_capture = capture_pane(&genex_pane)?;
+    let first_capture = capture_pane(&ruxex_pane)?;
     let first_row = last_composer_row(&first_capture).context("composer row after split")?;
 
     sleep(Duration::from_millis(/*millis*/ 1_000));
-    let second_capture = capture_pane(&genex_pane)?;
+    let second_capture = capture_pane(&ruxex_pane)?;
     let second_row =
         last_composer_row(&second_capture).context("composer row after reflow wait")?;
 
@@ -142,7 +142,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
     )?;
 
     sleep(Duration::from_millis(/*millis*/ 500));
-    let final_capture = capture_pane(&genex_pane)?;
+    let final_capture = capture_pane(&ruxex_pane)?;
     let final_row =
         last_composer_row(&final_capture).context("composer row after closing split")?;
     anyhow::ensure!(
@@ -164,7 +164,7 @@ async fn tmux_split_preserves_fresh_session_composer_row_after_resize_reflow() -
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built ruxex binary; run with --ignored for manual resize smoke"]
 async fn tmux_repeated_resizes_do_not_push_composer_down() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -181,7 +181,7 @@ async fn tmux_repeated_resizes_do_not_push_composer_down() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built ruxex binary; run with --ignored for manual resize smoke"]
 async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -192,16 +192,16 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
         return Ok(());
     }
 
-    let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let genex = genex_binary(&repo_root)?;
-    let genex_home = tempdir()?;
+    let repo_root = ruxex_utils_cargo_bin::repo_root()?;
+    let ruxex = ruxex_binary(&repo_root)?;
+    let ruxex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config = format!("model_provider.base_url=\"{}/v1\"", server.uri());
-    write_config(genex_home.path(), &repo_root)?;
-    write_auth(genex_home.path())?;
+    write_config(ruxex_home.path(), &repo_root)?;
+    write_auth(ruxex_home.path())?;
 
-    let session_name = format!("genex-resize-width-{}", std::process::id());
+    let session_name = format!("ruxex-resize-width-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -222,9 +222,9 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
+            .arg(format!("RUXEX_HOME={}", ruxex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(genex)
+            .arg(ruxex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -234,16 +234,16 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg(&repo_root)
             .arg(prompt),
     )?;
-    let genex_pane = stdout_text(&start_output).trim().to_string();
-    anyhow::ensure!(!genex_pane.is_empty(), "tmux did not report a pane id");
+    let ruxex_pane = stdout_text(&start_output).trim().to_string();
+    anyhow::ensure!(!ruxex_pane.is_empty(), "tmux did not report a pane id");
 
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "resize reflow sentinel",
         Duration::from_secs(/*secs*/ 15),
     )?;
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
@@ -252,12 +252,12 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
         Command::new("tmux")
             .arg("send-keys")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("-l")
             .arg(draft),
     )?;
     let baseline_capture =
-        wait_for_capture_contains(&genex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
+        wait_for_capture_contains(&ruxex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
     let baseline_row = last_composer_row(&baseline_capture).context("composer row before split")?;
     let baseline_history_row = first_row_containing(&baseline_capture, "resize reflow sentinel")
         .context("history row before split")?;
@@ -273,7 +273,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
             .arg("-l")
             .arg("40")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("sleep")
             .arg("30"),
     )?;
@@ -288,7 +288,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
     )?;
 
     sleep(Duration::from_millis(/*millis*/ 1_000));
-    let restored_capture = capture_pane(&genex_pane)?;
+    let restored_capture = capture_pane(&ruxex_pane)?;
     let restored_row =
         last_composer_row(&restored_capture).context("composer row after width restore")?;
     let restored_history_row = first_row_containing(&restored_capture, "resize reflow sentinel")
@@ -312,7 +312,7 @@ async fn tmux_width_resize_restore_keeps_visible_content_anchored() -> Result<()
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "requires tmux and a locally built genex binary; run with --ignored for manual resize smoke"]
+#[ignore = "requires tmux and a locally built ruxex binary; run with --ignored for manual resize smoke"]
 async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<()> {
     if cfg!(windows) {
         return Ok(());
@@ -323,15 +323,15 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
         return Ok(());
     }
 
-    let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let genex = genex_binary(&repo_root)?;
-    let genex_home = tempdir()?;
+    let repo_root = ruxex_utils_cargo_bin::repo_root()?;
+    let ruxex = ruxex_binary(&repo_root)?;
+    let ruxex_home = tempdir()?;
     let server = MockServer::start().await;
     let provider_base_url_config = format!("model_provider.base_url=\"{}/v1\"", server.uri());
-    write_config(genex_home.path(), &repo_root)?;
-    write_auth(genex_home.path())?;
+    write_config(ruxex_home.path(), &repo_root)?;
+    write_auth(ruxex_home.path())?;
 
-    let session_name = format!("genex-resize-scrolled-composer-{}", std::process::id());
+    let session_name = format!("ruxex-resize-scrolled-composer-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -351,9 +351,9 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
+            .arg(format!("RUXEX_HOME={}", ruxex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(genex)
+            .arg(ruxex)
             .arg("--model")
             .arg("provider-model-d")
             .arg("-c")
@@ -364,10 +364,10 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             .arg("-C")
             .arg(&repo_root),
     )?;
-    let genex_pane = stdout_text(&start_output).trim().to_string();
-    anyhow::ensure!(!genex_pane.is_empty(), "tmux did not report a pane id");
+    let ruxex_pane = stdout_text(&start_output).trim().to_string();
+    anyhow::ensure!(!ruxex_pane.is_empty(), "tmux did not report a pane id");
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "provider-model-d",
         Duration::from_secs(/*secs*/ 15),
     )?;
@@ -378,7 +378,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             Command::new("tmux")
                 .arg("send-keys")
                 .arg("-t")
-                .arg(&genex_pane)
+                .arg(&ruxex_pane)
                 .arg("-l")
                 .arg(line),
         )?;
@@ -386,7 +386,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
             Command::new("tmux")
                 .arg("send-keys")
                 .arg("-t")
-                .arg(&genex_pane)
+                .arg(&ruxex_pane)
                 .arg("C-j"),
         )?;
     }
@@ -396,12 +396,12 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
         Command::new("tmux")
             .arg("send-keys")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("-l")
             .arg(&final_line),
     )?;
     let baseline =
-        wait_for_capture_contains(&genex_pane, &final_line, Duration::from_secs(/*secs*/ 15))?;
+        wait_for_capture_contains(&ruxex_pane, &final_line, Duration::from_secs(/*secs*/ 15))?;
 
     for (phase, width, height, minimum_visible_rows) in
         [("narrowed", "28", "9", 2), ("restored", "44", "14", 6)]
@@ -417,7 +417,7 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
                 .arg(height),
         )?;
         sleep(Duration::from_millis(/*millis*/ 350));
-        let capture = capture_pane(&genex_pane)?;
+        let capture = capture_pane(&ruxex_pane)?;
         let visible_rows = capture
             .lines()
             .filter_map(|line| line.find("probe-").map(|start| (line, start)))
@@ -449,16 +449,16 @@ async fn tmux_scrolled_composer_resize_preserves_visible_draft_text() -> Result<
 }
 
 async fn run_repeated_resize_smoke() -> Result<()> {
-    let repo_root = genex_utils_cargo_bin::repo_root()?;
-    let genex = genex_binary(&repo_root)?;
-    let genex_home = tempdir()?;
+    let repo_root = ruxex_utils_cargo_bin::repo_root()?;
+    let ruxex = ruxex_binary(&repo_root)?;
+    let ruxex_home = tempdir()?;
     let server = MockServer::start().await;
     let _response_mock = responses::mount_sse_once(&server, resize_reflow_sse()).await;
     let provider_base_url_config = format!("model_provider.base_url=\"{}/v1\"", server.uri());
-    write_config(genex_home.path(), &repo_root)?;
-    write_auth(genex_home.path())?;
+    write_config(ruxex_home.path(), &repo_root)?;
+    write_auth(ruxex_home.path())?;
 
-    let session_name = format!("genex-resize-repeat-{}", std::process::id());
+    let session_name = format!("ruxex-resize-repeat-{}", std::process::id());
     let _session = TmuxSession {
         name: session_name.clone(),
     };
@@ -479,9 +479,9 @@ async fn run_repeated_resize_smoke() -> Result<()> {
             .arg(&session_name)
             .arg("--")
             .arg("env")
-            .arg(format!("GENEX_HOME={}", genex_home.path().display()))
+            .arg(format!("RUXEX_HOME={}", ruxex_home.path().display()))
             .arg("PROVIDER_API_KEY=dummy")
-            .arg(genex)
+            .arg(ruxex)
             .arg("-c")
             .arg("analytics.enabled=false")
             .arg("-c")
@@ -491,16 +491,16 @@ async fn run_repeated_resize_smoke() -> Result<()> {
             .arg(&repo_root)
             .arg(prompt),
     )?;
-    let genex_pane = stdout_text(&start_output).trim().to_string();
-    anyhow::ensure!(!genex_pane.is_empty(), "tmux did not report a pane id");
+    let ruxex_pane = stdout_text(&start_output).trim().to_string();
+    anyhow::ensure!(!ruxex_pane.is_empty(), "tmux did not report a pane id");
 
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "resize reflow sentinel",
         Duration::from_secs(/*secs*/ 15),
     )?;
     wait_for_capture_contains(
-        &genex_pane,
+        &ruxex_pane,
         "legacy-model default",
         Duration::from_secs(/*secs*/ 15),
     )?;
@@ -509,12 +509,12 @@ async fn run_repeated_resize_smoke() -> Result<()> {
         Command::new("tmux")
             .arg("send-keys")
             .arg("-t")
-            .arg(&genex_pane)
+            .arg(&ruxex_pane)
             .arg("-l")
             .arg(draft),
     )?;
     let baseline_capture =
-        wait_for_capture_contains(&genex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
+        wait_for_capture_contains(&ruxex_pane, draft, Duration::from_secs(/*secs*/ 15))?;
     let baseline_row = last_composer_row(&baseline_capture).context("composer row before split")?;
     let baseline_history_row = first_row_containing(&baseline_capture, "resize reflow sentinel")
         .context("history row before split")?;
@@ -531,7 +531,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
                 .arg("-l")
                 .arg("12")
                 .arg("-t")
-                .arg(&genex_pane)
+                .arg(&ruxex_pane)
                 .arg("sleep")
                 .arg("30"),
         )?;
@@ -546,7 +546,7 @@ async fn run_repeated_resize_smoke() -> Result<()> {
         )?;
 
         sleep(Duration::from_millis(/*millis*/ 500));
-        let restored_capture = capture_pane(&genex_pane)?;
+        let restored_capture = capture_pane(&ruxex_pane)?;
         let restored_row = last_composer_row(&restored_capture)
             .with_context(|| format!("composer row after resize cycle {cycle}"))?;
         let restored_history_row =
@@ -585,20 +585,20 @@ impl Drop for TmuxSession {
     }
 }
 
-fn genex_binary(repo_root: &Path) -> Result<PathBuf> {
-    if let Ok(path) = genex_utils_cargo_bin::cargo_bin("genex-provider-host-example") {
+fn ruxex_binary(repo_root: &Path) -> Result<PathBuf> {
+    if let Ok(path) = ruxex_utils_cargo_bin::cargo_bin("ruxex-provider-host-example") {
         return Ok(path);
     }
 
-    let fallback = repo_root.join("target/debug/genex-provider-host-example");
+    let fallback = repo_root.join("target/debug/ruxex-provider-host-example");
     anyhow::ensure!(
         fallback.is_file(),
-        "provider-owned host is unavailable; run `cargo build -p genex-provider-host-example` first"
+        "provider-owned host is unavailable; run `cargo build -p ruxex-provider-host-example` first"
     );
     Ok(fallback)
 }
 
-fn write_config(genex_home: &Path, repo_root: &Path) -> Result<()> {
+fn write_config(ruxex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root_display = repo_root.display();
     let config = format!(
         r#"model = "legacy-model"
@@ -608,13 +608,13 @@ suppress_unstable_features_warning = true
 trust_level = "trusted"
 "#
     );
-    std::fs::write(genex_home.join("config.toml"), config)?;
+    std::fs::write(ruxex_home.join("config.toml"), config)?;
     Ok(())
 }
 
-fn write_auth(genex_home: &Path) -> Result<()> {
+fn write_auth(ruxex_home: &Path) -> Result<()> {
     std::fs::write(
-        genex_home.join("auth.json"),
+        ruxex_home.join("auth.json"),
         r#"{"PROVIDER_API_KEY":"dummy","tokens":null,"last_refresh":null}"#,
     )?;
     Ok(())

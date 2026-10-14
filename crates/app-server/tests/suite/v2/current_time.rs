@@ -5,15 +5,15 @@ use app_test_support::create_final_assistant_message_sse_response;
 use chrono::DateTime;
 use chrono::Local;
 use chrono::Utc;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CurrentTimeReadResponse;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CurrentTimeReadResponse;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -39,7 +39,7 @@ async fn current_time_read_round_trip_adds_reminder_to_model_input() -> Result<(
         create_final_assistant_message_sse_response("Done")?,
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_extra_config(
             r#"[features.current_time_reminder]
@@ -48,10 +48,10 @@ reminder_interval_seconds = 1
 clock_source = "external"
 "#,
         )
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 

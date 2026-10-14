@@ -5,39 +5,39 @@ use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ApprovalsReviewer;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxMode;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadSettingsUpdateResponse;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::ThreadUnsubscribeStatus;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_core::test_support::all_model_presets;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ApprovalsReviewer;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxMode;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeStatus;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_core::test_support::all_model_presets;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -52,10 +52,10 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 #[tokio::test]
 async fn disabled_plugin_ids_replace_preserve_and_clear_without_inference() -> Result<()> {
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let started = start_thread(&mut mcp).await?;
@@ -104,10 +104,10 @@ async fn disabled_plugin_ids_restore_from_fork_boundary(
         create_final_assistant_message_sse_response("done again")?,
     ])
     .await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let started = mcp
@@ -167,7 +167,7 @@ async fn disabled_plugin_ids_restore_from_fork_boundary(
     if restart_before_fork {
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build_initialized()
             .await?;
     }
@@ -232,13 +232,13 @@ async fn thread_settings_update_emits_notification_and_updates_future_turns() ->
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
+    write_models_cache(ruxex_home.path()).await?;
     let (model_id, service_tier_id) = service_tier_model_and_tier_id()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let thread = start_thread(&mut mcp).await?.thread;
@@ -282,12 +282,12 @@ async fn thread_settings_update_emits_notification_and_updates_future_turns() ->
     .await??;
 
     // Loaded metadata must come from live settings, even if stored metadata is stale.
-    let state_db = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+    let state_db = ruxex_state::StateRuntime::init(
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
     let mut stored = state_db
-        .get_thread(genex_protocol::ThreadId::from_string(&thread.id)?)
+        .get_thread(ruxex_protocol::ThreadId::from_string(&thread.id)?)
         .await?
         .expect("completed thread should be persisted");
     stored.model = Some("stored-model".to_string());
@@ -361,13 +361,13 @@ async fn thread_settings_update_cwd_retargets_default_environment() -> Result<()
         responses::ev_completed("resp-1"),
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let initial_workspace = TempDir::new()?;
     let workspace = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = mcp
@@ -430,11 +430,11 @@ async fn thread_settings_update_while_turn_is_active_emits_notification() -> Res
         responses::sse_response(create_final_assistant_message_sse_response("first done")?)
             .set_delay(Duration::from_secs(2));
     let _requests = responses::mount_response_sequence(&server, vec![first_response]).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let thread = start_thread(&mut mcp).await?.thread;
@@ -473,13 +473,13 @@ async fn thread_settings_update_null_service_tier_uses_default() -> Result<()> {
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
-    write_models_cache(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
+    write_models_cache(ruxex_home.path()).await?;
     let (model_id, service_tier_id) = service_tier_model_and_tier_id()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let thread = start_thread(&mut mcp).await?.thread;
@@ -543,11 +543,11 @@ async fn thread_settings_update_null_service_tier_uses_default() -> Result<()> {
 #[tokio::test]
 async fn thread_settings_update_rejects_sandbox_policy_with_permissions() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let thread = start_thread(&mut mcp).await?.thread;
@@ -579,11 +579,11 @@ async fn turn_start_settings_override_emits_thread_settings_updated() -> Result<
         create_final_assistant_message_sse_response("done")?,
     ])
     .await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let thread = start_thread(&mut mcp).await?.thread;
@@ -695,11 +695,11 @@ fn service_tier_model_and_tier_id() -> Result<(String, String)> {
     Ok((model.id.clone(), model.service_tiers[0].id.clone()))
 }
 
-fn create_config_toml(genex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+fn create_config_toml(ruxex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_root_config("compact_prompt = \"compact\"\nmodel_auto_compact_token_limit = 200000")
         .with_provider_config("supports_websockets = false")
-        .write(genex_home)
+        .write(ruxex_home)
 }
 
 #[tokio::test]
@@ -717,7 +717,7 @@ async fn thread_settings_update_preserves_session_profiles() -> Result<()> {
         )?;
         write_models_cache(home.path()).await?;
         let mut server = TestAppServer::builder()
-            .with_genex_home(home.path())
+            .with_ruxex_home(home.path())
             .build_initialized_with_timeout(DEFAULT_TIMEOUT)
             .await?;
         let mut config = std::collections::HashMap::from([

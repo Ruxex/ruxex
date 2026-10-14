@@ -16,33 +16,33 @@ fn daemon(home: &Path) -> crate::Daemon {
         pid_file: state.join("app-server.pid"),
         operation_lock_file: state.join("daemon.lock"),
         settings_file: state.join("settings.json"),
-        managed_genex_bin: crate::managed_install::managed_genex_bin(home),
+        managed_ruxex_bin: crate::managed_install::managed_ruxex_bin(home),
         host_command_args: None,
     }
 }
 
 fn package(root: &Path, version: &str) -> PathBuf {
     let target = super::platform_target().expect("target");
-    for dir in ["bin", "genex-path", "genex-resources/nested"] {
+    for dir in ["bin", "ruxex-path", "ruxex-resources/nested"] {
         std::fs::create_dir_all(root.join(dir)).expect("package directory");
     }
-    let bin = root.join("bin/genex");
-    std::fs::write(&bin, format!("#!/bin/sh\necho 'genex {version}'\n")).expect("genex executable");
+    let bin = root.join("bin/ruxex");
+    std::fs::write(&bin, format!("#!/bin/sh\necho 'ruxex {version}'\n")).expect("ruxex executable");
     for file in [
-        "bin/genex-code-mode-host",
-        "genex-path/rg",
-        "genex-resources/nested/runtime",
+        "bin/ruxex-code-mode-host",
+        "ruxex-path/rg",
+        "ruxex-resources/nested/runtime",
     ] {
         std::fs::write(root.join(file), b"runtime").expect("package file");
-        if file != "genex-resources/nested/runtime" {
+        if file != "ruxex-resources/nested/runtime" {
             std::fs::set_permissions(root.join(file), std::fs::Permissions::from_mode(0o755))
                 .expect("executable helper");
         }
     }
     if cfg!(target_os = "linux") {
-        std::fs::write(root.join("genex-resources/bwrap"), b"runtime").expect("bwrap");
+        std::fs::write(root.join("ruxex-resources/bwrap"), b"runtime").expect("bwrap");
         std::fs::set_permissions(
-            root.join("genex-resources/bwrap"),
+            root.join("ruxex-resources/bwrap"),
             std::fs::Permissions::from_mode(0o755),
         )
         .expect("executable bwrap");
@@ -50,9 +50,9 @@ fn package(root: &Path, version: &str) -> PathBuf {
     std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755))
         .expect("executable permission");
     std::fs::write(
-        root.join("genex-package.json"),
+        root.join("ruxex-package.json"),
         serde_json::json!({
-            "version": version, "target": target, "entrypoint": "bin/genex"
+            "version": version, "target": target, "entrypoint": "bin/ruxex"
         })
         .to_string(),
     )
@@ -78,7 +78,7 @@ async fn seeds_full_package() {
     let root = home.join("packages/app-server-daemon");
     let selected = std::fs::canonicalize(root.join("current")).expect("selected");
     assert_eq!(
-        std::fs::read(selected.join("genex-resources/nested/runtime")).expect("runtime"),
+        std::fs::read(selected.join("ruxex-resources/nested/runtime")).expect("runtime"),
         b"runtime"
     );
     assert!(validate_package(&selected).is_ok());
@@ -89,7 +89,7 @@ async fn incomplete_source_fails_without_selecting_it() {
     let temp = tempfile::TempDir::new().expect("temp");
     let source = temp.path().join("package");
     let bin = package(&source, "0.152.0");
-    std::fs::remove_file(source.join("bin/genex-code-mode-host")).expect("remove helper");
+    std::fs::remove_file(source.join("bin/ruxex-code-mode-host")).expect("remove helper");
     let home = temp.path().join("home");
     let error = prepare_from_package(
         &daemon(&home),
@@ -99,7 +99,7 @@ async fn incomplete_source_fails_without_selecting_it() {
     )
     .await
     .expect_err("incomplete package");
-    assert!(error.to_string().contains("bin/genex-code-mode-host"));
+    assert!(error.to_string().contains("bin/ruxex-code-mode-host"));
     assert!(!home.join("packages/app-server-daemon/current").exists());
 }
 
@@ -109,8 +109,8 @@ async fn provisioned_macos_bundle_seeds_from_its_running_executable() {
     let temp = tempfile::TempDir::new().expect("temp");
     let source = temp.path().join("package");
     let launcher = package(&source, "0.1.0-internal-test.202609091200.1");
-    std::fs::write(&launcher, b"#!/bin/sh\necho genex 0.0.0\n").expect("launcher");
-    let bundle = source.join("GenexCLI.app/Contents/MacOS/codex");
+    std::fs::write(&launcher, b"#!/bin/sh\necho ruxex 0.0.0\n").expect("launcher");
+    let bundle = source.join("RuxexCLI.app/Contents/MacOS/codex");
     std::fs::create_dir_all(bundle.parent().expect("bundle parent")).expect("bundle dir");
     std::fs::write(&bundle, b"provisioned executable").expect("bundle executable");
     let home = temp.path().join("home");
@@ -125,7 +125,7 @@ async fn provisioned_macos_bundle_seeds_from_its_running_executable() {
     let selected = std::fs::canonicalize(home.join("packages/app-server-daemon/current"))
         .expect("selected release");
     assert_eq!(
-        std::fs::read(selected.join("GenexCLI.app/Contents/MacOS/codex"))
+        std::fs::read(selected.join("RuxexCLI.app/Contents/MacOS/codex"))
             .expect("bundled executable"),
         b"provisioned executable"
     );
@@ -152,7 +152,7 @@ async fn legacy_selection_is_not_migrated_or_refreshed() {
     .await
     .expect("preserve legacy selection");
     assert_eq!(
-        crate::managed_install::managed_genex_bin(&home)
+        crate::managed_install::managed_ruxex_bin(&home)
             .canonicalize()
             .expect("selected binary"),
         bin.canonicalize().expect("legacy binary")

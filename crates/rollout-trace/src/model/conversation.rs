@@ -9,7 +9,7 @@ use super::CodeCellId;
 use super::CompactionId;
 use super::ConversationItemId;
 use super::EdgeId;
-use super::GenexTurnId;
+use super::RuxexTurnId;
 use super::InferenceCallId;
 use super::ModelVisibleCallId;
 use super::ToolCallId;
@@ -27,10 +27,10 @@ pub struct ConversationItem {
     pub item_id: ConversationItemId,
     pub thread_id: AgentThreadId,
     /// Runtime activation that first introduced this item locally, when known.
-    pub genex_turn_id: Option<GenexTurnId>,
+    pub ruxex_turn_id: Option<RuxexTurnId>,
     pub first_seen_at_unix_ms: i64,
     pub role: ConversationRole,
-    /// Genex channel for assistant/tool content, when the item is channel-specific.
+    /// Ruxex channel for assistant/tool content, when the item is channel-specific.
     pub channel: Option<ConversationChannel>,
     pub kind: ConversationItemKind,
     /// Routing metadata carried by a Responses `agent_message` item.
@@ -63,7 +63,7 @@ pub enum ConversationRole {
     Tool,
 }
 
-/// Genex channel for model-visible content.
+/// Ruxex channel for model-visible content.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ConversationChannel {
@@ -161,7 +161,7 @@ pub enum ProducerRef {
 pub struct InferenceCall {
     pub inference_call_id: InferenceCallId,
     pub thread_id: AgentThreadId,
-    pub genex_turn_id: GenexTurnId,
+    pub ruxex_turn_id: RuxexTurnId,
     pub execution: ExecutionWindow,
     pub model: String,
     /// Responses API response id, used by follow-up `previous_response_id` requests.

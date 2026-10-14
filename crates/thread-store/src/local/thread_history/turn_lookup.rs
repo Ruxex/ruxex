@@ -1,4 +1,4 @@
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use sqlx::Row;
 
 use super::super::rollout_lineage::RolloutLineage;

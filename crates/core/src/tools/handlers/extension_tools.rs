@@ -2,20 +2,20 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use std::sync::Weak;
 
-use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_tools::ConversationHistory;
-use genex_tools::ExtensionTurnItem;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ToolCall as ExtensionToolCall;
-use genex_tools::ToolEnvironment;
-use genex_tools::ToolName;
-use genex_tools::ToolSearchInfo;
-use genex_tools::ToolSpec;
-use genex_tools::TurnItemEmissionFuture;
-use genex_tools::TurnItemEmitter;
-use genex_utils_string::to_ascii_json_string;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_tools::ConversationHistory;
+use ruxex_tools::ExtensionTurnItem;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ToolCall as ExtensionToolCall;
+use ruxex_tools::ToolEnvironment;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSearchInfo;
+use ruxex_tools::ToolSpec;
+use ruxex_tools::TurnItemEmissionFuture;
+use ruxex_tools::TurnItemEmitter;
+use ruxex_utils_string::to_ascii_json_string;
 
 use crate::sandboxing::SandboxPermissions;
 use crate::session::session::Session;
@@ -29,12 +29,12 @@ use crate::tools::registry::ToolExecutor;
 use crate::turn_metadata::ExecutionMetadata;
 
 pub(crate) struct ExtensionToolAdapter(
-    Arc<dyn for<'call> genex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
+    Arc<dyn for<'call> ruxex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
 );
 
 impl ExtensionToolAdapter {
     pub(crate) fn new(
-        executor: Arc<dyn for<'call> genex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
+        executor: Arc<dyn for<'call> ruxex_tools::ToolExecutor<ExtensionToolCall<'call>>>,
     ) -> Self {
         Self(executor)
     }
@@ -61,7 +61,7 @@ impl ToolExecutor<ToolInvocation> for ExtensionToolAdapter {
         self.0.search_info()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

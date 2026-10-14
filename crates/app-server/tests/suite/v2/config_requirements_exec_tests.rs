@@ -4,18 +4,18 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
@@ -78,7 +78,7 @@ decision = "prompt"
     .await;
 
     let mut app = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized_with_timeout(read_timeout)
         .await?;
     let environment_id = app.auto_env_params()?.environment_id;

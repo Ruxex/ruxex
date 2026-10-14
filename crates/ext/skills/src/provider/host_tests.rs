@@ -2,9 +2,9 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::SkillScope;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tokio::sync::Semaphore;
 
@@ -17,7 +17,7 @@ async fn host_catalog_entries_carry_their_render_metadata() -> Result<(), Box<dy
 {
     let unique = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
     let root = std::env::temp_dir().join(format!(
-        "genex-skills-extension-host-provider-{}-{unique}",
+        "ruxex-skills-extension-host-provider-{}-{unique}",
         std::process::id()
     ));
     let skill_path = root.join("demo").join("SKILL.md");

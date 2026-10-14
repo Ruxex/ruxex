@@ -7,37 +7,37 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_exec_server::Environment;
-use genex_exec_server::ExecBackend;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::ExecBackend;
 #[cfg(unix)]
-use genex_exec_server::ExecEnvPolicy;
-use genex_exec_server::ExecOutputStream;
-use genex_exec_server::ExecParams;
-use genex_exec_server::ExecProcess;
-use genex_exec_server::ExecProcessEvent;
+use ruxex_exec_server::ExecEnvPolicy;
+use ruxex_exec_server::ExecOutputStream;
+use ruxex_exec_server::ExecParams;
+use ruxex_exec_server::ExecProcess;
+use ruxex_exec_server::ExecProcessEvent;
 #[cfg(any(unix, windows))]
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::ProcessId;
-use genex_exec_server::ProcessSignal;
-use genex_exec_server::ReadResponse;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::ProcessId;
+use ruxex_exec_server::ProcessSignal;
+use ruxex_exec_server::ReadResponse;
 #[cfg(unix)]
-use genex_exec_server::ShellInfo;
+use ruxex_exec_server::ShellInfo;
 #[cfg(unix)]
-use genex_exec_server::ShellSnapshotRequest;
-use genex_exec_server::StartedExecProcess;
-use genex_exec_server::WriteStatus;
+use ruxex_exec_server::ShellSnapshotRequest;
+use ruxex_exec_server::StartedExecProcess;
+use ruxex_exec_server::WriteStatus;
 #[cfg(unix)]
-use genex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConfig;
 #[cfg(unix)]
-use genex_network_proxy::RemoteNetworkProxyConfig;
+use ruxex_network_proxy::RemoteNetworkProxyConfig;
 #[cfg(unix)]
-use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
 #[cfg(unix)]
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
 #[cfg(unix)]
-use genex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 #[cfg(unix)]
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -108,7 +108,7 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
     shell_name: &str,
 ) -> Result<()> {
     if use_sandbox
-        && let Some(warning) = genex_sandboxing::system_bwrap_warning(
+        && let Some(warning) = ruxex_sandboxing::system_bwrap_warning(
             &PermissionProfile::read_only(),
             &std::env::current_dir()?,
         )
@@ -215,7 +215,7 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
         ""
     };
     let command = format!(
-        "case $- in *u*) ;; *) exit 42 ;; esac; {entry_check}export PATH='{}':\"$PATH\"; {command_prefix}printf '|%s|%s|%s|%s|%s|%s' \"$PROFILE_ALLOWED\" \"${{PROFILE_SECRET-missing}}\" \"${{PROFILE_DENIED-missing}}\" \"$PATH\" \"${{__GENEX_SHELL_SNAPSHOT_STATE_0-missing}}\" \"${{__GENEX_SHELL_SNAPSHOT_STATE_1-missing}}\"",
+        "case $- in *u*) ;; *) exit 42 ;; esac; {entry_check}export PATH='{}':\"$PATH\"; {command_prefix}printf '|%s|%s|%s|%s|%s|%s' \"$PROFILE_ALLOWED\" \"${{PROFILE_SECRET-missing}}\" \"${{PROFILE_DENIED-missing}}\" \"$PATH\" \"${{__RUXEX_SHELL_SNAPSHOT_STATE_0-missing}}\" \"${{__RUXEX_SHELL_SNAPSHOT_STATE_1-missing}}\"",
         runtime_path_entry.display(),
     );
     let expected_stdout = format!(
@@ -266,7 +266,7 @@ async fn shell_snapshot_v2_filters_profile_exports_and_stays_in_memory(
     assert_eq!(std::fs::read_to_string(home.path().join("captures"))?, "x");
     assert!(!std::fs::read(home.path().join("tool-captures"))?.is_empty());
     if let Some(server) = context._server {
-        assert!(!server.genex_home().join("shell_snapshots").exists());
+        assert!(!server.ruxex_home().join("shell_snapshots").exists());
     }
     Ok(())
 }
@@ -280,7 +280,7 @@ async fn shell_snapshot_v2_remote_managed_proxy_uses_prepared_execution_context(
     let cwd = PathUri::from_host_native_path(home.path())?;
     std::fs::write(
         home.path().join(".bashrc"),
-        "printf '%s\\n' \"$HTTP_PROXY\" >> \"$HOME/captures\"\ntest \"$GENEX_NETWORK_PROXY_ACTIVE\" = 1 || exit 41\nexport PROFILE_ALLOWED=profile\nprofile_helper() { printf helper; }\n",
+        "printf '%s\\n' \"$HTTP_PROXY\" >> \"$HOME/captures\"\ntest \"$RUXEX_NETWORK_PROXY_ACTIVE\" = 1 || exit 41\nexport PROFILE_ALLOWED=profile\nprofile_helper() { printf helper; }\n",
     )?;
     let policy = ExecEnvPolicy {
         inherit: ShellEnvironmentPolicyInherit::All,
@@ -311,7 +311,7 @@ async fn shell_snapshot_v2_remote_managed_proxy_uses_prepared_execution_context(
                 argv: vec![
                     "/bin/bash".to_string(),
                     "-lc".to_string(),
-                    "profile_helper; printf '|%s|%s|%s' \"$PROFILE_ALLOWED\" \"$GENEX_NETWORK_PROXY_ACTIVE\" \"$HTTP_PROXY\"".to_string(),
+                    "profile_helper; printf '|%s|%s|%s' \"$PROFILE_ALLOWED\" \"$RUXEX_NETWORK_PROXY_ACTIVE\" \"$HTTP_PROXY\"".to_string(),
                 ],
                 cwd: cwd.clone(),
                 env_policy: Some(policy.clone()),
@@ -368,7 +368,7 @@ async fn shell_snapshot_v2_capture_failure_falls_back_and_retries(
     failures_before_repair: usize,
 ) -> Result<()> {
     if use_remote
-        && let Some(warning) = genex_sandboxing::system_bwrap_warning(
+        && let Some(warning) = ruxex_sandboxing::system_bwrap_warning(
             &PermissionProfile::workspace_write(),
             &std::env::current_dir()?,
         )

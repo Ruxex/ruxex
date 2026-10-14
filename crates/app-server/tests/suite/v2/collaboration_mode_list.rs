@@ -10,12 +10,12 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::CollaborationModeListParams;
-use genex_app_server_protocol::CollaborationModeListResponse;
-use genex_app_server_protocol::CollaborationModeMask;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_core::test_support::builtin_collaboration_mode_presets;
+use ruxex_app_server_protocol::CollaborationModeListParams;
+use ruxex_app_server_protocol::CollaborationModeListResponse;
+use ruxex_app_server_protocol::CollaborationModeMask;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_core::test_support::builtin_collaboration_mode_presets;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -27,9 +27,9 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 /// Confirms the server returns the default collaboration mode presets in a stable order.
 #[tokio::test]
 async fn list_collaboration_modes_returns_presets() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;

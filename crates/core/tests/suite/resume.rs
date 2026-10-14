@@ -1,10 +1,10 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::ByteRange;
-use genex_protocol::user_input::TextElement;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::ByteRange;
+use ruxex_protocol::user_input::TextElement;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_reasoning_item;
@@ -14,7 +14,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -24,9 +24,9 @@ async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let initial = builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -40,14 +40,14 @@ async fn resume_includes_initial_messages_from_rollout_events() -> Result<()> {
         Some("<note>".into()),
     )];
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record some messages".into(),
             text_elements: text_elements.clone(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let resumed = builder.restart(&server, &initial).await?;
     let initial_messages = resumed
         .session_configured
@@ -81,11 +81,11 @@ async fn resume_includes_initial_messages_from_reasoning_events() -> Result<()> 
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.show_raw_agent_reasoning = true;
     });
     let initial = builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -95,14 +95,14 @@ async fn resume_includes_initial_messages_from_reasoning_events() -> Result<()> 
     ]);
     mount_sse_once(&server, initial_sse).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record reasoning messages".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let resumed = builder.restart(&server, &initial).await?;
     let initial_messages = resumed
         .session_configured
@@ -139,11 +139,11 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.model = Some("example-model-2".to_string());
     });
     let initial = builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_sse = sse(vec![
         ev_response_created("resp-initial"),
@@ -152,13 +152,13 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     ]);
     let initial_mock = mount_sse_once(&server, initial_sse).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record initial instructions".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_body = initial_mock.single_request().body_json();
     let initial_instructions = initial_body
         .get("instructions")
@@ -183,30 +183,30 @@ async fn resume_switches_models_preserves_base_instructions() -> Result<()> {
     )
     .await;
 
-    let mut resume_builder = test_genex().with_config(|config| {
+    let mut resume_builder = test_ruxex().with_config(|config| {
         config.model = Some("legacy-model".to_string());
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Resume with different model".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Second turn after resume".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -246,11 +246,11 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.model = Some("example-model-2".to_string());
     });
     let initial = builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -261,13 +261,13 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
         ]),
     )
     .await;
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Record initial instructions".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let _ = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -280,12 +280,12 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     )
     .await;
 
-    let mut resume_builder = test_genex().with_config(|config| {
+    let mut resume_builder = test_ruxex().with_config(|config| {
         config.model = Some("example-model".to_string());
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
     core_test_support::submit_thread_settings(
-        &resumed.genex,
+        &resumed.ruxex,
         ThreadSettingsOverrides {
             model: Some("legacy-model".to_string()),
             ..Default::default()
@@ -293,13 +293,13 @@ async fn resume_model_switch_is_not_duplicated_after_pre_turn_override() -> Resu
     )
     .await?;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first turn after override".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

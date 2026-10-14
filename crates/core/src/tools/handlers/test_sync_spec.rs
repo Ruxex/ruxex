@@ -1,6 +1,6 @@
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub fn create_test_sync_tool() -> ToolSpec {
@@ -57,7 +57,7 @@ pub fn create_test_sync_tool() -> ToolSpec {
 
     ToolSpec::Function(ResponsesApiTool {
         name: "test_sync_tool".to_string(),
-        description: "Internal synchronization helper used by Genex integration tests.".to_string(),
+        description: "Internal synchronization helper used by Ruxex integration tests.".to_string(),
         strict: false,
         defer_loading: None,
         parameters: JsonSchema::object(properties, /*required*/ None, Some(false.into())),

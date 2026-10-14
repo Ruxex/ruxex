@@ -1,10 +1,10 @@
 //! Covers literal instruction templates and missing-versus-empty inputs.
 
 use super::*;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
 use pretty_assertions::assert_eq;
 
 fn test_model(model_messages: Option<ModelMessages>) -> ModelInfo {

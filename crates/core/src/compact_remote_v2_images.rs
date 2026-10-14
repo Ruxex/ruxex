@@ -1,16 +1,16 @@
 use crate::context_manager::estimate_image_reference_bytes;
-use genex_context_fragments::AnnotatedContent;
-use genex_context_fragments::set_annotated_content;
-use genex_context_fragments::to_annotated_content;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::is_image_close_tag_text;
-use genex_protocol::models::is_image_open_tag_text;
-use genex_protocol::models::is_local_image_open_tag_text;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::approx_tokens_from_byte_count_i64;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_context_fragments::set_annotated_content;
+use ruxex_context_fragments::to_annotated_content;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::is_image_close_tag_text;
+use ruxex_protocol::models::is_image_open_tag_text;
+use ruxex_protocol::models::is_local_image_open_tag_text;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::approx_tokens_from_byte_count_i64;
+use ruxex_utils_output_truncation::truncate_text;
 
 pub(super) fn content_item_token_count(item: &ContentItem) -> usize {
     match item {

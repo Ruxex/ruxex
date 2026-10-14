@@ -112,7 +112,7 @@ impl OtelProvider {
     fn prepare_shutdown_worker(&mut self) -> io::Result<()> {
         self.prepare_shutdown_worker_with_spawner(|startup| {
             std::thread::Builder::new()
-                .name("genex-otel-shutdown".to_string())
+                .name("ruxex-otel-shutdown".to_string())
                 .spawn(move || {
                     if startup.ready_tx.send(()).is_err() {
                         return;
@@ -313,7 +313,7 @@ impl OtelProvider {
             ))
     }
 
-    pub fn genex_export_filter(meta: &tracing::Metadata<'_>) -> bool {
+    pub fn ruxex_export_filter(meta: &tracing::Metadata<'_>) -> bool {
         Self::log_export_filter(meta)
     }
 
@@ -648,18 +648,18 @@ mod tests {
 
     #[test]
     fn log_export_target_excludes_trace_safe_events() {
-        assert!(is_log_export_target("genex_otel.log_only"));
-        assert!(is_log_export_target("genex_otel.network_proxy"));
-        assert!(!is_log_export_target("genex_otel.trace_safe"));
-        assert!(!is_log_export_target("genex_otel.trace_safe.debug"));
+        assert!(is_log_export_target("ruxex_otel.log_only"));
+        assert!(is_log_export_target("ruxex_otel.network_proxy"));
+        assert!(!is_log_export_target("ruxex_otel.trace_safe"));
+        assert!(!is_log_export_target("ruxex_otel.trace_safe.debug"));
     }
 
     #[test]
     fn trace_export_target_only_includes_trace_safe_prefix() {
-        assert!(is_trace_safe_target("genex_otel.trace_safe"));
-        assert!(is_trace_safe_target("genex_otel.trace_safe.summary"));
-        assert!(!is_trace_safe_target("genex_otel.log_only"));
-        assert!(!is_trace_safe_target("genex_otel.network_proxy"));
+        assert!(is_trace_safe_target("ruxex_otel.trace_safe"));
+        assert!(is_trace_safe_target("ruxex_otel.trace_safe.summary"));
+        assert!(!is_trace_safe_target("ruxex_otel.log_only"));
+        assert!(!is_trace_safe_target("ruxex_otel.network_proxy"));
     }
 
     #[test]
@@ -667,7 +667,7 @@ mod tests {
         let initial =
             crate::metrics::install_global(MetricsClient::new(MetricsConfig::in_memory(
                 "test",
-                "genex-test",
+                "ruxex-test",
                 env!("CARGO_PKG_VERSION"),
                 InMemoryMetricExporter::default(),
             ))?);
@@ -677,11 +677,11 @@ mod tests {
         let replacement =
             crate::metrics::install_global(MetricsClient::new(MetricsConfig::in_memory(
                 "test",
-                "genex-test",
+                "ruxex-test",
                 env!("CARGO_PKG_VERSION"),
                 exporter.clone(),
             ))?);
-        cached.counter("genex.after_transition", /*inc*/ 1, &[])?;
+        cached.counter("ruxex.after_transition", /*inc*/ 1, &[])?;
         initial.shutdown()?;
         replacement.shutdown()?;
 
@@ -694,7 +694,7 @@ mod tests {
             .collect();
         names.sort_unstable();
         names.dedup();
-        assert_eq!(names, vec!["genex.after_transition"]);
+        assert_eq!(names, vec!["ruxex.after_transition"]);
 
         Ok(())
     }
@@ -702,9 +702,9 @@ mod tests {
     fn test_otel_settings() -> OtelSettings {
         OtelSettings {
             environment: "test".to_string(),
-            service_name: "genex-test".to_string(),
+            service_name: "ruxex-test".to_string(),
             service_version: "0.0.0".to_string(),
-            genex_home: PathBuf::from("."),
+            ruxex_home: PathBuf::from("."),
             exporter: OtelExporter::None,
             trace_exporter: OtelExporter::None,
             metrics_exporter: OtelExporter::None,

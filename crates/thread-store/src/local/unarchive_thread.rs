@@ -10,7 +10,7 @@ use crate::ReadThreadParams;
 use crate::StoredThread;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use genex_rollout::rollout_date_parts;
+use ruxex_rollout::rollout_date_parts;
 
 use super::thread_rollout_resolver;
 use super::thread_rollout_resolver::RolloutLocation;
@@ -41,14 +41,14 @@ pub(super) async fn unarchive_thread(
     let mut restored_path = None;
     let mut rollout_moves = Vec::new();
     for rollout_path in rollout_paths {
-        if !rollout_path_is_archived(store.config.genex_home.as_path(), rollout_path.as_path()) {
+        if !rollout_path_is_archived(store.config.ruxex_home.as_path(), rollout_path.as_path()) {
             continue;
         }
         let canonical_archived_path = scoped_rollout_path(
             store
                 .config
-                .genex_home
-                .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
+                .ruxex_home
+                .join(ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR),
             rollout_path.as_path(),
             "archived",
         )?;
@@ -64,8 +64,8 @@ pub(super) async fn unarchive_thread(
         };
         let dest_dir = store
             .config
-            .genex_home
-            .join(genex_rollout::SESSIONS_SUBDIR)
+            .ruxex_home
+            .join(ruxex_rollout::SESSIONS_SUBDIR)
             .join(year)
             .join(month)
             .join(day);
@@ -145,9 +145,9 @@ pub(super) async fn unarchive_thread(
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use genex_protocol::ThreadId;
-    use genex_protocol::protocol::SessionSource;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use uuid::Uuid;
@@ -231,7 +231,7 @@ mod tests {
         let selected_archived_path = alternate_directory
             .join("..")
             .join(archived_path.file_name().expect("file name"));
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -241,7 +241,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        let mut builder = genex_state::ThreadMetadataBuilder::new(
+        let mut builder = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             selected_archived_path,
             Utc::now(),
@@ -251,9 +251,9 @@ mod tests {
         builder.cli_version = Some("test_version".to_string());
         let mut metadata = builder.build();
         metadata.archived_at = Some(metadata.updated_at);
-        metadata.section = Some(genex_state::ThreadSection {
-            id: genex_state::PINNED_THREAD_SECTION_ID.to_string(),
-            name: genex_state::PINNED_THREAD_SECTION_NAME.to_string(),
+        metadata.section = Some(ruxex_state::ThreadSection {
+            id: ruxex_state::PINNED_THREAD_SECTION_ID.to_string(),
+            name: ruxex_state::PINNED_THREAD_SECTION_NAME.to_string(),
             appearance: None,
         });
         runtime

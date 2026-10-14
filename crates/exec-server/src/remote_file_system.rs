@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io;
 use tokio::sync::Mutex;
 use tokio::sync::OnceCell;

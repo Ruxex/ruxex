@@ -1,25 +1,25 @@
 use super::*;
-use genex_app_server_protocol::ImageGenerationItem;
-use genex_app_server_protocol::PluginAvailability;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ImageGenerationItem;
+use ruxex_app_server_protocol::PluginAvailability;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 pub(super) async fn test_config() -> Config {
     // Start from the built-in defaults so tests do not inherit host/system config.
-    let genex_home = tempfile::Builder::new()
+    let ruxex_home = tempfile::Builder::new()
         .prefix("chatwidget-tests-")
         .tempdir()
         .expect("tempdir")
         .keep();
     let mut config =
-        Config::load_default_with_cli_overrides_for_genex_home(genex_home.clone(), Vec::new())
+        Config::load_default_with_cli_overrides_for_ruxex_home(ruxex_home.clone(), Vec::new())
             .await
             .expect("config");
     // Keep generic UI snapshots stable when the bundled catalog default changes.
     config.model = Some("provider-model-b".to_string());
-    config.genex_home = genex_home.abs();
-    config.sqlite = genex_state::SqliteConfig::new_for_testing(genex_home.as_path().abs());
-    config.log_dir = genex_home.join("log");
+    config.ruxex_home = ruxex_home.abs();
+    config.sqlite = ruxex_state::SqliteConfig::new_for_testing(ruxex_home.as_path().abs());
+    config.log_dir = ruxex_home.join("log");
     config.cwd = PathBuf::from(test_path_display("/tmp/project")).abs();
     config.config_layer_stack = ConfigLayerStack::default();
     config.startup_warnings.clear();
@@ -145,7 +145,7 @@ pub(super) fn test_model_catalog(_config: &Config) -> Arc<ModelCatalog> {
     Arc::new(
         ModelCatalog::new(crate::test_support::TEST_MODEL_PRESETS.clone())
             .with_collaboration_modes(
-            genex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets(),
+            ruxex_models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets(),
         ),
     )
 }
@@ -161,7 +161,7 @@ pub(super) async fn make_chatwidget_manual(
     make_chatwidget_manual_with_auth(
         model_override,
         /*has_managed_account*/ false,
-        /*has_genex_backend_auth*/ false,
+        /*has_ruxex_backend_auth*/ false,
         FrameRequester::test_dummy(),
     )
     .await
@@ -170,7 +170,7 @@ pub(super) async fn make_chatwidget_manual(
 pub(super) async fn make_chatwidget_manual_with_auth(
     model_override: Option<&str>,
     has_managed_account: bool,
-    has_genex_backend_auth: bool,
+    has_ruxex_backend_auth: bool,
     frame_requester: FrameRequester,
 ) -> (
     ChatWidget,
@@ -198,7 +198,7 @@ pub(super) async fn make_chatwidget_manual_with_auth(
         initial_user_message: None,
         enhanced_keys_supported: false,
         has_managed_account,
-        has_genex_backend_auth,
+        has_ruxex_backend_auth,
         model_catalog,
         is_first_run: true,
         status_account_display: None,
@@ -209,7 +209,7 @@ pub(super) async fn make_chatwidget_manual_with_auth(
         terminal_title_invalid_items_warned: Arc::new(AtomicBool::new(false)),
         session_telemetry,
     };
-    let mut widget = ChatWidget::new_with_op_target(common, super::GenexOpTarget::Direct(op_tx));
+    let mut widget = ChatWidget::new_with_op_target(common, super::RuxexOpTarget::Direct(op_tx));
     widget.windows_sandbox_host = crate::app::WindowsSandboxHost::Local;
     widget.windows_sandbox_config.requirements = Some(None);
     widget.transcript.active_cell = None;
@@ -257,7 +257,7 @@ pub(super) fn assert_no_submit_op(op_rx: &mut tokio::sync::mpsc::UnboundedReceiv
 
 pub(crate) fn set_managed_auth(chat: &mut ChatWidget) {
     chat.has_managed_account = true;
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.model_catalog = test_model_catalog(&chat.config);
 }
 
@@ -418,8 +418,8 @@ fn thread_id(chat: &ChatWidget) -> String {
     chat.thread_id.map(|id| id.to_string()).unwrap_or_default()
 }
 
-fn token_usage_breakdown(usage: TokenUsage) -> genex_app_server_protocol::TokenUsageBreakdown {
-    genex_app_server_protocol::TokenUsageBreakdown {
+fn token_usage_breakdown(usage: TokenUsage) -> ruxex_app_server_protocol::TokenUsageBreakdown {
+    ruxex_app_server_protocol::TokenUsageBreakdown {
         total_tokens: usage.total_tokens,
         input_tokens: usage.input_tokens,
         cached_input_tokens: usage.cached_input_tokens,
@@ -434,14 +434,14 @@ pub(super) fn handle_token_count(chat: &mut ChatWidget, info: Option<TokenUsageI
         Some(info) => {
             chat.handle_server_notification(
                 ServerNotification::ThreadTokenUsageUpdated(
-                    genex_app_server_protocol::ThreadTokenUsageUpdatedNotification {
+                    ruxex_app_server_protocol::ThreadTokenUsageUpdatedNotification {
                         thread_id: thread_id(chat),
                         turn_id: chat
                             .turn_lifecycle
                             .last_turn_id
                             .clone()
                             .unwrap_or_else(|| "turn-1".to_string()),
-                        token_usage: genex_app_server_protocol::ThreadTokenUsage {
+                        token_usage: ruxex_app_server_protocol::ThreadTokenUsage {
                             total: token_usage_breakdown(info.total_token_usage),
                             last: token_usage_breakdown(info.last_token_usage),
                             model_context_window: info.model_context_window,
@@ -458,14 +458,14 @@ pub(super) fn handle_token_count(chat: &mut ChatWidget, info: Option<TokenUsageI
 pub(super) fn handle_error(
     chat: &mut ChatWidget,
     message: impl Into<String>,
-    genex_error_info: Option<GenexErrorInfo>,
+    ruxex_error_info: Option<RuxexErrorInfo>,
 ) {
     chat.handle_server_notification(
         ServerNotification::Error(ErrorNotification {
             error: AppServerTurnError {
                 misalignment: None,
                 message: message.into(),
-                genex_error_info,
+                ruxex_error_info,
                 additional_details: None,
             },
             will_retry: false,
@@ -499,7 +499,7 @@ pub(super) fn handle_stream_error_with_replay(
             error: AppServerTurnError {
                 misalignment: None,
                 message: message.into(),
-                genex_error_info: None,
+                ruxex_error_info: None,
                 additional_details,
             },
             will_retry: true,
@@ -545,7 +545,7 @@ pub(super) fn handle_model_verification(
 pub(super) fn handle_agent_message_delta(chat: &mut ChatWidget, delta: impl Into<String>) {
     chat.handle_server_notification(
         ServerNotification::AgentMessageDelta(
-            genex_app_server_protocol::AgentMessageDeltaNotification {
+            ruxex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: thread_id(chat),
                 turn_id: chat
                     .turn_lifecycle
@@ -874,7 +874,7 @@ pub(super) fn replay_agent_message_delta(
 ) {
     chat.handle_server_notification(
         ServerNotification::AgentMessageDelta(
-            genex_app_server_protocol::AgentMessageDeltaNotification {
+            ruxex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: thread_id(chat),
                 turn_id: "turn-1".to_string(),
                 item_id: "msg-1".to_string(),
@@ -895,14 +895,14 @@ pub(super) fn begin_exec_with_source(
     // Build the full command vec and parse it using core's parser,
     // then convert to protocol variants for the event payload.
     let command = vec!["bash".to_string(), "-lc".to_string(), raw_cmd.to_string()];
-    let command_actions = genex_shell_command::parse_command::parse_command(&command)
+    let command_actions = ruxex_shell_command::parse_command::parse_command(&command)
         .into_iter()
         .map(|parsed| AppServerCommandAction::from_core_with_cwd(parsed, &chat.config.cwd))
         .collect();
     let item = AppServerThreadItem::CommandExecution {
         model_context: None,
         id: call_id.to_string(),
-        command: genex_shell_command::parse_command::shlex_join(&command),
+        command: ruxex_shell_command::parse_command::shlex_join(&command),
         cwd: chat.config.cwd.clone().into(),
         process_id: None,
         plugin_id: None,
@@ -928,7 +928,7 @@ pub(super) fn begin_unified_exec_startup(
     let item = AppServerThreadItem::CommandExecution {
         model_context: None,
         id: call_id.to_string(),
-        command: genex_shell_command::parse_command::shlex_join(&command),
+        command: ruxex_shell_command::parse_command::shlex_join(&command),
         cwd: chat.config.cwd.clone().into(),
         process_id: Some(process_id.to_string()),
         plugin_id: None,
@@ -968,7 +968,7 @@ pub(super) fn terminal_interaction(
 ) {
     chat.handle_server_notification(
         ServerNotification::TerminalInteraction(
-            genex_app_server_protocol::TerminalInteractionNotification {
+            ruxex_app_server_protocol::TerminalInteractionNotification {
                 thread_id: thread_id(chat),
                 turn_id: chat
                     .turn_lifecycle
@@ -1059,7 +1059,7 @@ pub(super) fn app_server_turn(
 ) -> AppServerTurn {
     AppServerTurn {
         id: turn_id.to_string(),
-        items_view: genex_app_server_protocol::TurnItemsView::Full,
+        items_view: ruxex_app_server_protocol::TurnItemsView::Full,
         items: Vec::new(),
         status,
         error,
@@ -1366,7 +1366,7 @@ pub(super) fn strip_osc8_for_snapshot(text: &str) -> String {
 
 pub(super) fn plugins_test_absolute_path(path: &str) -> AbsolutePathBuf {
     std::env::temp_dir()
-        .join("genex-plugin-menu-tests")
+        .join("ruxex-plugin-menu-tests")
         .join(path)
         .abs()
 }
@@ -1553,7 +1553,7 @@ pub(super) fn plugins_test_detail(
     summary: PluginSummary,
     description: Option<&str>,
     skills: &[&str],
-    hooks: &[(genex_app_server_protocol::HookEventName, usize)],
+    hooks: &[(ruxex_app_server_protocol::HookEventName, usize)],
     apps: &[&str],
     mcp_servers: &[&str],
 ) -> PluginDetail {
@@ -1581,7 +1581,7 @@ pub(super) fn plugins_test_detail(
             .enumerate()
             .flat_map(|(event_index, (event_name, handler_count))| {
                 (0..*handler_count).map(move |handler_index| {
-                    genex_app_server_protocol::PluginHookSummary {
+                    ruxex_app_server_protocol::PluginHookSummary {
                         key: format!("plugin:{event_index}:{handler_index}"),
                         event_name: *event_name,
                     }
@@ -1677,37 +1677,37 @@ pub(super) fn handle_hook_completed(chat: &mut ChatWidget, run: AppServerHookRun
 
 pub(super) fn hook_run(
     run_id: &str,
-    event_name: genex_app_server_protocol::HookEventName,
-    status: genex_app_server_protocol::HookRunStatus,
+    event_name: ruxex_app_server_protocol::HookEventName,
+    status: ruxex_app_server_protocol::HookRunStatus,
     status_message: &str,
-    entries: Vec<genex_app_server_protocol::HookOutputEntry>,
-) -> genex_app_server_protocol::HookRunSummary {
-    genex_app_server_protocol::HookRunSummary {
+    entries: Vec<ruxex_app_server_protocol::HookOutputEntry>,
+) -> ruxex_app_server_protocol::HookRunSummary {
+    ruxex_app_server_protocol::HookRunSummary {
         id: run_id.to_string(),
         event_name,
-        handler_type: genex_app_server_protocol::HookHandlerType::Command,
-        execution_mode: genex_app_server_protocol::HookExecutionMode::Sync,
-        scope: genex_app_server_protocol::HookScope::Turn,
+        handler_type: ruxex_app_server_protocol::HookHandlerType::Command,
+        execution_mode: ruxex_app_server_protocol::HookExecutionMode::Sync,
+        scope: ruxex_app_server_protocol::HookScope::Turn,
         source_path: PathBuf::from(test_path_display("/tmp/hooks.json")).abs(),
-        source: genex_app_server_protocol::HookSource::User,
+        source: ruxex_app_server_protocol::HookSource::User,
         display_order: 0,
         status,
         status_message: Some(status_message.to_string()),
         started_at: 1,
         completed_at: matches!(
             status,
-            genex_app_server_protocol::HookRunStatus::Completed
-                | genex_app_server_protocol::HookRunStatus::Failed
-                | genex_app_server_protocol::HookRunStatus::Blocked
-                | genex_app_server_protocol::HookRunStatus::Stopped
+            ruxex_app_server_protocol::HookRunStatus::Completed
+                | ruxex_app_server_protocol::HookRunStatus::Failed
+                | ruxex_app_server_protocol::HookRunStatus::Blocked
+                | ruxex_app_server_protocol::HookRunStatus::Stopped
         )
         .then_some(11),
         duration_ms: matches!(
             status,
-            genex_app_server_protocol::HookRunStatus::Completed
-                | genex_app_server_protocol::HookRunStatus::Failed
-                | genex_app_server_protocol::HookRunStatus::Blocked
-                | genex_app_server_protocol::HookRunStatus::Stopped
+            ruxex_app_server_protocol::HookRunStatus::Completed
+                | ruxex_app_server_protocol::HookRunStatus::Failed
+                | ruxex_app_server_protocol::HookRunStatus::Blocked
+                | ruxex_app_server_protocol::HookRunStatus::Stopped
         )
         .then_some(10),
         entries,

@@ -26,9 +26,9 @@
 use crate::ApplyPatchArgs;
 use crate::streaming_parser::StreamingPatchParser;
 #[cfg(test)]
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_path_uri::PathUri;
-use genex_utils_path_uri::PathUriParseError;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUriParseError;
 use std::path::Path;
 use std::path::PathBuf;
 

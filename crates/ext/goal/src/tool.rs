@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use genex_extension_api::FunctionCallError;
-use genex_extension_api::JsonToolOutput;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolName;
-use genex_extension_api::ToolOutput;
-use genex_extension_api::ToolSpec;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::ThreadGoal;
-use genex_protocol::protocol::ThreadGoalStatus;
-use genex_protocol::protocol::validate_thread_goal_objective;
+use ruxex_extension_api::FunctionCallError;
+use ruxex_extension_api::JsonToolOutput;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolName;
+use ruxex_extension_api::ToolOutput;
+use ruxex_extension_api::ToolSpec;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::ThreadGoal;
+use ruxex_protocol::protocol::ThreadGoalStatus;
+use ruxex_protocol::protocol::validate_thread_goal_objective;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -30,7 +30,7 @@ pub(crate) struct GoalToolExecutor {
     pub(crate) execution_allowed: bool,
     kind: GoalToolKind,
     thread_id: ThreadId,
-    state_db: Arc<genex_state::StateRuntime>,
+    state_db: Arc<ruxex_state::StateRuntime>,
     accounting_state: Arc<GoalAccountingState>,
     event_emitter: GoalEventEmitter,
     metrics: GoalMetrics,
@@ -74,7 +74,7 @@ enum CompletionBudgetReport {
 impl GoalToolExecutor {
     pub(crate) fn get(
         thread_id: ThreadId,
-        state_db: Arc<genex_state::StateRuntime>,
+        state_db: Arc<ruxex_state::StateRuntime>,
         accounting_state: Arc<GoalAccountingState>,
         event_emitter: GoalEventEmitter,
         metrics: GoalMetrics,
@@ -93,7 +93,7 @@ impl GoalToolExecutor {
 
     pub(crate) fn create(
         thread_id: ThreadId,
-        state_db: Arc<genex_state::StateRuntime>,
+        state_db: Arc<ruxex_state::StateRuntime>,
         accounting_state: Arc<GoalAccountingState>,
         event_emitter: GoalEventEmitter,
         metrics: GoalMetrics,
@@ -113,7 +113,7 @@ impl GoalToolExecutor {
 
     pub(crate) fn update(
         thread_id: ThreadId,
-        state_db: Arc<genex_state::StateRuntime>,
+        state_db: Arc<ruxex_state::StateRuntime>,
         accounting_state: Arc<GoalAccountingState>,
         event_emitter: GoalEventEmitter,
         metrics: GoalMetrics,
@@ -151,7 +151,7 @@ impl<'call> ToolExecutor<ToolCall<'call>> for GoalToolExecutor {
     fn handle<'a>(
         &'a self,
         invocation: ToolCall<'call>,
-    ) -> genex_extension_api::ToolExecutorFuture<'a>
+    ) -> ruxex_extension_api::ToolExecutorFuture<'a>
     where
         'call: 'a,
     {
@@ -206,7 +206,7 @@ impl GoalToolExecutor {
             .insert_thread_goal(
                 self.thread_id,
                 request.objective.as_str(),
-                genex_state::ThreadGoalStatus::Active,
+                ruxex_state::ThreadGoalStatus::Active,
                 request.token_budget,
             )
             .await
@@ -244,9 +244,9 @@ impl GoalToolExecutor {
 
         self.account_active_goal_progress(
             match args.status {
-                ThreadGoalStatus::Complete => genex_state::GoalAccountingMode::ActiveOrComplete,
+                ThreadGoalStatus::Complete => ruxex_state::GoalAccountingMode::ActiveOrComplete,
                 ThreadGoalStatus::Blocked | ThreadGoalStatus::Paused => {
-                    genex_state::GoalAccountingMode::ActiveOrStopped
+                    ruxex_state::GoalAccountingMode::ActiveOrStopped
                 }
                 ThreadGoalStatus::Active
                 | ThreadGoalStatus::UsageLimited
@@ -264,7 +264,7 @@ impl GoalToolExecutor {
             .thread_goals()
             .update_thread_goal(
                 self.thread_id,
-                genex_state::GoalUpdate {
+                ruxex_state::GoalUpdate {
                     objective: None,
                     status: Some(state_status_from_protocol(args.status)),
                     token_budget: None,
@@ -307,7 +307,7 @@ impl GoalToolExecutor {
 
     async fn account_active_goal_progress(
         &self,
-        mode: genex_state::GoalAccountingMode,
+        mode: ruxex_state::GoalAccountingMode,
         event_id: &str,
         budget_limited_goal_disposition: BudgetLimitedGoalDisposition,
     ) -> Result<Option<ThreadGoal>, FunctionCallError> {
@@ -344,7 +344,7 @@ impl GoalToolExecutor {
                 FunctionCallError::RespondToModel(format!("failed to account goal progress: {err}"))
             })?;
         Ok(match outcome {
-            genex_state::GoalAccountingOutcome::Updated(goal) => {
+            ruxex_state::GoalAccountingOutcome::Updated(goal) => {
                 self.metrics
                     .record_terminal_if_status_changed(previous_status, &goal);
                 self.accounting_state.mark_progress_accounted_for_status(
@@ -361,14 +361,14 @@ impl GoalToolExecutor {
                 );
                 Some(goal)
             }
-            genex_state::GoalAccountingOutcome::Unchanged(_) => None,
+            ruxex_state::GoalAccountingOutcome::Unchanged(_) => None,
         })
     }
 
     async fn current_goal_status_for_metrics(
         &self,
         expected_goal_id: Option<&str>,
-    ) -> Result<Option<genex_state::ThreadGoalStatus>, FunctionCallError> {
+    ) -> Result<Option<ruxex_state::ThreadGoalStatus>, FunctionCallError> {
         let goal = self
             .state_db
             .thread_goals()
@@ -446,9 +446,9 @@ impl GoalToolResponse {
 }
 
 pub(crate) async fn fill_empty_thread_preview_if_possible(
-    state_db: &genex_state::StateRuntime,
+    state_db: &ruxex_state::StateRuntime,
     thread_id: ThreadId,
-    goal: &genex_state::ThreadGoal,
+    goal: &ruxex_state::ThreadGoal,
 ) {
     if let Err(err) = state_db
         .set_thread_preview_if_empty(thread_id, goal.objective.as_str())
@@ -460,7 +460,7 @@ pub(crate) async fn fill_empty_thread_preview_if_possible(
     }
 }
 
-pub(crate) fn protocol_goal_from_state(goal: genex_state::ThreadGoal) -> ThreadGoal {
+pub(crate) fn protocol_goal_from_state(goal: ruxex_state::ThreadGoal) -> ThreadGoal {
     ThreadGoal {
         thread_id: goal.thread_id,
         objective: goal.objective,
@@ -473,27 +473,27 @@ pub(crate) fn protocol_goal_from_state(goal: genex_state::ThreadGoal) -> ThreadG
     }
 }
 
-fn protocol_status_from_state(status: genex_state::ThreadGoalStatus) -> ThreadGoalStatus {
+fn protocol_status_from_state(status: ruxex_state::ThreadGoalStatus) -> ThreadGoalStatus {
     match status {
-        genex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
-        genex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
-        genex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
-        genex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
-        genex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
-        genex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
+        ruxex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
+        ruxex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
+        ruxex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
+        ruxex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
+        ruxex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
+        ruxex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
     }
 }
 
 pub(crate) fn state_status_from_protocol(
     status: ThreadGoalStatus,
-) -> genex_state::ThreadGoalStatus {
+) -> ruxex_state::ThreadGoalStatus {
     match status {
-        ThreadGoalStatus::Active => genex_state::ThreadGoalStatus::Active,
-        ThreadGoalStatus::Paused => genex_state::ThreadGoalStatus::Paused,
-        ThreadGoalStatus::Blocked => genex_state::ThreadGoalStatus::Blocked,
-        ThreadGoalStatus::UsageLimited => genex_state::ThreadGoalStatus::UsageLimited,
-        ThreadGoalStatus::BudgetLimited => genex_state::ThreadGoalStatus::BudgetLimited,
-        ThreadGoalStatus::Complete => genex_state::ThreadGoalStatus::Complete,
+        ThreadGoalStatus::Active => ruxex_state::ThreadGoalStatus::Active,
+        ThreadGoalStatus::Paused => ruxex_state::ThreadGoalStatus::Paused,
+        ThreadGoalStatus::Blocked => ruxex_state::ThreadGoalStatus::Blocked,
+        ThreadGoalStatus::UsageLimited => ruxex_state::ThreadGoalStatus::UsageLimited,
+        ThreadGoalStatus::BudgetLimited => ruxex_state::ThreadGoalStatus::BudgetLimited,
+        ThreadGoalStatus::Complete => ruxex_state::ThreadGoalStatus::Complete,
     }
 }
 

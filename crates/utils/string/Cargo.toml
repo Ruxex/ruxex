@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-string"
+name = "ruxex-utils-string"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

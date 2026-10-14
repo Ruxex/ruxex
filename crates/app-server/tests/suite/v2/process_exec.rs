@@ -2,12 +2,12 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use genex_app_server_protocol::ProcessExitedNotification;
-use genex_app_server_protocol::ProcessKillParams;
-use genex_app_server_protocol::ProcessSpawnParams;
-use genex_app_server_protocol::RequestId;
-use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::ProcessExitedNotification;
+use ruxex_app_server_protocol::ProcessKillParams;
+use ruxex_app_server_protocol::ProcessSpawnParams;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_exec_server::RUXEX_EXEC_SERVER_URL_ENV_VAR;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::path::Path;
@@ -22,12 +22,12 @@ use super::connection_handling_websocket::create_config_toml;
 
 #[tokio::test]
 async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(ruxex_home.path()).await?;
 
     let process_handle = "one-shot-1".to_string();
-    let probe_file = genex_home.path().join("process-created");
-    let release_file = genex_home.path().join("process-release");
+    let probe_file = ruxex_home.path().join("process-created");
+    let release_file = ruxex_home.path().join("process-release");
     // Use a probe/release handshake instead of asserting on wall-clock timing:
     // the child proves it started by writing the probe file, then waits for the
     // test to create the release file before it can emit output and exit.
@@ -38,8 +38,8 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             "-NonInteractive".to_string(),
             "-Command".to_string(),
             concat!(
-                "[IO.File]::WriteAllText($env:GENEX_PROCESS_EXEC_PROBE_FILE, 'process'); ",
-                "while (!(Test-Path -LiteralPath $env:GENEX_PROCESS_EXEC_RELEASE_FILE)) { ",
+                "[IO.File]::WriteAllText($env:RUXEX_PROCESS_EXEC_PROBE_FILE, 'process'); ",
+                "while (!(Test-Path -LiteralPath $env:RUXEX_PROCESS_EXEC_RELEASE_FILE)) { ",
                 "Start-Sleep -Milliseconds 20 ",
                 "}; ",
                 "[Console]::Out.Write('process-out'); ",
@@ -52,8 +52,8 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             "sh".to_string(),
             "-c".to_string(),
             concat!(
-                "printf process > \"$GENEX_PROCESS_EXEC_PROBE_FILE\"; ",
-                "while [ ! -e \"$GENEX_PROCESS_EXEC_RELEASE_FILE\" ]; do sleep 0.05; done; ",
+                "printf process > \"$RUXEX_PROCESS_EXEC_PROBE_FILE\"; ",
+                "while [ ! -e \"$RUXEX_PROCESS_EXEC_RELEASE_FILE\" ]; do sleep 0.05; done; ",
                 "printf process-out; ",
                 "printf process-err >&2",
             )
@@ -62,11 +62,11 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
     };
     let env = HashMap::from([
         (
-            "GENEX_PROCESS_EXEC_PROBE_FILE".to_string(),
+            "RUXEX_PROCESS_EXEC_PROBE_FILE".to_string(),
             Some(probe_file.display().to_string()),
         ),
         (
-            "GENEX_PROCESS_EXEC_RELEASE_FILE".to_string(),
+            "RUXEX_PROCESS_EXEC_RELEASE_FILE".to_string(),
             Some(release_file.display().to_string()),
         ),
     ]);
@@ -75,7 +75,7 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
             env: Some(env),
             output_bytes_cap: Some(None),
             timeout_ms: Some(None),
-            ..process_spawn_params(process_handle.clone(), genex_home.path(), command)?
+            ..process_spawn_params(process_handle.clone(), ruxex_home.path(), command)?
         })
         .await?;
 
@@ -105,13 +105,13 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
 
 #[tokio::test]
 async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(RUXEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -119,7 +119,7 @@ async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Res
     let process_request_id = mcp
         .send_process_spawn_request(process_spawn_params(
             "disabled-process".to_string(),
-            genex_home.path(),
+            ruxex_home.path(),
             vec!["sh".to_string(), "-lc".to_string(), "true".to_string()],
         )?)
         .await?;
@@ -133,8 +133,8 @@ async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Res
 
 #[tokio::test]
 async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(ruxex_home.path()).await?;
 
     let process_handle = "capped-one-shot-1".to_string();
     let command = if cfg!(windows) {
@@ -155,7 +155,7 @@ async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
     let spawn_request_id = mcp
         .send_process_spawn_request(ProcessSpawnParams {
             output_bytes_cap: Some(Some(3)),
-            ..process_spawn_params(process_handle.clone(), genex_home.path(), command)?
+            ..process_spawn_params(process_handle.clone(), ruxex_home.path(), command)?
         })
         .await?;
 
@@ -182,8 +182,8 @@ async fn process_spawn_reports_buffered_output_cap_reached() -> Result<()> {
 
 #[tokio::test]
 async fn process_kill_terminates_running_process() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    let (_server, mut mcp) = initialized_mcp(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    let (_server, mut mcp) = initialized_mcp(ruxex_home.path()).await?;
 
     let process_handle = "sleep-process-1".to_string();
     let command = if cfg!(windows) {
@@ -200,7 +200,7 @@ async fn process_kill_terminates_running_process() -> Result<()> {
     let spawn_request_id = mcp
         .send_process_spawn_request(process_spawn_params(
             process_handle.clone(),
-            genex_home.path(),
+            ruxex_home.path(),
             command,
         )?)
         .await?;
@@ -231,11 +231,11 @@ async fn process_kill_terminates_running_process() -> Result<()> {
     Ok(())
 }
 
-async fn initialized_mcp(genex_home: &Path) -> Result<(MockServer, TestAppServer)> {
+async fn initialized_mcp(ruxex_home: &Path) -> Result<(MockServer, TestAppServer)> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    create_config_toml(genex_home, &server.uri(), "never")?;
+    create_config_toml(ruxex_home, &server.uri(), "never")?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home)
+        .with_ruxex_home(ruxex_home)
         .without_auto_env()
         .build()
         .await?;

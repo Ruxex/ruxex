@@ -14,8 +14,8 @@ use crate::app_server_session::turn_permissions_overrides;
 use crate::config_update::format_config_error;
 use crate::pager_overlay::TranscriptHistoryState;
 use crate::session_resume::cwds_differ;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ThreadGoalStatus;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ThreadGoalStatus;
 
 pub(super) const SHUTDOWN_FIRST_EXIT_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 2);
 
@@ -114,7 +114,7 @@ impl App {
                 if let Some(request) = self.chat_widget.request_managed_worktrees() {
                     crate::worktree_browser::fetch(
                         request,
-                        self.config.genex_home.to_path_buf(),
+                        self.config.ruxex_home.to_path_buf(),
                         app_server.request_handle(),
                         self.app_event_tx.clone(),
                     );
@@ -138,11 +138,11 @@ impl App {
                 if self.chat_widget.worktree_request_is_current(&request)
                     && !request.cwd.starts_with(&root)
                 {
-                    let genex_home = self.config.genex_home.to_path_buf();
+                    let ruxex_home = self.config.ruxex_home.to_path_buf();
                     let tx = self.app_event_tx.clone();
                     tokio::spawn(async move {
                         let result = crate::worktree_browser::remove(
-                            genex_home,
+                            ruxex_home,
                             request.cwd,
                             root.clone(),
                         )
@@ -369,7 +369,7 @@ impl App {
             }
             AppEvent::ForkCurrentSession { name } => {
                 self.session_telemetry.counter(
-                    "genex.thread.fork",
+                    "ruxex.thread.fork",
                     /*inc*/ 1,
                     &[("source", "slash_command")],
                 );
@@ -559,7 +559,7 @@ impl App {
                     Err(err) => {
                     // Validation and unsupported-method errors leave history unchanged. Other
                     // failures can arrive after the server has already committed the revert.
-                    if matches!(&err, genex_app_server_client::TypedRequestError::Server { source, .. }
+                    if matches!(&err, ruxex_app_server_client::TypedRequestError::Server { source, .. }
                         if matches!(source.code, -32602..=-32600)) {
                         self.restore_backtrack_prompt_after_revert_error(prompt, err);
                         tui.frame_requester().schedule_frame();
@@ -765,7 +765,7 @@ impl App {
                             .thread_goal_set(
                                 thread_id,
                                 /*objective*/ None,
-                                Some(genex_app_server_protocol::ThreadGoalStatus::Paused),
+                                Some(ruxex_app_server_protocol::ThreadGoalStatus::Paused),
                                 /*token_budget*/ None,
                             )
                             .await
@@ -809,7 +809,7 @@ impl App {
             AppEvent::ImagesPrepared(id) => {
                 self.chat_widget.on_images_prepared(id);
             }
-            AppEvent::GenexOp(op) => {
+            AppEvent::RuxexOp(op) => {
                 if let AppCommand::OverrideTurnContext {
                     cwd,
                     approval_policy,
@@ -1820,7 +1820,7 @@ impl App {
             #[cfg(unix)]
             AppEvent::AgentsDaemonStarted { result } => match result {
                 Ok(()) => self.chat_widget.add_info_message(
-                    "Background server started. Run `genex agents` in another terminal; this session remains unchanged."
+                    "Background server started. Run `ruxex agents` in another terminal; this session remains unchanged."
                         .to_string(),
                     /*hint*/ None,
                 ),
@@ -2092,7 +2092,7 @@ impl App {
                         // navigating, the runtime theme must still be applied.
                         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
                             &name,
-                            Some(&self.local_settings.genex_home),
+                            Some(&self.local_settings.ruxex_home),
                         ) {
                             crate::render::highlight::set_syntax_theme(theme);
                         }
@@ -2439,7 +2439,7 @@ impl App {
             }
             Ok(()) => {
                 self.track_agents_overview_notification(&ServerNotification::ThreadArchived(
-                    genex_app_server_protocol::ThreadArchivedNotification {
+                    ruxex_app_server_protocol::ThreadArchivedNotification {
                         thread_id: thread_id.to_string(),
                     },
                 ));
@@ -2499,7 +2499,7 @@ impl App {
             }
             Ok(()) => {
                 self.track_agents_overview_notification(&ServerNotification::ThreadDeleted(
-                    genex_app_server_protocol::ThreadDeletedNotification {
+                    ruxex_app_server_protocol::ThreadDeletedNotification {
                         thread_id: thread_id.to_string(),
                     },
                 ));

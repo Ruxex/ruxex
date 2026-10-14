@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-protocol"
+name = "ruxex-protocol"
 version.workspace = true
 
 [lib]
-name = "genex_protocol"
+name = "ruxex_protocol"
 path = "src/lib.rs"
 doctest = false
 
@@ -15,16 +15,16 @@ workspace = true
 [dependencies]
 chardetng = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-genex-async-utils = { workspace = true }
-genex-execpolicy = { workspace = true }
-genex-extension-items = { workspace = true }
-genex-http-client = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-image = { workspace = true }
-genex-utils-path-uri = { workspace = true }
-genex-utils-redacted-string = { workspace = true }
-genex-utils-string = { workspace = true }
+ruxex-async-utils = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-image = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-redacted-string = { workspace = true }
+ruxex-utils-string = { workspace = true }
 encoding_rs = { workspace = true }
 gix-url = { workspace = true }
 globset = { workspace = true }

@@ -6,7 +6,7 @@
 //! mode via [`ApplyGitRequest::preflight`] and inspect the resulting paths to
 //! learn what would change before applying for real.
 
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::ffi::OsStr;
@@ -60,7 +60,7 @@ pub fn apply_git_patch(req: &ApplyGitRequest) -> io::Result<ApplyGitResult> {
 
     // Optional: additional git config via env knob (defaults OFF)
     let mut cfg_parts: Vec<String> = Vec::new();
-    if let Ok(cfg) = std::env::var("GENEX_APPLY_GIT_CFG") {
+    if let Ok(cfg) = std::env::var("RUXEX_APPLY_GIT_CFG") {
         for pair in cfg.split(',') {
             let p = pair.trim();
             if p.is_empty() || !p.contains('=') {
@@ -630,8 +630,8 @@ mod tests {
         let root = dir.path();
         // git init and minimal identity
         let _ = run(root, &["git", "init"]);
-        let _ = run(root, &["git", "config", "user.email", "genex@example.com"]);
-        let _ = run(root, &["git", "config", "user.name", "Genex"]);
+        let _ = run(root, &["git", "config", "user.email", "ruxex@example.com"]);
+        let _ = run(root, &["git", "config", "user.name", "Ruxex"]);
         dir
     }
 

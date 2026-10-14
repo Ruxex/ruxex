@@ -2,16 +2,16 @@ use super::thread_input::DIRECT_INPUT_TO_MULTI_AGENT_V2_SUBAGENT_ERROR;
 use super::thread_input::can_accept_direct_input;
 use super::thread_input::ensure_direct_input_allowed;
 use super::*;
-use genex_goal_extension::GoalObjectiveUpdate;
-use genex_goal_extension::GoalService;
-use genex_goal_extension::GoalServiceError;
-use genex_goal_extension::GoalSetRequest;
-use genex_goal_extension::GoalTokenBudgetUpdate;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsAppliedEvent;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_rollout::RolloutRecorder;
+use ruxex_goal_extension::GoalObjectiveUpdate;
+use ruxex_goal_extension::GoalService;
+use ruxex_goal_extension::GoalServiceError;
+use ruxex_goal_extension::GoalSetRequest;
+use ruxex_goal_extension::GoalTokenBudgetUpdate;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSettingsAppliedEvent;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_rollout::RolloutRecorder;
 
 enum GoalAccess {
     Read,
@@ -85,7 +85,7 @@ impl ThreadGoalRequestProcessor {
 
     pub(crate) async fn pending_resume_goal_state(
         &self,
-        thread: &GenexThread,
+        thread: &RuxexThread,
     ) -> (bool, Option<StateDbHandle>) {
         let emit_thread_goal_update = self.config.features.enabled(Feature::Goals);
         let thread_goal_state_db = if emit_thread_goal_update {
@@ -172,7 +172,7 @@ impl ThreadGoalRequestProcessor {
 
         let persist_result = match self.thread_manager.get_thread(thread_id).await {
             Ok(thread) => match thread.rollout_path() {
-                Some(path) if genex_rollout::existing_rollout_path(&path).await.is_none() => {
+                Some(path) if ruxex_rollout::existing_rollout_path(&path).await.is_none() => {
                     // Goal-first threads need their settings captured when the goal creates the
                     // rollout. Once materialized, normal settings updates own this event.
                     let persisted_settings = thread.thread_settings_snapshot().await;
@@ -298,8 +298,8 @@ impl ThreadGoalRequestProcessor {
                 return Ok(state_db);
             }
         } else {
-            let rollout_path = genex_rollout::find_thread_path_by_id_str(
-                &self.config.genex_home,
+            let rollout_path = ruxex_rollout::find_thread_path_by_id_str(
+                &self.config.ruxex_home,
                 &thread_id.to_string(),
                 self.state_db.as_deref(),
             )
@@ -309,7 +309,7 @@ impl ThreadGoalRequestProcessor {
             })?
             .ok_or_else(|| invalid_request(format!("thread not found: {thread_id}")))?;
             if matches!(access, GoalAccess::Mutate) {
-                let session_meta = genex_rollout::read_session_meta_line(&rollout_path)
+                let session_meta = ruxex_rollout::read_session_meta_line(&rollout_path)
                     .await
                     .map_err(|err| {
                         internal_error(format!("failed to read thread ownership: {err}"))
@@ -359,8 +359,8 @@ impl ThreadGoalRequestProcessor {
                     "ephemeral thread does not support goals: {thread_id}"
                 ))
             })?,
-            None => genex_rollout::find_thread_path_by_id_str(
-                &self.config.genex_home,
+            None => ruxex_rollout::find_thread_path_by_id_str(
+                &self.config.ruxex_home,
                 &thread_id.to_string(),
                 self.state_db.as_deref(),
             )
@@ -372,11 +372,11 @@ impl ThreadGoalRequestProcessor {
         };
 
         if let Ok(Some(metadata)) = state_db.get_thread(thread_id).await
-            && genex_rollout::plain_rollout_path(metadata.rollout_path.as_path())
-                == genex_rollout::plain_rollout_path(rollout_path.as_path())
+            && ruxex_rollout::plain_rollout_path(metadata.rollout_path.as_path())
+                == ruxex_rollout::plain_rollout_path(rollout_path.as_path())
             && let Some(existing_path) =
-                genex_rollout::existing_rollout_path(metadata.rollout_path.as_path()).await
-            && genex_rollout::read_session_meta_line(existing_path.as_path())
+                ruxex_rollout::existing_rollout_path(metadata.rollout_path.as_path()).await
+            && ruxex_rollout::read_session_meta_line(existing_path.as_path())
                 .await
                 .is_ok_and(|session_meta| session_meta.meta.id == thread_id)
         {
@@ -492,7 +492,7 @@ fn thread_settings_applied_item(
     ))
 }
 
-pub(super) fn api_thread_goal_from_state(goal: genex_state::ThreadGoal) -> ThreadGoal {
+pub(super) fn api_thread_goal_from_state(goal: ruxex_state::ThreadGoal) -> ThreadGoal {
     ThreadGoal {
         thread_id: goal.thread_id.to_string(),
         objective: goal.objective,
@@ -505,14 +505,14 @@ pub(super) fn api_thread_goal_from_state(goal: genex_state::ThreadGoal) -> Threa
     }
 }
 
-fn api_thread_goal_status_from_state(status: genex_state::ThreadGoalStatus) -> ThreadGoalStatus {
+fn api_thread_goal_status_from_state(status: ruxex_state::ThreadGoalStatus) -> ThreadGoalStatus {
     match status {
-        genex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
-        genex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
-        genex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
-        genex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
-        genex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
-        genex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
+        ruxex_state::ThreadGoalStatus::Active => ThreadGoalStatus::Active,
+        ruxex_state::ThreadGoalStatus::Paused => ThreadGoalStatus::Paused,
+        ruxex_state::ThreadGoalStatus::Blocked => ThreadGoalStatus::Blocked,
+        ruxex_state::ThreadGoalStatus::UsageLimited => ThreadGoalStatus::UsageLimited,
+        ruxex_state::ThreadGoalStatus::BudgetLimited => ThreadGoalStatus::BudgetLimited,
+        ruxex_state::ThreadGoalStatus::Complete => ThreadGoalStatus::Complete,
     }
 }
 

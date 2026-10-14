@@ -1,12 +1,12 @@
-use genex_app_server_protocol::ConfigLayer as ApiConfigLayer;
-use genex_app_server_protocol::ConfigLayerMetadata as ApiConfigLayerMetadata;
-use genex_app_server_protocol::ConfigLayerSource as ApiConfigLayerSource;
-use genex_config::ConfigLayer;
-use genex_config::ConfigLayerMetadata;
-use genex_config::ConfigLayerSource;
+use ruxex_app_server_protocol::ConfigLayer as ApiConfigLayer;
+use ruxex_app_server_protocol::ConfigLayerMetadata as ApiConfigLayerMetadata;
+use ruxex_app_server_protocol::ConfigLayerSource as ApiConfigLayerSource;
+use ruxex_config::ConfigLayer;
+use ruxex_config::ConfigLayerMetadata;
+use ruxex_config::ConfigLayerSource;
 
-/// Converts a config-layer source owned by `genex-config` into the app-server wire type owned by
-/// `genex-app-server-protocol`.
+/// Converts a config-layer source owned by `ruxex-config` into the app-server wire type owned by
+/// `ruxex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain
 /// crate. Because this crate owns neither type, Rust's orphan rules require an explicit conversion
@@ -22,15 +22,15 @@ pub(crate) fn config_layer_source_to_api(source: ConfigLayerSource) -> ApiConfig
             ApiConfigLayerSource::EnterpriseManaged { id, name }
         }
         ConfigLayerSource::User { file, profile } => ApiConfigLayerSource::User { file, profile },
-        ConfigLayerSource::Project { dot_genex_folder } => {
-            ApiConfigLayerSource::Project { dot_genex_folder }
+        ConfigLayerSource::Project { dot_ruxex_folder } => {
+            ApiConfigLayerSource::Project { dot_ruxex_folder }
         }
         ConfigLayerSource::SessionFlags => ApiConfigLayerSource::SessionFlags,
     }
 }
 
-/// Converts config-layer metadata owned by `genex-config` into the app-server wire type owned by
-/// `genex-app-server-protocol`.
+/// Converts config-layer metadata owned by `ruxex-config` into the app-server wire type owned by
+/// `ruxex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain
 /// crate. Because this crate owns neither type, Rust's orphan rules require an explicit conversion
@@ -44,8 +44,8 @@ pub(crate) fn config_layer_metadata_to_api(
     }
 }
 
-/// Converts a config layer owned by `genex-config` into the app-server wire type owned by
-/// `genex-app-server-protocol`.
+/// Converts a config layer owned by `ruxex-config` into the app-server wire type owned by
+/// `ruxex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into the config domain
 /// crate. Because this crate owns neither type, Rust's orphan rules require an explicit conversion

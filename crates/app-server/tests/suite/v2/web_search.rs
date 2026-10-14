@@ -5,19 +5,19 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_app_server_protocol::WebSearchAction;
-use genex_app_server_protocol::WebSearchItem;
-use genex_features::Feature;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::WebSearchAction;
+use ruxex_app_server_protocol::WebSearchItem;
+use ruxex_features::Feature;
 use core_test_support::responses;
 use core_test_support::responses::strip_response_item_ids_from_json;
 use pretty_assertions::assert_eq;
@@ -85,7 +85,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let config = MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .enable_feature(Feature::StandaloneWebSearch)
@@ -96,7 +96,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
         .with_provider_base_url(&format!("{}/v1", server.uri()))
         .with_provider_config("env_key = \"CUSTOM_RESPONSES_API_KEY\"")
         .with_provider_config("supports_standalone_web_search = true");
-    config.write(genex_home.path())?;
+    config.write(ruxex_home.path())?;
 
     let env_overrides = vec![
         ("PROVIDER_API_KEY", None),
@@ -104,14 +104,14 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     ];
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&env_overrides)
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
     let thread_req = mcp
         .send_thread_start_request_with_auto_env(ThreadStartParams {
-            service_name: Some("genex_work_cca".to_string()),
+            service_name: Some("ruxex_work_cca".to_string()),
             ..Default::default()
         })
         .await?;
@@ -189,7 +189,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
             .context("standalone search should include the thread originator")?
             .to_str()
             .context("standalone search originator should be valid ASCII")?,
-        "genex_work_cca"
+        "ruxex_work_cca"
     );
     let search_body = search_request
         .body_json::<Value>()
@@ -224,12 +224,12 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
     );
     let turn_metadata_header = search_request
         .headers
-        .get("x-genex-turn-metadata")
-        .context("standalone search should include x-genex-turn-metadata")?
+        .get("x-ruxex-turn-metadata")
+        .context("standalone search should include x-ruxex-turn-metadata")?
         .to_str()
-        .context("x-genex-turn-metadata should be valid ASCII")?;
+        .context("x-ruxex-turn-metadata should be valid ASCII")?;
     let turn_metadata: Value = serde_json::from_str(turn_metadata_header)
-        .context("x-genex-turn-metadata should be valid JSON")?;
+        .context("x-ruxex-turn-metadata should be valid JSON")?;
     let mcp_request_meta = turn_metadata["mcp_request_meta"]
         .as_str()
         .context("mcp_request_meta should be a JSON string")?;
@@ -289,7 +289,7 @@ async fn assert_standalone_web_search_round_trips_output() -> Result<()> {
 
     drop(mcp);
     let mut reloaded_mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&env_overrides)
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;

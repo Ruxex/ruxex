@@ -1,10 +1,10 @@
 use super::*;
-use genex_protocol::config_types::WebSearchContextSize;
-use genex_protocol::config_types::WebSearchFilters;
-use genex_protocol::config_types::WebSearchUserLocation;
-use genex_protocol::config_types::WebSearchUserLocationType;
-use genex_tools::ResponsesApiWebSearchFilters;
-use genex_tools::ResponsesApiWebSearchUserLocation;
+use ruxex_protocol::config_types::WebSearchContextSize;
+use ruxex_protocol::config_types::WebSearchFilters;
+use ruxex_protocol::config_types::WebSearchUserLocation;
+use ruxex_protocol::config_types::WebSearchUserLocationType;
+use ruxex_tools::ResponsesApiWebSearchFilters;
+use ruxex_tools::ResponsesApiWebSearchUserLocation;
 use pretty_assertions::assert_eq;
 
 #[test]

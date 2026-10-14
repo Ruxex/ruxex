@@ -1,21 +1,21 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-features"
+name = "ruxex-features"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_features"
+name = "ruxex_features"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-network-proxy = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 toml = { workspace = true }

@@ -1,15 +1,15 @@
 [package]
-name = "genex-linux-sandbox"
+name = "ruxex-linux-sandbox"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "genex-linux-sandbox"
+name = "ruxex-linux-sandbox"
 path = "src/main.rs"
 
 [lib]
-name = "genex_linux_sandbox"
+name = "ruxex_linux_sandbox"
 path = "src/lib.rs"
 doctest = false
 
@@ -18,13 +18,13 @@ workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 clap = { workspace = true, features = ["derive"] }
-genex-install-context = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-process-hardening = { workspace = true }
-genex-protocol = { workspace = true }
-genex-sandboxing = { workspace = true }
-genex-uds = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-process-hardening = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 globset = { workspace = true }
 landlock = { workspace = true }
 libc = { workspace = true }
@@ -36,7 +36,7 @@ sha2 = { workspace = true }
 url = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
-genex-core = { workspace = true }
+ruxex-core = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 test-case = "3.3.1"

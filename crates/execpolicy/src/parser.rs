@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use multimap::MultiMap;
 use starlark::any::ProvidesStaticType;
 use starlark::codemap::FileSpan;

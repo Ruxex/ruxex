@@ -45,9 +45,9 @@ struct TestToolServer {
     supports_provider_form_elicitation: Arc<AtomicBool>,
 }
 
-const MEMO_URI: &str = "memo://genex/example-note";
+const MEMO_URI: &str = "memo://ruxex/example-note";
 const MEMO_CONTENT: &str = "This is a sample MCP resource served by the rmcp test server.";
-const SANDBOX_STATE_META_CAPABILITY: &str = "genex/sandbox-state-meta";
+const SANDBOX_STATE_META_CAPABILITY: &str = "ruxex/sandbox-state-meta";
 const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
 const APP_ONLY_CWD_MARKER_FILE_ENV: &str = "MCP_TEST_APP_ONLY_CWD_MARKER_FILE";
 const DYNAMIC_SERVER_METADATA_ENV: &str = "MCP_TEST_DYNAMIC_SERVER_METADATA";
@@ -328,16 +328,16 @@ impl TestToolServer {
         tool
     }
 
-    /// Tool intended for manual testing of Genex TUI rendering for MCP image tool results.
+    /// Tool intended for manual testing of Ruxex TUI rendering for MCP image tool results.
     ///
     /// This exists to exercise edge cases where a `CallToolResult.content` includes image blocks
     /// that aren't the first item (or includes invalid image blocks before a valid image).
     ///
-    /// Manual testing approach (Genex TUI):
-    /// - Build this binary: `cargo build -p genex-rmcp-client --bin test_stdio_server`
+    /// Manual testing approach (Ruxex TUI):
+    /// - Build this binary: `cargo build -p ruxex-rmcp-client --bin test_stdio_server`
     /// - Register it:
-    ///   - `genex mcp add mcpimg -- /abs/path/to/test_stdio_server`
-    /// - Then in Genex TUI, ask it to call:
+    ///   - `ruxex mcp add mcpimg -- /abs/path/to/test_stdio_server`
+    /// - Then in Ruxex TUI, ask it to call:
     ///   - `mcpimg.image_scenario({"scenario":"image_only"})`
     ///   - `mcpimg.image_scenario({"scenario":"image_only_original_detail"})`
     ///   - `mcpimg.image_scenario({"scenario":"text_then_image","caption":"Here is the image:"})`
@@ -395,9 +395,9 @@ impl TestToolServer {
     }
 
     fn memo_template() -> ResourceTemplate {
-        ResourceTemplate::new("memo://genex/{slug}", "genex-memo")
-            .with_title("Genex Memo")
-            .with_description("Template for memo://genex/{slug} resources used in tests.")
+        ResourceTemplate::new("memo://ruxex/{slug}", "ruxex-memo")
+            .with_title("Ruxex Memo")
+            .with_description("Template for memo://ruxex/{slug} resources used in tests.")
             .with_mime_type("text/plain")
     }
 
@@ -455,7 +455,7 @@ fn sync_barrier_map() -> &'static tokio::sync::Mutex<HashMap<String, SyncBarrier
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-/// Scenarios for `image_scenario`, intended to exercise Genex TUI handling of MCP image outputs.
+/// Scenarios for `image_scenario`, intended to exercise Ruxex TUI handling of MCP image outputs.
 ///
 /// The key behavior under test is that the TUI should render an image output cell if *any*
 /// decodable image block exists in the tool result content, even if the first block is text or an
@@ -518,7 +518,7 @@ impl ServerHandler for TestToolServer {
         let server_info = match dynamic_server_process_label() {
             Some(process_label) => server_info
                 .with_server_info(
-                    Implementation::new("genex-rmcp-test-server", env!("CARGO_PKG_VERSION"))
+                    Implementation::new("ruxex-rmcp-test-server", env!("CARGO_PKG_VERSION"))
                         .with_title(process_label.clone()),
                 )
                 .with_instructions(format!("Use the tools from {process_label}.")),
@@ -630,7 +630,7 @@ impl ServerHandler for TestToolServer {
                     ]))
                 } else if args.code == "await nodeRepl.emitImage(await tab.screenshot())" {
                     let mut meta = MetaObject::new();
-                    meta.insert("genex/imageDetail".to_string(), json!("low"));
+                    meta.insert("ruxex/imageDetail".to_string(), json!("low"));
                     Ok(CallToolResult::success(vec![
                         rmcp::model::ContentBlock::text("guardian-visible-before-image"),
                         rmcp::model::ContentBlock::Image(
@@ -715,7 +715,7 @@ impl ServerHandler for TestToolServer {
             }
             "encrypted_output" => {
                 let mut meta = MetaObject::new();
-                meta.insert("genex/encryptedContent".to_string(), json!(true));
+                meta.insert("ruxex/encryptedContent".to_string(), json!(true));
                 let mut result = CallToolResult::success(vec![
                     rmcp::model::ContentBlock::text("Lookup completed"),
                     rmcp::model::ContentBlock::Text(
@@ -808,7 +808,7 @@ impl TestToolServer {
             ImageScenario::ImageOnlyOriginalDetail => {
                 let mut meta = MetaObject::new();
                 meta.insert(
-                    "genex/imageDetail".to_string(),
+                    "ruxex/imageDetail".to_string(),
                     serde_json::json!("original"),
                 );
                 content.push(rmcp::model::ContentBlock::Image(

@@ -78,21 +78,21 @@ impl JsonLogCapture {
 pub fn app_server_json_shutdown_event(
     binary: &str,
     args: &[&str],
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> Result<Value> {
     std::fs::write(
-        genex_home.join("config.toml"),
+        ruxex_home.join("config.toml"),
         "[features]\nplugins = false\n",
     )?;
-    let output = Command::new(genex_utils_cargo_bin::cargo_bin(binary)?)
+    let output = Command::new(ruxex_utils_cargo_bin::cargo_bin(binary)?)
         .stdin(Stdio::null())
-        .env("GENEX_HOME", genex_home)
+        .env("RUXEX_HOME", ruxex_home)
         .env(
-            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            genex_home.join("managed_config.toml"),
+            "RUXEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            ruxex_home.join("managed_config.toml"),
         )
         .env("LOG_FORMAT", "json")
-        .env("RUST_LOG", "genex_app_server=info")
+        .env("RUST_LOG", "ruxex_app_server=info")
         .args(args)
         .output()?;
 

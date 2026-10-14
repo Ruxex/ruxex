@@ -1,6 +1,6 @@
 //! Shortcut picker construction for `/keymap`.
 
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::TuiKeymap;
 use ratatui::style::Styled;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
@@ -314,7 +314,7 @@ fn keymap_debug_tab() -> SelectionTab {
         label: "Debug".to_string(),
         header: keymap_header(
             "Inspect keypresses from your terminal.".to_string(),
-            "See the key Genex detects and any shortcuts assigned to it.".to_string(),
+            "See the key Ruxex detects and any shortcuts assigned to it.".to_string(),
         ),
         items: vec![SelectionItem {
             name: "Inspect keypresses".to_string(),

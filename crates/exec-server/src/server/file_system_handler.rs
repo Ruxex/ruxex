@@ -2,7 +2,7 @@ use std::io;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use genex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
 
 use crate::CapabilityRootsDiscoverParams;
 use crate::CapabilityRootsDiscoverResponse;
@@ -356,9 +356,9 @@ fn map_fs_error(err: io::Error) -> JSONRPCErrorError {
 
 #[cfg(test)]
 mod tests {
-    use genex_protocol::protocol::NetworkAccess;
-    use genex_protocol::protocol::SandboxPolicy;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_protocol::protocol::NetworkAccess;
+    use ruxex_protocol::protocol::SandboxPolicy;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -371,7 +371,7 @@ mod tests {
         let temp_dir = tempfile::tempdir().expect("tempdir");
         let runtime_paths = ExecServerRuntimePaths::new(
             std::env::current_exe().expect("current exe"),
-            /*genex_linux_sandbox_exe*/ None,
+            /*ruxex_linux_sandbox_exe*/ None,
         )
         .expect("runtime paths");
         let handler = FileSystemHandler::new(runtime_paths);

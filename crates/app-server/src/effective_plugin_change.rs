@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use genex_core::ThreadManager;
-use genex_core_plugins::EffectivePluginsChange;
+use ruxex_core::ThreadManager;
+use ruxex_core_plugins::EffectivePluginsChange;
 
 use crate::config_manager::ConfigManager;
 use crate::request_processors::ConfigRequestProcessor;

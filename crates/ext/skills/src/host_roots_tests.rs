@@ -3,32 +3,32 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::ConfigRequirementsToml;
-use genex_exec_server::CopyOptions;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::ExecutorFileSystemFuture;
-use genex_exec_server::FileMetadata;
-use genex_exec_server::FileSystemReadStream;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::LOCAL_FS;
-use genex_exec_server::ReadDirectoryEntry;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WalkOptions;
-use genex_exec_server::WalkOutcome;
-use genex_exec_server::WriteFileOptions;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::SkillMetadata;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::SkillDiscoveryMode;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_exec_server::CopyOptions;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::ExecutorFileSystemFuture;
+use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemReadStream;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_exec_server::ReadDirectoryEntry;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WalkOptions;
+use ruxex_exec_server::WalkOutcome;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::SkillMetadata;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::sync::Notify;
@@ -192,20 +192,20 @@ fn stack(layers: Vec<ConfigLayerEntry>) -> ConfigLayerStack {
     .expect("valid config stack")
 }
 
-fn user_layer(genex_home: &AbsolutePathBuf) -> ConfigLayerEntry {
+fn user_layer(ruxex_home: &AbsolutePathBuf) -> ConfigLayerEntry {
     ConfigLayerEntry::new(
         ConfigLayerSource::User {
-            file: genex_home.join("config.toml"),
+            file: ruxex_home.join("config.toml"),
             profile: None,
         },
         empty_config(),
     )
 }
 
-fn project_layer(dot_genex_folder: &AbsolutePathBuf) -> ConfigLayerEntry {
+fn project_layer(dot_ruxex_folder: &AbsolutePathBuf) -> ConfigLayerEntry {
     ConfigLayerEntry::new(
         ConfigLayerSource::Project {
-            dot_genex_folder: dot_genex_folder.clone(),
+            dot_ruxex_folder: dot_ruxex_folder.clone(),
         },
         empty_config(),
     )
@@ -244,11 +244,11 @@ fn expected_skill(path: AbsolutePathBuf, name: &str, scope: SkillScope) -> Skill
 #[test]
 fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
     let temp_dir = TempDir::new().expect("temp dir");
-    let system_folder = absolute(temp_dir.path().join("etc/genex"));
+    let system_folder = absolute(temp_dir.path().join("etc/ruxex"));
     let home_folder = absolute(temp_dir.path().join("home"));
-    let user_folder = home_folder.join("genex");
-    let project_folder = absolute(temp_dir.path().join("repo/.genex"));
-    let nested_project_folder = absolute(temp_dir.path().join("repo/nested/.genex"));
+    let user_folder = home_folder.join("ruxex");
+    let project_folder = absolute(temp_dir.path().join("repo/.ruxex"));
+    let nested_project_folder = absolute(temp_dir.path().join("repo/nested/.ruxex"));
     let config_stack = stack(vec![
         ConfigLayerEntry::new(
             ConfigLayerSource::System {
@@ -259,7 +259,7 @@ fn layer_roots_preserve_scope_precedence_and_disabled_projects() {
         user_layer(&user_folder),
         ConfigLayerEntry::new_disabled(
             ConfigLayerSource::Project {
-                dot_genex_folder: project_folder.clone(),
+                dot_ruxex_folder: project_folder.clone(),
             },
             empty_config(),
             "untrusted project",
@@ -447,11 +447,11 @@ async fn repo_ancestry_stops_at_project_root_and_preserves_root_to_cwd_order() {
 async fn resolved_project_layer_loads_skill_without_git_marker() {
     let temp_dir = TempDir::new().expect("temp dir");
     let workspace = absolute(temp_dir.path().join("workspace"));
-    let dot_genex = workspace.join(".genex");
-    let skill_root = dot_genex.join("skills");
+    let dot_ruxex = workspace.join(".ruxex");
+    let skill_root = dot_ruxex.join("skills");
     fs::create_dir_all(&workspace).expect("create workspace");
     let skill_path = write_skill(&skill_root, "local", "local-skill");
-    let config_stack = stack(vec![project_layer(&dot_genex)]);
+    let config_stack = stack(vec![project_layer(&dot_ruxex)]);
 
     let roots = resolve_skill_roots_with_home_dir(
         Some(Arc::clone(&LOCAL_FS)),
@@ -481,14 +481,14 @@ async fn resolved_project_layer_loads_skill_without_git_marker() {
 async fn resolved_project_layer_loads_skill_when_cwd_is_file() {
     let temp_dir = TempDir::new().expect("temp dir");
     let repository = absolute(temp_dir.path().join("repo"));
-    let dot_genex = repository.join(".genex");
-    let skill_root = dot_genex.join("skills");
+    let dot_ruxex = repository.join(".ruxex");
+    let skill_root = dot_ruxex.join("skills");
     fs::create_dir_all(&repository).expect("create repository");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
     let cwd = repository.join("some-file.txt");
     fs::write(&cwd, "contents").expect("write cwd file");
     let skill_path = write_skill(&skill_root, "repo", "repo-skill");
-    let config_stack = stack(vec![project_layer(&dot_genex)]);
+    let config_stack = stack(vec![project_layer(&dot_ruxex)]);
 
     let roots = resolve_skill_roots_with_home_dir(
         Some(Arc::clone(&LOCAL_FS)),
@@ -598,29 +598,29 @@ async fn repo_ancestry_limits_concurrent_probes_and_preserves_order() {
 async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_names() {
     let temp_dir = TempDir::new().expect("temp dir");
     let home_folder = absolute(temp_dir.path().join("home"));
-    let genex_home = home_folder.join("genex");
-    let system_folder = absolute(temp_dir.path().join("etc/genex"));
+    let ruxex_home = home_folder.join("ruxex");
+    let system_folder = absolute(temp_dir.path().join("etc/ruxex"));
     let repository = absolute(temp_dir.path().join("repo"));
     let cwd = repository.join("nested/inner");
     fs::create_dir_all(&cwd).expect("create cwd");
     fs::write(repository.join(".git"), "gitdir: fake\n").expect("write git marker");
 
-    let project_dot_genex = repository.join(".genex");
-    let nested_project_dot_genex = repository.join("nested/.genex");
-    let user_skills = genex_home.join("skills");
+    let project_dot_ruxex = repository.join(".ruxex");
+    let nested_project_dot_ruxex = repository.join("nested/.ruxex");
+    let user_skills = ruxex_home.join("skills");
     let root_project_skill = write_skill(
-        &project_dot_genex.join("skills"),
+        &project_dot_ruxex.join("skills"),
         "root-duplicate",
         "duplicate-skill",
     );
     let nested_project_skill = write_skill(
-        &nested_project_dot_genex.join("skills"),
+        &nested_project_dot_ruxex.join("skills"),
         "nested-duplicate",
         "duplicate-skill",
     );
     let user_skill = write_skill(&user_skills, "user-duplicate", "duplicate-skill");
     let home_skill = write_skill(&home_folder.join(".agents/skills"), "home", "home-skill");
-    let system_skill = write_skill(&genex_home.join("skills/.system"), "system", "system-skill");
+    let system_skill = write_skill(&ruxex_home.join("skills/.system"), "system", "system-skill");
     let admin_skill = write_skill(&system_folder.join("skills"), "admin", "admin-skill");
     let repo_agent_skill = write_skill(
         &repository.join(".agents/skills"),
@@ -639,9 +639,9 @@ async fn resolved_config_and_repo_roots_preserve_order_and_dedupe_paths_not_name
             },
             empty_config(),
         ),
-        user_layer(&genex_home),
-        project_layer(&project_dot_genex),
-        project_layer(&nested_project_dot_genex),
+        user_layer(&ruxex_home),
+        project_layer(&project_dot_ruxex),
+        project_layer(&nested_project_dot_ruxex),
     ]);
 
     let roots = resolve_skill_roots_with_home_dir(

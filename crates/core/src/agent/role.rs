@@ -7,19 +7,19 @@ use crate::config::AgentRoleConfig;
 use crate::config::Config;
 use crate::config::deserialize_config_toml_with_base;
 use anyhow::anyhow;
-use genex_agent_roles::parse_agent_role_file_contents;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::SkillsConfig;
-use genex_config::loader::resolve_relative_paths_in_config_toml;
-use genex_exec_server::read_sensitive_file_to_string;
-use genex_features::Feature;
-use genex_features::feature_for_key;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_agent_roles::parse_agent_role_file_contents;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::SkillsConfig;
+use ruxex_config::loader::resolve_relative_paths_in_config_toml;
+use ruxex_exec_server::read_sensitive_file_to_string;
+use ruxex_features::Feature;
+use ruxex_features::feature_for_key;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::model_types::ReasoningEffort;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
@@ -72,7 +72,7 @@ async fn apply_role_to_config_inner(
         return Ok(());
     };
     let role_layer_toml = load_role_layer_toml(config, config_file, is_built_in, role_name).await?;
-    let role_config = deserialize_config_toml_with_base(role_layer_toml, &config.genex_home)?;
+    let role_config = deserialize_config_toml_with_base(role_layer_toml, &config.ruxex_home)?;
     let mut overrides = AgentRoleOverrides {
         model: role_config.model,
         model_reasoning_effort: role_config.model_reasoning_effort,
@@ -130,7 +130,7 @@ async fn load_role_layer_toml(
             .map(str::to_owned)
             .ok_or(anyhow!("No corresponding config content"))?;
         let role_config_toml: TomlValue = toml::from_str(&role_config_contents)?;
-        (role_config_toml, config.genex_home.as_path())
+        (role_config_toml, config.ruxex_home.as_path())
     } else {
         let role_config_contents = read_sensitive_file_to_string(config_file).await?;
         let role_config_base = config_file

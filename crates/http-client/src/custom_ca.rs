@@ -1,6 +1,6 @@
-//! Custom CA handling shared by Genex outbound HTTP and websocket clients.
+//! Custom CA handling shared by Ruxex outbound HTTP and websocket clients.
 //!
-//! Genex constructs outbound reqwest clients and secure websocket connections in a few crates, but
+//! Ruxex constructs outbound reqwest clients and secure websocket connections in a few crates, but
 //! they all need the same trust-store policy when enterprise proxies or gateways intercept TLS.
 //! This module centralizes that policy so callers can start from an ordinary
 //! `reqwest::ClientBuilder` or rustls client config, layer in custom CA support, and either get
@@ -9,7 +9,7 @@
 //!
 //! The module intentionally has a narrow responsibility:
 //!
-//! - read CA material from `GENEX_CA_CERTIFICATE`, falling back to `SSL_CERT_FILE`
+//! - read CA material from `RUXEX_CA_CERTIFICATE`, falling back to `SSL_CERT_FILE`
 //! - normalize PEM variants that show up in real deployments, including OpenSSL-style
 //!   `TRUSTED CERTIFICATE` labels and bundles that also contain CRLs
 //! - return user-facing errors that explain how to fix misconfigured CA files
@@ -25,7 +25,7 @@
 //! - on macOS seatbelt runs, `reqwest::Client::builder().build()` can panic inside
 //!   `system-configuration` while probing platform proxy settings, which means the process can die
 //!   before the custom-CA code reports success or a structured error. That matters in practice
-//!   because Genex itself commonly runs spawned test processes under seatbelt, so this is not just
+//!   because Ruxex itself commonly runs spawned test processes under seatbelt, so this is not just
 //!   a hypothetical CI edge case.
 //! - child processes inherit CA-related environment variables by default, which lets developer
 //!   shell state or CI configuration affect a test unless the test scrubs those variables first
@@ -47,7 +47,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use rustls::ClientConfig;
 use rustls::RootCertStore;
 use rustls_pki_types::CertificateDer;
@@ -58,9 +58,9 @@ use thiserror::Error;
 use tracing::info;
 use tracing::warn;
 
-pub const GENEX_CA_CERT_ENV: &str = "GENEX_CA_CERTIFICATE";
+pub const RUXEX_CA_CERT_ENV: &str = "RUXEX_CA_CERTIFICATE";
 pub const SSL_CERT_FILE_ENV: &str = "SSL_CERT_FILE";
-const CA_CERT_HINT: &str = "If you set GENEX_CA_CERTIFICATE or SSL_CERT_FILE, ensure it points to a PEM file containing one or more CERTIFICATE blocks, or unset it to use system roots.";
+const CA_CERT_HINT: &str = "If you set RUXEX_CA_CERTIFICATE or SSL_CERT_FILE, ensure it points to a PEM file containing one or more CERTIFICATE blocks, or unset it to use system roots.";
 type PemSection = (SectionKind, Vec<u8>);
 
 /// Describes why a transport using shared custom CA support could not be constructed.
@@ -161,15 +161,15 @@ impl From<BuildCustomCaTransportError> for io::Error {
     }
 }
 
-/// Builds a reqwest client that honors Genex custom CA environment variables.
+/// Builds a reqwest client that honors Ruxex custom CA environment variables.
 ///
 /// Callers supply the baseline builder configuration they need, and this helper layers in custom
-/// CA handling before finally constructing the client. `GENEX_CA_CERTIFICATE` takes precedence
+/// CA handling before finally constructing the client. `RUXEX_CA_CERTIFICATE` takes precedence
 /// over `SSL_CERT_FILE`, and empty values for either are treated as unset so callers do not
 /// accidentally turn `VAR=""` into a bogus path lookup.
 ///
 /// Callers that build a raw `reqwest::Client` directly bypass this policy entirely. That is an
-/// easy mistake to make when adding a new outbound Genex HTTP path, and the resulting bug only
+/// easy mistake to make when adding a new outbound Ruxex HTTP path, and the resulting bug only
 /// shows up in environments where a proxy or gateway requires a custom root CA.
 ///
 /// # Errors
@@ -182,10 +182,10 @@ pub fn build_reqwest_client_with_custom_ca(
     build_reqwest_client_with_env(&ProcessEnv, builder)
 }
 
-/// Builds a rustls client config when a Genex custom CA bundle is configured.
+/// Builds a rustls client config when a Ruxex custom CA bundle is configured.
 ///
 /// This is the websocket-facing sibling of [`build_reqwest_client_with_custom_ca`]. When
-/// `GENEX_CA_CERTIFICATE` or `SSL_CERT_FILE` selects a CA bundle, the returned config starts from
+/// `RUXEX_CA_CERTIFICATE` or `SSL_CERT_FILE` selects a CA bundle, the returned config starts from
 /// the platform native roots and then adds the configured custom CA certificates. When no custom
 /// CA env var is set, this returns `Ok(None)` so websocket callers can keep using their ordinary
 /// default connector path.
@@ -198,7 +198,7 @@ pub fn maybe_build_rustls_client_config_with_custom_ca()
     maybe_build_rustls_client_config_with_env(&ProcessEnv)
 }
 
-/// Builds a rustls client config using native roots and any configured Genex custom CA bundle.
+/// Builds a rustls client config using native roots and any configured Ruxex custom CA bundle.
 ///
 /// Unlike [`maybe_build_rustls_client_config_with_custom_ca`], this always returns a config. Use
 /// this when the caller must perform TLS itself instead of delegating default configuration to a
@@ -245,7 +245,7 @@ fn build_rustls_client_config(
     ensure_rustls_crypto_provider();
 
     // Start from the platform roots so websocket callers keep the same baseline trust behavior
-    // they would get from tungstenite's default rustls connector, then layer in the Genex custom
+    // they would get from tungstenite's default rustls connector, then layer in the Ruxex custom
     // CA bundle on top when configured.
     let mut root_store = RootCertStore::empty();
     let rustls_native_certs::CertificateResult { certs, errors, .. } =
@@ -348,7 +348,7 @@ fn build_reqwest_client_with_env(
     }
 
     info!(
-        genex_ca_certificate_configured = false,
+        ruxex_ca_certificate_configured = false,
         ssl_cert_file_configured = false,
         "using system root certificates because no CA override environment variable was selected"
     );
@@ -392,13 +392,13 @@ trait EnvSource {
 
     /// Returns the configured CA bundle and which environment variable selected it.
     ///
-    /// `GENEX_CA_CERTIFICATE` wins over `SSL_CERT_FILE` because it is the Genex-specific override.
+    /// `RUXEX_CA_CERTIFICATE` wins over `SSL_CERT_FILE` because it is the Ruxex-specific override.
     /// Keeping the winning variable name with the path lets later logging explain not only which
     /// file was used but also why that file was chosen.
     fn configured_ca_bundle(&self) -> Option<ConfiguredCaBundle> {
-        self.non_empty_path(GENEX_CA_CERT_ENV)
+        self.non_empty_path(RUXEX_CA_CERT_ENV)
             .map(|path| ConfiguredCaBundle {
-                source_env: GENEX_CA_CERT_ENV,
+                source_env: RUXEX_CA_CERT_ENV,
                 path,
             })
             .or_else(|| {
@@ -467,9 +467,9 @@ impl ConfiguredCaBundle {
         }
     }
 
-    /// Loads every certificate block from a PEM file intended for Genex CA overrides.
+    /// Loads every certificate block from a PEM file intended for Ruxex CA overrides.
     ///
-    /// This accepts a few common real-world variants so Genex behaves like other CA-aware tooling:
+    /// This accepts a few common real-world variants so Ruxex behaves like other CA-aware tooling:
     /// leading comments are preserved, `TRUSTED CERTIFICATE` labels are normalized to standard
     /// certificate labels, and embedded CRLs are ignored when they are well-formed enough for the
     /// section iterator to classify them.
@@ -577,7 +577,7 @@ enum NormalizedPem {
 impl NormalizedPem {
     /// Normalizes PEM text from a CA bundle into the label shape this module expects.
     ///
-    /// Genex only needs certificate DER bytes to seed `reqwest`'s root store, but operators may
+    /// Ruxex only needs certificate DER bytes to seed `reqwest`'s root store, but operators may
     /// point it at CA files that came from OpenSSL tooling rather than from a minimal certificate
     /// bundle. OpenSSL's `TRUSTED CERTIFICATE` form is one such variant: it is still certificate
     /// material, but it uses a different PEM label and may carry auxiliary trust metadata that
@@ -722,7 +722,7 @@ mod tests {
 
     use super::BuildCustomCaTransportError;
     use super::EnvSource;
-    use super::GENEX_CA_CERT_ENV;
+    use super::RUXEX_CA_CERT_ENV;
     use super::SSL_CERT_FILE_ENV;
     use super::maybe_build_rustls_client_config_with_env;
 
@@ -756,15 +756,15 @@ mod tests {
     }
 
     #[test]
-    fn ca_path_prefers_genex_env() {
+    fn ca_path_prefers_ruxex_env() {
         let env = map_env(&[
-            (GENEX_CA_CERT_ENV, "/tmp/genex.pem"),
+            (RUXEX_CA_CERT_ENV, "/tmp/ruxex.pem"),
             (SSL_CERT_FILE_ENV, "/tmp/fallback.pem"),
         ]);
 
         assert_eq!(
             env.configured_ca_bundle().map(|bundle| bundle.path),
-            Some(PathBuf::from("/tmp/genex.pem"))
+            Some(PathBuf::from("/tmp/ruxex.pem"))
         );
     }
 
@@ -781,7 +781,7 @@ mod tests {
     #[test]
     fn ca_path_ignores_empty_values() {
         let env = map_env(&[
-            (GENEX_CA_CERT_ENV, ""),
+            (RUXEX_CA_CERT_ENV, ""),
             (SSL_CERT_FILE_ENV, "/tmp/fallback.pem"),
         ]);
 
@@ -795,7 +795,7 @@ mod tests {
     fn rustls_config_uses_custom_ca_bundle_when_configured() {
         let temp_dir = TempDir::new().expect("tempdir");
         let cert_path = write_cert_file(&temp_dir, "ca.pem", TEST_CERT);
-        let env = map_env(&[(GENEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
+        let env = map_env(&[(RUXEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
 
         let config = maybe_build_rustls_client_config_with_env(&env)
             .expect("rustls config")
@@ -808,7 +808,7 @@ mod tests {
     fn rustls_config_reports_invalid_ca_file() {
         let temp_dir = TempDir::new().expect("tempdir");
         let cert_path = write_cert_file(&temp_dir, "empty.pem", "");
-        let env = map_env(&[(GENEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
+        let env = map_env(&[(RUXEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
 
         let error = maybe_build_rustls_client_config_with_env(&env).expect_err("invalid CA");
 

@@ -5,8 +5,8 @@
 
 use std::time::Duration;
 
-pub(crate) const LOAD_DURATION: &str = "genex.plugins.loaded_cache.load.duration_ms";
-pub(crate) const WAIT_DURATION: &str = "genex.plugins.loaded_cache.wait.duration_ms";
+pub(crate) const LOAD_DURATION: &str = "ruxex.plugins.loaded_cache.load.duration_ms";
+pub(crate) const WAIT_DURATION: &str = "ruxex.plugins.loaded_cache.wait.duration_ms";
 
 pub(crate) enum RequestOutcome {
     Hit,
@@ -16,7 +16,7 @@ pub(crate) enum RequestOutcome {
 
 impl RequestOutcome {
     pub(crate) fn record(self) {
-        let Some(metrics) = genex_otel::global() else {
+        let Some(metrics) = ruxex_otel::global() else {
             return;
         };
         let outcome = match self {
@@ -25,7 +25,7 @@ impl RequestOutcome {
             Self::Load => "load",
         };
         let _ = metrics.counter(
-            "genex.plugins.loaded_cache.request",
+            "ruxex.plugins.loaded_cache.request",
             /*inc*/ 1,
             &[("outcome", outcome)],
         );
@@ -33,15 +33,15 @@ impl RequestOutcome {
 }
 
 pub(crate) fn record_duration(name: &'static str, duration: Duration) {
-    if let Some(metrics) = genex_otel::global() {
+    if let Some(metrics) = ruxex_otel::global() {
         let _ = metrics.record_duration(name, duration, &[]);
     }
 }
 
 pub(crate) fn record_event(event: &'static str) {
-    if let Some(metrics) = genex_otel::global() {
+    if let Some(metrics) = ruxex_otel::global() {
         let _ = metrics.counter(
-            "genex.plugins.loaded_cache.event",
+            "ruxex.plugins.loaded_cache.event",
             /*inc*/ 1,
             &[("event", event)],
         );

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -123,7 +123,7 @@ fn effective_workspace_intersection_preserves_network_metadata_and_temp() {
     );
     assert_eq!(result.network_sandbox_policy(), Restricted);
     assert!(policy.entries.contains(&special(Tmpdir, Write)));
-    for name in [".git", ".agents", ".genex", ".aws"] {
+    for name in [".git", ".agents", ".ruxex", ".aws"] {
         let protected = project.join(name);
         assert!(!policy.can_write_local_path_with_cwd(protected.as_path(), root.as_path()));
         assert!(policy.entries.contains(&skipped(protected.into(), Read)));

@@ -82,8 +82,8 @@ pub(crate) fn start_turn_for_thread(
     thread_id: &str,
     turn_id: &str,
 ) -> anyhow::Result<()> {
-    writer.append(RawTraceEventPayload::GenexTurnStarted {
-        genex_turn_id: turn_id.to_string(),
+    writer.append(RawTraceEventPayload::RuxexTurnStarted {
+        ruxex_turn_id: turn_id.to_string(),
         thread_id: thread_id.to_string(),
     })?;
     Ok(())
@@ -100,20 +100,20 @@ pub(crate) fn trace_context_for_agent(turn_id: &str) -> RawTraceEventContext {
 pub(crate) fn trace_context_for_thread(thread_id: &str, turn_id: &str) -> RawTraceEventContext {
     RawTraceEventContext {
         thread_id: Some(thread_id.to_string()),
-        genex_turn_id: Some(turn_id.to_string()),
+        ruxex_turn_id: Some(turn_id.to_string()),
     }
 }
 
 pub(crate) fn append_inference_start(
     writer: &TraceWriter,
     inference_call_id: &str,
-    genex_turn_id: &str,
+    ruxex_turn_id: &str,
     request_payload: RawPayloadRef,
 ) -> anyhow::Result<()> {
     append_inference_start_for_thread(
         writer,
         ROOT_THREAD_ID,
-        genex_turn_id,
+        ruxex_turn_id,
         inference_call_id,
         request_payload,
     )
@@ -122,14 +122,14 @@ pub(crate) fn append_inference_start(
 pub(crate) fn append_inference_start_for_thread(
     writer: &TraceWriter,
     thread_id: &str,
-    genex_turn_id: &str,
+    ruxex_turn_id: &str,
     inference_call_id: &str,
     request_payload: RawPayloadRef,
 ) -> anyhow::Result<()> {
     writer.append(RawTraceEventPayload::InferenceStarted {
         inference_call_id: inference_call_id.to_string(),
         thread_id: thread_id.to_string(),
-        genex_turn_id: genex_turn_id.to_string(),
+        ruxex_turn_id: ruxex_turn_id.to_string(),
         model: "model-test".to_string(),
         request_payload,
     })?;

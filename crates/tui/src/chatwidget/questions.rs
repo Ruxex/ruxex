@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::bottom_pane::QuestionSubmission;
-use genex_protocol::items::AsyncUserInputQuestion;
+use ruxex_protocol::items::AsyncUserInputQuestion;
 
 impl ChatWidget {
     pub(super) fn add_async_questions(

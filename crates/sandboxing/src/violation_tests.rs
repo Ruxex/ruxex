@@ -1,9 +1,9 @@
 use super::*;
-use genex_network_proxy::BlockedRequest;
-use genex_network_proxy::BlockedRequestArgs;
-use genex_network_proxy::NetworkMode;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
+use ruxex_network_proxy::BlockedRequest;
+use ruxex_network_proxy::BlockedRequestArgs;
+use ruxex_network_proxy::NetworkMode;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 

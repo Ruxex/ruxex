@@ -2,20 +2,20 @@ use std::io::ErrorKind;
 use std::path::Path;
 
 use crate::rollout::SESSIONS_SUBDIR;
-use genex_protocol::error::GenexErr;
-use genex_thread_store::ThreadStoreError;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_thread_store::ThreadStoreError;
 
-pub(crate) fn map_session_init_error(err: &anyhow::Error, genex_home: &Path) -> GenexErr {
+pub(crate) fn map_session_init_error(err: &anyhow::Error, ruxex_home: &Path) -> RuxexErr {
     if let Some(store_error) = err
         .chain()
         .find_map(|cause| cause.downcast_ref::<ThreadStoreError>())
     {
         match store_error {
             ThreadStoreError::Unsupported { operation } => {
-                return GenexErr::UnsupportedOperation(format!("{operation} is not supported yet"));
+                return RuxexErr::UnsupportedOperation(format!("{operation} is not supported yet"));
             }
             ThreadStoreError::Conflict { message } => {
-                return GenexErr::InvalidRequest(message.clone());
+                return RuxexErr::InvalidRequest(message.clone());
             }
             ThreadStoreError::ThreadNotFound { .. }
             | ThreadStoreError::InvalidRequest { .. }
@@ -26,28 +26,28 @@ pub(crate) fn map_session_init_error(err: &anyhow::Error, genex_home: &Path) -> 
     if let Some(mapped) = err
         .chain()
         .filter_map(|cause| cause.downcast_ref::<std::io::Error>())
-        .find_map(|io_err| map_rollout_io_error(io_err, genex_home))
+        .find_map(|io_err| map_rollout_io_error(io_err, ruxex_home))
     {
         return mapped;
     }
 
-    GenexErr::Fatal(format!("Failed to initialize session: {err:#}"))
+    RuxexErr::Fatal(format!("Failed to initialize session: {err:#}"))
 }
 
-fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<GenexErr> {
-    let sessions_dir = genex_home.join(SESSIONS_SUBDIR);
+fn map_rollout_io_error(io_err: &std::io::Error, ruxex_home: &Path) -> Option<RuxexErr> {
+    let sessions_dir = ruxex_home.join(SESSIONS_SUBDIR);
     let hint = match io_err.kind() {
         ErrorKind::PermissionDenied => format!(
-            "Genex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
+            "Ruxex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
             sessions_dir.display(),
-            genex_home.display()
+            ruxex_home.display()
         ),
         ErrorKind::NotFound => format!(
-            "Session storage missing at {}. Create the directory or choose a different Genex home.",
+            "Session storage missing at {}. Create the directory or choose a different Ruxex home.",
             sessions_dir.display()
         ),
         ErrorKind::AlreadyExists => format!(
-            "Session storage path {} is blocked by an existing file. Remove or rename it so Genex can create sessions.",
+            "Session storage path {} is blocked by an existing file. Remove or rename it so Ruxex can create sessions.",
             sessions_dir.display()
         ),
         ErrorKind::InvalidData => format!(
@@ -55,13 +55,13 @@ fn map_rollout_io_error(io_err: &std::io::Error, genex_home: &Path) -> Option<Ge
             sessions_dir.display()
         ),
         ErrorKind::IsADirectory | ErrorKind::NotADirectory => format!(
-            "Session storage path {} has an unexpected type. Ensure it is a directory Genex can use for session files.",
+            "Session storage path {} has an unexpected type. Ensure it is a directory Ruxex can use for session files.",
             sessions_dir.display()
         ),
         _ => return None,
     };
 
-    Some(GenexErr::Fatal(format!(
+    Some(RuxexErr::Fatal(format!(
         "{hint} (underlying error: {io_err})"
     )))
 }

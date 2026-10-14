@@ -2,12 +2,12 @@
 
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_protocol::ThreadId;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_protocol::ThreadId;
 use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
@@ -48,14 +48,14 @@ pub(crate) enum Action {
 
 pub(crate) fn fetch(
     request: Request,
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     app_server: AppServerRequestHandle,
     tx: AppEventSender,
 ) {
     tokio::spawn(async move {
         let result = async {
-            let mut entries = list(genex_home.clone(), request.cwd.clone()).await?;
-            let archive_root = genex_home.join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR);
+            let mut entries = list(ruxex_home.clone(), request.cwd.clone()).await?;
+            let archive_root = ruxex_home.join(ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR);
             for entry in &mut entries {
                 let Owner::Unavailable(id) = entry.owner else {
                     continue;
@@ -74,7 +74,7 @@ pub(crate) fn fetch(
                     let Some(path) = thread.path.as_ref() else {
                         continue;
                     };
-                    let Some(path) = genex_rollout::existing_rollout_path(path).await else {
+                    let Some(path) = ruxex_rollout::existing_rollout_path(path).await else {
                         continue;
                     };
                     let archived = path.starts_with(&archive_root);
@@ -115,20 +115,20 @@ pub(crate) fn fetch(
     });
 }
 
-pub(crate) async fn list(genex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Vec<Entry>> {
+pub(crate) async fn list(ruxex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Vec<Entry>> {
     let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-        &genex_home,
+        &ruxex_home,
         /*cwd*/ None,
         Vec::new(),
-        genex_config::ConfigLoadOptions::default(),
+        ruxex_config::ConfigLoadOptions::default(),
     )
     .await?;
     let settings =
-        genex_worktree::WorktreeSettings::for_cli(&genex_home, host.config_toml.desktop.as_ref())?;
+        ruxex_worktree::WorktreeSettings::for_cli(&ruxex_home, host.config_toml.desktop.as_ref())?;
     // Closing the popup discards its result; an already-running blocking Git call still finishes.
     tokio::task::spawn_blocking(move || {
-        let cwd = genex_git_utils::get_git_repo_root(&cwd).unwrap_or(cwd);
-        let manager = genex_worktree::WorktreeManager::new(settings);
+        let cwd = ruxex_git_utils::get_git_repo_root(&cwd).unwrap_or(cwd);
+        let manager = ruxex_worktree::WorktreeManager::new(settings);
         Ok(manager
             .list(&cwd)?
             .into_iter()
@@ -148,21 +148,21 @@ pub(crate) async fn list(genex_home: PathBuf, cwd: PathBuf) -> anyhow::Result<Ve
 }
 
 pub(crate) async fn remove(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     source_cwd: PathBuf,
     root: PathBuf,
 ) -> anyhow::Result<()> {
     let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-        &genex_home,
+        &ruxex_home,
         /*cwd*/ None,
         Vec::new(),
-        genex_config::ConfigLoadOptions::default(),
+        ruxex_config::ConfigLoadOptions::default(),
     )
     .await?;
     let settings =
-        genex_worktree::WorktreeSettings::for_cli(&genex_home, host.config_toml.desktop.as_ref())?;
+        ruxex_worktree::WorktreeSettings::for_cli(&ruxex_home, host.config_toml.desktop.as_ref())?;
     tokio::task::spawn_blocking(move || {
-        genex_worktree::WorktreeManager::new(settings).remove(&source_cwd, &root)
+        ruxex_worktree::WorktreeManager::new(settings).remove(&source_cwd, &root)
     })
     .await?
 }

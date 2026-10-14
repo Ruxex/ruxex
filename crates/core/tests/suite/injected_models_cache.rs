@@ -1,6 +1,6 @@
 //! Integration coverage for model catalogs supplied through the public cache interface.
 
-use genex_core::TurnInputRequest;
+use ruxex_core::TurnInputRequest;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicUsize;
@@ -16,31 +16,31 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_http_client::HttpClientFactory;
-use genex_model_provider::ProviderModelCatalogSource;
-use genex_models_manager::cache::ModelsCache;
-use genex_models_manager::cache::ModelsCacheEntry;
-use genex_models_manager::cache::ModelsCacheError;
-use genex_models_manager::cache::ModelsCacheFuture;
-use genex_models_manager::manager::ModelCatalogFuture;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_models_manager::manager::ModelCatalogSource;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_models_manager::manager::RemoteModelsManager;
-use genex_models_manager::manager::SharedModelsManager;
-use genex_models_manager::manager::build_models_manager_with_cache;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_providers::create_model_provider;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_model_provider::ProviderModelCatalogSource;
+use ruxex_models_manager::cache::ModelsCache;
+use ruxex_models_manager::cache::ModelsCacheEntry;
+use ruxex_models_manager::cache::ModelsCacheError;
+use ruxex_models_manager::cache::ModelsCacheFuture;
+use ruxex_models_manager::manager::ModelCatalogFuture;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_models_manager::manager::ModelCatalogSource;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::manager::RemoteModelsManager;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::manager::build_models_manager_with_cache;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::create_model_provider;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::sync::oneshot;
@@ -196,8 +196,8 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         ]),
     )
     .await;
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_models_manager(models_manager);
     let test = builder.build(&server).await?;
     let available_models = test
@@ -205,7 +205,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert!(
@@ -215,14 +215,14 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
     );
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(model_slug.to_string()),
             ..Default::default()
         },
     )
     .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".to_string(),
             text_elements: Vec::new(),
@@ -230,7 +230,7 @@ async fn run_agent_with_model(models_manager: SharedModelsManager, model_slug: &
         .await?;
     loop {
         if matches!(
-            wait_for_event(&test.genex, |_| true).await,
+            wait_for_event(&test.ruxex, |_| true).await,
             EventMsg::TurnComplete(_)
         ) {
             break;
@@ -252,7 +252,7 @@ async fn injected_cache_hit_drives_agent_model_selection() -> Result<()> {
             identity: Some("test-provider".to_string()),
             fetched_at: Utc::now(),
             etag: None,
-            client_version: Some(genex_models_manager::client_version_to_whole()),
+            client_version: Some(ruxex_models_manager::client_version_to_whole()),
             models: vec![remote_model(model_slug)],
         }),
         load_error: false,
@@ -295,7 +295,7 @@ async fn injected_cache_error_falls_back_for_agent_model_selection() -> Result<(
 async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn() -> Result<()> {
     let server = wiremock::MockServer::start().await;
     let home = Arc::new(TempDir::new()?);
-    let initial_auth = GenexAuth::from_api_key("test-api-key");
+    let initial_auth = RuxexAuth::from_api_key("test-api-key");
     let auth = CredentialManager::from_auth_for_testing_with_home(
         initial_auth.clone(),
         home.path().to_path_buf(),
@@ -324,7 +324,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         },
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_home(home.clone())
         .with_auth(initial_auth.clone())
         .with_model("legacy-model")
@@ -357,7 +357,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
             manager
                 .list_models(
                     RefreshStrategy::Online,
-                    genex_core::test_support::default_http_client_factory(),
+                    ruxex_core::test_support::default_http_client_factory(),
                 )
                 .await
         }
@@ -385,7 +385,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
     manager
         .list_models(
             RefreshStrategy::Online,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(manager.get_remote_models().await, vec![new_model.clone()]);

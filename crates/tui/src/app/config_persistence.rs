@@ -5,7 +5,7 @@
 //! loop.
 
 use super::*;
-use genex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerSource;
 
 async fn build_config_on_runtime_worker(
     builder: ConfigBuilder,
@@ -117,7 +117,7 @@ impl App {
         overrides.cwd = Some(cwd.clone());
         let cwd_display = cwd.display().to_string();
         let builder = ConfigBuilder::default()
-            .genex_home(self.config.genex_home.to_path_buf())
+            .ruxex_home(self.config.ruxex_home.to_path_buf())
             .cli_overrides(self.cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(self.loader_overrides.clone());
@@ -138,7 +138,7 @@ impl App {
         overrides.permission_profile = None;
         overrides.default_permissions = Some(profile_id.to_string());
         let builder = ConfigBuilder::default()
-            .genex_home(self.config.genex_home.to_path_buf())
+            .ruxex_home(self.config.ruxex_home.to_path_buf())
             .cli_overrides(self.cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(self.loader_overrides.clone());
@@ -245,7 +245,7 @@ impl App {
         self.sync_active_thread_permission_settings_to_cached_session()
             .await;
         self.app_event_tx
-            .send(AppEvent::GenexOp(AppCommand::override_turn_context(
+            .send(AppEvent::RuxexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 approval_policy,
                 Some(permission_profile.clone()),
@@ -417,7 +417,7 @@ impl App {
             .await?;
         self.apply_runtime_policy_overrides(&mut config, RuntimePolicyOverrideScope::All);
         self.local_settings = crate::local_settings::LocalSettings::from(&config);
-        self.refresh_server_version_overview_notice(GENEX_CLI_VERSION);
+        self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
         // Other preferences have runtime caches and are adopted when the widget is replaced.
         self.chat_widget
             .local_settings
@@ -454,7 +454,7 @@ impl App {
                     "failed to refresh effective config after an overridden write"
                 );
                 self.chat_widget.add_error_message(format!(
-                    "{setting} were saved, but Genex could not refresh the effective config: {err}"
+                    "{setting} were saved, but Ruxex could not refresh the effective config: {err}"
                 ));
                 None
             }
@@ -770,7 +770,7 @@ impl App {
         if let Some(name) = self.local_settings.tui.theme.as_deref()
             && let Some(theme) = crate::render::highlight::resolve_theme_by_name(
                 name,
-                Some(&self.local_settings.genex_home),
+                Some(&self.local_settings.ruxex_home),
             )
         {
             crate::render::highlight::set_syntax_theme(theme);
@@ -780,7 +780,7 @@ impl App {
         let auto_theme_name = crate::render::highlight::adaptive_default_theme_name();
         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
             auto_theme_name,
-            Some(&self.local_settings.genex_home),
+            Some(&self.local_settings.ruxex_home),
         ) {
             crate::render::highlight::set_syntax_theme(theme);
         }

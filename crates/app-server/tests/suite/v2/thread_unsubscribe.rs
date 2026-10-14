@@ -2,32 +2,32 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::DynamicToolCallOutputContentItem;
-use genex_app_server_protocol::DynamicToolCallParams;
-use genex_app_server_protocol::DynamicToolCallResponse;
-use genex_app_server_protocol::DynamicToolFunctionSpec;
-use genex_app_server_protocol::DynamicToolSpec;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadClosedNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::ThreadUnsubscribeStatus;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
+use ruxex_app_server_protocol::DynamicToolCallParams;
+use ruxex_app_server_protocol::DynamicToolCallResponse;
+use ruxex_app_server_protocol::DynamicToolFunctionSpec;
+use ruxex_app_server_protocol::DynamicToolSpec;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadClosedNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeStatus;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
@@ -41,14 +41,14 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_unsubscribe_keeps_thread_loaded_until_idle_timeout() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
         .with_root_config("thread_unload_delay_secs = 2")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -204,8 +204,8 @@ async fn thread_unsubscribe_during_turn_keeps_turn_running(delay_secs: u64) -> R
     let tool_call_arguments = serde_json::to_string(&tool_args)?;
 
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
 
     let (server, mut completions) = start_streaming_sse_server(vec![
         vec![StreamingSseChunk {
@@ -231,10 +231,10 @@ async fn thread_unsubscribe_during_turn_keeps_turn_running(delay_secs: u64) -> R
     MockResponsesConfig::new(server.uri())
         .with_sandbox_mode("danger-full-access")
         .with_root_config(&format!("thread_unload_delay_secs = {delay_secs}"))
-        .write(&genex_home)?;
+        .write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(&genex_home)
+        .with_ruxex_home(&ruxex_home)
         .build_initialized()
         .await?;
 
@@ -375,13 +375,13 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
         responses::sse_failed("resp-1", "server_error", "simulated failure"),
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -447,7 +447,7 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
             request_id,
             params: ThreadResumeParams {
                 thread_id,
-                cwd: Some(genex_home.path().to_string_lossy().to_string()),
+                cwd: Some(ruxex_home.path().to_string_lossy().to_string()),
                 ..Default::default()
             },
         })
@@ -460,13 +460,13 @@ async fn thread_unsubscribe_preserves_cached_status_before_idle_unload() -> Resu
 #[tokio::test]
 async fn thread_unsubscribe_reports_not_subscribed_before_idle_unload() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("danger-full-access")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 

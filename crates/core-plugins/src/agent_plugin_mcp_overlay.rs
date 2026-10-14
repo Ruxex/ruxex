@@ -4,8 +4,8 @@ use super::plugin_mcp_config_paths;
 use crate::manifest::PluginManifestFormat;
 use crate::manifest::PluginManifestMcpServers;
 use crate::manifest::parse_plugin_manifest;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
 use std::collections::HashMap;
 use std::path::Path;
 use tracing::warn;
@@ -18,7 +18,7 @@ pub(super) async fn apply_agent_plugin_env_overlay(
         return;
     }
 
-    let overlay_path = plugin_root.join(".genex-plugin/plugin.json");
+    let overlay_path = plugin_root.join(".ruxex-plugin/plugin.json");
     let Ok(contents) = tokio::fs::read_to_string(&overlay_path).await else {
         return;
     };
@@ -27,7 +27,7 @@ pub(super) async fn apply_agent_plugin_env_overlay(
         Err(err) => {
             warn!(
                 path = %overlay_path.display(),
-                "failed to parse Genex Agent Plugin MCP overlay: {err}"
+                "failed to parse Ruxex Agent Plugin MCP overlay: {err}"
             );
             return;
         }

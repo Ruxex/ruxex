@@ -17,7 +17,7 @@ pub use transport::ExecServerListenUrlParseError;
 
 use crate::ExecServerRuntimePaths;
 use crate::ExecServerTelemetry;
-use genex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpClientFactory;
 
 pub async fn run_main(
     listen_url: &str,
@@ -35,7 +35,7 @@ pub async fn run_main(
 }
 
 #[tracing::instrument(
-    name = "genex.exec_server",
+    name = "ruxex.exec_server",
     skip_all,
     fields(otel.kind = "internal")
 )]
@@ -59,8 +59,8 @@ pub async fn run_main_with_telemetry(
 
 #[cfg(test)]
 mod tests {
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::InMemorySpanExporter;
     use opentelemetry_sdk::trace::SdkTracerProvider;
@@ -86,7 +86,7 @@ mod tests {
                 "invalid",
                 ExecServerRuntimePaths::new(
                     std::env::current_exe().expect("current executable"),
-                    /*genex_linux_sandbox_exe*/ None,
+                    /*ruxex_linux_sandbox_exe*/ None,
                 )
                 .expect("runtime paths"),
                 ExecServerTelemetry::default(),
@@ -102,7 +102,7 @@ mod tests {
         provider.force_flush().expect("flush traces");
         let spans = exporter.get_finished_spans().expect("span export");
         assert!(
-            spans.iter().any(|span| span.name == "genex.exec_server"),
+            spans.iter().any(|span| span.name == "ruxex.exec_server"),
             "root exec-server span missing: {spans:?}"
         );
     }

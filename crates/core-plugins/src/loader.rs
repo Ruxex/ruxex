@@ -13,32 +13,32 @@ use crate::npm_source::materialize_npm_plugin_source;
 use crate::store::PluginStore;
 use crate::store::plugin_version_for_source;
 use crate::store::plugin_version_for_source_with_fallback_manifest;
-use genex_config::ConfigLayerStack;
-use genex_config::HooksFile;
-use genex_config::SkillConfigRules;
-use genex_config::skill_config_rules_from_stack;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_config::types::PluginConfig;
-use genex_config::types::PluginMcpServerConfig;
-use genex_mcp::parse_agent_plugin_mcp_config;
-use genex_mcp::parse_plugin_mcp_config;
-use genex_plugin::LoadedPlugin;
-use genex_plugin::PluginCapabilitySummary;
-use genex_plugin::PluginHookSource;
-use genex_plugin::PluginId;
-use genex_plugin::PluginIdError;
-use genex_protocol::protocol::Product;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillRootLoadRequest;
-use genex_skills::SkillRootLoader;
-use genex_skills::SkillRootSnapshots;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::PluginIdentity;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::SkillDiscoveryMode;
-use genex_utils_plugins::find_plugin_manifest_path;
-use genex_utils_plugins::migrated_command_skills_root;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::HooksFile;
+use ruxex_config::SkillConfigRules;
+use ruxex_config::skill_config_rules_from_stack;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_config::types::PluginConfig;
+use ruxex_config::types::PluginMcpServerConfig;
+use ruxex_mcp::parse_agent_plugin_mcp_config;
+use ruxex_mcp::parse_plugin_mcp_config;
+use ruxex_plugin::LoadedPlugin;
+use ruxex_plugin::PluginCapabilitySummary;
+use ruxex_plugin::PluginHookSource;
+use ruxex_plugin::PluginId;
+use ruxex_plugin::PluginIdError;
+use ruxex_protocol::protocol::Product;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillRootLoadRequest;
+use ruxex_skills::SkillRootLoader;
+use ruxex_skills::SkillRootSnapshots;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::PluginIdentity;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::SkillDiscoveryMode;
+use ruxex_utils_plugins::find_plugin_manifest_path;
+use ruxex_utils_plugins::migrated_command_skills_root;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
@@ -129,7 +129,7 @@ async fn load_plugins_from_layer_stack_with_scope(
     scope: PluginLoadScope<'_>,
 ) -> Vec<LoadedPlugin<McpServerConfig>> {
     let configured_plugins =
-        configured_plugins_from_stack(config_layer_stack, store.genex_home().as_path());
+        configured_plugins_from_stack(config_layer_stack, store.ruxex_home().as_path());
     let mut configured_plugins: Vec<_> = configured_plugins.into_iter().collect();
     configured_plugins.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
@@ -157,12 +157,12 @@ async fn load_plugins_from_layer_stack_with_scope(
 
 #[cfg(test)]
 pub(crate) fn refresh_non_curated_plugin_cache(
-    genex_home: &Path,
+    ruxex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
 ) -> Result<bool, String> {
     collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_detailed(
-        genex_home,
+        ruxex_home,
         additional_roots,
         configured_plugin_keys,
         PluginGitMode::Automatic,
@@ -170,13 +170,13 @@ pub(crate) fn refresh_non_curated_plugin_cache(
 }
 
 pub(crate) fn refresh_non_curated_plugin_cache_detailed(
-    genex_home: &Path,
+    ruxex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     git_mode: PluginGitMode,
 ) -> Result<NonCuratedCacheRefreshOutcome, String> {
     refresh_non_curated_plugin_cache_with_mode(
-        genex_home,
+        ruxex_home,
         additional_roots,
         configured_plugin_keys,
         NonCuratedCacheRefreshMode::IfVersionChanged,
@@ -186,12 +186,12 @@ pub(crate) fn refresh_non_curated_plugin_cache_detailed(
 
 #[cfg(test)]
 pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall(
-    genex_home: &Path,
+    ruxex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
 ) -> Result<bool, String> {
     collapse_non_curated_cache_refresh(refresh_non_curated_plugin_cache_force_reinstall_detailed(
-        genex_home,
+        ruxex_home,
         additional_roots,
         configured_plugin_keys,
         PluginGitMode::Automatic,
@@ -199,13 +199,13 @@ pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall(
 }
 
 pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall_detailed(
-    genex_home: &Path,
+    ruxex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     git_mode: PluginGitMode,
 ) -> Result<NonCuratedCacheRefreshOutcome, String> {
     refresh_non_curated_plugin_cache_with_mode(
-        genex_home,
+        ruxex_home,
         additional_roots,
         configured_plugin_keys,
         NonCuratedCacheRefreshMode::ForceReinstall,
@@ -214,7 +214,7 @@ pub(crate) fn refresh_non_curated_plugin_cache_force_reinstall_detailed(
 }
 
 fn refresh_non_curated_plugin_cache_with_mode(
-    genex_home: &Path,
+    ruxex_home: &Path,
     additional_roots: &[AbsolutePathBuf],
     configured_plugin_keys: &[String],
     mode: NonCuratedCacheRefreshMode,
@@ -246,7 +246,7 @@ fn refresh_non_curated_plugin_cache_with_mode(
         .map(PluginId::as_key)
         .collect::<HashSet<_>>();
 
-    let store = PluginStore::try_new(genex_home.to_path_buf()).map_err(|err| err.to_string())?;
+    let store = PluginStore::try_new(ruxex_home.to_path_buf()).map_err(|err| err.to_string())?;
     let marketplace_outcome = list_marketplaces_with_home(additional_roots, /*home_dir*/ None)
         .map_err(|err| format!("failed to discover marketplaces for cache refresh: {err}"))?;
     let mut plugin_sources = HashMap::<String, (MarketplacePluginSource, Option<String>)>::new();
@@ -313,7 +313,7 @@ fn refresh_non_curated_plugin_cache_with_mode(
         };
         let refresh_result = (|| -> Result<bool, String> {
             let materialized =
-                materialize_marketplace_plugin_source_with_mode(genex_home, &source, git_mode)
+                materialize_marketplace_plugin_source_with_mode(ruxex_home, &source, git_mode)
                     .map_err(|err| {
                         format!("failed to materialize plugin source for {plugin_key}: {err}")
                     })?;
@@ -717,7 +717,7 @@ pub fn load_plugin_hooks(
         Some(PluginManifestHooks::Inline(hooks_files)) => {
             let manifest_path = find_plugin_manifest_path(plugin_root.as_path())
                 .and_then(|path| AbsolutePathBuf::try_from(path).ok())
-                .unwrap_or_else(|| plugin_root.join(".genex-plugin/plugin.json"));
+                .unwrap_or_else(|| plugin_root.join(".ruxex-plugin/plugin.json"));
             for (index, hooks_file) in hooks_files.iter().enumerate() {
                 if hooks_file.hooks.is_empty() {
                     continue;
@@ -1166,15 +1166,15 @@ pub struct MaterializedMarketplacePluginSource {
 }
 
 pub fn materialize_marketplace_plugin_source(
-    genex_home: &Path,
+    ruxex_home: &Path,
     source: &MarketplacePluginSource,
 ) -> Result<MaterializedMarketplacePluginSource, String> {
-    materialize_marketplace_plugin_source_with_mode(genex_home, source, PluginGitMode::Manual)
+    materialize_marketplace_plugin_source_with_mode(ruxex_home, source, PluginGitMode::Manual)
 }
 
 /// Applies the initiating operation's Git trust policy throughout plugin materialization.
 pub(crate) fn materialize_marketplace_plugin_source_with_mode(
-    genex_home: &Path,
+    ruxex_home: &Path,
     source: &MarketplacePluginSource,
     mode: PluginGitMode,
 ) -> Result<MaterializedMarketplacePluginSource, String> {
@@ -1189,7 +1189,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
             ref_name,
             sha,
         } => {
-            let staging_root = genex_home.join("plugins/.marketplace-plugin-source-staging");
+            let staging_root = ruxex_home.join("plugins/.marketplace-plugin-source-staging");
             fs::create_dir_all(&staging_root).map_err(|err| {
                 format!(
                     "failed to create marketplace plugin source staging directory {}: {err}",
@@ -1206,7 +1206,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
                     )
                 })?;
             clone_git_plugin_source(
-                genex_home,
+                ruxex_home,
                 url,
                 ref_name.as_deref(),
                 sha.as_deref(),
@@ -1234,7 +1234,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
             registry,
         } => {
             let (path, tempdir) = materialize_npm_plugin_source(
-                genex_home,
+                ruxex_home,
                 package,
                 version.as_deref(),
                 registry.as_deref(),
@@ -1248,7 +1248,7 @@ pub(crate) fn materialize_marketplace_plugin_source_with_mode(
 }
 
 fn clone_git_plugin_source(
-    genex_home: &Path,
+    ruxex_home: &Path,
     url: &str,
     ref_name: Option<&str>,
     sha: Option<&str>,
@@ -1257,7 +1257,7 @@ fn clone_git_plugin_source(
     mode: PluginGitMode,
 ) -> Result<(), String> {
     let clone_cwd = match mode {
-        PluginGitMode::Automatic => Some(genex_home),
+        PluginGitMode::Automatic => Some(ruxex_home),
         PluginGitMode::Manual => None,
     };
     if let Some(sparse_checkout_path) = sparse_checkout_path {

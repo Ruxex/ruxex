@@ -5,7 +5,7 @@
       "description": "Authentication mode for configured model providers.",
       "oneOf": [
         {
-          "description": "API key provided by the caller and stored by Genex.",
+          "description": "API key provided by the caller and stored by Ruxex.",
           "enum": [
             "apikey"
           ],

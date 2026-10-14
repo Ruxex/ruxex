@@ -6,9 +6,9 @@ import type { AppServerIdentity } from "./AppServerIdentity";
 
 export type InitializeResponse = { userAgent: string,
 /**
- * Absolute path to the server's $GENEX_HOME directory.
+ * Absolute path to the server's $RUXEX_HOME directory.
  */
-genexHome: AbsolutePathBuf,
+ruxexHome: AbsolutePathBuf,
 /**
  * Platform family for the running app-server target, for example
  * `"unix"`.

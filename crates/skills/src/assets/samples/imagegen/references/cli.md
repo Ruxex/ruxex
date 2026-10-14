@@ -13,11 +13,11 @@ The word `batch` in a user request is not CLI opt-in by itself.
 Real API calls require **network access** + `PROVIDER_API_KEY`. `--dry-run` does not.
 
 ## Quick start (works from any repo)
-Set a stable path to the skill CLI (default `GENEX_HOME` is `~/.genex`):
+Set a stable path to the skill CLI (default `RUXEX_HOME` is `~/.ruxex`):
 
 ```
-export GENEX_HOME="${GENEX_HOME:-$HOME/.genex}"
-export IMAGE_GEN="$GENEX_HOME/skills/.system/imagegen/scripts/image_gen.py"
+export RUXEX_HOME="${RUXEX_HOME:-$HOME/.ruxex}"
+export IMAGE_GEN="$RUXEX_HOME/skills/.system/imagegen/scripts/image_gen.py"
 ```
 
 Install dependencies into that environment with its package manager. In uv-managed environments, `uv pip install ...` remains the preferred path.
@@ -238,5 +238,5 @@ Notes:
 ## See also
 - API parameter quick reference for fallback CLI mode: `references/image-api.md`
 - Prompt examples shared across both top-level modes: `references/sample-prompts.md`
-- Network/sandbox notes for fallback CLI mode: `references/genex-network.md`
+- Network/sandbox notes for fallback CLI mode: `references/ruxex-network.md`
 - Built-in-first transparent image workflow: `SKILL.md`

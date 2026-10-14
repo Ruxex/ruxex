@@ -1,21 +1,21 @@
-pub use genex_apply_patch::GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
+pub use ruxex_apply_patch::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
 #[cfg(test)]
-use genex_protocol::config_types::EnvironmentVariablePattern;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::shell_environment;
+use ruxex_protocol::config_types::EnvironmentVariablePattern;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::shell_environment;
 use std::collections::HashMap;
 
-pub use genex_protocol::shell_environment::GENEX_SESSION_ID_ENV_VAR;
-pub use genex_protocol::shell_environment::GENEX_THREAD_ID_ENV_VAR;
+pub use ruxex_protocol::shell_environment::RUXEX_SESSION_ID_ENV_VAR;
+pub use ruxex_protocol::shell_environment::RUXEX_THREAD_ID_ENV_VAR;
 
-pub(crate) const GENEX_VERSION_ENV_VAR: &str = "GENEX_VERSION";
+pub(crate) const RUXEX_VERSION_ENV_VAR: &str = "RUXEX_VERSION";
 
 /// Informational name of the active permission profile. Child processes can
 /// overwrite this value, so it must not be treated as proof of enforcement.
-pub const GENEX_PERMISSION_PROFILE_ENV_VAR: &str = "GENEX_PERMISSION_PROFILE";
+pub const RUXEX_PERMISSION_PROFILE_ENV_VAR: &str = "RUXEX_PERMISSION_PROFILE";
 
 /// Construct an environment map based on the rules in the specified policy. The
 /// resulting map can be passed directly to `Command::envs()` after calling
@@ -25,7 +25,7 @@ pub const GENEX_PERMISSION_PROFILE_ENV_VAR: &str = "GENEX_PERMISSION_PROFILE";
 /// The derivation follows the algorithm documented in the struct-level comment
 /// for [`ShellEnvironmentPolicy`].
 ///
-/// `GENEX_THREAD_ID` is injected when a thread id is provided, even when
+/// `RUXEX_THREAD_ID` is injected when a thread id is provided, even when
 /// `include_only` is set.
 pub fn create_env(
     policy: &ShellEnvironmentPolicy,
@@ -37,10 +37,10 @@ pub fn create_env(
 
 /// Exposes the shared root-session identity and harness version to shell commands.
 pub(crate) fn inject_session_env(env: &mut HashMap<String, String>, session_id: SessionId) {
-    env.insert(GENEX_SESSION_ID_ENV_VAR.to_string(), session_id.to_string());
-    env.remove(GENEX_VERSION_ENV_VAR);
+    env.insert(RUXEX_SESSION_ID_ENV_VAR.to_string(), session_id.to_string());
+    env.remove(RUXEX_VERSION_ENV_VAR);
     env.insert(
-        GENEX_VERSION_ENV_VAR.to_string(),
+        RUXEX_VERSION_ENV_VAR.to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
     );
 }
@@ -53,10 +53,10 @@ pub(crate) fn inject_permission_profile_env(
     env: &mut HashMap<String, String>,
     active_permission_profile: Option<&ActivePermissionProfile>,
 ) {
-    env.remove(GENEX_PERMISSION_PROFILE_ENV_VAR);
+    env.remove(RUXEX_PERMISSION_PROFILE_ENV_VAR);
     if let Some(active_permission_profile) = active_permission_profile {
         env.insert(
-            GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+            RUXEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
             active_permission_profile.id.clone(),
         );
     }
@@ -66,9 +66,9 @@ pub(crate) fn inject_permission_profile_env(
 /// including those provided by remote executors. Override inherited values so
 /// they cannot restore the legacy normalization behavior.
 pub fn inject_apply_patch_env(env: &mut HashMap<String, String>) {
-    env.retain(|key, _| !key.eq_ignore_ascii_case(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR));
+    env.retain(|key, _| !key.eq_ignore_ascii_case(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR));
     env.insert(
-        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         "1".to_string(),
     );
 }

@@ -5,10 +5,10 @@
 
 use super::AgentControl;
 use crate::agent::AgentStatus;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
 
 pub(crate) struct AgentInterruptOutcome {
     pub(crate) agent_path: AgentPath,
@@ -19,7 +19,7 @@ pub(crate) struct AgentInterruptOutcome {
 #[derive(Debug)]
 pub(crate) enum AgentInterruptError {
     InvalidRequest(String),
-    Agent(GenexErr),
+    Agent(RuxexErr),
 }
 
 impl AgentControl {
@@ -56,7 +56,7 @@ impl AgentControl {
             Err(err)
                 if matches!(
                     err.details(),
-                    GenexErrorDetails::ThreadNotFound(_) | GenexErrorDetails::InternalAgentDied
+                    RuxexErrorDetails::ThreadNotFound(_) | RuxexErrorDetails::InternalAgentDied
                 ) => {}
             Err(err) => return Err(AgentInterruptError::Agent(err)),
         }

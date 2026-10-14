@@ -22,7 +22,7 @@ use crate::OutboundProxyPolicy;
 
 #[tokio::test]
 async fn request_failures_classify_real_untrusted_certificate_handshakes() {
-    genex_utils_rustls_provider::ensure_rustls_crypto_provider();
+    ruxex_utils_rustls_provider::ensure_rustls_crypto_provider();
     let certificate = rcgen::generate_simple_self_signed(vec!["localhost".to_string()])
         .expect("self-signed certificate should generate");
     let private_key = rustls::pki_types::PrivateKeyDer::Pkcs8(
@@ -75,7 +75,7 @@ async fn request_failures_classify_real_untrusted_certificate_handshakes() {
 async fn request_failures_classify_https_proxy_authentication_challenges() {
     let (address, proxy) = spawn_response_server(vec![
         "HTTP/1.1 407 Proxy Authentication Required\r\n\
-         Proxy-Authenticate: Basic realm=\"genex\"\r\n\
+         Proxy-Authenticate: Basic realm=\"ruxex\"\r\n\
          Content-Length: 0\r\n\
          Connection: close\r\n\r\n"
             .to_string(),
@@ -159,7 +159,7 @@ async fn streams_request_bodies_without_exposing_reqwest_body() {
 
 #[tokio::test]
 async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
-    const CHILD_POLICY_ENV: &str = "GENEX_HTTP_CLIENT_POOL_INVALID_CA_TEST_POLICY";
+    const CHILD_POLICY_ENV: &str = "RUXEX_HTTP_CLIENT_POOL_INVALID_CA_TEST_POLICY";
 
     let Ok(policy_name) = std::env::var(CHILD_POLICY_ENV) else {
         let temp_dir = tempfile::tempdir().expect("temporary directory should be created");
@@ -167,7 +167,7 @@ async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
         std::fs::write(&invalid_ca_path, "not a PEM certificate")
             .expect("invalid CA fixture should be written");
 
-        for ca_env in ["GENEX_CA_CERTIFICATE", "SSL_CERT_FILE"] {
+        for ca_env in ["RUXEX_CA_CERTIFICATE", "SSL_CERT_FILE"] {
             for policy_name in ["reqwest-default", "respect-system-proxy"] {
                 let output = std::process::Command::new(
                     std::env::current_exe().expect("test executable should be available"),
@@ -175,7 +175,7 @@ async fn legacy_custom_ca_fallback_is_limited_to_reqwest_default() {
                 .arg("--exact")
                 .arg("route_aware_client_pool::tests::legacy_custom_ca_fallback_is_limited_to_reqwest_default")
                 .arg("--nocapture")
-                .env_remove("GENEX_CA_CERTIFICATE")
+                .env_remove("RUXEX_CA_CERTIFICATE")
                 .env_remove("SSL_CERT_FILE")
                 .env(ca_env, &invalid_ca_path)
                 .env(CHILD_POLICY_ENV, policy_name)
@@ -676,11 +676,11 @@ async fn disabled_pool_logging_does_not_expose_request_or_response_data() {
             })
             .with_filter(
                 tracing_subscriber::filter::Targets::new()
-                    .with_target("genex_http_client", tracing::Level::TRACE),
+                    .with_target("ruxex_http_client", tracing::Level::TRACE),
             ),
     );
     let _guard = tracing::subscriber::set_default(subscriber);
-    tracing::debug!(target: "genex_http_client", "log capture sentinel");
+    tracing::debug!(target: "ruxex_http_client", "log capture sentinel");
     let request_url = format!(
         "http://auth-user:password-secret-value@{address}/token?client_secret=query-secret-value"
     );

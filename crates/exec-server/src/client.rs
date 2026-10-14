@@ -12,11 +12,11 @@ use arc_swap::ArcSwap;
 use arc_swap::ArcSwapOption;
 use futures::FutureExt;
 use futures::future::BoxFuture;
-use genex_exec_server_protocol::JSONRPCNotification;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkProxyAuditMetadata;
-use genex_network_proxy::NetworkRequestCancellation;
-use genex_network_proxy::NetworkRequestCancellationReason;
+use ruxex_exec_server_protocol::JSONRPCNotification;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkProxyAuditMetadata;
+use ruxex_network_proxy::NetworkRequestCancellation;
+use ruxex_network_proxy::NetworkRequestCancellationReason;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio::sync::OnceCell;
@@ -134,7 +134,7 @@ use crate::protocol::WriteResponse;
 use crate::rpc::RpcCallError;
 use crate::rpc::RpcClient;
 use crate::rpc_server_requests::MAX_IN_FLIGHT_SERVER_CALLS;
-use genex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpClientFactory;
 
 pub(crate) mod http_client;
 mod network_policy_audit;
@@ -156,7 +156,7 @@ const MAX_PENDING_PROCESS_EVENT_BYTES: usize = 1024 * 1024;
 impl Default for ExecServerClientConnectOptions {
     fn default() -> Self {
         Self {
-            client_name: "genex-core".to_string(),
+            client_name: "ruxex-core".to_string(),
             initialize_timeout: INITIALIZE_TIMEOUT,
             resume_session_id: None,
         }
@@ -1686,12 +1686,12 @@ async fn handle_server_notification(
 
 #[cfg(test)]
 mod tests {
-    use genex_exec_server_protocol::JSONRPCMessage;
-    use genex_exec_server_protocol::JSONRPCNotification;
-    use genex_exec_server_protocol::JSONRPCResponse;
-    use genex_http_client::HttpClientFactory;
-    use genex_http_client::OutboundProxyPolicy;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_exec_server_protocol::JSONRPCMessage;
+    use ruxex_exec_server_protocol::JSONRPCNotification;
+    use ruxex_exec_server_protocol::JSONRPCResponse;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_utils_path_uri::PathUri;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::SdkTracerProvider;
     use pretty_assertions::assert_eq;
@@ -1841,12 +1841,12 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(
             tracing_opentelemetry::layer()
                 .with_tracer(tracer)
-                .with_filter(filter_fn(genex_otel::OtelProvider::trace_export_filter)),
+                .with_filter(filter_fn(ruxex_otel::OtelProvider::trace_export_filter)),
         );
         let _subscriber_guard = tracing::subscriber::set_default(subscriber);
         tracing::callsite::rebuild_interest_cache();
         let parent_span = tracing::info_span!("process-start-parent");
-        let expected_trace = genex_otel::span_w3c_trace_context(&parent_span)
+        let expected_trace = ruxex_otel::span_w3c_trace_context(&parent_span)
             .expect("parent span should have trace context");
         let process_id = ProcessId::from("trace-process");
 
@@ -1930,8 +1930,8 @@ mod tests {
                 },
                 initialize_timeout: DEFAULT_EXEC_SERVER_INITIALIZE_TIMEOUT,
             },
-            genex_http_client::HttpClientFactory::new(
-                genex_http_client::OutboundProxyPolicy::ReqwestDefault,
+            ruxex_http_client::HttpClientFactory::new(
+                ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
             ),
         )
         .await
@@ -2301,7 +2301,7 @@ mod tests {
         let client = LazyRemoteExecServerClient::new(
             ExecServerTransportParams::StdioCommand {
                 command: StdioExecServerCommand {
-                    program: "genex-missing-exec-server-for-test".to_string(),
+                    program: "ruxex-missing-exec-server-for-test".to_string(),
                     args: Vec::new(),
                     env: HashMap::new(),
                     cwd: None,

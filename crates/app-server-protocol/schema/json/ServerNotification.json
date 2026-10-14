@@ -201,7 +201,7 @@
       "description": "Authentication mode for configured model providers.",
       "oneOf": [
         {
-          "description": "API key provided by the caller and stored by Genex.",
+          "description": "API key provided by the caller and stored by Ruxex.",
           "enum": [
             "apikey"
           ],
@@ -311,7 +311,7 @@
       "type": "string"
     },
     "CollaborationMode": {
-      "description": "Collaboration mode for a Genex session.",
+      "description": "Collaboration mode for a Ruxex session.",
       "properties": {
         "mode": {
           "$ref": "#/definitions/ModeKind"
@@ -965,7 +965,7 @@
       "type": "string"
     },
     "FuzzyFileSearchResult": {
-      "description": "Superset of [`genex_file_search::FileMatch`]",
+      "description": "Superset of [`ruxex_file_search::FileMatch`]",
       "properties": {
         "file_name": {
           "type": "string"
@@ -1037,146 +1037,6 @@
         "sessionId"
       ],
       "type": "object"
-    },
-    "GenexErrorInfo": {
-      "description": "This translation layer make sure that we expose Genex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `genexErrorInfo` variant.",
-      "oneOf": [
-        {
-          "enum": [
-            "contextWindowExceeded",
-            "sessionBudgetExceeded",
-            "usageLimitExceeded",
-            "rateLimitExceeded",
-            "serverOverloaded",
-            "cyberPolicy",
-            "misalignmentPolicyViolation",
-            "internalServerError",
-            "unauthorized",
-            "badRequest",
-            "threadRollbackFailed",
-            "sandboxError",
-            "other"
-          ],
-          "type": "string"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "httpConnectionFailed": {
-              "properties": {
-                "httpStatusCode": {
-                  "format": "uint16",
-                  "minimum": 0.0,
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              },
-              "type": "object"
-            }
-          },
-          "required": [
-            "httpConnectionFailed"
-          ],
-          "title": "HttpConnectionFailedGenexErrorInfo",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "Failed to connect to the response SSE stream.",
-          "properties": {
-            "responseStreamConnectionFailed": {
-              "properties": {
-                "httpStatusCode": {
-                  "format": "uint16",
-                  "minimum": 0.0,
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              },
-              "type": "object"
-            }
-          },
-          "required": [
-            "responseStreamConnectionFailed"
-          ],
-          "title": "ResponseStreamConnectionFailedGenexErrorInfo",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "The response SSE stream disconnected in the middle of a turn before completion.",
-          "properties": {
-            "responseStreamDisconnected": {
-              "properties": {
-                "httpStatusCode": {
-                  "format": "uint16",
-                  "minimum": 0.0,
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              },
-              "type": "object"
-            }
-          },
-          "required": [
-            "responseStreamDisconnected"
-          ],
-          "title": "ResponseStreamDisconnectedGenexErrorInfo",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "Reached the retry limit for responses.",
-          "properties": {
-            "responseTooManyFailedAttempts": {
-              "properties": {
-                "httpStatusCode": {
-                  "format": "uint16",
-                  "minimum": 0.0,
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              },
-              "type": "object"
-            }
-          },
-          "required": [
-            "responseTooManyFailedAttempts"
-          ],
-          "title": "ResponseTooManyFailedAttemptsGenexErrorInfo",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "Returned when `turn/start` or `turn/steer` is submitted while the current active turn cannot accept same-turn steering, for example `/review` or manual `/compact`.",
-          "properties": {
-            "activeTurnNotSteerable": {
-              "properties": {
-                "turnKind": {
-                  "$ref": "#/definitions/NonSteerableTurnKind"
-                }
-              },
-              "required": [
-                "turnKind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "activeTurnNotSteerable"
-          ],
-          "title": "ActiveTurnNotSteerableGenexErrorInfo",
-          "type": "object"
-        }
-      ]
     },
     "GitInfo": {
       "properties": {
@@ -2358,6 +2218,146 @@
         }
       ]
     },
+    "RuxexErrorInfo": {
+      "description": "This translation layer make sure that we expose Ruxex error code in camel case.\n\nWhen an upstream HTTP status is available (for example, from the Responses API or a provider), it is forwarded in `httpStatusCode` on the relevant `ruxexErrorInfo` variant.",
+      "oneOf": [
+        {
+          "enum": [
+            "contextWindowExceeded",
+            "sessionBudgetExceeded",
+            "usageLimitExceeded",
+            "rateLimitExceeded",
+            "serverOverloaded",
+            "cyberPolicy",
+            "misalignmentPolicyViolation",
+            "internalServerError",
+            "unauthorized",
+            "badRequest",
+            "threadRollbackFailed",
+            "sandboxError",
+            "other"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "httpConnectionFailed": {
+              "properties": {
+                "httpStatusCode": {
+                  "format": "uint16",
+                  "minimum": 0.0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "httpConnectionFailed"
+          ],
+          "title": "HttpConnectionFailedRuxexErrorInfo",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Failed to connect to the response SSE stream.",
+          "properties": {
+            "responseStreamConnectionFailed": {
+              "properties": {
+                "httpStatusCode": {
+                  "format": "uint16",
+                  "minimum": 0.0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "responseStreamConnectionFailed"
+          ],
+          "title": "ResponseStreamConnectionFailedRuxexErrorInfo",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "The response SSE stream disconnected in the middle of a turn before completion.",
+          "properties": {
+            "responseStreamDisconnected": {
+              "properties": {
+                "httpStatusCode": {
+                  "format": "uint16",
+                  "minimum": 0.0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "responseStreamDisconnected"
+          ],
+          "title": "ResponseStreamDisconnectedRuxexErrorInfo",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Reached the retry limit for responses.",
+          "properties": {
+            "responseTooManyFailedAttempts": {
+              "properties": {
+                "httpStatusCode": {
+                  "format": "uint16",
+                  "minimum": 0.0,
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "responseTooManyFailedAttempts"
+          ],
+          "title": "ResponseTooManyFailedAttemptsRuxexErrorInfo",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Returned when `turn/start` or `turn/steer` is submitted while the current active turn cannot accept same-turn steering, for example `/review` or manual `/compact`.",
+          "properties": {
+            "activeTurnNotSteerable": {
+              "properties": {
+                "turnKind": {
+                  "$ref": "#/definitions/NonSteerableTurnKind"
+                }
+              },
+              "required": [
+                "turnKind"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "activeTurnNotSteerable"
+          ],
+          "title": "ActiveTurnNotSteerableRuxexErrorInfo",
+          "type": "object"
+        }
+      ]
+    },
     "SandboxPolicy": {
       "oneOf": [
         {
@@ -2804,7 +2804,7 @@
           "description": "Persisted thread history contract selected when this thread was created."
         },
         "id": {
-          "description": "Identifier for this thread. Genex-generated thread IDs are UUIDv7.",
+          "description": "Identifier for this thread. Ruxex-generated thread IDs are UUIDv7.",
           "type": "string"
         },
         "model": {
@@ -2903,7 +2903,7 @@
               "$ref": "#/definitions/SessionSource"
             }
           ],
-          "description": "Origin of the thread (CLI, VSCode, genex exec, genex app-server, etc.)."
+          "description": "Origin of the thread (CLI, VSCode, ruxex exec, ruxex app-server, etc.)."
         },
         "status": {
           "allOf": [
@@ -3784,7 +3784,7 @@
             },
             "results": {
               "default": null,
-              "description": "Structured search results returned out-of-band by standalone web search.\n\nThese stay as opaque JSON at the extension/app-server boundary so new result fields and result types can pass through without a Genex release.",
+              "description": "Structured search results returned out-of-band by standalone web search.\n\nThese stay as opaque JSON at the extension/app-server boundary so new result fields and result types can pass through without a Ruxex release.",
               "items": true,
               "type": [
                 "array",
@@ -4404,7 +4404,7 @@
           "description": "Only populated when the Turn's status is failed."
         },
         "id": {
-          "description": "Identifier for this turn. Genex-generated turn IDs are UUIDv7.",
+          "description": "Identifier for this turn. Ruxex-generated turn IDs are UUIDv7.",
           "type": "string"
         },
         "items": {
@@ -4486,16 +4486,6 @@
             "null"
           ]
         },
-        "genexErrorInfo": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/GenexErrorInfo"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "message": {
           "type": "string"
         },
@@ -4510,6 +4500,16 @@
           ],
           "default": null,
           "description": "Optional public explanation and continuation instruction for a misalignment block."
+        },
+        "ruxexErrorInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuxexErrorInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

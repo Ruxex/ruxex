@@ -1,23 +1,23 @@
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::GenexErrorInfo;
-use genex_app_server_protocol::ErrorNotification;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::ModelRerouteReason;
-use genex_app_server_protocol::ModelReroutedNotification;
-use genex_app_server_protocol::ModelVerification;
-use genex_app_server_protocol::ModelVerificationNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RuxexErrorInfo;
+use ruxex_app_server_protocol::ErrorNotification;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::ModelRerouteReason;
+use ruxex_app_server_protocol::ModelReroutedNotification;
+use ruxex_app_server_protocol::ModelVerification;
+use ruxex_app_server_protocol::ModelVerificationNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -45,11 +45,11 @@ async fn provider_model_header_mismatch_emits_model_rerouted_notification_v2() -
     let response = responses::sse_response(body).insert_header("provider-Model", SERVER_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -103,11 +103,11 @@ async fn cyber_policy_response_emits_typed_error_notification_v2() -> Result<()>
     }));
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -135,10 +135,10 @@ async fn cyber_policy_response_emits_typed_error_notification_v2() -> Result<()>
     assert_eq!(
         error,
         ErrorNotification {
-            error: genex_app_server_protocol::TurnError {
+            error: ruxex_app_server_protocol::TurnError {
                 misalignment: None,
                 message: CYBER_POLICY_MESSAGE.to_string(),
-                genex_error_info: Some(GenexErrorInfo::CyberPolicy),
+                ruxex_error_info: Some(RuxexErrorInfo::CyberPolicy),
                 additional_details: None,
             },
             will_retry: false,
@@ -172,11 +172,11 @@ async fn response_model_field_mismatch_emits_model_rerouted_notification_v2_when
     let response = responses::sse_response(body).insert_header("provider-Model", REQUESTED_MODEL);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -232,11 +232,11 @@ async fn model_verification_emits_typed_notification_and_warning_v2() -> Result<
     let response = responses::sse_response(body);
     let _response_mock = responses::mount_response_once(&server, response).await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -383,7 +383,7 @@ async fn collect_cyber_policy_error_and_validate_no_reroute(
                     .params
                     .ok_or_else(|| anyhow::anyhow!("error notifications must include params"))?;
                 let payload: ErrorNotification = serde_json::from_value(params)?;
-                if payload.error.genex_error_info == Some(GenexErrorInfo::CyberPolicy) {
+                if payload.error.ruxex_error_info == Some(RuxexErrorInfo::CyberPolicy) {
                     error = Some(payload);
                 }
             }
@@ -415,9 +415,9 @@ fn is_warning_user_message_item(item: &ThreadItem) -> bool {
     warning_text_from_item(item).is_some()
 }
 
-fn create_config_toml(genex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+fn create_config_toml(ruxex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_model(REQUESTED_MODEL)
         .disable_feature(Feature::RemoteModels)
-        .write(genex_home)
+        .write(ruxex_home)
 }

@@ -1,6 +1,6 @@
 use async_channel::Receiver;
-use genex_otel::set_parent_from_w3c_trace_context;
-use genex_protocol::protocol::Submission;
+use ruxex_otel::set_parent_from_w3c_trace_context;
+use ruxex_protocol::protocol::Submission;
 use tracing::Instrument;
 use tracing::info_span;
 
@@ -15,24 +15,24 @@ use crate::tasks::CompactTask;
 use crate::tasks::UserShellCommandMode;
 use crate::tasks::UserShellCommandTask;
 use crate::tasks::execute_user_shell_command;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ReviewRequest;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::WarningEvent;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ReviewRequest;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
 
 use crate::context_manager::is_user_turn_boundary;
-use genex_protocol::dynamic_tools::DynamicToolResponse;
-use genex_protocol::mcp::RequestId as ProtocolRequestId;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
+use ruxex_protocol::dynamic_tools::DynamicToolResponse;
+use ruxex_protocol::mcp::RequestId as ProtocolRequestId;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
 use serde_json::Value;
 use std::sync::Arc;
 use tracing::debug;
@@ -53,7 +53,7 @@ pub async fn inter_agent_communication(
     sess: &Arc<Session>,
     sub_id: String,
     communication: InterAgentCommunication,
-    start_options: genex_protocol::turn_input::TurnStartOptions,
+    start_options: ruxex_protocol::turn_input::TurnStartOptions,
 ) {
     let trigger_turn = communication.trigger_turn;
     sess.input_queue
@@ -105,14 +105,14 @@ pub async fn resolve_elicitation(
     sess: &Arc<Session>,
     server_name: String,
     request_id: ProtocolRequestId,
-    decision: genex_protocol::approvals::ElicitationAction,
+    decision: ruxex_protocol::approvals::ElicitationAction,
     content: Option<Value>,
     meta: Option<Value>,
 ) {
     let action = match decision {
-        genex_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
-        genex_protocol::approvals::ElicitationAction::Decline => ElicitationAction::Decline,
-        genex_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
+        ruxex_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
+        ruxex_protocol::approvals::ElicitationAction::Decline => ElicitationAction::Decline,
+        ruxex_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
     };
     let content = match action {
         // Preserve the legacy fallback for clients that only send an action.
@@ -256,7 +256,7 @@ pub(super) async fn shutdown_session_runtime(sess: &Arc<Session>) {
 async fn emit_thread_stop_lifecycle(sess: &Session) {
     for contributor in sess.services.extensions.thread_lifecycle_contributors() {
         contributor
-            .on_thread_stop(genex_extension_api::ThreadStopInput {
+            .on_thread_stop(ruxex_extension_api::ThreadStopInput {
                 session_store: &sess.services.session_extension_data,
                 thread_store: &sess.services.thread_extension_data,
             })
@@ -266,14 +266,14 @@ async fn emit_thread_stop_lifecycle(sess: &Session) {
 
 pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
     shutdown_session_runtime(sess).await;
-    info!("Shutting down Genex instance");
+    info!("Shutting down Ruxex instance");
     let history = sess.clone_history().await;
     let turn_count = history
         .raw_items()
         .filter(|item| is_user_turn_boundary(item))
         .count();
     sess.services.session_telemetry.counter(
-        "genex.conversation.turn.count",
+        "ruxex.conversation.turn.count",
         i64::try_from(turn_count).unwrap_or(0),
         &[],
     );
@@ -289,7 +289,7 @@ pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
             msg: EventMsg::Error(ErrorEvent {
                 misalignment: None,
                 message: "Failed to shutdown thread persistence".to_string(),
-                genex_error_info: Some(GenexErrorInfo::Other),
+                ruxex_error_info: Some(RuxexErrorInfo::Other),
             }),
         };
         sess.send_event_raw(event).await;
@@ -305,7 +305,7 @@ pub async fn shutdown(sess: &Arc<Session>, sub_id: String) -> bool {
     sess.deliver_event_raw(event).await;
     sess.services
         .rollout_thread_trace
-        .record_ended(genex_rollout_trace::RolloutStatus::Completed);
+        .record_ended(ruxex_rollout_trace::RolloutStatus::Completed);
     true
 }
 
@@ -338,7 +338,7 @@ pub async fn review(
                 msg: EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: err.to_string(),
-                    genex_error_info: Some(GenexErrorInfo::Other),
+                    ruxex_error_info: Some(RuxexErrorInfo::Other),
                 }),
             };
             sess.send_event(&turn_context, event.msg).await;
@@ -402,7 +402,7 @@ pub(super) async fn submission_loop(
                     // must leave responsibility for the thread with the current worker.
                     let should_exit = matches!(
                         &result,
-                        Ok(genex_protocol::turn_input::SuspendTurnOutcome::Suspended { .. })
+                        Ok(ruxex_protocol::turn_input::SuspendTurnOutcome::Suspended { .. })
                     );
                     let _ = reply.send(result);
                     should_exit
@@ -517,7 +517,7 @@ pub(super) fn submission_dispatch_span(sub: &Submission) -> tracing::Span {
         "submission_dispatch",
         otel.name = span_name.as_str(),
         submission.id = sub.id.as_str(),
-        genex.op = op_name
+        ruxex.op = op_name
     );
     if let Some(trace) = sub.trace.as_ref()
         && !set_parent_from_w3c_trace_context(&dispatch_span, trace)

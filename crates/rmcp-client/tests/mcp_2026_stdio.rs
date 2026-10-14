@@ -6,15 +6,15 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_exec_server::Environment;
-use genex_rmcp_client::Elicitation;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::ExecutorStdioServerLauncher;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StdioServerLauncher;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::Elicitation;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::ExecutorStdioServerLauncher;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StdioServerLauncher;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::ElicitRequestParams;
@@ -31,7 +31,7 @@ async fn exercise_stdio_server(
     opt_in: bool,
     use_executor: bool,
 ) -> anyhow::Result<()> {
-    let server = genex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
+    let server = ruxex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
     let launcher: Arc<dyn StdioServerLauncher> = if use_executor {
         Arc::new(ExecutorStdioServerLauncher::new(
             Environment::default_for_tests().get_exec_backend(),
@@ -42,7 +42,7 @@ async fn exercise_stdio_server(
     let mut env = HashMap::new();
     if opt_in {
         env.insert(
-            OsString::from("GENEX_MCP_PROTOCOL_VERSION"),
+            OsString::from("RUXEX_MCP_PROTOCOL_VERSION"),
             OsString::from("2026-07-28"),
         );
     }
@@ -87,7 +87,7 @@ async fn exercise_stdio_server(
         .initialize(
             InitializeRequestParams::new(
                 capabilities,
-                Implementation::new("genex-mcp-client", "0.0.0-test"),
+                Implementation::new("ruxex-mcp-client", "0.0.0-test"),
             )
             .with_protocol_version(ProtocolVersion::V_2025_06_18),
             Some(Duration::from_secs(5)),

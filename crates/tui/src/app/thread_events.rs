@@ -13,7 +13,7 @@ pub(super) struct ThreadEventSnapshot {
     pub(super) session: Option<ThreadSessionState>,
     pub(super) turns: Vec<Turn>,
     pub(super) events: Vec<ThreadBufferedEvent>,
-    pub(super) active_reasoning_item: Option<genex_app_server_protocol::ItemStartedNotification>,
+    pub(super) active_reasoning_item: Option<ruxex_app_server_protocol::ItemStartedNotification>,
     pub(super) input_state: Option<ThreadInputState>,
 }
 
@@ -39,7 +39,7 @@ pub(super) struct ThreadEventStore {
     pub(super) pending_interactive_replay: PendingInteractiveReplayState,
     pub(super) active_turn_id: Option<String>,
     // Retain the active item even if its start falls out of the bounded replay buffer.
-    pub(super) active_reasoning_item: Option<genex_app_server_protocol::ItemStartedNotification>,
+    pub(super) active_reasoning_item: Option<ruxex_app_server_protocol::ItemStartedNotification>,
     // Lifecycle identity must survive bounded replay-buffer eviction.
     pub(super) latest_turn_id: Option<String>,
     pub(super) pending_interrupt_turn_id: Option<String>,
@@ -193,8 +193,8 @@ impl ThreadEventStore {
             ServerNotification::Error(n)
                 if self.active_turn_id.is_none()
                     && !n.will_retry
-                    && n.error.genex_error_info
-                        == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation) =>
+                    && n.error.ruxex_error_info
+                        == Some(AppServerRuxexErrorInfo::MisalignmentPolicyViolation) =>
             {
                 self.latest_turn_id = Some(n.turn_id.clone());
             }
@@ -204,13 +204,13 @@ impl ThreadEventStore {
                 self.pending_interrupt_turn_id = None;
             }
             ServerNotification::ItemStarted(
-                started @ genex_app_server_protocol::ItemStartedNotification {
+                started @ ruxex_app_server_protocol::ItemStartedNotification {
                     item: ThreadItem::Reasoning { id, .. },
                     ..
                 },
             ) => {
                 self.active_reasoning_item =
-                    Some(genex_app_server_protocol::ItemStartedNotification {
+                    Some(ruxex_app_server_protocol::ItemStartedNotification {
                         thread_id: started.thread_id.clone(),
                         turn_id: started.turn_id.clone(),
                         item: ThreadItem::Reasoning {
@@ -281,7 +281,7 @@ impl ThreadEventStore {
         &self,
         turn_id: &str,
         item_id: &str,
-    ) -> Option<Vec<genex_app_server_protocol::FileUpdateChange>> {
+    ) -> Option<Vec<ruxex_app_server_protocol::FileUpdateChange>> {
         file_change_changes(self.buffer.iter(), &self.turns, turn_id, item_id)
     }
 
@@ -373,7 +373,7 @@ pub(super) fn file_change_changes<'a>(
     turns: &'a [Turn],
     turn_id: &str,
     item_id: &str,
-) -> Option<Vec<genex_app_server_protocol::FileUpdateChange>> {
+) -> Option<Vec<ruxex_app_server_protocol::FileUpdateChange>> {
     let event_items = events.rev().filter_map(|event| {
         let ThreadBufferedEvent::Notification(notification) = event else {
             return None;
@@ -403,7 +403,7 @@ pub(super) fn file_change_changes<'a>(
 fn file_change_item_changes(
     item: &ThreadItem,
     item_id: &str,
-) -> Option<Vec<genex_app_server_protocol::FileUpdateChange>> {
+) -> Option<Vec<ruxex_app_server_protocol::FileUpdateChange>> {
     match item {
         ThreadItem::FileChange { id, changes, .. } if id == item_id => Some(changes.clone()),
         _ => None,

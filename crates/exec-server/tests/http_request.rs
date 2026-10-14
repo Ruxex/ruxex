@@ -11,17 +11,17 @@ use common::SYSTEM_PROXY_URL_ENV;
 use common::exec_server::ExecServerHarness;
 use common::exec_server::exec_server;
 use common::exec_server::exec_server_with_env;
-use genex_exec_server::HttpHeader;
-use genex_exec_server::HttpRedirectPolicy;
-use genex_exec_server::HttpRequestBodyDeltaNotification;
-use genex_exec_server::HttpRequestParams;
-use genex_exec_server::HttpRequestResponse;
-use genex_exec_server::InitializeParams;
-use genex_exec_server_protocol::JSONRPCError;
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCNotification;
-use genex_exec_server_protocol::JSONRPCResponse;
-use genex_exec_server_protocol::RequestId;
+use ruxex_exec_server::HttpHeader;
+use ruxex_exec_server::HttpRedirectPolicy;
+use ruxex_exec_server::HttpRequestBodyDeltaNotification;
+use ruxex_exec_server::HttpRequestParams;
+use ruxex_exec_server::HttpRequestResponse;
+use ruxex_exec_server::InitializeParams;
+use ruxex_exec_server_protocol::JSONRPCError;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCNotification;
+use ruxex_exec_server_protocol::JSONRPCResponse;
+use ruxex_exec_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -70,7 +70,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
                 url,
                 headers: vec![
                     HttpHeader {
-                        name: "x-genex-test".to_string(),
+                        name: "x-ruxex-test".to_string(),
                         value: "buffered".to_string(),
                         value_env_var: None,
                     },
@@ -100,7 +100,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
     assert_eq!(
         (
             captured.request_line.as_str(),
-            captured.headers.get("x-genex-test").map(String::as_str),
+            captured.headers.get("x-ruxex-test").map(String::as_str),
             captured.headers.get("authorization").map(String::as_str),
             captured
                 .headers
@@ -144,7 +144,7 @@ async fn exec_server_http_request_buffers_response_body() -> anyhow::Result<()> 
 async fn exec_server_http_request_rejects_protected_environment_headers() -> anyhow::Result<()> {
     let mut server = exec_server_with_env(
         [(
-            "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
+            "RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
             "executor-internal-token",
         )],
         &[],
@@ -154,11 +154,11 @@ async fn exec_server_http_request_rejects_protected_environment_headers() -> any
 
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     for (index, env_var) in [
-        "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
-        "genex_exec_server_noise_auth_token",
+        "RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN",
+        "ruxex_exec_server_noise_auth_token",
         "PROVIDER_API_KEY",
-        "GENEX_ACCESS_TOKEN",
-        "GENEX_CONNECTORS_TOKEN",
+        "RUXEX_ACCESS_TOKEN",
+        "RUXEX_CONNECTORS_TOKEN",
         "AWS_SECRET_ACCESS_KEY",
         "AZURE_FEDERATED_TOKEN_FILE",
     ]
@@ -776,7 +776,7 @@ where
 async fn wait_for_error_response(
     server: &mut ExecServerHarness,
     request_id: RequestId,
-) -> anyhow::Result<genex_exec_server_protocol::JSONRPCErrorError> {
+) -> anyhow::Result<ruxex_exec_server_protocol::JSONRPCErrorError> {
     let response = server
         .wait_for_event(|event| {
             matches!(

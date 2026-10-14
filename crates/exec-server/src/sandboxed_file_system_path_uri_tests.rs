@@ -1,11 +1,11 @@
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tokio::io;
 
@@ -130,7 +130,7 @@ fn sandbox_routing_uses_independent_read_write_policies_and_executor_temp_rules(
 async fn sandboxed_file_system_rejects_non_native_uri_as_invalid_input() {
     let runtime_paths = ExecServerRuntimePaths::new(
         std::env::current_exe().expect("current exe"),
-        /*genex_linux_sandbox_exe*/ None,
+        /*ruxex_linux_sandbox_exe*/ None,
     )
     .expect("runtime paths");
     let file_system = SandboxedFileSystem::new(runtime_paths.clone());

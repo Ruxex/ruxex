@@ -6,8 +6,8 @@ use std::io::Seek;
 use std::io::SeekFrom;
 use std::path::Path;
 
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::ThreadHistoryMode;
 
 use crate::RolloutItem;
 use crate::reverse_jsonl_scanner::ReverseJsonlScanner;

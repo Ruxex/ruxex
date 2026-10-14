@@ -4,14 +4,14 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence;
-use genex_app_server_protocol::ThreadGoalGetResponse;
-use genex_app_server_protocol::ThreadGoalSetResponse;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_features::Feature;
+use ruxex_app_server_protocol::ThreadGoalGetResponse;
+use ruxex_app_server_protocol::ThreadGoalSetResponse;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_features::Feature;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -58,13 +58,13 @@ async fn empty_goal_continuations_block_after_three_without_activity(
         scripts.push(responses::sse(events));
     }
     let server = create_mock_responses_server_sequence(scripts).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_model("legacy-model")
         .enable_feature(Feature::Goals)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized()
         .await?;

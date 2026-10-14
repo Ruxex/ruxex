@@ -1,7 +1,7 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::io;
@@ -50,7 +50,7 @@ use crate::rpc::internal_error;
 use crate::rpc::invalid_request;
 use crate::rpc::not_found;
 
-pub const GENEX_FS_HELPER_ARG1: &str = "--genex-run-as-fs-helper";
+pub const RUXEX_FS_HELPER_ARG1: &str = "--ruxex-run-as-fs-helper";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "operation", content = "params")]
@@ -398,7 +398,7 @@ pub(crate) fn map_fs_error(err: io::Error) -> JSONRPCErrorError {
 
 #[cfg(test)]
 mod tests {
-    use genex_utils_path_uri::PathUri;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

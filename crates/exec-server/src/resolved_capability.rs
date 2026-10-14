@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 
 use crate::Environment;
 use crate::EnvironmentManager;

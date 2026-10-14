@@ -2,9 +2,9 @@
 
 use std::path::PathBuf;
 
-use genex_config::types::KeybindingSpec;
-use genex_config::types::KeybindingsSpec;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::KeybindingSpec;
+use ruxex_config::types::KeybindingsSpec;
+use ruxex_config::types::TuiKeymap;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;

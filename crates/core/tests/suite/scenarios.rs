@@ -11,36 +11,36 @@ use std::time::Duration;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::types::McpServerConfig;
-use genex_context_fragments::AnsweredQuestion;
-use genex_context_fragments::ContextualUserFragment;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_extension_api::ExtensionDataInit;
-use genex_extension_api::ExtensionRegistry;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_models_manager::test_support::test_models_response;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::items::AgentMessageDelivery;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ImageReference;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::user_input::UserInput;
-use genex_skills_extension::ExecutorSkillProvider;
-use genex_skills_extension::SkillProviders;
-use genex_skills_extension::SkillsExtensionConfig;
-use genex_skills_extension::install;
-use genex_skills_extension::install_with_providers;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::types::McpServerConfig;
+use ruxex_context_fragments::AnsweredQuestion;
+use ruxex_context_fragments::ContextualUserFragment;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::items::AgentMessageDelivery;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::ExecutorSkillProvider;
+use ruxex_skills_extension::SkillProviders;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::install;
+use ruxex_skills_extension::install_with_providers;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::SnapshotEntry;
@@ -57,8 +57,8 @@ use core_test_support::skip_if_wine_exec;
 use core_test_support::stdio_server_bin;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::executor_path_uri;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::executor_path_uri;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
@@ -109,7 +109,7 @@ fn write_scenario_capabilities(home: &TempDir) -> Result<ScenarioSkills> {
     ] {
         let manifest = plugin_cache
             .join(name)
-            .join("local/.genex-plugin/plugin.json");
+            .join("local/.ruxex-plugin/plugin.json");
         fs::create_dir_all(manifest.parent().expect("manifest parent"))?;
         fs::write(
             manifest,
@@ -235,9 +235,9 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
     .await;
     let config_server = start_mock_server().await;
     let base_url = format!("{}/v1", streaming.uri());
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("provider-model-a")
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_scenario_catalog(config);
             config.model_provider.base_url = Some(base_url);
@@ -250,17 +250,17 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
         .build_with_auto_env(&config_server)
         .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![text(
             "Draft a short launch update. Ask me who it is for and keep working while I answer.",
         )]))
         .await?;
-    let turn_id = wait_for_event_match(&test.genex, |event| match event {
+    let turn_id = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::TurnStarted(event) => Some(event.turn_id.clone()),
         _ => None,
     })
     .await;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ItemCompleted(event)
             if matches!(&event.item, TurnItem::AgentMessage(message)
                 if message.delivery == Some(AgentMessageDelivery::Async)))
@@ -271,18 +271,18 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
         streaming.wait_for_request_count(/*count*/ 2),
     )
     .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::ItemCompleted(event)
             if matches!(&event.item, TurnItem::AgentMessage(message) if message.id == "working"))
     })
     .await;
 
     let answer = format!("{}Customers", AnsweredQuestion::new(question).render());
-    test.genex
+    test.ruxex
         .steer_turn(TurnInputRequest::user_input(vec![text(&answer)]), turn_id)
         .await?;
     release_continuation.send(()).expect("release continuation");
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -341,10 +341,10 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
         ],
     )
     .await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-a")
         .with_home(home)
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())
         .with_workspace_setup(|cwd, fs| async move {
             fs.write_file(
@@ -376,22 +376,22 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
     ]
     .into_iter()
     {
-        test.genex
+        test.ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(input))
             .await?;
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
     }
 
-    test.genex.submit(Op::Compact).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             text("Check the final kickoff brief and attached sketch with $final-check and $calendar:agenda."),
             UserInput::Image {
@@ -404,7 +404,7 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
             plugin("calendar"),
         ]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -468,9 +468,9 @@ async fn astra_omits_disabled_executor_skills_from_model_context() -> Result<()>
         ])],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("provider-model-a")
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_extensions(Arc::new(extensions.build()))
         .with_config(configure_scenario_catalog)
         .build(&server)
@@ -536,10 +536,10 @@ async fn astra_settings_release_check_with_direct_and_code_mode_tools() -> Resul
     let server = start_mock_server().await;
     let rmcp_server_bin = stdio_server_bin()?;
     let home = Arc::new(TempDir::new()?);
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-a")
         .with_home(home)
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             configure_scenario_catalog(config);
             let mut servers = config.mcp_servers.get().clone();
@@ -569,7 +569,7 @@ async fn astra_settings_release_check_with_direct_and_code_mode_tools() -> Resul
         release.join("settings.png"),
         BASE64_STANDARD.decode(ONE_PIXEL_PNG_BASE64)?,
     )?;
-    wait_for_mcp_server(&test.genex, "rmcp").await?;
+    wait_for_mcp_server(&test.ruxex, "rmcp").await?;
 
     let patch = "*** Begin Patch\n*** Update File: release/status.md\n@@\n-Status: pending\n+Status: blocked\n+Reason: expected Apply; observed Save\n+MCP: reachable\n*** End Patch\n";
     let patch_code = format!("text(await tools.apply_patch(`{patch}`));");
@@ -697,10 +697,10 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
         ],
     )
     .await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-a")
         .with_home(Arc::clone(&home))
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_extensions(skills_extensions())
         .with_config(configure_scenario_catalog);
     let test = builder.build(&server).await?;
@@ -709,9 +709,9 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
         .await?;
 
     let plugin_root = home.path().join("plugins/cache/test/notes/local");
-    fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         json!({ "name": "notes", "description": "Look up and summarize team notes" }).to_string(),
     )?;
     fs::write(
@@ -729,15 +729,15 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread() -> Resu
         home.path().join("config.toml"),
         format!("{config}\n[plugins.\"notes@test\"]\nenabled = true\n"),
     )?;
-    test.genex.submit(Op::ReloadUserConfig).await?;
-    test.genex
+    test.ruxex.submit(Op::ReloadUserConfig).await?;
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             text("I installed Notes. Use $notes:summarize and the Notes tool to check that Mira owns the kickoff."),
             plugin("notes"),
             selected_skill("notes:summarize", &skill),
         ]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

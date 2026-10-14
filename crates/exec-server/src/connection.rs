@@ -4,8 +4,8 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCRequest;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tokio::process::Child;
@@ -49,14 +49,14 @@ impl JsonRpcConnectionEvent {
 
         let queued_at = Instant::now();
         let request_span = tracing::info_span!(
-            "genex.exec_server.request",
+            "ruxex.exec_server.request",
             otel.kind = "server",
             otel.name = "unknown",
             method = request.method.as_str(),
             result = tracing::field::Empty,
         );
         if let Some(trace) = &request.trace
-            && !genex_otel::set_parent_from_w3c_trace_context(&request_span, trace)
+            && !ruxex_otel::set_parent_from_w3c_trace_context(&request_span, trace)
         {
             warn!(
                 method = request.method.as_str(),
@@ -180,7 +180,7 @@ fn terminate_process_tree(child_process: &mut Child, process_group_id: Option<u3
     };
 
     #[cfg(unix)]
-    if let Err(err) = genex_utils_pty::process_group::terminate_process_group(process_group_id) {
+    if let Err(err) = ruxex_utils_pty::process_group::terminate_process_group(process_group_id) {
         warn!("failed to terminate exec-server stdio process group {process_group_id}: {err}");
         kill_direct_child(child_process, "terminate");
     }
@@ -193,7 +193,7 @@ fn kill_process_tree(child_process: &mut Child, process_group_id: Option<u32>) {
     };
 
     #[cfg(unix)]
-    if let Err(err) = genex_utils_pty::process_group::kill_process_group(process_group_id) {
+    if let Err(err) = ruxex_utils_pty::process_group::kill_process_group(process_group_id) {
         warn!("failed to kill exec-server stdio process group {process_group_id}: {err}");
     }
 }
@@ -419,8 +419,8 @@ fn serialize_jsonrpc_message(message: &JSONRPCMessage) -> Result<String, serde_j
 
 #[cfg(test)]
 mod tests {
-    use genex_exec_server_protocol::JSONRPCRequest;
-    use genex_exec_server_protocol::RequestId;
+    use ruxex_exec_server_protocol::JSONRPCRequest;
+    use ruxex_exec_server_protocol::RequestId;
     use pretty_assertions::assert_eq;
     use tokio::time::timeout;
 

@@ -1,8 +1,8 @@
-# genex-protocol
+# ruxex-protocol
 
-This crate defines the protocol types used by Genex hosts, including both
-internal types for communication between `genex-core` and `genex-tui`, and
-external types used with `genex-app-server`.
+This crate defines the protocol types used by Ruxex hosts, including both
+internal types for communication between `ruxex-core` and `ruxex-tui`, and
+external types used with `ruxex-app-server`.
 
 This crate should have minimal dependencies.
 

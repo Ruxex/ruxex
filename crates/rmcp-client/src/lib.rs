@@ -57,7 +57,7 @@ pub use enterprise_oauth_login::EnterpriseOAuthLoginRequest;
 pub use enterprise_oauth_login::delete_enterprise_oauth_tokens;
 pub use enterprise_oauth_login::perform_enterprise_oauth_login_return_url;
 pub use event_notification_transport::EventNotificationReceiver;
-pub use genex_protocol::protocol::McpAuthStatus;
+pub use ruxex_protocol::protocol::McpAuthStatus;
 pub use http_client_adapter::StreamableHttpRedirectMode;
 pub use http_headers::with_http_headers_helper;
 pub use in_process_transport::InProcessTransportFactory;

@@ -119,13 +119,13 @@ the environment does not already provide it.
 If you are changing the lint crate itself, use the source-build wrapper:
 
 ```bash
-./tools/argument-comment-lint/run.py -p genex-core
+./tools/argument-comment-lint/run.py -p ruxex-core
 ```
 
 Run the lint against the workspace from the repository root:
 
 ```bash
-just argument-comment-lint -p genex-core
+just argument-comment-lint -p ruxex-core
 ```
 
 The source wrapper defaults to `--all-targets` unless a narrower target is selected.
@@ -134,7 +134,7 @@ Repo runs also promote `argument_comment_mismatch` and
 `uncommented_anonymous_literal_argument` to errors by default:
 
 ```bash
-./tools/argument-comment-lint/run-prebuilt-linter.py -p genex-core
+./tools/argument-comment-lint/run-prebuilt-linter.py -p ruxex-core
 ```
 
 The wrapper does that by setting `DYLINT_RUSTFLAGS`, and it leaves an explicit
@@ -146,11 +146,11 @@ hoc run:
 ```bash
 DYLINT_RUSTFLAGS="-A argument-comment-mismatch -A uncommented-anonymous-literal-argument" \
 CARGO_INCREMENTAL=1 \
-  ./tools/argument-comment-lint/run.py -p genex-core
+  ./tools/argument-comment-lint/run.py -p ruxex-core
 ```
 
 To override an explicitly narrow target selection, or to be explicit in scripts:
 
 ```bash
-./tools/argument-comment-lint/run-prebuilt-linter.py -p genex-core -- --all-targets
+./tools/argument-comment-lint/run-prebuilt-linter.py -p ruxex-core -- --all-targets
 ```

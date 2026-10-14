@@ -3,16 +3,16 @@
 
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_assistant_message;
@@ -23,10 +23,10 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::time::Duration;
@@ -90,14 +90,14 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .disable(Feature::EnableRequestCompression)
             .expect("test config should allow feature update");
         config
             .responses_api_metadata
-            .insert("genex_security_surface".to_string(), "sdk".to_string());
+            .insert("ruxex_security_surface".to_string(), "sdk".to_string());
     });
     let test = builder.build(&server).await?;
     submit_turn_with_timeout(&test, PARENT_PROMPT).await?;
@@ -115,11 +115,11 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
     .await?;
 
     let parent_window_id = parent
-        .header("x-genex-window-id")
-        .ok_or_else(|| anyhow!("parent request missing x-genex-window-id"))?;
+        .header("x-ruxex-window-id")
+        .ok_or_else(|| anyhow!("parent request missing x-ruxex-window-id"))?;
     let child_window_id = child
-        .header("x-genex-window-id")
-        .ok_or_else(|| anyhow!("child request missing x-genex-window-id"))?;
+        .header("x-ruxex-window-id")
+        .ok_or_else(|| anyhow!("child request missing x-ruxex-window-id"))?;
     let (parent_thread_id, parent_generation) = split_window_id(&parent_window_id)?;
     let (child_thread_id, child_generation) = split_window_id(&child_window_id)?;
 
@@ -132,36 +132,36 @@ async fn responses_api_parent_and_subagent_requests_include_identity_headers_and
         "collab_spawn"
     );
     assert_eq!(
-        child.header("x-genex-parent-thread-id").as_deref(),
+        child.header("x-ruxex-parent-thread-id").as_deref(),
         Some(parent_thread_id)
     );
     let parent_turn_metadata: serde_json::Value = serde_json::from_str(
         &parent
-            .header("x-genex-turn-metadata")
-            .ok_or_else(|| anyhow!("parent request missing x-genex-turn-metadata"))?,
+            .header("x-ruxex-turn-metadata")
+            .ok_or_else(|| anyhow!("parent request missing x-ruxex-turn-metadata"))?,
     )?;
-    assert_eq!(parent_turn_metadata["genex_security_surface"], json!("sdk"));
+    assert_eq!(parent_turn_metadata["ruxex_security_surface"], json!("sdk"));
     let child_turn_metadata: serde_json::Value = serde_json::from_str(
         &child
-            .header("x-genex-turn-metadata")
-            .ok_or_else(|| anyhow!("child request missing x-genex-turn-metadata"))?,
+            .header("x-ruxex-turn-metadata")
+            .ok_or_else(|| anyhow!("child request missing x-ruxex-turn-metadata"))?,
     )?;
     assert!(child_turn_metadata.get("forked_from_thread_id").is_none());
     assert_eq!(
         child_turn_metadata["parent_thread_id"].as_str(),
         Some(parent_thread_id)
     );
-    assert_eq!(child_turn_metadata["genex_security_surface"], json!("sdk"));
+    assert_eq!(child_turn_metadata["ruxex_security_surface"], json!("sdk"));
 
     Ok(())
 }
 
-async fn submit_turn_with_timeout(test: &TestGenex, prompt: &str) -> Result<()> {
+async fn submit_turn_with_timeout(test: &TestRuxex, prompt: &str) -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let cwd = test.config.cwd.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::workspace_write(), cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -226,7 +226,7 @@ where
 }
 
 async fn wait_for_event_result<F>(
-    test: &TestGenex,
+    test: &TestRuxex,
     stage: &str,
     mut predicate: F,
 ) -> Result<EventMsg>
@@ -236,7 +236,7 @@ where
     let mut seen_events = Vec::new();
     tokio::time::timeout(TURN_TIMEOUT, async {
         loop {
-            let event = test.genex.next_event().await?;
+            let event = test.ruxex.next_event().await?;
             seen_events.push(event_summary(&event.msg));
             if predicate(&event.msg) {
                 return Ok::<EventMsg, anyhow::Error>(event.msg);

@@ -26,7 +26,7 @@ pub use core_test_support::format_with_current_shell_non_login;
 pub use core_test_support::test_absolute_path;
 pub use core_test_support::test_tmp_path;
 pub use core_test_support::test_tmp_path_buf;
-use genex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::JSONRPCResponse;
 pub use json_logging::app_server_json_shutdown_event;
 pub use mock_model_server::create_mock_responses_server_repeating_assistant;
 pub use mock_model_server::create_mock_responses_server_sequence;
@@ -56,6 +56,6 @@ pub use test_app_server::TestAppServerBuilder;
 
 pub fn to_response<T: DeserializeOwned>(response: JSONRPCResponse) -> anyhow::Result<T> {
     let value = serde_json::to_value(response.result)?;
-    let genex_response = serde_json::from_value(value)?;
-    Ok(genex_response)
+    let ruxex_response = serde_json::from_value(value)?;
+    Ok(ruxex_response)
 }

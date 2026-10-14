@@ -7,12 +7,12 @@ retries = 1
 
 [[profile.default.overrides]]
 # This case validates and copies both the initial and replacement debug package.
-filter = 'package(genex-cli) & binary(app_server_daemon) & test(=packaged_daemon_start_and_explicit_replacement)'
+filter = 'package(ruxex-cli) & binary(app_server_daemon) & test(=packaged_daemon_start_and_explicit_replacement)'
 slow-timeout = { period = "1m", terminate-after = 3 }
 
 [[profile.default.overrides]]
 # These cases copy a full debug CLI package and launch its new executable.
-filter = 'package(genex-cli) & binary(app_server_daemon) & test(packaged_daemon_)'
+filter = 'package(ruxex-cli) & binary(app_server_daemon) & test(packaged_daemon_)'
 slow-timeout = { period = "1m", terminate-after = 2 }
 
 [profile.default.junit]
@@ -44,7 +44,7 @@ slow-timeout = { period = "1m", terminate-after = 4 }
 
 [[profile.default.overrides]]
 # This end-to-end case launches several CLI subprocesses and checks cloud policy.
-filter = 'package(genex-exec) & test(worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume)'
+filter = 'package(ruxex-exec) & test(worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume)'
 slow-timeout = { period = "30s", terminate-after = 4 }
 
 [[profile.default.overrides]]
@@ -52,32 +52,32 @@ filter = 'test(approval_matrix_covers_all_modes)'
 slow-timeout = { period = "30s", terminate-after = 2 }
 
 [[profile.default.overrides]]
-filter = 'package(genex-app-server-protocol) & (test(typescript_schema_fixtures_match_generated) | test(json_schema_fixtures_match_generated) | test(generate_ts_with_experimental_api_retains_experimental_entries) | test(generated_ts_optional_nullable_fields_only_in_params) | test(generate_json_filters_experimental_fields_and_methods))'
+filter = 'package(ruxex-app-server-protocol) & (test(typescript_schema_fixtures_match_generated) | test(json_schema_fixtures_match_generated) | test(generate_ts_with_experimental_api_retains_experimental_entries) | test(generated_ts_optional_nullable_fields_only_in_params) | test(generate_json_filters_experimental_fields_and_methods))'
 test-group = 'app_server_protocol_codegen'
 
 [[profile.default.overrides]]
 # Experimental exports include the full schema and take longer than the regular
 # code-generation tests on developer machines.
-filter = 'package(genex-app-server-protocol) & test(experimental_precomputed_exports_match_generated)'
+filter = 'package(ruxex-app-server-protocol) & test(experimental_precomputed_exports_match_generated)'
 slow-timeout = { period = "2m", terminate-after = 2 }
 test-group = 'app_server_protocol_codegen'
 
 [[profile.default.overrides]]
 # These integration tests spawn a fresh app-server subprocess per case.
 # Keep the library unit tests parallel.
-filter = 'package(genex-app-server) & kind(test)'
+filter = 'package(ruxex-app-server) & kind(test)'
 test-group = 'app_server_integration'
 
 [[profile.local.overrides]]
 # Use up to four app-server subprocesses locally. The global nextest pool still
 # limits this to the machine's logical CPU count.
-filter = 'package(genex-app-server) & kind(test)'
+filter = 'package(ruxex-app-server) & kind(test)'
 test-group = 'app_server_integration_local'
 
 [[profile.default.overrides]]
 # These tests exercise full Codex turns and apply_patch execution, and they are
 # sensitive to Windows runner process-startup stalls when many cases launch at once.
-filter = 'package(genex-core) & kind(test) & test(apply_patch_cli)'
+filter = 'package(ruxex-core) & kind(test) & test(apply_patch_cli)'
 test-group = 'core_apply_patch_cli_integration'
 
 [[profile.default.overrides]]

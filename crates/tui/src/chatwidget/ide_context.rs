@@ -1,6 +1,6 @@
 //! Chat-widget wiring for the `/ide` command and IDE context prompt injection.
 
-use genex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::UserInput;
 
 use super::ChatWidget;
 
@@ -69,7 +69,7 @@ impl ChatWidget {
             return;
         }
 
-        match crate::ide_context::fetch_ide_context(&self.config.cwd, &self.config.genex_home) {
+        match crate::ide_context::fetch_ide_context(&self.config.cwd, &self.config.ruxex_home) {
             Ok(context) => {
                 self.ide_context.mark_available();
                 self.sync_ide_context_status_indicator();
@@ -95,7 +95,7 @@ impl ChatWidget {
             return;
         }
 
-        match crate::ide_context::fetch_ide_context(&self.config.cwd, &self.config.genex_home) {
+        match crate::ide_context::fetch_ide_context(&self.config.cwd, &self.config.ruxex_home) {
             Ok(context) => {
                 self.ide_context.mark_available();
                 self.sync_ide_context_status_indicator();

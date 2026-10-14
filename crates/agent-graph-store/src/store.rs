@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 
 use crate::AgentGraphStoreResult;
 use crate::ThreadSpawnEdgeStatus;

@@ -1,5 +1,5 @@
-use core_test_support::test_genex::local_selections;
-use genex_core::TurnInputRequest;
+use core_test_support::test_ruxex::local_selections;
+use ruxex_core::TurnInputRequest;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -16,32 +16,32 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
-use genex_core::config::Constrained;
-use genex_login::GenexAuth;
-use genex_models_manager::client_version_to_whole;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::config::Constrained;
+use ruxex_login::RuxexAuth;
+use ruxex_models_manager::client_version_to_whole;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::default_input_modalities;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use serde::Serialize;
@@ -60,7 +60,7 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = MockServer::start().await;
-    let bundled = genex_models_manager::test_support::test_models_response()?;
+    let bundled = ruxex_models_manager::test_support::test_models_response()?;
     let catalog = ModelCatalog {
         models: bundled
             .models
@@ -72,8 +72,8 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
     let initial_models =
         responses::mount_models_once_with_etag(&server, catalog.clone(), ETAG).await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model("legacy-model");
     builder = builder.with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -85,12 +85,12 @@ async fn guardian_reused_reviewer_avoids_stale_catalog_lookup() -> Result<()> {
         .get_models_manager()
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert_eq!(initial_models.requests().len(), 1);
     rewrite_cache_timestamp(
-        &test.config.genex_home.join(CACHE_FILE),
+        &test.config.ruxex_home.join(CACHE_FILE),
         Utc::now() - chrono::Duration::hours(1),
     )
     .await?;
@@ -166,7 +166,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -174,7 +174,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     });
 
     let test = builder.build(&server).await?;
-    let genex = Arc::clone(&test.genex);
+    let ruxex = Arc::clone(&test.ruxex);
     let config = test.config.clone();
 
     // Populate cache via initial refresh.
@@ -182,11 +182,11 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
-    let cache_path = config.genex_home.join(CACHE_FILE);
+    let cache_path = config.ruxex_home.join(CACHE_FILE);
     let stale_time = Utc.timestamp_opt(0, 0).single().expect("valid epoch");
     rewrite_cache_timestamp(&cache_path, stale_time).await?;
 
@@ -204,7 +204,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.cwd_path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hi".into(),
@@ -212,7 +212,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
             }])
             .with_thread_settings(ThreadSettingsOverrides {
                 environments: Some(local_selections(test.config.cwd.clone())),
-                approval_policy: Some(genex_protocol::protocol::AskForApproval::Never),
+                approval_policy: Some(ruxex_protocol::protocol::AskForApproval::Never),
                 sandbox_policy: Some(sandbox_policy),
                 permission_profile,
                 collaboration_mode: Some(CollaborationMode {
@@ -228,7 +228,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
         )
         .await?;
 
-    let _ = wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    let _ = wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let refreshed_cache = read_cache(&cache_path).await?;
     assert!(
@@ -246,7 +246,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
         .thread_manager
         .list_models(
             RefreshStrategy::Offline,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
     assert!(
@@ -271,7 +271,7 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -283,11 +283,11 @@ async fn matching_models_etag_does_not_rewrite_recent_cache() -> Result<()> {
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
-    let cache_path = test.config.genex_home.join(CACHE_FILE);
+    let cache_path = test.config.ruxex_home.join(CACHE_FILE);
     rewrite_cache_timestamp(&cache_path, Utc::now() - chrono::Duration::seconds(60)).await?;
     let original_contents = tokio::fs::read(&cache_path).await?;
     let original_modified = tokio::fs::metadata(&cache_path).await?.modified()?;
@@ -331,7 +331,7 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
     builder = builder.with_config(|config| {
         config.model = Some("example-model-2".to_string());
         config.model_provider.request_max_retries = Some(0);
@@ -343,11 +343,11 @@ async fn matching_models_etag_renews_cache_after_half_its_lifetime() -> Result<(
     let _ = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
-    let cache_path = test.config.genex_home.join(CACHE_FILE);
+    let cache_path = test.config.ruxex_home.join(CACHE_FILE);
     let fetched_at = Utc::now() - chrono::Duration::seconds(180);
     rewrite_cache_timestamp(&cache_path, fetched_at).await?;
 
@@ -391,13 +391,13 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
-    let identity = genex_model_provider::test_support::models_cache_entry(
-        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
+    let identity = ruxex_model_provider::test_support::models_cache_entry(
+        &ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&GenexAuth::from_api_key("test-api-key")),
+        Some(&RuxexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;
@@ -432,7 +432,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -466,13 +466,13 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
-    let identity = genex_model_provider::test_support::models_cache_entry(
-        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
+    let identity = ruxex_model_provider::test_support::models_cache_entry(
+        &ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&GenexAuth::from_api_key("test-api-key")),
+        Some(&RuxexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;
@@ -497,7 +497,7 @@ async fn refreshes_when_cache_version_missing() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 
@@ -526,13 +526,13 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
         models_mocks.push(responses::mount_models_once(&server, models_response.clone()).await);
     }
 
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
-    let identity = genex_model_provider::test_support::models_cache_entry(
-        &genex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
+    let identity = ruxex_model_provider::test_support::models_cache_entry(
+        &ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/v1",
             server.uri()
         ))),
-        Some(&GenexAuth::from_api_key("test-api-key")),
+        Some(&RuxexAuth::from_api_key("test-api-key")),
         Vec::new(),
     )
     .identity;
@@ -558,7 +558,7 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
     let models = models_manager
         .list_models(
             RefreshStrategy::OnlineIfUncached,
-            genex_core::test_support::default_http_client_factory(),
+            ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
 

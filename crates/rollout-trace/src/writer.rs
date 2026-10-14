@@ -123,7 +123,7 @@ impl TraceWriter {
             wall_time_unix_ms: unix_time_ms(),
             rollout_id: inner.manifest.rollout_id.clone(),
             thread_id: context.thread_id,
-            genex_turn_id: context.genex_turn_id,
+            ruxex_turn_id: context.ruxex_turn_id,
             payload,
         };
         inner.next_seq += 1;
@@ -193,8 +193,8 @@ mod tests {
             agent_path: "/root".to_string(),
             metadata_payload: Some(metadata_payload.clone()),
         })?;
-        writer.append(RawTraceEventPayload::GenexTurnStarted {
-            genex_turn_id: "turn-1".to_string(),
+        writer.append(RawTraceEventPayload::RuxexTurnStarted {
+            ruxex_turn_id: "turn-1".to_string(),
             thread_id: "thread-root".to_string(),
         })?;
         let inference_request = writer.write_json_payload(
@@ -211,7 +211,7 @@ mod tests {
         writer.append(RawTraceEventPayload::InferenceStarted {
             inference_call_id: "inference-1".to_string(),
             thread_id: "thread-root".to_string(),
-            genex_turn_id: "turn-1".to_string(),
+            ruxex_turn_id: "turn-1".to_string(),
             model: "model-test".to_string(),
             request_payload: inference_request.clone(),
         })?;
@@ -228,8 +228,8 @@ mod tests {
             upstream_request_id: Some("req-1".to_string()),
             response_payload: inference_response.clone(),
         })?;
-        writer.append(RawTraceEventPayload::GenexTurnEnded {
-            genex_turn_id: "turn-1".to_string(),
+        writer.append(RawTraceEventPayload::RuxexTurnEnded {
+            ruxex_turn_id: "turn-1".to_string(),
             status: ExecutionStatus::Completed,
         })?;
         writer.append(RawTraceEventPayload::RolloutEnded {
@@ -241,9 +241,9 @@ mod tests {
         assert_eq!(rollout.status, RolloutStatus::Completed);
         assert_eq!(rollout.root_thread_id, "thread-root");
         assert_eq!(rollout.threads["thread-root"].agent_path, "/root");
-        assert_eq!(rollout.genex_turns["turn-1"].thread_id, "thread-root");
+        assert_eq!(rollout.ruxex_turns["turn-1"].thread_id, "thread-root");
         assert_eq!(
-            rollout.genex_turns["turn-1"].execution.status,
+            rollout.ruxex_turns["turn-1"].execution.status,
             ExecutionStatus::Completed,
         );
         assert_eq!(

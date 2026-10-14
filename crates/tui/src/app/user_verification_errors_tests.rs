@@ -1,5 +1,5 @@
 use super::*;
-use genex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -14,7 +14,7 @@ fn user_verification_errors_use_typed_reasons_without_raw_provider_diagnostics()
     };
     assert_eq!(
         verification_error_message(&error),
-        "No user-verification credential is available in the local Genex binary."
+        "No user-verification credential is available in the local Ruxex binary."
     );
     let malformed = TypedRequestError::Server {
         method: "userVerification/verify".to_string(),
@@ -28,7 +28,7 @@ fn user_verification_errors_use_typed_reasons_without_raw_provider_diagnostics()
     };
     assert_eq!(
         verification_error_message(&malformed),
-        "The local Genex binary could not complete user verification."
+        "The local Ruxex binary could not complete user verification."
     );
 }
 

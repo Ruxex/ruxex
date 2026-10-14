@@ -1,10 +1,10 @@
 use std::fmt;
 
-use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotificationEnvelope;
-use genex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ClientResponsePayload;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotificationEnvelope;
+use ruxex_app_server_protocol::ServerRequest;
 use serde::Serialize;
 use tokio::sync::oneshot;
 

@@ -1,12 +1,12 @@
 //! Executor-discovered plugin hook admission and trusted MCP routing.
 
-use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use genex_mcp::ToolInfo;
-use genex_plugin::ExecutorPluginHookSource;
-use genex_plugin::PluginId;
-use genex_plugin::is_allowlisted_bundled_cleanup_hook;
-use genex_plugin::manifest::PluginManifestHooks;
-use genex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_mcp::ToolInfo;
+use ruxex_plugin::ExecutorPluginHookSource;
+use ruxex_plugin::PluginId;
+use ruxex_plugin::is_allowlisted_bundled_cleanup_hook;
+use ruxex_plugin::manifest::PluginManifestHooks;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
 
 use crate::manifest::parse_plugin_manifest_uri;
 

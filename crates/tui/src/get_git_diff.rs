@@ -1,7 +1,7 @@
 //! Utility to compute the current Git diff for the working directory.
 //!
 //! The implementation mirrors the behaviour of the TypeScript version in
-//! `genex-cli`: it returns the diff for tracked changes as well as any
+//! `ruxex-cli`: it returns the diff for tracked changes as well as any
 //! untracked files. When the current directory is not inside a Git
 //! repository, the function returns `Ok((false, String::new()))`.
 
@@ -11,9 +11,9 @@ use std::time::Duration;
 use crate::workspace_command::WorkspaceCommand;
 use crate::workspace_command::WorkspaceCommandExecutor;
 use crate::workspace_command::WorkspaceCommandOutput;
-use genex_git_utils::FsmonitorOverride;
-use genex_git_utils::FsmonitorProbeRunner;
-use genex_git_utils::detect_fsmonitor_override;
+use ruxex_git_utils::FsmonitorOverride;
+use ruxex_git_utils::FsmonitorProbeRunner;
+use ruxex_git_utils::detect_fsmonitor_override;
 
 const DIFF_COMMAND_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 30);
 const DISABLE_HOOKS_CONFIG: &str = "core.hooksPath=/dev/null";
@@ -29,7 +29,7 @@ struct WorkspaceFsmonitorProbeRunner<'a> {
 
 impl FsmonitorProbeRunner for WorkspaceFsmonitorProbeRunner<'_> {
     async fn run_probe(&mut self, args: &[&str]) -> Option<Vec<u8>> {
-        let argv = ["git", "-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
+        let argv = ["git", "-c", ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
             .into_iter()
             .chain(args.iter().copied());
         let command = WorkspaceCommand::new(argv).cwd(self.cwd.to_path_buf());
@@ -226,7 +226,7 @@ async fn run_git_command(
     let argv = [
         "git",
         "-c",
-        genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
+        ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
         "-c",
         fsmonitor.git_config_arg(),
         "-c",
@@ -741,7 +741,7 @@ mod tests {
         [
             "git",
             "-c",
-            genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
+            ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG,
             "-c",
             fsmonitor.git_config_arg(),
             "-c",
@@ -754,7 +754,7 @@ mod tests {
     }
 
     fn git_probe_command(args: &[&str]) -> Vec<String> {
-        ["git", "-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
+        ["git", "-c", ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG]
             .into_iter()
             .chain(args.iter().copied())
             .map(str::to_string)

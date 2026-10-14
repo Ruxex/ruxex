@@ -2,16 +2,16 @@ use std::fs;
 use std::sync::Arc;
 
 use anyhow::Result;
-use genex_config::LoaderOverrides;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_utils_cargo_bin::cargo_bin;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_utils_cargo_bin::cargo_bin;
 use core_test_support::responses;
 use core_test_support::skip_if_remote;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -52,7 +52,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             tmp.path().join(scenario)
         };
         let marker = tmp.path().join(format!("{scenario}-mcp-started"));
-        fs::create_dir_all(checkout.join(".genex"))?;
+        fs::create_dir_all(checkout.join(".ruxex"))?;
         match scenario {
             "missing" => fs::write(
                 checkout.join(".git"),
@@ -74,7 +74,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             _ => unreachable!(),
         }
         fs::write(
-            checkout.join(".genex/config.toml"),
+            checkout.join(".ruxex/config.toml"),
             toml::to_string(&serde_json::json!({
                 "approval_policy": "never",
                 "sandbox_mode": "danger-full-access",
@@ -85,7 +85,7 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             }))?,
         )?;
         let loaded = ConfigBuilder::default()
-            .genex_home(home.path().to_path_buf())
+            .ruxex_home(home.path().to_path_buf())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .harness_overrides(ConfigOverrides {
                 cwd: Some(checkout.clone()),
@@ -125,20 +125,20 @@ async fn forged_worktree_project_config_cannot_start_host_mcp() -> Result<()> {
             ]),
         )
         .await;
-        let fixture = test_genex()
+        let fixture = test_ruxex()
             .with_home(Arc::clone(&home))
             .with_config(move |config| {
                 let model = config.model.clone();
                 let provider = config.model_provider.clone();
-                let self_exe = config.genex_self_exe.clone();
+                let self_exe = config.ruxex_self_exe.clone();
                 *config = loaded;
                 config.model = model;
                 config.model_provider = provider;
-                config.genex_self_exe = self_exe;
+                config.ruxex_self_exe = self_exe;
             })
             .build_with_auto_env(&server)
             .await?;
-        let startup = wait_for_event(&fixture.genex, |event| {
+        let startup = wait_for_event(&fixture.ruxex, |event| {
             matches!(event, EventMsg::McpStartupComplete(_))
         })
         .await;

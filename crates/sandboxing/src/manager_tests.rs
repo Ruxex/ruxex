@@ -1,5 +1,5 @@
 use super::*;
-use genex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 
 #[test]
 fn unrestricted_forbidden_request_stays_unsandboxed() {

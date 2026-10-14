@@ -1,13 +1,13 @@
-use genex_protocol::ThreadId;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_rollout::RolloutItem;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_rollout::RolloutItem;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -28,7 +28,7 @@ use crate::ThreadStore;
 async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+    let state_db = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("initialize state database");
     let store = LocalThreadStore::new(config, Some(state_db.clone()));
@@ -54,7 +54,7 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         .shutdown_thread(thread_id)
         .await
         .expect("close source writer");
-    genex_rollout::state_db::reconcile_rollout(
+    ruxex_rollout::state_db::reconcile_rollout(
         Some(state_db.as_ref()),
         original_path.as_path(),
         /*builder*/ None,
@@ -80,10 +80,10 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
         .rollout_path;
     assert_ne!(first_replacement_path, original_path);
     assert_ne!(
-        genex_rollout::rollout_id_from_path(first_replacement_path.as_path()),
+        ruxex_rollout::rollout_id_from_path(first_replacement_path.as_path()),
         Some(thread_id)
     );
-    let replacement_meta = genex_rollout::read_session_meta_line(first_replacement_path.as_path())
+    let replacement_meta = ruxex_rollout::read_session_meta_line(first_replacement_path.as_path())
         .await
         .expect("read replacement metadata")
         .meta;
@@ -139,7 +139,7 @@ async fn revert_keeps_thread_id_and_hides_suffix_across_repeated_reverts() {
 async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
-    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+    let state_db = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("initialize state database");
     let store = LocalThreadStore::new(config, Some(state_db.clone()));
@@ -171,7 +171,7 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
             .shutdown_thread(thread_id)
             .await
             .expect("close source writer");
-        genex_rollout::state_db::reconcile_rollout(
+        ruxex_rollout::state_db::reconcile_rollout(
             Some(state_db.as_ref()),
             path.as_path(),
             /*builder*/ None,
@@ -196,7 +196,7 @@ async fn revert_preserves_resolved_multi_agent_version_in_session_metadata() {
                 .expect("read metadata")
                 .expect("thread metadata")
                 .rollout_path;
-            let meta = genex_rollout::read_session_meta_line(&path)
+            let meta = ruxex_rollout::read_session_meta_line(&path)
                 .await
                 .expect("read replacement metadata");
             assert_eq!(meta.meta.multi_agent_version, Some(version));
@@ -208,7 +208,7 @@ async fn rollout_paths_for_thread(
     home: &std::path::Path,
     thread_id: ThreadId,
 ) -> Vec<std::path::PathBuf> {
-    genex_rollout::RolloutReferenceIndex::scan(home)
+    ruxex_rollout::RolloutReferenceIndex::scan(home)
         .await
         .expect("scan rollout references")
         .rollouts_for_thread(thread_id)
@@ -235,7 +235,7 @@ async fn create_paginated_thread(store: &LocalThreadStore, thread_id: ThreadId) 
             history_base: None,
             subagent_history_start_ordinal: None,
             initial_window_id: "window-1".to_string(),
-            runtime_workspace_roots: Some(vec![store.config.genex_home.join("workspace").abs()]),
+            runtime_workspace_roots: Some(vec![store.config.ruxex_home.join("workspace").abs()]),
             metadata: ThreadPersistenceMetadata {
                 cwd: Some(std::env::current_dir().expect("cwd")),
             },

@@ -1,6 +1,6 @@
 //! Shared in-process app-server client facade for CLI surfaces.
 //!
-//! This crate wraps [`genex_app_server::in_process`] behind a single async API
+//! This crate wraps [`ruxex_app_server::in_process`] behind a single async API
 //! used by surfaces like TUI and exec. It centralizes:
 //!
 //! - Runtime startup and initialize-capabilities handshake.
@@ -11,7 +11,7 @@
 //! - Bounded graceful shutdown with abort fallback.
 //!
 //! The facade interposes a worker task between the caller and the underlying
-//! [`InProcessClientHandle`](genex_app_server::in_process::InProcessClientHandle),
+//! [`InProcessClientHandle`](ruxex_app_server::in_process::InProcessClientHandle),
 //! bridging async `mpsc` channels on both sides. Commands and the underlying
 //! runtime remain bounded; the local consumer event queue is unbounded so
 //! unread notifications cannot prevent request responses from being delivered.
@@ -27,40 +27,40 @@ use std::io::Result as IoResult;
 use std::sync::Arc;
 use std::time::Duration;
 
-pub use genex_app_server::AppServerRuntime;
-pub use genex_app_server::AppServerRuntimeBuilder;
-pub use genex_app_server::ProviderInit;
-pub use genex_app_server::app_server_control_socket_path;
-pub use genex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-pub use genex_app_server::in_process::InProcessServerEvent;
-use genex_app_server::in_process::InProcessStartArgs;
-use genex_app_server::in_process::LogDbLayer;
-pub use genex_app_server::in_process::StateDbHandle;
-pub use genex_app_server::runtime::configured_app_server_runtime_from_config;
-pub use genex_app_server::runtime::mount_provider_home_for_config;
-pub use genex_app_server::runtime::provider_init_from_config;
-pub use genex_app_server::runtime::provider_init_from_config_with_descriptor;
-use genex_app_server_protocol::AppServerIdentity;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::Result as JsonRpcResult;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::LoaderOverrides;
-use genex_config::NoopThreadConfigLoader;
-use genex_core::config::Config;
-pub use genex_core::otel_init::build_provider as build_otel_provider;
-pub use genex_exec_server::EnvironmentManager;
-pub use genex_exec_server::ExecServerRuntimePaths;
-use genex_protocol::protocol::SessionSource;
-use genex_utils_absolute_path::AbsolutePathBuf;
+pub use ruxex_app_server::AppServerRuntime;
+pub use ruxex_app_server::AppServerRuntimeBuilder;
+pub use ruxex_app_server::ProviderInit;
+pub use ruxex_app_server::app_server_control_socket_path;
+pub use ruxex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+pub use ruxex_app_server::in_process::InProcessServerEvent;
+use ruxex_app_server::in_process::InProcessStartArgs;
+use ruxex_app_server::in_process::LogDbLayer;
+pub use ruxex_app_server::in_process::StateDbHandle;
+pub use ruxex_app_server::runtime::configured_app_server_runtime_from_config;
+pub use ruxex_app_server::runtime::mount_provider_home_for_config;
+pub use ruxex_app_server::runtime::provider_init_from_config;
+pub use ruxex_app_server::runtime::provider_init_from_config_with_descriptor;
+use ruxex_app_server_protocol::AppServerIdentity;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::Result as JsonRpcResult;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_core::config::Config;
+pub use ruxex_core::otel_init::build_provider as build_otel_provider;
+pub use ruxex_exec_server::EnvironmentManager;
+pub use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::de::DeserializeOwned;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -78,9 +78,9 @@ fn mount_provider_home_for_startup(
 ) -> IoResult<AppServerIdentity> {
     let marker = match runtime {
         Some(runtime) => {
-            genex_app_server::runtime::mount_provider_home_for_runtime(config, runtime)
+            ruxex_app_server::runtime::mount_provider_home_for_runtime(config, runtime)
         }
-        None => genex_app_server::runtime::mount_provider_home_for_config(config),
+        None => ruxex_app_server::runtime::mount_provider_home_for_config(config),
     }
     .map_err(|error| IoError::new(ErrorKind::InvalidData, error.to_string()))?;
     Ok(AppServerIdentity::from_provider_home(
@@ -93,14 +93,14 @@ fn mount_provider_home_for_startup(
 /// Transitional access to core-only embedded app-server types.
 ///
 /// New TUI behavior should prefer the app-server protocol methods. This
-/// module exists so clients can remove a direct `genex-core` dependency
+/// module exists so clients can remove a direct `ruxex-core` dependency
 /// while legacy startup/config paths are migrated to RPCs.
 pub mod legacy_core {
     pub mod config {
-        pub use genex_core::config::*;
+        pub use ruxex_core::config::*;
 
         pub mod edit {
-            pub use genex_core::config::edit::*;
+            pub use ruxex_core::config::edit::*;
         }
     }
 }
@@ -213,7 +213,7 @@ pub struct InProcessClientStartArgs {
     pub config_warnings: Vec<ConfigWarningNotification>,
     /// Session source recorded in app-server thread metadata.
     pub session_source: SessionSource,
-    /// Whether auth loading should honor the `GENEX_API_KEY` environment variable.
+    /// Whether auth loading should honor the `RUXEX_API_KEY` environment variable.
     pub enable_api_key_env: bool,
     /// Shared AppServer runtime injected by an embedding host, when present.
     pub runtime: Option<AppServerRuntime>,
@@ -307,7 +307,7 @@ enum ClientCommand {
 ///
 /// This type owns a worker task that bridges between:
 /// - caller-facing async `mpsc` channels used by TUI/exec
-/// - [`genex_app_server::in_process::InProcessClientHandle`], which speaks to
+/// - [`ruxex_app_server::in_process::InProcessClientHandle`], which speaks to
 ///   the embedded `MessageProcessor`
 ///
 /// The facade intentionally preserves the server's request/notification/event
@@ -346,7 +346,7 @@ impl InProcessAppServerClient {
         let channel_capacity = args.channel_capacity.max(1);
         let identity = mount_provider_home_for_startup(&args.config, args.runtime.as_ref())?;
         let mut handle =
-            genex_app_server::in_process::start(args.into_runtime_start_args()).await?;
+            ruxex_app_server::in_process::start(args.into_runtime_start_args()).await?;
         let request_sender = handle.sender();
         let (command_tx, mut command_rx) = mpsc::channel::<ClientCommand>(channel_capacity);
         // e9996ec62a preserved transcript events by awaiting a bounded queue, but that can
@@ -777,12 +777,12 @@ impl AppServerClient {
         }
     }
 
-    pub fn genex_home(&self, local_genex_home: &AbsolutePathBuf) -> Option<AppServerPath> {
+    pub fn ruxex_home(&self, local_ruxex_home: &AbsolutePathBuf) -> Option<AppServerPath> {
         match self {
             Self::InProcess(_) => Some(AppServerPath::from_app_server(
-                local_genex_home.display().to_string(),
+                local_ruxex_home.display().to_string(),
             )),
-            Self::Remote(client) => client.genex_home().map(AppServerPath::from_app_server),
+            Self::Remote(client) => client.ruxex_home().map(AppServerPath::from_app_server),
         }
     }
 
@@ -845,23 +845,23 @@ mod tests {
     use super::*;
     use futures::SinkExt;
     use futures::StreamExt;
-    use genex_app_server_protocol::AccountUpdatedNotification;
-    use genex_app_server_protocol::ConfigRequirementsReadResponse;
-    use genex_app_server_protocol::GetAccountResponse;
-    use genex_app_server_protocol::JSONRPCMessage;
-    use genex_app_server_protocol::JSONRPCRequest;
-    use genex_app_server_protocol::JSONRPCResponse;
-    use genex_app_server_protocol::ProviderAuthStatus;
-    use genex_app_server_protocol::ServerNotification;
-    use genex_app_server_protocol::SessionSource as ApiSessionSource;
-    use genex_app_server_protocol::ThreadStartParams;
-    use genex_app_server_protocol::ThreadStartResponse;
-    use genex_app_server_protocol::ToolRequestUserInputParams;
-    use genex_app_server_protocol::ToolRequestUserInputQuestion;
-    use genex_core::config::ConfigBuilder;
-    use genex_core::init_state_db;
-    use genex_uds::UnixListener;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_app_server_protocol::AccountUpdatedNotification;
+    use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+    use ruxex_app_server_protocol::GetAccountResponse;
+    use ruxex_app_server_protocol::JSONRPCMessage;
+    use ruxex_app_server_protocol::JSONRPCRequest;
+    use ruxex_app_server_protocol::JSONRPCResponse;
+    use ruxex_app_server_protocol::ProviderAuthStatus;
+    use ruxex_app_server_protocol::ServerNotification;
+    use ruxex_app_server_protocol::SessionSource as ApiSessionSource;
+    use ruxex_app_server_protocol::ThreadStartParams;
+    use ruxex_app_server_protocol::ThreadStartResponse;
+    use ruxex_app_server_protocol::ToolRequestUserInputParams;
+    use ruxex_app_server_protocol::ToolRequestUserInputQuestion;
+    use ruxex_core::config::ConfigBuilder;
+    use ruxex_core::init_state_db;
+    use ruxex_uds::UnixListener;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::ops::Deref;
     use std::path::Path;
@@ -876,15 +876,15 @@ mod tests {
     use tokio_tungstenite::tungstenite::handshake::server::Response as WebSocketResponse;
     use tokio_tungstenite::tungstenite::http::header::AUTHORIZATION;
 
-    async fn build_test_config_for_genex_home(genex_home: &Path) -> Config {
+    async fn build_test_config_for_ruxex_home(ruxex_home: &Path) -> Config {
         match ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .build()
             .await
         {
             Ok(config) => config,
-            Err(_) => Config::load_default_with_cli_overrides_for_genex_home(
-                genex_home.to_path_buf(),
+            Err(_) => Config::load_default_with_cli_overrides_for_ruxex_home(
+                ruxex_home.to_path_buf(),
                 Vec::new(),
             )
             .await
@@ -894,8 +894,8 @@ mod tests {
 
     #[tokio::test]
     async fn in_process_client_home_mount_prefers_injected_runtime() {
-        let genex_home = TempDir::new().expect("temporary provider home");
-        let config = build_test_config_for_genex_home(genex_home.path()).await;
+        let ruxex_home = TempDir::new().expect("temporary provider home");
+        let config = build_test_config_for_ruxex_home(ruxex_home.path()).await;
         let mut provider_info = config.model_provider.clone();
         provider_info.id = Some("injected-provider".to_string());
         let runtime = AppServerRuntimeBuilder::from_provider_info(provider_info, None).build();
@@ -903,7 +903,7 @@ mod tests {
         let _identity = mount_provider_home_for_startup(&config, Some(&runtime))
             .expect("injected provider home should mount");
         let marker: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(genex_home.path().join("genex-home.json"))
+            &std::fs::read_to_string(ruxex_home.path().join("ruxex-home.json"))
                 .expect("provider home marker should be readable"),
         )
         .expect("provider home marker should be JSON");
@@ -911,7 +911,7 @@ mod tests {
     }
 
     struct TestClient {
-        _genex_home: TempDir,
+        _ruxex_home: TempDir,
         client: InProcessAppServerClient,
     }
 
@@ -933,8 +933,8 @@ mod tests {
         session_source: SessionSource,
         channel_capacity: usize,
     ) -> TestClient {
-        let genex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config_for_genex_home(genex_home.path()).await);
+        let ruxex_home = TempDir::new().expect("temp dir");
+        let config = Arc::new(build_test_config_for_ruxex_home(ruxex_home.path()).await);
         let state_db = init_state_db(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
@@ -951,7 +951,7 @@ mod tests {
             session_source,
             enable_api_key_env: false,
             runtime: None,
-            client_name: "genex-app-server-client-test".to_string(),
+            client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -961,7 +961,7 @@ mod tests {
         .expect("in-process app-server client should start");
 
         TestClient {
-            _genex_home: genex_home,
+            _ruxex_home: ruxex_home,
             client,
         }
     }
@@ -1025,8 +1025,8 @@ mod tests {
         expect_remote_initialize_with_metadata(
             websocket,
             serde_json::json!({
-                "userAgent": "genex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
-                "genexHome": "/server/.genex",
+                "userAgent": "ruxex_cli_rs/9.8.7-test (Test OS; x86_64) rust",
+                "ruxexHome": "/server/.ruxex",
                 "appServerIdentity": {
                     "signature": "server-a",
                     "version": "app-server/1;provider/1",
@@ -1106,7 +1106,7 @@ mod tests {
 
     fn command_execution_output_delta_notification(delta: &str) -> ServerNotification {
         ServerNotification::CommandExecutionOutputDelta(
-            genex_app_server_protocol::CommandExecutionOutputDeltaNotification {
+            ruxex_app_server_protocol::CommandExecutionOutputDeltaNotification {
                 thread_id: "thread".to_string(),
                 turn_id: "turn".to_string(),
                 item_id: "item".to_string(),
@@ -1117,7 +1117,7 @@ mod tests {
 
     fn agent_message_delta_notification(delta: &str) -> ServerNotification {
         ServerNotification::AgentMessageDelta(
-            genex_app_server_protocol::AgentMessageDeltaNotification {
+            ruxex_app_server_protocol::AgentMessageDeltaNotification {
                 thread_id: "thread".to_string(),
                 turn_id: "turn".to_string(),
                 item_id: "item".to_string(),
@@ -1127,11 +1127,11 @@ mod tests {
     }
 
     fn item_completed_notification(text: &str) -> ServerNotification {
-        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(ruxex_app_server_protocol::ItemCompletedNotification {
             thread_id: "thread".to_string(),
             turn_id: "turn".to_string(),
             completed_at_ms: 0,
-            item: genex_app_server_protocol::ThreadItem::AgentMessage {
+            item: ruxex_app_server_protocol::ThreadItem::AgentMessage {
                 id: "item".to_string(),
                 text: text.to_string(),
                 phase: None,
@@ -1142,13 +1142,13 @@ mod tests {
     }
 
     fn turn_completed_notification() -> ServerNotification {
-        ServerNotification::TurnCompleted(genex_app_server_protocol::TurnCompletedNotification {
+        ServerNotification::TurnCompleted(ruxex_app_server_protocol::TurnCompletedNotification {
             thread_id: "thread".to_string(),
-            turn: genex_app_server_protocol::Turn {
+            turn: ruxex_app_server_protocol::Turn {
                 id: "turn".to_string(),
-                items_view: genex_app_server_protocol::TurnItemsView::Full,
+                items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                 items: Vec::new(),
-                status: genex_app_server_protocol::TurnStatus::Completed,
+                status: ruxex_app_server_protocol::TurnStatus::Completed,
                 error: None,
                 started_at: None,
                 completed_at: Some(0),
@@ -1163,7 +1163,7 @@ mod tests {
                 websocket_url,
                 auth_token: None,
             },
-            client_name: "genex-app-server-client-test".to_string(),
+            client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1174,7 +1174,7 @@ mod tests {
     #[tokio::test]
     async fn typed_request_roundtrip_works() {
         let TestClient {
-            _genex_home,
+            _ruxex_home,
             client,
         } = start_test_client(SessionSource::Exec).await;
         let client = AppServerClient::InProcess(client);
@@ -1198,7 +1198,7 @@ mod tests {
         let err = client
             .request_typed::<ConfigRequirementsReadResponse>(ClientRequest::ThreadRead {
                 request_id: RequestId::Integer(99),
-                params: genex_app_server_protocol::ThreadReadParams {
+                params: ruxex_app_server_protocol::ThreadReadParams {
                     thread_id: "missing-thread".to_string(),
                     include_turns: false,
                 },
@@ -1249,10 +1249,10 @@ mod tests {
             .await
             .expect("thread/start should succeed");
         let read = client
-            .request_typed::<genex_app_server_protocol::ThreadReadResponse>(
+            .request_typed::<ruxex_app_server_protocol::ThreadReadResponse>(
                 ClientRequest::ThreadRead {
                     request_id: RequestId::Integer(4),
-                    params: genex_app_server_protocol::ThreadReadParams {
+                    params: ruxex_app_server_protocol::ThreadReadParams {
                         thread_id: response.thread.id.clone(),
                         include_turns: false,
                     },
@@ -1346,7 +1346,7 @@ mod tests {
             .expect("remote client should connect");
 
         assert_eq!(client.server_version(), Some("9.8.7-test"));
-        assert_eq!(client.genex_home(), Some("/server/.genex"));
+        assert_eq!(client.ruxex_home(), Some("/server/.ruxex"));
         assert_eq!(
             client
                 .identity()
@@ -1356,7 +1356,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: genex_app_server_protocol::GetAccountParams {
+                params: ruxex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1370,7 +1370,7 @@ mod tests {
     #[tokio::test]
     async fn remote_unix_socket_typed_request_roundtrip_works() {
         let socket_dir = TempDir::new().expect("socket dir");
-        let socket_path = AbsolutePathBuf::from_absolute_path(socket_dir.path().join("genex.sock"))
+        let socket_path = AbsolutePathBuf::from_absolute_path(socket_dir.path().join("ruxex.sock"))
             .expect("socket path should resolve");
         let mut listener = UnixListener::bind(socket_path.as_path())
             .await
@@ -1406,7 +1406,7 @@ mod tests {
         });
         let client = RemoteAppServerClient::connect(RemoteAppServerConnectArgs {
             endpoint: RemoteAppServerEndpoint::UnixSocket { socket_path },
-            client_name: "genex-app-server-client-test".to_string(),
+            client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1418,7 +1418,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: genex_app_server_protocol::GetAccountParams {
+                params: ruxex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1462,7 +1462,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: genex_app_server_protocol::GetAccountParams {
+                params: ruxex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1499,7 +1499,7 @@ mod tests {
                 websocket_url,
                 auth_token: Some(auth_token),
             },
-            client_name: "genex-app-server-client-test".to_string(),
+            client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1518,7 +1518,7 @@ mod tests {
                 websocket_url: "ws://example.com:4500".to_string(),
                 auth_token: Some("remote-bearer-token".to_string()),
             },
-            client_name: "genex-app-server-client-test".to_string(),
+            client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
             opt_out_notification_methods: Vec::new(),
@@ -1600,7 +1600,7 @@ mod tests {
             first_request_handle
                 .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                     request_id: RequestId::Integer(1),
-                    params: genex_app_server_protocol::GetAccountParams {
+                    params: ruxex_app_server_protocol::GetAccountParams {
                         refresh_token: false,
                     },
                 })
@@ -1615,7 +1615,7 @@ mod tests {
         let second_err = second_request_handle
             .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: genex_app_server_protocol::GetAccountParams {
+                params: ruxex_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1754,7 +1754,7 @@ mod tests {
                     ServerNotification::ItemCompleted(notification)
                         if matches!(
                             &notification.item,
-                            genex_app_server_protocol::ThreadItem::AgentMessage { text, .. }
+                            ruxex_app_server_protocol::ThreadItem::AgentMessage { text, .. }
                                 if text == "hello"
                         ) =>
                     {
@@ -1762,7 +1762,7 @@ mod tests {
                     }
                     ServerNotification::TurnCompleted(notification)
                         if notification.turn.status
-                            == genex_app_server_protocol::TurnStatus::Completed =>
+                            == ruxex_app_server_protocol::TurnStatus::Completed =>
                     {
                         transcript_event_names.push("turn_completed");
                     }

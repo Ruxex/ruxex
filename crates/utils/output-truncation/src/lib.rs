@@ -1,15 +1,15 @@
 //! Shared byte/token truncation for tool and exec output.
 
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-pub use genex_utils_string::approx_bytes_for_tokens;
-pub use genex_utils_string::approx_token_count;
-pub use genex_utils_string::approx_tokens_from_byte_count;
-use genex_utils_string::truncate_middle_chars;
-use genex_utils_string::truncate_middle_with_token_budget;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+pub use ruxex_utils_string::approx_bytes_for_tokens;
+pub use ruxex_utils_string::approx_token_count;
+pub use ruxex_utils_string::approx_tokens_from_byte_count;
+use ruxex_utils_string::truncate_middle_chars;
+use ruxex_utils_string::truncate_middle_with_token_budget;
 
-pub use genex_protocol::protocol::TruncationPolicy;
+pub use ruxex_protocol::protocol::TruncationPolicy;
 
 /// Adds the existing 20% allowance for serialization and headers.
 /// Saved history budgets already include this allowance.

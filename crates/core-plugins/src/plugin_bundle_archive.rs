@@ -60,12 +60,12 @@ pub(crate) fn pack_plugin_bundle_tar_gz(
             reason: "expected a plugin directory".to_string(),
         });
     }
-    if !plugin_path.join(".genex-plugin/plugin.json").is_file()
+    if !plugin_path.join(".ruxex-plugin/plugin.json").is_file()
         && load_plugin_manifest(plugin_path).is_none()
     {
         return Err(PluginBundlePackError::InvalidPluginPath {
             path: plugin_path.to_path_buf(),
-            reason: "missing .genex-plugin/plugin.json or valid Agent Plugin manifest".to_string(),
+            reason: "missing .ruxex-plugin/plugin.json or valid Agent Plugin manifest".to_string(),
         });
     }
 

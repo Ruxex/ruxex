@@ -54,15 +54,15 @@ fn each_endpoint_product_requires_vendor_specific_app_exclusions() {
             .to_ascii_lowercase();
         assert_eq!(
             remediation,
-            "ask your security administrator to verify genex exclusions and required helper allowances",
+            "ask your security administrator to verify ruxex exclusions and required helper allowances",
             "{product}"
         );
         let rendered_check = serde_json::to_string(&redacted_json_check(&check))
             .expect("serialize endpoint check")
             .to_ascii_lowercase();
         assert!(
-            rendered_check.contains("genex"),
-            "{product}: endpoint diagnostics should refer to Genex"
+            rendered_check.contains("ruxex"),
+            "{product}: endpoint diagnostics should refer to Ruxex"
         );
 
         assert_eq!(check.issues.len(), 1, "{product}");
@@ -77,7 +77,7 @@ fn each_endpoint_product_requires_vendor_specific_app_exclusions() {
             issue.cause
         );
         assert!(
-            issue.cause.contains("Verify Genex exclusions."),
+            issue.cause.contains("Verify Ruxex exclusions."),
             "{product}: {}",
             issue.cause
         );

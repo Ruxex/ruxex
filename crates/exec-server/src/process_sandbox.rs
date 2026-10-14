@@ -2,30 +2,30 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::process_telemetry::ProcessTelemetry;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::ManagedProxyRouting;
-use genex_network_proxy::NetworkPolicyAuditObserver;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyHandle;
-use genex_network_proxy::NetworkProxyState;
-use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use genex_network_proxy::is_managed_mitm_ca_trust_bundle_path;
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxDirectSpawnTransformRequest;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxTransformRequest;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::with_managed_mitm_ca_readable_root;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::ManagedProxyRouting;
+use ruxex_network_proxy::NetworkPolicyAuditObserver;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyHandle;
+use ruxex_network_proxy::NetworkProxyState;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_network_proxy::is_managed_mitm_ca_trust_bundle_path;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxDirectSpawnTransformRequest;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxTransformRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::with_managed_mitm_ca_readable_root;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::ExecServerRuntimePaths;
 #[cfg(unix)]
-use crate::GENEX_ARG0_EXEC_HELPER_ARG1;
+use crate::RUXEX_ARG0_EXEC_HELPER_ARG1;
 use crate::protocol::ExecParams;
 use crate::rpc::internal_error;
 use crate::rpc::invalid_params;
@@ -107,17 +107,17 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
     let sandbox_helper_paths = params
         .arg0
         .iter()
-        .map(|_| runtime_paths.genex_self_exe.clone())
+        .map(|_| runtime_paths.ruxex_self_exe.clone())
         .collect::<Vec<_>>();
     // Bubblewrap launches the configured helper, which may re-enter this executable to apply
     // seccomp, so the outer filesystem sandbox must expose both paths.
     #[cfg(target_os = "linux")]
     let sandbox_helper_paths = {
         let mut sandbox_helper_paths = sandbox_helper_paths;
-        if !sandbox_helper_paths.contains(&runtime_paths.genex_self_exe) {
-            sandbox_helper_paths.push(runtime_paths.genex_self_exe.clone());
+        if !sandbox_helper_paths.contains(&runtime_paths.ruxex_self_exe) {
+            sandbox_helper_paths.push(runtime_paths.ruxex_self_exe.clone());
         }
-        sandbox_helper_paths.extend(runtime_paths.genex_linux_sandbox_exe.iter().cloned());
+        sandbox_helper_paths.extend(runtime_paths.ruxex_linux_sandbox_exe.iter().cloned());
         sandbox_helper_paths
     };
     #[cfg(unix)]
@@ -132,7 +132,7 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
     let sandbox_manager = SandboxManager::new();
     #[cfg(target_os = "macos")]
     let sandbox_manager = sandbox_manager
-        .with_allowed_symlinked_genex_home(runtime_paths.allowed_symlinked_genex_home.clone());
+        .with_allowed_symlinked_ruxex_home(runtime_paths.allowed_symlinked_ruxex_home.clone());
     let sandbox = select_sandbox(
         &sandbox_manager,
         &permissions,
@@ -152,12 +152,12 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
         || (program.into(), args.to_vec()),
         |arg0| {
             let mut helper_args = Vec::with_capacity(params.argv.len() + 2);
-            helper_args.push(GENEX_ARG0_EXEC_HELPER_ARG1.to_string());
+            helper_args.push(RUXEX_ARG0_EXEC_HELPER_ARG1.to_string());
             helper_args.push(arg0.clone());
             helper_args.extend(params.argv.iter().cloned());
             (
                 runtime_paths
-                    .genex_self_exe
+                    .ruxex_self_exe
                     .as_path()
                     .as_os_str()
                     .to_owned(),
@@ -183,7 +183,7 @@ pub(crate) async fn prepare_exec_request_with_telemetry(
             environment_id: None,
             network: None,
             sandbox_policy_cwd,
-            sandbox_exe: runtime_paths.genex_linux_sandbox_exe.as_deref(),
+            sandbox_exe: runtime_paths.ruxex_linux_sandbox_exe.as_deref(),
             use_legacy_landlock: sandbox_context.use_legacy_landlock,
         },
     };
@@ -227,7 +227,7 @@ async fn prepare_managed_network(
     if let Some(launch_context) = &telemetry.launch_context {
         state.set_launch_span_context(launch_context.clone());
     }
-    state.set_process_log_metadata(genex_network_proxy::NetworkProxyProcessLogMetadata {
+    state.set_process_log_metadata(ruxex_network_proxy::NetworkProxyProcessLogMetadata {
         thread_id: telemetry.thread_id.clone(),
         tool_call_id: telemetry.tool_call_id.clone(),
         executor_identity: None,

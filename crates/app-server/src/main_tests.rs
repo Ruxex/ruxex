@@ -1,6 +1,6 @@
 use super::AppServerArgs;
 use clap::Parser;
-use genex_app_server::AppServerTransport;
+use ruxex_app_server::AppServerTransport;
 use pretty_assertions::assert_eq;
 use toml::Value as TomlValue;
 use url::Url;
@@ -8,7 +8,7 @@ use url::Url;
 #[test]
 fn app_server_accepts_cli_config_overrides() {
     let args = AppServerArgs::try_parse_from([
-        "genex-app-server",
+        "ruxex-app-server",
         "-c",
         "model=\"example-model\"",
         "--config",
@@ -41,7 +41,7 @@ fn app_server_accepts_cli_config_overrides() {
 #[test]
 fn app_server_accepts_process_scoped_grpc_code_mode_host() {
     let args = AppServerArgs::try_parse_from([
-        "genex-app-server",
+        "ruxex-app-server",
         "--code-mode-host",
         "https://example.test",
         "--listen",
@@ -74,7 +74,7 @@ fn app_server_rejects_invalid_code_mode_host() {
         "http://example.test/?token=secret",
     ] {
         let error =
-            AppServerArgs::try_parse_from(["genex-app-server", "--code-mode-host", endpoint])
+            AppServerArgs::try_parse_from(["ruxex-app-server", "--code-mode-host", endpoint])
                 .expect_err("invalid code-mode host endpoint should fail startup argument parsing");
 
         assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);

@@ -2,9 +2,9 @@
 //! The caller selects the warning; the host owns task cancellation and idle notification.
 
 use super::session::Session;
-use genex_extension_api::ThreadIdleCause;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::TurnAbortReason;
+use ruxex_extension_api::ThreadIdleCause;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::TurnAbortReason;
 use std::sync::Arc;
 
 impl Session {

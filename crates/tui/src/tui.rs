@@ -55,8 +55,8 @@ use crate::tui::event_stream::TuiEventStream;
 use crate::tui::job_control::SuspendContext;
 use crate::tui::screen_size::ScreenSizePolicy;
 use crate::tui::scrollback::ScrollbackStrategy;
-use genex_config::types::NotificationCondition;
-use genex_config::types::NotificationMethod;
+use ruxex_config::types::NotificationCondition;
+use ruxex_config::types::NotificationMethod;
 
 mod event_stream;
 mod frame_rate_limiter;
@@ -110,7 +110,7 @@ mod tests {
     use super::should_emit_notification;
     use crate::custom_terminal::Terminal as CustomTerminal;
     use crate::test_backend::VT100Backend;
-    use genex_config::types::NotificationCondition;
+    use ruxex_config::types::NotificationCondition;
     use ratatui::layout::Position;
     use ratatui::layout::Rect;
     use ratatui::text::Line;
@@ -295,7 +295,7 @@ pub(super) fn reapply_raw_mode_after_resume() -> Result<()> {
     enable_raw_mode()
 }
 
-/// Restore the terminal after Genex is exiting.
+/// Restore the terminal after Ruxex is exiting.
 ///
 /// Uses a stronger keyboard reset than `restore` so the parent shell recovers even if a
 /// terminal missed the stack pop that normally pairs with [`set_modes`].
@@ -491,7 +491,7 @@ impl Tui {
         // Cache this to avoid contention with the event reader.
         supports_color::on_cached(supports_color::Stream::Stdout);
         let _ = crate::terminal_palette::default_colors();
-        let terminal_info = genex_terminal_detection::terminal_info();
+        let terminal_info = ruxex_terminal_detection::terminal_info();
         let scrollback = ScrollbackStrategy::detect(&terminal_info);
         let mut event_broker = EventBroker::new();
         event_broker.size_monitor = size_monitor::SizeMonitor::start(
@@ -588,7 +588,7 @@ impl Tui {
     /// Temporarily restore terminal state to run an external interactive program `f`.
     ///
     /// This pauses crossterm's stdin polling by dropping the underlying event stream, restores
-    /// terminal modes and stderr while keeping raw mode enabled, then re-applies Genex TUI modes
+    /// terminal modes and stderr while keeping raw mode enabled, then re-applies Ruxex TUI modes
     /// and stderr suppression before resuming events.
     pub async fn with_restored<R, F, Fut>(&mut self, f: F) -> R
     where

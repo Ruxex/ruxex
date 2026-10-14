@@ -2,8 +2,8 @@
 
 use std::sync::LazyLock;
 
-use genex_build_info::BuildInfo;
-use genex_build_info::build_id;
+use ruxex_build_info::BuildInfo;
+use ruxex_build_info::build_id;
 
 use crate::protocol::EnvironmentInfo;
 

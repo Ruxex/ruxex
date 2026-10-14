@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 use super::*;

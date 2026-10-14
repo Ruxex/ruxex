@@ -1,6 +1,6 @@
 //! Helper binary for exercising shared custom CA environment handling in tests.
 //!
-//! The shared reqwest client honors `GENEX_CA_CERTIFICATE` and `SSL_CERT_FILE`, but those
+//! The shared reqwest client honors `RUXEX_CA_CERTIFICATE` and `SSL_CERT_FILE`, but those
 //! environment variables are process-global and unsafe to mutate in parallel test execution. This
 //! probe keeps the behavior under test while letting integration tests (`tests/ca_env.rs`) set
 //! env vars per-process, proving:
@@ -10,18 +10,18 @@
 //! - error messages guide users when CA files are invalid.
 //! - optional HTTPS probes can complete a request through the constructed client.
 //!
-//! The detailed explanation of what "hermetic" means here lives in `genex_http_client::custom_ca`.
+//! The detailed explanation of what "hermetic" means here lives in `ruxex_http_client::custom_ca`.
 //! This binary exists so the tests can exercise
-//! [`genex_http_client::build_reqwest_client_for_subprocess_tests`] in a separate process without
+//! [`ruxex_http_client::build_reqwest_client_for_subprocess_tests`] in a separate process without
 //! duplicating client-construction logic.
 
 use std::env;
 use std::process;
 use std::time::Duration;
 
-const PROBE_TLS13_ENV: &str = "GENEX_CUSTOM_CA_PROBE_TLS13";
-const PROBE_PROXY_ENV: &str = "GENEX_CUSTOM_CA_PROBE_PROXY";
-const PROBE_URL_ENV: &str = "GENEX_CUSTOM_CA_PROBE_URL";
+const PROBE_TLS13_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_TLS13";
+const PROBE_PROXY_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_PROXY";
+const PROBE_URL_ENV: &str = "RUXEX_CUSTOM_CA_PROBE_URL";
 
 fn main() {
     let runtime = match tokio::runtime::Builder::new_current_thread()
@@ -69,11 +69,11 @@ fn build_probe_client(
     if let Some(proxy_url) = proxy_url {
         let proxy = reqwest::Proxy::https(proxy_url)
             .map_err(|error| format!("failed to configure probe proxy {proxy_url}: {error}"))?;
-        return genex_http_client::build_reqwest_client_with_custom_ca(builder.proxy(proxy))
+        return ruxex_http_client::build_reqwest_client_with_custom_ca(builder.proxy(proxy))
             .map_err(|error| error.to_string());
     }
 
-    genex_http_client::build_reqwest_client_for_subprocess_tests(builder)
+    ruxex_http_client::build_reqwest_client_for_subprocess_tests(builder)
         .map_err(|error| error.to_string())
 }
 

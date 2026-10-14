@@ -6,10 +6,10 @@ use super::connection_handling_websocket::spawn_websocket_server;
 use anyhow::Result;
 use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -191,7 +191,7 @@ async fn user_verification_websocket_blocks_native_operations_before_validation(
         "initialize",
         /*id*/ 0,
         Some(json!({
-            "clientInfo": {"name": "genex-tui", "version": "1"},
+            "clientInfo": {"name": "ruxex-tui", "version": "1"},
             "capabilities": {"experimentalApi": true},
         })),
     )

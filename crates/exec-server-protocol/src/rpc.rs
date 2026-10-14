@@ -1,11 +1,11 @@
 //! JSON-RPC wire envelopes used by exec-server.
 //!
-//! Exec-server uses the Genex JSON-RPC dialect, which omits the
+//! Exec-server uses the Ruxex JSON-RPC dialect, which omits the
 //! `"jsonrpc": "2.0"` field on the wire.
 
 use std::fmt;
 
-use genex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::protocol::W3cTraceContext;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;

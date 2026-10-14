@@ -1,7 +1,7 @@
-use genex_protocol::config_types::WebSearchConfig;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::WebSearchToolType;
-use genex_tools::ToolSpec;
+use ruxex_protocol::config_types::WebSearchConfig;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::WebSearchToolType;
+use ruxex_tools::ToolSpec;
 
 const WEB_SEARCH_TEXT_AND_IMAGE_CONTENT_TYPES: [&str; 2] = ["text", "image"];
 

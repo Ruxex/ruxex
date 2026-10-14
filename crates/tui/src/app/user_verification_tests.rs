@@ -1,9 +1,9 @@
 //! Covers the controller's RPC boundary, cancellation generations, and proof redaction.
 
 use super::*;
-use genex_app_server_protocol::McpServerElicitationRequest;
-use genex_app_server_protocol::McpServerElicitationRequestParams;
-use genex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::McpServerElicitationRequest;
+use ruxex_app_server_protocol::McpServerElicitationRequestParams;
+use ruxex_app_server_protocol::ServerRequest;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;

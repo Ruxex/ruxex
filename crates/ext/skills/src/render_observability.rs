@@ -1,8 +1,8 @@
-use genex_extension_api::ExtensionMetrics;
-use genex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
-use genex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
-use genex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
-use genex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_otel::THREAD_SKILLS_DESCRIPTION_TRUNCATED_CHARS_METRIC;
+use ruxex_otel::THREAD_SKILLS_ENABLED_TOTAL_METRIC;
+use ruxex_otel::THREAD_SKILLS_KEPT_TOTAL_METRIC;
+use ruxex_otel::THREAD_SKILLS_TRUNCATED_METRIC;
 
 use crate::render::SkillMetadataBudget;
 use crate::render::SkillRenderReport;

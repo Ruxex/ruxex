@@ -1,7 +1,7 @@
 //! Clipboard copy backend for the TUI's `/copy` command and `Ctrl+O` hotkey.
 //!
 //! Local copying uses the native clipboard.
-//! In tmux, also forward to the attached terminal so clients attached after Genex
+//! In tmux, also forward to the attached terminal so clients attached after Ruxex
 //! started receive the copy. Over SSH without tmux, send OSC 52 directly.
 //!
 //! Terminal writes have no delivery acknowledgement: a successful send must not
@@ -142,7 +142,7 @@ fn copy_to_clipboard_with(
         .map_err(|native_error| format!("native clipboard: {native_error}"));
     // Copy natively first: an X11 SelectionClear from a terminal write can otherwise
     // race with arboard reusing its ownership window and clear the new native data.
-    // Persistent tmux sessions may gain remote clients after Genex starts, so still
+    // Persistent tmux sessions may gain remote clients after Ruxex starts, so still
     // forward even when no SSH variables were inherited or native copying succeeded.
     let terminal_result = (environment.tmux_session || environment.ssh_session).then(terminal_copy);
     match native_result {

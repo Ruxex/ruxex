@@ -3,8 +3,8 @@
 //! `permissions_instructions` and consume caller-resolved runtime facts.
 
 use super::ResolvedMessage;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::model_types::ApprovalMessages;
+use ruxex_protocol::model_types::PermissionMessages;
 
 const APPROVAL_POLICY_NEVER: &str =
     include_str!("../../templates/permissions/approval_policy/never.md");

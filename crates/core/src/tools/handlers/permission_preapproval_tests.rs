@@ -1,14 +1,14 @@
 use super::preapproved_permission_profile;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::NetworkPermissions;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 

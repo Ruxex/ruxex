@@ -1,8 +1,8 @@
-use genex_app_server_protocol::AuthMode as ApiAuthMode;
-use genex_protocol::auth::AuthMode;
+use ruxex_app_server_protocol::AuthMode as ApiAuthMode;
+use ruxex_protocol::auth::AuthMode;
 
 /// Converts the domain auth mode owned by `codex-protocol` into the app-server wire type owned by
-/// `genex-app-server-protocol`.
+/// `ruxex-app-server-protocol`.
 ///
 /// The types stay separate so app-server protocol ownership does not leak into domain crates.
 /// Because this crate owns neither type, Rust's orphan rules require an explicit conversion

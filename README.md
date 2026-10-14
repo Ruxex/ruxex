@@ -1,9 +1,13 @@
-# Genex
+# Ruxex
 
-Genex is a general-purpose AI agent foundation written in Rust. It provides
+Ruxex is a general-purpose AI agent foundation written in Rust. It provides
 the agent loop, tools, MCP integration, sandboxing, persistence, and an
 AppServer boundary without coupling the core runtime to a particular model
 provider.
+
+Ruxex is an independent derivative work based on the Codex project. It is
+maintained under the Ruxex organization and is not presented as an upstream
+Codex product.
 
 The repository is currently an unreleased workspace. The crates under
 `crates/` are intended to be composed by a host binary or another workspace
@@ -11,14 +15,14 @@ crate rather than consumed as a published, versioned SDK.
 
 ## Architecture
 
-Genex uses one concrete model provider per runtime/AppServer:
+Ruxex uses one concrete model provider per runtime/AppServer:
 
 | Crate | Responsibility |
 | --- | --- |
-| `genex-model-provider` | Provider-neutral request, response, stream, error, capability, authentication, usage, and data-root contracts. |
-| `genex-providers` | Built-in provider adapters and provider-specific HTTP, wire payload, credentials, and model-catalog behavior. Cloudflare lives under `genex_providers::cloudflare`. |
-| `genex-app-server` | The shared runtime boundary. `AppServerRuntimeBuilder::new(SharedModelProvider)` accepts the provider selected by the host. |
-| `genex-core` | Provider-neutral agent, session, thread, tool, and turn execution. |
+| `ruxex-model-provider` | Provider-neutral request, response, stream, error, capability, authentication, usage, and data-root contracts. |
+| `ruxex-providers` | Built-in provider adapters and provider-specific HTTP, wire payload, credentials, and model-catalog behavior. Cloudflare lives under `ruxex_providers::cloudflare`. |
+| `ruxex-app-server` | The shared runtime boundary. `AppServerRuntimeBuilder::new(SharedModelProvider)` accepts the provider selected by the host. |
+| `ruxex-core` | Provider-neutral agent, session, thread, tool, and turn execution. |
 
 Provider selection is a host-startup concern. Threads and rollouts do not
 select providers, and a running runtime does not switch providers. To use a
@@ -29,37 +33,37 @@ and another provider-scoped data root.
 
 Install the Rust toolchain selected by `rust-toolchain.toml`, then build the
 provider-owned sample host. The repository supports Linux and macOS. Windows
-users should run Genex in WSL2.
+users should run Ruxex in WSL2.
 
 ```sh
-cargo build -p genex-provider-host-example
-cargo run -p genex-provider-host-example -- "explain this codebase to me"
+cargo build -p ruxex-provider-host-example
+cargo run -p ruxex-provider-host-example -- "explain this codebase to me"
 ```
 
-There is no fixed-provider `genex` CLI binary. A host chooses its provider at
+There is no fixed-provider `ruxex` CLI binary. A host chooses its provider at
 compile time; the sample host uses `CloudflareModelProvider`. Its default data
-root is `~/.genex`; set `GENEX_HOME` to use an existing directory instead.
+root is `~/.ruxex`; set `RUXEX_HOME` to use an existing directory instead.
 
-## Embed Genex in a Rust host
+## Embed Ruxex in a Rust host
 
 Add the workspace crates needed by the host:
 
 ```toml
 [dependencies]
-genex-app-server = { path = "crates/app-server" }
-genex-http-client = { path = "crates/http-client" }
-genex-model-provider = { path = "crates/model-provider" }
-genex-model-provider-info = { path = "crates/model-provider-info" }
-genex-providers = { path = "crates/providers" }
+ruxex-app-server = { path = "crates/app-server" }
+ruxex-http-client = { path = "crates/http-client" }
+ruxex-model-provider = { path = "crates/model-provider" }
+ruxex-model-provider-info = { path = "crates/model-provider-info" }
+ruxex-providers = { path = "crates/providers" }
 ```
 
 The built-in Cloudflare adapter can be constructed and injected like this:
 
 ```rust
-use genex_app_server::runtime::AppServerRuntimeBuilder;
-use genex_http_client::{HttpClientFactory, OutboundProxyPolicy};
-use genex_model_provider_info::ModelProviderInfo;
-use genex_providers::create_cloudflare_provider;
+use ruxex_app_server::runtime::AppServerRuntimeBuilder;
+use ruxex_http_client::{HttpClientFactory, OutboundProxyPolicy};
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::create_cloudflare_provider;
 
 let provider = create_cloudflare_provider(
     Some("cloudflare".to_owned()),
@@ -85,12 +89,12 @@ Hosts that construct a provider themselves should mount its data root before
 opening credentials, SQLite, sessions, or caches:
 
 ```rust
-use genex_app_server::runtime::mount_provider_home_for_runtime;
+use ruxex_app_server::runtime::mount_provider_home_for_runtime;
 
 mount_provider_home_for_runtime(&config, &runtime)?;
 ```
 
-The mount writes or validates `genex-home.json`. A marker for a different
+The mount writes or validates `ruxex-home.json`. A marker for a different
 provider or incompatible provider protocol is rejected before sensitive state
 is opened.
 
@@ -102,7 +106,7 @@ reconstructs the provider; the foreground process never sends a provider
 instance over the socket:
 
 ```rust
-use genex_app_server::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
+use ruxex_app_server::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
 
 impl ModelProviderFactory for MyProvider {
     fn provider_descriptor() -> ProviderDescriptor {
@@ -115,27 +119,27 @@ impl ModelProviderFactory for MyProvider {
 }
 
 // The host's hidden daemon mode calls this in the child process.
-genex_app_server::run_main_with_transport_options_and_provider::<MyProvider>(
+ruxex_app_server::run_main_with_transport_options_and_provider::<MyProvider>(
     arg0_paths,
     cli_config_overrides,
     loader_overrides,
     strict_config,
     false,
-    genex_app_server::AppServerTransport::UnixSocket { socket_path },
+    ruxex_app_server::AppServerTransport::UnixSocket { socket_path },
     session_source,
-    genex_app_server::AppServerWebsocketAuthSettings::default(),
-    genex_app_server::AppServerRuntimeOptions::default(),
+    ruxex_app_server::AppServerWebsocketAuthSettings::default(),
+    ruxex_app_server::AppServerRuntimeOptions::default(),
 ).await?;
 ```
 
-The host can use `genex_app_server_daemon::run_with_host_executable` to start
+The host can use `ruxex_app_server_daemon::run_with_host_executable` to start
 that hidden mode in the same executable. Only serializable startup arguments
 cross the process boundary; `P::new(ProviderInit)` runs inside the AppServer
-daemon. The standalone `genex-app-server` binary remains available as a
+daemon. The standalone `ruxex-app-server` binary remains available as a
 compatibility and operational entrypoint, but it is not required by a
 provider-owned host.
 
-For a complete CLI host, call `genex_cli::run_with_provider::<P>(arg0_paths)` in
+For a complete CLI host, call `ruxex_cli::run_with_provider::<P>(arg0_paths)` in
 the foreground branch and dispatch `APP_SERVER_DAEMON_MODE_ARG` to
 `run_host_app_server_daemon::<P>(...)` before normal argument parsing in the
 child branch. The CLI library owns the command dispatch, including interactive
@@ -145,16 +149,16 @@ layout with `CloudflareModelProvider`.
 
 ## Implement a custom provider
 
-Provider implementations do not need to be registered in Genex. Implement the
-public `genex_model_provider::ModelProvider` trait in the host or in another
+Provider implementations do not need to be registered in Ruxex. Implement the
+public `ruxex_model_provider::ModelProvider` trait in the host or in another
 workspace crate, store it as `SharedModelProvider`, and inject it into the
 runtime:
 
 ```rust
 use std::sync::Arc;
 
-use genex_app_server::runtime::AppServerRuntimeBuilder;
-use genex_model_provider::SharedModelProvider;
+use ruxex_app_server::runtime::AppServerRuntimeBuilder;
+use ruxex_model_provider::SharedModelProvider;
 
 // MyProvider implements ModelProvider and owns its provider-specific client,
 // credentials, wire payloads, and configuration.
@@ -165,15 +169,15 @@ let runtime = AppServerRuntimeBuilder::new(provider).build();
 The contract keeps provider-specific details behind the implementation. The
 host receives neutral chat/model-catalog/auth/usage operations and explicit
 `Unsupported` results for capabilities the provider does not implement.
-See [`genex-model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
+See [`ruxex-model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
 for the complete trait and neutral types.
 
 ## Provider data and credentials
 
-- Default data root: `~/.genex`.
-- Runtime override: `GENEX_HOME`.
-- Build-time default override: `GENEX_DEFAULT_HOME_DIR_NAME`.
-- Provider marker: `genex-home.json` in the data root.
+- Default data root: `~/.ruxex`.
+- Runtime override: `RUXEX_HOME`.
+- Build-time default override: `RUXEX_DEFAULT_HOME_DIR_NAME`.
+- Provider marker: `ruxex-home.json` in the data root.
 - Credential values are owned by the provider/runtime lifecycle and are not
   persisted in threads or rollouts.
 - Credential changes affect new turns; an in-flight turn retains its

@@ -3,17 +3,17 @@ use std::fs;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_protocol::protocol::Op;
+use ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_protocol::protocol::Op;
 use core_test_support::process::process_is_alive;
 use core_test_support::process::wait_for_pid_file;
 use core_test_support::process::wait_for_process_exit;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_mcp_server;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -25,7 +25,7 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
     let pid_file = temp_dir.path().join("mcp.pid");
     let pid_file_for_config = pid_file.clone();
     let command = stdio_server_bin()?;
-    let fixture = test_genex()
+    let fixture = test_ruxex()
         .with_config(move |config| {
             let mut servers = config.mcp_servers.get().clone();
             servers.insert(
@@ -66,7 +66,7 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
         })
         .build(&server)
         .await?;
-    wait_for_mcp_server(&fixture.genex, "refresh_cleanup").await?;
+    wait_for_mcp_server(&fixture.ruxex, "refresh_cleanup").await?;
 
     let superseded_pid = wait_for_pid_file(&pid_file).await?;
     assert!(process_is_alive(&superseded_pid)?);
@@ -77,10 +77,10 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
         "timeout_ms": 1_000
     });
     let long_call = tokio::spawn({
-        let genex = Arc::clone(&fixture.genex);
+        let ruxex = Arc::clone(&fixture.ruxex);
         let barrier = barrier.clone();
         async move {
-            genex
+            ruxex
                 .call_mcp_tool(
                     "refresh_cleanup",
                     "sync",
@@ -94,7 +94,7 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
         }
     });
     fixture
-        .genex
+        .ruxex
         .call_mcp_tool(
             "refresh_cleanup",
             "sync",
@@ -113,7 +113,7 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
         ]),
     )
     .await;
-    fixture.genex.submit(Op::RefreshMcpServers).await?;
+    fixture.ruxex.submit(Op::RefreshMcpServers).await?;
     fixture.submit_turn("refresh MCP servers").await?;
 
     let replacement_pid = wait_for_pid_file(&pid_file).await?;
@@ -129,6 +129,6 @@ async fn refresh_keeps_superseded_mcp_server_alive_for_in_flight_calls() -> anyh
     wait_for_process_exit(&superseded_pid).await?;
     assert!(process_is_alive(&replacement_pid)?);
 
-    fixture.genex.shutdown_and_wait().await?;
+    fixture.ruxex.shutdown_and_wait().await?;
     wait_for_process_exit(&replacement_pid).await
 }

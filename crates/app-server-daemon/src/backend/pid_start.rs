@@ -14,7 +14,7 @@ use tokio::process::Command;
 impl PidBackend {
     pub(super) async fn start_inner(&self) -> Result<Option<u32>> {
         if let Some(parent) = self.pid_file.parent() {
-            genex_uds::prepare_private_socket_directory(parent)
+            ruxex_uds::prepare_private_socket_directory(parent)
                 .await
                 .with_context(|| format!("failed to create pid directory {}", parent.display()))?;
         }
@@ -53,11 +53,11 @@ impl PidBackend {
             }
         }
         // Pin the selected release across installer symlink/junction retargeting.
-        let genex_bin = fs::canonicalize(&self.genex_bin)
+        let ruxex_bin = fs::canonicalize(&self.ruxex_bin)
             .await
-            .unwrap_or_else(|_| self.genex_bin.clone());
-        let launched_identity = executable_identity(&genex_bin).await.ok();
-        let mut command = Command::new(&genex_bin);
+            .unwrap_or_else(|_| self.ruxex_bin.clone());
+        let launched_identity = executable_identity(&ruxex_bin).await.ok();
+        let mut command = Command::new(&ruxex_bin);
         let stderr_log = match self.open_stderr_log().await {
             Ok(stderr_log) => stderr_log,
             Err(err) => {
@@ -75,7 +75,7 @@ impl PidBackend {
             if matches!(
                 tokio::time::timeout(
                     std::time::Duration::from_secs(5),
-                    Command::new(&genex_bin)
+                    Command::new(&ruxex_bin)
                         .args(["app-server", "--managed-daemon", "--help"])
                         .stdin(Stdio::null())
                         .stdout(Stdio::null())
@@ -87,13 +87,13 @@ impl PidBackend {
             ) {
                 command.arg("--managed-daemon");
             } else {
-                let genex_home = self
+                let ruxex_home = self
                     .pid_file
                     .parent()
                     .and_then(std::path::Path::parent)
-                    .context("daemon pid path has no Genex home")?;
+                    .context("daemon pid path has no Ruxex home")?;
                 let recovery_file =
-                    genex_app_server_transport::daemon_recovery_file_path(genex_home);
+                    ruxex_app_server_transport::daemon_recovery_file_path(ruxex_home);
                 match fs::remove_file(&recovery_file).await {
                     Ok(()) => {}
                     Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
@@ -122,7 +122,7 @@ impl PidBackend {
                 return Err(err).with_context(|| {
                     format!(
                         "failed to spawn detached app-server process using {}",
-                        self.genex_bin.display()
+                        self.ruxex_bin.display()
                     )
                 });
             }

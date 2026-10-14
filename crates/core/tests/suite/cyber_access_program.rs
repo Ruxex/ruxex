@@ -1,22 +1,22 @@
 use anyhow::Result;
-use genex_core::RecoverTurnRequest;
-use genex_core::StartIfIdleSubmission;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::TurnStartOptions;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::turn_input::CyberAccessProgram;
-use genex_protocol::user_input::UserInput;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutRecorder;
+use ruxex_core::RecoverTurnRequest;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::TurnStartOptions;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::turn_input::CyberAccessProgram;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutRecorder;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -37,10 +37,10 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             body: responses::sse(vec![responses::ev_completed("resp-initial")]),
         }]])
         .await;
-    let mut builder = test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
+    let mut builder = test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
     let initial = builder.build_with_streaming_server(&initial_server).await?;
     let TurnInputSubmission::Started { turn_id } = initial
-        .genex
+        .ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "recover this turn".to_owned(),
@@ -56,20 +56,20 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
         panic!("expected a new turn");
     };
     initial_server.wait_for_request_count(/*count*/ 1).await;
-    initial.genex.submit(Op::Interrupt).await?;
-    wait_for_event(&initial.genex, |event| {
+    initial.ruxex.submit(Op::Interrupt).await?;
+    wait_for_event(&initial.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
     drop(release_response);
     initial_server.shutdown().await;
-    initial.genex.flush_rollout().await?;
+    initial.ruxex.flush_rollout().await?;
 
     let server = responses::start_mock_server().await;
     let test = builder.restart(&server, &initial).await?;
     let (rollout, _, _) = RolloutRecorder::load_rollout_items(
         &test
-            .genex
+            .ruxex
             .rollout_path()
             .expect("recovered turn rollout path"),
     )
@@ -94,7 +94,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
     let response_mock =
         responses::mount_sse_once(&server, responses::sse_completed("resp-1")).await;
     let submission = test
-        .genex
+        .ruxex
         .recover_turn_if_idle(RecoverTurnRequest {
             turn_id: turn_id.clone(),
             thread_settings: Default::default(),
@@ -108,7 +108,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             turn_id: turn_id.clone(),
         }
     );
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -134,7 +134,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
     let TurnInputSubmission::Started {
         turn_id: next_turn_id,
     } = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "start a new turn".to_owned(),
             text_elements: Vec::new(),
@@ -144,7 +144,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
         panic!("expected a new turn");
     };
     assert_ne!(next_turn_id, turn_id);
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -155,7 +155,7 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
             .get("access_programs"),
         None
     );
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -163,8 +163,8 @@ async fn recover_turn_restores_cyber_access_program_without_making_it_sticky() -
 async fn cyber_access_program_omits_api_key_and_spoofed_custom_provider() -> Result<()> {
     core_test_support::skip_if_no_network!(Ok(()));
     for (auth, provider_id) in [
-        (GenexAuth::from_api_key("test-key"), "provider"),
-        (GenexAuth::from_api_key("test-api-key"), "custom"),
+        (RuxexAuth::from_api_key("test-key"), "provider"),
+        (RuxexAuth::from_api_key("test-api-key"), "custom"),
     ] {
         let server = responses::start_mock_server().await;
         let request = responses::mount_sse_once(
@@ -172,7 +172,7 @@ async fn cyber_access_program_omits_api_key_and_spoofed_custom_provider() -> Res
             responses::sse(vec![responses::ev_completed("resp-1")]),
         )
         .await;
-        let test = test_genex()
+        let test = test_ruxex()
             .with_auth(auth)
             .with_config(move |config| {
                 // Keep the display name "provider": provider identity must not use it.
@@ -216,8 +216,8 @@ async fn cyber_access_program_survives_mid_turn_remote_compaction_v2() -> Result
         ],
     )
     .await;
-    let test = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let test = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| config.model_auto_compact_token_limit = Some(200))
         .build_with_auto_env(&server)
         .await?;
@@ -289,8 +289,8 @@ async fn cyber_access_program_is_inherited_by_child_turns() -> Result<()> {
             final_response("resp-child-initial"),
         )
         .await;
-        let test = test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+        let test = test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_model(if is_v2 { "provider-model-b" } else { "example-model-1" })
             .with_config(move |config| {
                 config
@@ -411,8 +411,8 @@ async fn cyber_access_program_changes_on_one_websocket_with_response_reuse() -> 
             .collect(),
     ])
     .await;
-    let test = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let test = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .build_with_websocket_server(&server)
         .await?;
     for program in [
@@ -454,13 +454,13 @@ async fn cyber_access_program_changes_on_one_websocket_with_response_reuse() -> 
             .map(|id| Some(json!(id)))
             .collect::<Vec<_>>()
     );
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }
 
-async fn submit(test: &TestGenex, program: Option<CyberAccessProgram>) -> Result<()> {
-    test.genex
+async fn submit(test: &TestRuxex, program: Option<CyberAccessProgram>) -> Result<()> {
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello".to_owned(),
@@ -472,7 +472,7 @@ async fn submit(test: &TestGenex, program: Option<CyberAccessProgram>) -> Result
             }),
         )
         .await?;
-    let event = wait_for_event(&test.genex, |event| {
+    let event = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_) | EventMsg::Error(_))
     })
     .await;

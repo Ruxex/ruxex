@@ -1,50 +1,50 @@
-use genex_core::GenexThread;
-use genex_core::REVIEW_PROMPT;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_core::config::Constrained;
-use genex_core::find_thread_path_by_id_str;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::Settings;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::model_types::ModelServiceTier;
-use genex_protocol::model_types::ModelTokenBudgetConfig;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExitedReviewModeEvent;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewCodeLocation;
-use genex_protocol::protocol::ReviewFinding;
-use genex_protocol::protocol::ReviewLineRange;
-use genex_protocol::protocol::ReviewOutputEvent;
-use genex_protocol::protocol::ReviewRequest;
-use genex_protocol::protocol::ReviewTarget;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::review_format::render_review_output_text;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::RuxexThread;
+use ruxex_core::REVIEW_PROMPT;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_core::config::Constrained;
+use ruxex_core::find_thread_path_by_id_str;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::model_types::ModelServiceTier;
+use ruxex_protocol::model_types::ModelTokenBudgetConfig;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExitedReviewModeEvent;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewCodeLocation;
+use ruxex_protocol::protocol::ReviewFinding;
+use ruxex_protocol::protocol::ReviewLineRange;
+use ruxex_protocol::protocol::ReviewOutputEvent;
+use ruxex_protocol::protocol::ReviewRequest;
+use ruxex_protocol::protocol::ReviewTarget;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::review_format::render_review_output_text;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::PathBufExt;
 use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
@@ -59,7 +59,7 @@ use wiremock::MockServer;
 /// legacy review events, and TurnComplete when the model returns a structured review payload.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn review_op_emits_lifecycle_and_review_output() {
-    // Skip under Genex sandbox network restrictions.
+    // Skip under Ruxex sandbox network restrictions.
     skip_if_no_network!();
 
     // Start mock Responses API server. Return a single assistant message whose
@@ -87,11 +87,11 @@ async fn review_op_emits_lifecycle_and_review_output() {
         /*expected_requests*/ 1,
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
     // Submit review request.
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -105,7 +105,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
 
     // Item lifecycle events are emitted first, then the legacy review event is fanned out
     // with the same stable IDs for compatibility consumers.
-    let entered_started = wait_for_event(&genex, |ev| {
+    let entered_started = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ItemStarted(event)
@@ -117,7 +117,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         EventMsg::ItemStarted(event) => (event.turn_id, event.item.id()),
         other => panic!("expected entered review item start, got {other:?}"),
     };
-    let entered_completed = wait_for_event(&genex, |ev| {
+    let entered_completed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ItemCompleted(event)
@@ -132,7 +132,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected entered review item completion, got {other:?}"),
     }
-    let entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
     match entered {
         EventMsg::EnteredReviewMode(event) => {
             assert_eq!(event.turn_id.as_deref(), Some(review_turn_id.as_str()));
@@ -141,7 +141,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         other => panic!("expected EnteredReviewMode(..), got {other:?}"),
     }
 
-    let exited_started = wait_for_event(&genex, |ev| {
+    let exited_started = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ItemStarted(event)
@@ -156,7 +156,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected exited review item start, got {other:?}"),
     };
-    let exited_completed = wait_for_event(&genex, |ev| {
+    let exited_completed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ItemCompleted(event)
@@ -171,7 +171,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         }
         other => panic!("expected exited review item completion, got {other:?}"),
     }
-    let closed = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
+    let closed = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
     let review = match closed {
         EventMsg::ExitedReviewMode(ev) => {
             assert_eq!(ev.turn_id.as_deref(), Some(review_turn_id.as_str()));
@@ -199,15 +199,15 @@ async fn review_op_emits_lifecycle_and_review_output() {
         overall_confidence_score: 0.8,
     };
     assert_eq!(expected, review);
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let path = genex.rollout_path().expect("rollout path");
+    let path = ruxex.rollout_path().expect("rollout path");
     let text = std::fs::read_to_string(&path).expect("read rollout file");
     let parent_thread_id = text
         .lines()
         .filter(|line| !line.trim().is_empty())
         .find_map(|line| {
-            let rollout_line = genex_rollout::parse_rollout_line(line).expect("rollout line");
+            let rollout_line = ruxex_rollout::parse_rollout_line(line).expect("rollout line");
             match rollout_line.item {
                 RolloutItem::SessionMeta(session_meta) => Some(session_meta.meta.id.to_string()),
                 _ => None,
@@ -222,7 +222,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
     );
     let turn_metadata: serde_json::Value = serde_json::from_str(
         &request
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("review request turn metadata"),
     )
     .expect("review request turn metadata json");
@@ -249,7 +249,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
             continue;
         }
         let v: serde_json::Value = serde_json::from_str(line).expect("jsonl line");
-        let rl = genex_rollout::decode_rollout_line(v).expect("rollout line");
+        let rl = ruxex_rollout::decode_rollout_line(v).expect("rollout line");
         if let RolloutItem::ResponseItem(envelope) = rl.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
         {
@@ -292,7 +292,7 @@ async fn review_op_emits_lifecycle_and_review_output() {
         "assistant review output contains user_action markup"
     );
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -309,16 +309,16 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
         .set_delay(Duration::from_secs(30)),
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
     // Consume the parent session's own empty startup round before starting the review.
-    wait_for_event(&genex, |event| {
+    wait_for_event(&ruxex, |event| {
         matches!(event, EventMsg::McpStartupComplete(_))
     })
     .await;
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -332,7 +332,7 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
 
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
-            match genex.next_event().await.expect("review event").msg {
+            match ruxex.next_event().await.expect("review event").msg {
                 event @ (EventMsg::McpStartupUpdate(_) | EventMsg::McpStartupComplete(_)) => {
                     panic!("review forwarded delegate MCP startup: {event:?}")
                 }
@@ -352,12 +352,12 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
     .await
     .expect("review request did not reach the server");
 
-    genex.submit(Op::Interrupt).await.unwrap();
+    ruxex.submit(Op::Interrupt).await.unwrap();
 
     let mut exited_review = false;
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
-            match genex
+            match ruxex
                 .next_event()
                 .await
                 .expect("review cancellation event")
@@ -381,7 +381,7 @@ async fn cancelled_review_does_not_forward_delegate_mcp_startup() {
 
     assert_eq!(request_log.requests().len(), 1);
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -399,10 +399,10 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         /*expected_requests*/ 1,
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -414,8 +414,8 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let closed = wait_for_event(&genex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let closed = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::ExitedReviewMode(_))).await;
     let review = match closed {
         EventMsg::ExitedReviewMode(ev) => ev
             .review_output
@@ -429,9 +429,9 @@ async fn review_op_with_plain_text_emits_review_fallback() {
         ..Default::default()
     };
     assert_eq!(expected, review);
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -455,10 +455,10 @@ async fn review_filters_agent_message_related_events() {
         /*expected_requests*/ 1,
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -474,7 +474,7 @@ async fn review_filters_agent_message_related_events() {
     let mut saw_exited = false;
 
     // Drain until TurnComplete; assert streaming-related events never surface.
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::TurnComplete(_) => true,
         EventMsg::EnteredReviewMode(_) => {
             saw_entered = true;
@@ -493,7 +493,7 @@ async fn review_filters_agent_message_related_events() {
     .await;
     assert!(saw_entered && saw_exited, "missing review lifecycle events");
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -529,10 +529,10 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
         /*expected_requests*/ 1,
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -549,7 +549,7 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
     let mut saw_entered = false;
     let mut saw_exited = false;
     let mut agent_messages = 0;
-    wait_for_event(&genex, |event| match event {
+    wait_for_event(&ruxex, |event| match event {
         EventMsg::TurnComplete(_) => true,
         EventMsg::AgentMessage(_) => {
             agent_messages += 1;
@@ -569,7 +569,7 @@ async fn review_does_not_emit_agent_message_on_structured_output() {
     assert_eq!(1, agent_messages, "expected exactly one AgentMessage event");
     assert!(saw_entered && saw_exited, "missing review lifecycle events");
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -592,9 +592,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_genex()
-        .with_home(genex_home.clone())
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let test = test_ruxex()
+        .with_home(ruxex_home.clone())
         .with_model_info_override("example-model-2", |model_info| {
             model_info.service_tiers.clear();
             model_info
@@ -646,7 +646,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .build_with_auto_env(&server)
         .await
         .expect("review conversation should be created");
-    let genex = Arc::clone(&test.genex);
+    let ruxex = Arc::clone(&test.ruxex);
     let updated_cwd = test.config.cwd.join("updated-review-workspace");
     let mut selection = test.executor_environment().selection().clone();
     selection.cwd = selection
@@ -667,7 +667,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .expect("updated review workspace should be created");
 
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 updated_cwd.clone(),
@@ -690,8 +690,8 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     .await
     .expect("updated thread permissions should be accepted");
 
-    let stored_settings = genex.thread_settings_snapshot().await;
-    genex
+    let stored_settings = ruxex.thread_settings_snapshot().await;
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -702,9 +702,9 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         })
         .await
         .expect("review should start");
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
-    assert_eq!(genex.thread_settings_snapshot().await, stored_settings);
+    assert_eq!(ruxex.thread_settings_snapshot().await, stored_settings);
     let request = request_log.single_request();
     assert_eq!(request.body_json()["reasoning"]["effort"], "medium");
     assert_eq!(
@@ -744,7 +744,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         .expect("review request should include its thread ID")
         .to_string();
     let review_rollout_path = find_thread_path_by_id_str(
-        genex_home.path(),
+        ruxex_home.path(),
         &review_thread_id,
         /*state_db_ctx*/ None,
     )
@@ -756,7 +756,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let review_session_cwd = review_rollout
         .lines()
         .find_map(|line| {
-            let rollout_line = genex_rollout::parse_rollout_line(line)
+            let rollout_line = ruxex_rollout::parse_rollout_line(line)
                 .expect("review rollout line should be valid");
             match rollout_line.item {
                 RolloutItem::SessionMeta(session_meta) => Some(session_meta.meta.cwd),
@@ -768,7 +768,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
     let review_context = review_rollout
         .lines()
         .filter_map(|line| {
-            let rollout_line = genex_rollout::parse_rollout_line(line)
+            let rollout_line = ruxex_rollout::parse_rollout_line(line)
                 .expect("review rollout line should be valid");
             match rollout_line.item {
                 RolloutItem::TurnContext(turn_context) => Some(turn_context),
@@ -794,7 +794,7 @@ async fn review_uses_updated_turn_permissions_and_approval_policy() {
         })
     );
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -803,7 +803,7 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 2).await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model| {
             model.default_reasoning_summary = ReasoningSummary::Auto;
         })
@@ -822,7 +822,7 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
     for summary in [None, Some(ReasoningSummary::Concise)] {
         if let Some(summary) = summary {
             core_test_support::submit_thread_settings(
-                &test.genex,
+                &test.ruxex,
                 ThreadSettingsOverrides {
                     summary: Some(summary),
                     ..Default::default()
@@ -830,8 +830,8 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
             )
             .await?;
         }
-        let stored_settings = test.genex.thread_settings_snapshot().await;
-        test.genex
+        let stored_settings = test.ruxex.thread_settings_snapshot().await;
+        test.ruxex
             .submit(Op::Review {
                 review_request: ReviewRequest {
                     target: ReviewTarget::Custom {
@@ -841,11 +841,11 @@ async fn review_resolves_inherited_summary_preferences() -> anyhow::Result<()> {
                 },
             })
             .await?;
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
-        assert_eq!(test.genex.thread_settings_snapshot().await, stored_settings);
+        assert_eq!(test.ruxex.thread_settings_snapshot().await, stored_settings);
     }
     let actual = request_log
         .requests()
@@ -873,10 +873,10 @@ async fn review_uses_custom_review_model_from_config() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_genex()
-        .with_home(Arc::clone(&genex_home))
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let test = test_ruxex()
+        .with_home(Arc::clone(&ruxex_home))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some("legacy-model-4".to_string());
             config.review_model = Some("custom-review-model".to_string());
@@ -885,10 +885,10 @@ async fn review_uses_custom_review_model_from_config() {
         .build_with_auto_env(&server)
         .await
         .expect("custom review conversation should be created");
-    let genex = Arc::clone(&test.genex);
-    std::fs::remove_file(genex_home.path().join("models_cache.json"))
+    let ruxex = Arc::clone(&test.ruxex);
+    std::fs::remove_file(ruxex_home.path().join("models_cache.json"))
         .expect("initial empty model catalog should be cached");
-    let mut models = genex_models_manager::test_support::test_models_response()
+    let mut models = ruxex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog should parse");
     let model = models
         .models
@@ -900,7 +900,7 @@ async fn review_uses_custom_review_model_from_config() {
     model.node_repl_disabled = true;
     let models_mock = responses::mount_models_once(&server, models).await;
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -913,8 +913,8 @@ async fn review_uses_custom_review_model_from_config() {
         .unwrap();
 
     // Wait for completion
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&genex, |ev| {
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -924,7 +924,7 @@ async fn review_uses_custom_review_model_from_config() {
         )
     })
     .await;
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Assert the request body model equals the configured review model
     let request = request_log.single_request();
@@ -934,7 +934,7 @@ async fn review_uses_custom_review_model_from_config() {
     assert_eq!(body["reasoning"]["effort"].as_str(), Some("max"));
     let turn_metadata: serde_json::Value = serde_json::from_str(
         &request
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("review request turn metadata"),
     )
     .expect("review request turn metadata json");
@@ -942,7 +942,7 @@ async fn review_uses_custom_review_model_from_config() {
     assert_eq!(turn_metadata["node_repl_disabled"], true);
     assert_eq!(models_mock.requests().len(), 1);
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -954,9 +954,9 @@ async fn review_uses_session_model_when_review_model_unset() {
 
     let (server, request_log) =
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let test = test_genex()
-        .with_home(Arc::clone(&genex_home))
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let test = test_ruxex()
+        .with_home(Arc::clone(&ruxex_home))
         .with_config(|config| {
             config.model = Some("legacy-model".to_string());
             config.review_model = None;
@@ -965,9 +965,9 @@ async fn review_uses_session_model_when_review_model_unset() {
         .build_with_auto_env(&server)
         .await
         .expect("same-model review conversation should be created");
-    let genex = Arc::clone(&test.genex);
+    let ruxex = Arc::clone(&test.ruxex);
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -979,8 +979,8 @@ async fn review_uses_session_model_when_review_model_unset() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&genex, |ev| {
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -990,7 +990,7 @@ async fn review_uses_session_model_when_review_model_unset() {
         )
     })
     .await;
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = request_log.single_request();
     assert_eq!(request.path(), "/v1/responses");
@@ -1003,7 +1003,7 @@ async fn review_uses_session_model_when_review_model_unset() {
     );
     assert!(!request.has_content_kinds(&["current_time.reminder"]));
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -1020,9 +1020,9 @@ async fn review_input_isolated_from_parent_history() {
         start_responses_server_with_sse(completed_sse(), /*expected_requests*/ 1).await;
 
     // Seed a parent session history via resume file with both user + assistant items.
-    let genex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
 
-    let session_file = genex_home.path().join("resume.jsonl");
+    let session_file = ruxex_home.path().join("resume.jsonl");
     {
         let mut f = tokio::fs::File::create(&session_file).await.unwrap();
         let convo_id = Uuid::new_v4();
@@ -1044,10 +1044,10 @@ async fn review_input_isolated_from_parent_history() {
             .unwrap();
 
         // Prior user message (enveloped response_item)
-        let user = genex_protocol::models::ResponseItem::Message {
+        let user = ruxex_protocol::models::ResponseItem::Message {
             id: None,
             role: "user".to_string(),
-            content: vec![genex_protocol::models::ContentItem::InputText {
+            content: vec![ruxex_protocol::models::ContentItem::InputText {
                 text: "parent: earlier user message".to_string(),
             }],
             phase: None,
@@ -1064,10 +1064,10 @@ async fn review_input_isolated_from_parent_history() {
             .unwrap();
 
         // Prior assistant message (enveloped response_item)
-        let assistant = genex_protocol::models::ResponseItem::Message {
+        let assistant = ruxex_protocol::models::ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
-            content: vec![genex_protocol::models::ContentItem::OutputText {
+            content: vec![ruxex_protocol::models::ContentItem::OutputText {
                 text: "parent: assistant reply".to_string(),
             }],
             phase: None,
@@ -1083,13 +1083,13 @@ async fn review_input_isolated_from_parent_history() {
             .await
             .unwrap();
     }
-    let genex =
-        resume_conversation_for_server(&server, genex_home.clone(), session_file.clone(), |_| {})
+    let ruxex =
+        resume_conversation_for_server(&server, ruxex_home.clone(), session_file.clone(), |_| {})
             .await;
 
     // Submit review request; it must start fresh (no parent history in `input`).
     let review_prompt = "Please review only this".to_string();
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -1101,8 +1101,8 @@ async fn review_input_isolated_from_parent_history() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&genex, |ev| {
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -1112,7 +1112,7 @@ async fn review_input_isolated_from_parent_history() {
         )
     })
     .await;
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Assert the request `input` contains the environment context followed by the user review prompt.
     let request = request_log.single_request();
@@ -1153,7 +1153,7 @@ async fn review_input_isolated_from_parent_history() {
     assert_eq!(instructions, REVIEW_PROMPT);
 
     // Also verify that a user interruption note was recorded in the rollout.
-    let path = genex.rollout_path().expect("rollout path");
+    let path = ruxex.rollout_path().expect("rollout path");
     let text = std::fs::read_to_string(&path).expect("read rollout file");
     let mut saw_interruption_message = false;
     for line in text.lines() {
@@ -1161,7 +1161,7 @@ async fn review_input_isolated_from_parent_history() {
             continue;
         }
         let v: serde_json::Value = serde_json::from_str(line).expect("jsonl line");
-        let rl = genex_rollout::decode_rollout_line(v).expect("rollout line");
+        let rl = ruxex_rollout::decode_rollout_line(v).expect("rollout line");
         if let RolloutItem::ResponseItem(envelope) = rl.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
             && role == "user"
@@ -1184,7 +1184,7 @@ async fn review_input_isolated_from_parent_history() {
         "expected user interruption message in rollout"
     );
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -1199,11 +1199,11 @@ async fn review_history_surfaces_in_parent_session() {
         /*expected_requests*/ 2,
     )
     .await;
-    let genex_home = Arc::new(TempDir::new().unwrap());
-    let genex = new_conversation_for_server(&server, genex_home.clone(), |_| {}).await;
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), |_| {}).await;
 
     // 1) Run a review turn that produces an assistant message (isolated in child).
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::Custom {
@@ -1214,8 +1214,8 @@ async fn review_history_surfaces_in_parent_session() {
         })
         .await
         .unwrap();
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _closed = wait_for_event(&genex, |ev| {
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _closed = wait_for_event(&ruxex, |ev| {
         matches!(
             ev,
             EventMsg::ExitedReviewMode(ExitedReviewModeEvent {
@@ -1225,18 +1225,18 @@ async fn review_history_surfaces_in_parent_session() {
         )
     })
     .await;
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // 2) Continue in the parent session; request input must not include any review items.
     let followup = "back to parent".to_string();
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: followup.clone(),
             text_elements: Vec::new(),
         }]))
         .await
         .unwrap();
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     // Inspect the second request (parent turn) input contents.
     // Parent turns include session initial messages (user_instructions, environment_context).
@@ -1277,7 +1277,7 @@ async fn review_history_surfaces_in_parent_session() {
         "review assistant output missing from parent turn input"
     );
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -1330,15 +1330,15 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         .trim()
         .to_string();
 
-    let genex_home = Arc::new(TempDir::new().unwrap());
+    let ruxex_home = Arc::new(TempDir::new().unwrap());
     let initial_cwd_path = initial_cwd.path().to_path_buf();
-    let genex = new_conversation_for_server(&server, genex_home.clone(), move |config| {
+    let ruxex = new_conversation_for_server(&server, ruxex_home.clone(), move |config| {
         config.cwd = initial_cwd_path.abs();
     })
     .await;
 
     core_test_support::submit_thread_settings(
-        &genex,
+        &ruxex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(repo_path.to_path_buf().abs())),
             ..Default::default()
@@ -1347,7 +1347,7 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
     .await
     .unwrap();
 
-    genex
+    ruxex
         .submit(Op::Review {
             review_request: ReviewRequest {
                 target: ReviewTarget::BaseBranch {
@@ -1359,8 +1359,8 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         .await
         .unwrap();
 
-    let _entered = wait_for_event(&genex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
-    let _complete = wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    let _entered = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::EnteredReviewMode(_))).await;
+    let _complete = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let requests = request_log.requests();
     assert_eq!(requests.len(), 1);
@@ -1379,7 +1379,7 @@ async fn review_uses_overridden_cwd_for_base_branch_merge_base() {
         "expected review prompt to include merge-base sha {head_sha}"
     );
 
-    let _genex_home_guard = genex_home;
+    let _ruxex_home_guard = ruxex_home;
     server.verify().await;
 }
 
@@ -1409,15 +1409,15 @@ async fn start_responses_server_with_sse(
 /// Create a conversation configured to talk to the provided mock server.
 async fn new_conversation_for_server<F>(
     server: &MockServer,
-    genex_home: Arc<TempDir>,
+    ruxex_home: Arc<TempDir>,
     mutator: F,
-) -> Arc<GenexThread>
+) -> Arc<RuxexThread>
 where
     F: FnOnce(&mut Config) + Send + 'static,
 {
     let base_url = format!("{}/v1", server.uri());
-    let mut builder = test_genex()
-        .with_home(genex_home)
+    let mut builder = test_ruxex()
+        .with_home(ruxex_home)
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());
             mutator(config);
@@ -1426,29 +1426,29 @@ where
         .build(server)
         .await
         .expect("create conversation")
-        .genex
+        .ruxex
 }
 
 /// Create a conversation resuming from a rollout file, configured to talk to the provided mock server.
 async fn resume_conversation_for_server<F>(
     server: &MockServer,
-    genex_home: Arc<TempDir>,
+    ruxex_home: Arc<TempDir>,
     resume_path: std::path::PathBuf,
     mutator: F,
-) -> Arc<GenexThread>
+) -> Arc<RuxexThread>
 where
     F: FnOnce(&mut Config) + Send + 'static,
 {
     let base_url = format!("{}/v1", server.uri());
-    let mut builder = test_genex()
-        .with_home(genex_home.clone())
+    let mut builder = test_ruxex()
+        .with_home(ruxex_home.clone())
         .with_config(move |config| {
             config.model_provider.base_url = Some(base_url.clone());
             mutator(config);
         });
     builder
-        .resume(server, genex_home, resume_path)
+        .resume(server, ruxex_home, resume_path)
         .await
         .expect("resume conversation")
-        .genex
+        .ruxex
 }

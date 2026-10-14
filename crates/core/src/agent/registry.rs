@@ -1,11 +1,11 @@
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use rand::prelude::IndexedRandom;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -15,7 +15,7 @@ use std::sync::Mutex;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
-/// This structure is used to add some limits on the multi-agent capabilities for Genex. In
+/// This structure is used to add some limits on the multi-agent capabilities for Ruxex. In
 /// the current implementation, it limits:
 /// * Total number of sub-agents (i.e. threads) per user session
 ///
@@ -99,7 +99,7 @@ impl AgentRegistry {
     ) -> Result<SpawnReservation> {
         if let Some(max_threads) = max_threads {
             if !self.try_increment_spawned(max_threads) {
-                return Err(GenexErr::new(GenexErrorDetails::AgentLimitReached {
+                return Err(RuxexErr::new(RuxexErrorDetails::AgentLimitReached {
                     max_threads,
                 }));
             }
@@ -282,9 +282,9 @@ impl AgentRegistry {
             } else {
                 active_agents.used_agent_nicknames.clear();
                 active_agents.nickname_reset_count += 1;
-                if let Some(metrics) = genex_otel::global() {
+                if let Some(metrics) = ruxex_otel::global() {
                     let _ = metrics.counter(
-                        "genex.multi_agent.nickname_pool_reset",
+                        "ruxex.multi_agent.nickname_pool_reset",
                         /*inc*/ 1,
                         &[],
                     );
@@ -307,7 +307,7 @@ impl AgentRegistry {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         match active_agents.agent_tree.entry(agent_path.to_string()) {
-            Entry::Occupied(_) => Err(GenexErr::UnsupportedOperation(format!(
+            Entry::Occupied(_) => Err(RuxexErr::UnsupportedOperation(format!(
                 "agent path `{agent_path}` already exists"
             ))),
             Entry::Vacant(entry) => {
@@ -370,7 +370,7 @@ impl SpawnReservation {
             .state
             .reserve_agent_nickname(names, preferred)
             .ok_or_else(|| {
-                GenexErr::UnsupportedOperation("no available agent nicknames".to_string())
+                RuxexErr::UnsupportedOperation("no available agent nicknames".to_string())
             })?;
         self.reserved_agent_nickname = Some(agent_nickname.clone());
         Ok(agent_nickname)

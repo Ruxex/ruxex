@@ -1,6 +1,6 @@
-# genex-http-client
+# ruxex-http-client
 
-`genex-http-client` is the low-level HTTP transport shared by Genex crates. It is the intended
+`ruxex-http-client` is the low-level HTTP transport shared by Ruxex crates. It is the intended
 owner of the workspace's direct `reqwest` integration; product crates should use the types in this
 crate instead of constructing `reqwest::Client` values themselves.
 
@@ -14,11 +14,11 @@ short-lived clients that fragment reqwest's connection pool. In particular, this
 - tracing-header injection and optional request diagnostics.
 
 Another important motivation is consistent support for the `respect_system_proxy` feature. That
-feature requires more than enabling reqwest's default proxy behavior: Genex must resolve platform
+feature requires more than enabling reqwest's default proxy behavior: Ruxex must resolve platform
 system settings and PAC/WPAD for each destination, pool connections without mixing routes, and
 resolve redirect targets independently.
 
-Higher-level retry, SSE, and request-attempt telemetry policy remains in `genex-client`.
+Higher-level retry, SSE, and request-attempt telemetry policy remains in `ruxex-client`.
 
 ## Outbound proxy policy
 
@@ -43,7 +43,7 @@ different route, and exceptional direct-routing requirements must remain explici
 For a client that talks to one known destination, build it once and retain it:
 
 ```rust
-use genex_http_client::ClientRouteClass;
+use ruxex_http_client::ClientRouteClass;
 
 let client = http_client_factory.build_client(api_url, ClientRouteClass::Api)?;
 let response = client.get(api_url).send().await?;
@@ -52,8 +52,8 @@ let response = client.get(api_url).send().await?;
 Use `HttpClientBuilder` when the client needs additional shared configuration:
 
 ```rust
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientBuilder;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientBuilder;
 
 let client = HttpClientBuilder::new()
     .default_headers(default_headers)
@@ -77,8 +77,8 @@ Use a long-lived `RouteAwareClientPool` when a component can send requests to mo
 follow redirects:
 
 ```rust
-use genex_http_client::ClientRouteClass;
-use genex_http_client::RouteAwareClientPool;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::RouteAwareClientPool;
 
 let client_pool =
     RouteAwareClientPool::new(http_client_factory.clone(), ClientRouteClass::Api);
@@ -91,7 +91,7 @@ route. This preserves connection reuse without accidentally sending a URL over a
 the wrong route.
 
 Redirects need the same treatment. Reqwest normally follows them inside one client execution, which
-would skip Genex's route selection for the redirect target. In `RespectSystemProxy` mode the pool
+would skip Ruxex's route selection for the redirect target. In `RespectSystemProxy` mode the pool
 follows redirects itself, resolves every hop, and removes sensitive headers when an origin changes.
 
 Do not create a new `HttpClient`, `HttpClientFactory`, or `RouteAwareClientPool` for every request.
@@ -113,12 +113,12 @@ Code using the transport abstraction should convert a configured wrapper rather 
 a raw reqwest client:
 
 ```rust
-use genex_http_client::ClientRouteClass;
-use genex_http_client::ReqwestTransport;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::ReqwestTransport;
 
 let client = http_client_factory.build_client(api_url, ClientRouteClass::Api)?;
 let transport = ReqwestTransport::from_http_client(client);
 ```
 
-If the existing wrapper surface cannot support a use case, extend `genex-http-client` rather than
+If the existing wrapper surface cannot support a use case, extend `ruxex-http-client` rather than
 adding a direct `reqwest` dependency to another first-party crate.

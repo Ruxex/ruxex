@@ -3,5 +3,5 @@ use tokio::runtime::Builder;
 
 fn main() -> Result<()> {
     let runtime = Builder::new_current_thread().enable_all().build()?;
-    runtime.block_on(genex_app_server_test_client::run())
+    runtime.block_on(ruxex_app_server_test_client::run())
 }

@@ -1,8 +1,8 @@
 use crate::JsonSchema;
 use crate::TS;
-use genex_protocol::config_types::CollaborationModeMask as CoreCollaborationModeMask;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::config_types::CollaborationModeMask as CoreCollaborationModeMask;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::model_types::ReasoningEffort;
 use serde::Deserialize;
 use serde::Serialize;
 

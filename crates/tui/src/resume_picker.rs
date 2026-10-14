@@ -40,21 +40,21 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadArchiveResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadListCwdFilter;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadSortKey;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_config::types::SessionPickerViewMode;
-use genex_protocol::ThreadId;
-use genex_utils_path as path_utils;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadArchiveResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadListCwdFilter;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadSortKey;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnarchiveResponse;
+use ruxex_config::types::SessionPickerViewMode;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_path as path_utils;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
 use ratatui::layout::Rect;
@@ -322,7 +322,7 @@ struct PickerPage {
 
 #[derive(Clone)]
 struct SessionPickerViewPersistence {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
 }
 
 struct SessionPickerRunOptions {
@@ -440,14 +440,14 @@ async fn run_resume_picker_with_launch_context(
         show_all,
         filter_cwd: cwd_filter,
         local_filter_cwd,
-        worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
+        worktrees_enabled: config.features.enabled(ruxex_features::Feature::Worktrees),
         action: SessionPickerAction::Resume,
         launch_context,
         initial_density: SessionListDensity::from(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
         view_persistence: Some(SessionPickerViewPersistence {
-            genex_home: local_settings.genex_home.to_path_buf(),
+            ruxex_home: local_settings.ruxex_home.to_path_buf(),
         }),
         pager_keymap: runtime_keymap.pager,
         list_keymap: runtime_keymap.list,
@@ -499,14 +499,14 @@ pub async fn run_fork_picker_with_app_server(
         show_all,
         filter_cwd: cwd_filter,
         local_filter_cwd,
-        worktrees_enabled: config.features.enabled(genex_features::Feature::Worktrees),
+        worktrees_enabled: config.features.enabled(ruxex_features::Feature::Worktrees),
         action: SessionPickerAction::Fork,
         launch_context: SessionPickerLaunchContext::Startup,
         initial_density: SessionListDensity::from(
             local_settings.tui.session_picker_view.unwrap_or_default(),
         ),
         view_persistence: Some(SessionPickerViewPersistence {
-            genex_home: local_settings.genex_home.to_path_buf(),
+            ruxex_home: local_settings.ruxex_home.to_path_buf(),
         }),
         pager_keymap: runtime_keymap.pager,
         list_keymap: runtime_keymap.list,
@@ -689,7 +689,7 @@ fn spawn_app_server_page_loader(
                         request.cwd_filter.as_deref(),
                         uses_remote_filesystem,
                         config.as_ref().is_some_and(|config| {
-                            config.features.enabled(genex_features::Feature::Worktrees)
+                            config.features.enabled(ruxex_features::Feature::Worktrees)
                         }),
                     );
                     let cursor = request.cursor.map(|PageCursor::AppServer(cursor)| cursor);
@@ -1630,8 +1630,8 @@ impl PickerState {
         };
         paths_match(row_cwd, filter_cwd)
             || (self.worktrees_enabled
-                && genex_git_utils::repository_identity(row_cwd)
-                    .zip(genex_git_utils::repository_identity(filter_cwd))
+                && ruxex_git_utils::repository_identity(row_cwd)
+                    .zip(ruxex_git_utils::repository_identity(filter_cwd))
                     .is_some_and(|(row, filter)| {
                         row.common_dir == filter.common_dir
                             && row.relative_cwd == filter.relative_cwd
@@ -1879,7 +1879,7 @@ impl PickerState {
             return Ok(());
         };
 
-        ConfigEditsBuilder::new(&persistence.genex_home)
+        ConfigEditsBuilder::new(&persistence.ruxex_home)
             .set_session_picker_view(SessionPickerViewMode::from(self.density))
             .apply()
             .await
@@ -2050,7 +2050,7 @@ pub(crate) fn repository_cwd_filter(
 ) -> ThreadListCwdFilter {
     if worktrees_enabled
         && !uses_remote_filesystem
-        && let Some(cwds) = genex_git_utils::linked_worktree_cwds(cwd)
+        && let Some(cwds) = ruxex_git_utils::linked_worktree_cwds(cwd)
         && cwds.len() > 1
     {
         return ThreadListCwdFilter::Many(

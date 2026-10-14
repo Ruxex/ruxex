@@ -6,7 +6,7 @@ use crate::model::CompactionId;
 use crate::model::CompactionRequestId;
 use crate::model::EdgeId;
 use crate::model::ExecutionStatus;
-use crate::model::GenexTurnId;
+use crate::model::RuxexTurnId;
 use crate::model::InferenceCallId;
 use crate::model::McpCallId;
 use crate::model::ModelVisibleCallId;
@@ -38,7 +38,7 @@ pub struct RawTraceEvent {
     pub wall_time_unix_ms: i64,
     pub rollout_id: String,
     pub thread_id: Option<AgentThreadId>,
-    pub genex_turn_id: Option<GenexTurnId>,
+    pub ruxex_turn_id: Option<RuxexTurnId>,
     pub payload: RawTraceEventPayload,
 }
 
@@ -46,7 +46,7 @@ pub struct RawTraceEvent {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RawTraceEventContext {
     pub thread_id: Option<AgentThreadId>,
-    pub genex_turn_id: Option<GenexTurnId>,
+    pub ruxex_turn_id: Option<RuxexTurnId>,
 }
 
 /// Runtime requester as observed at the raw tool boundary.
@@ -84,18 +84,18 @@ pub enum RawTraceEventPayload {
         thread_id: AgentThreadId,
         status: RolloutStatus,
     },
-    GenexTurnStarted {
-        genex_turn_id: GenexTurnId,
+    RuxexTurnStarted {
+        ruxex_turn_id: RuxexTurnId,
         thread_id: AgentThreadId,
     },
-    GenexTurnEnded {
-        genex_turn_id: GenexTurnId,
+    RuxexTurnEnded {
+        ruxex_turn_id: RuxexTurnId,
         status: ExecutionStatus,
     },
     InferenceStarted {
         inference_call_id: InferenceCallId,
         thread_id: AgentThreadId,
-        genex_turn_id: GenexTurnId,
+        ruxex_turn_id: RuxexTurnId,
         model: String,
         request_payload: RawPayloadRef,
     },
@@ -119,9 +119,9 @@ pub enum RawTraceEventPayload {
     InferenceCancelled {
         inference_call_id: InferenceCallId,
         /// Provider transport request id, such as `x-request-id`, when observed
-        /// before Genex stopped consuming the stream.
+        /// before Ruxex stopped consuming the stream.
         upstream_request_id: Option<String>,
-        /// Why Genex stopped consuming the provider stream before a terminal response event.
+        /// Why Ruxex stopped consuming the provider stream before a terminal response event.
         reason: String,
         /// Completed output items observed before cancellation, if any.
         partial_response_payload: Option<RawPayloadRef>,
@@ -145,13 +145,13 @@ pub enum RawTraceEventPayload {
     },
     ToolCallRuntimeStarted {
         tool_call_id: ToolCallId,
-        /// Runtime/protocol observation for how Genex began executing the tool.
+        /// Runtime/protocol observation for how Ruxex began executing the tool.
         runtime_payload: RawPayloadRef,
     },
     ToolCallRuntimeEnded {
         tool_call_id: ToolCallId,
         status: ExecutionStatus,
-        /// Runtime/protocol observation for how Genex finished executing the tool.
+        /// Runtime/protocol observation for how Ruxex finished executing the tool.
         runtime_payload: RawPayloadRef,
     },
     ToolCallEnded {
@@ -183,7 +183,7 @@ pub enum RawTraceEventPayload {
         compaction_id: CompactionId,
         compaction_request_id: CompactionRequestId,
         thread_id: AgentThreadId,
-        genex_turn_id: GenexTurnId,
+        ruxex_turn_id: RuxexTurnId,
         model: String,
         request_payload: RawPayloadRef,
     },
@@ -207,7 +207,7 @@ pub enum RawTraceEventPayload {
     AgentResultObserved {
         edge_id: EdgeId,
         child_thread_id: AgentThreadId,
-        child_genex_turn_id: GenexTurnId,
+        child_ruxex_turn_id: RuxexTurnId,
         parent_thread_id: AgentThreadId,
         message: String,
         /// Raw notification payload. This is evidence for the runtime delivery,
@@ -236,8 +236,8 @@ impl RawTraceEventPayload {
             RawTraceEventPayload::RolloutStarted { .. }
             | RawTraceEventPayload::RolloutEnded { .. }
             | RawTraceEventPayload::ThreadEnded { .. }
-            | RawTraceEventPayload::GenexTurnStarted { .. }
-            | RawTraceEventPayload::GenexTurnEnded { .. }
+            | RawTraceEventPayload::RuxexTurnStarted { .. }
+            | RawTraceEventPayload::RuxexTurnEnded { .. }
             | RawTraceEventPayload::CompactionRequestFailed { .. }
             | RawTraceEventPayload::CodeCellStarted { .. }
             | RawTraceEventPayload::McpToolCallCorrelationAssigned { .. }

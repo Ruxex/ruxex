@@ -7,7 +7,7 @@
 //!
 //! The reducer has to reconcile two clocks:
 //! - model-visible items come from inference request/response payloads;
-//! - runtime work starts as soon as Genex dispatches the tool.
+//! - runtime work starts as soon as Ruxex dispatches the tool.
 //!
 //! In real traces `CodeCellStarted` can arrive before the inference completion
 //! payload that contains the `custom_tool_call` item. We therefore queue starts
@@ -53,7 +53,7 @@ pub(super) struct PendingCodeCellStart {
     pub(super) seq: RawEventSeq,
     pub(super) wall_time_unix_ms: i64,
     pub(super) thread_id: String,
-    pub(super) genex_turn_id: Option<String>,
+    pub(super) ruxex_turn_id: Option<String>,
     pub(super) started: StartedCodeCell,
 }
 
@@ -133,20 +133,20 @@ impl TraceReducer {
             seq,
             wall_time_unix_ms,
             thread_id,
-            genex_turn_id,
+            ruxex_turn_id,
             started,
         } = pending;
         if self.rollout.code_cells.contains_key(&started.code_cell_id) {
             bail!("duplicate code cell start for {}", started.code_cell_id);
         }
 
-        let Some(genex_turn_id) = genex_turn_id else {
+        let Some(ruxex_turn_id) = ruxex_turn_id else {
             bail!(
-                "code cell start {} did not include a Genex turn id",
+                "code cell start {} did not include a Ruxex turn id",
                 started.code_cell_id
             );
         };
-        self.validate_code_cell_turn(&thread_id, &genex_turn_id)?;
+        self.validate_code_cell_turn(&thread_id, &ruxex_turn_id)?;
 
         let source_item_id = self.source_item_id_for_code_cell_start(
             &thread_id,
@@ -178,7 +178,7 @@ impl TraceReducer {
                 code_cell_id: started.code_cell_id.clone(),
                 model_visible_call_id: started.model_visible_call_id,
                 thread_id: thread_id.clone(),
-                genex_turn_id,
+                ruxex_turn_id,
                 source_item_id,
                 output_item_ids: output_item_ids.clone(),
                 runtime_cell_id: Some(started.runtime_cell_id),
@@ -354,7 +354,7 @@ impl TraceReducer {
         &mut self,
         seq: RawEventSeq,
         wall_time_unix_ms: i64,
-        genex_turn_id: &str,
+        ruxex_turn_id: &str,
         turn_status: &ExecutionStatus,
     ) -> Result<()> {
         let runtime_status = match turn_status {
@@ -369,7 +369,7 @@ impl TraceReducer {
             .code_cells
             .values()
             .filter(|cell| {
-                cell.genex_turn_id == genex_turn_id
+                cell.ruxex_turn_id == ruxex_turn_id
                     && cell.execution.status == ExecutionStatus::Running
             })
             .map(|cell| cell.code_cell_id.clone())
@@ -533,23 +533,23 @@ impl TraceReducer {
     pub(super) fn code_cell_event_thread_id(
         &self,
         thread_id: Option<String>,
-        genex_turn_id: Option<&str>,
+        ruxex_turn_id: Option<&str>,
         runtime_cell_id: &str,
         event_name: &str,
     ) -> Result<String> {
         if let Some(thread_id) = thread_id {
             return Ok(thread_id);
         }
-        let Some(genex_turn_id) = genex_turn_id else {
+        let Some(ruxex_turn_id) = ruxex_turn_id else {
             bail!("{event_name} {runtime_cell_id} did not include a thread id");
         };
         self.rollout
-            .genex_turns
-            .get(genex_turn_id)
+            .ruxex_turns
+            .get(ruxex_turn_id)
             .map(|turn| turn.thread_id.clone())
             .with_context(|| {
                 format!(
-                    "{event_name} {runtime_cell_id} referenced unknown Genex turn {genex_turn_id}"
+                    "{event_name} {runtime_cell_id} referenced unknown Ruxex turn {ruxex_turn_id}"
                 )
             })
     }
@@ -637,16 +637,16 @@ impl TraceReducer {
         }
     }
 
-    fn validate_code_cell_turn(&self, thread_id: &str, genex_turn_id: &str) -> Result<()> {
+    fn validate_code_cell_turn(&self, thread_id: &str, ruxex_turn_id: &str) -> Result<()> {
         if !self.rollout.threads.contains_key(thread_id) {
             bail!("code cell start referenced unknown thread {thread_id}");
         }
-        let Some(turn) = self.rollout.genex_turns.get(genex_turn_id) else {
-            bail!("code cell start referenced unknown Genex turn {genex_turn_id}");
+        let Some(turn) = self.rollout.ruxex_turns.get(ruxex_turn_id) else {
+            bail!("code cell start referenced unknown Ruxex turn {ruxex_turn_id}");
         };
         if turn.thread_id != thread_id {
             bail!(
-                "code cell start used thread {thread_id}, but Genex turn {genex_turn_id} belongs \
+                "code cell start used thread {thread_id}, but Ruxex turn {ruxex_turn_id} belongs \
                  to {}",
                 turn.thread_id
             );

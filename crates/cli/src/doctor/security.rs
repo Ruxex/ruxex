@@ -57,21 +57,21 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     }
 
     let targets = if cfg!(target_os = "macos") {
-        "signing team 2DC432GLL2 plus the installed Genex app identity, signed genex agent, and required helpers"
+        "signing team 2DC432GLL2 plus the installed Ruxex app identity, signed ruxex agent, and required helpers"
     } else {
-        "verified Genex app, genex agent, and required helpers"
+        "verified Ruxex app, ruxex agent, and required helpers"
     };
     let mut check = DoctorCheck::new(
         "security.endpoint",
         "security",
         CheckStatus::Warning,
-        "endpoint protection detected; Genex exclusions are unverified",
+        "endpoint protection detected; Ruxex exclusions are unverified",
     )
     .detail(format!("endpoint products: {}", products.join(", ")))
     .detail(format!("exclusion targets: {targets}"))
-    .detail("Genex exclusions: not verified")
+    .detail("Ruxex exclusions: not verified")
     .remediation(
-        "ask your security administrator to verify Genex exclusions and required helper allowances",
+        "ask your security administrator to verify Ruxex exclusions and required helper allowances",
     );
     if visibility_incomplete {
         check = check.detail("additional endpoint products: unavailable");
@@ -80,33 +80,33 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     for product in products {
         let remedy = match product {
             "CrowdStrike Falcon" => {
-                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Genex and monitor descendant processes."
+                "CrowdStrike Falcon: Add a certificate or IOA exclusion for Ruxex and monitor descendant processes."
             }
             "BeyondTrust Privilege Management" => {
-                "BeyondTrust: Remove Genex from application blocking rules and allow Genex helper executables."
+                "BeyondTrust: Remove Ruxex from application blocking rules and allow Ruxex helper executables."
             }
             "Microsoft Defender" => {
-                "Microsoft Defender: Add a certificate or executable-path exclusion for Genex and its helpers."
+                "Microsoft Defender: Add a certificate or executable-path exclusion for Ruxex and its helpers."
             }
             "SentinelOne" => {
-                "SentinelOne: Add a signer, file-hash, or executable-path exclusion for Genex and its helpers."
+                "SentinelOne: Add a signer, file-hash, or executable-path exclusion for Ruxex and its helpers."
             }
             "Jamf Protect" => {
-                "Jamf Protect: Add an exception for Genex app and helper signing identities."
+                "Jamf Protect: Add an exception for Ruxex app and helper signing identities."
             }
             _ => {
-                "Add an exclusion for Genex and its helpers. Use the endpoint product instructions."
+                "Add an exclusion for Ruxex and its helpers. Use the endpoint product instructions."
             }
         };
         check = check.issue(
             DoctorIssue::new(
                 CheckStatus::Warning,
-                format!("{product} can interfere with Genex. Verify Genex exclusions."),
+                format!("{product} can interfere with Ruxex. Verify Ruxex exclusions."),
             )
             .measured("not verified")
-            .expected("Genex application and helper exclusions")
+            .expected("Ruxex application and helper exclusions")
             .remedy(remedy)
-            .field("Genex exclusions"),
+            .field("Ruxex exclusions"),
         );
     }
 

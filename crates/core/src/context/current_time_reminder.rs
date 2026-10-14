@@ -2,7 +2,7 @@ use chrono::DateTime;
 use chrono::Utc;
 
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 pub(crate) struct CurrentTimeReminder {
     current_time: DateTime<Utc>,

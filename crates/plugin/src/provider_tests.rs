@@ -6,8 +6,8 @@ use crate::manifest::PluginManifestHooks;
 use crate::manifest::PluginManifestInterface;
 use crate::manifest::PluginManifestMcpServers;
 use crate::manifest::PluginManifestPaths;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
 fn absolute(path: impl AsRef<std::path::Path>) -> AbsolutePathBuf {
@@ -29,7 +29,7 @@ fn resource(environment_id: &str, path: &AbsolutePathBuf) -> PluginResourceLocat
 fn environment_descriptor_binds_every_manifest_resource() {
     let root = absolute(std::env::current_dir().expect("cwd").join("plugin-root"));
     let root_uri = path_uri(&root);
-    let manifest_path = root.join(".genex-plugin/plugin.json");
+    let manifest_path = root.join(".ruxex-plugin/plugin.json");
     let skills = root.join("skills");
     let mcp_servers = root.join(".mcp.json");
     let hooks = root.join("hooks/hooks.json");
@@ -117,7 +117,7 @@ fn environment_descriptor_rejects_resources_outside_package_root() {
         "selected-demo".to_string(),
         "executor-1".to_string(),
         path_uri(&root),
-        path_uri(&root.join(".genex-plugin/plugin.json")),
+        path_uri(&root.join(".ruxex-plugin/plugin.json")),
         manifest,
     )
     .expect_err("outside resource should fail");

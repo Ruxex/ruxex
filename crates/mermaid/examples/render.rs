@@ -12,6 +12,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|value| value.parse())
         .transpose()?
         .unwrap_or(120);
-    println!("{}", genex_mermaid::render(&source, max_width)?);
+    println!("{}", ruxex_mermaid::render(&source, max_width)?);
     Ok(())
 }

@@ -1,5 +1,5 @@
-use genex_protocol::ThreadId;
-use genex_state::StateRuntime;
+use ruxex_protocol::ThreadId;
+use ruxex_state::StateRuntime;
 use std::sync::Arc;
 
 use crate::AgentGraphStore;
@@ -109,10 +109,10 @@ impl AgentGraphStore for LocalAgentGraphStore {
     }
 }
 
-fn to_state_status(status: ThreadSpawnEdgeStatus) -> genex_state::DirectionalThreadSpawnEdgeStatus {
+fn to_state_status(status: ThreadSpawnEdgeStatus) -> ruxex_state::DirectionalThreadSpawnEdgeStatus {
     match status {
-        ThreadSpawnEdgeStatus::Open => genex_state::DirectionalThreadSpawnEdgeStatus::Open,
-        ThreadSpawnEdgeStatus::Closed => genex_state::DirectionalThreadSpawnEdgeStatus::Closed,
+        ThreadSpawnEdgeStatus::Open => ruxex_state::DirectionalThreadSpawnEdgeStatus::Open,
+        ThreadSpawnEdgeStatus::Closed => ruxex_state::DirectionalThreadSpawnEdgeStatus::Closed,
     }
 }
 
@@ -125,14 +125,14 @@ fn internal_error(err: impl std::fmt::Display) -> AgentGraphStoreError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_state::DirectionalThreadSpawnEdgeStatus;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_state::DirectionalThreadSpawnEdgeStatus;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
     struct TestRuntime {
         state_db: Arc<StateRuntime>,
-        _genex_home: TempDir,
+        _ruxex_home: TempDir,
     }
 
     fn thread_id(suffix: u128) -> ThreadId {
@@ -141,15 +141,15 @@ mod tests {
     }
 
     async fn state_runtime() -> TestRuntime {
-        let genex_home = TempDir::new().expect("tempdir should be created");
-        let state_db = StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
-            genex_home.path().abs(),
+        let ruxex_home = TempDir::new().expect("tempdir should be created");
+        let state_db = StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
+            ruxex_home.path().abs(),
         ))
         .await
         .expect("state db should initialize");
         TestRuntime {
             state_db,
-            _genex_home: genex_home,
+            _ruxex_home: ruxex_home,
         }
     }
 

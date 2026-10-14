@@ -182,33 +182,33 @@ impl TraceReducer {
             RawTraceEventPayload::ThreadEnded { thread_id, status } => {
                 self.end_thread(event.seq, event.wall_time_unix_ms, thread_id, status)?;
             }
-            RawTraceEventPayload::GenexTurnStarted {
-                genex_turn_id,
+            RawTraceEventPayload::RuxexTurnStarted {
+                ruxex_turn_id,
                 thread_id,
             } => {
-                self.start_genex_turn(
+                self.start_ruxex_turn(
                     event.seq,
                     event.wall_time_unix_ms,
-                    genex_turn_id,
+                    ruxex_turn_id,
                     thread_id,
                 )?;
             }
-            RawTraceEventPayload::GenexTurnEnded {
-                genex_turn_id,
+            RawTraceEventPayload::RuxexTurnEnded {
+                ruxex_turn_id,
                 status,
             } => {
-                self.end_genex_turn(
+                self.end_ruxex_turn(
                     event.seq,
                     event.wall_time_unix_ms,
                     event.thread_id,
-                    genex_turn_id,
+                    ruxex_turn_id,
                     status,
                 )?;
             }
             RawTraceEventPayload::InferenceStarted {
                 inference_call_id,
                 thread_id,
-                genex_turn_id,
+                ruxex_turn_id,
                 model,
                 request_payload,
             } => {
@@ -218,7 +218,7 @@ impl TraceReducer {
                     StartedInferenceCall {
                         inference_call_id,
                         thread_id,
-                        genex_turn_id,
+                        ruxex_turn_id,
                         model,
                         request_payload,
                     },
@@ -247,7 +247,7 @@ impl TraceReducer {
                     event.seq,
                     event.wall_time_unix_ms,
                     event.thread_id,
-                    event.genex_turn_id,
+                    event.ruxex_turn_id,
                     ToolCallStarted {
                         tool_call_id,
                         model_visible_call_id,
@@ -309,7 +309,7 @@ impl TraceReducer {
             } => {
                 let thread_id = self.code_cell_event_thread_id(
                     event.thread_id,
-                    event.genex_turn_id.as_deref(),
+                    event.ruxex_turn_id.as_deref(),
                     &runtime_cell_id,
                     "code cell start",
                 )?;
@@ -324,7 +324,7 @@ impl TraceReducer {
                     seq: event.seq,
                     wall_time_unix_ms: event.wall_time_unix_ms,
                     thread_id,
-                    genex_turn_id: event.genex_turn_id,
+                    ruxex_turn_id: event.ruxex_turn_id,
                     started: StartedCodeCell {
                         code_cell_id: reduced_code_cell_id,
                         runtime_cell_id,
@@ -340,7 +340,7 @@ impl TraceReducer {
             } => {
                 let thread_id = self.code_cell_event_thread_id(
                     event.thread_id,
-                    event.genex_turn_id.as_deref(),
+                    event.ruxex_turn_id.as_deref(),
                     &runtime_cell_id,
                     "code cell initial response",
                 )?;
@@ -364,7 +364,7 @@ impl TraceReducer {
             } => {
                 let thread_id = self.code_cell_event_thread_id(
                     event.thread_id,
-                    event.genex_turn_id.as_deref(),
+                    event.ruxex_turn_id.as_deref(),
                     &runtime_cell_id,
                     "code cell end",
                 )?;
@@ -384,7 +384,7 @@ impl TraceReducer {
                 compaction_id,
                 compaction_request_id,
                 thread_id,
-                genex_turn_id,
+                ruxex_turn_id,
                 model,
                 request_payload,
             } => {
@@ -395,7 +395,7 @@ impl TraceReducer {
                         compaction_id,
                         compaction_request_id,
                         thread_id,
-                        genex_turn_id,
+                        ruxex_turn_id,
                         model,
                         request_payload,
                     },
@@ -436,15 +436,15 @@ impl TraceReducer {
                 let Some(thread_id) = event.thread_id else {
                     bail!("compaction installed event {compaction_id} did not include a thread id");
                 };
-                let Some(genex_turn_id) = event.genex_turn_id else {
+                let Some(ruxex_turn_id) = event.ruxex_turn_id else {
                     bail!(
-                        "compaction installed event {compaction_id} did not include a genex turn id"
+                        "compaction installed event {compaction_id} did not include a ruxex turn id"
                     );
                 };
                 self.reduce_compaction_installed_event(
                     event.wall_time_unix_ms,
                     thread_id,
-                    genex_turn_id,
+                    ruxex_turn_id,
                     compaction_id,
                     checkpoint_payload,
                 )?;
@@ -452,7 +452,7 @@ impl TraceReducer {
             RawTraceEventPayload::AgentResultObserved {
                 edge_id,
                 child_thread_id,
-                child_genex_turn_id,
+                child_ruxex_turn_id,
                 parent_thread_id,
                 message,
                 carried_payload,
@@ -461,7 +461,7 @@ impl TraceReducer {
                     wall_time_unix_ms: event.wall_time_unix_ms,
                     edge_id,
                     child_thread_id,
-                    child_genex_turn_id,
+                    child_ruxex_turn_id,
                     parent_thread_id,
                     message,
                     carried_payload,

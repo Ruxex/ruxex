@@ -7,11 +7,11 @@ mod executor;
 mod host;
 
 use crate::HostSkillsSnapshot;
-use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::ResolvedSelectedCapabilityRoot;
-use genex_mcp::McpResourceClient;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::ResolvedSelectedCapabilityRoot;
+use ruxex_mcp::McpResourceClient;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 
 use crate::catalog::SkillAuthority;
 use crate::catalog::SkillCatalog;

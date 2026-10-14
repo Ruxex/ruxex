@@ -5,12 +5,12 @@ use crate::safety::assess_patch_safety;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnEnvironment;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use genex_apply_patch::ApplyPatchAction;
-use genex_apply_patch::ApplyPatchFileChange;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::protocol::FileChange;
-use genex_protocol::protocol::FileSystemSandboxPolicy;
-use genex_utils_path_uri::PathUri;
+use ruxex_apply_patch::ApplyPatchAction;
+use ruxex_apply_patch::ApplyPatchFileChange;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

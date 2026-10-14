@@ -1,28 +1,28 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use genex_core::StartIfIdleSubmission;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::ExecutorFileSystem;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::SkillInvocationContributor;
-use genex_extension_api::SkillInvocationInput;
-use genex_extension_api::SkillInvocationKind;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_skills_extension::SkillsExtensionConfig;
-use genex_skills_extension::install;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::SkillInvocationContributor;
+use ruxex_extension_api::SkillInvocationInput;
+use ruxex_extension_api::SkillInvocationKind;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::install;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::create_directory_symlink;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -33,9 +33,9 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -101,7 +101,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
     let recorder = Arc::new(SkillInvocationRecorder::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.skill_invocation_contributor(recorder.clone());
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(move |cwd, fs| async move {
             write_repo_skill(cwd, fs, "demo", "demo skill", skill_body).await
@@ -129,7 +129,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Text {
@@ -159,8 +159,8 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
         )
         .await?;
 
-    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
-        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
+    core_test_support::wait_for_event(test.ruxex.as_ref(), |event| {
+        matches!(event, ruxex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 
@@ -209,7 +209,7 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
         orchestrator_skills_enabled: false,
         shadow_selection_enabled: false,
     });
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_workspace_setup(move |cwd, _fs| async move {
             let source_skill_dir = cwd.join("shared-skills/linked-demo");
@@ -245,7 +245,7 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
     .await;
 
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::UserInput {
             content: vec![
                 UserInput::Text {
@@ -262,8 +262,8 @@ async fn user_turn_selects_symlinked_skill_by_advertised_discovery_path() -> Res
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
-        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
+    core_test_support::wait_for_event(test.ruxex.as_ref(), |event| {
+        matches!(event, ruxex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 
@@ -310,7 +310,7 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
 
     let server = start_mock_server().await;
     let skill_body = "queued skill body";
-    let mut builder = test_genex().with_workspace_setup(move |cwd, fs| async move {
+    let mut builder = test_ruxex().with_workspace_setup(move |cwd, fs| async move {
         write_repo_skill(cwd, fs, "queued-demo", "queued demo skill", skill_body).await
     });
     let test = builder.build_with_auto_env(&server).await?;
@@ -332,7 +332,7 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
     .await;
 
     let submission = test
-        .genex
+        .ruxex
         .start_turn_if_idle(TurnInputRequest::new(TurnInput::UserInput {
             content: vec![
                 UserInput::Text {
@@ -349,8 +349,8 @@ async fn idle_user_turn_includes_skill_instructions_in_the_first_request() -> Re
         .await?;
     assert!(matches!(submission, StartIfIdleSubmission::Started { .. }));
 
-    core_test_support::wait_for_event(test.genex.as_ref(), |event| {
-        matches!(event, genex_protocol::protocol::EventMsg::TurnComplete(_))
+    core_test_support::wait_for_event(test.ruxex.as_ref(), |event| {
+        matches!(event, ruxex_protocol::protocol::EventMsg::TurnComplete(_))
     })
     .await;
 

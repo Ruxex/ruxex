@@ -3,20 +3,20 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use genex_core::config::Config;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_login::CredentialManager;
-use genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-use genex_model_provider::ModelProviderFactory;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::ProviderHomeError;
-use genex_model_provider::ProviderHomeMarker;
-use genex_model_provider::ProviderInit;
-use genex_model_provider::SharedModelProvider;
-use genex_model_provider::mount_provider_home;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_providers::create_model_provider_with_http_client_factory;
+use ruxex_core::config::Config;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::ModelProviderFactory;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderHomeError;
+use ruxex_model_provider::ProviderHomeMarker;
+use ruxex_model_provider::ProviderInit;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::create_model_provider_with_http_client_factory;
 
 /// The single provider contract shared by an AppServer transport and its clients.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub fn mount_provider_home_for_config(
     config: &Config,
 ) -> Result<ProviderHomeMarker, ProviderHomeError> {
     let descriptor = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
-    mount_provider_home(&config.genex_home, &descriptor)
+    mount_provider_home(&config.ruxex_home, &descriptor)
 }
 
 /// Mounts the provider-scoped data root for an already-injected runtime.
@@ -60,7 +60,7 @@ pub fn mount_provider_home_for_runtime(
     config: &Config,
     runtime: &AppServerRuntime,
 ) -> Result<ProviderHomeMarker, ProviderHomeError> {
-    mount_provider_home(&config.genex_home, &runtime.provider_descriptor())
+    mount_provider_home(&config.ruxex_home, &runtime.provider_descriptor())
 }
 
 /// Mounts the provider home and constructs the single runtime owned by a local host.
@@ -100,7 +100,7 @@ pub async fn provider_init_from_config_with_descriptor(
     enable_api_key_env: bool,
     descriptor: &ProviderDescriptor,
 ) -> anyhow::Result<ProviderInit> {
-    mount_provider_home(&config.genex_home, descriptor)
+    mount_provider_home(&config.ruxex_home, descriptor)
         .context("failed to mount provider data root")?;
     let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
         .await
@@ -219,8 +219,8 @@ mod tests {
     #[tokio::test]
     async fn config_home_mount_uses_the_configured_provider_descriptor() {
         let temp = tempfile::tempdir().expect("temporary provider home");
-        let config = genex_core::config::ConfigBuilder::default()
-            .genex_home(temp.path().to_path_buf())
+        let config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
             .build()
             .await
             .expect("config should build");
@@ -239,8 +239,8 @@ mod tests {
     #[tokio::test]
     async fn config_home_mount_rejects_a_mismatched_provider_marker() {
         let temp = tempfile::tempdir().expect("temporary provider home");
-        let config = genex_core::config::ConfigBuilder::default()
-            .genex_home(temp.path().to_path_buf())
+        let config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
             .build()
             .await
             .expect("config should build");
@@ -259,8 +259,8 @@ mod tests {
     #[tokio::test]
     async fn injected_runtime_home_mount_uses_runtime_descriptor() {
         let temp = tempfile::tempdir().expect("temporary provider home");
-        let config = genex_core::config::ConfigBuilder::default()
-            .genex_home(temp.path().to_path_buf())
+        let config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
             .build()
             .await
             .expect("config should build");
@@ -282,8 +282,8 @@ mod tests {
     #[tokio::test]
     async fn configured_runtime_rejects_mismatched_marker_before_credential_loading() {
         let temp = tempfile::tempdir().expect("temporary provider home");
-        let config = genex_core::config::ConfigBuilder::default()
-            .genex_home(temp.path().to_path_buf())
+        let config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
             .build()
             .await
             .expect("config should build");

@@ -1,7 +1,7 @@
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 /// Metadata for one skill materialized on the host filesystem.
 #[derive(Debug, Clone, PartialEq)]
@@ -62,7 +62,7 @@ impl EnvironmentSkillMetadata {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SkillPolicy {
     pub allow_implicit_invocation: Option<bool>,
-    // TODO: Enforce product gating in Genex skill selection/injection instead of only parsing and
+    // TODO: Enforce product gating in Ruxex skill selection/injection instead of only parsing and
     // storing this metadata.
     pub products: Vec<Product>,
 }

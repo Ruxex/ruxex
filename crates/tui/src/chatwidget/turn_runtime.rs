@@ -270,11 +270,11 @@ impl ChatWidget {
 
     pub(super) fn handle_app_server_steer_rejected_error(
         &mut self,
-        genex_error_info: &AppServerGenexErrorInfo,
+        ruxex_error_info: &AppServerRuxexErrorInfo,
     ) -> bool {
         matches!(
-            genex_error_info,
-            AppServerGenexErrorInfo::ActiveTurnNotSteerable { .. }
+            ruxex_error_info,
+            AppServerRuxexErrorInfo::ActiveTurnNotSteerable { .. }
         ) && self.enqueue_rejected_steer()
     }
 
@@ -326,7 +326,7 @@ impl ChatWidget {
         self.finalize_turn();
 
         let message = if message.trim().is_empty() {
-            "Genex is currently experiencing high load.".to_string()
+            "Ruxex is currently experiencing high load.".to_string()
         } else {
             message
         };
@@ -374,7 +374,7 @@ impl ChatWidget {
         // on_error can drain queued input, before the asynchronous recovery read completes.
         self.input_queue.rate_limit_recovery_pending = self.has_managed_account;
         let usage_limit_error = matches!(error_kind, RateLimitErrorKind::UsageLimit);
-        let rate_limit_reached_type = self.genex_rate_limit_reached_type.map(|kind| {
+        let rate_limit_reached_type = self.ruxex_rate_limit_reached_type.map(|kind| {
             if usage_limit_error {
                 match kind {
                     RateLimitReachedType::WorkspaceOwnerCreditsDepleted => {
@@ -389,7 +389,7 @@ impl ChatWidget {
                 kind
             }
         });
-        self.genex_rate_limit_reached_type = rate_limit_reached_type;
+        self.ruxex_rate_limit_reached_type = rate_limit_reached_type;
         let message = match rate_limit_reached_type {
             Some(
                 RateLimitReachedType::WorkspaceOwnerCreditsDepleted
@@ -409,15 +409,15 @@ impl ChatWidget {
     pub(super) fn handle_non_retry_error(
         &mut self,
         message: String,
-        genex_error_info: Option<AppServerGenexErrorInfo>,
+        ruxex_error_info: Option<AppServerRuxexErrorInfo>,
     ) {
-        if genex_error_info == Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation) {
+        if ruxex_error_info == Some(AppServerRuxexErrorInfo::MisalignmentPolicyViolation) {
             self.on_misalignment_policy_violation();
-        } else if genex_error_info
+        } else if ruxex_error_info
             .as_ref()
             .is_some_and(|info| self.handle_app_server_steer_rejected_error(info))
         {
-        } else if genex_error_info
+        } else if ruxex_error_info
             .as_ref()
             .is_some_and(is_app_server_cyber_policy_error)
         {
@@ -435,7 +435,7 @@ impl ChatWidget {
             self.add_to_history(history_cell::new_safety_access_block_event());
             self.request_redraw();
             self.maybe_send_next_queued_input();
-        } else if let Some(info) = genex_error_info
+        } else if let Some(info) = ruxex_error_info
             .as_ref()
             .and_then(app_server_rate_limit_error_kind)
         {

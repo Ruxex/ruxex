@@ -3,14 +3,14 @@ use std::sync::Weak;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_core::StartIfIdleSubmission;
-use genex_core::ThreadManager;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_protocol::ThreadId;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::ThreadGoal;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::ThreadManager;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnStartOptions;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::ThreadGoal;
 
 use crate::accounting::BudgetLimitedGoalDisposition;
 use crate::accounting::GoalAccountingState;
@@ -43,7 +43,7 @@ pub(crate) enum ActiveGoalStopReason {
 
 struct GoalRuntimeInner {
     thread_id: ThreadId,
-    state_dbs: Arc<genex_state::StateRuntime>,
+    state_dbs: Arc<ruxex_state::StateRuntime>,
     event_emitter: GoalEventEmitter,
     metrics: GoalMetrics,
     thread_manager: Weak<ThreadManager>,
@@ -63,12 +63,12 @@ pub(crate) struct AccountedGoalProgress {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PreviousGoalSnapshot {
     pub goal_id: String,
-    pub status: genex_state::ThreadGoalStatus,
+    pub status: ruxex_state::ThreadGoalStatus,
     pub objective: String,
 }
 
-impl From<&genex_state::ThreadGoal> for PreviousGoalSnapshot {
-    fn from(goal: &genex_state::ThreadGoal) -> Self {
+impl From<&ruxex_state::ThreadGoal> for PreviousGoalSnapshot {
+    fn from(goal: &ruxex_state::ThreadGoal) -> Self {
         Self {
             goal_id: goal.goal_id.clone(),
             status: goal.status,
@@ -86,7 +86,7 @@ impl std::fmt::Debug for GoalRuntimeHandle {
 impl GoalRuntimeHandle {
     pub(crate) fn new(
         thread_id: ThreadId,
-        state_dbs: Arc<genex_state::StateRuntime>,
+        state_dbs: Arc<ruxex_state::StateRuntime>,
         event_emitter: GoalEventEmitter,
         metrics: GoalMetrics,
         thread_manager: Weak<ThreadManager>,
@@ -167,7 +167,7 @@ impl GoalRuntimeHandle {
             self.account_active_goal_progress(
                 turn_id.as_str(),
                 &format!("{turn_id}:external-goal-mutation"),
-                genex_state::GoalAccountingMode::ActiveOnly,
+                ruxex_state::GoalAccountingMode::ActiveOnly,
                 BudgetLimitedGoalDisposition::ClearActive,
             )
             .await?;
@@ -176,7 +176,7 @@ impl GoalRuntimeHandle {
 
         self.account_idle_goal_progress(
             &format!("{}:external-goal-mutation", self.inner.thread_id),
-            genex_state::GoalAccountingMode::ActiveOnly,
+            ruxex_state::GoalAccountingMode::ActiveOnly,
             BudgetLimitedGoalDisposition::ClearActive,
         )
         .await?;
@@ -185,7 +185,7 @@ impl GoalRuntimeHandle {
 
     pub async fn apply_external_goal_set(
         &self,
-        goal: genex_state::ThreadGoal,
+        goal: ruxex_state::ThreadGoal,
         previous_goal: Option<PreviousGoalSnapshot>,
     ) -> Result<(), String> {
         if !self.is_enabled() {
@@ -212,7 +212,7 @@ impl GoalRuntimeHandle {
             !replaced_existing_goal && previous_goal.objective != goal.objective
         });
         match goal.status {
-            genex_state::ThreadGoalStatus::Active => {
+            ruxex_state::ThreadGoalStatus::Active => {
                 if self.inner.accounting_state.current_turn_id().is_some() {
                     let _ = self
                         .inner
@@ -229,15 +229,15 @@ impl GoalRuntimeHandle {
                 }
                 self.continue_if_idle().await?;
             }
-            genex_state::ThreadGoalStatus::BudgetLimited => {
+            ruxex_state::ThreadGoalStatus::BudgetLimited => {
                 if self.inner.accounting_state.current_turn_id().is_none() {
                     self.inner.accounting_state.clear_active_goal();
                 }
             }
-            genex_state::ThreadGoalStatus::Paused
-            | genex_state::ThreadGoalStatus::Blocked
-            | genex_state::ThreadGoalStatus::UsageLimited
-            | genex_state::ThreadGoalStatus::Complete => {
+            ruxex_state::ThreadGoalStatus::Paused
+            | ruxex_state::ThreadGoalStatus::Blocked
+            | ruxex_state::ThreadGoalStatus::UsageLimited
+            | ruxex_state::ThreadGoalStatus::Complete => {
                 self.inner.accounting_state.clear_active_goal();
             }
         }
@@ -246,7 +246,7 @@ impl GoalRuntimeHandle {
 
     pub async fn apply_external_goal_clear(
         &self,
-        _goal: genex_state::ThreadGoal,
+        _goal: ruxex_state::ThreadGoal,
     ) -> Result<(), String> {
         if !self.is_enabled() {
             return Ok(());
@@ -289,11 +289,11 @@ impl GoalRuntimeHandle {
 
         let (event_name, status, expected_goal_id) = match reason {
             ActiveGoalStopReason::TurnError => {
-                ("turn-error", genex_state::ThreadGoalStatus::Blocked, None)
+                ("turn-error", ruxex_state::ThreadGoalStatus::Blocked, None)
             }
             ActiveGoalStopReason::UsageLimit => (
                 "usage-limit",
-                genex_state::ThreadGoalStatus::UsageLimited,
+                ruxex_state::ThreadGoalStatus::UsageLimited,
                 None,
             ),
             ActiveGoalStopReason::EmptyResponse => {
@@ -307,20 +307,20 @@ impl GoalRuntimeHandle {
                 }
                 (
                     "empty-response",
-                    genex_state::ThreadGoalStatus::Blocked,
+                    ruxex_state::ThreadGoalStatus::Blocked,
                     Some(expected_goal_id),
                 )
             }
             ActiveGoalStopReason::ExecutionUnavailable { expected_goal_id } => (
                 "execution-unavailable",
-                genex_state::ThreadGoalStatus::Blocked,
+                ruxex_state::ThreadGoalStatus::Blocked,
                 Some(expected_goal_id),
             ),
         };
         self.account_active_goal_progress(
             turn_id,
             &format!("{turn_id}:{event_name}-progress"),
-            genex_state::GoalAccountingMode::ActiveOnly,
+            ruxex_state::GoalAccountingMode::ActiveOnly,
             BudgetLimitedGoalDisposition::ClearActive,
         )
         .await?;
@@ -342,9 +342,9 @@ impl GoalRuntimeHandle {
         {
             return Ok(());
         }
-        let can_stop = active_goal.status == genex_state::ThreadGoalStatus::Active
-            || (active_goal.status == genex_state::ThreadGoalStatus::BudgetLimited
-                && status == genex_state::ThreadGoalStatus::UsageLimited);
+        let can_stop = active_goal.status == ruxex_state::ThreadGoalStatus::Active
+            || (active_goal.status == ruxex_state::ThreadGoalStatus::BudgetLimited
+                && status == ruxex_state::ThreadGoalStatus::UsageLimited);
         if !can_stop {
             self.inner.accounting_state.clear_active_goal();
             return Ok(());
@@ -356,7 +356,7 @@ impl GoalRuntimeHandle {
             .thread_goals()
             .update_thread_goal(
                 self.thread_id(),
-                genex_state::GoalUpdate {
+                ruxex_state::GoalUpdate {
                     objective: None,
                     status: Some(status),
                     token_budget: None,
@@ -394,7 +394,7 @@ impl GoalRuntimeHandle {
             .await
             .map_err(|err| err.to_string())?;
         match goal {
-            Some(goal) if goal.status == genex_state::ThreadGoalStatus::Active => {
+            Some(goal) if goal.status == ruxex_state::ThreadGoalStatus::Active => {
                 self.inner
                     .accounting_state
                     .mark_idle_goal_active(goal.goal_id);
@@ -445,7 +445,7 @@ impl GoalRuntimeHandle {
             self.inner.accounting_state.clear_active_goal();
             return Ok(());
         };
-        if goal.status != genex_state::ThreadGoalStatus::Active {
+        if goal.status != ruxex_state::ThreadGoalStatus::Active {
             self.inner.accounting_state.clear_active_goal();
             return Ok(());
         }
@@ -523,7 +523,7 @@ impl GoalRuntimeHandle {
         &self,
         turn_id: &str,
         event_id: &str,
-        mode: genex_state::GoalAccountingMode,
+        mode: ruxex_state::GoalAccountingMode,
         budget_limited_goal_disposition: BudgetLimitedGoalDisposition,
     ) -> Result<Option<AccountedGoalProgress>, String> {
         let accounting = self.accounting_state();
@@ -551,7 +551,7 @@ impl GoalRuntimeHandle {
             .await
             .map_err(|err| err.to_string())?;
         Ok(match outcome {
-            genex_state::GoalAccountingOutcome::Updated(goal) => {
+            ruxex_state::GoalAccountingOutcome::Updated(goal) => {
                 let goal_id = goal.goal_id.clone();
                 self.inner
                     .metrics
@@ -570,14 +570,14 @@ impl GoalRuntimeHandle {
                 );
                 Some(AccountedGoalProgress { goal, goal_id })
             }
-            genex_state::GoalAccountingOutcome::Unchanged(_) => None,
+            ruxex_state::GoalAccountingOutcome::Unchanged(_) => None,
         })
     }
 
     async fn account_idle_goal_progress(
         &self,
         event_id: &str,
-        mode: genex_state::GoalAccountingMode,
+        mode: ruxex_state::GoalAccountingMode,
         budget_limited_goal_disposition: BudgetLimitedGoalDisposition,
     ) -> Result<Option<AccountedGoalProgress>, String> {
         let accounting = self.accounting_state();
@@ -605,7 +605,7 @@ impl GoalRuntimeHandle {
             .await
             .map_err(|err| err.to_string())?;
         Ok(match outcome {
-            genex_state::GoalAccountingOutcome::Updated(goal) => {
+            ruxex_state::GoalAccountingOutcome::Updated(goal) => {
                 let goal_id = goal.goal_id.clone();
                 self.inner
                     .metrics
@@ -623,7 +623,7 @@ impl GoalRuntimeHandle {
                 );
                 Some(AccountedGoalProgress { goal, goal_id })
             }
-            genex_state::GoalAccountingOutcome::Unchanged(_) => {
+            ruxex_state::GoalAccountingOutcome::Unchanged(_) => {
                 accounting.reset_idle_progress_baseline_and_clear_active_goal();
                 None
             }
@@ -633,7 +633,7 @@ impl GoalRuntimeHandle {
     async fn current_goal_status_for_metrics(
         &self,
         expected_goal_id: Option<&str>,
-    ) -> Result<Option<genex_state::ThreadGoalStatus>, String> {
+    ) -> Result<Option<ruxex_state::ThreadGoalStatus>, String> {
         let goal = self
             .inner
             .state_dbs

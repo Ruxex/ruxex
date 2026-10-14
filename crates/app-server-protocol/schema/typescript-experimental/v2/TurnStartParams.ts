@@ -27,10 +27,10 @@ disabledPluginIds?: Array<string> | null, clientUserMessageId?: string | null, i
  */
 turnTrigger?: string | null, toolOutput?: TurnToolOutput | null,
 /**
- * Optional metadata to enrich Genex's ResponsesAPI turn metadata.
+ * Optional metadata to enrich Ruxex's ResponsesAPI turn metadata.
  *
  * Entries are flattened into the JSON string sent as
- * `client_metadata["x-genex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
+ * `client_metadata["x-ruxex-turn-metadata"]` on ResponsesAPI HTTP and websocket requests.
  *
  * They are not sent as top-level ResponsesAPI `client_metadata` keys, and reserved keys
  * such as `session_id`, `thread_id`, `turn_id`, and `window_id` cannot be overridden.

@@ -1,5 +1,5 @@
 use super::*;
-use genex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::Arg0DispatchPaths;
 use pretty_assertions::assert_eq;
 
 fn read_only_selection() -> PermissionProfileSelection {

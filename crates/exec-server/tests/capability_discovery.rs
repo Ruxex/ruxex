@@ -12,44 +12,44 @@ use common::exec_server::exec_server;
 use common::exec_server::exec_server_with_env;
 #[cfg(target_os = "linux")]
 use fake_bwrap::write_fake_bwrap;
-use genex_exec_server::CAPABILITY_ROOTS_DISCOVER_METHOD;
-use genex_exec_server::CapabilityRootDiscovery;
-use genex_exec_server::CapabilityRootsDiscoverParams;
-use genex_exec_server::CapabilityRootsDiscoverResponse;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::InitializeParams;
-use genex_exec_server::InitializeResponse;
-use genex_exec_server_protocol::CapabilityRootDiscoverRequest;
-use genex_exec_server_protocol::EXEC_METHOD;
+use ruxex_exec_server::CAPABILITY_ROOTS_DISCOVER_METHOD;
+use ruxex_exec_server::CapabilityRootDiscovery;
+use ruxex_exec_server::CapabilityRootsDiscoverParams;
+use ruxex_exec_server::CapabilityRootsDiscoverResponse;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::InitializeParams;
+use ruxex_exec_server::InitializeResponse;
+use ruxex_exec_server_protocol::CapabilityRootDiscoverRequest;
+use ruxex_exec_server_protocol::EXEC_METHOD;
 #[cfg(unix)]
-use genex_exec_server_protocol::EXEC_READ_METHOD;
-use genex_exec_server_protocol::FS_OPEN_METHOD;
+use ruxex_exec_server_protocol::EXEC_READ_METHOD;
+use ruxex_exec_server_protocol::FS_OPEN_METHOD;
 #[cfg(unix)]
-use genex_exec_server_protocol::FS_READ_BLOCK_METHOD;
-use genex_exec_server_protocol::FS_READ_FILE_METHOD;
+use ruxex_exec_server_protocol::FS_READ_BLOCK_METHOD;
+use ruxex_exec_server_protocol::FS_READ_FILE_METHOD;
 #[cfg(unix)]
-use genex_exec_server_protocol::FsReadBlockResponse;
-use genex_exec_server_protocol::FsReadFileResponse;
-use genex_exec_server_protocol::JSONRPCMessage;
-use genex_exec_server_protocol::JSONRPCResponse;
+use ruxex_exec_server_protocol::FsReadBlockResponse;
+use ruxex_exec_server_protocol::FsReadFileResponse;
+use ruxex_exec_server_protocol::JSONRPCMessage;
+use ruxex_exec_server_protocol::JSONRPCResponse;
 #[cfg(unix)]
-use genex_exec_server_protocol::ReadResponse;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::ReadResponse;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Result<()> {
     let root = tempfile::tempdir()?;
     write_file(
-        &root.path().join(".genex-plugin/plugin.json"),
+        &root.path().join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "demo",
   "interface": {"displayName": "Demo Plugin"},
@@ -73,7 +73,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
         "---\nname: deploy\ndescription: Deploy the service.\n---\n\nDeploy instructions.\n",
     )?;
     write_file(
-        &root.path().join("skills/deploy/agents/genex.yaml"),
+        &root.path().join("skills/deploy/agents/ruxex.yaml"),
         "policy:\n  allow_implicit_invocation: false\n",
     )?;
     write_file(
@@ -105,7 +105,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
     let plugin = discovery.plugin.as_ref().expect("root plugin");
     assert_eq!(
         plugin.manifest.path,
-        root_uri.join(".genex-plugin/plugin.json")?
+        root_uri.join(".ruxex-plugin/plugin.json")?
     );
     assert!(plugin.manifest.contents.contains("Demo Plugin"));
     assert_eq!(
@@ -119,7 +119,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
             .map(|file| file.path.clone())
             .collect::<Vec<_>>(),
         vec![
-            root_uri.join(".genex-plugin/plugin.json")?,
+            root_uri.join(".ruxex-plugin/plugin.json")?,
             root_uri.join("nested/.claude-plugin/plugin.json")?,
             root_uri.join("nested-cursor/.cursor-plugin/plugin.json")?,
         ]
@@ -141,7 +141,7 @@ async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Resu
             (root_uri.join("nested/skills/audit/SKILL.md")?, None,),
             (
                 root_uri.join("skills/deploy/SKILL.md")?,
-                Some(root_uri.join("skills/deploy/agents/genex.yaml")?),
+                Some(root_uri.join("skills/deploy/agents/ruxex.yaml")?),
             ),
         ]
     );
@@ -1075,7 +1075,7 @@ async fn sandboxed_discovery_follows_only_permitted_external_symlinks() -> anyho
     let root = tempfile::tempdir()?;
     let external = tempfile::tempdir()?;
     write_file(
-        &root.path().join(".genex-plugin/plugin.json"),
+        &root.path().join(".ruxex-plugin/plugin.json"),
         r#"{"name":"linked-plugin","mcpServers":"./external-mcp.json"}"#,
     )?;
     write_file(

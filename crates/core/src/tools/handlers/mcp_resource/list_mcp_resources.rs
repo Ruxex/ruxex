@@ -4,9 +4,9 @@ use crate::tools::context::ToolPayload;
 use crate::tools::handlers::mcp_resource_spec::create_list_mcp_resources_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_protocol::protocol::McpInvocation;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_protocol::protocol::McpInvocation;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 
 use super::ListResourceArgs;
 use super::ListResourcesPayload;
@@ -30,7 +30,7 @@ impl ToolExecutor<ToolInvocation> for ListMcpResourcesHandler {
         true
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

@@ -1,17 +1,17 @@
-use genex_state::SqliteConfig;
+use ruxex_state::SqliteConfig;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 pub trait RolloutConfigView {
-    fn genex_home(&self) -> &Path;
+    fn ruxex_home(&self) -> &Path;
     fn sqlite_config(&self) -> &SqliteConfig;
     fn cwd(&self) -> &Path;
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RolloutConfig {
-    pub genex_home: PathBuf,
+    pub ruxex_home: PathBuf,
     pub sqlite: SqliteConfig,
     pub cwd: PathBuf,
 }
@@ -21,7 +21,7 @@ pub type Config = RolloutConfig;
 impl RolloutConfig {
     pub fn from_view(view: &impl RolloutConfigView) -> Self {
         Self {
-            genex_home: view.genex_home().to_path_buf(),
+            ruxex_home: view.ruxex_home().to_path_buf(),
             sqlite: view.sqlite_config().clone(),
             cwd: view.cwd().to_path_buf(),
         }
@@ -29,8 +29,8 @@ impl RolloutConfig {
 }
 
 impl RolloutConfigView for RolloutConfig {
-    fn genex_home(&self) -> &Path {
-        self.genex_home.as_path()
+    fn ruxex_home(&self) -> &Path {
+        self.ruxex_home.as_path()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {
@@ -43,8 +43,8 @@ impl RolloutConfigView for RolloutConfig {
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
-    fn genex_home(&self) -> &Path {
-        (*self).genex_home()
+    fn ruxex_home(&self) -> &Path {
+        (*self).ruxex_home()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {
@@ -57,8 +57,8 @@ impl<T: RolloutConfigView + ?Sized> RolloutConfigView for &T {
 }
 
 impl<T: RolloutConfigView + ?Sized> RolloutConfigView for Arc<T> {
-    fn genex_home(&self) -> &Path {
-        self.as_ref().genex_home()
+    fn ruxex_home(&self) -> &Path {
+        self.as_ref().ruxex_home()
     }
 
     fn sqlite_config(&self) -> &SqliteConfig {

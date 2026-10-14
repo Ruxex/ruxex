@@ -1,12 +1,12 @@
-use genex_core::test_support::all_model_presets;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::model_types::default_input_modalities;
+use ruxex_core::test_support::all_model_presets;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::default_input_modalities;
 use std::path::Path;
 
 /// Convert a ModelPreset to ModelInfo for cache storage.
@@ -71,11 +71,11 @@ fn preset_to_info(preset: &ModelPreset, priority: i32) -> ModelInfo {
     }
 }
 
-/// Write a models_cache.json file to the genex home directory.
+/// Write a models_cache.json file to the ruxex home directory.
 /// This prevents ModelsManager from making network requests to refresh models.
 /// The cache will be treated as fresh (within TTL) and used instead of fetching from the network.
 /// Uses bundled-catalog-derived presets, converted to ModelInfo format.
-pub async fn write_models_cache(genex_home: &Path) -> std::io::Result<()> {
+pub async fn write_models_cache(ruxex_home: &Path) -> std::io::Result<()> {
     // Get a stable bundled-catalog-derived preset list and filter for picker-visible entries.
     let presets: Vec<&ModelPreset> = all_model_presets()
         .iter()
@@ -93,33 +93,33 @@ pub async fn write_models_cache(genex_home: &Path) -> std::io::Result<()> {
         })
         .collect();
 
-    write_models_cache_with_models(genex_home, models).await
+    write_models_cache_with_models(ruxex_home, models).await
 }
 
 /// Write a models_cache.json file with specific models.
 /// Useful when tests need specific models to be available.
 pub async fn write_models_cache_with_models(
-    genex_home: &Path,
+    ruxex_home: &Path,
     models: Vec<ModelInfo>,
 ) -> std::io::Result<()> {
-    let config = genex_core::config::ConfigBuilder::default()
-        .loader_overrides(genex_config::LoaderOverrides::without_managed_config_for_tests())
-        .genex_home(genex_home.to_path_buf())
+    let config = ruxex_core::config::ConfigBuilder::default()
+        .loader_overrides(ruxex_config::LoaderOverrides::without_managed_config_for_tests())
+        .ruxex_home(ruxex_home.to_path_buf())
         .build()
         .await?;
-    let auth = genex_login::GenexAuth::from_auth_storage(
-        genex_home,
+    let auth = ruxex_login::RuxexAuth::from_auth_storage(
+        ruxex_home,
         config.cli_auth_credentials_store_mode,
         Some(&config.managed_auth_base_url),
         config.auth_keyring_backend_kind(),
-        &genex_login::test_support::transport_default_auth_route_config(),
+        &ruxex_login::test_support::transport_default_auth_route_config(),
     )
     .await?;
-    let cache = genex_model_provider::test_support::models_cache_entry(
+    let cache = ruxex_model_provider::test_support::models_cache_entry(
         &config.model_provider,
         auth.as_ref(),
         models,
     );
-    let cache_path = genex_home.join("models_cache.json");
+    let cache_path = ruxex_home.join("models_cache.json");
     std::fs::write(cache_path, serde_json::to_string_pretty(&cache)?)
 }

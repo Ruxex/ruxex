@@ -2,10 +2,10 @@ use super::LocalThreadStore;
 use crate::CreateThreadParams;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use genex_rollout::RolloutConfig;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::RolloutRecorderParams;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_rollout::RolloutConfig;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::RolloutRecorderParams;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 pub(super) async fn create_thread(
     store: &LocalThreadStore,
@@ -20,7 +20,7 @@ pub(super) async fn create_thread(
             message: "local thread store requires a cwd".to_string(),
         })?;
     let config = RolloutConfig {
-        genex_home: store.config.genex_home.clone(),
+        ruxex_home: store.config.ruxex_home.clone(),
         sqlite: store.config.sqlite.clone(),
         cwd,
     };

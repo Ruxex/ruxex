@@ -5,27 +5,27 @@ use std::fs;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_core::sandboxing::SandboxPermissions;
-use genex_features::Feature;
-use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
-use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
-use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
-use genex_protocol::dynamic_tools::DynamicToolSpec;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_core::sandboxing::SandboxPermissions;
+use ruxex_features::Feature;
+use ruxex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use ruxex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
+use ruxex_protocol::dynamic_tools::DynamicToolNamespaceTool;
+use ruxex_protocol::dynamic_tools::DynamicToolSpec;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::assert_regex_match;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -42,8 +42,8 @@ use core_test_support::responses::strip_response_item_ids_from_json;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::local;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -81,7 +81,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.tool_registry.error_on_tool_collisions = true;
         config.update_plan_enabled = true;
         if pre_compact {
@@ -126,7 +126,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
             defer_loading: false,
         })]
     };
-    let genex_core::NewThread { thread, .. } = test
+    let ruxex_core::NewThread { thread, .. } = test
         .thread_manager
         .start_thread(StartThreadOptions {
             dynamic_tools,
@@ -140,7 +140,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
                 text: "use the planning tool".to_string(),
                 text_elements: Vec::new(),
             }])
-            .on_start(genex_core::TurnStartOptions {
+            .on_start(ruxex_core::TurnStartOptions {
                 root_turn_id: Some("root-turn".into()),
                 ..Default::default()
             }),
@@ -168,7 +168,7 @@ async fn strict_tool_collisions_fail_the_turn_before_sampling(
     thread.flush_rollout().await?;
     let history = thread.load_history(/*include_archived*/ false).await?;
     let attribution = history.items.iter().find_map(|item| match item {
-        genex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event))
+        ruxex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event))
             if event.turn_id == completed.turn_id =>
         {
             event.root_turn_id.as_deref()
@@ -203,13 +203,13 @@ async fn strict_tool_collisions_do_not_duplicate_unrelated_compaction_errors() -
     });
     let compact_mock =
         mount_response_once(&server, ResponseTemplate::new(400).set_body_json(&error)).await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.tool_registry.error_on_tool_collisions = true;
         config.model_auto_compact_token_limit = Some(0);
     });
     let test = builder.build_with_auto_env(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "trigger compaction".to_string(),
             text_elements: Vec::new(),
@@ -217,7 +217,7 @@ async fn strict_tool_collisions_do_not_duplicate_unrelated_compaction_errors() -
         .await?;
 
     let mut errors = Vec::new();
-    wait_for_event(&test.genex, |event| match event {
+    wait_for_event(&test.ruxex, |event| match event {
         EventMsg::Error(error) => {
             errors.push(error.message.clone());
             false
@@ -251,7 +251,7 @@ async fn empty_turn_environments_omits_environment_backed_tools() -> Result<()> 
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.update_plan_enabled = true;
         config
             .features
@@ -293,7 +293,7 @@ async fn turn_environment_selection_keeps_environment_backed_tools() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -321,7 +321,7 @@ async fn custom_tool_unknown_returns_custom_output_error() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await?;
 
     let call_id = "custom-unsupported";
@@ -374,7 +374,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     builder = builder.with_config(|config| {
         let _ = config.features.enable(Feature::ExecutedToolCallMetadata);
     });
@@ -499,7 +499,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
     let expected_escaped_calls = json!([{
         "name": format!("{namespace}__{tool_name}"),
         "arguments": {
-            "_genex_executed_tool_call_truncated": {
+            "_ruxex_executed_tool_call_truncated": {
                 "original_bytes": serde_json::to_vec(&escaped_input)?.len(),
                 "max_bytes": 8 * 1024,
             },
@@ -517,7 +517,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
             ev_response_created("resp-5"),
             ev_custom_tool_call(
                 direct_exec_call_id,
-                genex_code_mode::PUBLIC_TOOL_NAME,
+                ruxex_code_mode::PUBLIC_TOOL_NAME,
                 input,
             ),
             ev_completed("resp-5"),
@@ -558,7 +558,7 @@ async fn namespaced_custom_tool_call_preserves_namespace_through_dispatch_and_re
         tool_call_metadata(direct_exec_output),
         json!({
             "executed_tool_calls": [{
-                "name": genex_code_mode::PUBLIC_TOOL_NAME,
+                "name": ruxex_code_mode::PUBLIC_TOOL_NAME,
                 "arguments": input,
             }],
             "tool_calls_complete": true,
@@ -573,14 +573,14 @@ async fn exec_command_escalated_permissions_rejected_then_ok() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_config(|config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         });
     let test = builder.build(&server).await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             permission_profile: Some(PermissionProfile::Disabled),
@@ -675,7 +675,7 @@ async fn sandbox_denied_exec_command_returns_original_output() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let fixture = builder.build(&server).await?;
 
     let call_id = "sandbox-denied-exec-command";
@@ -763,7 +763,7 @@ async fn exec_command_enforces_glob_deny_read_policy() -> Result<()> {
     skip_if_sandbox!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("legacy-model")
         .with_config(move |config| {
             let mut file_system_sandbox_policy = FileSystemSandboxPolicy::default();
@@ -879,8 +879,8 @@ async fn collect_tools(availability: CommandToolAvailability) -> Result<Vec<Stri
     let mock = mount_sse_sequence(&server, responses).await;
 
     let mut builder = match availability {
-        CommandToolAvailability::Default => test_genex(),
-        CommandToolAvailability::ManagedUnifiedExecDisabled => test_genex()
+        CommandToolAvailability::Default => test_ruxex(),
+        CommandToolAvailability::ManagedUnifiedExecDisabled => test_ruxex()
             .with_cloud_config_bundle(
                 CloudConfigBundleFixture::loader_with_enterprise_requirement(
                     r#"
@@ -890,14 +890,14 @@ shell_tool = true
 "#,
                 ),
             ),
-        CommandToolAvailability::ShellToolDisabled => test_genex().with_config(|config| {
+        CommandToolAvailability::ShellToolDisabled => test_ruxex().with_config(|config| {
             config
                 .features
                 .disable(Feature::ShellTool)
                 .expect("test config should allow feature update");
         }),
         CommandToolAvailability::ModelDisabled => {
-            test_genex().with_model_info_override("legacy-model", |model| {
+            test_ruxex().with_model_info_override("legacy-model", |model| {
                 model.shell_type = ConfigShellToolType::Disabled;
             })
         }

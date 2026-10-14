@@ -1,8 +1,8 @@
 //! Temporary cleanup-hook allowlist shared by local and executor plugin discovery.
 //! This narrowly authorizes known MCP cleanup calls; it does not verify plugin signatures.
 
-use genex_config::HookHandlerConfig;
-use genex_protocol::protocol::HookEventName;
+use ruxex_config::HookHandlerConfig;
+use ruxex_protocol::protocol::HookEventName;
 
 struct BundledHook {
     plugin_id: &'static str,
@@ -20,7 +20,7 @@ enum BundledHookTarget {
 // Keep unsigned plugin exceptions together so they can be removed as signing lands.
 const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
     BundledHook {
-        plugin_id: "browser@genex-bundled",
+        plugin_id: "browser@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -32,7 +32,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome@genex-bundled",
+        plugin_id: "chrome@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -44,7 +44,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome-dev@genex-bundled",
+        plugin_id: "chrome-dev@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -56,7 +56,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "chrome-internal@genex-bundled",
+        plugin_id: "chrome-internal@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -68,7 +68,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "computer-use@genex-bundled",
+        plugin_id: "computer-use@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,
@@ -80,7 +80,7 @@ const ALLOWLISTED_BUNDLED_HOOKS: &[BundledHook] = &[
         },
     },
     BundledHook {
-        plugin_id: "unified-computer-use@genex-bundled",
+        plugin_id: "unified-computer-use@ruxex-bundled",
         events: &[
             HookEventName::Stop,
             HookEventName::Interrupt,

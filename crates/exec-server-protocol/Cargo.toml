@@ -1,11 +1,11 @@
 [package]
-name = "genex-exec-server-protocol"
+name = "ruxex-exec-server-protocol"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_exec_server_protocol"
+name = "ruxex_exec_server_protocol"
 path = "src/lib.rs"
 doctest = false
 
@@ -14,11 +14,11 @@ workspace = true
 
 [dependencies]
 base64 = { workspace = true }
-genex-file-system = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-protocol = { workspace = true }
-genex-shell-command = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["arbitrary_precision", "raw_value"] }
 

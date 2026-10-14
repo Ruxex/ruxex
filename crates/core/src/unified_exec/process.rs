@@ -12,22 +12,22 @@ use tokio::task::JoinHandle;
 use tokio::time::Duration;
 use tokio_util::sync::CancellationToken;
 
-use genex_exec_server::ExecProcess;
-use genex_exec_server::ExecProcessEvent;
-use genex_exec_server::ProcessSignal as ExecServerProcessSignal;
-use genex_exec_server::ReadResponse as ExecReadResponse;
-use genex_exec_server::StartedExecProcess;
-use genex_exec_server::WriteStatus;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::is_likely_sandbox_denied;
-use genex_sandboxing::record_filesystem_sandbox_violation;
-use genex_utils_output_truncation::formatted_truncate_text;
-use genex_utils_pty::ExecCommandSession;
-use genex_utils_pty::ProcessSignal as PtyProcessSignal;
-use genex_utils_pty::SpawnedPty;
+use ruxex_exec_server::ExecProcess;
+use ruxex_exec_server::ExecProcessEvent;
+use ruxex_exec_server::ProcessSignal as ExecServerProcessSignal;
+use ruxex_exec_server::ReadResponse as ExecReadResponse;
+use ruxex_exec_server::StartedExecProcess;
+use ruxex_exec_server::WriteStatus;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::is_likely_sandbox_denied;
+use ruxex_sandboxing::record_filesystem_sandbox_violation;
+use ruxex_utils_output_truncation::formatted_truncate_text;
+use ruxex_utils_pty::ExecCommandSession;
+use ruxex_utils_pty::ProcessSignal as PtyProcessSignal;
+use ruxex_utils_pty::SpawnedPty;
 
 use super::UNIFIED_EXEC_OUTPUT_MAX_BYTES;
 use super::UNIFIED_EXEC_OUTPUT_MAX_TOKENS;
@@ -351,7 +351,7 @@ impl UnifiedExecProcess {
             stderr_rx,
             mut exit_rx,
         } = spawned;
-        let output_rx = genex_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
+        let output_rx = ruxex_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
         let mut managed = Self::new(
             ProcessHandle::Local(Box::new(process_handle)),
             sandbox_type,

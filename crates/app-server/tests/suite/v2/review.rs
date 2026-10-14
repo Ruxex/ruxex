@@ -5,31 +5,31 @@ use app_test_support::create_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::create_mock_responses_server_sequence;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::DeprecationNoticeNotification;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ReviewDelivery;
-use genex_app_server_protocol::ReviewStartParams;
-use genex_app_server_protocol::ReviewStartResponse;
-use genex_app_server_protocol::ReviewTarget;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStartedNotification;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_features::Feature;
-use genex_skills::system_cache_root_dir;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::DeprecationNoticeNotification;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ReviewDelivery;
+use ruxex_app_server_protocol::ReviewStartParams;
+use ruxex_app_server_protocol::ReviewStartResponse;
+use ruxex_app_server_protocol::ReviewTarget;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStartedNotification;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_features::Feature;
+use ruxex_skills::system_cache_root_dir;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -44,11 +44,11 @@ const COLLIDING_REVIEW_SKILL_MARKER: &str = "COLLIDING_REVIEW_SKILL_MARKER";
 #[tokio::test]
 async fn review_start_rejects_detached_delivery_for_paginated_parent() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;
@@ -118,11 +118,11 @@ async fn review_start_runs_review_turn_and_emits_code_review_item(
     .to_string();
     let server = create_mock_responses_server_repeating_assistant(&review_payload).await;
 
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let thread_id = start_default_thread(&mut mcp).await?;
@@ -228,15 +228,15 @@ async fn review_start_exec_approval_item_id_matches_command_execution_item() -> 
     ];
     let server = create_mock_responses_server_sequence(responses).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_provider_name("Mock provider")
         .with_approval_policy("on-request")
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let thread_id = start_default_thread(&mut mcp).await?;
@@ -292,7 +292,7 @@ async fn review_start_exec_approval_item_id_matches_command_execution_item() -> 
 
     mcp.send_response(
         request_id,
-        serde_json::json!({ "decision": genex_protocol::protocol::ReviewDecision::Approved }),
+        serde_json::json!({ "decision": ruxex_protocol::protocol::ReviewDecision::Approved }),
     )
     .await?;
     timeout(
@@ -307,11 +307,11 @@ async fn review_start_exec_approval_item_id_matches_command_execution_item() -> 
 #[tokio::test]
 async fn review_start_rejects_empty_base_branch() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let thread_id = start_default_thread(&mut mcp).await?;
@@ -361,10 +361,10 @@ async fn review_start_with_detached_delivery_returns_new_thread_id() -> Result<(
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let startup_provider = responses::start_mock_server().await;
-    create_config_toml(genex_home.path(), &startup_provider.uri())?;
-    let colliding_skill_dir = genex_home.path().join("skills/review-agent-collision");
+    create_config_toml(ruxex_home.path(), &startup_provider.uri())?;
+    let colliding_skill_dir = ruxex_home.path().join("skills/review-agent-collision");
     std::fs::create_dir_all(&colliding_skill_dir)?;
     std::fs::write(
         colliding_skill_dir.join("SKILL.md"),
@@ -372,8 +372,8 @@ async fn review_start_with_detached_delivery_returns_new_thread_id() -> Result<(
             "---\nname: review-agent\ndescription: Colliding user review skill.\n---\n\n{COLLIDING_REVIEW_SKILL_MARKER}\n"
         ),
     )?;
-    let canonical_genex_home = std::fs::canonicalize(genex_home.path())?.try_into()?;
-    let review_skill_path = system_cache_root_dir(&canonical_genex_home)
+    let canonical_ruxex_home = std::fs::canonicalize(ruxex_home.path())?.try_into()?;
+    let review_skill_path = system_cache_root_dir(&canonical_ruxex_home)
         .join("review-agent")
         .join("SKILL.md");
     let expected_prompt = format!(
@@ -382,7 +382,7 @@ async fn review_start_with_detached_delivery_returns_new_thread_id() -> Result<(
     );
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -495,11 +495,11 @@ async fn review_start_with_detached_delivery_returns_new_thread_id() -> Result<(
 #[tokio::test]
 async fn review_start_rejects_empty_commit_sha() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let thread_id = start_default_thread(&mut mcp).await?;
@@ -532,11 +532,11 @@ async fn review_start_rejects_empty_commit_sha() -> Result<()> {
 #[tokio::test]
 async fn review_start_rejects_empty_custom_instructions() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri())?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let thread_id = start_default_thread(&mut mcp).await?;
@@ -606,9 +606,9 @@ async fn materialize_thread_rollout(mcp: &mut TestAppServer, thread_id: &str) ->
     Ok(())
 }
 
-fn create_config_toml(genex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+fn create_config_toml(ruxex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
     MockResponsesConfig::new(server_uri)
         .with_provider_name("Mock provider")
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home)
+        .write(ruxex_home)
 }

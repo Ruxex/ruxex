@@ -22,7 +22,7 @@ members = [
     "crates/code-mode-host",
     "crates/code-mode-protocol",
     "crates/code-mode-runtime",
-    "crates/genex-home",
+    "crates/ruxex-home",
     "crates/cli",
     "crates/collaboration-mode-templates",
     "crates/config",
@@ -59,7 +59,7 @@ members = [
     "crates/file-watcher",
     "crates/linux-sandbox",
     "crates/login",
-    "crates/genex-mcp",
+    "crates/ruxex-mcp",
     "crates/mermaid",
     "crates/model-provider-info",
     "crates/models-manager",
@@ -108,14 +108,14 @@ members = [
     "crates/utils/fuzzy-match",
     "crates/utils/stream-parser",
     "crates/utils/template",
-    "crates/genex-client",
-    "crates/genex-api",
+    "crates/ruxex-client",
+    "crates/ruxex-api",
     "crates/state",
     "crates/terminal-detection",
     "crates/test-binary-support",
     "crates/thread-store",
     "crates/uds",
-    "crates/genex-experimental-api-macros",
+    "crates/ruxex-experimental-api-macros",
     "crates/plugin",
     "crates/model-provider",
     "apps/desktop/src-tauri",
@@ -134,121 +134,121 @@ license = "Apache-2.0"
 [workspace.dependencies]
 # Internal
 app_test_support = { path = "crates/app-server/tests/common" }
-genex-agent-graph-store = { path = "crates/agent-graph-store" }
-genex-agent-roles = { path = "crates/agent-roles" }
-genex-ansi-escape = { path = "crates/ansi-escape" }
-genex-api = { path = "crates/genex-api" }
-genex-attachment-store = { path = "crates/attachment-store" }
-genex-app-server = { path = "crates/app-server" }
-genex-app-server-transport = { path = "crates/app-server-transport" }
-genex-app-server-daemon = { path = "crates/app-server-daemon" }
-genex-app-server-client = { path = "crates/app-server-client" }
-genex-app-server-protocol = { path = "crates/app-server-protocol" }
-genex-app-server-protocol-noop-macros = { path = "crates/app-server-protocol-noop-macros" }
-genex-app-server-test-client = { path = "crates/app-server-test-client" }
-genex-apply-patch = { path = "crates/apply-patch" }
-genex-arg0 = { path = "crates/arg0" }
-genex-async-utils = { path = "crates/async-utils" }
-genex-build-info = { path = "crates/build-info" }
-genex-client = { path = "crates/genex-client" }
-genex-cli = { path = "crates/cli" }
-genex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }
-genex-code-mode = { path = "crates/code-mode" }
-genex-code-mode-protocol = { path = "crates/code-mode-protocol" }
-genex-code-mode-runtime = { path = "crates/code-mode-runtime" }
-genex-home = { path = "crates/genex-home" }
-genex-http-client = { path = "crates/http-client" }
-genex-websocket-client = { path = "crates/websocket-client" }
-genex-config = { path = "crates/config" }
-genex-credential-broker = { path = "crates/credential-broker" }
-genex-agent-extension = { path = "crates/ext/agent" }
-genex-context-fragments = { path = "crates/context-fragments" }
-genex-core = { path = "crates/core" }
-genex-core-api = { path = "crates/core-api" }
-genex-core-plugins = { path = "crates/core-plugins" }
-genex-diagnostics = { path = "crates/diagnostics" }
-genex-exec = { path = "crates/exec" }
-genex-file-system = { path = "crates/file-system" }
-genex-exec-server-protocol = { path = "crates/exec-server-protocol" }
-genex-exec-server = { path = "crates/exec-server" }
-genex-exec-server-test-support = { path = "crates/exec-server/tests/support" }
-genex-execpolicy = { path = "crates/execpolicy" }
-genex-extension-api = { path = "crates/ext/extension-api" }
-genex-extension-items = { path = "crates/ext/items" }
-genex-goal-extension = { path = "crates/ext/goal" }
-genex-history-notes-extension = { path = "crates/ext/history-notes" }
-genex-experimental-api-macros = { path = "crates/genex-experimental-api-macros" }
-genex-features = { path = "crates/features" }
-genex-install-context = { path = "crates/install-context" }
-genex-file-search = { path = "crates/file-search" }
-genex-file-watcher = { path = "crates/file-watcher" }
-genex-git-utils = { path = "crates/git-utils" }
-genex-hooks = { path = "crates/hooks" }
-genex-history = { path = "crates/history" }
-genex-keyring-store = { path = "crates/keyring-store" }
-genex-linux-sandbox = { path = "crates/linux-sandbox" }
-genex-login = { path = "crates/login" }
-genex-mermaid = { path = "crates/mermaid" }
-genex-message-history = { path = "crates/message-history" }
-genex-web-search-extension = { path = "crates/ext/web-search" }
-genex-mcp = { path = "crates/genex-mcp" }
-genex-mcp-extension = { path = "crates/ext/mcp" }
-genex-model-provider-info = { path = "crates/model-provider-info" }
-genex-models-manager = { path = "crates/models-manager" }
-genex-providers = { path = "crates/providers" }
-genex-network-proxy = { path = "crates/network-proxy" }
-genex-otel = { path = "crates/otel" }
-genex-otel-trace-websocket = { path = "crates/otel-trace-websocket" }
-genex-plugin = { path = "crates/plugin" }
-genex-model-provider = { path = "crates/model-provider" }
-genex-process-hardening = { path = "crates/process-hardening" }
-genex-protocol = { path = "crates/protocol" }
-genex-prompts = { path = "crates/prompts" }
-genex-queue-extension = { path = "crates/ext/queue" }
-genex-response-debug-context = { path = "crates/response-debug-context" }
-genex-rmcp-client = { path = "crates/rmcp-client" }
-genex-rollout = { path = "crates/rollout" }
-genex-rollout-trace = { path = "crates/rollout-trace" }
-genex-sandboxing = { path = "crates/sandboxing" }
-genex-secrets = { path = "crates/secrets" }
-genex-shell-command = { path = "crates/shell-command" }
-genex-skills-extension = { path = "crates/ext/skills" }
-genex-skills = { path = "crates/skills" }
-genex-state = { path = "crates/state" }
-genex-stdio-to-uds = { path = "crates/stdio-to-uds" }
-genex-terminal-detection = { path = "crates/terminal-detection" }
-genex-test-binary-support = { path = "crates/test-binary-support" }
-genex-thread-store = { path = "crates/thread-store" }
-genex-tools = { path = "crates/tools" }
-genex-tcp-tunnel = { path = "crates/tcp-tunnel" }
-genex-tui = { path = "crates/tui" }
-genex-uds = { path = "crates/uds" }
-genex-utils-absolute-path = { path = "crates/utils/absolute-path" }
-genex-utils-approval-presets = { path = "crates/utils/approval-presets" }
-genex-utils-audio = { path = "crates/utils/audio" }
-genex-utils-cache = { path = "crates/utils/cache" }
-genex-utils-cargo-bin = { path = "crates/utils/cargo-bin" }
-genex-utils-cli = { path = "crates/utils/cli" }
-genex-utils-elapsed = { path = "crates/utils/elapsed" }
-genex-utils-fuzzy-match = { path = "crates/utils/fuzzy-match" }
-genex-utils-git-discovery = { path = "crates/utils/git-discovery" }
-genex-utils-home-dir = { path = "crates/utils/home-dir" }
-genex-utils-image = { path = "crates/utils/image" }
-genex-utils-json-to-toml = { path = "crates/utils/json-to-toml" }
-genex-utils-output-truncation = { path = "crates/utils/output-truncation" }
-genex-utils-path = { path = "crates/utils/path-utils" }
-genex-utils-path-uri = { path = "crates/utils/path-uri" }
-genex-utils-plugins = { path = "crates/utils/plugins" }
-genex-utils-pty = { path = "crates/utils/pty" }
-genex-utils-redacted-string = { path = "crates/utils/redacted-string" }
-genex-utils-rustls-provider = { path = "crates/utils/rustls-provider" }
-genex-utils-sandbox-summary = { path = "crates/utils/sandbox-summary" }
-genex-worktree = { path = "crates/worktree" }
-genex-utils-sleep-inhibitor = { path = "crates/utils/sleep-inhibitor" }
-genex-utils-stream-parser = { path = "crates/utils/stream-parser" }
-genex-utils-string = { path = "crates/utils/string" }
-genex-utils-template = { path = "crates/utils/template" }
-genex-user-verification = { path = "crates/user-verification" }
+ruxex-agent-graph-store = { path = "crates/agent-graph-store" }
+ruxex-agent-roles = { path = "crates/agent-roles" }
+ruxex-ansi-escape = { path = "crates/ansi-escape" }
+ruxex-api = { path = "crates/ruxex-api" }
+ruxex-attachment-store = { path = "crates/attachment-store" }
+ruxex-app-server = { path = "crates/app-server" }
+ruxex-app-server-transport = { path = "crates/app-server-transport" }
+ruxex-app-server-daemon = { path = "crates/app-server-daemon" }
+ruxex-app-server-client = { path = "crates/app-server-client" }
+ruxex-app-server-protocol = { path = "crates/app-server-protocol" }
+ruxex-app-server-protocol-noop-macros = { path = "crates/app-server-protocol-noop-macros" }
+ruxex-app-server-test-client = { path = "crates/app-server-test-client" }
+ruxex-apply-patch = { path = "crates/apply-patch" }
+ruxex-arg0 = { path = "crates/arg0" }
+ruxex-async-utils = { path = "crates/async-utils" }
+ruxex-build-info = { path = "crates/build-info" }
+ruxex-client = { path = "crates/ruxex-client" }
+ruxex-cli = { path = "crates/cli" }
+ruxex-collaboration-mode-templates = { path = "crates/collaboration-mode-templates" }
+ruxex-code-mode = { path = "crates/code-mode" }
+ruxex-code-mode-protocol = { path = "crates/code-mode-protocol" }
+ruxex-code-mode-runtime = { path = "crates/code-mode-runtime" }
+ruxex-home = { path = "crates/ruxex-home" }
+ruxex-http-client = { path = "crates/http-client" }
+ruxex-websocket-client = { path = "crates/websocket-client" }
+ruxex-config = { path = "crates/config" }
+ruxex-credential-broker = { path = "crates/credential-broker" }
+ruxex-agent-extension = { path = "crates/ext/agent" }
+ruxex-context-fragments = { path = "crates/context-fragments" }
+ruxex-core = { path = "crates/core" }
+ruxex-core-api = { path = "crates/core-api" }
+ruxex-core-plugins = { path = "crates/core-plugins" }
+ruxex-diagnostics = { path = "crates/diagnostics" }
+ruxex-exec = { path = "crates/exec" }
+ruxex-file-system = { path = "crates/file-system" }
+ruxex-exec-server-protocol = { path = "crates/exec-server-protocol" }
+ruxex-exec-server = { path = "crates/exec-server" }
+ruxex-exec-server-test-support = { path = "crates/exec-server/tests/support" }
+ruxex-execpolicy = { path = "crates/execpolicy" }
+ruxex-extension-api = { path = "crates/ext/extension-api" }
+ruxex-extension-items = { path = "crates/ext/items" }
+ruxex-goal-extension = { path = "crates/ext/goal" }
+ruxex-history-notes-extension = { path = "crates/ext/history-notes" }
+ruxex-experimental-api-macros = { path = "crates/ruxex-experimental-api-macros" }
+ruxex-features = { path = "crates/features" }
+ruxex-install-context = { path = "crates/install-context" }
+ruxex-file-search = { path = "crates/file-search" }
+ruxex-file-watcher = { path = "crates/file-watcher" }
+ruxex-git-utils = { path = "crates/git-utils" }
+ruxex-hooks = { path = "crates/hooks" }
+ruxex-history = { path = "crates/history" }
+ruxex-keyring-store = { path = "crates/keyring-store" }
+ruxex-linux-sandbox = { path = "crates/linux-sandbox" }
+ruxex-login = { path = "crates/login" }
+ruxex-mermaid = { path = "crates/mermaid" }
+ruxex-message-history = { path = "crates/message-history" }
+ruxex-web-search-extension = { path = "crates/ext/web-search" }
+ruxex-mcp = { path = "crates/ruxex-mcp" }
+ruxex-mcp-extension = { path = "crates/ext/mcp" }
+ruxex-model-provider-info = { path = "crates/model-provider-info" }
+ruxex-models-manager = { path = "crates/models-manager" }
+ruxex-providers = { path = "crates/providers" }
+ruxex-network-proxy = { path = "crates/network-proxy" }
+ruxex-otel = { path = "crates/otel" }
+ruxex-otel-trace-websocket = { path = "crates/otel-trace-websocket" }
+ruxex-plugin = { path = "crates/plugin" }
+ruxex-model-provider = { path = "crates/model-provider" }
+ruxex-process-hardening = { path = "crates/process-hardening" }
+ruxex-protocol = { path = "crates/protocol" }
+ruxex-prompts = { path = "crates/prompts" }
+ruxex-queue-extension = { path = "crates/ext/queue" }
+ruxex-response-debug-context = { path = "crates/response-debug-context" }
+ruxex-rmcp-client = { path = "crates/rmcp-client" }
+ruxex-rollout = { path = "crates/rollout" }
+ruxex-rollout-trace = { path = "crates/rollout-trace" }
+ruxex-sandboxing = { path = "crates/sandboxing" }
+ruxex-secrets = { path = "crates/secrets" }
+ruxex-shell-command = { path = "crates/shell-command" }
+ruxex-skills-extension = { path = "crates/ext/skills" }
+ruxex-skills = { path = "crates/skills" }
+ruxex-state = { path = "crates/state" }
+ruxex-stdio-to-uds = { path = "crates/stdio-to-uds" }
+ruxex-terminal-detection = { path = "crates/terminal-detection" }
+ruxex-test-binary-support = { path = "crates/test-binary-support" }
+ruxex-thread-store = { path = "crates/thread-store" }
+ruxex-tools = { path = "crates/tools" }
+ruxex-tcp-tunnel = { path = "crates/tcp-tunnel" }
+ruxex-tui = { path = "crates/tui" }
+ruxex-uds = { path = "crates/uds" }
+ruxex-utils-absolute-path = { path = "crates/utils/absolute-path" }
+ruxex-utils-approval-presets = { path = "crates/utils/approval-presets" }
+ruxex-utils-audio = { path = "crates/utils/audio" }
+ruxex-utils-cache = { path = "crates/utils/cache" }
+ruxex-utils-cargo-bin = { path = "crates/utils/cargo-bin" }
+ruxex-utils-cli = { path = "crates/utils/cli" }
+ruxex-utils-elapsed = { path = "crates/utils/elapsed" }
+ruxex-utils-fuzzy-match = { path = "crates/utils/fuzzy-match" }
+ruxex-utils-git-discovery = { path = "crates/utils/git-discovery" }
+ruxex-utils-home-dir = { path = "crates/utils/home-dir" }
+ruxex-utils-image = { path = "crates/utils/image" }
+ruxex-utils-json-to-toml = { path = "crates/utils/json-to-toml" }
+ruxex-utils-output-truncation = { path = "crates/utils/output-truncation" }
+ruxex-utils-path = { path = "crates/utils/path-utils" }
+ruxex-utils-path-uri = { path = "crates/utils/path-uri" }
+ruxex-utils-plugins = { path = "crates/utils/plugins" }
+ruxex-utils-pty = { path = "crates/utils/pty" }
+ruxex-utils-redacted-string = { path = "crates/utils/redacted-string" }
+ruxex-utils-rustls-provider = { path = "crates/utils/rustls-provider" }
+ruxex-utils-sandbox-summary = { path = "crates/utils/sandbox-summary" }
+ruxex-worktree = { path = "crates/worktree" }
+ruxex-utils-sleep-inhibitor = { path = "crates/utils/sleep-inhibitor" }
+ruxex-utils-stream-parser = { path = "crates/utils/stream-parser" }
+ruxex-utils-string = { path = "crates/utils/string" }
+ruxex-utils-template = { path = "crates/utils/template" }
+ruxex-user-verification = { path = "crates/user-verification" }
 core_test_support = { path = "crates/core/tests/common" }
 
 # External

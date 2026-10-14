@@ -9,16 +9,16 @@ use crate::agent::next_thread_spawn_depth;
 use crate::agent::role::DEFAULT_ROLE_NAME;
 use crate::agent_communication::AgentCommunicationContext;
 use crate::agent_communication::AgentCommunicationKind;
-use crate::genex_thread::ThreadConfigSnapshot;
+use crate::ruxex_thread::ThreadConfigSnapshot;
 use crate::session::multi_agents::resolve_usage_hints;
 use crate::tools::handlers::multi_agents_spec::SpawnAgentToolOptions;
 use crate::tools::handlers::multi_agents_spec::create_spawn_agent_tool_v2;
 use crate::tools::handlers::multi_agents_v2::message_tool::message_content;
-use genex_prompts::ResolvedModelMessages;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_tools::ToolSpec;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_tools::ToolSpec;
 
 #[derive(Default)]
 pub(crate) struct Handler {
@@ -47,7 +47,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         create_spawn_agent_tool_v2(self.options.clone(), self.description_override.as_deref())
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -199,7 +199,7 @@ async fn handle_spawn_agent(
     .await;
     let role_tag = role_name.unwrap_or(DEFAULT_ROLE_NAME);
     turn.session_telemetry.counter(
-        "genex.multi_agent.spawn",
+        "ruxex.multi_agent.spawn",
         /*inc*/ 1,
         &[("role", role_tag), ("version", "v2")],
     );

@@ -1,5 +1,5 @@
 [package]
-name = "genex-test-binary-support"
+name = "ruxex-test-binary-support"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,5 +13,5 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-arg0 = { workspace = true }
+ruxex-arg0 = { workspace = true }
 tempfile = { workspace = true }

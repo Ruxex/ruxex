@@ -1,17 +1,17 @@
 #![recursion_limit = "256"]
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
-use genex_arg0::Arg0DispatchPaths;
-use genex_code_mode::CodeModeSessionProvider;
-use genex_code_mode::GrpcCodeModeSessionProvider;
-use genex_config::LoaderOverrides;
-use genex_config::NoopThreadConfigLoader;
-use genex_core::config::Config;
-use genex_core::config::UnsupportedUntrustedApprovalPolicyError;
-use genex_core::resolve_installation_id;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_code_mode::CodeModeSessionProvider;
+use ruxex_code_mode::GrpcCodeModeSessionProvider;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_core::config::Config;
+use ruxex_core::config::UnsupportedUntrustedApprovalPolicyError;
+use ruxex_core::resolve_installation_id;
 #[cfg(debug_assertions)]
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::io::ErrorKind;
@@ -45,25 +45,25 @@ use crate::transport::route_outgoing_envelope;
 use crate::transport::start_control_socket_acceptor;
 use crate::transport::start_stdio_connection;
 use crate::transport::start_websocket_acceptor;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::TextPosition as AppTextPosition;
-use genex_app_server_protocol::TextRange as AppTextRange;
-use genex_app_server_transport::daemon_recovery_file_path;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLoadError;
-use genex_config::TextRange as CoreTextRange;
-use genex_core::ExecPolicyError;
-use genex_core::check_execpolicy_for_warnings;
-use genex_core::config::find_genex_home;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_features::Feature;
-use genex_login::CredentialManager;
-use genex_model_provider::mount_provider_home;
-use genex_protocol::protocol::SessionSource;
-use genex_rollout::state_db as rollout_state_db;
-use genex_state::log_db;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::TextPosition as AppTextPosition;
+use ruxex_app_server_protocol::TextRange as AppTextRange;
+use ruxex_app_server_transport::daemon_recovery_file_path;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLoadError;
+use ruxex_config::TextRange as CoreTextRange;
+use ruxex_core::ExecPolicyError;
+use ruxex_core::check_execpolicy_for_warnings;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_features::Feature;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_rollout::state_db as rollout_state_db;
+use ruxex_state::log_db;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
@@ -76,7 +76,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::registry::Registry;
 use tracing_subscriber::util::SubscriberInitExt;
 
-const SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY: &str = "Genex rebuilt its local database.";
+const SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY: &str = "Ruxex rebuilt its local database.";
 
 fn is_unsupported_untrusted_approval_policy_error(err: &std::io::Error) -> bool {
     err.get_ref().is_some_and(
@@ -106,7 +106,7 @@ mod extensions;
 mod filters;
 mod fs_watch;
 mod fuzzy_file_search;
-mod genex_home_metrics;
+mod ruxex_home_metrics;
 mod image_url;
 pub mod in_process;
 mod mcp_refresh;
@@ -141,14 +141,14 @@ pub use crate::transport::app_server_control_socket_path;
 pub use crate::transport::auth::AppServerWebsocketAuthArgs;
 pub use crate::transport::auth::AppServerWebsocketAuthSettings;
 pub use crate::transport::auth::WebsocketAuthCliMode;
-pub use genex_model_provider::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
+pub use ruxex_model_provider::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
 const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
-const OTEL_SERVICE_NAME: &str = "genex-app-server";
+const OTEL_SERVICE_NAME: &str = "ruxex-app-server";
 #[cfg(debug_assertions)]
-const TEST_USER_CONFIG_FILE_ENV_VAR: &str = "GENEX_APP_SERVER_TEST_USER_CONFIG_FILE";
+const TEST_USER_CONFIG_FILE_ENV_VAR: &str = "RUXEX_APP_SERVER_TEST_USER_CONFIG_FILE";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LogFormat {
@@ -361,14 +361,14 @@ fn project_config_warning(config: &Config) -> Option<ConfigWarningNotification> 
     let mut disabled_folders = Vec::new();
 
     for layer in config.config_layer_stack.all_layers_low_to_high() {
-        let ConfigLayerSource::Project { dot_genex_folder } = &layer.name else {
+        let ConfigLayerSource::Project { dot_ruxex_folder } = &layer.name else {
             continue;
         };
         let Some(disabled_reason) = &layer.disabled_reason else {
             continue;
         };
         disabled_folders.push((
-            dot_genex_folder.as_path().display().to_string(),
+            dot_ruxex_folder.as_path().display().to_string(),
             disabled_reason.clone(),
         ));
     }
@@ -623,14 +623,14 @@ async fn run_main_with_transport_options_and_optional_runtime(
             format!("error parsing -c overrides: {e}"),
         )
     })?;
-    let genex_home = find_genex_home()?;
+    let ruxex_home = find_ruxex_home()?;
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.genex_self_exe.clone(),
-        arg0_paths.genex_linux_sandbox_exe.clone(),
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
     )?;
     let ignore_user_config = loader_overrides.ignore_user_config;
     let config_manager = ConfigManager::new(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         cli_kv_overrides.clone(),
         loader_overrides,
         strict_config,
@@ -694,7 +694,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
                 .map(|(_, descriptor)| descriptor)
                 .cloned()
                 .unwrap_or_else(|| AppServerRuntimeBuilder::descriptor_for(&config.model_provider));
-            mount_provider_home(&config.genex_home, &descriptor).map_err(|error| {
+            mount_provider_home(&config.ruxex_home, &descriptor).map_err(|error| {
                 std::io::Error::new(
                     ErrorKind::InvalidData,
                     format!("failed to mount provider data root: {error}"),
@@ -723,8 +723,8 @@ async fn run_main_with_transport_options_and_optional_runtime(
         }
     };
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
-        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
+        ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
     );
     let code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>> =
         match &runtime_options.code_mode_host_transport {
@@ -747,8 +747,8 @@ async fn run_main_with_transport_options_and_optional_runtime(
     let environment_manager = if ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory()).await
     } else {
-        EnvironmentManager::from_genex_home(
-            genex_home.clone(),
+        EnvironmentManager::from_ruxex_home(
+            ruxex_home.clone(),
             Some(local_runtime_paths),
             config.http_client_factory(),
         )
@@ -757,7 +757,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
     .map(Arc::new)
     .map_err(std::io::Error::other)?;
 
-    let otel = genex_core::otel_init::build_provider(
+    let otel = ruxex_core::otel_init::build_provider(
         &config,
         env!("CARGO_PKG_VERSION"),
         Some(OTEL_SERVICE_NAME),
@@ -769,11 +769,11 @@ async fn run_main_with_transport_options_and_optional_runtime(
             format!("error loading otel config: {e}"),
         )
     })?;
-    genex_core::otel_init::record_process_start(otel.as_ref(), OTEL_SERVICE_NAME);
-    genex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
+    ruxex_core::otel_init::record_process_start(otel.as_ref(), OTEL_SERVICE_NAME);
+    ruxex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
     let unix_socket_startup_lock = match &transport {
         AppServerTransport::UnixSocket { .. } => {
-            let startup_lock_path = app_server_startup_lock_path(&genex_home)?;
+            let startup_lock_path = app_server_startup_lock_path(&ruxex_home)?;
             let startup_lock = acquire_app_server_startup_lock(startup_lock_path).await?;
             Some(startup_lock)
         }
@@ -813,7 +813,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
             range: None,
         });
     }
-    if let Some(warning) = genex_core::config::system_bwrap_warning(
+    if let Some(warning) = ruxex_core::config::system_bwrap_warning(
         &config.permissions.effective_permission_profile(),
         &config.cwd,
     ) {
@@ -880,7 +880,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
                 socket_path.clone(),
                 transport_event_tx.clone(),
                 transport_shutdown_token.clone(),
-                if std::env::var_os(genex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
+                if std::env::var_os(ruxex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
                     .is_some()
                 {
                     DaemonShutdownAccess::Managed
@@ -912,11 +912,11 @@ async fn run_main_with_transport_options_and_optional_runtime(
             "no transport configured; use --listen",
         ));
     }
-    let installation_id = resolve_installation_id(&config.genex_home).await?;
+    let installation_id = resolve_installation_id(&config.ruxex_home).await?;
 
     // Only the standalone server measures its local home, not embedded/cloud runtimes.
-    if let Some(metrics) = otel.as_ref().and_then(genex_otel::OtelProvider::metrics) {
-        genex_home_metrics::spawn(&config, metrics.clone(), transport_shutdown_token.clone());
+    if let Some(metrics) = otel.as_ref().and_then(ruxex_otel::OtelProvider::metrics) {
+        ruxex_home_metrics::spawn(&config, metrics.clone(), transport_shutdown_token.clone());
     }
 
     let otel_reloader_handle = otel_reloader::spawn(
@@ -983,7 +983,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
         info!("outbound router task exited (channel closed)");
     });
 
-    let recovery_file = daemon_recovery_file_path(&config.genex_home);
+    let recovery_file = daemon_recovery_file_path(&config.ruxex_home);
     let processor_handle = tokio::spawn({
         let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
         let outbound_control_tx = outbound_control_tx;
@@ -1389,9 +1389,9 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
             }
             Err(err) => err,
         };
-        let database_path = genex_state::runtime_db_path_for_corruption_error(&err)
+        let database_path = ruxex_state::runtime_db_path_for_corruption_error(&err)
             .unwrap_or_else(|| config.sqlite_config().state_db_path());
-        if !genex_state::is_sqlite_corruption_error(&err)
+        if !ruxex_state::is_sqlite_corruption_error(&err)
             && !sqlite_home_is_blocking_file(database_path.as_path())
         {
             return Err(err);
@@ -1405,10 +1405,10 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
 
         let original_error = err.to_string();
         emit_state_db_backup_warning(&format!(
-            "Genex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
+            "Ruxex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
             database_path.display()
         ));
-        let backups = genex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
+        let backups = ruxex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
             .await
             .map_err(|backup_err| {
                 anyhow::anyhow!(
@@ -1417,7 +1417,7 @@ async fn init_sqlite_state_db_with_fresh_start_on_corruption(
             })?;
         for backup in &backups {
             emit_state_db_backup_warning(&format!(
-                "Moved damaged Genex local database file {} to {}",
+                "Moved damaged Ruxex local database file {} to {}",
                 backup.original_path.display(),
                 backup.backup_path.display()
             ));
@@ -1517,9 +1517,9 @@ mod tests {
     use super::loader_overrides_with_test_user_config_file;
     use super::turn_admission::TurnAdmission;
     #[cfg(debug_assertions)]
-    use genex_config::LoaderOverrides;
+    use ruxex_config::LoaderOverrides;
     #[cfg(debug_assertions)]
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -1575,7 +1575,7 @@ mod tests {
     #[cfg(debug_assertions)]
     #[test]
     fn debug_test_user_config_file_overrides_loader_path() {
-        let path = std::env::temp_dir().join("genex-app-server-test-config.toml");
+        let path = std::env::temp_dir().join("ruxex-app-server-test-config.toml");
         let loader_overrides = loader_overrides_with_test_user_config_file(
             LoaderOverrides::default(),
             Some(path.clone()),

@@ -26,7 +26,7 @@ impl LifecycleLock {
         })?;
         Self::acquire_at(
             &directory
-                .join("com.genex.genex")
+                .join("com.ruxex.ruxex")
                 .join("user-verification")
                 .join(format!("{}.lock", namespace.label)),
             Duration::from_secs(/*secs*/ 60),

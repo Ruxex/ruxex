@@ -3,16 +3,16 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use semver::Version;
 use serde::Deserialize;
 
 const BIN_DIRNAME: &str = "bin";
-const CODE_MODE_HOST_EXECUTABLE_NAME: &str = "genex-code-mode-host";
-const PACKAGE_METADATA_FILENAME: &str = "genex-package.json";
-const PATH_DIRNAME: &str = "genex-path";
+const CODE_MODE_HOST_EXECUTABLE_NAME: &str = "ruxex-code-mode-host";
+const PACKAGE_METADATA_FILENAME: &str = "ruxex-package.json";
+const PATH_DIRNAME: &str = "ruxex-path";
 const RELEASES_DIRNAME: &str = "releases";
-const RESOURCES_DIRNAME: &str = "genex-resources";
+const RESOURCES_DIRNAME: &str = "ruxex-resources";
 const STANDALONE_PACKAGES_DIRNAME: &str = "standalone";
 static INSTALL_CONTEXT: OnceLock<InstallContext> = OnceLock::new();
 
@@ -22,10 +22,10 @@ pub enum StandalonePlatform {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct GenexPackageLayout {
+pub struct RuxexPackageLayout {
     /// The package root that contains the metadata file and layout directories.
     pub package_dir: AbsolutePathBuf,
-    /// Directory containing the Genex entrypoint executable.
+    /// Directory containing the Ruxex entrypoint executable.
     pub bin_dir: AbsolutePathBuf,
     /// Directory containing managed helper binaries and data files, when present.
     pub resources_dir: Option<AbsolutePathBuf>,
@@ -33,16 +33,16 @@ pub struct GenexPackageLayout {
     pub path_dir: Option<AbsolutePathBuf>,
 }
 
-/// Version metadata recorded in a bundled Genex runtime package.
+/// Version metadata recorded in a bundled Ruxex runtime package.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-pub struct GenexPackageManifest {
+pub struct RuxexPackageManifest {
     pub version: Version,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InstallContext {
     pub method: InstallMethod,
-    pub package_layout: Option<GenexPackageLayout>,
+    pub package_layout: Option<RuxexPackageLayout>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,29 +50,29 @@ pub enum InstallMethod {
     Standalone {
         /// The managed standalone release directory. Legacy installs use paths
         /// such as
-        /// `~/.genex/packages/standalone/releases/0.111.0-x86_64-unknown-linux-musl`.
+        /// `~/.ruxex/packages/standalone/releases/0.111.0-x86_64-unknown-linux-musl`.
         /// Package-layout installs use the package root that contains `bin/`,
-        /// `genex-resources/`, and `genex-path/`.
+        /// `ruxex-resources/`, and `ruxex-path/`.
         release_dir: AbsolutePathBuf,
         /// The bundled resource directory for managed dependencies.
         resources_dir: Option<AbsolutePathBuf>,
         /// The platform of the standalone release.
         platform: StandalonePlatform,
     },
-    /// A Genex binary launched through the npm-managed `genex.js` shim.
+    /// A Ruxex binary launched through the npm-managed `ruxex.js` shim.
     Npm,
-    /// A Genex binary launched through the bun-managed `genex.js` shim.
+    /// A Ruxex binary launched through the bun-managed `ruxex.js` shim.
     Bun,
-    /// A Genex binary launched through the pnpm-managed `genex.js` shim.
+    /// A Ruxex binary launched through the pnpm-managed `ruxex.js` shim.
     Pnpm,
-    /// A Genex binary launched through the Vite+-managed `genex.js` shim.
+    /// A Ruxex binary launched through the Vite+-managed `ruxex.js` shim.
     VitePlus,
     /// A Codex binary that appears to come from a Homebrew install prefix.
     Brew,
     /// Any other execution environment.
     ///
-    /// This commonly covers `cargo run`, app-bundled Genex binaries, custom
-    /// internal launchers, and tests that execute Genex from an arbitrary path.
+    /// This commonly covers `cargo run`, app-bundled Ruxex binaries, custom
+    /// internal launchers, and tests that execute Ruxex from an arbitrary path.
     Other,
 }
 
@@ -82,26 +82,26 @@ impl InstallContext {
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
     ) -> Self {
-        let genex_home = genex_utils_home_dir::find_genex_home().ok();
-        Self::from_exe_with_genex_home(
+        let ruxex_home = ruxex_utils_home_dir::find_ruxex_home().ok();
+        Self::from_exe_with_ruxex_home(
             is_macos,
             current_exe,
             method_override,
-            genex_home.as_deref(),
+            ruxex_home.as_deref(),
         )
     }
 
-    fn from_exe_with_genex_home(
+    fn from_exe_with_ruxex_home(
         is_macos: bool,
         current_exe: Option<&Path>,
         method_override: Option<InstallMethod>,
-        genex_home: Option<&Path>,
+        ruxex_home: Option<&Path>,
     ) -> Self {
-        let package_layout = current_exe.and_then(GenexPackageLayout::from_exe);
+        let package_layout = current_exe.and_then(RuxexPackageLayout::from_exe);
         let method = if let Some(method) = method_override {
             method
         } else if let Some(exe_path) = current_exe {
-            install_method_from_exe(exe_path, genex_home, package_layout.as_ref(), is_macos)
+            install_method_from_exe(exe_path, ruxex_home, package_layout.as_ref(), is_macos)
         } else {
             InstallMethod::Other
         };
@@ -115,13 +115,13 @@ impl InstallContext {
     pub fn current() -> &'static Self {
         INSTALL_CONTEXT.get_or_init(|| {
             let current_exe = std::env::current_exe().ok();
-            let method_override = if std::env::var_os("GENEX_MANAGED_BY_VITE_PLUS").is_some() {
+            let method_override = if std::env::var_os("RUXEX_MANAGED_BY_VITE_PLUS").is_some() {
                 Some(InstallMethod::VitePlus)
-            } else if std::env::var_os("GENEX_MANAGED_BY_PNPM").is_some() {
+            } else if std::env::var_os("RUXEX_MANAGED_BY_PNPM").is_some() {
                 Some(InstallMethod::Pnpm)
-            } else if std::env::var_os("GENEX_MANAGED_BY_NPM").is_some() {
+            } else if std::env::var_os("RUXEX_MANAGED_BY_NPM").is_some() {
                 Some(InstallMethod::Npm)
-            } else if std::env::var_os("GENEX_MANAGED_BY_BUN").is_some() {
+            } else if std::env::var_os("RUXEX_MANAGED_BY_BUN").is_some() {
                 Some(InstallMethod::Bun)
             } else {
                 None
@@ -135,7 +135,7 @@ impl InstallContext {
     }
 
     /// Read the manifest for the package that contains the current executable.
-    pub fn package_manifest(&self) -> Option<GenexPackageManifest> {
+    pub fn package_manifest(&self) -> Option<RuxexPackageManifest> {
         let package_layout = self.package_layout.as_ref()?;
         let manifest =
             std::fs::read_to_string(package_layout.package_dir.join(PACKAGE_METADATA_FILENAME))
@@ -168,7 +168,7 @@ impl InstallContext {
     }
 
     pub fn code_mode_host_program(&self) -> PathBuf {
-        // prefer the one packed under genex-resources
+        // prefer the one packed under ruxex-resources
         self.bundled_resource(CODE_MODE_HOST_EXECUTABLE_NAME)
             .map_or_else(
                 || self.code_mode_host_program_from_exe(std::env::current_exe().ok().as_deref()),
@@ -225,7 +225,7 @@ impl InstallContext {
 
 }
 
-impl GenexPackageLayout {
+impl RuxexPackageLayout {
     fn from_exe(exe_path: &Path) -> Option<Self> {
         let canonical_exe = canonical_absolute_path(exe_path)?;
         let exe_dir = canonical_exe.parent()?;
@@ -237,11 +237,11 @@ impl GenexPackageLayout {
             }
             Some(name) if name == OsStr::new("MacOS") => {
                 // A provisioned CLI keeps helpers and metadata in the outer
-                // package. current_exe points inside the bundle, not at bin/genex.
+                // package. current_exe points inside the bundle, not at bin/ruxex.
                 let contents = exe_dir.parent()?;
                 let bundle = contents.parent()?;
                 if contents.file_name()? != OsStr::new("Contents")
-                    || bundle.file_name()? != OsStr::new("GenexCLI.app")
+                    || bundle.file_name()? != OsStr::new("RuxexCLI.app")
                 {
                     return None;
                 }
@@ -271,11 +271,11 @@ impl GenexPackageLayout {
 
 fn install_method_from_exe(
     exe_path: &Path,
-    genex_home: Option<&Path>,
-    package_layout: Option<&GenexPackageLayout>,
+    ruxex_home: Option<&Path>,
+    package_layout: Option<&RuxexPackageLayout>,
     is_macos: bool,
 ) -> InstallMethod {
-    if let Some(standalone_method) = standalone_install_method(exe_path, genex_home, package_layout)
+    if let Some(standalone_method) = standalone_install_method(exe_path, ruxex_home, package_layout)
     {
         return standalone_method;
     }
@@ -289,16 +289,16 @@ fn install_method_from_exe(
 
 fn standalone_install_method(
     exe_path: &Path,
-    genex_home: Option<&Path>,
-    package_layout: Option<&GenexPackageLayout>,
+    ruxex_home: Option<&Path>,
+    package_layout: Option<&RuxexPackageLayout>,
 ) -> Option<InstallMethod> {
-    let canonical_genex_home = canonical_absolute_path(genex_home?)?;
+    let canonical_ruxex_home = canonical_absolute_path(ruxex_home?)?;
     let release_dir = if let Some(package_layout) = package_layout {
         package_layout.package_dir.clone()
     } else {
         canonical_absolute_path(exe_path)?.parent()?
     };
-    let releases_root = canonical_genex_home
+    let releases_root = canonical_ruxex_home
         .join("packages")
         .join(STANDALONE_PACKAGES_DIRNAME)
         .join(RELEASES_DIRNAME);
@@ -341,7 +341,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use std::fs;
 
-    const TEST_RESOURCE_NAME: &str = "genex-test-helper";
+    const TEST_RESOURCE_NAME: &str = "ruxex-test-helper";
 
     #[test]
     fn code_mode_host_program_prefers_package_resource_over_legacy_binary() -> std::io::Result<()> {
@@ -351,7 +351,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "legacy host")?;
@@ -378,7 +378,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&resources_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         let resource_host = resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&resource_host, "managed host")?;
@@ -405,7 +405,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(resources_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         let legacy_host = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
         fs::write(&legacy_host, "legacy host")?;
@@ -425,13 +425,13 @@ mod tests {
 
     #[test]
     fn detects_standalone_install_from_release_layout() -> std::io::Result<()> {
-        let genex_home = tempfile::tempdir()?;
-        let release_dir = genex_home
+        let ruxex_home = tempfile::tempdir()?;
+        let release_dir = ruxex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let resources_dir = release_dir.join(RESOURCES_DIRNAME);
         fs::create_dir_all(&resources_dir)?;
-        let exe_path = release_dir.join("genex");
+        let exe_path = release_dir.join("ruxex");
         fs::write(&exe_path, "")?;
         fs::write(release_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(
@@ -445,11 +445,11 @@ mod tests {
         let canonical_resources_dir =
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ Some(genex_home.path()),
+            /*ruxex_home*/ Some(ruxex_home.path()),
         );
         assert_eq!(
             context,
@@ -483,19 +483,19 @@ mod tests {
 
     #[test]
     fn standalone_rg_falls_back_when_resources_are_missing() -> std::io::Result<()> {
-        let genex_home = tempfile::tempdir()?;
-        let release_dir = genex_home
+        let ruxex_home = tempfile::tempdir()?;
+        let release_dir = ruxex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         fs::create_dir_all(&release_dir)?;
-        let exe_path = release_dir.join("genex");
+        let exe_path = release_dir.join("ruxex");
         fs::write(&exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ Some(genex_home.path()),
+            /*ruxex_home*/ Some(ruxex_home.path()),
         );
         assert_eq!(context.rg_command(), default_rg_command());
         Ok(())
@@ -516,14 +516,14 @@ mod tests {
   "layoutVersion": 1,
   "version": "1.2.3",
   "target": "x86_64-unknown-linux-musl",
-  "variant": "genex",
-  "entrypoint": "bin/genex",
-  "resourcesDir": "genex-resources",
-  "pathDir": "genex-path"
+  "variant": "ruxex",
+  "entrypoint": "bin/ruxex",
+  "resourcesDir": "ruxex-resources",
+  "pathDir": "ruxex-path"
 }
 "#,
         )?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         fs::write(&exe_path, "")?;
         fs::write(bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME), "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
@@ -534,18 +534,18 @@ mod tests {
         let canonical_resources_dir =
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
-        let package_layout = GenexPackageLayout {
+        let package_layout = RuxexPackageLayout {
             package_dir: canonical_package_dir,
             bin_dir: canonical_bin_dir.clone(),
             resources_dir: Some(canonical_resources_dir.clone()),
             path_dir: Some(canonical_path_dir.clone()),
         };
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ None,
+            /*ruxex_home*/ None,
         );
         assert_eq!(
             context,
@@ -556,7 +556,7 @@ mod tests {
         );
         assert_eq!(
             context.package_manifest(),
-            Some(GenexPackageManifest {
+            Some(RuxexPackageManifest {
                 version: Version::new(1, 2, 3),
             })
         );
@@ -592,7 +592,7 @@ mod tests {
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         let executable_target = package_dir.path().join("host-target");
         let executable_path = bin_dir.join(CODE_MODE_HOST_EXECUTABLE_NAME);
         fs::write(&exe_path, "")?;
@@ -617,8 +617,8 @@ mod tests {
 
     #[test]
     fn standalone_package_layout_keeps_standalone_install_method() -> std::io::Result<()> {
-        let genex_home = tempfile::tempdir()?;
-        let package_dir = genex_home
+        let ruxex_home = tempfile::tempdir()?;
+        let package_dir = ruxex_home
             .path()
             .join("packages/standalone/releases/1.2.3-x86_64-unknown-linux-musl");
         let bin_dir = package_dir.join(BIN_DIRNAME);
@@ -628,7 +628,7 @@ mod tests {
         fs::create_dir_all(&resources_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         fs::write(&exe_path, "")?;
         fs::write(resources_dir.join(TEST_RESOURCE_NAME), "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
@@ -639,11 +639,11 @@ mod tests {
             AbsolutePathBuf::from_absolute_path(resources_dir.canonicalize()?)?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ Some(genex_home.path()),
+            /*ruxex_home*/ Some(ruxex_home.path()),
         );
         assert_eq!(
             context,
@@ -653,7 +653,7 @@ mod tests {
                     resources_dir: Some(canonical_resources_dir.clone()),
                     platform: standalone_platform(),
                 },
-                package_layout: Some(GenexPackageLayout {
+                package_layout: Some(RuxexPackageLayout {
                     package_dir: canonical_package_dir,
                     bin_dir: canonical_bin_dir,
                     resources_dir: Some(canonical_resources_dir.clone()),
@@ -682,7 +682,7 @@ mod tests {
         fs::create_dir_all(&bin_dir)?;
         fs::create_dir_all(&path_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         fs::write(&exe_path, "")?;
         fs::write(path_dir.join(default_rg_command()), "")?;
         let canonical_path_dir = AbsolutePathBuf::from_absolute_path(path_dir.canonicalize()?)?;
@@ -704,19 +704,19 @@ mod tests {
     }
 
     #[test]
-    fn standalone_package_rg_falls_back_when_genex_path_is_missing() -> std::io::Result<()> {
+    fn standalone_package_rg_falls_back_when_ruxex_path_is_missing() -> std::io::Result<()> {
         let package_dir = tempfile::tempdir()?;
         let bin_dir = package_dir.path().join(BIN_DIRNAME);
         fs::create_dir_all(&bin_dir)?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         fs::write(&exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ None,
+            /*ruxex_home*/ None,
         );
         assert_eq!(context.rg_command(), default_rg_command());
         Ok(())
@@ -733,16 +733,16 @@ mod tests {
         fs::create_dir_all(resources_dir.join(TEST_RESOURCE_NAME))?;
         fs::create_dir_all(path_dir.join(default_rg_command()))?;
         fs::write(package_dir.path().join(PACKAGE_METADATA_FILENAME), "{}")?;
-        let exe_path = bin_dir.join("genex");
+        let exe_path = bin_dir.join("ruxex");
         fs::write(&exe_path, "")?;
-        let fallback_exe_path = package_dir.path().join("fallback-genex");
+        let fallback_exe_path = package_dir.path().join("fallback-ruxex");
         fs::write(&fallback_exe_path, "")?;
 
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ false,
             /*current_exe*/ Some(&exe_path),
             /*method_override*/ None,
-            /*genex_home*/ None,
+            /*ruxex_home*/ None,
         );
         assert_eq!(
             context.code_mode_host_program_from_exe(Some(&fallback_exe_path)),
@@ -761,8 +761,8 @@ mod tests {
         };
 
         assert_eq!(
-            context.code_mode_host_program_from_exe(Some(Path::new("/opt/genex/bin/genex"))),
-            PathBuf::from("/opt/genex/bin").join(CODE_MODE_HOST_EXECUTABLE_NAME)
+            context.code_mode_host_program_from_exe(Some(Path::new("/opt/ruxex/bin/ruxex"))),
+            PathBuf::from("/opt/ruxex/bin").join(CODE_MODE_HOST_EXECUTABLE_NAME)
         );
     }
 
@@ -783,7 +783,7 @@ mod tests {
     fn package_manager_method_overrides_take_precedence() {
         let vite_plus_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/genex")),
+            /*current_exe*/ Some(Path::new("/tmp/ruxex")),
             /*method_override*/ Some(InstallMethod::VitePlus),
         );
         assert_eq!(
@@ -796,7 +796,7 @@ mod tests {
 
         let pnpm_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/genex")),
+            /*current_exe*/ Some(Path::new("/tmp/ruxex")),
             /*method_override*/ Some(InstallMethod::Pnpm),
         );
         assert_eq!(
@@ -809,7 +809,7 @@ mod tests {
 
         let npm_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/genex")),
+            /*current_exe*/ Some(Path::new("/tmp/ruxex")),
             /*method_override*/ Some(InstallMethod::Npm),
         );
         assert_eq!(
@@ -822,7 +822,7 @@ mod tests {
 
         let bun_context = InstallContext::from_exe(
             /*is_macos*/ false,
-            /*current_exe*/ Some(Path::new("/tmp/genex")),
+            /*current_exe*/ Some(Path::new("/tmp/ruxex")),
             /*method_override*/ Some(InstallMethod::Bun),
         );
         assert_eq!(
@@ -836,11 +836,11 @@ mod tests {
 
     #[test]
     fn brew_is_detected_on_macos_prefixes() {
-        let context = InstallContext::from_exe_with_genex_home(
+        let context = InstallContext::from_exe_with_ruxex_home(
             /*is_macos*/ true,
-            /*current_exe*/ Some(Path::new("/opt/homebrew/bin/genex")),
+            /*current_exe*/ Some(Path::new("/opt/homebrew/bin/ruxex")),
             /*method_override*/ None,
-            /*genex_home*/ None,
+            /*ruxex_home*/ None,
         );
         assert_eq!(
             context,

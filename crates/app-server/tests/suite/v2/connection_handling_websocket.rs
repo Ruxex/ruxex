@@ -6,24 +6,24 @@ use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_core::config::set_project_trust_level;
-use genex_http_client::HttpClient;
-use genex_http_client::HttpClientBuilder;
-use genex_http_client::HttpResponse;
-use genex_protocol::config_types::TrustLevel;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_http_client::HttpClient;
+use ruxex_http_client::HttpClientBuilder;
+use ruxex_http_client::HttpResponse;
+use ruxex_protocol::config_types::TrustLevel;
 use futures::SinkExt;
 use futures::StreamExt;
 use hmac::Hmac;
@@ -67,10 +67,10 @@ type HmacSha256 = Hmac<Sha256>;
 #[tokio::test]
 async fn websocket_transport_routes_per_connection_handshake_and_responses() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
 
     let mut ws1 = connect_websocket(bind_addr).await?;
     let mut ws2 = connect_websocket(bind_addr).await?;
@@ -112,18 +112,18 @@ async fn websocket_transport_routes_per_connection_handshake_and_responses() -> 
 #[tokio::test]
 async fn thread_start_routes_project_exec_policy_warning_to_requester() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
     let project = TempDir::new()?;
     std::fs::create_dir(project.path().join(".git"))?;
-    let rules_dir = project.path().join(".genex/rules");
+    let rules_dir = project.path().join(".ruxex/rules");
     std::fs::create_dir_all(&rules_dir)?;
     let rules_path = rules_dir.join("broken.rules");
     std::fs::write(&rules_path, "prefix_rule(")?;
-    set_project_trust_level(genex_home.path(), project.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(ruxex_home.path(), project.path(), TrustLevel::Trusted)?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
     let mut requester = connect_websocket(bind_addr).await?;
     let mut other_client = connect_websocket(bind_addr).await?;
 
@@ -212,10 +212,10 @@ async fn thread_start_routes_project_exec_policy_warning_to_requester() -> Resul
 #[tokio::test]
 async fn websocket_transport_serves_health_endpoints_on_same_listener() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
     let client = HttpClientBuilder::new().build_direct()?;
 
     let readyz = http_get(&client, bind_addr, "/readyz").await?;
@@ -239,10 +239,10 @@ async fn websocket_transport_serves_health_endpoints_on_same_listener() -> Resul
 #[tokio::test]
 async fn websocket_transport_rejects_browser_origin_without_auth() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
 
     let mut ws = connect_websocket(bind_addr).await?;
     send_initialize_request(&mut ws, /*id*/ 1, "ws_loopback_client").await?;
@@ -268,10 +268,10 @@ async fn websocket_transport_rejects_browser_origin_without_auth() -> Result<()>
 #[tokio::test]
 async fn websocket_transport_rejects_missing_and_invalid_capability_tokens() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    let token_file = genex_home.path().join("app-server-token");
+    let ruxex_home = TempDir::new()?;
+    let token_file = ruxex_home.path().join("app-server-token");
     std::fs::write(&token_file, "super-secret-token\n")?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
     let auth_args = vec![
         "--ws-auth".to_string(),
         "capability-token".to_string(),
@@ -280,7 +280,7 @@ async fn websocket_transport_rejects_missing_and_invalid_capability_tokens() -> 
     ];
 
     let (mut process, bind_addr) =
-        spawn_websocket_server_with_args(genex_home.path(), "ws://0.0.0.0:0", &auth_args).await?;
+        spawn_websocket_server_with_args(ruxex_home.path(), "ws://0.0.0.0:0", &auth_args).await?;
 
     assert_websocket_connect_rejected(bind_addr, /*bearer_token*/ None).await?;
     assert_websocket_connect_rejected(bind_addr, Some("wrong-token")).await?;
@@ -300,32 +300,32 @@ async fn websocket_transport_rejects_missing_and_invalid_capability_tokens() -> 
 #[tokio::test]
 async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    let shared_secret_file = genex_home.path().join("app-server-signing-secret");
+    let ruxex_home = TempDir::new()?;
+    let shared_secret_file = ruxex_home.path().join("app-server-signing-secret");
     let shared_secret = "0123456789abcdef0123456789abcdef";
     std::fs::write(&shared_secret_file, format!("{shared_secret}\n"))?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
     let auth_args = vec![
         "--ws-auth".to_string(),
         "signed-bearer-token".to_string(),
         "--ws-shared-secret-file".to_string(),
         shared_secret_file.display().to_string(),
         "--ws-issuer".to_string(),
-        "genex-enroller".to_string(),
+        "ruxex-enroller".to_string(),
         "--ws-audience".to_string(),
-        "genex-app-server".to_string(),
+        "ruxex-app-server".to_string(),
         "--ws-max-clock-skew-seconds".to_string(),
         "1".to_string(),
     ];
 
     let (mut process, bind_addr) =
-        spawn_websocket_server_with_args(genex_home.path(), "ws://127.0.0.1:0", &auth_args).await?;
+        spawn_websocket_server_with_args(ruxex_home.path(), "ws://127.0.0.1:0", &auth_args).await?;
     let expired_token = signed_bearer_token(
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() - 30,
-            "iss": "genex-enroller",
-            "aud": "genex-app-server",
+            "iss": "ruxex-enroller",
+            "aud": "ruxex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(expired_token.as_str())).await?;
@@ -338,8 +338,8 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "nbf": OffsetDateTime::now_utc().unix_timestamp() + 30,
-            "iss": "genex-enroller",
-            "aud": "genex-app-server",
+            "iss": "ruxex-enroller",
+            "aud": "ruxex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(not_yet_valid_token.as_str())).await?;
@@ -349,7 +349,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
             "iss": "someone-else",
-            "aud": "genex-app-server",
+            "aud": "ruxex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(wrong_issuer_token.as_str())).await?;
@@ -358,7 +358,7 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "genex-enroller",
+            "iss": "ruxex-enroller",
             "aud": "wrong-audience",
         }),
     )?;
@@ -368,8 +368,8 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         b"fedcba9876543210fedcba9876543210",
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "genex-enroller",
-            "aud": "genex-app-server",
+            "iss": "ruxex-enroller",
+            "aud": "ruxex-app-server",
         }),
     )?;
     assert_websocket_connect_rejected(bind_addr, Some(wrong_signature_token.as_str())).await?;
@@ -378,8 +378,8 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
         shared_secret.as_bytes(),
         json!({
             "exp": OffsetDateTime::now_utc().unix_timestamp() + 60,
-            "iss": "genex-enroller",
-            "aud": "genex-app-server",
+            "iss": "ruxex-enroller",
+            "aud": "ruxex-app-server",
         }),
     )?;
     let mut ws = connect_websocket_with_bearer(bind_addr, Some(valid_token.as_str())).await?;
@@ -397,13 +397,13 @@ async fn websocket_transport_verifies_signed_short_lived_bearer_tokens() -> Resu
 #[tokio::test]
 async fn websocket_transport_rejects_short_signed_bearer_secret_configuration() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    let shared_secret_file = genex_home.path().join("app-server-signing-secret");
+    let ruxex_home = TempDir::new()?;
+    let shared_secret_file = ruxex_home.path().join("app-server-signing-secret");
     std::fs::write(&shared_secret_file, "too-short\n")?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
     let output = run_websocket_server_to_completion_with_args(
-        genex_home.path(),
+        ruxex_home.path(),
         "ws://127.0.0.1:0",
         &[
             "--ws-auth".to_string(),
@@ -429,11 +429,11 @@ async fn websocket_transport_rejects_short_signed_bearer_secret_configuration() 
 #[tokio::test]
 async fn websocket_transport_rejects_unauthenticated_non_loopback_startup() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
     let output =
-        run_websocket_server_to_completion_with_args(genex_home.path(), "ws://0.0.0.0:0", &[])
+        run_websocket_server_to_completion_with_args(ruxex_home.path(), "ws://0.0.0.0:0", &[])
             .await?;
     assert!(
         !output.status.success(),
@@ -452,11 +452,11 @@ async fn websocket_transport_rejects_unauthenticated_non_loopback_startup() -> R
 async fn websocket_disconnect_keeps_last_subscribed_thread_loaded_until_idle_timeout() -> Result<()>
 {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
 
     let (mut process, bind_addr) = spawn_websocket_server_with_args(
-        genex_home.path(),
+        ruxex_home.path(),
         "ws://127.0.0.1:0",
         &["-c".to_string(), "thread_unload_delay_secs=2".to_string()],
     )
@@ -486,16 +486,16 @@ async fn websocket_disconnect_keeps_last_subscribed_thread_loaded_until_idle_tim
     Ok(())
 }
 
-pub(super) async fn spawn_websocket_server(genex_home: &Path) -> Result<(Child, SocketAddr)> {
-    spawn_websocket_server_with_args(genex_home, "ws://127.0.0.1:0", &[]).await
+pub(super) async fn spawn_websocket_server(ruxex_home: &Path) -> Result<(Child, SocketAddr)> {
+    spawn_websocket_server_with_args(ruxex_home, "ws://127.0.0.1:0", &[]).await
 }
 
 pub(super) async fn spawn_websocket_server_with_args(
-    genex_home: &Path,
+    ruxex_home: &Path,
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<(Child, SocketAddr)> {
-    let program = genex_utils_cargo_bin::cargo_bin("genex-app-server")
+    let program = ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")
@@ -505,7 +505,7 @@ pub(super) async fn spawn_websocket_server_with_args(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
-        .env("GENEX_HOME", genex_home)
+        .env("RUXEX_HOME", ruxex_home)
         .env("RUST_LOG", "warn");
 
     let mut process = cmd
@@ -628,11 +628,11 @@ async fn assert_websocket_connect_rejected_with_headers(
 }
 
 async fn run_websocket_server_to_completion_with_args(
-    genex_home: &Path,
+    ruxex_home: &Path,
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<std::process::Output> {
-    let program = genex_utils_cargo_bin::cargo_bin("genex-app-server")
+    let program = ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")
@@ -642,7 +642,7 @@ async fn run_websocket_server_to_completion_with_args(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
-        .env("GENEX_HOME", genex_home)
+        .env("RUXEX_HOME", ruxex_home)
         .env("RUST_LOG", "warn");
     timeout(DEFAULT_READ_TIMEOUT, cmd.output())
         .await
@@ -935,11 +935,11 @@ pub(super) async fn assert_no_message(stream: &mut WsClient, wait_for: Duration)
 }
 
 pub(super) fn create_config_toml(
-    genex_home: &Path,
+    ruxex_home: &Path,
     server_uri: &str,
     approval_policy: &str,
 ) -> std::io::Result<()> {
-    let config_toml = genex_home.join("config.toml");
+    let config_toml = ruxex_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

@@ -9,21 +9,21 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use genex_protocol::RolloutId;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_state::BackfillState;
-use genex_state::BackfillStats;
-use genex_state::BackfillStatus;
-use genex_state::DB_ERROR_METRIC;
-use genex_state::DB_METRIC_BACKFILL;
-use genex_state::DB_METRIC_BACKFILL_DURATION_MS;
-use genex_state::ExtractionOutcome;
-use genex_state::ThreadMetadataBuilder;
-use genex_state::apply_rollout_item;
+use ruxex_protocol::RolloutId;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_state::BackfillState;
+use ruxex_state::BackfillStats;
+use ruxex_state::BackfillStatus;
+use ruxex_state::DB_ERROR_METRIC;
+use ruxex_state::DB_METRIC_BACKFILL;
+use ruxex_state::DB_METRIC_BACKFILL_DURATION_MS;
+use ruxex_state::ExtractionOutcome;
+use ruxex_state::ThreadMetadataBuilder;
+use ruxex_state::apply_rollout_item;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::info;
@@ -162,16 +162,16 @@ pub async fn extract_metadata_from_rollout(
     })
 }
 
-pub(crate) async fn backfill_sessions(runtime: &genex_state::StateRuntime, genex_home: &Path) {
-    backfill_sessions_with_lease(runtime, genex_home, BACKFILL_LEASE_SECONDS).await;
+pub(crate) async fn backfill_sessions(runtime: &ruxex_state::StateRuntime, ruxex_home: &Path) {
+    backfill_sessions_with_lease(runtime, ruxex_home, BACKFILL_LEASE_SECONDS).await;
 }
 
 pub(crate) async fn backfill_sessions_with_lease(
-    runtime: &genex_state::StateRuntime,
-    genex_home: &Path,
+    runtime: &ruxex_state::StateRuntime,
+    ruxex_home: &Path,
     backfill_lease_seconds: i64,
 ) {
-    let metric_client = genex_otel::global();
+    let metric_client = ruxex_otel::global();
     let timer = metric_client
         .as_ref()
         .and_then(|otel| otel.start_timer(DB_METRIC_BACKFILL_DURATION_MS, &[]).ok());
@@ -180,7 +180,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to read backfill state at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             );
             BackfillState::default()
         }
@@ -193,7 +193,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to claim backfill worker at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             );
             return;
         }
@@ -201,7 +201,7 @@ pub(crate) async fn backfill_sessions_with_lease(
     if !claimed {
         info!(
             "state db backfill already running at {}; skipping duplicate worker",
-            genex_home.display()
+            ruxex_home.display()
         );
         return;
     }
@@ -210,7 +210,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         Err(err) => {
             warn!(
                 "failed to read claimed backfill state at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             );
             BackfillState {
                 status: BackfillStatus::Running,
@@ -222,15 +222,15 @@ pub(crate) async fn backfill_sessions_with_lease(
         if let Err(err) = runtime.mark_backfill_running().await {
             warn!(
                 "failed to mark backfill running at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             );
         } else {
             backfill_state.status = BackfillStatus::Running;
         }
     }
 
-    let sessions_root = genex_home.join(SESSIONS_SUBDIR);
-    let archived_root = genex_home.join(ARCHIVED_SESSIONS_SUBDIR);
+    let sessions_root = ruxex_home.join(SESSIONS_SUBDIR);
+    let archived_root = ruxex_home.join(ARCHIVED_SESSIONS_SUBDIR);
     let mut rollout_paths: Vec<BackfillRolloutPath> = Vec::new();
     for (root, archived) in [(sessions_root, false), (archived_root, true)] {
         if !tokio::fs::try_exists(&root).await.unwrap_or(false) {
@@ -239,7 +239,7 @@ pub(crate) async fn backfill_sessions_with_lease(
         match collect_rollout_paths(&root).await {
             Ok(paths) => {
                 rollout_paths.extend(paths.into_iter().map(|path| BackfillRolloutPath {
-                    watermark: backfill_watermark_for_path(genex_home, &path),
+                    watermark: backfill_watermark_for_path(ruxex_home, &path),
                     path,
                     archived,
                 }));
@@ -314,7 +314,7 @@ pub(crate) async fn backfill_sessions_with_lease(
             {
                 warn!(
                     "failed to checkpoint backfill at {}: {err}",
-                    genex_home.display()
+                    ruxex_home.display()
                 );
             } else {
                 last_watermark = Some(last_entry.watermark.clone());
@@ -327,7 +327,7 @@ pub(crate) async fn backfill_sessions_with_lease(
     {
         warn!(
             "failed to mark backfill complete at {}: {err}",
-            genex_home.display()
+            ruxex_home.display()
         );
     }
 
@@ -366,8 +366,8 @@ struct BackfillRolloutPath {
     archived: bool,
 }
 
-fn backfill_watermark_for_path(genex_home: &Path, path: &Path) -> String {
-    path.strip_prefix(genex_home)
+fn backfill_watermark_for_path(ruxex_home: &Path, path: &Path) -> String {
+    path.strip_prefix(ruxex_home)
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")

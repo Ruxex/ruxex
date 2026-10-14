@@ -2,17 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_file_system::FileSystemSandboxContext;
-pub use genex_file_system::WalkOptions;
-pub use genex_file_system::WalkOutcome;
-use genex_file_system::WireFileSystemSandboxContext;
-use genex_network_proxy::ManagedNetworkSandboxContext;
-use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-use genex_protocol::ThreadId;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use genex_shell_command::shell_detect::DetectedShell;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::FileSystemSandboxContext;
+pub use ruxex_file_system::WalkOptions;
+pub use ruxex_file_system::WalkOutcome;
+use ruxex_file_system::WireFileSystemSandboxContext;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_shell_command::shell_detect::DetectedShell;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -47,7 +47,7 @@ pub const FS_COPY_METHOD: &str = "fs/copy";
 pub const CAPABILITY_ROOTS_DISCOVER_METHOD: &str = "capabilityRoots/discoverV1";
 /// Ordered plugin manifest paths recognized beneath a plugin root.
 pub const DISCOVERABLE_PLUGIN_MANIFEST_PATHS: &[&str] = &[
-    ".genex-plugin/plugin.json",
+    ".ruxex-plugin/plugin.json",
     ".claude-plugin/plugin.json",
     ".cursor-plugin/plugin.json",
 ];
@@ -217,7 +217,7 @@ impl EnvironmentInfo {
         let temp_dir = normalize_temp_path(std::env::temp_dir().into_os_string());
 
         Self {
-            shell: genex_shell_command::shell_detect::default_user_shell().into(),
+            shell: ruxex_shell_command::shell_detect::default_user_shell().into(),
             executor_version: unknown_executor_version(),
             provider_id: None,
             cwd: cwd.and_then(|cwd| PathUri::from_host_native_path(cwd).ok()),
@@ -288,7 +288,7 @@ pub struct ExecParams {
     /// Keep non-tty stdin writable through `process/write`.
     #[serde(default)]
     pub pipe_stdin: bool,
-    /// Optional process-visible argv0 override. Values such as `genex-linux-sandbox` are command
+    /// Optional process-visible argv0 override. Values such as `ruxex-linux-sandbox` are command
     /// names rather than paths, so this is not a [`PathUri`].
     pub arg0: Option<String>,
     /// Portable sandbox intent. Concrete wrapper argv is resolved by the exec-server.
@@ -1145,21 +1145,21 @@ mod tests {
     use super::ShellInfo;
     use super::WireFsOpenParams;
     use super::WireFsReadFileParams;
-    use genex_file_system::FileSystemSandboxContext;
-    use genex_network_proxy::ManagedNetworkSandboxContext;
-    use genex_network_proxy::NetworkProxyAuditMetadata;
-    use genex_network_proxy::NetworkProxyConfig;
-    use genex_network_proxy::RemoteNetworkProxyConfig;
-    use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-    use genex_protocol::models::ManagedFileSystemPermissions;
-    use genex_protocol::models::PermissionProfile;
-    use genex_protocol::permissions::FileSystemAccessMode;
-    use genex_protocol::permissions::FileSystemPath;
-    use genex_protocol::permissions::FileSystemSandboxEntry;
-    use genex_protocol::permissions::FileSystemSandboxPolicy;
-    use genex_protocol::permissions::FileSystemSpecialPath;
-    use genex_protocol::permissions::NetworkSandboxPolicy;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_file_system::FileSystemSandboxContext;
+    use ruxex_network_proxy::ManagedNetworkSandboxContext;
+    use ruxex_network_proxy::NetworkProxyAuditMetadata;
+    use ruxex_network_proxy::NetworkProxyConfig;
+    use ruxex_network_proxy::RemoteNetworkProxyConfig;
+    use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+    use ruxex_protocol::models::ManagedFileSystemPermissions;
+    use ruxex_protocol::models::PermissionProfile;
+    use ruxex_protocol::permissions::FileSystemAccessMode;
+    use ruxex_protocol::permissions::FileSystemPath;
+    use ruxex_protocol::permissions::FileSystemSandboxEntry;
+    use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+    use ruxex_protocol::permissions::FileSystemSpecialPath;
+    use ruxex_protocol::permissions::NetworkSandboxPolicy;
+    use ruxex_utils_path_uri::PathUri;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
@@ -1171,7 +1171,7 @@ mod tests {
         let params = ExecParams {
             process_id: ProcessId::from("managed-network"),
             metadata: Some(ExecMetadata {
-                thread_id: Some(genex_protocol::ThreadId::new()),
+                thread_id: Some(ruxex_protocol::ThreadId::new()),
                 tool_call_id: Some("call-1".to_string()),
             }),
             argv: vec!["true".to_string()],
@@ -1370,13 +1370,13 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn local_environment_info_resolves_relative_temporary_directory() {
-        if std::env::var_os("GENEX_TEST_RELATIVE_TMPDIR").is_none() {
+        if std::env::var_os("RUXEX_TEST_RELATIVE_TMPDIR").is_none() {
             let status = std::process::Command::new(std::env::current_exe().expect("test binary"))
                 .arg("--exact")
                 .arg(
                     "protocol::tests::local_environment_info_resolves_relative_temporary_directory",
                 )
-                .env("GENEX_TEST_RELATIVE_TMPDIR", "1")
+                .env("RUXEX_TEST_RELATIVE_TMPDIR", "1")
                 .env("TMPDIR", "relative-temp")
                 .status()
                 .expect("run relative TMPDIR subprocess");
@@ -1446,7 +1446,7 @@ mod tests {
                 FileSystemSandboxEntry::skip_missing_path(
                     FileSystemPath::Special {
                         value: FileSystemSpecialPath::ProjectRoots {
-                            subpath: Some(".genex".into()),
+                            subpath: Some(".ruxex".into()),
                         },
                     },
                     FileSystemAccessMode::Read,

@@ -1,5 +1,5 @@
 use super::*;
-use genex_execpolicy::Decision;
+use ruxex_execpolicy::Decision;
 use pretty_assertions::assert_eq;
 
 #[test]

@@ -11,15 +11,15 @@ use crate::session::turn_context::TurnContext;
 use crate::session::turn_context::TurnEnvironment;
 use crate::tools::sandboxing::ApprovalAction;
 use crate::tools::sandboxing::ToolError;
-use genex_features::Feature;
-use genex_file_system::FileSystemSandboxContext;
-use genex_network_proxy::EnvironmentNetworkPolicy;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::SandboxPermissions;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_sandboxing::policy_transforms::effective_permission_profile;
-use genex_sandboxing::policy_transforms::merge_permission_profiles;
+use ruxex_features::Feature;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_network_proxy::EnvironmentNetworkPolicy;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::SandboxPermissions;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_sandboxing::policy_transforms::effective_permission_profile;
+use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
 
 #[derive(Clone, Copy)]
 pub(crate) enum TerminalSandboxSource {

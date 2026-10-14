@@ -9,25 +9,25 @@ use async_channel::Sender;
 use futures::FutureExt;
 use futures::future::BoxFuture;
 use futures::future::Shared;
-use genex_exec_server::Environment;
-use genex_exec_server::EnvironmentConnectionState;
-use genex_exec_server::EnvironmentInfo;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::ExecServerError;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::SelectedCapabilityRootsStatus;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::EnvironmentConfig;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EnvironmentConnectionEvent;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::EnvironmentConnectionState;
+use ruxex_exec_server::EnvironmentInfo;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerError;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::SelectedCapabilityRootsStatus;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::EnvironmentConfig;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EnvironmentConnectionEvent;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use tokio::sync::mpsc;
 use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
@@ -1006,7 +1006,7 @@ impl TurnEnvironmentSnapshot {
                 TurnEnvironmentState::Ready(_) => None,
                 TurnEnvironmentState::Starting(environment)
                     if environment.selection.environment_id
-                        == genex_exec_server::LOCAL_ENVIRONMENT_ID =>
+                        == ruxex_exec_server::LOCAL_ENVIRONMENT_ID =>
                 {
                     environment.selection.cwd.to_abs_path().ok()
                 }
@@ -1015,7 +1015,7 @@ impl TurnEnvironmentSnapshot {
     }
 
     #[cfg(test)]
-    pub(crate) fn primary_environment(&self) -> Option<Arc<genex_exec_server::Environment>> {
+    pub(crate) fn primary_environment(&self) -> Option<Arc<ruxex_exec_server::Environment>> {
         self.primary()
             .map(|environment| Arc::clone(&environment.environment))
     }

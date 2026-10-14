@@ -11,9 +11,9 @@ use crate::bundled_bwrap;
 use crate::bundled_bwrap::BundledBwrapLauncher;
 use crate::exec_util::argv_to_cstrings;
 use crate::exec_util::make_files_inheritable;
-use genex_protocol::protocol::FileSystemSandboxPolicy;
-use genex_sandboxing::find_system_bwrap_in_path;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_sandboxing::find_system_bwrap_in_path;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum BubblewrapLauncher {
@@ -53,7 +53,7 @@ pub(crate) fn exec_bwrap(mut argv: Vec<String>, preserved_files: Vec<File>) -> !
         BubblewrapLauncher::Unavailable => {
             panic!(
                 "bubblewrap is unavailable: no system bwrap was found on PATH and no bundled \
-                 genex-resources/bwrap binary was found next to the Genex executable"
+                 ruxex-resources/bwrap binary was found next to the Ruxex executable"
             )
         }
     }
@@ -337,7 +337,7 @@ mod tests {
             "7".to_string(),
             "/tmp/socket-root".to_string(),
             "--".to_string(),
-            "/usr/bin/genex-linux-sandbox".to_string(),
+            "/usr/bin/ruxex-linux-sandbox".to_string(),
             "--apply-seccomp-then-exec".to_string(),
             "--".to_string(),
             "echo".to_string(),
@@ -354,7 +354,7 @@ mod tests {
                 "/proc/self/fd/7".to_string(),
                 "/tmp/socket-root".to_string(),
                 "--".to_string(),
-                "/usr/bin/genex-linux-sandbox".to_string(),
+                "/usr/bin/ruxex-linux-sandbox".to_string(),
                 "--verify-fd-mount".to_string(),
                 "7:/tmp/socket-root".to_string(),
                 "--apply-seccomp-then-exec".to_string(),
@@ -376,7 +376,7 @@ mod tests {
             "9".to_string(),
             "/tmp/second:with-colon".to_string(),
             "--".to_string(),
-            "genex-linux-sandbox".to_string(),
+            "ruxex-linux-sandbox".to_string(),
             "--apply-seccomp-then-exec".to_string(),
             "--".to_string(),
             "true".to_string(),
@@ -395,7 +395,7 @@ mod tests {
                 "/proc/self/fd/9".to_string(),
                 "/tmp/second:with-colon".to_string(),
                 "--".to_string(),
-                "genex-linux-sandbox".to_string(),
+                "ruxex-linux-sandbox".to_string(),
                 "--verify-fd-mount".to_string(),
                 "7:/tmp/first".to_string(),
                 "--verify-fd-mount".to_string(),
@@ -420,7 +420,7 @@ mod tests {
                 fd.to_string(),
                 destination.to_string(),
                 "--".to_string(),
-                "genex-linux-sandbox".to_string(),
+                "ruxex-linux-sandbox".to_string(),
             ];
 
             assert!(translate_legacy_bwrap_fd_mounts(&mut argv).is_err());
@@ -454,7 +454,7 @@ mod tests {
             "7".to_string(),
             "/tmp/second".to_string(),
             "--".to_string(),
-            "genex-linux-sandbox".to_string(),
+            "ruxex-linux-sandbox".to_string(),
         ];
 
         assert!(translate_legacy_bwrap_fd_mounts(&mut argv).is_err());

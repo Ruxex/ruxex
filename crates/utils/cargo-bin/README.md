@@ -1,4 +1,4 @@
-# genex-utils-cargo-bin
+# ruxex-utils-cargo-bin
 
 The helpers in this crate use Cargo's test environment and manifest-relative
 paths.

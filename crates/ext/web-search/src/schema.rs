@@ -1,4 +1,4 @@
-use genex_api::SearchCommands;
+use ruxex_api::SearchCommands;
 use schemars::r#gen::SchemaSettings;
 use serde_json::Map;
 use serde_json::Value;

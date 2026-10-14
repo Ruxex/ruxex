@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use genex_protocol::models::SearchToolCallParams;
+use ruxex_protocol::models::SearchToolCallParams;
 
 /// Canonical payload shapes accepted by model-visible tool runtimes.
 #[derive(Clone, Debug, PartialEq)]

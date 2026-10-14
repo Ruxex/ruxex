@@ -1,7 +1,7 @@
-use genex_config::McpServerConfig;
-use genex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::protocol::SessionSource;
+use ruxex_config::McpServerConfig;
+use ruxex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::protocol::SessionSource;
 
 use crate::ExtensionData;
 use crate::ExtensionDataInit;

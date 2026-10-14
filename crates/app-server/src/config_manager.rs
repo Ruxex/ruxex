@@ -1,16 +1,16 @@
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::ConfigLayerStack;
-use genex_config::LoaderOverrides;
-use genex_config::ThreadConfigLoader;
-use genex_config::loader::load_config_layers_state;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_exec_server::LOCAL_FS;
-use genex_features::feature_for_key;
-use genex_login::default_client::set_default_client_residency_requirement;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_json_to_toml::json_to_toml;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::ThreadConfigLoader;
+use ruxex_config::loader::load_config_layers_state;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_features::feature_for_key;
+use ruxex_login::default_client::set_default_client_residency_requirement;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_json_to_toml::json_to_toml;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -22,10 +22,10 @@ use toml::Value as TomlValue;
 use tracing::instrument;
 use tracing::warn;
 
-/// Shared app-server entry point for loading effective Genex configuration.
+/// Shared app-server entry point for loading effective Ruxex configuration.
 #[derive(Clone)]
 pub(crate) struct ConfigManager {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     cli_overrides: Arc<RwLock<Vec<(String, TomlValue)>>>,
     runtime_feature_enablement: Arc<RwLock<BTreeMap<String, bool>>>,
     loader_overrides: LoaderOverrides,
@@ -36,7 +36,7 @@ pub(crate) struct ConfigManager {
 
 impl ConfigManager {
     pub(crate) fn new(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
         strict_config: bool,
@@ -44,7 +44,7 @@ impl ConfigManager {
         thread_config_loader: Arc<dyn ThreadConfigLoader>,
     ) -> Self {
         Self {
-            genex_home,
+            ruxex_home,
             cli_overrides: Arc::new(RwLock::new(cli_overrides)),
             runtime_feature_enablement: Arc::new(RwLock::new(BTreeMap::new())),
             loader_overrides,
@@ -54,12 +54,12 @@ impl ConfigManager {
         }
     }
 
-    pub(crate) fn genex_home(&self) -> &Path {
-        self.genex_home.as_path()
+    pub(crate) fn ruxex_home(&self) -> &Path {
+        self.ruxex_home.as_path()
     }
 
     pub(crate) fn user_config_path(&self) -> std::io::Result<AbsolutePathBuf> {
-        self.loader_overrides.user_config_path(self.genex_home())
+        self.loader_overrides.user_config_path(self.ruxex_home())
     }
 
     pub(crate) fn current_cli_overrides(&self) -> Vec<(String, TomlValue)> {
@@ -133,10 +133,10 @@ impl ConfigManager {
         let mut loader_overrides = self.loader_overrides.clone();
         loader_overrides.ignore_user_config = true;
         let mut config = ConfigBuilder::default()
-            .genex_home(self.genex_home.clone())
+            .ruxex_home(self.ruxex_home.clone())
             .cli_overrides(self.current_cli_overrides())
             .loader_overrides(loader_overrides)
-            .fallback_cwd(Some(self.genex_home.clone()))
+            .fallback_cwd(Some(self.ruxex_home.clone()))
             .build()
             .await?;
         self.apply_runtime_feature_enablement(&mut config);
@@ -182,8 +182,8 @@ impl ConfigManager {
     ) -> std::io::Result<Config> {
         let mut session_flags = TomlValue::Table(Default::default());
         for layer in thread_config.config_layer_stack.layers_low_to_high() {
-            if matches!(layer.name, genex_config::ConfigLayerSource::SessionFlags) {
-                genex_config::merge_toml_values(&mut session_flags, &layer.config);
+            if matches!(layer.name, ruxex_config::ConfigLayerSource::SessionFlags) {
+                ruxex_config::merge_toml_values(&mut session_flags, &layer.config);
             }
         }
         let overrides = session_flags
@@ -203,7 +203,7 @@ impl ConfigManager {
             ConfigOverrides {
                 cwd: Some(cwd.to_path_buf()),
                 default_permissions: Some(permission_profile),
-                genex_linux_sandbox_exe: self.arg0_paths.genex_linux_sandbox_exe.clone(),
+                ruxex_linux_sandbox_exe: self.arg0_paths.ruxex_linux_sandbox_exe.clone(),
                 ..Default::default()
             },
             Some(cwd.to_path_buf()),
@@ -237,8 +237,8 @@ impl ConfigManager {
                     .map(|(key, value)| (key, json_to_toml(value))),
             )
             .collect::<Vec<_>>();
-        let mut config = genex_core::config::ConfigBuilder::default()
-            .genex_home(self.genex_home.clone())
+        let mut config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(self.ruxex_home.clone())
             .cli_overrides(merged_cli_overrides)
             .loader_overrides(self.loader_overrides.clone())
             .strict_config(self.strict_config)
@@ -265,10 +265,10 @@ impl ConfigManager {
     ) -> std::io::Result<ConfigLayerStack> {
         load_config_layers_state(
             LOCAL_FS.as_ref(),
-            &self.genex_home,
+            &self.ruxex_home,
             cwd,
             &self.current_cli_overrides(),
-            genex_config::ConfigLoadOptions {
+            ruxex_config::ConfigLoadOptions {
                 loader_overrides: self.loader_overrides.clone(),
                 strict_config: self.strict_config,
             },
@@ -289,30 +289,30 @@ impl ConfigManager {
     }
 
     fn apply_arg0_paths(&self, config: &mut Config) {
-        config.genex_self_exe = self.arg0_paths.genex_self_exe.clone();
-        config.genex_linux_sandbox_exe = self.arg0_paths.genex_linux_sandbox_exe.clone();
+        config.ruxex_self_exe = self.arg0_paths.ruxex_self_exe.clone();
+        config.ruxex_linux_sandbox_exe = self.arg0_paths.ruxex_linux_sandbox_exe.clone();
     }
 
     #[cfg(test)]
     pub(crate) fn new_for_tests(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
     ) -> Self {
         Self::new(
-            genex_home,
+            ruxex_home,
             cli_overrides,
             loader_overrides,
             /*strict_config*/ false,
             Arg0DispatchPaths::default(),
-            Arc::new(genex_config::NoopThreadConfigLoader),
+            Arc::new(ruxex_config::NoopThreadConfigLoader),
         )
     }
 
     #[cfg(test)]
-    pub(crate) fn without_managed_config_for_tests(genex_home: PathBuf) -> Self {
+    pub(crate) fn without_managed_config_for_tests(ruxex_home: PathBuf) -> Self {
         Self::new_for_tests(
-            genex_home,
+            ruxex_home,
             Vec::new(),
             LoaderOverrides::without_managed_config_for_tests(),
         )

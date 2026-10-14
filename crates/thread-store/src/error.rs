@@ -1,4 +1,4 @@
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 /// Result type returned by thread-store operations.
 pub type ThreadStoreResult<T> = Result<T, ThreadStoreError>;
 

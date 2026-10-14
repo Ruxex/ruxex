@@ -8,13 +8,13 @@ use super::session::Session;
 use super::step_context::StepContext;
 use super::step_settings::ResolvedStepSettings;
 use crate::state::ReasoningEffortPin;
-use genex_features::Feature;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_model_provider::ProviderRequestFormat;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ConfigurationReasoning;
-use genex_protocol::models::ResponseItem;
+use ruxex_features::Feature;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_model_provider::ProviderRequestFormat;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ConfigurationReasoning;
+use ruxex_protocol::models::ResponseItem;
 
 /// Sampling can establish a pin; compaction must not change live state before it succeeds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,7 +81,7 @@ impl Session {
                 item: ResponseItem::ConfigurationUpdate {
                     reasoning: ConfigurationReasoning { effort },
                 },
-                metadata: Some(GenexHarnessMetadata {
+                metadata: Some(RuxexHarnessMetadata {
                     harness_authored_configuration: true,
                     ..Default::default()
                 }),

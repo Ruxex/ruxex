@@ -4,22 +4,22 @@ use anyhow::bail;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::PlanDeltaNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::PlanDeltaNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -45,13 +45,13 @@ async fn plan_mode_uses_proposed_plan_block_for_plan_item() -> Result<()> {
     ])];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::CollaborationModes)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -107,13 +107,13 @@ async fn plan_mode_without_proposed_plan_does_not_emit_plan_item() -> Result<()>
     ])];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::CollaborationModes)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -130,7 +130,7 @@ async fn plan_mode_without_proposed_plan_does_not_emit_plan_item() -> Result<()>
     Ok(())
 }
 
-async fn start_plan_mode_turn(mcp: &mut TestAppServer) -> Result<genex_app_server_protocol::Turn> {
+async fn start_plan_mode_turn(mcp: &mut TestAppServer) -> Result<ruxex_app_server_protocol::Turn> {
     let thread = mcp
         .start_thread(ThreadStartParams {
             model: Some("mock-model".to_string()),

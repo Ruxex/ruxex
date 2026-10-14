@@ -12,13 +12,13 @@ use crate::tools::handlers::request_user_input_spec::request_user_input_tool_des
 use crate::tools::handlers::request_user_input_spec::request_user_input_unavailable_message;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_history::RetainedContextEvent;
-use genex_history::VerifiedAnswer;
-use genex_history::VerifiedQuestionAnswer;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::request_user_input::RequestUserInputArgs;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_history::RetainedContextEvent;
+use ruxex_history::VerifiedAnswer;
+use ruxex_history::VerifiedQuestionAnswer;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::request_user_input::RequestUserInputArgs;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 
 pub struct RequestUserInputHandler {
     pub available_modes: Vec<ModeKind>,
@@ -33,7 +33,7 @@ impl ToolExecutor<ToolInvocation> for RequestUserInputHandler {
         create_request_user_input_tool(request_user_input_tool_description(&self.available_modes))
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

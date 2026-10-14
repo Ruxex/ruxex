@@ -2,23 +2,23 @@
 #![cfg(unix)]
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecApprovalRequestEvent;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecApprovalRequestEvent;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::mount_function_call_agent_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use std::fs;
@@ -28,7 +28,7 @@ use std::path::PathBuf;
 fn write_skill_metadata(home: &Path, name: &str, contents: &str) -> Result<()> {
     let metadata_dir = home.join("skills").join(name).join("agents");
     fs::create_dir_all(&metadata_dir)?;
-    fs::write(metadata_dir.join("genex.yaml"), contents)?;
+    fs::write(metadata_dir.join("ruxex.yaml"), contents)?;
     Ok(())
 }
 
@@ -40,14 +40,14 @@ fn exec_command_arguments(command: &str) -> Result<String> {
 }
 
 async fn submit_turn_with_policies(
-    test: &TestGenex,
+    test: &TestRuxex,
     prompt: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
 ) -> Result<()> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.cwd_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.to_string(),
@@ -104,17 +104,17 @@ description: {name} skill
     Ok(script_path)
 }
 
-fn skill_script_command(test: &TestGenex, script_name: &str) -> Result<String> {
+fn skill_script_command(test: &TestRuxex, script_name: &str) -> Result<String> {
     let script_path = fs::canonicalize(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("skills/mbolin-test-skill/scripts")
             .join(script_name),
     )?;
     Ok(shlex::try_join([script_path.to_string_lossy().as_ref()])?)
 }
 
-async fn wait_for_exec_approval_request(test: &TestGenex) -> Option<ExecApprovalRequestEvent> {
-    wait_for_event_match(test.genex.as_ref(), |event| match event {
+async fn wait_for_exec_approval_request(test: &TestRuxex) -> Option<ExecApprovalRequestEvent> {
+    wait_for_event_match(test.ruxex.as_ref(), |event| match event {
         EventMsg::ExecApprovalRequest(request) => Some(Some(request.clone())),
         EventMsg::TurnComplete(_) => Some(None),
         _ => None,
@@ -122,8 +122,8 @@ async fn wait_for_exec_approval_request(test: &TestGenex) -> Option<ExecApproval
     .await
 }
 
-async fn wait_for_turn_complete(test: &TestGenex) {
-    wait_for_event(test.genex.as_ref(), |event| {
+async fn wait_for_turn_complete(test: &TestRuxex) {
+    wait_for_event(test.ruxex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -243,7 +243,7 @@ async fn shell_zsh_fork_still_enforces_workspace_write_sandbox() -> Result<()> {
 
     let server = start_mock_server().await;
     let tool_call_id = "zsh-fork-workspace-write-deny";
-    let outside_path = "/tmp/genex-zsh-fork-workspace-write-deny.txt";
+    let outside_path = "/tmp/ruxex-zsh-fork-workspace-write-deny.txt";
     let workspace_write_profile = restrictive_workspace_write_profile();
     let _ = fs::remove_file(outside_path);
     let test = build_zsh_fork_test(

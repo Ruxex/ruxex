@@ -1,5 +1,5 @@
-use genex_network_proxy::NetworkProxy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -7,23 +7,23 @@ use tokio::process::Child;
 use tokio::process::Command;
 use tracing::trace;
 
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
 
 /// Experimental environment variable that will be set to some non-empty value
 /// if both of the following are true:
 ///
-/// 1. The process was spawned by Genex as part of a shell tool call.
+/// 1. The process was spawned by Ruxex as part of a shell tool call.
 /// 2. NetworkSandboxPolicy is restricted for the tool call.
 ///
 /// We may try to have just one environment variable for all sandboxing
 /// attributes, so this may change in the future.
-pub const GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR: &str = "GENEX_SANDBOX_NETWORK_DISABLED";
+pub const RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR: &str = "RUXEX_SANDBOX_NETWORK_DISABLED";
 
 /// Should be set when the process is spawned under a sandbox. Currently, the
 /// value is "seatbelt" for macOS, but it may change in the future to
 /// accommodate sandboxing configuration and other sandboxing mechanisms.
-pub const GENEX_SANDBOX_ENV_VAR: &str = "GENEX_SANDBOX";
+pub const RUXEX_SANDBOX_ENV_VAR: &str = "RUXEX_SANDBOX";
 
 #[derive(Debug, Clone, Copy)]
 pub enum StdioPolicy {
@@ -37,7 +37,7 @@ pub enum StdioPolicy {
 ///
 /// For now, we take `NetworkSandboxPolicy` as a parameter to spawn_child()
 /// because we need to determine whether to set the
-/// `GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` environment variable.
+/// `RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` environment variable.
 pub(crate) struct SpawnChildRequest<'a> {
     pub program: PathBuf,
     pub args: Vec<String>,
@@ -79,10 +79,10 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
     cmd.envs(env);
 
     if !network_sandbox_policy.is_enabled() {
-        cmd.env(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
+        cmd.env(RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR, "1");
     }
 
-    // If this Genex process dies (including being killed via SIGKILL), we want
+    // If this Ruxex process dies (including being killed via SIGKILL), we want
     // any child processes that were spawned as part of a `"shell"` tool call
     // to also be terminated.
 
@@ -93,7 +93,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
         let parent_pid = libc::getpid();
         cmd.pre_exec(move || {
             if detach_from_tty {
-                genex_utils_pty::process_group::detach_from_tty()?;
+                ruxex_utils_pty::process_group::detach_from_tty()?;
             }
 
             // This relies on prctl(2), so it only works on Linux.
@@ -101,11 +101,11 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
             {
                 // This prctl call effectively requests, "deliver SIGTERM when my
                 // current parent dies."
-                genex_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
+                ruxex_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
             }
             // macOS cannot receive the fd with close-on-exec set atomically.
             #[cfg(target_os = "macos")]
-            genex_utils_pty::pty::close_inherited_fds_except(&[]);
+            ruxex_utils_pty::pty::close_inherited_fds_except(&[]);
             Ok(())
         });
     }

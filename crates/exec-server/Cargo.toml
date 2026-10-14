@@ -1,5 +1,5 @@
 [package]
-name = "genex-exec-server"
+name = "ruxex-exec-server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,20 +15,20 @@ arc-swap = { workspace = true }
 base64 = { workspace = true }
 bytes = { workspace = true }
 clatter = { workspace = true }
-genex-build-info = { workspace = true }
-genex-config = { workspace = true }
-genex-http-client = { workspace = true }
-genex-exec-server-protocol = { workspace = true }
-genex-file-system = { workspace = true }
-genex-network-proxy = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-sandboxing = { workspace = true }
-genex-shell-command = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-home-dir = { workspace = true }
-genex-utils-path-uri = { workspace = true }
-genex-utils-pty = { workspace = true }
+ruxex-build-info = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-exec-server-protocol = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-pty = { workspace = true }
 dirs = { workspace = true }
 futures = { workspace = true }
 http = { workspace = true }
@@ -60,9 +60,9 @@ rustix = { workspace = true, features = ["fs"] }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-genex-exec-server-test-support = { workspace = true }
-genex-test-binary-support = { workspace = true }
-genex-utils-cargo-bin = { workspace = true }
+ruxex-exec-server-test-support = { workspace = true }
+ruxex-test-binary-support = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 ctor = { workspace = true }
 http = { workspace = true }
 opentelemetry_sdk = { workspace = true }

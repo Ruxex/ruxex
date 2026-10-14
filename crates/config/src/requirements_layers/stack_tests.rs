@@ -8,8 +8,8 @@ use crate::ConfigRequirementsToml;
 use crate::ConfigRequirementsWithSources;
 use crate::RequirementSource;
 use crate::Sourced;
-use genex_protocol::protocol::AskForApproval;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -242,13 +242,13 @@ name = "Gateway"
 #[test]
 fn composition_strategy_applies_to_non_cloud_layers() {
     let mdm_source = RequirementSource::MdmManagedPreferences {
-        domain: "com.genex.genex".to_string(),
+        domain: "com.ruxex.ruxex".to_string(),
         key: "requirements_toml_base64".to_string(),
     };
     let system_file = if cfg!(windows) {
         "C:\\requirements.toml"
     } else {
-        "/etc/genex/requirements.toml"
+        "/etc/ruxex/requirements.toml"
     };
     let system_source = RequirementSource::SystemRequirementsToml {
         file: AbsolutePathBuf::from_absolute_path(system_file).expect("absolute path"),

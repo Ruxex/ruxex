@@ -10,8 +10,8 @@ async fn removes_banned_allow_rules_once() {
         &["pwsh", "-ec"],
         &["pwsh", "-f"],
     ];
-    let genex_home = tempdir().expect("create Genex home");
-    let policy_path = genex_home.path().join("rules/default.rules");
+    let ruxex_home = tempdir().expect("create Ruxex home");
+    let policy_path = ruxex_home.path().join("rules/default.rules");
     std::fs::create_dir_all(policy_path.parent().expect("rules directory"))
         .expect("create rules directory");
     std::fs::write(
@@ -28,7 +28,7 @@ network_rule(host="api.github.com", protocol="https", decision="allow")
     )
     .expect("write legacy policy");
 
-    prefix_rule_migration(genex_home.path(), &policy_path, BANNED_PREFIXES)
+    prefix_rule_migration(ruxex_home.path(), &policy_path, BANNED_PREFIXES)
         .await
         .expect("run sandbox migration");
     assert_eq!(
@@ -40,7 +40,7 @@ network_rule(host="api.github.com", protocol="https", decision="allow")
 "#
     );
     assert_eq!(
-        std::fs::read_to_string(genex_home.path().join(MIGRATION_MARKER_FILENAME))
+        std::fs::read_to_string(ruxex_home.path().join(MIGRATION_MARKER_FILENAME))
             .expect("read migration marker"),
         "v1\n"
     );
@@ -48,7 +48,7 @@ network_rule(host="api.github.com", protocol="https", decision="allow")
     let post_migration_policy = r#"prefix_rule(pattern=["git"], decision="allow")
 "#;
     std::fs::write(&policy_path, post_migration_policy).expect("write post-migration policy");
-    prefix_rule_migration(genex_home.path(), &policy_path, BANNED_PREFIXES)
+    prefix_rule_migration(ruxex_home.path(), &policy_path, BANNED_PREFIXES)
         .await
         .expect("rerun sandbox migration");
     assert_eq!(

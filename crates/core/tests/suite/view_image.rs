@@ -16,44 +16,44 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event_with_timeout;
-use genex_core::TurnInputRequest;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_exec_server::REMOTE_ENVIRONMENT_ID;
-use genex_exec_server::RemoveOptions;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::TruncationPolicyConfig;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::user_input::UserInput;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::TurnInputRequest;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_exec_server::REMOTE_ENVIRONMENT_ID;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_path_uri::PathUri;
 use image::DynamicImage;
 use image::GenericImageView;
 use image::ImageBuffer;
@@ -85,7 +85,7 @@ enum ImageBudgetPolicy {
     UnifiedResponsesLiteWithoutOriginalSupport,
 }
 
-fn disabled_user_turn(test: &TestGenex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
+fn disabled_user_turn(test: &TestRuxex, items: Vec<UserInput>, model: String) -> TurnInputRequest {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
     TurnInputRequest::user_input(items).with_thread_settings(ThreadSettingsOverrides {
@@ -161,7 +161,7 @@ fn png_bytes(width: u32, height: u32, rgba: [u8; 4]) -> anyhow::Result<Vec<u8>> 
     Ok(cursor.into_inner())
 }
 
-async fn create_workspace_directory(test: &TestGenex, rel_path: &str) -> anyhow::Result<PathUri> {
+async fn create_workspace_directory(test: &TestRuxex, rel_path: &str) -> anyhow::Result<PathUri> {
     let abs_path_uri = test.workspace_path_uri(rel_path)?;
     test.fs()
         .create_directory(
@@ -177,7 +177,7 @@ async fn create_workspace_directory(test: &TestGenex, rel_path: &str) -> anyhow:
 }
 
 async fn write_workspace_file(
-    test: &TestGenex,
+    test: &TestRuxex,
     rel_path: &str,
     contents: Vec<u8>,
 ) -> anyhow::Result<PathBuf> {
@@ -206,7 +206,7 @@ async fn write_workspace_file(
 }
 
 async fn write_workspace_png(
-    test: &TestGenex,
+    test: &TestRuxex,
     rel_path: &str,
     width: u32,
     height: u32,
@@ -224,8 +224,8 @@ async fn assert_user_turn_local_image_resizes_to(
     let server = start_mock_server().await;
 
     let builder = match image_budget_policy {
-        ImageBudgetPolicy::DetailBased | ImageBudgetPolicy::Unified => test_genex(),
-        ImageBudgetPolicy::UnifiedResponsesLiteWithoutOriginalSupport => test_genex()
+        ImageBudgetPolicy::DetailBased | ImageBudgetPolicy::Unified => test_ruxex(),
+        ImageBudgetPolicy::UnifiedResponsesLiteWithoutOriginalSupport => test_ruxex()
             .with_model_info_override("legacy-model", |model_info| {
                 model_info.supports_image_detail_original = false;
                 model_info.use_responses_lite = true;
@@ -240,8 +240,8 @@ async fn assert_user_turn_local_image_resizes_to(
         }
     });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -261,7 +261,7 @@ async fn assert_user_turn_local_image_resizes_to(
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::LocalImage {
@@ -273,7 +273,7 @@ async fn assert_user_turn_local_image_resizes_to(
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         // Empirically, image attachment can be slow in CI.
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
@@ -421,12 +421,12 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         let _ = config.features.enable(Feature::ImageResizeNotice);
     });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -461,7 +461,7 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -476,16 +476,16 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     let mut item_completed = None;
     let mut legacy_event = None;
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| match event {
             EventMsg::ItemStarted(event) => {
-                if matches!(&event.item, genex_protocol::items::TurnItem::ImageView(_)) {
+                if matches!(&event.item, ruxex_protocol::items::TurnItem::ImageView(_)) {
                     item_started = Some(event.item.clone());
                 }
                 false
             }
             EventMsg::ItemCompleted(event) => {
-                if matches!(&event.item, genex_protocol::items::TurnItem::ImageView(_)) {
+                if matches!(&event.item, ruxex_protocol::items::TurnItem::ImageView(_)) {
                     item_completed = Some(event.item.clone());
                 }
                 false
@@ -504,14 +504,14 @@ async fn view_image_tool_attaches_local_image() -> anyhow::Result<()> {
     .await;
 
     match item_started.expect("view image item started event emitted") {
-        genex_protocol::items::TurnItem::ImageView(item) => {
+        ruxex_protocol::items::TurnItem::ImageView(item) => {
             assert_eq!(item.id, call_id);
             assert_eq!(item.path, path_uri);
         }
         other => panic!("expected ImageView item, got {other:?}"),
     }
     match item_completed.expect("view image item completed event emitted") {
-        genex_protocol::items::TurnItem::ImageView(item) => {
+        ruxex_protocol::items::TurnItem::ImageView(item) => {
             assert_eq!(item.id, call_id);
             assert_eq!(item.path, path_uri);
         }
@@ -587,7 +587,7 @@ async fn view_image_routes_to_selected_local_environment() -> anyhow::Result<()>
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await?;
     write_workspace_file(
         &test,
@@ -653,7 +653,7 @@ async fn view_image_tool_applies_local_sandbox_read_denies() -> anyhow::Result<(
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build(&server).await?;
     let rel_path = "denied.png";
     let denied_path = test.config.cwd.join(rel_path);
@@ -733,7 +733,7 @@ async fn view_image_routes_to_selected_remote_environment() -> anyhow::Result<()
     skip_if_no_remote_env!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_remote_and_local_env(&server).await?;
     let local_cwd = TempDir::new()?;
     fs::write(local_cwd.path().join("remote.png"), b"not a remote image")?;
@@ -844,10 +844,10 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_mode
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -882,7 +882,7 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_mode
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -894,7 +894,7 @@ async fn view_image_tool_can_preserve_original_resolution_when_requested_on_mode
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -935,7 +935,7 @@ async fn view_image_unified_budget_hides_detail_but_accepts_legacy_hints() -> an
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("legacy-model")
         .with_config(|config| {
             let _ = config.features.enable(Feature::UnifiedImageBudget);
@@ -1013,10 +1013,10 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1049,7 +1049,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1061,7 +1061,7 @@ async fn view_image_tool_errors_clearly_for_unsupported_detail_values() -> anyho
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1091,10 +1091,10 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1129,7 +1129,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1141,7 +1141,7 @@ async fn view_image_tool_treats_null_detail_as_omitted() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1194,7 +1194,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
     image_budget_policy: ImageBudgetPolicy,
 ) -> anyhow::Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("example-model-2")
         .with_config(move |config| {
             if image_budget_policy == ImageBudgetPolicy::Unified {
@@ -1202,8 +1202,8 @@ async fn assert_view_image_tool_resizes_without_original_support(
             }
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1238,7 +1238,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1250,7 +1250,7 @@ async fn assert_view_image_tool_resizes_without_original_support(
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1294,10 +1294,10 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("legacy-model");
+    let mut builder = test_ruxex().with_model("legacy-model");
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1332,7 +1332,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1344,7 +1344,7 @@ async fn view_image_tool_does_not_force_original_resolution_with_capability_only
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1385,10 +1385,10 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1414,7 +1414,7 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1426,7 +1426,7 @@ async fn view_image_tool_errors_when_path_is_directory() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1455,10 +1455,10 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1486,7 +1486,7 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
     )
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1497,7 +1497,7 @@ async fn view_image_tool_rejects_invalid_image_before_tool_output() -> anyhow::R
         ))
         .await?;
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1527,10 +1527,10 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         session_configured,
         ..
     } = &test;
@@ -1558,7 +1558,7 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
 
     let session_model = session_configured.model.clone();
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1570,7 +1570,7 @@ async fn view_image_tool_errors_when_file_missing() -> anyhow::Result<()> {
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )
@@ -1667,13 +1667,13 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     )
     .await;
 
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model = Some(model_slug.to_string());
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let TestGenex { genex, .. } = &test;
+    let TestRuxex { ruxex, .. } = &test;
 
     let rel_path = "assets/example.png";
     write_workspace_png(
@@ -1700,7 +1700,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
     ]);
     let mock = responses::mount_sse_once(&server, second_response).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(disabled_user_turn(
             &test,
             vec![UserInput::Text {
@@ -1712,7 +1712,7 @@ async fn view_image_tool_returns_unsupported_message_for_text_only_model() -> an
         .await?;
 
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |event| matches!(event, EventMsg::TurnComplete(_)),
         VIEW_IMAGE_TURN_COMPLETE_TIMEOUT,
     )

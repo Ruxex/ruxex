@@ -6,8 +6,8 @@ use std::hash::Hasher;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use genex_protocol::protocol::Product;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::protocol::Product;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 use crate::SkillMetadata;
 

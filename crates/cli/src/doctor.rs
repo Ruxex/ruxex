@@ -1,4 +1,4 @@
-//! Implements the `genex doctor` diagnostic report.
+//! Implements the `ruxex doctor` diagnostic report.
 //!
 //! Doctor is intentionally read-mostly: checks inspect the current installation,
 //! configuration, authentication, terminal, state paths, and bounded reachability
@@ -27,41 +27,41 @@ use std::time::Instant;
 
 use anyhow::Context;
 use clap::Parser;
-use genex_api::is_azure_responses_provider;
-use genex_app_server::AppServerRuntimeBuilder;
-use genex_app_server::runtime::mount_provider_home_for_config;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_core::config::Config;
-use genex_core::config::ConfigOverrides;
-use genex_core::config::LoaderOverrides;
-use genex_core::config::find_genex_home;
-use genex_features::FEATURES;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_http_client::RouteAwareClientPool;
-use genex_install_context::GenexPackageLayout;
-use genex_install_context::InstallContext;
-use genex_install_context::InstallMethod;
-use genex_install_context::StandalonePlatform;
-use genex_login::AuthDotJson;
-use genex_login::CredentialManager;
-use genex_login::GENEX_API_KEY_ENV_VAR;
-use genex_login::default_client::create_client_without_request_logging;
-use genex_login::default_client::default_headers;
-use genex_login::load_auth_dot_json;
-use genex_model_provider::ProviderError;
-use genex_model_provider::ProviderStreamConnectRequest;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::protocol::AskForApproval;
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
-use genex_tui::Cli as TuiCli;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_api::is_azure_responses_provider;
+use ruxex_app_server::AppServerRuntimeBuilder;
+use ruxex_app_server::runtime::mount_provider_home_for_config;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_core::config::LoaderOverrides;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_features::FEATURES;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_http_client::RouteAwareClientPool;
+use ruxex_install_context::RuxexPackageLayout;
+use ruxex_install_context::InstallContext;
+use ruxex_install_context::InstallMethod;
+use ruxex_install_context::StandalonePlatform;
+use ruxex_login::AuthDotJson;
+use ruxex_login::CredentialManager;
+use ruxex_login::RUXEX_API_KEY_ENV_VAR;
+use ruxex_login::default_client::create_client_without_request_logging;
+use ruxex_login::default_client::default_headers;
+use ruxex_login::load_auth_dot_json;
+use ruxex_model_provider::ProviderError;
+use ruxex_model_provider::ProviderStreamConnectRequest;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
+use ruxex_tui::Cli as TuiCli;
+use ruxex_utils_cli::CliConfigOverrides;
 use http::Method;
 use serde::Serialize;
 use supports_color::Stream;
@@ -137,7 +137,7 @@ const REMOTE_TERMINAL_ENV_VARS: &[&str] = &[
 const NARROW_TERMINAL_COLUMNS: u16 = 80;
 const NARROW_TERMINAL_ROWS: u16 = 24;
 
-/// Options for building a local Genex diagnostic report.
+/// Options for building a local Ruxex diagnostic report.
 ///
 /// The command always runs the full diagnostic set. Human output includes
 /// detailed diagnostics by default; --summary keeps the terminal output compact.
@@ -183,7 +183,7 @@ struct DoctorReport {
     schema_version: u32,
     generated_at: String,
     overall_status: CheckStatus,
-    genex_version: String,
+    ruxex_version: String,
     checks: Vec<DoctorCheck>,
 }
 
@@ -295,7 +295,7 @@ impl DoctorCheck {
 
 /// Builds, renders, and exits according to the current doctor report.
 ///
-/// This is the CLI entry point for genex doctor. It does not repair issues;
+/// This is the CLI entry point for ruxex doctor. It does not repair issues;
 /// failures are represented in the report and cause a non-zero process exit so
 /// scripts can distinguish a clean environment from one that needs attention.
 pub async fn run_doctor(
@@ -412,7 +412,7 @@ async fn build_report(
                             )
                             .detail(error.to_string())
                             .remediation(
-                                "Fix the reported authentication error, then rerun genex doctor.",
+                                "Fix the reported authentication error, then rerun ruxex doctor.",
                             ),
                         },
                     )
@@ -502,7 +502,7 @@ async fn build_report(
                             "config could not be loaded",
                         )
                         .detail(err.to_string())
-                        .remediation("Fix the reported config error, then rerun genex doctor.")
+                        .remediation("Fix the reported config error, then rerun ruxex doctor.")
                     })
                 },
                 async {
@@ -547,7 +547,7 @@ async fn build_report(
         schema_version: 1,
         generated_at: generated_at(),
         overall_status,
-        genex_version: env!("CARGO_PKG_VERSION").to_string(),
+        ruxex_version: env!("CARGO_PKG_VERSION").to_string(),
         checks,
     }
 }
@@ -576,7 +576,7 @@ async fn load_config(
     .await?
     .build()
     .await
-    .context("failed to load Genex config")
+    .context("failed to load Ruxex config")
 }
 
 fn config_overrides_from_interactive(
@@ -589,7 +589,7 @@ fn config_overrides_from_interactive(
         interactive.approval_policy.map(Into::into)
     };
     let sandbox_mode = if interactive.dangerously_bypass_approvals_and_sandbox {
-        Some(genex_protocol::config_types::SandboxMode::DangerFullAccess)
+        Some(ruxex_protocol::config_types::SandboxMode::DangerFullAccess)
     } else {
         interactive.sandbox_mode.map(Into::into)
     };
@@ -598,15 +598,15 @@ fn config_overrides_from_interactive(
         approval_policy,
         sandbox_mode,
         cwd: interactive.cwd.clone(),
-        genex_self_exe: arg0_paths.genex_self_exe.clone(),
-        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
+        ruxex_self_exe: arg0_paths.ruxex_self_exe.clone(),
+        ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe.clone(),
         show_raw_agent_reasoning: None,
         additional_writable_roots: interactive.add_dir.clone(),
         ..Default::default()
     }
 }
 
-/// JSON support report emitted by `genex doctor --json`.
+/// JSON support report emitted by `ruxex doctor --json`.
 ///
 /// The report is keyed by check id so support tooling can fetch paths like
 /// `checks["terminal.metadata"]` without scanning arrays. Human rendering can
@@ -618,7 +618,7 @@ struct JsonDoctorReport {
     schema_version: u32,
     generated_at: String,
     overall_status: CheckStatus,
-    genex_version: String,
+    ruxex_version: String,
     checks: BTreeMap<String, JsonDoctorCheck>,
 }
 
@@ -683,7 +683,7 @@ fn redacted_json_report(report: &DoctorReport) -> JsonDoctorReport {
         schema_version: report.schema_version,
         generated_at: report.generated_at.clone(),
         overall_status: report.overall_status,
-        genex_version: report.genex_version.clone(),
+        ruxex_version: report.ruxex_version.clone(),
         checks,
     }
 }
@@ -849,47 +849,47 @@ fn installation_check(show_details: bool) -> DoctorCheck {
     ));
     details.push(format!(
         "managed by bun: {}",
-        env::var_os("GENEX_MANAGED_BY_BUN").is_some()
+        env::var_os("RUXEX_MANAGED_BY_BUN").is_some()
     ));
     details.push(format!(
         "managed by Vite+: {}",
-        env::var_os("GENEX_MANAGED_BY_VITE_PLUS").is_some()
+        env::var_os("RUXEX_MANAGED_BY_VITE_PLUS").is_some()
     ));
     details.push(format!(
         "managed by pnpm: {}",
-        env::var_os("GENEX_MANAGED_BY_PNPM").is_some()
+        env::var_os("RUXEX_MANAGED_BY_PNPM").is_some()
     ));
     push_env_path_detail(
         &mut details,
         "managed package root",
-        "GENEX_MANAGED_PACKAGE_ROOT",
+        "RUXEX_MANAGED_PACKAGE_ROOT",
     );
 
-    let path_entries = genex_path_entries();
+    let path_entries = ruxex_path_entries();
     let mut status = CheckStatus::Ok;
     let mut summary = "installation looks consistent".to_string();
     let mut remediation = None;
 
     if path_entries.len() > 1 {
-        details.push(format!("PATH genex entries: {}", path_entries.len()));
+        details.push(format!("PATH ruxex entries: {}", path_entries.len()));
     }
     if show_details || path_entries.len() > 1 {
         details.extend(
             path_entries
                 .iter()
                 .enumerate()
-                .map(|(index, path)| format!("PATH genex #{}: {path}", index + 1)),
+                .map(|(index, path)| format!("PATH ruxex #{}: {path}", index + 1)),
         );
     }
 
     if doctor_managed_by_npm(current_exe.as_deref()) {
         details
             .push("npm update target: not inspected (PATH helpers are not executed)".to_string());
-        if env::var_os("GENEX_MANAGED_PACKAGE_ROOT").is_none() {
+        if env::var_os("RUXEX_MANAGED_PACKAGE_ROOT").is_none() {
             status = status.max(CheckStatus::Warning);
             summary = "npm-managed launch is missing package-root provenance".to_string();
             remediation = Some(
-                "Reinstall or update Genex so the JS shim provides GENEX_MANAGED_PACKAGE_ROOT."
+                "Reinstall or update Ruxex so the JS shim provides RUXEX_MANAGED_PACKAGE_ROOT."
                     .to_string(),
             );
         }
@@ -914,15 +914,15 @@ fn doctor_install_context(current_exe: Option<&Path>) -> InstallContext {
 }
 
 fn doctor_managed_by_npm(current_exe: Option<&Path>) -> bool {
-    env::var_os("GENEX_MANAGED_BY_NPM").is_some()
+    env::var_os("RUXEX_MANAGED_BY_NPM").is_some()
         && !inherited_managed_env_for_cargo_binary(current_exe)
 }
 
 fn inherited_managed_env_for_cargo_binary(current_exe: Option<&Path>) -> bool {
-    if env::var_os("GENEX_MANAGED_BY_NPM").is_none()
-        && env::var_os("GENEX_MANAGED_BY_BUN").is_none()
-        && env::var_os("GENEX_MANAGED_BY_VITE_PLUS").is_none()
-        && env::var_os("GENEX_MANAGED_BY_PNPM").is_none()
+    if env::var_os("RUXEX_MANAGED_BY_NPM").is_none()
+        && env::var_os("RUXEX_MANAGED_BY_BUN").is_none()
+        && env::var_os("RUXEX_MANAGED_BY_VITE_PLUS").is_none()
+        && env::var_os("RUXEX_MANAGED_BY_PNPM").is_none()
     {
         return false;
     }
@@ -991,7 +991,7 @@ fn describe_install_context(context: &InstallContext) -> String {
 
 fn describe_method_with_package_layout(
     method: &str,
-    package_layout: Option<&GenexPackageLayout>,
+    package_layout: Option<&RuxexPackageLayout>,
 ) -> String {
     match package_layout {
         Some(package_layout) => {
@@ -1024,8 +1024,8 @@ fn display_list<T: AsRef<str>>(items: &[T]) -> String {
     }
 }
 
-fn genex_path_entries() -> Vec<String> {
-    let Ok(candidates) = which::which_all("genex") else {
+fn ruxex_path_entries() -> Vec<String> {
+    let Ok(candidates) = which::which_all("ruxex") else {
         return Vec::new();
     };
     let mut seen = BTreeSet::new();
@@ -1040,7 +1040,7 @@ fn config_check(config: &Config) -> DoctorCheck {
     details
         .push("configuration scope: invocation config, including cloud-managed policy".to_string());
     details.push("active thread overrides: not inspected".to_string());
-    details.push(format!("GENEX_HOME: {}", config.genex_home.display()));
+    details.push(format!("RUXEX_HOME: {}", config.ruxex_home.display()));
     details.push(format!("cwd: {}", config.cwd.display()));
     details.push(format!(
         "model: {}",
@@ -1120,7 +1120,7 @@ fn feature_flag_details(config: &Config, details: &mut Vec<String>) {
 }
 
 fn config_toml_details(config: &Config, details: &mut Vec<String>) {
-    let config_path = config.genex_home.join(genex_config::CONFIG_TOML_FILE);
+    let config_path = config.ruxex_home.join(ruxex_config::CONFIG_TOML_FILE);
     details.push(format!("config.toml: {}", config_path.display()));
     match std::fs::read_to_string(&config_path) {
         Ok(contents) => match toml::from_str::<toml::Value>(&contents) {
@@ -1136,7 +1136,7 @@ fn config_toml_details(config: &Config, details: &mut Vec<String>) {
 
 fn auth_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
-    let auth_path = config.genex_home.join("auth.json");
+    let auth_path = config.ruxex_home.join("auth.json");
     details.push(format!(
         "auth storage mode: {:?}",
         config.cli_auth_credentials_store_mode
@@ -1144,7 +1144,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     details.push(format!("auth file: {}", auth_path.display()));
 
     let env_auth_vars = [
-        Some(GENEX_API_KEY_ENV_VAR),
+        Some(RUXEX_API_KEY_ENV_VAR),
         config.model_provider.env_key.as_deref(),
     ]
     .into_iter()
@@ -1158,7 +1158,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
         ));
     }
     match load_auth_dot_json(
-        &config.genex_home,
+        &config.ruxex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
     ) {
@@ -1212,7 +1212,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
             "auth.credentials",
             "auth",
             CheckStatus::Fail,
-            "no Genex credentials were found",
+            "no Ruxex credentials were found",
         )
         .details(details)
         .remediation(
@@ -1231,7 +1231,7 @@ fn auth_check(config: &Config) -> DoctorCheck {
     }
 }
 
-fn stored_auth_mode(auth: &genex_login::AuthDotJson) -> &'static str {
+fn stored_auth_mode(auth: &ruxex_login::AuthDotJson) -> &'static str {
     match stored_auth_mode_value(auth) {
         AuthMode::ApiKey => "api_key",
         AuthMode::Headers => "headers",
@@ -1255,7 +1255,7 @@ fn stored_auth_issues(
                 .auth()
                 .and_then(|provider_auth| provider_auth.api_key.as_deref())
                 .is_some_and(|key| !key.trim().is_empty());
-            let env_key_present = env_var_present(GENEX_API_KEY_ENV_VAR);
+            let env_key_present = env_var_present(RUXEX_API_KEY_ENV_VAR);
             if !stored_key_present && !env_key_present {
                 issues.push("API key auth is missing an API key");
             }
@@ -1832,7 +1832,7 @@ fn terminal_size_issues(inputs: &TerminalCheckInputs) -> Vec<DoctorIssue> {
 
 async fn state_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
-    path_readiness(&mut details, "GENEX_HOME", &config.genex_home);
+    path_readiness(&mut details, "RUXEX_HOME", &config.ruxex_home);
     path_readiness(&mut details, "log dir", &config.log_dir);
     path_readiness(&mut details, "sqlite home", config.sqlite_config().home());
     let mut status = CheckStatus::Ok;
@@ -1849,7 +1849,7 @@ async fn state_check(config: &Config) -> DoctorCheck {
             .await,
         );
     }
-    rollout_stats_details(&mut details, &config.genex_home);
+    rollout_stats_details(&mut details, &config.ruxex_home);
     standalone_release_cache_details(&mut details);
 
     let summary = match status {
@@ -1867,7 +1867,7 @@ async fn state_check(config: &Config) -> DoctorCheck {
 }
 
 async fn sqlite_integrity_detail(
-    sqlite: &genex_state::SqliteConfig,
+    sqlite: &ruxex_state::SqliteConfig,
     details: &mut Vec<String>,
     label: &str,
     path: &Path,
@@ -1878,10 +1878,10 @@ async fn sqlite_integrity_detail(
         return CheckStatus::Ok;
     }
 
-    let (rows, timed_out) = match genex_state::sqlite_integrity_check(sqlite, path, deadline).await
+    let (rows, timed_out) = match ruxex_state::sqlite_integrity_check(sqlite, path, deadline).await
     {
-        Ok(genex_state::SqliteIntegrityCheck::Complete(rows)) => (rows, false),
-        Ok(genex_state::SqliteIntegrityCheck::TimedOut(rows)) => (rows, true),
+        Ok(ruxex_state::SqliteIntegrityCheck::Complete(rows)) => (rows, false),
+        Ok(ruxex_state::SqliteIntegrityCheck::TimedOut(rows)) => (rows, true),
         Err(err) => {
             details.push(format!("{label} integrity: {err}"));
             return CheckStatus::Fail;
@@ -1903,9 +1903,9 @@ async fn sqlite_integrity_detail(
     }
 }
 
-fn rollout_stats_details(details: &mut Vec<String>, genex_home: &Path) {
-    let active = collect_rollout_stats(&genex_home.join("sessions"));
-    let archived = collect_rollout_stats(&genex_home.join("archived_sessions"));
+fn rollout_stats_details(details: &mut Vec<String>, ruxex_home: &Path) {
+    let active = collect_rollout_stats(&ruxex_home.join("sessions"));
+    let archived = collect_rollout_stats(&ruxex_home.join("archived_sessions"));
     push_rollout_stats_detail(details, "active rollout files", active);
     push_rollout_stats_detail(details, "archived rollout files", archived);
 }
@@ -2124,20 +2124,20 @@ fn neutral_headers(headers: http::HeaderMap) -> BTreeMap<String, String> {
 }
 
 fn fallback_state_check() -> DoctorCheck {
-    let genex_home = find_genex_home();
-    match genex_home {
+    let ruxex_home = find_ruxex_home();
+    match ruxex_home {
         Ok(path) => DoctorCheck::new(
             "state.paths",
             "state",
             CheckStatus::Ok,
-            "GENEX_HOME was resolved without config",
+            "RUXEX_HOME was resolved without config",
         )
-        .detail(format!("GENEX_HOME: {}", path.display())),
+        .detail(format!("RUXEX_HOME: {}", path.display())),
         Err(err) => DoctorCheck::new(
             "state.paths",
             "state",
             CheckStatus::Warning,
-            "GENEX_HOME could not be resolved",
+            "RUXEX_HOME could not be resolved",
         )
         .detail(err.to_string()),
     }
@@ -2179,7 +2179,7 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
             .collect::<HashMap<_, _>>()
     });
     let stored_auth = load_auth_dot_json(
-        &config.genex_home,
+        &config.ruxex_home,
         config.cli_auth_credentials_store_mode,
         config.auth_keyring_backend_kind(),
     )
@@ -2221,7 +2221,7 @@ fn provider_auth_reachability_mode_from_auth(
     if provider_base_url.is_some_and(|url| !url.trim().is_empty())
         && provider_env_key
             .is_some_and(|env_key| !env_key.trim().is_empty() && env_var_present(env_key))
-        || env_var_present(GENEX_API_KEY_ENV_VAR)
+        || env_var_present(RUXEX_API_KEY_ENV_VAR)
     {
         return ProviderAuthReachabilityMode::ApiKey;
     }

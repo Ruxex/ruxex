@@ -14,37 +14,37 @@ use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::hook_mcp_executor::CoreHookMcpExecutor;
 use crate::mcp_tool_call::McpToolApprovalMetadata;
 use crate::responses_metadata::CompactionTurnMetadata;
-use crate::responses_metadata::GenexResponsesMetadata;
-use crate::responses_metadata::GenexResponsesRequestKind;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesRequestKind;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::shell_snapshot::SnapshotCredentialBrokerState;
 use crate::state::ActiveTurn;
 use crate::turn_metadata::ExecutionMetadata;
-use genex_attachment_store::AttachmentStore;
-use genex_extension_api::ExtensionDataInit;
-use genex_model_provider::ProviderAuthState;
-use genex_model_provider::SharedModelProvider;
-use genex_otel::AuthEnvTelemetryMetadata;
-use genex_otel::TelemetryAuthMode;
-use genex_prompts::render_model_instructions;
-use genex_protocol::SessionId;
-use genex_protocol::account::ProviderAuthStatus;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::models::ProfileWorkspaceRoot;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::protocol::EnvironmentConfig;
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::McpInvocation;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_skills::SkillError;
-use genex_utils_git_discovery::GitRootDiscovery;
-use genex_utils_path::replace_path_and_deduplicate;
+use ruxex_attachment_store::AttachmentStore;
+use ruxex_extension_api::ExtensionDataInit;
+use ruxex_model_provider::ProviderAuthState;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_otel::AuthEnvTelemetryMetadata;
+use ruxex_otel::TelemetryAuthMode;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::account::ProviderAuthStatus;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::models::ProfileWorkspaceRoot;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::protocol::EnvironmentConfig;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::McpInvocation;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_skills::SkillError;
+use ruxex_utils_git_discovery::GitRootDiscovery;
+use ruxex_utils_path::replace_path_and_deduplicate;
 use std::sync::OnceLock;
 use tokio::sync::Semaphore;
 
@@ -77,15 +77,15 @@ pub(crate) struct Session {
     /// The set of enabled features should be invariant for the lifetime of the
     /// session.
     pub(super) features: ManagedFeatures,
-    pub(super) isolation: genex_extension_api::SessionIsolation,
-    pub(crate) allowed_tools: Option<Arc<genex_extension_api::AllowedTools>>,
+    pub(super) isolation: ruxex_extension_api::SessionIsolation,
+    pub(crate) allowed_tools: Option<Arc<ruxex_extension_api::AllowedTools>>,
     pub(super) multi_agent_version: OnceLock<MultiAgentVersion>,
     /// Owns invalidation and serializes refreshes without blocking captured calls.
     pub(super) mcp_refresh: McpRefresh,
     /// Non-owning lookup for approval data retained by running MCP invocations.
     pub(crate) mcp_tool_approval_metadata: std::sync::Mutex<McpToolApprovalMetadataMap>,
-    pub(super) mcp_elicitation_reviewer_handle: OnceLock<genex_mcp::ElicitationReviewerHandle>,
-    pub(super) mcp_elicitation_lifecycle_handle: OnceLock<genex_mcp::ElicitationLifecycle>,
+    pub(super) mcp_elicitation_reviewer_handle: OnceLock<ruxex_mcp::ElicitationReviewerHandle>,
+    pub(super) mcp_elicitation_lifecycle_handle: OnceLock<ruxex_mcp::ElicitationLifecycle>,
     pub(super) mcp_prewarm_tx: async_channel::Sender<()>,
     pub(super) mcp_prewarm_shutdown: CancellationToken,
     pub(super) mcp_prewarm_task: std::sync::Mutex<Option<JoinHandle<()>>>,
@@ -127,8 +127,8 @@ pub(crate) struct SessionConfiguration {
     pub(super) legacy_fallback_cwd: AbsolutePathBuf,
     /// Top-level runtime workspace roots, independent of explicit environment selections.
     pub(super) runtime_workspace_roots: Vec<AbsolutePathBuf>,
-    /// Directory containing all Genex state for this session.
-    pub(super) genex_home: AbsolutePathBuf,
+    /// Directory containing all Ruxex state for this session.
+    pub(super) ruxex_home: AbsolutePathBuf,
     /// Optional user-facing name for the thread, updated during the session.
     pub(super) thread_name: Option<String>,
     /// Thread-owned plugin selection inherited by future turns.
@@ -161,8 +161,8 @@ impl SessionConfiguration {
         &self.legacy_fallback_cwd
     }
 
-    pub(crate) fn genex_home(&self) -> &AbsolutePathBuf {
-        &self.genex_home
+    pub(crate) fn ruxex_home(&self) -> &AbsolutePathBuf {
+        &self.ruxex_home
     }
 
     pub(super) fn inferred_environment_config(&self) -> EnvironmentConfig {
@@ -232,7 +232,7 @@ impl SessionConfiguration {
         environments: &[TurnEnvironmentSelection],
     ) -> SandboxPolicy {
         let permission_profile = self.materialized_permission_profile(environments);
-        genex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
+        ruxex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
             &permission_profile,
             self.cwd(),
         )
@@ -266,7 +266,7 @@ impl SessionConfiguration {
             service_tier: self.step_settings.service_tier.clone(),
             approval_policy: self.step_settings.approval_policy.value(),
             permission_profile: self.effective_permission_profile(&environment_selections),
-            full_access: genex_protocol::protocol::has_full_access(
+            full_access: ruxex_protocol::protocol::has_full_access(
                 self.step_settings.approval_policy.value(),
                 &self.permission_profile(),
                 environment_selections
@@ -318,8 +318,8 @@ impl SessionConfiguration {
     pub(super) fn restorable_thread_settings(
         &self,
         environment_selections: Vec<TurnEnvironmentSelection>,
-    ) -> GenexThreadSettingsOverrides {
-        GenexThreadSettingsOverrides {
+    ) -> RuxexThreadSettingsOverrides {
+        RuxexThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 self.legacy_fallback_cwd.clone(),
                 environment_selections,
@@ -436,7 +436,7 @@ impl SessionConfiguration {
                         allowed: format!(
                             "configured permission profile with valid network policy ({err})"
                         ),
-                        requirement_source: genex_config::RequirementSource::Unknown,
+                        requirement_source: ruxex_config::RequirementSource::Unknown,
                     })?;
                 config
                     .permissions
@@ -587,7 +587,7 @@ async fn warm_plugins_and_skills_for_session_init(
     plugins_manager: Arc<PluginsManager>,
     skills_service: Arc<HostSkillsService>,
     turn_environments: &TurnEnvironmentSnapshot,
-    extensions: &genex_extension_api::ExtensionRegistry<Config>,
+    extensions: &ruxex_extension_api::ExtensionRegistry<Config>,
 ) -> Vec<SkillError> {
     let plugins_input = config.plugins_config_input();
     let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;
@@ -629,8 +629,8 @@ impl Session {
     pub(crate) async fn responses_metadata(
         &self,
         step_context: &StepContext,
-        request_kind: GenexResponsesRequestKind,
-    ) -> GenexResponsesMetadata {
+        request_kind: RuxexResponsesRequestKind,
+    ) -> RuxexResponsesMetadata {
         let (window_id, window_number, context_window_id) = self.current_window().await;
         let mut responses_metadata = step_context.turn.turn_metadata_state.to_responses_metadata(
             self.installation_id.clone(),
@@ -664,12 +664,12 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         compaction_metadata: CompactionTurnMetadata,
-    ) -> GenexResponsesMetadata {
+    ) -> RuxexResponsesMetadata {
         let (window_id, window_number, context_window_id) = self.current_window().await;
         let responses_metadata = turn_context.turn_metadata_state.to_responses_metadata(
             self.installation_id.clone(),
             window_id,
-            GenexResponsesRequestKind::Compaction(compaction_metadata),
+            RuxexResponsesRequestKind::Compaction(compaction_metadata),
         );
         self.with_window_and_fork_metadata(
             turn_context,
@@ -682,11 +682,11 @@ impl Session {
     fn with_window_and_fork_metadata(
         &self,
         turn_context: &TurnContext,
-        responses_metadata: GenexResponsesMetadata,
+        responses_metadata: RuxexResponsesMetadata,
         window_number: u64,
         context_window_id: uuid::Uuid,
-    ) -> GenexResponsesMetadata {
-        GenexResponsesMetadata {
+    ) -> RuxexResponsesMetadata {
+        RuxexResponsesMetadata {
             window_number: Some(window_number),
             context_window_id: Some(context_window_id),
             history_ingest_requested: turn_context
@@ -723,8 +723,8 @@ impl Session {
         skills_service: Arc<HostSkillsService>,
         plugins_manager: Arc<PluginsManager>,
         mcp_manager: Arc<McpManager>,
-        code_mode_session_provider: Arc<dyn genex_code_mode::CodeModeSessionProvider>,
-        extensions: Arc<genex_extension_api::ExtensionRegistry<crate::config::Config>>,
+        code_mode_session_provider: Arc<dyn ruxex_code_mode::CodeModeSessionProvider>,
+        extensions: Arc<ruxex_extension_api::ExtensionRegistry<crate::config::Config>>,
         mut thread_extension_init: ExtensionDataInit,
         client_mcp_extensions: ClientMcpExtensions,
         agent_control: AgentControl,
@@ -785,7 +785,7 @@ impl Session {
                         RolloutItem::SessionMeta(meta)
                             if meta.meta.id == resumed.conversation_id =>
                         {
-                            genex_rollout::forked_from_ordinal_exclusive(
+                            ruxex_rollout::forked_from_ordinal_exclusive(
                                 &meta.meta,
                                 resumed.rollout_path.as_deref(),
                             )
@@ -912,19 +912,19 @@ impl Session {
                     roots
                 }
             };
-        thread_extension_init.insert(genex_extension_api::ThreadOriginator(
+        thread_extension_init.insert(ruxex_extension_api::ThreadOriginator(
             session_configuration.originator.clone(),
         ));
         // Publish the already resolved model before extensions make startup decisions.
         // Turn construction refreshes this attachment when the selected model changes.
         thread_extension_init.insert(model_info);
         let isolation = thread_extension_init
-            .get::<genex_extension_api::SessionIsolation>()
+            .get::<ruxex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let allowed_tools = thread_extension_init.get::<genex_extension_api::AllowedTools>();
+        let allowed_tools = thread_extension_init.get::<ruxex_extension_api::AllowedTools>();
         let mcp_thread_init = thread_extension_init.clone();
-        let thread_extension_data = genex_extension_api::ExtensionData::new_with_init(
+        let thread_extension_data = ruxex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),
             thread_extension_init,
         );
@@ -1088,7 +1088,7 @@ impl Session {
             let trace_agent_path = session_configuration
                 .session_source
                 .get_agent_path()
-                .unwrap_or_else(genex_protocol::AgentPath::root);
+                .unwrap_or_else(ruxex_protocol::AgentPath::root);
             let trace_task_name =
                 (!trace_agent_path.is_root()).then(|| trace_agent_path.name().to_string());
             let trace_metadata = ThreadStartedTraceMetadata {
@@ -1147,7 +1147,7 @@ impl Session {
                 });
             }
             let effective_config = config.config_layer_stack.effective_config();
-            let config_path = config.genex_home.join(CONFIG_TOML_FILE);
+            let config_path = config.ruxex_home.join(CONFIG_TOML_FILE);
             if let Some(event) = unstable_features_warning_event(
                 effective_config
                     .get("features")
@@ -1170,8 +1170,8 @@ impl Session {
                 .to_string();
             let auth_environment = session_configuration.provider.auth_environment();
             let auth_env_telemetry = AuthEnvTelemetryMetadata {
-                genex_api_key_env_present: auth_environment.host_api_key_env_present,
-                genex_api_key_env_enabled: auth_environment.host_api_key_env_enabled,
+                ruxex_api_key_env_present: auth_environment.host_api_key_env_present,
+                ruxex_api_key_env_enabled: auth_environment.host_api_key_env_enabled,
                 provider_env_key_name: auth_environment
                     .provider_env_key_configured
                     .then(|| "configured".to_string()),
@@ -1191,7 +1191,7 @@ impl Session {
             )
             .with_auth_env(auth_env_telemetry)
             .with_tool_result_log_config(config.otel.tool_result);
-            if let Some(metrics) = thread_extension_data.get::<genex_otel::MetricsClient>() {
+            if let Some(metrics) = thread_extension_data.get::<ruxex_otel::MetricsClient>() {
                 session_telemetry = session_telemetry.with_metrics(metrics.as_ref().clone());
             }
             if let Some(service_name) = session_configuration.metrics_service_name.as_deref() {
@@ -1214,7 +1214,7 @@ impl Session {
                 .canonicalize()
                 .ok()
                 .and_then(|cwd| {
-                    genex_git_utils::repository_identity(&cwd).and_then(|_| {
+                    ruxex_git_utils::repository_identity(&cwd).and_then(|_| {
                         get_git_repo_root(&cwd).map(|root| root.join(".git").is_file())
                     })
                 });
@@ -1234,7 +1234,7 @@ impl Session {
                 &[("is_git", is_git_tag), ("is_worktree", is_worktree_tag)],
             );
 
-            let mcp_server_names = genex_mcp::effective_mcp_servers(&mcp_projection.config)
+            let mcp_server_names = ruxex_mcp::effective_mcp_servers(&mcp_projection.config)
                 .into_iter()
                 .filter_map(|(name, server)| server.enabled().then_some(name))
                 .collect::<Vec<_>>();
@@ -1288,8 +1288,8 @@ impl Session {
                 && config.features.enabled(Feature::ShellTool)
                 && config.features.enabled(Feature::UnifiedExec)
                 && matches!(
-                    genex_tools::UnifiedExecShellMode::for_session(config.features.get(),),
-                    genex_tools::UnifiedExecShellMode::Direct
+                    ruxex_tools::UnifiedExecShellMode::for_session(config.features.get(),),
+                    ruxex_tools::UnifiedExecShellMode::Direct
                 );
             let use_executor_shell_snapshots =
                 prefer_executor_shell_snapshots && !credential_broker_active;
@@ -1305,7 +1305,7 @@ impl Session {
                     watch::channel(state).0
                 });
                 ShellSnapshot::new(
-                    config.genex_home.clone(),
+                    config.ruxex_home.clone(),
                     thread_id,
                     session_telemetry.clone(),
                     state_db_ctx.clone(),
@@ -1500,13 +1500,13 @@ impl Session {
                 }
             }
             let session_extension_data =
-                genex_extension_api::ExtensionData::new(session_id.to_string());
+                ruxex_extension_api::ExtensionData::new(session_id.to_string());
             let mcp_resource_client = Arc::new(McpResourceClient::new(Arc::clone(&mcp_runtime)));
             let extension_metrics =
                 extension_metrics::from_session_telemetry(session_telemetry.clone());
             for contributor in extensions.thread_lifecycle_contributors() {
                 contributor
-                    .on_thread_start(genex_extension_api::ThreadStartInput {
+                    .on_thread_start(ruxex_extension_api::ThreadStartInput {
                         config: config.as_ref(),
                         session_source: &session_configuration.session_source,
                         persistent_thread_state_available: state_db_ctx.is_some(),
@@ -1521,8 +1521,8 @@ impl Session {
 
             let executed_tool_calls =
                 crate::state::ExecutedToolCalls::new(&config.features, &initial_history);
-            let genex_responses_headers =
-                thread_extension_data.get::<crate::GenexResponsesHeaders>();
+            let ruxex_responses_headers =
+                thread_extension_data.get::<crate::RuxexResponsesHeaders>();
             let services = SessionServices {
                 // Start with an empty connection set. The initialized set is
                 // published after SessionConfigured so MCP events follow it.
@@ -1587,7 +1587,7 @@ impl Session {
                 .with_session_context(
                     fork_cache_key,
                     tx_event.clone(),
-                    genex_responses_headers,
+                    ruxex_responses_headers,
                 ),
                 executed_tool_calls: executed_tool_calls.clone(),
                 code_mode_service: crate::tools::code_mode::CodeModeService::new(
@@ -1683,15 +1683,15 @@ impl Session {
                 .await;
             let session_start_source = match &initial_history {
                 InitialHistory::Forked(_) if forked_from_id.is_some() => {
-                    genex_hooks::SessionStartSource::Fork
+                    ruxex_hooks::SessionStartSource::Fork
                 }
                 // `thread/resume` with supplied history uses `Forked` internally
                 // without a fork parent, so it should still report `resume`.
                 InitialHistory::Resumed(_) | InitialHistory::Forked(_) => {
-                    genex_hooks::SessionStartSource::Resume
+                    ruxex_hooks::SessionStartSource::Resume
                 }
-                InitialHistory::New => genex_hooks::SessionStartSource::Startup,
-                InitialHistory::Cleared => genex_hooks::SessionStartSource::Clear,
+                InitialHistory::New => ruxex_hooks::SessionStartSource::Startup,
+                InitialHistory::Cleared => ruxex_hooks::SessionStartSource::Clear,
             };
 
             // record_initial_history can emit events. We record only after the SessionConfiguredEvent is emitted.
@@ -1730,9 +1730,9 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::telemetry_auth_metadata;
-    use genex_model_provider::ProviderAuthState;
-    use genex_otel::TelemetryAuthMode;
-    use genex_protocol::account::ProviderAuthStatus;
+    use ruxex_model_provider::ProviderAuthState;
+    use ruxex_otel::TelemetryAuthMode;
+    use ruxex_protocol::account::ProviderAuthStatus;
 
     #[test]
     fn telemetry_uses_provider_auth_state_without_credentials() {

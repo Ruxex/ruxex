@@ -1,4 +1,4 @@
-//! Fixed shortcuts used before users have had a chance to configure Genex.
+//! Fixed shortcuts used before users have had a chance to configure Ruxex.
 
 use crossterm::event::KeyCode;
 

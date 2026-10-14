@@ -11,13 +11,13 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use tracing::warn;
 
 const WRITER_LOCK_DIR: &str = "thread-writer-locks";
 const COORDINATION_LOCK_FILE: &str = ".coordination.lock";
 
-/// Coordinates writer ownership within one Genex home.
+/// Coordinates writer ownership within one Ruxex home.
 pub struct WriterLockCoordinator {
     directory: PathBuf,
     cleanup_attempted: AtomicBool,
@@ -32,9 +32,9 @@ pub struct WriterLockGuard {
 
 impl WriterLockCoordinator {
     /// Uses the same lock namespace as existing local thread-store writers.
-    pub fn new(genex_home: &Path) -> Self {
+    pub fn new(ruxex_home: &Path) -> Self {
         Self {
-            directory: genex_home.join(WRITER_LOCK_DIR),
+            directory: ruxex_home.join(WRITER_LOCK_DIR),
             cleanup_attempted: AtomicBool::new(false),
         }
     }

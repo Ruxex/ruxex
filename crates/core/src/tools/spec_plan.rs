@@ -60,34 +60,34 @@ use crate::tools::registry::ToolRegistry;
 use crate::tools::router::ToolRouter;
 use crate::tools::tool_namespaces_info::collect_tool_namespaces_info;
 use futures::future::BoxFuture;
-use genex_extension_api::ExtensionData;
-use genex_features::Feature;
-use genex_features::SleepToolMode;
-use genex_prompts::ResolvedModelMessages;
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::dynamic_tools::DynamicToolNamespaceTool;
-use genex_protocol::dynamic_tools::DynamicToolSpec;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::model_types::ConfigShellToolType;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::TOOL_SEARCH_TOOL_NAME;
-use genex_tools::ToolCall as ExtensionToolCall;
-use genex_tools::ToolEnvironmentMode;
-use genex_tools::ToolExecutor;
-use genex_tools::ToolExposures;
-use genex_tools::ToolName;
-use genex_tools::ToolSearchInfo;
-use genex_tools::ToolSpec;
-use genex_tools::can_request_original_image_detail;
-use genex_tools::collect_code_mode_exec_prompt_tool_definitions;
-use genex_tools::default_namespace_description;
-use genex_tools::request_user_input_available_modes;
+use ruxex_extension_api::ExtensionData;
+use ruxex_features::Feature;
+use ruxex_features::SleepToolMode;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::dynamic_tools::DynamicToolNamespaceTool;
+use ruxex_protocol::dynamic_tools::DynamicToolSpec;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::model_types::ConfigShellToolType;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::TOOL_SEARCH_TOOL_NAME;
+use ruxex_tools::ToolCall as ExtensionToolCall;
+use ruxex_tools::ToolEnvironmentMode;
+use ruxex_tools::ToolExecutor;
+use ruxex_tools::ToolExposures;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSearchInfo;
+use ruxex_tools::ToolSpec;
+use ruxex_tools::can_request_original_image_detail;
+use ruxex_tools::collect_code_mode_exec_prompt_tool_definitions;
+use ruxex_tools::default_namespace_description;
+use ruxex_tools::request_user_input_available_modes;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -102,7 +102,7 @@ struct CoreToolPlanContext<'a> {
     turn_context: &'a TurnContext,
     model_info: &'a ModelInfo,
     environments: &'a TurnEnvironmentSnapshot,
-    mcp: &'a genex_mcp::McpBinding,
+    mcp: &'a ruxex_mcp::McpBinding,
     wait_for_environment_tool_config: Option<&'a Arc<crate::WaitForEnvironmentToolConfig>>,
     default_agent_type_description: &'a str,
     wait_agent_timeouts: WaitAgentTimeoutOptions,
@@ -115,9 +115,9 @@ pub(crate) fn build_tool_router(
     turn_context: &TurnContext,
     model_info: &ModelInfo,
     environments: &TurnEnvironmentSnapshot,
-    mcp: &Arc<genex_mcp::McpBinding>,
+    mcp: &Arc<ruxex_mcp::McpBinding>,
     step_store: &ExtensionData,
-) -> GenexResult<ToolRouter> {
+) -> RuxexResult<ToolRouter> {
     let default_agent_type_description =
         crate::agent::role::spawn_tool_spec::build(&std::collections::BTreeMap::new());
     let wait_for_environment_tool_config = session
@@ -174,7 +174,7 @@ pub(crate) fn build_tool_router(
 fn apply_mcp_tool_exposure_policy(
     turn_context: &TurnContext,
     model_info: &ModelInfo,
-    mcp: &genex_mcp::McpBinding,
+    mcp: &ruxex_mcp::McpBinding,
     registered_mcp_tools: &HashSet<ToolName>,
     registry: &mut ToolRegistry,
 ) {
@@ -251,7 +251,7 @@ pub(crate) fn build_core_tool_registry(
     turn_context: &TurnContext,
     model_info: &ModelInfo,
     environments: &TurnEnvironmentSnapshot,
-    mcp: &genex_mcp::McpBinding,
+    mcp: &ruxex_mcp::McpBinding,
     wait_for_environment_tool_config: Option<&Arc<crate::WaitForEnvironmentToolConfig>>,
 ) -> ToolRegistry {
     let default_agent_type_description =
@@ -325,7 +325,7 @@ pub(crate) fn finalize_tool_router(
     mut registry: ToolRegistry,
     mut hosted_specs: Vec<ToolSpec>,
     tool_search_handler_cache: &ToolSearchHandlerCache,
-) -> GenexResult<ToolRouter> {
+) -> RuxexResult<ToolRouter> {
     if let Some(allowed) = &registry.allowed_tools {
         hosted_specs.retain(|spec| allowed.contains(&ToolName::plain(spec.name())));
     }
@@ -334,8 +334,8 @@ pub(crate) fn finalize_tool_router(
     let code_mode_enabled = matches!(tool_mode, ToolMode::CodeMode | ToolMode::CodeModeOnly);
     if code_mode_enabled {
         for tool_name in [
-            ToolName::plain(genex_code_mode::PUBLIC_TOOL_NAME),
-            ToolName::plain(genex_code_mode::WAIT_TOOL_NAME),
+            ToolName::plain(ruxex_code_mode::PUBLIC_TOOL_NAME),
+            ToolName::plain(ruxex_code_mode::WAIT_TOOL_NAME),
         ] {
             if registry.remove(&tool_name).is_some() {
                 registry.record_collision(tool_name);
@@ -391,7 +391,7 @@ pub(crate) fn finalize_tool_router(
         if let Some(tool_name) = registry.first_collision() {
             let namespace = tool_name.namespace.as_deref().unwrap_or("functions");
             let name = format!("{namespace}.{}", tool_name.name);
-            return Err(GenexErrorDetails::ToolCollision(name).into());
+            return Err(RuxexErrorDetails::ToolCollision(name).into());
         }
 
         let mut namespace_descriptions = BTreeMap::new();
@@ -415,7 +415,7 @@ pub(crate) fn finalize_tool_router(
                 match namespace_owners.get(namespace_name) {
                     Some(existing_owner) if existing_owner != &owner => {
                         return Err(
-                            GenexErrorDetails::ToolCollision(namespace_name.to_string()).into()
+                            RuxexErrorDetails::ToolCollision(namespace_name.to_string()).into()
                         );
                     }
                     Some(_) => {}
@@ -436,7 +436,7 @@ pub(crate) fn finalize_tool_router(
                     entry.insert(namespace.description.clone());
                 }
                 Entry::Occupied(entry) if entry.get() != &namespace.description => {
-                    return Err(GenexErrorDetails::ToolCollision(entry.key().clone()).into());
+                    return Err(RuxexErrorDetails::ToolCollision(entry.key().clone()).into());
                 }
                 Entry::Occupied(_) => {}
             }
@@ -552,14 +552,14 @@ fn spec_for_model_request(
     if matches!(tool_mode, ToolMode::CodeMode | ToolMode::CodeModeOnly)
         && exposure.is_available_in_code_mode()
         && !is_excluded_from_code_mode(turn_context, tool_name)
-        && genex_code_mode::is_code_mode_nested_tool(spec.name())
+        && ruxex_code_mode::is_code_mode_nested_tool(spec.name())
         && code_mode_tool_names
-            .get(&genex_code_mode::normalize_code_mode_identifier(
-                &genex_tools::code_mode_name_for_tool_name(tool_name),
+            .get(&ruxex_code_mode::normalize_code_mode_identifier(
+                &ruxex_tools::code_mode_name_for_tool_name(tool_name),
             ))
             .is_some_and(|winner| winner == tool_name)
     {
-        genex_tools::augment_tool_spec_for_code_mode(spec)
+        ruxex_tools::augment_tool_spec_for_code_mode(spec)
     } else {
         spec
     }
@@ -698,7 +698,7 @@ fn is_hidden_by_code_mode_only(
     let tool_mode = effective_tool_mode(turn_context, model_info);
     tool_mode == ToolMode::CodeModeOnly
         && exposure.is_available_in_code_mode()
-        && genex_code_mode::is_code_mode_nested_tool(&genex_tools::code_mode_name_for_tool_name(
+        && ruxex_code_mode::is_code_mode_nested_tool(&ruxex_tools::code_mode_name_for_tool_name(
             tool_name,
         ))
 }
@@ -749,19 +749,19 @@ fn register_code_mode_executors(
         // Derive the name without serializing and augmenting every tool schema.
         let code_mode_name = match spec.as_ref() {
             ToolSpec::Function(_) | ToolSpec::Freeform(_) => {
-                genex_tools::code_mode_name_for_tool_name(&tool_name)
+                ruxex_tools::code_mode_name_for_tool_name(&tool_name)
             }
             ToolSpec::Namespace(namespace) if !namespace.tools.is_empty() => {
-                genex_tools::code_mode_name_for_tool_name(&tool_name)
+                ruxex_tools::code_mode_name_for_tool_name(&tool_name)
             }
             ToolSpec::Namespace(_) | ToolSpec::ToolSearch { .. } | ToolSpec::WebSearch { .. } => {
                 continue;
             }
         };
-        if !genex_code_mode::is_code_mode_nested_tool(&code_mode_name) {
+        if !ruxex_code_mode::is_code_mode_nested_tool(&code_mode_name) {
             continue;
         }
-        match code_mode_tool_names.entry(genex_code_mode::normalize_code_mode_identifier(
+        match code_mode_tool_names.entry(ruxex_code_mode::normalize_code_mode_identifier(
             &code_mode_name,
         )) {
             Entry::Vacant(entry) => {
@@ -808,9 +808,9 @@ fn register_code_mode_executors(
             turn_context.config.code_mode.default_exec_yield_time_ms,
             tool_mode == ToolMode::CodeModeOnly,
             if unified_image_budget_enabled(&turn_context.config.features, model_info) {
-                genex_code_mode::ImageDetailVisibility::Hidden
+                ruxex_code_mode::ImageDetailVisibility::Hidden
             } else {
-                genex_code_mode::ImageDetailVisibility::Visible
+                ruxex_code_mode::ImageDetailVisibility::Visible
             },
         ),
         code_mode_nested_tool_specs,
@@ -876,7 +876,7 @@ fn merge_into_namespaces(specs: Vec<ToolSpec>) -> Vec<ToolSpec> {
 
 fn code_mode_namespace_descriptions(
     specs: &[ToolSpec],
-) -> BTreeMap<String, genex_code_mode::ToolNamespaceDescription> {
+) -> BTreeMap<String, ruxex_code_mode::ToolNamespaceDescription> {
     let mut namespace_descriptions = BTreeMap::new();
     for spec in specs {
         let ToolSpec::Namespace(namespace) = spec else {
@@ -885,7 +885,7 @@ fn code_mode_namespace_descriptions(
 
         let entry = namespace_descriptions
             .entry(namespace.name.clone())
-            .or_insert_with(|| genex_code_mode::ToolNamespaceDescription {
+            .or_insert_with(|| ruxex_code_mode::ToolNamespaceDescription {
                 name: namespace.name.clone(),
                 description: namespace.description.clone(),
             });
@@ -1330,7 +1330,7 @@ impl ToolExecutor<ToolInvocation> for MultiAgentV2NamespaceOverride {
         self.handler.search_info()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -1355,9 +1355,9 @@ impl CoreToolRuntime for MultiAgentV2NamespaceOverride {
 }
 
 fn compare_code_mode_tools(
-    left: &genex_code_mode::ToolDefinition,
-    right: &genex_code_mode::ToolDefinition,
-    namespace_descriptions: &BTreeMap<String, genex_code_mode::ToolNamespaceDescription>,
+    left: &ruxex_code_mode::ToolDefinition,
+    right: &ruxex_code_mode::ToolDefinition,
+    namespace_descriptions: &BTreeMap<String, ruxex_code_mode::ToolNamespaceDescription>,
 ) -> std::cmp::Ordering {
     let left_namespace = code_mode_namespace_name(left, namespace_descriptions);
     let right_namespace = code_mode_namespace_name(right, namespace_descriptions);
@@ -1369,8 +1369,8 @@ fn compare_code_mode_tools(
 }
 
 fn code_mode_namespace_name<'a>(
-    tool: &genex_code_mode::ToolDefinition,
-    namespace_descriptions: &'a BTreeMap<String, genex_code_mode::ToolNamespaceDescription>,
+    tool: &ruxex_code_mode::ToolDefinition,
+    namespace_descriptions: &'a BTreeMap<String, ruxex_code_mode::ToolNamespaceDescription>,
 ) -> Option<&'a str> {
     tool.tool_name
         .namespace

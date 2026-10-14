@@ -1,4 +1,4 @@
-# genex-git-utils
+# ruxex-git-utils
 
 Helpers for interacting with git, including patch application. The crate also
 exposes a lightweight baseline API for internal directories that use git only
@@ -11,7 +11,7 @@ diff from that baseline to the current directory contents.
 ```rust,no_run
 use std::path::Path;
 
-use genex_git_utils::{apply_git_patch, ApplyGitRequest};
+use ruxex_git_utils::{apply_git_patch, ApplyGitRequest};
 
 let repo = Path::new("/path/to/repo");
 

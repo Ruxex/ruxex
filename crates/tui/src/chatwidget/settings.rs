@@ -200,8 +200,8 @@ impl ChatWidget {
         self.has_managed_account
     }
 
-    pub(crate) fn has_genex_backend_auth(&self) -> bool {
-        self.has_genex_backend_auth
+    pub(crate) fn has_ruxex_backend_auth(&self) -> bool {
+        self.has_ruxex_backend_auth
     }
 
     pub(crate) fn update_account_state(
@@ -209,15 +209,15 @@ impl ChatWidget {
         status_account_display: Option<StatusAccountDisplay>,
         plan_type: Option<PlanType>,
         has_managed_account: bool,
-        has_genex_backend_auth: bool,
+        has_ruxex_backend_auth: bool,
     ) {
         // Account-update notifications are the identity boundary. The visible account fields can
         // be identical across two accounts, so always invalidate account-scoped requests and data.
         self.model_popup_request_id = None;
         self.invalidate_permission_discovery();
         self.input_queue.rate_limit_recovery_pending = false;
-        self.genex_rate_limit_reached_type = None;
-        self.genex_spend_control_reached = None;
+        self.ruxex_rate_limit_reached_type = None;
+        self.ruxex_spend_control_reached = None;
         self.rate_limit_warnings = RateLimitWarningState::default();
         self.rate_limit_switch_prompt = RateLimitSwitchPromptState::Idle;
         self.bottom_pane
@@ -234,9 +234,9 @@ impl ChatWidget {
         self.status_account_display = status_account_display;
         self.plan_type = plan_type;
         self.has_managed_account = has_managed_account;
-        self.has_genex_backend_auth = has_genex_backend_auth;
+        self.has_ruxex_backend_auth = has_ruxex_backend_auth;
         self.bottom_pane
-            .set_token_activity_command_enabled(has_genex_backend_auth);
+            .set_token_activity_command_enabled(has_ruxex_backend_auth);
         self.refresh_status_surfaces();
     }
 

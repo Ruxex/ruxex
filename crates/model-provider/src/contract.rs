@@ -1,4 +1,4 @@
-//! Provider-neutral boundary for Genex hosts and provider implementations.
+//! Provider-neutral boundary for Ruxex hosts and provider implementations.
 //!
 //! The request, response, stream, capability, descriptor, authentication, and usage surface is
 //! provider-neutral. Provider-specific HTTP, credentials, wire payloads, and error details stay
@@ -14,17 +14,17 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use futures::Stream;
-use genex_protocol::ResponseUsageMetadata;
-use genex_protocol::account::{ProviderAccount, ProviderAuthStatus};
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::ModelVerification;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::TokenUsage;
+use ruxex_protocol::ResponseUsageMetadata;
+use ruxex_protocol::account::{ProviderAccount, ProviderAuthStatus};
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::ModelVerification;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::TokenUsage;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -37,7 +37,7 @@ pub enum RemoteCompactionSupport {
     V2,
 }
 
-/// Optional provider-backed features that Genex may expose at runtime.
+/// Optional provider-backed features that Ruxex may expose at runtime.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProviderCapabilities {
     pub model_listing: bool,
@@ -128,7 +128,7 @@ pub struct ProviderModelCatalog {
     pub etag: Option<String>,
 }
 
-/// Provider-neutral error classes exposed to a Genex host.
+/// Provider-neutral error classes exposed to a Ruxex host.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProviderError {
     /// The provider does not implement the requested operation.
@@ -500,7 +500,7 @@ pub fn build_provider_text_controls(
             r#type: ProviderTextFormatType::JsonSchema,
             strict: output_schema_strict,
             schema: schema.clone(),
-            name: "genex_output_schema".to_string(),
+            name: "ruxex_output_schema".to_string(),
         }),
     })
 }

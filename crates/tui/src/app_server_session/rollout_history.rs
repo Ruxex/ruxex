@@ -12,17 +12,17 @@ use super::thread_resume_params_from_config;
 use super::thread_session_state_from_thread_response;
 use crate::legacy_core::config::Config;
 use color_eyre::eyre::Result;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadTurnsListResponse;
-use genex_app_server_protocol::TurnItemsView;
-use genex_protocol::ThreadId;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadTurnsListResponse;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 // Bound recovery to recent messages when item paging is unavailable.
 const READ_ONLY_HISTORY_TURN_LIMIT: u32 = 100;
@@ -101,9 +101,9 @@ impl AppServerSession {
         ))
     }
 
-    pub(crate) fn with_local_genex_home(mut self, genex_home: &AbsolutePathBuf) -> Self {
+    pub(crate) fn with_local_ruxex_home(mut self, ruxex_home: &AbsolutePathBuf) -> Self {
         self.task_tool_capabilities_dir = (!self.uses_embedded_app_server())
-            .then(|| genex_home.join("tui-thread-reference-capabilities"));
+            .then(|| ruxex_home.join("tui-thread-reference-capabilities"));
         self
     }
 

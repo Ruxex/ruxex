@@ -1,4 +1,4 @@
-use genex_protocol::protocol::Event;
+use ruxex_protocol::protocol::Event;
 
 /// Extension warning with an explicit thread target and optional turn correlation.
 #[derive(Debug, Clone, PartialEq, Eq)]

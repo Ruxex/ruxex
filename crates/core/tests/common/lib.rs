@@ -3,21 +3,21 @@
 use anyhow::Context as _;
 use anyhow::ensure;
 use ctor::ctor;
-use genex_arg0::Arg0PathEntryGuard;
-use genex_utils_cargo_bin::CargoBinError;
+use ruxex_arg0::Arg0PathEntryGuard;
+use ruxex_utils_cargo_bin::CargoBinError;
 use std::sync::OnceLock;
 use tempfile::TempDir;
 
-use genex_config::LoaderOverrides;
-use genex_core::GenexThread;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-pub use genex_core::test_support::TestGenexResponsesRequestKind;
-pub use genex_core::test_support::responses_metadata;
-use genex_utils_absolute_path::AbsolutePathBuf;
-pub use genex_utils_absolute_path::test_support::PathBufExt;
-pub use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::RuxexThread;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+pub use ruxex_core::test_support::TestRuxexResponsesRequestKind;
+pub use ruxex_core::test_support::responses_metadata;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+pub use ruxex_utils_absolute_path::test_support::PathBufExt;
+pub use ruxex_utils_absolute_path::test_support::PathExt;
 use regex_lite::Regex;
 use std::path::Path;
 use std::path::PathBuf;
@@ -29,8 +29,8 @@ pub mod responses;
 pub mod startup;
 pub mod streaming_sse;
 mod test_environment;
-pub mod test_genex;
-pub mod test_genex_exec;
+pub mod test_ruxex;
+pub mod test_ruxex_exec;
 pub mod tracing;
 
 pub(crate) use test_environment::TestEnvironment;
@@ -45,13 +45,13 @@ static TEST_ARG0_PATH_ENTRY: OnceLock<Option<Arg0PathEntryGuard>> = OnceLock::ne
 
 #[ctor]
 fn enable_deterministic_unified_exec_process_ids_for_tests() {
-    genex_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
-    genex_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
+    ruxex_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
+    ruxex_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
 }
 
 #[ctor]
 fn configure_arg0_dispatch_for_test_binaries() {
-    let _ = TEST_ARG0_PATH_ENTRY.get_or_init(genex_arg0::arg0_dispatch);
+    let _ = TEST_ARG0_PATH_ENTRY.get_or_init(ruxex_arg0::arg0_dispatch);
 }
 
 #[ctor]
@@ -60,9 +60,9 @@ fn configure_insta_workspace_root_for_snapshot_tests() {
         return;
     }
 
-    let workspace_root = genex_utils_cargo_bin::repo_root()
+    let workspace_root = ruxex_utils_cargo_bin::repo_root()
         .ok()
-        .map(|root| root.join("genex-rs"));
+        .map(|root| root.join("ruxex-rs"));
 
     if let Some(workspace_root) = workspace_root
         && let Ok(workspace_root) = workspace_root.canonicalize()
@@ -152,11 +152,11 @@ pub fn fetch_dotslash_file(
 
 /// Returns a default `Config` whose on-disk state is confined to the provided
 /// temporary directory. Using a per-test directory keeps tests hermetic and
-/// avoids clobbering a developer’s real `~/.genex`.
-pub async fn load_default_config_for_test(genex_home: &TempDir) -> Config {
+/// avoids clobbering a developer’s real `~/.ruxex`.
+pub async fn load_default_config_for_test(ruxex_home: &TempDir) -> Config {
     ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .genex_home(genex_home.path().to_path_buf())
+        .ruxex_home(ruxex_home.path().to_path_buf())
         .harness_overrides(default_test_overrides())
         .build()
         .await
@@ -166,8 +166,8 @@ pub async fn load_default_config_for_test(genex_home: &TempDir) -> Config {
 #[cfg(target_os = "linux")]
 fn default_test_overrides() -> ConfigOverrides {
     ConfigOverrides {
-        genex_linux_sandbox_exe: Some(
-            find_genex_linux_sandbox_exe().expect("should find binary for genex-linux-sandbox"),
+        ruxex_linux_sandbox_exe: Some(
+            find_ruxex_linux_sandbox_exe().expect("should find binary for ruxex-linux-sandbox"),
         ),
         ..ConfigOverrides::default()
     }
@@ -179,11 +179,11 @@ fn default_test_overrides() -> ConfigOverrides {
 }
 
 #[cfg(target_os = "linux")]
-pub fn find_genex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
+pub fn find_ruxex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
     if let Some(path) = TEST_ARG0_PATH_ENTRY
         .get()
         .and_then(Option::as_ref)
-        .and_then(|path_entry| path_entry.paths().genex_linux_sandbox_exe.clone())
+        .and_then(|path_entry| path_entry.paths().ruxex_linux_sandbox_exe.clone())
     {
         return Ok(path);
     }
@@ -192,28 +192,28 @@ pub fn find_genex_linux_sandbox_exe() -> Result<PathBuf, CargoBinError> {
         return Ok(path);
     }
 
-    genex_utils_cargo_bin::cargo_bin("genex-linux-sandbox")
+    ruxex_utils_cargo_bin::cargo_bin("ruxex-linux-sandbox")
 }
 
 pub async fn wait_for_event<F>(
-    genex: &GenexThread,
+    ruxex: &RuxexThread,
     predicate: F,
-) -> genex_protocol::protocol::EventMsg
+) -> ruxex_protocol::protocol::EventMsg
 where
-    F: FnMut(&genex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&ruxex_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
-    wait_for_event_with_timeout(genex, predicate, Duration::from_secs(1)).await
+    wait_for_event_with_timeout(ruxex, predicate, Duration::from_secs(1)).await
 }
 
 /// Waits for a configured MCP server to finish startup and requires it to be ready.
-pub async fn wait_for_mcp_server(genex: &GenexThread, server_name: &str) -> anyhow::Result<()> {
-    use genex_protocol::protocol::EventMsg;
+pub async fn wait_for_mcp_server(ruxex: &RuxexThread, server_name: &str) -> anyhow::Result<()> {
+    use ruxex_protocol::protocol::EventMsg;
 
     // Wait for the startup summary regardless of outcome, then interpret the
     // requested server's ready, failed, or cancelled entry below.
     let summary = loop {
-        let event = genex
+        let event = ruxex
             .next_event()
             .await
             .expect("stream ended unexpectedly while waiting for MCP startup");
@@ -240,17 +240,17 @@ pub async fn wait_for_mcp_server(genex: &GenexThread, server_name: &str) -> anyh
 }
 
 pub async fn submit_thread_settings(
-    genex: &GenexThread,
-    thread_settings: genex_protocol::protocol::ThreadSettingsOverrides,
+    ruxex: &RuxexThread,
+    thread_settings: ruxex_protocol::protocol::ThreadSettingsOverrides,
 ) -> anyhow::Result<()> {
-    use genex_protocol::protocol::EventMsg;
-    use genex_protocol::protocol::Op;
+    use ruxex_protocol::protocol::EventMsg;
+    use ruxex_protocol::protocol::Op;
     use tokio::time::Duration;
     use tokio::time::timeout;
 
-    let submission_id = genex.submit(Op::ThreadSettings { thread_settings }).await?;
+    let submission_id = ruxex.submit(Op::ThreadSettings { thread_settings }).await?;
     loop {
-        let ev = timeout(Duration::from_secs(10), genex.next_event())
+        let ev = timeout(Duration::from_secs(10), ruxex.next_event())
             .await
             .expect("timeout waiting for thread settings update")
             .expect("stream ended unexpectedly");
@@ -271,11 +271,11 @@ pub struct ThreadIdle;
 #[derive(Default)]
 struct ThreadIdleNotification(tokio::sync::Notify);
 
-impl genex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
+impl ruxex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
     fn on_thread_idle<'a>(
         &'a self,
-        input: genex_extension_api::ThreadIdleInput<'a>,
-    ) -> genex_extension_api::ExtensionFuture<'a, ()> {
+        input: ruxex_extension_api::ThreadIdleInput<'a>,
+    ) -> ruxex_extension_api::ExtensionFuture<'a, ()> {
         Box::pin(async move {
             input
                 .thread_store
@@ -287,7 +287,7 @@ impl genex_extension_api::ThreadLifecycleContributor<Config> for ThreadIdle {
 }
 
 impl ThreadIdle {
-    pub async fn wait(thread: &GenexThread) {
+    pub async fn wait(thread: &RuxexThread) {
         // TurnComplete is sent before active-turn cleanup. Rollback requires the later idle signal.
         let idle = thread
             .thread_extension_data()
@@ -298,27 +298,27 @@ impl ThreadIdle {
     }
 }
 
-pub async fn wait_for_event_match<T, F>(genex: &GenexThread, matcher: F) -> T
+pub async fn wait_for_event_match<T, F>(ruxex: &RuxexThread, matcher: F) -> T
 where
-    F: Fn(&genex_protocol::protocol::EventMsg) -> Option<T>,
+    F: Fn(&ruxex_protocol::protocol::EventMsg) -> Option<T>,
 {
-    let ev = wait_for_event(genex, |ev| matcher(ev).is_some()).await;
+    let ev = wait_for_event(ruxex, |ev| matcher(ev).is_some()).await;
     matcher(&ev).expect("EventMsg should match matcher predicate")
 }
 
 pub async fn wait_for_event_with_timeout<F>(
-    genex: &GenexThread,
+    ruxex: &RuxexThread,
     mut predicate: F,
     wait_time: tokio::time::Duration,
-) -> genex_protocol::protocol::EventMsg
+) -> ruxex_protocol::protocol::EventMsg
 where
-    F: FnMut(&genex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&ruxex_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
     use tokio::time::timeout;
     loop {
         // Allow a bit more time to accommodate async startup work (e.g. config IO, tool discovery)
-        let ev = timeout(wait_time.max(Duration::from_secs(10)), genex.next_event())
+        let ev = timeout(wait_time.max(Duration::from_secs(10)), ruxex.next_event())
             .await
             .expect("timeout waiting for event")
             .expect("stream ended unexpectedly");
@@ -329,15 +329,15 @@ where
 }
 
 pub fn sandbox_env_var() -> &'static str {
-    genex_core::spawn::GENEX_SANDBOX_ENV_VAR
+    ruxex_core::spawn::RUXEX_SANDBOX_ENV_VAR
 }
 
 pub fn sandbox_network_env_var() -> &'static str {
-    genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
+    ruxex_core::spawn::RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
 }
 
 pub fn format_with_current_shell(command: &str) -> Vec<String> {
-    genex_core::shell::default_user_shell().derive_exec_args(command, /*use_login_shell*/ true)
+    ruxex_core::shell::default_user_shell().derive_exec_args(command, /*use_login_shell*/ true)
 }
 
 pub fn format_with_current_shell_display(command: &str) -> String {
@@ -346,7 +346,7 @@ pub fn format_with_current_shell_display(command: &str) -> String {
 }
 
 pub fn format_with_current_shell_non_login(command: &str) -> Vec<String> {
-    genex_core::shell::default_user_shell()
+    ruxex_core::shell::default_user_shell()
         .derive_exec_args(command, /*use_login_shell*/ false)
 }
 
@@ -357,7 +357,7 @@ pub fn format_with_current_shell_display_non_login(command: &str) -> String {
 }
 
 pub fn stdio_server_bin() -> Result<String, CargoBinError> {
-    genex_utils_cargo_bin::cargo_bin("test_stdio_server").map(|p| p.to_string_lossy().to_string())
+    ruxex_utils_cargo_bin::cargo_bin("test_stdio_server").map(|p| p.to_string_lossy().to_string())
 }
 
 pub mod fs_wait {
@@ -534,7 +534,7 @@ macro_rules! skip_if_no_network {
     () => {{
         if ::std::env::var($crate::sandbox_network_env_var()).is_ok() {
             println!(
-                "Skipping test because it cannot execute when network is disabled in a Genex sandbox."
+                "Skipping test because it cannot execute when network is disabled in a Ruxex sandbox."
             );
             return;
         }
@@ -542,7 +542,7 @@ macro_rules! skip_if_no_network {
     ($return_value:expr $(,)?) => {{
         if ::std::env::var($crate::sandbox_network_env_var()).is_ok() {
             println!(
-                "Skipping test because it cannot execute when network is disabled in a Genex sandbox."
+                "Skipping test because it cannot execute when network is disabled in a Ruxex sandbox."
             );
             return $return_value;
         }
@@ -608,14 +608,14 @@ macro_rules! skip_if_target_windows {
 }
 
 #[macro_export]
-macro_rules! genex_linux_sandbox_exe_or_skip {
+macro_rules! ruxex_linux_sandbox_exe_or_skip {
     () => {{
         #[cfg(target_os = "linux")]
         {
-            match $crate::find_genex_linux_sandbox_exe() {
+            match $crate::find_ruxex_linux_sandbox_exe() {
                 Ok(path) => Some(path),
                 Err(err) => {
-                    eprintln!("genex-linux-sandbox binary not available, skipping test: {err}");
+                    eprintln!("ruxex-linux-sandbox binary not available, skipping test: {err}");
                     return;
                 }
             }
@@ -628,10 +628,10 @@ macro_rules! genex_linux_sandbox_exe_or_skip {
     ($return_value:expr $(,)?) => {{
         #[cfg(target_os = "linux")]
         {
-            match $crate::find_genex_linux_sandbox_exe() {
+            match $crate::find_ruxex_linux_sandbox_exe() {
                 Ok(path) => Some(path),
                 Err(err) => {
-                    eprintln!("genex-linux-sandbox binary not available, skipping test: {err}");
+                    eprintln!("ruxex-linux-sandbox binary not available, skipping test: {err}");
                     return $return_value;
                 }
             }

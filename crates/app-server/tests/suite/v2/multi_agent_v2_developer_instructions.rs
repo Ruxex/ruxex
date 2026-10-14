@@ -2,36 +2,36 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::write_models_cache;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxMode;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::ThreadUnsubscribeStatus;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxMode;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeStatus;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -184,7 +184,7 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
                 "\n\n[agents.custom]\ndescription = \"configured role\"\nconfig_file = \"./config.toml\"\n\n[agents.default]\ndescription = \"configured default role\"\nconfig_file = \"./config.toml\"",
             );
     }
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let configured_model = if case == "full history configured role" {
         "example-model"
     } else {
@@ -197,10 +197,10 @@ async fn spawned_subagents_apply_configured_developer_instruction_precedence(
     }
     config
         .with_extra_config(&feature_config)
-        .write(genex_home.path())?;
-    write_models_cache(genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    write_models_cache(ruxex_home.path()).await?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -369,7 +369,7 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_model("legacy-model")
         .with_root_config(&format!(
@@ -378,11 +378,11 @@ async fn compacted_full_history_fork_replaces_parent_developer_instructions() ->
         .with_extra_config(&format!(
             "[features.multi_agent_v2]\nenabled = true\nsubagent_developer_instructions = {CHILD_INSTRUCTIONS:?}"
         ))
-        .write(genex_home.path())?;
-    write_models_cache(genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    write_models_cache(ruxex_home.path()).await?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = app_server
@@ -621,8 +621,8 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
         ),
         None => "[features.multi_agent_v2]\nenabled = true".to_string(),
     };
-    let genex_home = TempDir::new()?;
-    let role_path = genex_home.path().join("worker.toml");
+    let ruxex_home = TempDir::new()?;
+    let role_path = ruxex_home.path().join("worker.toml");
     if let Some(agent_type) = agent_type {
         std::fs::write(
             &role_path,
@@ -640,12 +640,12 @@ async fn cold_resume_preserves_effective_developer_instructions_for_worker(
             "developer_instructions = {PARENT_INSTRUCTIONS:?}\nmodel_reasoning_effort = \"high\""
         ))
         .with_extra_config(&feature_config)
-        .write(genex_home.path())?;
-    write_models_cache(genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    write_models_cache(ruxex_home.path()).await?;
 
     let (thread_id, child_resume_params, baseline) = {
         let mut app_server = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build_initialized()
             .await?;
         let ThreadStartResponse { thread, .. } = app_server
@@ -807,7 +807,7 @@ features.shell_tool = false
     .await;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let child_thread_id = child_resume_params.thread_id.clone();
@@ -864,7 +864,7 @@ features.shell_tool = false
     let expected = baseline;
     if history_mode == ThreadHistoryMode::Paginated {
         let state_db = StateRuntime::init(
-            genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+            ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
         )
         .await?;
         let mut metadata = state_db

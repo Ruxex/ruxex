@@ -2,8 +2,8 @@
 
 use super::*;
 use crate::app::app_server_requests::AppServerRequestResolution;
-use genex_app_server_protocol::FileChangeApprovalDecision;
-use genex_app_server_protocol::PatchApplyStatus;
+use ruxex_app_server_protocol::FileChangeApprovalDecision;
+use ruxex_app_server_protocol::PatchApplyStatus;
 use pretty_assertions::assert_eq;
 use ratatui::layout::Rect;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -203,7 +203,7 @@ async fn active_patch_approval_preserves_deferred_startup_protection() -> Result
     assert!(app.startup_pending_protected_request);
 
     app.chat_widget.handle_server_notification(
-        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(ruxex_app_server_protocol::ItemCompletedNotification {
             thread_id: thread_id.to_string(),
             turn_id: TURN_ID.to_string(),
             completed_at_ms: 0,

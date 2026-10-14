@@ -20,59 +20,59 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_no_remote_env;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::local;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::local;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
-use genex_config::types::ApprovalsReviewer;
-use genex_core::EnvironmentConfig;
-use genex_core::EnvironmentNetworkPolicy;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_core::config::NetworkProxySpec;
-use genex_core::shell::ShellType;
-use genex_core::shell::get_shell;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_exec_server::REMOTE_ENVIRONMENT_ID;
-use genex_exec_server::RemoveOptions;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_protocol::approvals::NetworkApprovalContext;
-use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::AutoReviewMessages;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelVisibility;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecApprovalRequestEvent;
-use genex_protocol::protocol::GuardianAssessmentStatus;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::types::ApprovalsReviewer;
+use ruxex_core::EnvironmentConfig;
+use ruxex_core::EnvironmentNetworkPolicy;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_core::config::NetworkProxySpec;
+use ruxex_core::shell::ShellType;
+use ruxex_core::shell::get_shell;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_exec_server::REMOTE_ENVIRONMENT_ID;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_protocol::approvals::NetworkApprovalContext;
+use ruxex_protocol::approvals::NetworkApprovalProtocol;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::AutoReviewMessages;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelVisibility;
+use ruxex_protocol::models::NetworkPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecApprovalRequestEvent;
+use ruxex_protocol::protocol::GuardianAssessmentStatus;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -87,8 +87,8 @@ use test_case::test_case;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 
-const NETWORK_TEST_HOST: &str = "genex-network-test.invalid";
-const NETWORK_TEST_TARGET: &str = "http://genex-network-test.invalid:80";
+const NETWORK_TEST_HOST: &str = "ruxex-network-test.invalid";
+const NETWORK_TEST_TARGET: &str = "http://ruxex-network-test.invalid:80";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg_attr(
@@ -313,7 +313,7 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
         AskForApproval::OnRequest,
     )
     .await?;
-    let EventMsg::RequestPermissions(request) = wait_for_event(&test.genex, |event| {
+    let EventMsg::RequestPermissions(request) = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await
@@ -321,7 +321,7 @@ async fn strict_auto_review_routes_network_approval_to_guardian_when_user_review
         unreachable!("matched request permissions event")
     };
     assert_eq!(request.call_id, permission_call_id);
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -397,11 +397,11 @@ async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_s
     )
     .await?;
     wait_for_guardian_request(&pending_guardian).await;
-    test.genex.submit(Op::Interrupt).await?;
+    test.ruxex.submit(Op::Interrupt).await?;
     let mut saw_turn_aborted = false;
     let mut saw_guardian_aborted = false;
     while !saw_turn_aborted || !saw_guardian_aborted {
-        let event = tokio::time::timeout(Duration::from_secs(5), test.genex.next_event())
+        let event = tokio::time::timeout(Duration::from_secs(5), test.ruxex.next_event())
             .await
             .context("timed out waiting for parent and Guardian cancellation")?
             .context("event stream ended while waiting for cancellation")?;
@@ -440,8 +440,8 @@ async fn cancelled_guardian_network_review_fails_closed_without_rewriting_turn_s
     Ok(())
 }
 
-#[test_case("GET", "http://genex-network-test.invalid/"; "plain_http")]
-#[test_case("CONNECT", "genex-network-test.invalid:443"; "connect")]
+#[test_case("GET", "http://ruxex-network-test.invalid/"; "plain_http")]
+#[test_case("CONNECT", "ruxex-network-test.invalid:443"; "connect")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[cfg_attr(
     not(target_os = "linux"),
@@ -466,7 +466,7 @@ async fn disconnected_network_request_explains_failure_to_model(
 import os, socket, time, urllib.parse
 proxy = urllib.parse.urlparse(os.environ['HTTP_PROXY'])
 sock = socket.create_connection((proxy.hostname, proxy.port), timeout=10)
-sock.sendall(b'{method} {target} HTTP/1.1\r\nHost: genex-network-test.invalid\r\n\r\n')
+sock.sendall(b'{method} {target} HTTP/1.1\r\nHost: ruxex-network-test.invalid\r\n\r\n')
 while not os.path.exists('disconnect-now'):
     time.sleep(0.01)
 sock.close()
@@ -788,7 +788,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         AskForApproval::OnRequest,
     )
     .await?;
-    let EventMsg::TurnStarted(first_turn) = wait_for_event(&test.genex, |event| {
+    let EventMsg::TurnStarted(first_turn) = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnStarted(_))
     })
     .await
@@ -801,8 +801,8 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         first_turn.turn_id.clone()
     } else {
         wait_for_turn_complete(&test).await;
-        assert_eq!(test.genex.list_background_terminals().await.len(), 1);
-        test.genex
+        assert_eq!(test.ruxex.list_background_terminals().await.len(), 1);
+        test.ruxex
             .start_or_steer_turn(
                 TurnInputRequest::user_input(vec![UserInput::Text {
                     text: "review the existing terminal under B".to_string(),
@@ -818,7 +818,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                         settings: Settings {
                             model: "guardian-parent-b".to_string(),
                             reasoning_effort: Some(
-                                genex_protocol::model_types::ReasoningEffort::Medium,
+                                ruxex_protocol::model_types::ReasoningEffort::Medium,
                             ),
                             developer_instructions: None,
                         },
@@ -827,7 +827,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
                 }),
             )
             .await?;
-        let EventMsg::TurnStarted(active_turn) = wait_for_event(&test.genex, |event| {
+        let EventMsg::TurnStarted(active_turn) = wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnStarted(_))
         })
         .await
@@ -837,7 +837,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         assert_ne!(active_turn.turn_id, first_turn.turn_id);
         active_turn.turn_id
     };
-    let EventMsg::RequestPermissions(request) = wait_for_event(&test.genex, |event| {
+    let EventMsg::RequestPermissions(request) = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await
@@ -847,12 +847,12 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     assert_eq!(request.call_id, permission_call_id);
     if same_turn {
         let (reply, outcome) = tokio::sync::oneshot::channel();
-        test.genex
+        test.ruxex
             .submit(Op::TurnSettings {
                 turn_id: active_turn_id.clone(),
-                update: genex_protocol::protocol::TurnSettingsUpdate {
+                update: ruxex_protocol::protocol::TurnSettingsUpdate {
                     model: Some("guardian-parent-b".to_string()),
-                    effort: Some(Some(genex_protocol::model_types::ReasoningEffort::Medium)),
+                    effort: Some(Some(ruxex_protocol::model_types::ReasoningEffort::Medium)),
                     ..Default::default()
                 },
                 reply,
@@ -860,10 +860,10 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
             .await?;
         assert_eq!(
             tokio::time::timeout(Duration::from_secs(10), outcome).await??,
-            genex_protocol::protocol::TurnSettingsUpdateOutcome::Applied,
+            ruxex_protocol::protocol::TurnSettingsUpdateOutcome::Applied,
         );
     }
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -873,7 +873,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
             },
         })
         .await?;
-    let assessment = wait_for_event(&test.genex, |event| {
+    let assessment = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::GuardianAssessment(assessment)
@@ -927,7 +927,7 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
         .context("parent completion request")?;
     assert_eq!(final_parent.body_json()["model"], "guardian-parent-b");
     let metadata: Value = serde_json::from_str(
-        final_parent.body_json()["client_metadata"]["x-genex-turn-metadata"]
+        final_parent.body_json()["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .context("Responses turn metadata")?,
     )?;
@@ -957,11 +957,11 @@ async fn background_network_approval_uses_current_review_settings_and_original_e
     );
     assert!(stdin_output.contains("CROSS-TURN-NETWORK-COMPLETE"));
     assert_eq!(
-        test.genex.list_background_terminals().await.len(),
+        test.ruxex.list_background_terminals().await.len(),
         1,
         "approved network access must not terminate the background process"
     );
-    test.genex.submit(Op::CleanBackgroundTerminals).await?;
+    test.ruxex.submit(Op::CleanBackgroundTerminals).await?;
 
     Ok(())
 }
@@ -1000,7 +1000,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     assert!(
         approval
             .call_id
-            .starts_with("network#local#http#genex-network-test.invalid#80#")
+            .starts_with("network#local#http#ruxex-network-test.invalid#80#")
     );
     assert_eq!(approval.approval_id.as_deref(), None);
     let first_approval_call_id = approval.call_id.clone();
@@ -1008,9 +1008,9 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     assert_eq!(approval.cwd, test.config.cwd.clone().into());
     assert_eq!(
         approval.reason.as_deref(),
-        Some("genex-network-test.invalid is not in the allowed_domains")
+        Some("ruxex-network-test.invalid is not in the allowed_domains")
     );
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1037,7 +1037,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
     assert_eq!(approval.approval_id.as_deref(), None);
     assert_ne!(approval.call_id, first_approval_call_id);
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1089,7 +1089,7 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
         NetworkApprovalProtocol::Http,
     )
     .await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1137,14 +1137,14 @@ async fn user_network_approval_once_session_and_denial_semantics() -> Result<()>
         NetworkApprovalProtocol::Socks5Tcp,
     )
     .await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
             decision: ReviewDecision::Abort,
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -1242,7 +1242,7 @@ PY"#
     let mut approvals = Vec::new();
     for _ in 0..2 {
         let event = wait_for_event_with_timeout(
-            &test.genex,
+            &test.ruxex,
             |event| {
                 matches!(
                     event,
@@ -1257,7 +1257,7 @@ PY"#
         };
         approvals.push(approval);
     }
-    assert_eq!(test.genex.list_background_terminals().await.len(), 1);
+    assert_eq!(test.ruxex.list_background_terminals().await.len(), 1);
     // The child holds this lock until exit, including across the sandbox's PID namespace.
     let process_lock = fs::File::open(local_cwd.join("network-process-lock"))?;
     assert!(matches!(
@@ -1283,7 +1283,7 @@ PY"#
         OtherNetworkReview::ApprovedForSession => Some(ReviewDecision::ApprovedForSession),
     };
     if let Some(decision) = first_decision {
-        test.genex
+        test.ruxex
             .submit(Op::ExecApproval {
                 id: first_approval.effective_approval_id(),
                 turn_id: Some(first_approval.turn_id.clone()),
@@ -1299,7 +1299,7 @@ PY"#
         assert!(result.starts_with("HTTP/1.1 200") || result.starts_with("HTTP/1.1 502"));
     }
     let final_approval = &approvals[1];
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: final_approval.effective_approval_id(),
             turn_id: Some(final_approval.turn_id.clone()),
@@ -1320,7 +1320,7 @@ PY"#
     })
     .await
     .context("background process remained alive after network rejection")??;
-    assert!(test.genex.list_background_terminals().await.is_empty());
+    assert!(test.ruxex.list_background_terminals().await.is_empty());
 
     let output = responses
         .requests()
@@ -1408,7 +1408,7 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
             },
         ]
     );
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1421,11 +1421,11 @@ async fn allowing_network_policy_amendment_persists_context_and_bypasses_prompt(
 
     let policy = fs::read_to_string(test.home.path().join("rules/default.rules"))?;
     assert!(policy.contains(
-        r#"network_rule(host="genex-network-test.invalid", protocol="http", decision="allow""#
+        r#"network_rule(host="ruxex-network-test.invalid", protocol="http", decision="allow""#
     ));
     assert!(first_responses.requests().iter().any(|request| {
         request.body_contains_text(
-            "Allowed network rule saved in execpolicy (allowlist): genex-network-test.invalid",
+            "Allowed network rule saved in execpolicy (allowlist): ruxex-network-test.invalid",
         )
     }));
     mount_exec_network_turn(
@@ -1477,7 +1477,7 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1493,7 +1493,7 @@ async fn denying_network_policy_amendment_persists_and_blocks_request() -> Resul
 
     let policy = fs::read_to_string(test.home.path().join("rules/default.rules"))?;
     assert!(policy.contains(
-        r#"network_rule(host="genex-network-test.invalid", protocol="http", decision="deny""#
+        r#"network_rule(host="ruxex-network-test.invalid", protocol="http", decision="deny""#
     ));
     let output = responses
         .requests()
@@ -1534,7 +1534,7 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1570,7 +1570,7 @@ async fn failed_network_policy_amendment_denies_request_and_does_not_approve_hos
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1654,7 +1654,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         let thread_id = request["client_metadata"]["thread_id"]
             .as_str()
             .context("Guardian thread id")?;
-        let thread_id = genex_protocol::ThreadId::from_string(thread_id)?;
+        let thread_id = ruxex_protocol::ThreadId::from_string(thread_id)?;
         // Internal reviewers are hidden from get_thread. Their persisted terminal event
         // confirms the reviewer's own retries finished before testing Guardian's retry wait.
         tokio::time::timeout(Duration::from_secs(5), async {
@@ -1677,7 +1677,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         })
         .await
         .context("Guardian reviewer did not finish its rate-limited turn")??;
-        tokio::time::timeout(Duration::from_secs(5), test.genex.shutdown_and_wait())
+        tokio::time::timeout(Duration::from_secs(5), test.ruxex.shutdown_and_wait())
             .await
             .context("parent shutdown waited for Guardian's 60-second retry")??;
         let response = tokio::time::timeout(Duration::from_secs(5), proxy_request).await???;
@@ -1689,7 +1689,7 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
     assert_eq!(approval.command, ["network-access", NETWORK_TEST_TARGET]);
     assert_eq!(approval.cwd, test.config.cwd.clone().into());
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(approval.turn_id),
@@ -1701,8 +1701,8 @@ async fn unattributed_network_request_uses_active_turn_environment_fallback(
         .context("unattributed proxy request did not finish")???;
     assert!(response.starts_with("HTTP/1.1 200") || response.starts_with("HTTP/1.1 502"));
 
-    test.genex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
@@ -1777,7 +1777,7 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
     assert!(
         tokio::time::timeout(
             Duration::from_secs(1),
-            wait_for_event(&test.genex, |event| matches!(
+            wait_for_event(&test.ruxex, |event| matches!(
                 event,
                 EventMsg::ExecApprovalRequest(_)
             ))
@@ -1787,15 +1787,15 @@ async fn ambiguous_unattributed_network_request_is_not_assigned_to_active_calls(
         "ambiguous request was incorrectly assigned to an active call"
     );
 
-    test.genex.submit(Op::Interrupt).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Interrupt).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
-    test.genex.submit(Op::CleanBackgroundTerminals).await?;
+    test.ruxex.submit(Op::CleanBackgroundTerminals).await?;
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
-            if test.genex.list_background_terminals().await.is_empty() {
+            if test.ruxex.list_background_terminals().await.is_empty() {
                 break;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
@@ -1818,7 +1818,7 @@ async fn thread_turnover_closes_managed_proxy_tunnels() -> Result<()> {
     let mut config = test.config.clone();
     let mut network = NetworkProxyConfig {
         enabled: true,
-        mode: genex_network_proxy::NetworkMode::Full,
+        mode: ruxex_network_proxy::NetworkMode::Full,
         allow_local_binding: true,
         allow_upstream_proxy: false,
         ..NetworkProxyConfig::default()
@@ -1901,7 +1901,7 @@ async fn thread_turnover_closes_managed_proxy_tunnels() -> Result<()> {
         }
         drop(upstream);
     }
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     Ok(())
 }
 
@@ -2238,7 +2238,7 @@ async fn remote_guardian_network_decisions_are_scoped_to_each_request_and_enviro
             )
             .await?;
             let approval = expect_network_approval(&test, REMOTE_ENVIRONMENT_ID).await?;
-            test.genex
+            test.ruxex
                 .submit(Op::ExecApproval {
                     id: approval.effective_approval_id(),
                     turn_id: Some(approval.turn_id),
@@ -2353,7 +2353,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
     let server = start_mock_server().await;
     let mut scenarios = vec![("ROOTED", managed_network_unified_exec_test(&server).await?)];
     for (scenario, configured_controller) in [("ROOTLESS", false), ("USER_ROOTED", true)] {
-        let mut builder = test_genex().with_config(move |config| {
+        let mut builder = test_ruxex().with_config(move |config| {
             for feature in [Feature::UnifiedExec, Feature::ExecPermissionApprovals] {
                 config
                     .features
@@ -2499,7 +2499,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
             )
             .await?;
             if suffix == "GRANTED_DENIED" {
-                let event = wait_for_event(&test.genex, |event| {
+                let event = wait_for_event(&test.ruxex, |event| {
                     matches!(
                         event,
                         EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -2509,7 +2509,7 @@ async fn owner_network_policy_follows_the_selected_remote_command() -> Result<()
                 let EventMsg::ExecApprovalRequest(approval) = event else {
                     anyhow::bail!("expected additional permissions approval before completion")
                 };
-                test.genex
+                test.ruxex
                     .submit(Op::ExecApproval {
                         id: approval.effective_approval_id(),
                         turn_id: Some(approval.turn_id),
@@ -2549,7 +2549,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     let test = managed_network_unified_exec_test(&server).await?;
     let local_cwd = TempDir::new()?;
     let remote_cwd = PathBuf::from(format!(
-        "/tmp/genex-network-approval-{}",
+        "/tmp/ruxex-network-approval-{}",
         SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
     ))
     .abs();
@@ -2590,7 +2590,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     )
     .await?;
     let approval = expect_network_approval(&test, LOCAL_ENVIRONMENT_ID).await?;
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -2616,7 +2616,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
     .await?;
     let approval = expect_network_approval(&test, REMOTE_ENVIRONMENT_ID).await?;
     let rejection = "approval request failed because the client disconnected";
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
@@ -2645,7 +2645,7 @@ async fn approved_network_host_for_one_environment_still_prompts_in_another() ->
 }
 
 pub(super) fn guardian_parent_catalog() -> ModelCatalog {
-    let template = genex_models_manager::test_support::test_models_response()
+    let template = ruxex_models_manager::test_support::test_models_response()
         .expect("bundled model catalog")
         .models
         .into_iter()
@@ -2661,7 +2661,7 @@ pub(super) fn guardian_parent_catalog() -> ModelCatalog {
                 model.visibility = ModelVisibility::List;
                 model.auto_review_model_override = None;
                 model.supported_reasoning_levels.retain(|level| {
-                    level.effort != genex_protocol::model_types::ReasoningEffort::Low
+                    level.effort != ruxex_protocol::model_types::ReasoningEffort::Low
                 });
                 model
                     .model_messages
@@ -2682,14 +2682,14 @@ pub(super) fn guardian_parent_catalog() -> ModelCatalog {
     }
 }
 
-async fn managed_network_unified_exec_test(server: &wiremock::MockServer) -> Result<TestGenex> {
+async fn managed_network_unified_exec_test(server: &wiremock::MockServer) -> Result<TestRuxex> {
     managed_network_unified_exec_test_with_features(server, &[]).await
 }
 
 async fn managed_network_unified_exec_test_with_features(
     server: &wiremock::MockServer,
     features: &[Feature],
-) -> Result<TestGenex> {
+) -> Result<TestRuxex> {
     let test = managed_network_unified_exec_builder(features)?
         .build_with_remote_and_local_env(server)
         .await?;
@@ -2699,7 +2699,7 @@ async fn managed_network_unified_exec_test_with_features(
     Ok(test)
 }
 
-fn managed_network_unified_exec_builder(features: &[Feature]) -> Result<TestGenexBuilder> {
+fn managed_network_unified_exec_builder(features: &[Feature]) -> Result<TestRuxexBuilder> {
     let home = Arc::new(TempDir::new()?);
     fs::write(
         home.path().join("config.toml"),
@@ -2723,7 +2723,7 @@ allow_local_binding = true
     );
     let permission_profile_for_config = permission_profile;
     let features = features.to_vec();
-    Ok(test_genex()
+    Ok(test_ruxex()
         .with_home(home)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
@@ -2788,7 +2788,7 @@ fn remote_network_proxy_request_command(marker: &str) -> String {
 }
 
 async fn submit_managed_network_turn(
-    test: &TestGenex,
+    test: &TestRuxex,
     prompt: &str,
     environments: Vec<TurnEnvironmentSelection>,
     approvals_reviewer: ApprovalsReviewer,
@@ -2805,7 +2805,7 @@ async fn submit_managed_network_turn(
     let turn_environment_selections =
         TurnEnvironmentSelections::new(test.config.cwd.clone(), environments);
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -2948,7 +2948,7 @@ fn guardian_network_actions(responses: &ResponseMock) -> Result<Vec<Value>> {
 }
 
 async fn expect_network_approval(
-    test: &TestGenex,
+    test: &TestRuxex,
     expected_environment_id: &str,
 ) -> Result<ExecApprovalRequestEvent> {
     expect_network_approval_target(
@@ -2961,7 +2961,7 @@ async fn expect_network_approval(
 }
 
 async fn expect_network_approval_target(
-    test: &TestGenex,
+    test: &TestRuxex,
     expected_environment_id: &str,
     expected_target: &str,
     expected_protocol: NetworkApprovalProtocol,
@@ -2971,7 +2971,7 @@ async fn expect_network_approval_target(
         .checked_duration_since(std::time::Instant::now())
         .context("timed out waiting for network approval request")?;
     let event = wait_for_event_with_timeout(
-        &test.genex,
+        &test.ruxex,
         |event| {
             matches!(
                 event,
@@ -3007,8 +3007,8 @@ async fn expect_network_approval_target(
     }
 }
 
-async fn wait_for_completion_without_network_prompt(test: &TestGenex) {
-    let event = wait_for_event(&test.genex, |event| {
+async fn wait_for_completion_without_network_prompt(test: &TestRuxex) {
+    let event = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -3082,8 +3082,8 @@ async fn wait_for_paths(paths: &[&std::path::Path]) -> Result<()> {
     Ok(())
 }
 
-async fn wait_for_turn_complete(test: &TestGenex) {
-    wait_for_event(&test.genex, |event| {
+async fn wait_for_turn_complete(test: &TestRuxex) {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

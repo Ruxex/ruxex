@@ -1,9 +1,9 @@
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
 
 /// A simple preset pairing an approval policy with a permission profile.
 #[derive(Debug, Clone)]
@@ -30,7 +30,7 @@ pub fn builtin_approval_presets() -> Vec<ApprovalPreset> {
         ApprovalPreset {
             id: "read-only",
             label: "Read Only",
-            description: "Genex can read files in the current workspace. Approval is required to edit files or access the internet.",
+            description: "Ruxex can read files in the current workspace. Approval is required to edit files or access the internet.",
             approval: AskForApproval::OnRequest,
             active_permission_profile: ActivePermissionProfile::new(
                 BUILT_IN_PERMISSION_PROFILE_READ_ONLY,
@@ -40,7 +40,7 @@ pub fn builtin_approval_presets() -> Vec<ApprovalPreset> {
         ApprovalPreset {
             id: "auto",
             label: "Default",
-            description: "Genex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)",
+            description: "Ruxex can read and edit files in the current workspace, and run commands. Approval is required to access the internet or edit other files. (Identical to Agent mode)",
             approval: AskForApproval::OnRequest,
             active_permission_profile: ActivePermissionProfile::new(
                 BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
@@ -50,7 +50,7 @@ pub fn builtin_approval_presets() -> Vec<ApprovalPreset> {
         ApprovalPreset {
             id: "full-access",
             label: "Full Access",
-            description: "Genex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using.",
+            description: "Ruxex can edit files outside this workspace and access the internet without asking for approval. Exercise caution when using.",
             approval: AskForApproval::Never,
             active_permission_profile: ActivePermissionProfile::new(
                 BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS,

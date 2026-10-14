@@ -4,38 +4,38 @@ use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::QueuedSubmission;
-use genex_app_server_protocol::ThreadQueueAddParams;
-use genex_app_server_protocol::ThreadQueueAddResponse;
-use genex_app_server_protocol::ThreadQueueDeleteParams;
-use genex_app_server_protocol::ThreadQueueDeleteResponse;
-use genex_app_server_protocol::ThreadQueueListParams;
-use genex_app_server_protocol::ThreadQueueListResponse;
-use genex_app_server_protocol::ThreadQueueReorderParams;
-use genex_app_server_protocol::ThreadQueueReorderResponse;
-use genex_app_server_protocol::ThreadQueueStartParams;
-use genex_app_server_protocol::ThreadQueueStartResponse;
-use genex_app_server_protocol::ThreadQueueUpdateParams;
-use genex_app_server_protocol::ThreadQueueUpdateResponse;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_core::GenexThread;
-use genex_core::NotSubmittedReason;
-use genex_core::StartIfIdleSubmission;
-use genex_core::ThreadManager;
-use genex_core::TurnInput;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_queue_extension::QueueServiceError;
-use genex_queue_extension::QueuedItem;
-use genex_queue_extension::QueuedItemService;
-use genex_thread_store::ReadThreadParams;
-use genex_thread_store::ThreadStore;
-use genex_thread_store::ThreadStoreError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::QueuedSubmission;
+use ruxex_app_server_protocol::ThreadQueueAddParams;
+use ruxex_app_server_protocol::ThreadQueueAddResponse;
+use ruxex_app_server_protocol::ThreadQueueDeleteParams;
+use ruxex_app_server_protocol::ThreadQueueDeleteResponse;
+use ruxex_app_server_protocol::ThreadQueueListParams;
+use ruxex_app_server_protocol::ThreadQueueListResponse;
+use ruxex_app_server_protocol::ThreadQueueReorderParams;
+use ruxex_app_server_protocol::ThreadQueueReorderResponse;
+use ruxex_app_server_protocol::ThreadQueueStartParams;
+use ruxex_app_server_protocol::ThreadQueueStartResponse;
+use ruxex_app_server_protocol::ThreadQueueUpdateParams;
+use ruxex_app_server_protocol::ThreadQueueUpdateResponse;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_core::RuxexThread;
+use ruxex_core::NotSubmittedReason;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::ThreadManager;
+use ruxex_core::TurnInput;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_queue_extension::QueueServiceError;
+use ruxex_queue_extension::QueuedItem;
+use ruxex_queue_extension::QueuedItemService;
+use ruxex_thread_store::ReadThreadParams;
+use ruxex_thread_store::ThreadStore;
+use ruxex_thread_store::ThreadStoreError;
 
 use super::TurnRequestProcessor;
 use super::thread_input::DIRECT_INPUT_TO_MULTI_AGENT_V2_SUBAGENT_ERROR;
@@ -240,7 +240,7 @@ impl ThreadQueueRequestProcessor {
     async fn require_thread(
         &self,
         raw_thread_id: &str,
-    ) -> Result<(ThreadId, Option<Arc<GenexThread>>, SessionSource), JSONRPCErrorError> {
+    ) -> Result<(ThreadId, Option<Arc<RuxexThread>>, SessionSource), JSONRPCErrorError> {
         let thread_id = ThreadId::from_string(raw_thread_id)
             .map_err(|error| invalid_request(format!("invalid thread id: {error}")))?;
         let (loaded_thread, source) = if let Ok(thread) =
@@ -270,7 +270,7 @@ impl ThreadQueueRequestProcessor {
                 })?;
             if stored.archived_at.is_some() {
                 return Err(invalid_request(format!(
-                    "session {thread_id} is archived. Run `genex unarchive {thread_id}` to unarchive it first."
+                    "session {thread_id} is archived. Run `ruxex unarchive {thread_id}` to unarchive it first."
                 )));
             }
             (None, stored.source)
@@ -281,7 +281,7 @@ impl ThreadQueueRequestProcessor {
 }
 
 fn ensure_direct_input_allowed(
-    loaded_thread: Option<&GenexThread>,
+    loaded_thread: Option<&RuxexThread>,
     source: &SessionSource,
 ) -> Result<(), JSONRPCErrorError> {
     match loaded_thread {

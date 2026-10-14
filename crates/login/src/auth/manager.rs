@@ -11,9 +11,9 @@ use tokio::sync::Semaphore;
 use tokio::sync::watch;
 use tracing::instrument;
 
-use genex_protocol::auth::AuthMode;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::ModelProviderAuthInfo;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ModelProviderAuthInfo;
 
 use super::change_state::AuthChangeState;
 use super::change_state::same_owner;
@@ -24,22 +24,22 @@ pub use crate::auth::storage::AuthKeyringBackendKind;
 pub use crate::auth::storage::ProviderAuth;
 use crate::auth::storage::create_auth_storage;
 use crate::outbound_proxy::AuthRouteConfig;
-use genex_config::ManagedAuthPolicy;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_protocol::auth::RefreshTokenFailedError;
-use genex_protocol::auth::RefreshTokenFailedReason;
+use ruxex_config::ManagedAuthPolicy;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_protocol::auth::RefreshTokenFailedError;
+use ruxex_protocol::auth::RefreshTokenFailedReason;
 use thiserror::Error;
 
 /// Authentication mechanism used by the current user.
 #[derive(Debug, Clone)]
-pub enum GenexAuth {
+pub enum RuxexAuth {
     ApiKey(ApiKeyAuth),
     Headers(AuthHeaders),
 }
 
-impl PartialEq for GenexAuth {
+impl PartialEq for RuxexAuth {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Headers(a), Self::Headers(b)) => a == b,
@@ -110,10 +110,10 @@ pub struct ExternalAuthRefreshContext {
 /// Implementations own the current auth value and any source-specific refresh mechanism.
 pub trait ExternalAuth: Send + Sync {
     /// Returns the provider's current auth value.
-    fn resolve(&self) -> ExternalAuthFuture<'_, GenexAuth>;
+    fn resolve(&self) -> ExternalAuthFuture<'_, RuxexAuth>;
 
     /// Refreshes auth and makes the returned value current for future `resolve()` calls.
-    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, GenexAuth>;
+    fn refresh(&self, context: ExternalAuthRefreshContext) -> ExternalAuthFuture<'_, RuxexAuth>;
 
     /// Maps a provider error into the retry policy used by external-auth reload and recovery.
     fn classify_error(&self, error: std::io::Error) -> RefreshTokenError {
@@ -141,7 +141,7 @@ impl From<RefreshTokenError> for std::io::Error {
     }
 }
 
-impl GenexAuth {
+impl RuxexAuth {
     async fn from_provider_auth(credentials: &ProviderAuth) -> std::io::Result<Self> {
         let auth_mode = credentials.resolved_mode();
         if auth_mode == AuthMode::ApiKey {
@@ -168,14 +168,14 @@ impl GenexAuth {
     }
 
     pub async fn from_auth_storage(
-        genex_home: &Path,
+        ruxex_home: &Path,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         managed_auth_base_url: Option<&str>,
         keyring_backend_kind: AuthKeyringBackendKind,
         auth_route_config: &AuthRouteConfig,
     ) -> std::io::Result<Option<Self>> {
         load_auth(
-            genex_home,
+            ruxex_home,
             /*enable_api_key_env*/ false,
             auth_credentials_store_mode,
             /*allowed_login_methods*/ None,
@@ -270,10 +270,10 @@ impl GenexAuth {
     }
 }
 
-pub const GENEX_API_KEY_ENV_VAR: &str = "GENEX_API_KEY";
+pub const RUXEX_API_KEY_ENV_VAR: &str = "RUXEX_API_KEY";
 
 pub fn read_api_key_from_env() -> Option<String> {
-    read_non_empty_env_var(GENEX_API_KEY_ENV_VAR)
+    read_non_empty_env_var(RUXEX_API_KEY_ENV_VAR)
 }
 
 fn read_non_empty_env_var(key: &str) -> Option<String> {
@@ -283,15 +283,15 @@ fn read_non_empty_env_var(key: &str) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
-/// Delete the auth.json file inside `genex_home` if it exists. Returns `Ok(true)`
+/// Delete the auth.json file inside `ruxex_home` if it exists. Returns `Ok(true)`
 /// if a file was removed, `Ok(false)` if no auth file was present.
 pub fn logout(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<bool> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -300,14 +300,14 @@ pub fn logout(
 
 /// Writes an `auth.json` that contains only the API key.
 pub fn login_with_api_key(
-    genex_home: &Path,
+    ruxex_home: &Path,
     api_key: &str,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<()> {
     let auth_dot_json = AuthDotJson::new(ProviderAuth::api_key(api_key));
     save_auth(
-        genex_home,
+        ruxex_home,
         &auth_dot_json,
         auth_credentials_store_mode,
         keyring_backend_kind,
@@ -316,13 +316,13 @@ pub fn login_with_api_key(
 
 /// Persist the provided auth payload using the specified backend.
 pub fn save_auth(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth: &AuthDotJson,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<()> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -335,12 +335,12 @@ pub fn save_auth(
 /// ordinary production reads; this helper is for tests and write-side
 /// maintenance that must inspect the exact payload in storage.
 pub fn load_auth_dot_json(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<Option<AuthDotJson>> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -349,12 +349,12 @@ pub fn load_auth_dot_json(
 
 /// Load credentials for the current runtime.
 pub fn load_auth_credentials(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<Option<ProviderAuth>> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -363,13 +363,13 @@ pub fn load_auth_credentials(
 
 /// Persist credentials for the current runtime.
 pub fn save_auth_credentials(
-    genex_home: &Path,
+    ruxex_home: &Path,
     provider_auth: &ProviderAuth,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<()> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -378,12 +378,12 @@ pub fn save_auth_credentials(
 
 /// Delete credentials for the current runtime.
 pub fn delete_auth_credentials(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<bool> {
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -396,7 +396,7 @@ pub fn delete_auth_credentials(
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthConfig {
-    pub genex_home: PathBuf,
+    pub ruxex_home: PathBuf,
     pub auth_credentials_store_mode: AuthCredentialsStoreMode,
     pub keyring_backend_kind: AuthKeyringBackendKind,
     pub forced_login_method: Option<ForcedLoginMethod>,
@@ -433,18 +433,18 @@ impl AuthConfig {
         }
     }
 
-    pub fn allows_auth(&self, auth: &GenexAuth) -> bool {
+    pub fn allows_auth(&self, auth: &RuxexAuth) -> bool {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         validate_auth_restrictions(Some(&allowed_login_methods), workspaces.as_deref(), auth)
             .is_ok()
     }
 
-    pub async fn load_auth(&self, enable_api_key_env: bool) -> std::io::Result<Option<GenexAuth>> {
+    pub async fn load_auth(&self, enable_api_key_env: bool) -> std::io::Result<Option<RuxexAuth>> {
         let allowed_login_methods = self.allowed_login_methods();
         let workspaces = self.effective_managed_workspaces();
         let auth = load_auth(
-            &self.genex_home,
+            &self.ruxex_home,
             enable_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
@@ -480,7 +480,7 @@ fn auth_mode_is_allowed(
 fn validate_auth_restrictions(
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
     expected_workspaces: Option<&[String]>,
-    auth: &GenexAuth,
+    auth: &RuxexAuth,
 ) -> Result<(), String> {
     if !auth_mode_is_allowed(allowed_login_methods, auth.auth_mode()) {
         return Err(match allowed_login_methods {
@@ -495,7 +495,7 @@ fn validate_auth_restrictions(
     let Some(expected_workspaces) = expected_workspaces else {
         return Ok(());
     };
-    if matches!(auth, GenexAuth::ApiKey(_)) {
+    if matches!(auth, RuxexAuth::ApiKey(_)) {
         return Ok(());
     }
 
@@ -522,7 +522,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
     }
 
     let Some(auth) = load_auth(
-        &config.genex_home,
+        &config.ruxex_home,
         /*enable_api_key_env*/ true,
         config.auth_credentials_store_mode,
         /*allowed_login_methods*/ None,
@@ -552,7 +552,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
         if let Some(message) = method_violation {
             return logout_with_message(
-                &config.genex_home,
+                &config.ruxex_home,
                 message,
                 config.auth_credentials_store_mode,
                 config.keyring_backend_kind,
@@ -562,10 +562,10 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 
     if let Some(expected_account_ids) = config.forced_managed_workspace_id.as_deref() {
         let workspace_id = match &auth {
-            GenexAuth::ApiKey(_) => {
+            RuxexAuth::ApiKey(_) => {
                 return Ok(());
             }
-            GenexAuth::Headers(_) => auth.get_account_id(),
+            RuxexAuth::Headers(_) => auth.get_account_id(),
         };
 
         // workspace is the external identifier for account id.
@@ -585,7 +585,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
                 ),
             };
             return logout_with_message(
-                &config.genex_home,
+                &config.ruxex_home,
                 message,
                 config.auth_credentials_store_mode,
                 config.keyring_backend_kind,
@@ -597,7 +597,7 @@ pub async fn enforce_login_restrictions(config: &AuthConfig) -> std::io::Result<
 }
 
 fn logout_with_message(
-    genex_home: &Path,
+    ruxex_home: &Path,
     message: String,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
@@ -605,7 +605,7 @@ fn logout_with_message(
     // External auth tokens live in the ephemeral store, but persistent auth may still exist
     // from earlier logins. Clear both so a forced logout truly removes all active auth.
     let removal_result = logout_all_stores(
-        genex_home,
+        ruxex_home,
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -617,24 +617,24 @@ fn logout_with_message(
 }
 
 fn logout_all_stores(
-    genex_home: &Path,
+    ruxex_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> std::io::Result<bool> {
     if auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
         return logout(
-            genex_home,
+            ruxex_home,
             AuthCredentialsStoreMode::Ephemeral,
             AuthKeyringBackendKind::default(),
         );
     }
     let removed_ephemeral = logout(
-        genex_home,
+        ruxex_home,
         AuthCredentialsStoreMode::Ephemeral,
         AuthKeyringBackendKind::default(),
     )?;
     let removed_managed = logout(
-        genex_home,
+        ruxex_home,
         auth_credentials_store_mode,
         keyring_backend_kind,
     )?;
@@ -643,7 +643,7 @@ fn logout_all_stores(
 
 #[allow(clippy::too_many_arguments)]
 async fn load_auth(
-    genex_home: &Path,
+    ruxex_home: &Path,
     enable_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     allowed_login_methods: Option<&[ForcedLoginMethod]>,
@@ -651,18 +651,18 @@ async fn load_auth(
     _managed_auth_base_url: Option<&str>,
     keyring_backend_kind: AuthKeyringBackendKind,
     _auth_route_config: &AuthRouteConfig,
-) -> std::io::Result<Option<GenexAuth>> {
+) -> std::io::Result<Option<RuxexAuth>> {
     // API key via env var takes precedence over any other auth method.
     if enable_api_key_env
         && auth_mode_is_allowed(allowed_login_methods, AuthMode::ApiKey)
         && let Some(api_key) = read_api_key_from_env()
     {
-        return Ok(Some(GenexAuth::from_api_key(api_key.as_str())));
+        return Ok(Some(RuxexAuth::from_api_key(api_key.as_str())));
     }
 
     // Ephemeral credentials take precedence over persisted credentials.
     let ephemeral_storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         AuthCredentialsStoreMode::Ephemeral,
         AuthKeyringBackendKind::default(),
     );
@@ -671,7 +671,7 @@ async fn load_auth(
         && credentials.has_supported_credentials()
         && auth_mode_is_allowed(allowed_login_methods, credentials.resolved_mode())
     {
-        let auth = GenexAuth::from_provider_auth(credentials).await?;
+        let auth = RuxexAuth::from_provider_auth(credentials).await?;
         return Ok(Some(auth));
     }
 
@@ -682,7 +682,7 @@ async fn load_auth(
 
     // Fall back to the configured persistent store (file/keyring/auto).
     let storage = create_auth_storage(
-        genex_home.to_path_buf(),
+        ruxex_home.to_path_buf(),
         auth_credentials_store_mode,
         keyring_backend_kind,
     );
@@ -699,14 +699,14 @@ async fn load_auth(
     if !auth_mode_is_allowed(allowed_login_methods, credentials.resolved_mode()) {
         return Ok(None);
     }
-    let auth = GenexAuth::from_provider_auth(credentials).await?;
+    let auth = RuxexAuth::from_provider_auth(credentials).await?;
     Ok(Some(auth))
 }
 
 /// Internal cached auth state.
 #[derive(Clone)]
 struct CachedAuth {
-    auth: Option<GenexAuth>,
+    auth: Option<RuxexAuth>,
     /// Permanent refresh failure cached for the current auth snapshot so
     /// later refresh attempts for the same credentials fail fast without network.
     permanent_refresh_failure: Option<AuthScopedRefreshFailure>,
@@ -714,7 +714,7 @@ struct CachedAuth {
 
 #[derive(Clone)]
 struct AuthScopedRefreshFailure {
-    auth: GenexAuth,
+    auth: RuxexAuth,
     error: RefreshTokenFailedError,
 }
 
@@ -723,7 +723,7 @@ impl Debug for CachedAuth {
         f.debug_struct("CachedAuth")
             .field(
                 "auth_mode",
-                &self.auth.as_ref().map(GenexAuth::api_auth_mode),
+                &self.auth.as_ref().map(RuxexAuth::api_auth_mode),
             )
             .field(
                 "permanent_refresh_failure",
@@ -787,7 +787,7 @@ impl UnauthorizedRecoveryStepResult {
 impl UnauthorizedRecovery {
     fn new(manager: Arc<CredentialManager>) -> Self {
         let cached_auth = manager.auth_cached();
-        let expected_account_id = cached_auth.as_ref().and_then(GenexAuth::get_account_id);
+        let expected_account_id = cached_auth.as_ref().and_then(RuxexAuth::get_account_id);
         let mode = if manager.has_external_auth() {
             UnauthorizedRecoveryMode::External
         } else {
@@ -814,7 +814,7 @@ impl UnauthorizedRecovery {
             .manager
             .auth_cached()
             .as_ref()
-            .is_some_and(GenexAuth::supports_unauthorized_recovery)
+            .is_some_and(RuxexAuth::supports_unauthorized_recovery)
         {
             return false;
         }
@@ -839,7 +839,7 @@ impl UnauthorizedRecovery {
             .manager
             .auth_cached()
             .as_ref()
-            .is_some_and(GenexAuth::supports_unauthorized_recovery)
+            .is_some_and(RuxexAuth::supports_unauthorized_recovery)
         {
             return "not_managed_auth";
         }
@@ -931,14 +931,14 @@ impl UnauthorizedRecovery {
 
 /// Central manager providing a single source of truth for auth.json derived
 /// authentication data. It loads once (or on preference change) and then
-/// hands out cloned `GenexAuth` values so the rest of the program has a
+/// hands out cloned `RuxexAuth` values so the rest of the program has a
 /// consistent snapshot.
 ///
 /// External modifications to `auth.json` will NOT be observed until
 /// `reload()` is called explicitly. This matches the design goal of avoiding
 /// different parts of the program seeing inconsistent auth data mid‑run.
 pub struct CredentialManager {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     inner: RwLock<CachedAuth>,
     auth_change_tx: watch::Sender<u64>,
     auth_change_state_tx: watch::Sender<AuthChangeState>,
@@ -958,11 +958,11 @@ pub struct CredentialManager {
 ///
 /// Implementations should return the auth-related config values for the
 /// already-resolved runtime configuration. The primary implementation is
-/// `genex_core::config::Config`, but this trait keeps `genex-login` independent
-/// from `genex-core`.
+/// `ruxex_core::config::Config`, but this trait keeps `ruxex-login` independent
+/// from `ruxex-core`.
 pub trait CredentialManagerConfig {
-    /// Returns the Genex home directory used for auth storage.
-    fn genex_home(&self) -> PathBuf;
+    /// Returns the Ruxex home directory used for auth storage.
+    fn ruxex_home(&self) -> PathBuf;
 
     /// Returns the CLI auth credential storage mode for auth loading.
     fn cli_auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode;
@@ -989,7 +989,7 @@ pub trait CredentialManagerConfig {
 impl Debug for CredentialManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CredentialManager")
-            .field("genex_home", &self.genex_home)
+            .field("ruxex_home", &self.ruxex_home)
             .field("inner", &self.inner)
             .field("enable_api_key_env", &self.enable_api_key_env)
             .field(
@@ -1016,7 +1016,7 @@ impl CredentialManager {
     /// simply return `None` in that case so callers can treat it as an
     /// unauthenticated state.
     pub async fn new(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         enable_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
@@ -1026,7 +1026,7 @@ impl CredentialManager {
     ) -> Self {
         Self::new_from_auth_config(
             AuthConfig {
-                genex_home,
+                ruxex_home,
                 auth_credentials_store_mode,
                 keyring_backend_kind,
                 forced_login_method: None,
@@ -1047,7 +1047,7 @@ impl CredentialManager {
             .ok()
             .flatten();
         let AuthConfig {
-            genex_home,
+            ruxex_home,
             auth_credentials_store_mode,
             keyring_backend_kind,
             forced_login_method,
@@ -1058,7 +1058,7 @@ impl CredentialManager {
         } = auth_config;
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Self {
-            genex_home,
+            ruxex_home,
             inner: RwLock::new(CachedAuth {
                 auth: managed_auth,
                 permanent_refresh_failure: None,
@@ -1078,13 +1078,13 @@ impl CredentialManager {
         }
     }
 
-    /// Create an CredentialManager with a specific GenexAuth, for testing only.
-    pub fn from_auth_for_testing(auth: GenexAuth) -> Arc<Self> {
+    /// Create an CredentialManager with a specific RuxexAuth, for testing only.
+    pub fn from_auth_for_testing(auth: RuxexAuth) -> Arc<Self> {
         Self::from_optional_auth_for_testing(Some(auth))
     }
 
-    /// Create an CredentialManager with an optional GenexAuth, for testing only.
-    pub(crate) fn from_optional_auth_for_testing(auth: Option<GenexAuth>) -> Arc<Self> {
+    /// Create an CredentialManager with an optional RuxexAuth, for testing only.
+    pub(crate) fn from_optional_auth_for_testing(auth: Option<RuxexAuth>) -> Arc<Self> {
         let cached = CachedAuth {
             auth,
             permanent_refresh_failure: None,
@@ -1092,7 +1092,7 @@ impl CredentialManager {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
 
         Arc::new(Self {
-            genex_home: PathBuf::from("non-existent"),
+            ruxex_home: PathBuf::from("non-existent"),
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1109,15 +1109,15 @@ impl CredentialManager {
         })
     }
 
-    /// Create an CredentialManager with a specific GenexAuth and genex home, for testing only.
-    pub fn from_auth_for_testing_with_home(auth: GenexAuth, genex_home: PathBuf) -> Arc<Self> {
+    /// Create an CredentialManager with a specific RuxexAuth and ruxex home, for testing only.
+    pub fn from_auth_for_testing_with_home(auth: RuxexAuth, ruxex_home: PathBuf) -> Arc<Self> {
         let cached = CachedAuth {
             auth: Some(auth),
             permanent_refresh_failure: None,
         };
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
-            genex_home,
+            ruxex_home,
             inner: RwLock::new(cached),
             auth_change_tx,
             auth_change_state_tx: watch::channel(AuthChangeState::default()).0,
@@ -1137,7 +1137,7 @@ impl CredentialManager {
     pub fn external_bearer_only(config: ModelProviderAuthInfo) -> Arc<Self> {
         let (auth_change_tx, _auth_change_rx) = watch::channel(0);
         Arc::new(Self {
-            genex_home: PathBuf::from("non-existent"),
+            ruxex_home: PathBuf::from("non-existent"),
             inner: RwLock::new(CachedAuth {
                 auth: None,
                 permanent_refresh_failure: None,
@@ -1162,7 +1162,7 @@ impl CredentialManager {
     }
 
     /// Current cached auth (clone) without attempting a refresh.
-    pub fn auth_cached(&self) -> Option<GenexAuth> {
+    pub fn auth_cached(&self) -> Option<RuxexAuth> {
         self.inner
             .read()
             .ok()
@@ -1179,7 +1179,7 @@ impl CredentialManager {
         self.auth_change_state_tx.subscribe()
     }
 
-    pub fn refresh_failure_for_auth(&self, auth: &GenexAuth) -> Option<RefreshTokenFailedError> {
+    pub fn refresh_failure_for_auth(&self, auth: &RuxexAuth) -> Option<RefreshTokenFailedError> {
         self.inner.read().ok().and_then(|cached| {
             cached
                 .permanent_refresh_failure
@@ -1192,7 +1192,7 @@ impl CredentialManager {
     /// Current cached auth (clone). May be `None` if not logged in or load failed.
     /// Resolve current authentication, refreshing configured external credentials first.
     #[instrument(level = "trace", skip_all)]
-    pub async fn auth(&self) -> Option<GenexAuth> {
+    pub async fn auth(&self) -> Option<RuxexAuth> {
         if self.has_external_auth() {
             self.reload().await;
             return self.auth_cached();
@@ -1221,7 +1221,7 @@ impl CredentialManager {
         };
 
         let new_auth = self.load_auth().await;
-        let new_account_id = new_auth.as_ref().and_then(GenexAuth::get_account_id);
+        let new_account_id = new_auth.as_ref().and_then(RuxexAuth::get_account_id);
 
         if new_account_id.as_deref() != Some(expected_account_id) {
             let found_account_id = new_account_id.as_deref().unwrap_or("unknown");
@@ -1243,7 +1243,7 @@ impl CredentialManager {
         }
     }
 
-    fn auths_equal_for_refresh(a: Option<&GenexAuth>, b: Option<&GenexAuth>) -> bool {
+    fn auths_equal_for_refresh(a: Option<&RuxexAuth>, b: Option<&RuxexAuth>) -> bool {
         match (a, b) {
             (None, None) => true,
             (Some(a), Some(b)) => match (a.api_auth_mode(), b.api_auth_mode()) {
@@ -1255,7 +1255,7 @@ impl CredentialManager {
         }
     }
 
-    fn auths_equal(a: Option<&GenexAuth>, b: Option<&GenexAuth>) -> bool {
+    fn auths_equal(a: Option<&RuxexAuth>, b: Option<&RuxexAuth>) -> bool {
         match (a, b) {
             (None, None) => true,
             (Some(a), Some(b)) => a == b,
@@ -1267,7 +1267,7 @@ impl CredentialManager {
     /// attempted against the auth snapshot that is still cached.
     fn record_permanent_refresh_failure_if_unchanged(
         &self,
-        attempted_auth: &GenexAuth,
+        attempted_auth: &RuxexAuth,
         error: &RefreshTokenFailedError,
     ) {
         if let Ok(mut guard) = self.inner.write() {
@@ -1282,7 +1282,7 @@ impl CredentialManager {
         }
     }
 
-    async fn load_auth(&self) -> Option<GenexAuth> {
+    async fn load_auth(&self) -> Option<RuxexAuth> {
         if let Some(external_auth) = self.external_auth_provider() {
             let cached_auth = self.auth_cached();
             if cached_auth
@@ -1311,7 +1311,7 @@ impl CredentialManager {
         let allowed_login_methods = self.allowed_login_methods();
         let effective_managed_workspaces = self.effective_managed_workspaces();
         load_auth(
-            &self.genex_home,
+            &self.ruxex_home,
             self.enable_api_key_env,
             self.auth_credentials_store_mode,
             Some(&allowed_login_methods),
@@ -1333,7 +1333,7 @@ impl CredentialManager {
         })
     }
 
-    fn set_cached_auth(&self, new_auth: Option<GenexAuth>) -> bool {
+    fn set_cached_auth(&self, new_auth: Option<RuxexAuth>) -> bool {
         if let Ok(mut guard) = self.inner.write() {
             let previous = guard.auth.as_ref();
             let changed = !CredentialManager::auths_equal(previous, new_auth.as_ref());
@@ -1438,7 +1438,7 @@ impl CredentialManager {
 
     /// Convenience constructor returning an `Arc` wrapper.
     pub async fn shared(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         enable_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         forced_managed_workspace_id: Option<Vec<String>>,
@@ -1448,7 +1448,7 @@ impl CredentialManager {
     ) -> Arc<Self> {
         Arc::new(
             Self::new(
-                genex_home,
+                ruxex_home,
                 enable_api_key_env,
                 auth_credentials_store_mode,
                 forced_managed_workspace_id,
@@ -1499,7 +1499,7 @@ impl CredentialManager {
     async fn resolve_external_auth(
         &self,
         external_auth: &dyn ExternalAuth,
-    ) -> Result<GenexAuth, RefreshTokenError> {
+    ) -> Result<RuxexAuth, RefreshTokenError> {
         let auth = external_auth
             .resolve()
             .await
@@ -1522,13 +1522,13 @@ impl CredentialManager {
         let auth_before_reload = self.auth_cached();
         if auth_before_reload
             .as_ref()
-            .is_some_and(GenexAuth::is_api_key_auth)
+            .is_some_and(RuxexAuth::is_api_key_auth)
         {
             return Ok(());
         }
         let expected_account_id = auth_before_reload
             .as_ref()
-            .and_then(GenexAuth::get_account_id);
+            .and_then(RuxexAuth::get_account_id);
 
         match self
             .reload_if_account_id_matches(expected_account_id.as_deref())
@@ -1577,7 +1577,7 @@ impl CredentialManager {
                 .await
         } else {
             match attempted_auth.as_ref() {
-                Some(GenexAuth::ApiKey(_) | GenexAuth::Headers(_)) | None => Ok(()),
+                Some(RuxexAuth::ApiKey(_) | RuxexAuth::Headers(_)) | None => Ok(()),
             }
         };
         if let Some(attempted_auth) = attempted_auth.as_ref()
@@ -1591,7 +1591,7 @@ impl CredentialManager {
     /// Persist credentials for this runtime and reload the shared snapshot.
     pub async fn login(&self, credentials: ProviderAuth) -> std::io::Result<()> {
         save_auth_credentials(
-            &self.genex_home,
+            &self.ruxex_home,
             &credentials,
             self.auth_credentials_store_mode,
             self.keyring_backend_kind,
@@ -1603,7 +1603,7 @@ impl CredentialManager {
     /// Delete this runtime's credentials from all active stores.
     pub async fn delete(&self) -> std::io::Result<bool> {
         let removed_ephemeral = delete_auth_credentials(
-            &self.genex_home,
+            &self.ruxex_home,
             AuthCredentialsStoreMode::Ephemeral,
             AuthKeyringBackendKind::default(),
         )?;
@@ -1612,7 +1612,7 @@ impl CredentialManager {
                 false
             } else {
                 delete_auth_credentials(
-                    &self.genex_home,
+                    &self.ruxex_home,
                     self.auth_credentials_store_mode,
                     self.keyring_backend_kind,
                 )?
@@ -1640,12 +1640,12 @@ impl CredentialManager {
 
     /// Returns the precise kind of credentials backing the current authentication.
     pub fn get_api_auth_mode(&self) -> Option<AuthMode> {
-        self.auth_cached().as_ref().map(GenexAuth::api_auth_mode)
+        self.auth_cached().as_ref().map(RuxexAuth::api_auth_mode)
     }
 
     /// Returns the effective backend auth mode for the current authentication.
     pub fn auth_mode(&self) -> Option<AuthMode> {
-        self.auth_cached().as_ref().map(GenexAuth::auth_mode)
+        self.auth_cached().as_ref().map(RuxexAuth::auth_mode)
     }
 
     pub fn current_auth_uses_managed_auth(&self) -> bool {
@@ -1665,7 +1665,7 @@ impl CredentialManager {
         let previous_account_id = self
             .auth_cached()
             .as_ref()
-            .and_then(GenexAuth::get_account_id);
+            .and_then(RuxexAuth::get_account_id);
         let context = ExternalAuthRefreshContext {
             reason,
             previous_account_id,
@@ -1680,14 +1680,14 @@ impl CredentialManager {
         Ok(())
     }
 
-    fn commit_external_auth(&self, auth: GenexAuth) -> Result<(), RefreshTokenError> {
+    fn commit_external_auth(&self, auth: RuxexAuth) -> Result<(), RefreshTokenError> {
         self.set_cached_auth(Some(auth));
         Ok(())
     }
 
     fn validate_external_auth(
         &self,
-        auth: &GenexAuth,
+        auth: &RuxexAuth,
         external_auth: &dyn ExternalAuth,
     ) -> Result<(), RefreshTokenError> {
         let allowed_login_methods = self.allowed_login_methods();
@@ -1702,7 +1702,7 @@ impl CredentialManager {
 
 fn auth_config_from(config: &impl CredentialManagerConfig) -> AuthConfig {
     AuthConfig {
-        genex_home: config.genex_home(),
+        ruxex_home: config.ruxex_home(),
         auth_credentials_store_mode: config.cli_auth_credentials_store_mode(),
         keyring_backend_kind: config.auth_keyring_backend_kind(),
         forced_login_method: config.forced_login_method(),
@@ -1824,7 +1824,7 @@ mod tests {
         let (home, mode, keyring) = file_store();
         let manager = CredentialManager::new_from_auth_config(
             AuthConfig {
-                genex_home: home.path().to_path_buf(),
+                ruxex_home: home.path().to_path_buf(),
                 auth_credentials_store_mode: mode,
                 keyring_backend_kind: keyring,
                 forced_login_method: None,

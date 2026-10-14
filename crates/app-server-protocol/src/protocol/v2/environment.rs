@@ -1,8 +1,8 @@
 use crate::JsonSchema;
 use crate::TS;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 

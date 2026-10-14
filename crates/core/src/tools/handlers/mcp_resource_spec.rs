@@ -1,6 +1,6 @@
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub fn create_list_mcp_resources_tool() -> ToolSpec {

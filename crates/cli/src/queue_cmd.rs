@@ -1,8 +1,8 @@
 use clap::Parser;
 use clap::builder::NonEmptyStringValueParser;
-use genex_arg0::Arg0DispatchPaths;
-use genex_tui::Cli as TuiCli;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_tui::Cli as TuiCli;
+use ruxex_utils_cli::CliConfigOverrides;
 
 use crate::InteractiveRemoteOptions;
 use crate::SessionArchiveConfigOverrides;
@@ -33,7 +33,7 @@ pub(crate) async fn run_queue_command(
     root_remote: Option<String>,
     root_remote_auth_token_env: Option<String>,
     arg0_paths: Arg0DispatchPaths,
-    provider_factory: Option<genex_tui::ProviderRuntimeFactory>,
+    provider_factory: Option<ruxex_tui::ProviderRuntimeFactory>,
 ) -> anyhow::Result<String> {
     let QueueCommand {
         thread,
@@ -44,16 +44,16 @@ pub(crate) async fn run_queue_command(
     let cli =
         finalize_session_archive_interactive(interactive, root_config_overrides, config_overrides);
     if !cli.images.is_empty() {
-        anyhow::bail!("`genex queue` does not support image attachments");
+        anyhow::bail!("`ruxex queue` does not support image attachments");
     }
     let explicit_remote_endpoint = resolve_remote_endpoint(
         remote.remote.or(root_remote),
         remote.remote_auth_token_env.or(root_remote_auth_token_env),
     )?;
-    genex_tui::run_session_queue_command(
+    ruxex_tui::run_session_queue_command(
         thread,
         message,
-        genex_tui::SessionArchiveCommandOptions {
+        ruxex_tui::SessionArchiveCommandOptions {
             cli,
             arg0_paths,
             explicit_remote_endpoint,

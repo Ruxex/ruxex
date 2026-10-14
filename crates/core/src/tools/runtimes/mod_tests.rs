@@ -6,25 +6,25 @@ use crate::shell::ShellType;
 use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::managed_network_for_sandbox_permissions;
 use core_test_support::PathBufExt;
-use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use genex_network_proxy::ConfigReloader;
-use genex_network_proxy::ConfigReloaderFuture;
-use genex_network_proxy::ConfigState;
+use ruxex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use ruxex_network_proxy::ConfigReloader;
+use ruxex_network_proxy::ConfigReloaderFuture;
+use ruxex_network_proxy::ConfigState;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkProxyConstraints;
-use genex_network_proxy::NetworkProxyState;
-use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use genex_network_proxy::PROXY_ENV_KEYS;
+use ruxex_network_proxy::RUXEX_PROXY_GIT_SSH_COMMAND_MARKER;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConstraints;
+use ruxex_network_proxy::NetworkProxyState;
+use ruxex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::PROXY_ENV_KEYS;
 #[cfg(target_os = "macos")]
-use genex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::PROXY_GIT_SSH_COMMAND_ENV_KEY;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
@@ -76,13 +76,13 @@ async fn test_network_proxy_with_config(
     config: NetworkProxyConfig,
 ) -> anyhow::Result<NetworkProxy> {
     let state =
-        genex_network_proxy::build_config_state(config, NetworkProxyConstraints::default())?;
+        ruxex_network_proxy::build_config_state(config, NetworkProxyConstraints::default())?;
     NetworkProxy::builder()
         .state(Arc::new(NetworkProxyState::with_reloader(
             state,
             Arc::new(StaticReloader),
         )))
-        .managed_by_genex(/*managed_by_genex*/ false)
+        .managed_by_ruxex(/*managed_by_ruxex*/ false)
         .http_addr("127.0.0.1:43128".parse()?)
         .socks_addr("127.0.0.1:48081".parse()?)
         .build()
@@ -98,7 +98,7 @@ async fn explicit_escalation_prepares_exec_without_managed_network() -> anyhow::
     let mut env = HashMap::from([("CUSTOM_ENV".to_string(), "kept".to_string())]);
     proxy.apply_to_env(&mut env);
 
-    let command = genex_sandboxing::SandboxCommand {
+    let command = ruxex_sandboxing::SandboxCommand {
         program: "/bin/echo".into(),
         args: vec!["ok".to_string()],
         cwd: PathUri::from_abs_path(&command_cwd),
@@ -183,16 +183,16 @@ fn runtime_path_prepends_records_runtime_path_prepend() {
     let mut env = HashMap::from([("PATH".to_string(), "/usr/bin:/bin".to_string())]);
     let mut runtime_path_prepends = RuntimePathPrepends::default();
 
-    runtime_path_prepends.prepend(&mut env, PathBuf::from("/package/genex-path").as_path());
+    runtime_path_prepends.prepend(&mut env, PathBuf::from("/package/ruxex-path").as_path());
 
     assert_eq!(
         env.get("PATH").map(String::as_str),
-        Some("/package/genex-path:/usr/bin:/bin"),
+        Some("/package/ruxex-path:/usr/bin:/bin"),
         "runtime PATH prepend should update the live exec environment"
     );
     assert_eq!(
         runtime_path_prepends.entries,
-        vec!["/package/genex-path"],
+        vec!["/package/ruxex-path"],
         "runtime PATH prepend should be recorded for snapshot replay"
     );
 }
@@ -202,20 +202,20 @@ fn runtime_path_prepends_records_runtime_path_prepend() {
 fn runtime_path_prepends_drops_empty_path_entries() {
     let mut env = HashMap::from([(
         "PATH".to_string(),
-        ":/usr/bin:/package/genex-path::/bin:".to_string(),
+        ":/usr/bin:/package/ruxex-path::/bin:".to_string(),
     )]);
     let mut runtime_path_prepends = RuntimePathPrepends::default();
 
-    runtime_path_prepends.prepend(&mut env, PathBuf::from("/package/genex-path").as_path());
+    runtime_path_prepends.prepend(&mut env, PathBuf::from("/package/ruxex-path").as_path());
 
     assert_eq!(
         env.get("PATH").map(String::as_str),
-        Some("/package/genex-path:/usr/bin:/bin"),
+        Some("/package/ruxex-path:/usr/bin:/bin"),
         "empty PATH entries should be dropped instead of preserving current-directory lookup"
     );
     assert_eq!(
         runtime_path_prepends.entries,
-        vec!["/package/genex-path"],
+        vec!["/package/ruxex-path"],
         "deduped runtime PATH prepend should still be recorded once"
     );
 }
@@ -241,7 +241,7 @@ fn runtime_path_prepends_ignores_empty_path_entry() {
 }
 
 #[test]
-fn explicit_escalation_keeps_user_proxy_env_without_genex_marker() {
+fn explicit_escalation_keeps_user_proxy_env_without_ruxex_marker() {
     let env = HashMap::from([
         (
             "HTTP_PROXY".to_string(),
@@ -484,12 +484,12 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_explicit_override_precedence() {
 }
 
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_restores_genex_metadata_from_env() {
+fn maybe_wrap_shell_lc_with_snapshot_restores_ruxex_metadata_from_env() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_THREAD_ID='parent-thread'\nexport GENEX_VERSION='old-version'\n",
+        "# Snapshot file\nexport RUXEX_THREAD_ID='parent-thread'\nexport RUXEX_VERSION='old-version'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -497,12 +497,12 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_genex_metadata_from_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printf '%s|%s' \"$GENEX_THREAD_ID\" \"$GENEX_VERSION\"".to_string(),
+        "printf '%s|%s' \"$RUXEX_THREAD_ID\" \"$RUXEX_VERSION\"".to_string(),
     ];
     let env = HashMap::from([
-        ("GENEX_THREAD_ID".to_string(), "nested-thread".to_string()),
+        ("RUXEX_THREAD_ID".to_string(), "nested-thread".to_string()),
         (
-            "GENEX_VERSION".to_string(),
+            "RUXEX_VERSION".to_string(),
             env!("CARGO_PKG_VERSION").to_string(),
         ),
     ]);
@@ -533,7 +533,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_PERMISSION_PROFILE='parent-profile'\n",
+        "# Snapshot file\nexport RUXEX_PERMISSION_PROFILE='parent-profile'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -541,10 +541,10 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv GENEX_PERMISSION_PROFILE".to_string(),
+        "printenv RUXEX_PERMISSION_PROFILE".to_string(),
     ];
     let env = HashMap::from([(
-        GENEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
+        RUXEX_PERMISSION_PROFILE_ENV_VAR.to_string(),
         "current-profile".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -557,7 +557,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_permission_profile_from_env() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env(GENEX_PERMISSION_PROFILE_ENV_VAR, "current-profile")
+        .env(RUXEX_PERMISSION_PROFILE_ENV_VAR, "current-profile")
         .output()
         .expect("run rewritten command");
 
@@ -571,7 +571,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_PERMISSION_PROFILE='stale-profile'\n",
+        "# Snapshot file\nexport RUXEX_PERMISSION_PROFILE='stale-profile'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -579,7 +579,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv GENEX_PERMISSION_PROFILE".to_string(),
+        "printenv RUXEX_PERMISSION_PROFILE".to_string(),
     ];
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
         &command,
@@ -591,7 +591,7 @@ fn maybe_wrap_shell_lc_with_snapshot_unsets_absent_permission_profile() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove(GENEX_PERMISSION_PROFILE_ENV_VAR)
+        .env_remove(RUXEX_PERMISSION_PROFILE_ENV_VAR)
         .output()
         .expect("run rewritten command");
 
@@ -605,7 +605,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS='stale'\n",
+        "# Snapshot file\nexport RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS='stale'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -613,10 +613,10 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printenv GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS".to_string(),
+        "printenv RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS".to_string(),
     ];
     let env = HashMap::from([(
-        GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
+        RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR.to_string(),
         "1".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -629,7 +629,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1")
+        .env(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR, "1")
         .output()
         .expect("run rewritten command");
 
@@ -646,7 +646,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_apply_patch_rollout_state() {
     );
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove(GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
+        .env_remove(RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR)
         .output()
         .expect("run rewritten command");
 
@@ -660,7 +660,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_reserved_metrics_output_env() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_PLUGIN_METRICS_OUTPUT='/stale/path'\n",
+        "# Snapshot file\nexport RUXEX_PLUGIN_METRICS_OUTPUT='/stale/path'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -668,7 +668,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_reserved_metrics_output_env() {
     let command = vec![
         "/bin/bash".to_string(),
         "-lc".to_string(),
-        "printf '%s' \"${GENEX_PLUGIN_METRICS_OUTPUT-unset}\"".to_string(),
+        "printf '%s' \"${RUXEX_PLUGIN_METRICS_OUTPUT-unset}\"".to_string(),
     ];
 
     for (live_value, expected) in [(None, "unset"), (Some("/private/path"), "/private/path")] {
@@ -1069,7 +1069,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
         format!("{dummy}|unset")
     );
 
-    let injection = "\"; printf GENEX_ENV_INJECTED; __genex_env_file=\"";
+    let injection = "\"; printf RUXEX_ENV_INJECTED; __ruxex_env_file=\"";
     expanded_env.insert("ENV".to_string(), injection.to_string());
     let startup_value_snapshot = dir.path().join("startup-value-snapshot.sh").abs();
     std::fs::write(
@@ -1294,7 +1294,7 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
             assert!(
                 !exported_env
                     .split('\0')
-                    .any(|entry| entry.starts_with("__GENEX_SNAPSHOT_PROXY_OVERRIDE_"))
+                    .any(|entry| entry.starts_with("__RUXEX_SNAPSHOT_PROXY_OVERRIDE_"))
             );
             assert!(!String::from_utf8_lossy(&output.stderr).contains("sk-system-startup-secret"));
         }
@@ -1344,14 +1344,14 @@ async fn snapshot_wrapper_replays_dummy_and_preserves_unbrokered_credentials() -
 
 #[cfg(target_os = "macos")]
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_refreshes_genex_proxy_git_ssh_command() {
+fn maybe_wrap_shell_lc_with_snapshot_refreshes_ruxex_proxy_git_ssh_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{RUXEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     let fresh_command = format!(
-        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:48081 %h %p'"
+        "{RUXEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:48081 %h %p'"
     );
     std::fs::write(
         &snapshot_path,
@@ -1392,7 +1392,7 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_custom_git_ssh_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{RUXEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     let custom_command = "ssh -o ProxyCommand='tsh proxy ssh --cluster=dev %r@%h:%p'";
     std::fs::write(
@@ -1430,11 +1430,11 @@ fn maybe_wrap_shell_lc_with_snapshot_restores_custom_git_ssh_command() {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn maybe_wrap_shell_lc_with_snapshot_clears_stale_genex_git_ssh_command_without_live_command() {
+fn maybe_wrap_shell_lc_with_snapshot_clears_stale_ruxex_git_ssh_command_without_live_command() {
     let dir = tempdir().expect("create temp dir");
     let snapshot_path = dir.path().join("snapshot.sh");
     let stale_command = format!(
-        "{GENEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+        "{RUXEX_PROXY_GIT_SSH_COMMAND_MARKER}ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
     );
     std::fs::write(
         &snapshot_path,
@@ -1675,7 +1675,7 @@ fn run_snapshot_path_probe_with_runtime_path_prepend(
         "-lc".to_string(),
         "printf '%s' \"$PATH\"".to_string(),
     ];
-    let package_path_dir = dir.path().join("genex-path");
+    let package_path_dir = dir.path().join("ruxex-path");
     let mut env = HashMap::from([("PATH".to_string(), "/worktree/bin".to_string())]);
     let mut runtime_path_prepends = RuntimePathPrepends::default();
     runtime_path_prepends.prepend(&mut env, package_path_dir.as_path());
@@ -1753,7 +1753,7 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
     let snapshot_path = dir.path().join("snapshot.sh");
     std::fs::write(
         &snapshot_path,
-        "# Snapshot file\nexport GENEX_TEST_UNSET_OVERRIDE='snapshot-value'\n",
+        "# Snapshot file\nexport RUXEX_TEST_UNSET_OVERRIDE='snapshot-value'\n",
     )
     .expect("write snapshot");
     let (session_shell, shell_snapshot) =
@@ -1761,10 +1761,10 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
     let command = vec![
             "/bin/bash".to_string(),
             "-lc".to_string(),
-            "if [ \"${GENEX_TEST_UNSET_OVERRIDE+x}\" = x ]; then printf 'set:%s' \"$GENEX_TEST_UNSET_OVERRIDE\"; else printf 'unset'; fi".to_string(),
+            "if [ \"${RUXEX_TEST_UNSET_OVERRIDE+x}\" = x ]; then printf 'set:%s' \"$RUXEX_TEST_UNSET_OVERRIDE\"; else printf 'unset'; fi".to_string(),
         ];
     let explicit_env_overrides = HashMap::from([(
-        "GENEX_TEST_UNSET_OVERRIDE".to_string(),
+        "RUXEX_TEST_UNSET_OVERRIDE".to_string(),
         "worktree-value".to_string(),
     )]);
     let rewritten = maybe_wrap_shell_lc_with_snapshot(
@@ -1778,7 +1778,7 @@ fn maybe_wrap_shell_lc_with_snapshot_preserves_unset_override_variables() {
 
     let output = Command::new(&rewritten[0])
         .args(&rewritten[1..])
-        .env_remove("GENEX_TEST_UNSET_OVERRIDE")
+        .env_remove("RUXEX_TEST_UNSET_OVERRIDE")
         .output()
         .expect("run rewritten command");
     assert!(output.status.success(), "command failed: {output:?}");

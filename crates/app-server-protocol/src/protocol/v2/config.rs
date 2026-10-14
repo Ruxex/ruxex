@@ -5,16 +5,16 @@ use super::ComputerUseConfig;
 use super::SandboxMode;
 use crate::JsonSchema;
 use crate::TS;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::config_types::WebSearchToolConfig;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::config_types::WebSearchToolConfig;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -27,7 +27,7 @@ use std::path::PathBuf;
 #[ts(tag = "type")]
 #[ts(export_to = "v2/")]
 pub enum ConfigLayerSource {
-    /// Default configuration supplied with the installed Genex package.
+    /// Default configuration supplied with the installed Ruxex package.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
     PackagedDefaults {
@@ -62,7 +62,7 @@ pub enum ConfigLayerSource {
         name: String,
     },
 
-    /// User config layer from $GENEX_HOME/config.toml. This layer is special
+    /// User config layer from $RUXEX_HOME/config.toml. This layer is special
     /// in that it is expected to be:
     /// - writable by the user
     /// - generally outside the workspace directory
@@ -78,11 +78,11 @@ pub enum ConfigLayerSource {
         profile: Option<String>,
     },
 
-    /// Path to a .genex/ folder within a project. There could be multiple of
+    /// Path to a .ruxex/ folder within a project. There could be multiple of
     /// these between `cwd` and the project/repo root.
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
-    Project { dot_genex_folder: AbsolutePathBuf },
+    Project { dot_ruxex_folder: AbsolutePathBuf },
 
     /// Session-layer overrides supplied via `-c`/`--config`.
     SessionFlags,

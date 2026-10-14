@@ -1,4 +1,4 @@
-use genex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ForcedLoginMethod;
 
 /// Authentication restrictions supplied by locally managed requirements.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

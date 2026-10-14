@@ -1,21 +1,21 @@
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::write_mock_responses_config_toml_with_managed_auth_base_url;
-use genex_app_server::INVALID_PARAMS_ERROR_CODE;
-use genex_app_server_protocol::ActivePermissionProfile;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SandboxPolicy;
-use genex_app_server_protocol::ThreadLoadedListParams;
-use genex_app_server_protocol::ThreadLoadedListResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseItem;
+use ruxex_app_server::INVALID_PARAMS_ERROR_CODE;
+use ruxex_app_server_protocol::ActivePermissionProfile;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SandboxPolicy;
+use ruxex_app_server_protocol::ThreadLoadedListParams;
+use ruxex_app_server_protocol::ThreadLoadedListResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::time::Duration;
@@ -28,9 +28,9 @@ const REMOTE_IMAGE_URL_ERROR: &str =
 
 #[tokio::test]
 async fn legacy_permission_profile_requests_fail_closed() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
     let legacy_permission_profile = json!({
@@ -115,9 +115,9 @@ async fn legacy_permission_profile_requests_fail_closed() -> Result<()> {
 
 #[tokio::test]
 async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -149,14 +149,14 @@ async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions()
 
 #[tokio::test]
 async fn request_handlers_reject_remote_image_urls() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     write_mock_responses_config_toml_with_managed_auth_base_url(
-        genex_home.path(),
+        ruxex_home.path(),
         "http://localhost/unused",
         "http://localhost/unused",
     )?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

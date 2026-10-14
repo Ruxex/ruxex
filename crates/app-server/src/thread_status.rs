@@ -3,11 +3,11 @@ use crate::outgoing_message::OutgoingEnvelope;
 #[cfg(test)]
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadActiveFlag;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadStatusChangedNotification;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadActiveFlag;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadStatusChangedNotification;
+use ruxex_protocol::ThreadId;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;

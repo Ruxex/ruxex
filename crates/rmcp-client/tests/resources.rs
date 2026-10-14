@@ -4,12 +4,12 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::FutureExt as _;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::mcp_error;
-use genex_utils_cargo_bin::CargoBinError;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::mcp_error;
+use ruxex_utils_cargo_bin::CargoBinError;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::ElicitationCapability;
@@ -22,10 +22,10 @@ use rmcp::model::ReadResourceRequestParams;
 use rmcp::model::ResourceContents;
 use serde_json::json;
 
-const RESOURCE_URI: &str = "memo://genex/example-note";
+const RESOURCE_URI: &str = "memo://ruxex/example-note";
 
 fn stdio_server_bin() -> Result<PathBuf, CargoBinError> {
-    genex_utils_cargo_bin::cargo_bin("test_stdio_server")
+    ruxex_utils_cargo_bin::cargo_bin("test_stdio_server")
 }
 
 fn init_params() -> InitializeRequestParams {
@@ -34,7 +34,7 @@ fn init_params() -> InitializeRequestParams {
         Some(ElicitationCapability::new().with_form(FormElicitationCapability::new()));
     InitializeRequestParams::new(
         capabilities,
-        Implementation::new("genex-test", "0.0.0-test").with_title("Genex rmcp resource test"),
+        Implementation::new("ruxex-test", "0.0.0-test").with_title("Ruxex rmcp resource test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }
@@ -92,9 +92,9 @@ async fn rmcp_client_can_list_and_read_resources() -> anyhow::Result<()> {
         .list_resource_templates(/*params*/ None, Some(Duration::from_secs(5)))
         .await?;
     let mut expected_templates = ListResourceTemplatesResult::with_all_items(vec![
-        rmcp::model::ResourceTemplate::new("memo://genex/{slug}", "genex-memo")
-            .with_title("Genex Memo")
-            .with_description("Template for memo://genex/{slug} resources used in tests.")
+        rmcp::model::ResourceTemplate::new("memo://ruxex/{slug}", "ruxex-memo")
+            .with_title("Ruxex Memo")
+            .with_description("Template for memo://ruxex/{slug} resources used in tests.")
             .with_mime_type("text/plain"),
     ]);
     expected_templates.result_type = None;
@@ -123,7 +123,7 @@ async fn rmcp_client_can_list_and_read_resources() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn rmcp_client_preserves_each_resource_error() -> anyhow::Result<()> {
     let client = resource_client().await?;
-    for uri in ["memo://genex/missing-first", "memo://genex/missing-second"] {
+    for uri in ["memo://ruxex/missing-first", "memo://ruxex/missing-second"] {
         let error = client
             .read_resource(
                 ReadResourceRequestParams::new(uri),

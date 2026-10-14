@@ -1,10 +1,10 @@
 use anyhow::Result;
 use clap::Parser;
-use genex_execpolicy::ExecPolicyCheckCommand;
+use ruxex_execpolicy::ExecPolicyCheckCommand;
 
 /// CLI for evaluating exec policies
 #[derive(Parser)]
-#[command(name = "genex-execpolicy")]
+#[command(name = "ruxex-execpolicy")]
 enum Cli {
     /// Evaluate a command against a policy.
     Check(ExecPolicyCheckCommand),

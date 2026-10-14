@@ -2,13 +2,13 @@ use std::fs;
 use std::os::unix::fs::symlink;
 use std::sync::Arc;
 
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::LOCAL_FS;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillPolicy;
-use genex_utils_absolute_path::test_support::PathBufExt;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillPolicy;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 use tokio::sync::Semaphore;
@@ -23,7 +23,7 @@ use crate::loader::load_and_merge_host_skill_roots;
 async fn host_loading_reuses_walk_inventory_for_symlinked_skill_pack() {
     let root = tempdir().expect("tempdir");
     let shared_plugin_root = tempdir().expect("tempdir");
-    let manifest_path = shared_plugin_root.path().join(".genex-plugin/plugin.json");
+    let manifest_path = shared_plugin_root.path().join(".ruxex-plugin/plugin.json");
     fs::create_dir_all(manifest_path.parent().expect("manifest parent")).expect("manifest dir");
     fs::write(&manifest_path, r#"{"name":"linked"}"#).expect("manifest");
 
@@ -37,7 +37,7 @@ async fn host_loading_reuses_walk_inventory_for_symlinked_skill_pack() {
         )
         .expect("skill");
     }
-    let metadata_path = skills_root.join("first/agents/genex.yaml");
+    let metadata_path = skills_root.join("first/agents/ruxex.yaml");
     fs::create_dir_all(metadata_path.parent().expect("metadata parent")).expect("metadata dir");
     fs::write(
         &metadata_path,
@@ -123,7 +123,7 @@ async fn host_loading_reuses_walk_inventory_for_symlinked_skill_pack() {
         calls
             .metadata_files
             .iter()
-            .all(|path| path.basename().as_deref() != Some("genex.yaml"))
+            .all(|path| path.basename().as_deref() != Some("ruxex.yaml"))
     );
     let manifest_uri =
         PathUri::from_host_native_path(dunce::canonicalize(manifest_path).unwrap()).unwrap();

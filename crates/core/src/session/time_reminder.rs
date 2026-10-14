@@ -1,10 +1,10 @@
 use chrono::DateTime;
 use chrono::Utc;
-use genex_features::CurrentTimeReminderDeliveryMode;
-use genex_features::Feature;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::ResponseItem;
+use ruxex_features::CurrentTimeReminderDeliveryMode;
+use ruxex_features::Feature;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::ResponseItem;
 
 use super::session::Session;
 use super::turn_context::TurnContext;
@@ -101,7 +101,7 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         clock_read: &'static str,
-    ) -> GenexResult<Option<DateTime<Utc>>> {
+    ) -> RuxexResult<Option<DateTime<Utc>>> {
         let error = match self
             .services
             .time_provider
@@ -120,7 +120,7 @@ impl Session {
             .features
             .enabled(Feature::NonfatalClockReadErrors)
         {
-            return Err(GenexErr::Fatal(format!(
+            return Err(RuxexErr::Fatal(format!(
                 "failed to read current time: {error:#}"
             )));
         }
@@ -157,7 +157,7 @@ pub(super) async fn maybe_record_current_time_reminder(
     sess: &Session,
     turn_context: &TurnContext,
     window_id: &str,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     if !turn_context
         .config
         .features
@@ -216,7 +216,7 @@ mod tests {
         ResponseItem::Message {
             id: None,
             role: "user".to_string(),
-            content: vec![genex_protocol::models::ContentItem::InputText {
+            content: vec![ruxex_protocol::models::ContentItem::InputText {
                 text: "hello".to_string(),
             }],
             phase: None,
@@ -271,7 +271,7 @@ mod tests {
             call_id: Some("call-1".to_string()),
             name: None,
             namespace: None,
-            output: genex_protocol::models::FunctionCallOutputPayload::from_text("done".into()),
+            output: ruxex_protocol::models::FunctionCallOutputPayload::from_text("done".into()),
             internal_chat_message_metadata_passthrough: None,
         }]);
         assert!(state.take_reminder_due("window-1", time(4), 0, mode));

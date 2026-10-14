@@ -9,24 +9,24 @@ use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_protocol::ThreadId;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::dynamic_tools::DynamicToolSpec;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TokenUsageRecord;
-use genex_protocol::protocol::TurnContextItem;
-use genex_protocol::protocol::WorldStateItem;
-use genex_protocol::security_risk::SecurityRiskScore;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::dynamic_tools::DynamicToolSpec;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TokenUsageRecord;
+use ruxex_protocol::protocol::TurnContextItem;
+use ruxex_protocol::protocol::WorldStateItem;
+use ruxex_protocol::security_risk::SecurityRiskScore;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -40,13 +40,13 @@ use serde::de::Error as _;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResponseItemEnvelope {
     pub item: ResponseItem,
-    pub metadata: Option<GenexHarnessMetadata>,
+    pub metadata: Option<RuxexHarnessMetadata>,
 }
 
-/// Metadata owned by the Genex harness and persisted with a response item.
+/// Metadata owned by the Ruxex harness and persisted with a response item.
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
-pub struct GenexHarnessMetadata {
+pub struct RuxexHarnessMetadata {
     /// Whether a developer message was supplied by an app-server client.
     #[serde(default)]
     pub client_authored: bool,
@@ -60,7 +60,7 @@ pub struct GenexHarnessMetadata {
     )]
     pub history_truncation_token_limit: Option<usize>,
 
-    /// Whether a response configuration update was created by the Genex harness itself.
+    /// Whether a response configuration update was created by the Ruxex harness itself.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub harness_authored_configuration: bool,
 
@@ -256,7 +256,7 @@ impl From<CompactedItem> for ResponseItem {
 /// One persisted rollout JSONL record.
 ///
 /// This intentionally does not implement Deserialize: JSONL readers must use
-/// `genex_rollout`'s canonical parser so nested decimal values survive the flattened envelope.
+/// `ruxex_rollout`'s canonical parser so nested decimal values survive the flattened envelope.
 #[derive(Serialize, Clone, JsonSchema)]
 pub struct RolloutLine {
     pub timestamp: String,

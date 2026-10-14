@@ -49,7 +49,7 @@ pub use telemetry::record_plugin_turn_usage;
 
 /// Recognizes persisted explicit skill prompts without exposing their fragment implementation.
 pub fn is_skill_prompt_fragment(text: &str) -> bool {
-    <fragments::SkillInstructions as genex_extension_api::ContextualUserFragment>::matches_text(
+    <fragments::SkillInstructions as ruxex_extension_api::ContextualUserFragment>::matches_text(
         text,
     )
 }

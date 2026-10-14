@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_core::config::set_project_trust_level;
-use genex_protocol::config_types::TrustLevel;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_protocol::config_types::TrustLevel;
 use pretty_assertions::assert_ne;
 use std::process::Command;
 use std::time::Duration;
@@ -25,7 +25,7 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
     )?;
     let read_timeout = Duration::from_secs(30);
     let mut server = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized_with_timeout(read_timeout)
         .await?;
     let startup_warning: ConfigWarningNotification =
@@ -53,9 +53,9 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
 
     let project = TempDir::new()?;
     std::fs::create_dir(project.path().join(".git"))?;
-    std::fs::create_dir(project.path().join(".genex"))?;
+    std::fs::create_dir(project.path().join(".ruxex"))?;
     std::fs::write(
-        project.path().join(".genex/config.toml"),
+        project.path().join(".ruxex/config.toml"),
         "project_setting = 'private_value'",
     )?;
     set_project_trust_level(home.path(), project.path(), TrustLevel::Trusted)?;
@@ -74,19 +74,19 @@ async fn ignored_config_fields_emit_startup_and_project_warnings() -> Result<()>
 
 #[test]
 fn strict_config_rejects_unknown_config_fields_for_standalone_app_server() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         r#"
 foo = "bar"
 "#,
     )?;
 
-    let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
-        .env("GENEX_HOME", genex_home.path())
+    let output = Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")?)
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(
-            "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
-            genex_home.path().join("managed_config.toml"),
+            "RUXEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            ruxex_home.path().join("managed_config.toml"),
         )
         .args(["--strict-config", "--listen", "off"])
         .output()?;
@@ -118,15 +118,15 @@ fn managed_auth_requirements_fail_closed_for_standalone_app_server() -> Result<(
             "forced_managed_workspace_id = ['other']",
         ),
     ] {
-        let genex_home = TempDir::new()?;
-        std::fs::write(genex_home.path().join("requirements.toml"), requirements)?;
-        std::fs::write(genex_home.path().join("config.toml"), config)?;
+        let ruxex_home = TempDir::new()?;
+        std::fs::write(ruxex_home.path().join("requirements.toml"), requirements)?;
+        std::fs::write(ruxex_home.path().join("config.toml"), config)?;
 
-        let output = Command::new(genex_utils_cargo_bin::cargo_bin("genex-app-server")?)
-            .env("GENEX_HOME", genex_home.path())
+        let output = Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")?)
+            .env("RUXEX_HOME", ruxex_home.path())
             .env(
-                "GENEX_APP_SERVER_MANAGED_CONFIG_PATH",
-                genex_home.path().join("managed_config.toml"),
+                "RUXEX_APP_SERVER_MANAGED_CONFIG_PATH",
+                ruxex_home.path().join("managed_config.toml"),
             )
             .args(["--listen", "off"])
             .output()?;

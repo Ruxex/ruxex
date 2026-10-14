@@ -5,11 +5,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::Turn;
-use genex_protocol::ThreadId;
-use genex_protocol::models::local_image_label_text;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::Turn;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::local_image_label_text;
 
 use super::App;
 use crate::app_event::TranscriptExportDestination;
@@ -220,7 +220,7 @@ fn visible_export_items(turns: Vec<Turn>) -> Vec<ThreadItem> {
 }
 
 fn render_markdown_transcript(cells: &[Arc<dyn HistoryCell>]) -> Result<String, String> {
-    let mut markdown = String::from("# Genex conversation\n");
+    let mut markdown = String::from("# Ruxex conversation\n");
     for cell in cells {
         let lines = if let Some(user) = cell.as_any().downcast_ref::<UserHistoryCell>() {
             let (message, _) =
@@ -279,7 +279,7 @@ fn render_markdown_transcript(cells: &[Arc<dyn HistoryCell>]) -> Result<String, 
             markdown.push('\n');
         }
     }
-    if markdown != "# Genex conversation\n" {
+    if markdown != "# Ruxex conversation\n" {
         Ok(markdown)
     } else {
         Err("No conversation content to export.".to_string())

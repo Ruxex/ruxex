@@ -27,56 +27,56 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::test_target_os;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_mcp_server;
-use genex_config::HookStateToml;
-use genex_config::McpServerConfig;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::ForkSnapshot;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_core::config::Config;
-use genex_core::config::Constrained;
-use genex_core::config::ThreadStoreConfig;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_history::RolloutItem;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_models_manager::test_support::test_models_response;
-use genex_plugin::PluginHookSource;
-use genex_plugin::PluginId;
-use genex_protocol::items::parse_hook_prompt_fragment;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HookEventName;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnSettingsUpdate;
-use genex_protocol::protocol::TurnSettingsUpdateOutcome;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::InMemoryThreadStore;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::HookStateToml;
+use ruxex_config::McpServerConfig;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::ForkSnapshot;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnStartOptions;
+use ruxex_core::config::Config;
+use ruxex_core::config::Constrained;
+use ruxex_core::config::ThreadStoreConfig;
+use ruxex_features::Feature;
+use ruxex_history::InitialHistory;
+use ruxex_history::RolloutItem;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_plugin::PluginHookSource;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::items::parse_hook_prompt_fragment;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::NetworkPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnSettingsUpdate;
+use ruxex_protocol::protocol::TurnSettingsUpdateOutcome;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::request_user_input::RequestUserInputAnswer;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::InMemoryThreadStore;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -97,7 +97,7 @@ const PERMISSION_REQUEST_ALLOW_REASON: &str = "should not be used for allow";
 #[tokio::test]
 async fn managed_hook_discovery_failure_rejects_session_startup_when_hooks_enabled() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_cloud_config_bundle(
+    let mut builder = test_ruxex().with_cloud_config_bundle(
         CloudConfigBundleFixture::loader_with_enterprise_requirement(
             r#"
 [hooks]
@@ -171,13 +171,13 @@ fn non_provider_model_provider(server: &wiremock::MockServer) -> ModelProviderIn
 fn trust_plugin_hooks(config: &mut Config, plugin_hook_sources: Vec<PluginHookSource>) {
     config
         .features
-        .enable(Feature::GenexHooks)
+        .enable(Feature::RuxexHooks)
         .expect("test config should allow feature update");
-    let listed = genex_hooks::list_hooks(genex_hooks::HooksConfig {
+    let listed = ruxex_hooks::list_hooks(ruxex_hooks::HooksConfig {
         feature_enabled: true,
         config_layer_stack: Some(config.config_layer_stack.clone()),
         plugin_hook_sources,
-        ..genex_hooks::HooksConfig::default()
+        ..ruxex_hooks::HooksConfig::default()
     });
     assert!(
         !listed.hooks.is_empty(),
@@ -1154,7 +1154,7 @@ fn rollout_hook_prompt_texts(text: &str) -> Result<Vec<String>> {
         if trimmed.is_empty() {
             continue;
         }
-        let rollout = genex_rollout::parse_rollout_line(trimmed).context("parse rollout line")?;
+        let rollout = ruxex_rollout::parse_rollout_line(trimmed).context("parse rollout line")?;
         if let RolloutItem::ResponseItem(envelope) = rollout.item
             && let ResponseItem::Message { role, content, .. } = envelope.item
             && role == "user"
@@ -1342,7 +1342,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_stop_hook(
                 home,
@@ -1371,7 +1371,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
         "third request should retain hook prompts in user history",
     );
 
-    let hook_inputs = read_stop_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_stop_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     let stop_turn_ids = hook_inputs
         .iter()
@@ -1408,7 +1408,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
         vec![false, true, true],
     );
 
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let rollout_text = fs::read_to_string(&rollout_path)?;
     let hook_prompt_texts = rollout_hook_prompt_texts(&rollout_text)?;
     assert!(
@@ -1438,7 +1438,7 @@ async fn session_start_hook_sees_materialized_transcript_path() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_session_start_hook_recording_transcript(home, /*stop*/ false)
                 .expect("failed to write session start hook test fixture");
@@ -1448,7 +1448,7 @@ async fn session_start_hook_sees_materialized_transcript_path() -> Result<()> {
 
     test.submit_turn("hello").await?;
 
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     let transcript_path = hook_inputs[0]["transcript_path"]
         .as_str()
@@ -1468,7 +1468,7 @@ async fn session_start_hook_skips_persistence_for_non_local_thread_store() -> Re
     let server = start_mock_server().await;
     let store_id = uuid::Uuid::new_v4().to_string();
     let store = InMemoryThreadStore::for_id(store_id.clone());
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_session_start_hook_recording_transcript(home, /*stop*/ true)
                 .expect("failed to write session start hook test fixture");
@@ -1482,7 +1482,7 @@ async fn session_start_hook_skips_persistence_for_non_local_thread_store() -> Re
     test.submit_turn("run the non-local session start hook")
         .await?;
 
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["transcript_path"], Value::Null);
     assert_eq!(store.calls().await.persist_thread, 0);
@@ -1504,7 +1504,7 @@ async fn session_end_flushes_transcript_and_ignores_control_output() -> Result<(
         ]),
     )
     .await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_session_end_hook(home).expect("write session end hook fixture");
         })
@@ -1512,10 +1512,10 @@ async fn session_end_flushes_transcript_and_ignores_control_output() -> Result<(
     let test = builder.build(&server).await?;
 
     test.submit_turn("persist this before shutdown").await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     let inputs = read_hook_inputs_from_log(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("session_end_hook_log.jsonl")
             .as_path(),
     )?;
@@ -1536,7 +1536,7 @@ async fn session_end_skips_subagents() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_session_end_hook(home).expect("write session end hook fixture");
         })
@@ -1566,7 +1566,7 @@ async fn session_end_skips_subagents() -> Result<()> {
 
     assert!(
         !test
-            .genex_home_path()
+            .ruxex_home_path()
             .join("session_end_hook_log.jsonl")
             .exists(),
         "subagents must not run SessionEnd hooks"
@@ -1589,7 +1589,7 @@ async fn session_start_runs_before_user_prompt_submit_on_first_turn() -> Result<
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_session_start_and_user_prompt_submit_order_hooks(home)
                 .expect("failed to write hook ordering fixtures");
@@ -1599,7 +1599,7 @@ async fn session_start_runs_before_user_prompt_submit_on_first_turn() -> Result<
 
     test.submit_turn("hello").await?;
 
-    let hook_inputs = read_hook_order_inputs(test.genex_home_path())?;
+    let hook_inputs = read_hook_order_inputs(test.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -1636,7 +1636,7 @@ async fn forked_thread_matches_fork_session_start_without_repeating_startup_cont
         ],
     )
     .await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             let script_path = home.join("session_start_hook.py");
             fs::write(
@@ -1672,14 +1672,14 @@ print(json.dumps({"hookSpecificOutput": {
     let test = builder.build(&server).await?;
     test.submit_turn("first prompt").await?;
     test.submit_turn("second prompt").await?;
-    test.genex.flush_rollout().await?;
+    test.ruxex.flush_rollout().await?;
 
     let forked = test
         .thread_manager
         .fork_thread(
             ForkSnapshot::TruncateBeforeNthUserMessage(1),
             StartThreadOptions::new(test.config.clone()),
-            test.genex.rollout_path().expect("parent rollout path"),
+            test.ruxex.rollout_path().expect("parent rollout path"),
         )
         .await?
         .thread;
@@ -1718,7 +1718,7 @@ async fn explicit_history_runs_resume_session_start_hook() -> Result<()> {
 
     let server = start_mock_server().await;
     let response = mount_sse_once(&server, sse(vec![ev_completed("resp-resume")])).await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_resume_and_compact_session_start_hook_with_context(
                 home,
@@ -1751,7 +1751,7 @@ async fn explicit_history_runs_resume_session_start_hook() -> Result<()> {
         .await?;
     wait_for_event(&resumed, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -1802,7 +1802,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             write_async_user_prompt_submit_hook(home, /*gated*/ false)
                 .expect("write immediate async user prompt submit hook");
@@ -1813,14 +1813,14 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "observe async context immediately".to_string(),
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(
-                genex_protocol::protocol::ThreadSettingsOverrides {
+                ruxex_protocol::protocol::ThreadSettingsOverrides {
                     approval_policy: Some(AskForApproval::Never),
                     sandbox_policy: Some(sandbox_policy),
                     permission_profile,
@@ -1831,7 +1831,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
         .await?;
 
     let finished_path = test
-        .genex_home_path()
+        .ruxex_home_path()
         .join("async_user_prompt_submit_finished");
     fs_wait::wait_for_path_exists(finished_path, Duration::from_secs(5))
         .await
@@ -1839,7 +1839,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     assert!(
         timeout(
             Duration::from_millis(150),
-            wait_for_event(&test.genex, |event| {
+            wait_for_event(&test.ruxex, |event| {
                 matches!(
                     event,
                     EventMsg::Warning(warning)
@@ -1854,7 +1854,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     fs::write(release_path, "ready").context("release gated shell command")?;
     timeout(
         Duration::from_secs(5),
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(
                 event,
                 EventMsg::Warning(warning)
@@ -1864,7 +1864,7 @@ async fn async_hook_context_is_injected_into_the_active_turn() -> Result<()> {
     )
     .await
     .context("timed out waiting for the async hook warning after sampling")?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -1912,7 +1912,7 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
     )
     .await;
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(|home| {
             write_async_user_prompt_submit_hook(home, /*gated*/ true)
                 .expect("write gated async user prompt submit hook");
@@ -1927,28 +1927,28 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
         .context("first model request should include its turn ID")?
         .to_string();
     let started_path = test
-        .genex_home_path()
+        .ruxex_home_path()
         .join("async_user_prompt_submit_started");
     fs_wait::wait_for_path_exists(started_path, Duration::from_secs(5))
         .await
         .context("timed out waiting for the async hook to start")?;
 
     fs::write(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("async_user_prompt_submit_release"),
         "ready",
     )
     .context("release gated async hook")?;
 
     let finished_path = test
-        .genex_home_path()
+        .ruxex_home_path()
         .join("async_user_prompt_submit_finished");
     fs_wait::wait_for_path_exists(finished_path, Duration::from_secs(5))
         .await
         .context("timed out waiting for the async hook to finish")?;
 
     assert!(
-        timeout(Duration::from_millis(150), test.genex.next_event())
+        timeout(Duration::from_millis(150), test.ruxex.next_event())
             .await
             .is_err(),
         "an async hook result from the previous turn must not emit warnings or raw response items"
@@ -1976,12 +1976,12 @@ async fn async_hook_finishing_while_idle_waits_for_the_next_turn(
             text_elements: Vec::new(),
         }])
     };
-    test.genex.start_turn_if_idle(next_turn).await?;
+    test.ruxex.start_turn_if_idle(next_turn).await?;
 
     let mut warning_event = None;
     timeout(Duration::from_secs(5), async {
         loop {
-            let event = test.genex.next_event().await?;
+            let event = test.ruxex.next_event().await?;
             if matches!(
                 &event.msg,
                 EventMsg::Warning(warning)
@@ -2056,7 +2056,7 @@ async fn session_start_hook_spills_large_additional_context() -> Result<()> {
     .await;
     let additional_context = "remember the reef ".repeat(800);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook({
             let additional_context = additional_context.clone();
             move |home| {
@@ -2099,7 +2099,7 @@ async fn session_start_hooks_apply_additional_context_limits_individually() -> R
     let limited_additional_context = "spill this limited reef context".to_string();
     let expanded_additional_context = "keep this expanded reef context inline".to_string();
 
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook({
             let limited_additional_context = limited_additional_context.clone();
             let expanded_additional_context = expanded_additional_context.clone();
@@ -2165,7 +2165,7 @@ async fn pre_tool_use_hook_spills_large_additional_context() -> Result<()> {
     .await;
     let additional_context = "remember the pre tool reef ".repeat(800);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook({
             let additional_context = additional_context.clone();
             move |home| {
@@ -2222,7 +2222,7 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
     let additional_context = "remember the compacted reef";
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(move |home| {
             write_compact_session_start_hook_with_context(home, additional_context)
                 .expect("failed to write compact session start hook fixture");
@@ -2234,8 +2234,8 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
     let test = builder.build(&server).await?;
 
     test.submit_turn("hello before compact").await?;
-    test.genex.submit(Op::Compact).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -2258,7 +2258,7 @@ async fn compact_session_start_hook_records_additional_context_for_next_turn() -
         "compact matcher should inject additional context before the next model turn",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0].get("source").and_then(Value::as_str),
@@ -2332,7 +2332,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
     .await;
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_dynamic_compact_session_start_hook(
                 home,
@@ -2373,7 +2373,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
         "the second compact hook context should reach the immediate continuation request",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2393,7 +2393,7 @@ async fn mid_turn_auto_compact_session_start_hooks_run_before_each_continuation(
             .any(|message| message == "compact hook context 3"),
         "the next user turn should not receive a stale compact hook",
     );
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2443,7 +2443,7 @@ async fn mid_turn_auto_compact_session_start_hook_stop_blocks_continuation() -> 
     .await;
     let model_provider = non_provider_model_provider(&server);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_dynamic_compact_session_start_hook(home, DynamicCompactSessionStartHook::Stop)
                 .expect("failed to write stopping compact session start hook fixture");
@@ -2463,7 +2463,7 @@ async fn mid_turn_auto_compact_session_start_hook_stop_blocks_continuation() -> 
         unexpected_continuation.requests().is_empty(),
         "a compact SessionStart stop should prevent the next sampling request",
     );
-    let hook_inputs = read_session_start_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2512,7 +2512,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(move |home| {
             write_resume_and_compact_session_start_hook_with_context(
                 home,
@@ -2530,7 +2530,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
     initial.submit_turn("hello before resume").await?;
     assert_eq!(responses_mock.requests().len(), 1);
 
-    let mut resume_builder = test_genex().with_config(move |config| {
+    let mut resume_builder = test_ruxex().with_config(move |config| {
         config.model_auto_compact_token_limit = Some(limit);
         trust_discovered_hooks(config);
     });
@@ -2553,7 +2553,7 @@ async fn resumed_thread_runs_resume_then_compact_session_start_hooks() -> Result
         "compact matcher should inject additional context before the next model turn",
     );
 
-    let hook_inputs = read_session_start_hook_inputs(resumed.genex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(resumed.ruxex_home_path())?;
     assert_eq!(
         hook_inputs
             .iter()
@@ -2590,7 +2590,7 @@ async fn stop_hook_spills_large_continuation_prompt() -> Result<()> {
         .collect::<Vec<_>>()
         .join(" ");
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook({
             let continuation_prompt = continuation_prompt.clone();
             move |home| {
@@ -2637,7 +2637,7 @@ async fn resumed_thread_keeps_stop_continuation_prompt_in_history() -> Result<()
     )
     .await;
 
-    let mut initial_builder = test_genex()
+    let mut initial_builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_stop_hook(home, &[FIRST_CONTINUATION_PROMPT])
                 .expect("failed to write stop hook test fixture");
@@ -2659,7 +2659,7 @@ async fn resumed_thread_keeps_stop_continuation_prompt_in_history() -> Result<()
     )
     .await;
 
-    let mut resume_builder = test_genex().with_config(trust_discovered_hooks);
+    let mut resume_builder = test_ruxex().with_config(trust_discovered_hooks);
     let resumed = resume_builder.restart(&server, &initial).await?;
 
     resumed.submit_turn("and now continue").await?;
@@ -2696,7 +2696,7 @@ async fn multiple_blocking_stop_hooks_persist_multiple_hook_prompt_fragments() -
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_parallel_stop_hooks(
                 home,
@@ -2720,7 +2720,7 @@ async fn multiple_blocking_stop_hooks_persist_multiple_hook_prompt_fragments() -
         "second request should receive one user hook prompt message with both fragments",
     );
 
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let rollout_text = fs::read_to_string(&rollout_path)?;
     assert_eq!(
         rollout_hook_prompt_texts(&rollout_text)?,
@@ -2749,7 +2749,7 @@ async fn blocked_user_prompt_submit_persists_additional_context_for_next_turn() 
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_user_prompt_submit_hook(home, "blocked first prompt", BLOCKED_PROMPT_CONTEXT)
                 .expect("failed to write user prompt submit hook test fixture");
@@ -2782,7 +2782,7 @@ async fn blocked_user_prompt_submit_persists_additional_context_for_next_turn() 
         "second request should include the accepted prompt",
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 2);
     assert_eq!(
         hook_inputs
@@ -2851,7 +2851,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
     let (server, _completions) =
         start_streaming_sse_server(vec![first_chunks, second_chunks]).await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("legacy-model")
         .with_pre_build_hook(|home| {
             write_user_prompt_submit_hook(home, "blocked queued prompt", BLOCKED_PROMPT_CONTEXT)
@@ -2866,20 +2866,20 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         });
     let test = builder.build_with_streaming_server(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "initial prompt".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
 
     for text in ["accepted queued prompt", "blocked queued prompt"] {
-        test.genex
+        test.ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: text.to_string(),
                 text_elements: Vec::new(),
@@ -2918,7 +2918,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         "second request should not include the blocked queued prompt",
     );
 
-    let history = test.genex.conversation_history_snapshot().await;
+    let history = test.ruxex.conversation_history_snapshot().await;
     assert_eq!(history.retained_context().is_some(), thread_context_enabled);
     let retained = serde_json::to_value(history.retained_context().cloned().unwrap_or_default())?;
     assert_eq!(
@@ -2942,7 +2942,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt(
         json!(if thread_context_enabled { 3 } else { 0 })
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     assert_eq!(
         hook_inputs
@@ -3020,7 +3020,7 @@ async fn permission_request_hook_allows_exec_command_without_user_approval() -> 
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3046,7 +3046,7 @@ async fn permission_request_hook_allows_exec_command_without_user_approval() -> 
     );
 
     let hook_inputs = assert_single_permission_request_hook_input(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         &command,
         /*description*/ None,
     )?;
@@ -3117,7 +3117,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3148,7 +3148,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         .context("create strict auto-review marker")?;
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "request strict review, then run the shell command".into(),
@@ -3163,7 +3163,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         )
         .await?;
 
-    let request = wait_for_event(&test.genex, |event| {
+    let request = wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::RequestPermissions(_))
     })
     .await;
@@ -3171,7 +3171,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         panic!("expected request permissions event");
     };
     assert_eq!(request.call_id, permission_call_id);
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: permission_call_id.to_string(),
             response: RequestPermissionsResponse {
@@ -3182,7 +3182,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         })
         .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -3198,7 +3198,7 @@ async fn permission_request_hook_allow_bypasses_strict_auto_review() -> Result<(
         "hook-approved command should remove marker without Guardian review"
     );
     assert_single_permission_request_hook_input(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         &command,
         /*description*/ None,
     )?;
@@ -3237,7 +3237,7 @@ async fn permission_request_hook_allows_apply_patch_with_write_alias() -> Result
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_permission_request_hook(
                 home,
@@ -3269,7 +3269,7 @@ async fn permission_request_hook_allows_apply_patch_with_write_alias() -> Result
     );
 
     assert_single_permission_request_hook_input_for_tool(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         "apply_patch",
         &patch,
         /*description*/ None,
@@ -3314,7 +3314,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             install_allow_permission_request_hook(home)
                 .expect("failed to write permission request hook test fixture");
@@ -3342,7 +3342,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
     );
 
     assert_single_permission_request_hook_input(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         &command,
         Some(justification),
     )?;
@@ -3352,7 +3352,7 @@ async fn permission_request_hook_sees_raw_exec_command_input() -> Result<()> {
 
 #[tokio::test]
 async fn permission_request_hook_allows_network_approval_without_prompt() -> Result<()> {
-    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://genex-network-test.invalid', timeout=2).read().decode(errors='replace'))""#;
+    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); print('OK:' + opener.open('http://ruxex-network-test.invalid', timeout=2).read().decode(errors='replace'))""#;
     run_network_permission_hook_test(
         "allow",
         PERMISSION_REQUEST_ALLOW_REASON,
@@ -3366,7 +3366,7 @@ async fn permission_request_hook_allows_network_approval_without_prompt() -> Res
 #[tokio::test]
 async fn permission_request_hook_denies_network_approval_with_custom_message() -> Result<()> {
     let denial = "network access denied by the integration-test hook";
-    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); opener.open('http://genex-network-test.invalid', timeout=2).read()""#;
+    let command = r#"python3 -c "import urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler()); opener.open('http://ruxex-network-test.invalid', timeout=2).read()""#;
     run_network_permission_hook_test(
         "deny",
         denial,
@@ -3422,7 +3422,7 @@ allow_local_binding = true
     let approval_policy = AskForApproval::OnRequest;
     let permission_profile = network_workspace_write_profile();
     let permission_profile_for_config = permission_profile.clone();
-    let test = test_genex()
+    let test = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_pre_build_hook(move |home| {
             write_permission_request_hook(
@@ -3436,7 +3436,7 @@ allow_local_binding = true
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_config(move |config| {
             trust_discovered_hooks(config);
-            config.approvals_reviewer = genex_config::types::ApprovalsReviewer::AutoReview;
+            config.approvals_reviewer = ruxex_config::types::ApprovalsReviewer::AutoReview;
             config.permissions.approval_policy = Constrained::allow_any(approval_policy);
             config
                 .permissions
@@ -3456,7 +3456,7 @@ allow_local_binding = true
         timeout(Duration::from_secs(10), async {
             loop {
                 if test
-                    .genex_home_path()
+                    .ruxex_home_path()
                     .join("permission_request_hook_log.jsonl")
                     .exists()
                 {
@@ -3470,7 +3470,7 @@ allow_local_binding = true
         assert!(
             timeout(
                 Duration::from_secs(2),
-                wait_for_event(&test.genex, |event| matches!(
+                wait_for_event(&test.ruxex, |event| matches!(
                     event,
                     EventMsg::ExecApprovalRequest(_)
                 ))
@@ -3482,9 +3482,9 @@ allow_local_binding = true
     }
 
     assert_single_permission_request_hook_input(
-        test.genex_home_path(),
+        test.ruxex_home_path(),
         command,
-        Some("network-access http://genex-network-test.invalid:80"),
+        Some("network-access http://ruxex-network-test.invalid:80"),
     )?;
     let requests = responses.requests();
     assert_eq!(
@@ -3503,8 +3503,8 @@ allow_local_binding = true
             .expect("expected denied tool output");
         assert!(tool_output.contains(expected_denial));
     } else {
-        test.genex.submit(Op::Shutdown {}).await?;
-        wait_for_event(&test.genex, |event| {
+        test.ruxex.submit(Op::Shutdown {}).await?;
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::ShutdownComplete)
         })
         .await;
@@ -3544,7 +3544,7 @@ async fn pre_tool_use_json_deny_blocks_exec_command_before_execution() -> Result
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", "blocked by pre hook")
                 .expect("failed to write pre tool use hook test fixture");
@@ -3578,7 +3578,7 @@ async fn pre_tool_use_json_deny_blocks_exec_command_before_execution() -> Result
         "blocked command should not initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PreToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "Bash");
@@ -3659,7 +3659,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
             model
         })
         .collect();
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(model_a)
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", "blocked by pre hook")
@@ -3682,7 +3682,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run the blocked shell command".to_string(),
@@ -3697,14 +3697,14 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
         )
         .await?;
 
-    let request = wait_for_event_match(&test.genex, |event| match event {
+    let request = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
     assert_eq!(request.call_id, request_user_input_call_id);
     let (reply, outcome) = oneshot::channel();
-    test.genex
+    test.ruxex
         .submit(Op::TurnSettings {
             turn_id: request.turn_id.clone(),
             update: TurnSettingsUpdate {
@@ -3716,7 +3716,7 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
         })
         .await?;
     assert_eq!(outcome.await?, TurnSettingsUpdateOutcome::Applied);
-    test.genex
+    test.ruxex
         .submit(Op::UserInputAnswer {
             id: request.turn_id,
             response: RequestUserInputResponse {
@@ -3729,12 +3729,12 @@ async fn pre_tool_use_hook_model_tracks_step_after_a_turn_update() -> Result<()>
             },
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     assert_eq!(responses.requests().len(), 3);
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["model"], model_b);
 
@@ -3771,7 +3771,7 @@ async fn pre_tool_use_records_additional_context_for_exec_command() -> Result<()
     .await;
 
     let pre_context = "Remember the bash pre-tool note.";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "context", pre_context)
                 .expect("failed to write pre tool use hook test fixture");
@@ -3834,7 +3834,7 @@ async fn blocked_pre_tool_use_records_additional_context_for_exec_command() -> R
     .await;
 
     let pre_context = "blocked by pre hook with context";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny_with_context", pre_context)
                 .expect("failed to write pre tool use hook test fixture");
@@ -3916,7 +3916,7 @@ async fn async_pre_tool_use_cannot_block_or_rewrite_and_still_records_additional
     let updated_input = serde_json::json!({
         "command": format!("printf rewritten > {}", rewritten_marker.display())
     });
-    let test = test_genex()
+    let test = test_ruxex()
         .with_pre_build_hook(move |home| {
             let denying_script = home.join("async_deny_pre_tool_use_hook.py");
             fs::write(
@@ -3965,14 +3965,14 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run the original command with async pre-tool hooks".to_string(),
                 text_elements: Vec::new(),
             }])
             .with_thread_settings(
-                genex_protocol::protocol::ThreadSettingsOverrides {
+                ruxex_protocol::protocol::ThreadSettingsOverrides {
                     approval_policy: Some(AskForApproval::Never),
                     sandbox_policy: Some(sandbox_policy),
                     permission_profile,
@@ -3989,7 +3989,7 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
         timeout(
             Duration::from_millis(150),
             wait_for_event(
-                &test.genex,
+                &test.ruxex,
                 |event| matches!(event, EventMsg::Warning(warning) if warning.message == pre_context),
             ),
         )
@@ -4001,13 +4001,13 @@ Path(r"{hook_finished_path}").write_text("finished", encoding="utf-8")
     timeout(
         Duration::from_secs(5),
         wait_for_event(
-            &test.genex,
+            &test.ruxex,
             |event| matches!(event, EventMsg::Warning(warning) if warning.message == pre_context),
         ),
     )
     .await
     .context("timed out waiting for the async pre-tool warning after sampling")?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -4072,7 +4072,7 @@ async fn pre_tool_use_rewrites_exec_command_before_execution() -> Result<()> {
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_command });
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^Bash$", &updated_input)
                 .expect("failed to write updating pre tool use hook fixture");
@@ -4098,7 +4098,7 @@ async fn pre_tool_use_rewrites_exec_command_before_execution() -> Result<()> {
         "rewritten {slug} command should initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_command);
 
@@ -4145,7 +4145,7 @@ text(output.output);
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_command });
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^Bash$", &updated_input)
@@ -4180,7 +4180,7 @@ text(output.output);
         "rewritten nested command should initialize the marker repository"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_command);
 
@@ -4225,7 +4225,7 @@ try {{
     .await;
 
     let reason = "blocked nested command";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "json_deny", reason)
@@ -4255,7 +4255,7 @@ try {{
         "PreToolUse-blocked nested command should not execute"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
 
@@ -4304,7 +4304,7 @@ try {{
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_post_tool_use_hook(home, Some("^Bash$"), hook_mode, reason)
@@ -4339,7 +4339,7 @@ try {{
         "PostToolUse should run after the nested command executes"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
     assert_eq!(
@@ -4481,8 +4481,8 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     }
     let plugin_root = home
         .path()
-        .join(format!("plugins/cache/genex-bundled/{plugin_name}/local"));
-    fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
+        .join(format!("plugins/cache/ruxex-bundled/{plugin_name}/local"));
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
     let hooks = serde_json::json!({ "hooks": { "Stop": [{ "hooks": [{
         "type": "mcp_tool",
         "server": mcp_server_name,
@@ -4505,14 +4505,14 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         }
     };
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         serde_json::to_vec(&serde_json::json!({
             "name": plugin_name,
             "hooks": manifest_hooks,
         }))?,
     )?;
-    let hook_key = genex_hooks::hook_key(
-        &format!("{plugin_name}@genex-bundled:{source_relative_path}"),
+    let hook_key = ruxex_hooks::hook_key(
+        &format!("{plugin_name}@ruxex-bundled:{source_relative_path}"),
         HookEventName::Stop,
         /*group_index*/ 0,
         /*handler_index*/ 0,
@@ -4520,19 +4520,19 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     fs::write(
         home.path().join("config.toml"),
         format!(
-            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@genex-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
+            "[features]\nhooks = {hooks_enabled}\n\n[plugins.\"{plugin_name}@ruxex-bundled\"]\nenabled = {plugin_enabled}\n\n[hooks.state.\"{hook_key}\"]\nenabled = false\n"
         ),
     )?;
     let repl_url = format!("{}/repl", server.uri());
-    let mut builder = test_genex().with_home(home).with_config(move |config| {
-        for feature in [Feature::Plugins, Feature::GenexHooks] {
+    let mut builder = test_ruxex().with_home(home).with_config(move |config| {
+        for feature in [Feature::Plugins, Feature::RuxexHooks] {
             config.features.enable(feature).expect("enable feature");
         }
         if !hooks_enabled {
             trust_discovered_hooks(config);
             config
                 .features
-                .disable(Feature::GenexHooks)
+                .disable(Feature::RuxexHooks)
                 .expect("disable regular hooks");
         }
         config
@@ -4556,7 +4556,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
     let test = builder.build_with_auto_env(&server).await?;
     assert!(!test.config.bypass_hook_trust);
     assert_eq!(
-        test.config.features.enabled(Feature::GenexHooks),
+        test.config.features.enabled(Feature::RuxexHooks),
         hooks_enabled
     );
     let mut expected_hook_states = HashMap::from([(
@@ -4567,7 +4567,7 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         },
     )]);
     if !hooks_enabled {
-        let regular_hooks = genex_hooks::list_hooks(genex_hooks::HooksConfig {
+        let regular_hooks = ruxex_hooks::list_hooks(ruxex_hooks::HooksConfig {
             feature_enabled: true,
             config_layer_stack: Some(test.config.config_layer_stack.clone()),
             ..Default::default()
@@ -4584,18 +4584,18 @@ async fn local_bundled_cleanup_hook_runs_without_saved_trust(
         }
     }
     assert_eq!(
-        genex_hooks::hook_states_from_stack(Some(&test.config.config_layer_stack)),
+        ruxex_hooks::hook_states_from_stack(Some(&test.config.config_layer_stack)),
         expected_hook_states
     );
-    wait_for_mcp_server(&test.genex, mcp_server_name).await?;
-    test.genex
+    wait_for_mcp_server(&test.ruxex, mcp_server_name).await?;
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "finish this turn".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
     let mut hook_notifications = Vec::new();
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         if matches!(event, EventMsg::HookStarted(_) | EventMsg::HookCompleted(_)) {
             hook_notifications.push(event.clone());
         }
@@ -4674,11 +4674,11 @@ async fn plugin_pre_tool_use_blocks_exec_command_before_execution() -> Result<()
     let home = Arc::new(TempDir::new()?);
     let plugin_root = home.path().join("plugins/cache/test/sample/local");
     let hooks_dir = plugin_root.join("hooks");
-    fs::create_dir_all(plugin_root.join(".genex-plugin"))
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin"))
         .context("create plugin manifest directory")?;
     fs::create_dir_all(&hooks_dir).context("create plugin hooks directory")?;
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )
     .context("write plugin manifest")?;
@@ -4740,12 +4740,12 @@ print(json.dumps({{
         plugin_data_root,
         source_path: plugin_hooks_path_abs,
         source_relative_path: "hooks/hooks.json".to_string(),
-        hooks: serde_json::from_str::<genex_config::HooksFile>(plugin_hooks_json)
+        hooks: serde_json::from_str::<ruxex_config::HooksFile>(plugin_hooks_json)
             .context("parse plugin hooks")?
             .hooks,
     }];
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_config(move |config| {
             config
@@ -4762,7 +4762,7 @@ print(json.dumps({{
 
     test.submit_turn_with_policy(
         "run the shell command blocked by a plugin hook",
-        genex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+        ruxex_protocol::protocol::SandboxPolicy::DangerFullAccess,
     )
     .await?;
 
@@ -4822,7 +4822,7 @@ async fn pre_tool_use_blocks_shell_when_defined_in_config_toml() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook_toml(
                 home,
@@ -4864,7 +4864,7 @@ async fn pre_tool_use_blocks_shell_when_defined_in_config_toml() -> Result<()> {
     );
 
     let hook_inputs = read_hook_inputs_from_log(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("pre_tool_use_config_hook_log.jsonl")
             .as_path(),
     )?;
@@ -4905,7 +4905,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "allow", "unused")
                 .expect("failed to write hooks.json hook fixture");
@@ -4937,7 +4937,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
         "shell command output should still reach the model",
     );
 
-    let json_hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?
+    let json_hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?
         .into_iter()
         .map(|hook_input| {
             serde_json::json!({
@@ -4949,7 +4949,7 @@ async fn pre_tool_use_merges_hooks_json_and_config_toml() -> Result<()> {
         })
         .collect::<Vec<_>>();
     let toml_hook_inputs = read_hook_inputs_from_log(
-        test.genex_home_path()
+        test.ruxex_home_path()
             .join("pre_tool_use_toml_hook_log.jsonl")
             .as_path(),
     )?
@@ -5007,7 +5007,7 @@ async fn pre_tool_use_blocks_exec_command_before_execution() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Bash$"), "exit_2", "blocked exec command")
                 .expect("failed to write pre tool use hook test fixture");
@@ -5040,7 +5040,7 @@ async fn pre_tool_use_blocks_exec_command_before_execution() -> Result<()> {
     );
     assert!(!marker.exists(), "blocked exec command should not execute");
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
@@ -5083,7 +5083,7 @@ async fn pre_tool_use_blocks_apply_patch_before_execution() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(
                 home,
@@ -5116,7 +5116,7 @@ async fn pre_tool_use_blocks_apply_patch_before_execution() -> Result<()> {
         "blocked apply_patch should not create the file"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5163,7 +5163,7 @@ async fn pre_tool_use_rewrites_apply_patch_before_execution() -> Result<()> {
     .await;
 
     let updated_input = serde_json::json!({ "command": rewritten_patch });
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^apply_patch$", &updated_input)
                 .expect("failed to write updating pre tool use hook fixture");
@@ -5188,7 +5188,7 @@ async fn pre_tool_use_rewrites_apply_patch_before_execution() -> Result<()> {
         "rewritten\n"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], original_patch);
 
@@ -5225,7 +5225,7 @@ async fn pre_tool_use_blocks_apply_patch_with_write_alias() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^Write$"), "json_deny", "blocked write alias")
                 .expect("failed to write pre tool use hook test fixture");
@@ -5254,7 +5254,7 @@ async fn pre_tool_use_blocks_apply_patch_with_write_alias() -> Result<()> {
         "blocked apply_patch should not create the file"
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5288,7 +5288,7 @@ async fn pre_tool_use_blocks_local_function_tool_before_execution() -> Result<()
     .await;
 
     let reason = "blocked local function pre hook";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_pre_build_hook(|home| {
             write_pre_tool_use_hook(home, Some("^test_sync_tool$"), "json_deny", reason)
@@ -5314,7 +5314,7 @@ async fn pre_tool_use_blocks_local_function_tool_before_execution() -> Result<()
         "blocked local function output should surface the hook reason and tool name",
     );
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PreToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "test_sync_tool");
@@ -5358,7 +5358,7 @@ async fn pre_tool_use_rewrites_local_function_tool_before_execution() -> Result<
     .await;
 
     let updated_input = serde_json::json!({});
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("test-model")
         .with_pre_build_hook(move |home| {
             write_updating_pre_tool_use_hook(home, "^test_sync_tool$", &updated_input)
@@ -5379,7 +5379,7 @@ async fn pre_tool_use_rewrites_local_function_tool_before_execution() -> Result<
         .expect("rewritten local function tool output string");
     assert_eq!(output, "ok");
 
-    let hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_input"], original_args);
 
@@ -5416,7 +5416,7 @@ async fn post_tool_use_records_additional_context_for_exec_command() -> Result<(
     .await;
 
     let post_context = "Remember the bash post-tool note.";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");
@@ -5445,7 +5445,7 @@ async fn post_tool_use_records_additional_context_for_exec_command() -> Result<(
         "shell command output should still reach the model",
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["hook_event_name"], "PostToolUse");
     assert_eq!(hook_inputs[0]["tool_name"], "Bash");
@@ -5505,7 +5505,7 @@ async fn post_tool_use_block_decision_replaces_exec_command_output_with_reason()
     .await;
 
     let reason = "bash output looked sketchy";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "decision_block", reason)
                 .expect("failed to write post tool use hook test fixture");
@@ -5525,7 +5525,7 @@ async fn post_tool_use_block_decision_replaces_exec_command_output_with_reason()
         .expect("shell command output string");
     assert_eq!(output, reason);
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0]["tool_response"],
@@ -5566,7 +5566,7 @@ async fn post_tool_use_continue_false_replaces_exec_command_output_with_stop_rea
     .await;
 
     let stop_reason = "Execution halted by post-tool hook";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "continue_false", stop_reason)
                 .expect("failed to write post tool use hook test fixture");
@@ -5586,7 +5586,7 @@ async fn post_tool_use_continue_false_replaces_exec_command_output_with_stop_rea
         .expect("shell command output string");
     assert_eq!(output, stop_reason);
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0]["tool_response"],
@@ -5626,7 +5626,7 @@ async fn post_tool_use_exit_two_replaces_one_shot_exec_command_output_with_feedb
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Bash$"), "exit_2", "blocked by post hook")
                 .expect("failed to write post tool use hook test fixture");
@@ -5648,7 +5648,7 @@ async fn post_tool_use_exit_two_replaces_one_shot_exec_command_output_with_feedb
         .expect("exec command output string");
     assert_eq!(output, "blocked by post hook");
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
     assert_eq!(hook_inputs[0]["tool_input"]["command"], command);
@@ -5690,7 +5690,7 @@ async fn post_tool_use_spills_large_feedback_message() -> Result<()> {
     .await;
     let feedback = "blocked by post hook ".repeat(800);
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook({
             let feedback = feedback.clone();
             move |home| {
@@ -5772,7 +5772,7 @@ async fn post_tool_use_blocks_when_exec_session_completes_via_write_stdin() -> R
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_logging_pre_and_blocking_post_tool_use_hooks(home, feedback)
                 .expect("failed to write tool use hook test fixture");
@@ -5794,13 +5794,13 @@ async fn post_tool_use_blocks_when_exec_session_completes_via_write_stdin() -> R
         .expect("write_stdin output string");
     assert_eq!(output, feedback);
 
-    let pre_hook_inputs = read_pre_tool_use_hook_inputs(test.genex_home_path())?;
+    let pre_hook_inputs = read_pre_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(pre_hook_inputs.len(), 1);
     assert_eq!(pre_hook_inputs[0]["tool_name"], "Bash");
     assert_eq!(pre_hook_inputs[0]["tool_use_id"], start_call_id);
     assert_eq!(pre_hook_inputs[0]["tool_input"]["command"], command);
 
-    let post_hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let post_hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(post_hook_inputs.len(), 1);
     assert_eq!(post_hook_inputs[0]["hook_event_name"], "PostToolUse");
     assert_eq!(post_hook_inputs[0]["tool_name"], "Bash");
@@ -5848,7 +5848,7 @@ async fn post_tool_use_records_additional_context_for_apply_patch() -> Result<()
     .await;
 
     let post_context = "Remember the apply_patch post-tool note.";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^apply_patch$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");
@@ -5873,7 +5873,7 @@ async fn post_tool_use_records_additional_context_for_apply_patch() -> Result<()
         "apply_patch should create the file"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);
@@ -5919,7 +5919,7 @@ async fn post_tool_use_records_apply_patch_context_with_edit_alias() -> Result<(
     .await;
 
     let post_context = "Remember the edit alias post-tool note.";
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_pre_build_hook(|home| {
             write_post_tool_use_hook(home, Some("^Edit$"), "context", post_context)
                 .expect("failed to write post tool use hook test fixture");
@@ -5945,7 +5945,7 @@ async fn post_tool_use_records_apply_patch_context_with_edit_alias() -> Result<(
         "apply_patch should create the file"
     );
 
-    let hook_inputs = read_post_tool_use_hook_inputs(test.genex_home_path())?;
+    let hook_inputs = read_post_tool_use_hook_inputs(test.ruxex_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(hook_inputs[0]["tool_name"], "apply_patch");
     assert_eq!(hook_inputs[0]["tool_use_id"], call_id);

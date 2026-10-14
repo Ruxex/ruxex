@@ -25,7 +25,7 @@ use crate::protocol::v2::McpServerRefreshParams;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_history::RolloutLine;
+use ruxex_history::RolloutLine;
 use schemars::schema_for;
 use serde_json::Map;
 use serde_json::Value;
@@ -255,12 +255,12 @@ pub fn generate_json_with_experimental(out_dir: &Path, experimental_api: bool) -
         filter_experimental_schema(&mut bundle)?;
     }
     write_pretty_json(
-        out_dir.join("genex_app_server_protocol.schemas.json"),
+        out_dir.join("ruxex_app_server_protocol.schemas.json"),
         &bundle,
     )?;
     let flat_v2_bundle = build_flat_v2_schema(&bundle)?;
     write_pretty_json(
-        out_dir.join("genex_app_server_protocol.v2.schemas.json"),
+        out_dir.join("ruxex_app_server_protocol.v2.schemas.json"),
         &flat_v2_bundle,
     )?;
 
@@ -1105,7 +1105,7 @@ fn build_schema_bundle(schemas: Vec<GeneratedSchema>) -> Result<Value> {
     );
     root.insert(
         "title".to_string(),
-        Value::String("GenexAppServerProtocol".into()),
+        Value::String("RuxexAppServerProtocol".into()),
     );
     root.insert("type".to_string(), Value::String("object".into()));
     root.insert("definitions".to_string(), Value::Object(definitions));
@@ -1142,7 +1142,7 @@ fn build_flat_v2_schema(bundle: &Value) -> Result<Value> {
     let title = root
         .get("title")
         .and_then(Value::as_str)
-        .unwrap_or("GenexAppServerProtocol");
+        .unwrap_or("RuxexAppServerProtocol");
     let mut flat_definitions = v2_definitions.clone();
     let mut shared_definitions = Map::new();
     let mut non_v2_refs = HashSet::new();
@@ -2380,7 +2380,7 @@ mod tests {
     }
 
     fn schema_root() -> Result<PathBuf> {
-        let typescript_index = genex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
+        let typescript_index = ruxex_utils_cargo_bin::find_resource!("schema/typescript/index.ts")
             .context("resolve TypeScript schema index.ts")?;
         let schema_root = typescript_index
             .parent()
@@ -2406,7 +2406,7 @@ mod tests {
 
     #[test]
     fn stable_schema_filter_removes_mock_thread_start_field() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("ruxex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
         let schema = write_json_schema_with_return::<v2::ThreadStartParams>(
             &output_dir,
@@ -2516,7 +2516,7 @@ mod tests {
     fn build_flat_v2_schema_keeps_shared_root_schemas_and_dependencies() -> Result<()> {
         let bundle = serde_json::json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "title": "GenexAppServerProtocol",
+            "title": "RuxexAppServerProtocol",
             "type": "object",
             "definitions": {
                 "ClientRequest": {
@@ -2632,7 +2632,7 @@ mod tests {
 
         assert_eq!(
             flat_bundle["title"],
-            serde_json::json!("GenexAppServerProtocolV2")
+            serde_json::json!("RuxexAppServerProtocolV2")
         );
         assert_eq!(definitions.contains_key("v2"), false);
         assert_eq!(definitions.contains_key("ThreadStartParams"), true);
@@ -2693,7 +2693,7 @@ mod tests {
 
     #[test]
     fn experimental_type_fields_ts_filter_handles_interface_shape() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("ruxex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2732,7 +2732,7 @@ mod tests {
     #[test]
     fn experimental_type_fields_ts_filter_keeps_imports_used_in_intersection_suffix() -> Result<()>
     {
-        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("ruxex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2775,7 +2775,7 @@ export type Config = { stableField: Keep, unstableField: string | null } & ({ [k
 
     #[test]
     fn experimental_type_fields_ts_filter_handles_generated_command_params_shape() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("genex_ts_filter_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("ruxex_ts_filter_{}", Uuid::now_v7()));
         fs::create_dir_all(&output_dir)?;
 
         struct TempDirGuard(PathBuf);
@@ -2840,7 +2840,7 @@ permissionProfile?: string | null};
 
     #[test]
     fn generate_json_filters_experimental_fields_and_methods() -> Result<()> {
-        let output_dir = std::env::temp_dir().join(format!("genex_schema_{}", Uuid::now_v7()));
+        let output_dir = std::env::temp_dir().join(format!("ruxex_schema_{}", Uuid::now_v7()));
         fs::create_dir(&output_dir)?;
         generate_json_with_experimental(&output_dir, /*experimental_api*/ false)?;
 
@@ -2857,20 +2857,20 @@ permissionProfile?: string | null};
         assert_eq!(output_dir.join("EventMsg.json").exists(), false);
 
         let bundle_json =
-            fs::read_to_string(output_dir.join("genex_app_server_protocol.schemas.json"))?;
+            fs::read_to_string(output_dir.join("ruxex_app_server_protocol.schemas.json"))?;
         assert_eq!(bundle_json.contains("mockExperimentalField"), false);
         assert_eq!(bundle_json.contains("additionalPermissions"), false);
         let flat_v2_bundle_json =
-            fs::read_to_string(output_dir.join("genex_app_server_protocol.v2.schemas.json"))?;
+            fs::read_to_string(output_dir.join("ruxex_app_server_protocol.v2.schemas.json"))?;
         assert_eq!(flat_v2_bundle_json.contains("mockExperimentalField"), false);
         assert_eq!(flat_v2_bundle_json.contains("additionalPermissions"), false);
         assert_eq!(flat_v2_bundle_json.contains("#/definitions/v2/"), false);
         assert_eq!(
-            flat_v2_bundle_json.contains("\"title\": \"GenexAppServerProtocolV2\""),
+            flat_v2_bundle_json.contains("\"title\": \"RuxexAppServerProtocolV2\""),
             true
         );
         let flat_v2_bundle =
-            read_json_value(&output_dir.join("genex_app_server_protocol.v2.schemas.json"))?;
+            read_json_value(&output_dir.join("ruxex_app_server_protocol.v2.schemas.json"))?;
         let definitions = flat_v2_bundle["definitions"]
             .as_object()
             .expect("flat v2 bundle should include definitions");

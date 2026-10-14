@@ -7,10 +7,10 @@ use crate::diagnostics::config_error_from_toml;
 use crate::diagnostics::io_error_from_config_error;
 use crate::state::LoaderOverrides;
 use crate::strict_config::config_error_from_ignored_toml_value_fields;
-use genex_file_system::ExecutorFileSystem;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathUri;
 use std::io;
 use std::path::Path;
 use toml::Value as TomlValue;
@@ -31,11 +31,11 @@ pub(super) struct LoadedConfigLayers {
 
 pub(super) async fn load_config_layers_internal(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     overrides: LoaderOverrides,
     strict_config: bool,
 ) -> io::Result<LoadedConfigLayers> {
-    let _ = (&fs, genex_home, &overrides, strict_config);
+    let _ = (&fs, ruxex_home, &overrides, strict_config);
     #[cfg(target_os = "macos")]
     let LoaderOverrides {
         managed_preferences_base64,
@@ -47,7 +47,7 @@ pub(super) async fn load_config_layers_internal(
     let managed_preferences = load_managed_admin_config_layer(
         managed_preferences_base64.as_deref(),
         strict_config,
-        genex_home,
+        ruxex_home,
     )
     .await?
     .map(map_managed_admin_layer);

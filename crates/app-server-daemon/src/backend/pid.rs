@@ -31,7 +31,7 @@ const STDERR_LOG_TAIL_BYTES: u64 = 4096;
 
 #[derive(Debug)]
 pub(crate) struct PidBackend {
-    genex_bin: PathBuf,
+    ruxex_bin: PathBuf,
     pid_file: PathBuf,
     lock_file: PathBuf,
     command_args: Option<Vec<OsString>>,
@@ -78,13 +78,13 @@ enum PidFileState {
 
 impl PidBackend {
     pub(crate) fn new(
-        genex_bin: PathBuf,
+        ruxex_bin: PathBuf,
         pid_file: PathBuf,
         command_args: Option<Vec<OsString>>,
     ) -> Self {
         let lock_file = pid_file.with_extension("pid.lock");
         Self {
-            genex_bin,
+            ruxex_bin,
             pid_file,
             lock_file,
             command_args,

@@ -3,15 +3,15 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SkillsExtraRootsSetParams;
-use genex_app_server_protocol::SkillsExtraRootsSetResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SkillsExtraRootsSetParams;
+use ruxex_app_server_protocol::SkillsExtraRootsSetResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses;
 use core_test_support::skip_if_remote;
 use pretty_assertions::assert_eq;
@@ -46,7 +46,7 @@ async fn host_skill_catalog_refreshes_once_when_skills_change() -> Result<()> {
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let extra_root = TempDir::new()?;
     let extra_skills_root = extra_root.path().join("skills");
     write_skill(
@@ -55,7 +55,7 @@ async fn host_skill_catalog_refreshes_once_when_skills_change() -> Result<()> {
         INITIAL_SKILL_DESCRIPTION,
     )?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             r#"
 model = "mock-model"
@@ -81,7 +81,7 @@ stream_max_retries = 0
     )?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(READ_TIMEOUT, app_server.initialize()).await??;

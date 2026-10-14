@@ -1,18 +1,18 @@
 use anyhow::Context;
 use anyhow::Result;
-use genex_config::CloudConfigBundleLoader;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::GenexThreadSettingsOverrides;
-use genex_features::Feature;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::CloudConfigBundleLoader;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::RuxexThreadSettingsOverrides;
+use ruxex_features::Feature;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_target_windows;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -34,7 +34,7 @@ async fn refreshed_cloud_bundle_updates_later_sessions() -> Result<()> {
         async move { Ok(Some(latest.read().expect("bundle state lock").clone())) }
     });
 
-    let mut initial_builder = test_genex()
+    let mut initial_builder = test_ruxex()
         .with_home(Arc::clone(&home))
         .with_cloud_config_bundle(loader.clone());
     let initial = initial_builder.build_with_auto_env(&server).await?;
@@ -44,7 +44,7 @@ async fn refreshed_cloud_bundle_updates_later_sessions() -> Result<()> {
     );
     assert_eq!(
         initial
-            .genex
+            .ruxex
             .config()
             .await
             .developer_instructions
@@ -58,7 +58,7 @@ async fn refreshed_cloud_bundle_updates_later_sessions() -> Result<()> {
     .add_enterprise_config(r#"developer_instructions = "refreshed managed instructions""#)
     .into_bundle();
 
-    let mut refreshed_builder = test_genex()
+    let mut refreshed_builder = test_ruxex()
         .with_home(home)
         .with_cloud_config_bundle(loader);
     let refreshed = refreshed_builder.build_with_auto_env(&server).await?;
@@ -68,7 +68,7 @@ async fn refreshed_cloud_bundle_updates_later_sessions() -> Result<()> {
     );
     assert_eq!(
         refreshed
-            .genex
+            .ruxex
             .config()
             .await
             .developer_instructions
@@ -93,7 +93,7 @@ async fn managed_deny_read_requirements_follow_thread_permission_updates() -> Re
     std::fs::create_dir_all(&nested_root)?;
     let nested_root = AbsolutePathBuf::from_absolute_path(nested_root)?;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_home(home)
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(format!(
@@ -109,14 +109,14 @@ async fn managed_deny_read_requirements_follow_thread_permission_updates() -> Re
     let test = builder.build_with_auto_env(&server).await?;
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             permission_profile: Some(PermissionProfile::read_only()),
             ..Default::default()
         },
     )
     .await?;
-    let snapshot = test.genex.config_snapshot().await;
+    let snapshot = test.ruxex.config_snapshot().await;
     assert!(
         !snapshot
             .permission_profile
@@ -132,8 +132,8 @@ async fn managed_deny_read_requirements_follow_thread_permission_updates() -> Re
         /*exclude_slash_tmp*/ false,
     );
     let error = test
-        .genex
-        .preview_thread_settings_overrides(GenexThreadSettingsOverrides {
+        .ruxex
+        .preview_thread_settings_overrides(RuxexThreadSettingsOverrides {
             permission_profile: Some(conflicting_profile),
             ..Default::default()
         })
@@ -162,7 +162,7 @@ async fn managed_guardian_v1_requirements_disable_guardian_v2() -> Result<()> {
         ("[features]\nguardian_approval = true\n", true),
         ("[features]\nauto_review = true\n", true),
     ] {
-        let mut builder = test_genex()
+        let mut builder = test_ruxex()
             .with_pre_build_hook(|home| {
                 std::fs::write(home.join("config.toml"), "[features]\nguardianv2 = true\n")
                     .expect("Guardian v2 configuration should be written");

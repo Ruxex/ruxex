@@ -1,12 +1,12 @@
-use genex_context_fragments::set_annotated_content;
-use genex_context_fragments::to_annotated_content;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::ResponseItemId;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseItem;
+use ruxex_context_fragments::set_annotated_content;
+use ruxex_context_fragments::to_annotated_content;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseItem;
 use std::collections::HashSet;
 use uuid::Uuid;
 
@@ -422,8 +422,8 @@ pub(crate) fn strip_audio_when_unsupported(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::models::FunctionCallOutputBody;
-    use genex_protocol::models::ImageReference;
+    use ruxex_protocol::models::FunctionCallOutputBody;
+    use ruxex_protocol::models::ImageReference;
 
     fn function_call(call_id: &str, id: Option<&str>) -> ResponseItem {
         ResponseItem::FunctionCall {

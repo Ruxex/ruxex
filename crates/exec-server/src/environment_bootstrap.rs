@@ -1,4 +1,4 @@
-use genex_http_client::HttpClientFactory;
+use ruxex_http_client::HttpClientFactory;
 
 use crate::EnvironmentManager;
 use crate::ExecServerError;

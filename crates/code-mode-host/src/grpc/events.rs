@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use genex_code_mode_protocol::grpc as proto;
-use genex_code_mode_protocol::host::MAX_FRAME_BYTES;
-use genex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
+use ruxex_code_mode_protocol::grpc as proto;
+use ruxex_code_mode_protocol::host::MAX_FRAME_BYTES;
+use ruxex_code_mode_protocol::host::MAX_PENDING_DELEGATE_CALLS;
 use prost::Message;
 use tokio::sync::OwnedSemaphorePermit;
 use tokio::sync::Semaphore;

@@ -8,7 +8,7 @@ use super::StatusLineItem;
 use super::TerminalTitleItem;
 use super::ThreadId;
 use crate::status::StatusHistoryHandle;
-use genex_app_server_protocol::ThreadUsage;
+use ruxex_app_server_protocol::ThreadUsage;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum ThreadUsageOutcome {
@@ -331,7 +331,7 @@ impl ChatWidget {
     }
 
     pub(super) fn thread_usage_is_available(&self) -> bool {
-        self.has_genex_backend_auth
+        self.has_ruxex_backend_auth
             && !self.thread_usage.feature_disabled
             && self.thread_id.is_some()
             && matches!(

@@ -3,14 +3,14 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use futures::StreamExt;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_extension_api::SelectedPluginSnapshot;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::EnvironmentSkillMetadata;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_extension_api::SelectedPluginSnapshot;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::EnvironmentSkillMetadata;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::catalog::SkillAuthority;
 use crate::catalog::SkillCatalog;
@@ -207,7 +207,7 @@ impl SkillProvider for ExecutorSkillProvider {
 impl ExecutorSkillProvider {
     fn list_from_discovery(
         &self,
-        snapshot: &genex_exec_server::ExecutorCapabilityDiscoverySnapshot,
+        snapshot: &ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot,
     ) -> SkillCatalog {
         let mut catalog = SkillCatalog::default();
         for root in snapshot.roots() {
@@ -320,7 +320,7 @@ fn normalized_environment_path(path: &PathUri) -> String {
 }
 
 async fn read_bounded_text(
-    file_system: &dyn genex_exec_server::ExecutorFileSystem,
+    file_system: &dyn ruxex_exec_server::ExecutorFileSystem,
     path: &PathUri,
     resource: &str,
     sandbox: Option<&FileSystemSandboxContext>,

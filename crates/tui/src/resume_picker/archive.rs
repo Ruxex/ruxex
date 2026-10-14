@@ -1,7 +1,7 @@
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 
 use super::LoadTrigger;
 use super::PickerLoadRequest;

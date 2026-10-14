@@ -1,5 +1,5 @@
-use genex_rollout::state_db as rollout_state_db;
-pub use genex_rollout::state_db::StateDbHandle;
+use ruxex_rollout::state_db as rollout_state_db;
+pub use ruxex_rollout::state_db::StateDbHandle;
 
 use crate::config::Config;
 

@@ -4,15 +4,15 @@ use std::sync::Arc;
 
 use futures::FutureExt;
 use futures::StreamExt;
-use genex_exec_server::ExecutorFileSystem;
-use genex_protocol::protocol::Product;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::LoadedSkillRoot;
-use genex_skills::SkillRootSnapshots;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::PluginSkillRoot;
-use genex_utils_plugins::migrated_command_skills_root;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_protocol::protocol::Product;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::LoadedSkillRoot;
+use ruxex_skills::SkillRootSnapshots;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::PluginSkillRoot;
+use ruxex_utils_plugins::migrated_command_skills_root;
 use tokio::sync::OnceCell;
 use tokio::sync::Semaphore;
 

@@ -12,15 +12,15 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WriteFileOptions;
-use genex_utils_path_uri::PathUri;
-use genex_utils_path_uri::PathUriParseError;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUriParseError;
 pub use parser::Hunk;
 pub use parser::ParseError;
 use parser::ParseError::*;
@@ -42,19 +42,19 @@ pub use standalone_executable::main;
 
 use crate::invocation::ExtractHeredocError;
 
-/// Special argv[1] flag used when the Genex executable self-invokes to run the
+/// Special argv[1] flag used when the Ruxex executable self-invokes to run the
 /// internal `apply_patch` path.
 ///
-/// Although this constant lives in `genex-apply-patch` (to avoid forcing
-/// `genex-arg0` to depend on `genex-core`), it remains part of the "genex core"
+/// Although this constant lives in `ruxex-apply-patch` (to avoid forcing
+/// `ruxex-arg0` to depend on `ruxex-core`), it remains part of the "ruxex core"
 /// process-invocation contract for the standalone `apply_patch` command
 /// surface.
-pub const GENEX_CORE_APPLY_PATCH_ARG1: &str = "--genex-run-as-apply-patch";
+pub const RUXEX_CORE_APPLY_PATCH_ARG1: &str = "--ruxex-run-as-apply-patch";
 
 /// Compatibility opt-in for older standalone `apply_patch` executables.
 /// Current executables always preserve line endings.
-pub const GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR: &str =
-    "GENEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS";
+pub const RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR: &str =
+    "RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS";
 
 /// Policy for one patch application. Standalone callers follow symlinks by default.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -822,7 +822,7 @@ pub fn print_summary(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_exec_server::LOCAL_FS;
+    use ruxex_exec_server::LOCAL_FS;
     use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::tempdir;

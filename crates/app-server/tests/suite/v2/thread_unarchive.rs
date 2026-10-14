@@ -3,48 +3,48 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
-use genex_app_server::in_process;
-use genex_app_server::in_process::InProcessStartArgs;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeParams;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadArchiveResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadSection;
-use genex_app_server_protocol::ThreadSectionMoveParams;
-use genex_app_server_protocol::ThreadSectionMoveResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_app_server_protocol::ThreadUnarchivedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::CloudConfigBundleLoader;
-use genex_config::LoaderOverrides;
-use genex_core::config::ConfigBuilder;
-use genex_core::find_archived_thread_path_by_id_str;
-use genex_core::find_thread_path_by_id_str;
-use genex_exec_server::EnvironmentManager;
-use genex_protocol::ThreadId;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::SessionSource;
-use genex_state::PINNED_THREAD_SECTION_ID;
-use genex_state::PINNED_THREAD_SECTION_NAME;
-use genex_thread_store::CreateThreadParams;
-use genex_thread_store::InMemoryThreadStore;
-use genex_thread_store::ThreadMetadataPatch;
-use genex_thread_store::ThreadPersistenceMetadata;
-use genex_thread_store::ThreadStore;
-use genex_thread_store::UpdateThreadMetadataParams;
+use ruxex_app_server::in_process;
+use ruxex_app_server::in_process::InProcessStartArgs;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadArchiveResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadSection;
+use ruxex_app_server_protocol::ThreadSectionMoveParams;
+use ruxex_app_server_protocol::ThreadSectionMoveResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnarchiveResponse;
+use ruxex_app_server_protocol::ThreadUnarchivedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::CloudConfigBundleLoader;
+use ruxex_config::LoaderOverrides;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::find_archived_thread_path_by_id_str;
+use ruxex_core::find_thread_path_by_id_str;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_state::PINNED_THREAD_SECTION_ID;
+use ruxex_state::PINNED_THREAD_SECTION_NAME;
+use ruxex_thread_store::CreateThreadParams;
+use ruxex_thread_store::InMemoryThreadStore;
+use ruxex_thread_store::ThreadMetadataPatch;
+use ruxex_thread_store::ThreadPersistenceMetadata;
+use ruxex_thread_store::ThreadStore;
+use ruxex_thread_store::UpdateThreadMetadataParams;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::fs::FileTimes;
@@ -62,11 +62,11 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -129,7 +129,7 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
         .expect("pinned thread should have a section entry timestamp");
 
     let found_rollout_path =
-        find_thread_path_by_id_str(genex_home.path(), &thread.id, /*state_db_ctx*/ None)
+        find_thread_path_by_id_str(ruxex_home.path(), &thread.id, /*state_db_ctx*/ None)
             .await?
             .expect("expected rollout path for thread id to exist");
     assert_paths_match_on_disk(&found_rollout_path, &rollout_path)?;
@@ -143,7 +143,7 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(archive_id)).await??;
 
     let archived_path = find_archived_thread_path_by_id_str(
-        genex_home.path(),
+        ruxex_home.path(),
         &thread.id,
         /*state_db_ctx*/ None,
     )
@@ -231,13 +231,13 @@ async fn thread_unarchive_moves_rollout_back_into_sessions_directory() -> Result
 
 #[tokio::test]
 async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let store_id = Uuid::new_v4().to_string();
     MockResponsesConfig::new("http://127.0.0.1:1")
         .with_root_config(&format!(
             r#"experimental_thread_store = {{ type = "in_memory", id = "{store_id}" }}"#
         ))
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let store = InMemoryThreadStore::for_id(store_id.clone());
     let _in_memory_store = InMemoryThreadStoreId { store_id };
     let thread_id = ThreadId::from_string("00000000-0000-4000-8000-000000000126")?;
@@ -279,8 +279,8 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
 
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
-        .fallback_cwd(Some(genex_home.path().to_path_buf()))
+        .ruxex_home(ruxex_home.path().to_path_buf())
+        .fallback_cwd(Some(ruxex_home.path().to_path_buf()))
         .loader_overrides(loader_overrides.clone())
         .build()
         .await?;
@@ -291,7 +291,7 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
         loader_overrides,
         strict_config: false,
         cloud_config_bundle: CloudConfigBundleLoader::default(),
-        thread_config_loader: Arc::new(genex_config::NoopThreadConfigLoader),
+        thread_config_loader: Arc::new(ruxex_config::NoopThreadConfigLoader),
         log_db: None,
         state_db: None,
         environment_manager: Arc::new(EnvironmentManager::default_for_tests()),
@@ -301,7 +301,7 @@ async fn thread_unarchive_preserves_pathless_store_metadata() -> Result<()> {
         runtime: None,
         initialize: InitializeParams {
             client_info: ClientInfo {
-                name: "genex-app-server-tests".to_string(),
+                name: "ruxex-app-server-tests".to_string(),
                 title: None,
                 version: "0.1.0".to_string(),
             },

@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HistoryPosition;
 
 use super::LocalThreadStore;
 use super::thread_rollout_resolver;
@@ -94,33 +94,33 @@ impl LocalThreadStore {
             let rollout_path = match representation {
                 LineageRepresentation::Existing => rollout_path,
                 LineageRepresentation::PlainForReference => {
-                    let outside_genex_home = || ThreadStoreError::InvalidRequest {
+                    let outside_ruxex_home = || ThreadStoreError::InvalidRequest {
                         message: format!(
-                            "rollout path `{}` must be in Genex home directory",
+                            "rollout path `{}` must be in Ruxex home directory",
                             rollout_path.display()
                         ),
                     };
                     let canonical_rollout_path = std::fs::canonicalize(rollout_path.as_path())
-                        .map_err(|_| outside_genex_home())?;
-                    // Resume can retain either the logical Genex home path or its canonical
+                        .map_err(|_| outside_ruxex_home())?;
+                    // Resume can retain either the logical Ruxex home path or its canonical
                     // target. Keep references inside canonical managed roots so nested symlinks
                     // cannot escape them.
                     let is_managed_rollout = [
-                        self.config.genex_home.join(genex_rollout::SESSIONS_SUBDIR),
+                        self.config.ruxex_home.join(ruxex_rollout::SESSIONS_SUBDIR),
                         self.config
-                            .genex_home
-                            .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR),
+                            .ruxex_home
+                            .join(ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR),
                     ]
                     .into_iter()
                     .filter_map(|root| std::fs::canonicalize(root).ok())
                     .any(|root| canonical_rollout_path.starts_with(root));
                     if !is_managed_rollout {
-                        return Err(outside_genex_home());
+                        return Err(outside_ruxex_home());
                     }
                     canonical_rollout_path
                 }
             };
-            let meta = genex_rollout::read_session_meta_line(rollout_path.as_path())
+            let meta = ruxex_rollout::read_session_meta_line(rollout_path.as_path())
                 .await
                 .map_err(|err| ThreadStoreError::Internal {
                     message: format!(
@@ -140,7 +140,7 @@ impl LocalThreadStore {
                     if next_rollout_id.is_none() && meta.meta.history_base.is_none() =>
                 {
                     // A newly shared standalone source must remain readable by older binaries.
-                    genex_rollout::materialize_rollout_for_reference(rollout_path.as_path())
+                    ruxex_rollout::materialize_rollout_for_reference(rollout_path.as_path())
                         .await
                         .map_err(|err| ThreadStoreError::Internal {
                             message: format!(
@@ -186,7 +186,7 @@ async fn resolve_rollout_path_by_id(
     store: &LocalThreadStore,
     rollout_id: ThreadId,
 ) -> ThreadStoreResult<Option<PathBuf>> {
-    genex_rollout::find_rollout_path_by_rollout_id(store.config.genex_home.as_path(), rollout_id)
+    ruxex_rollout::find_rollout_path_by_rollout_id(store.config.ruxex_home.as_path(), rollout_id)
         .await
         .map_err(|err| ThreadStoreError::Internal {
             message: format!("failed to locate rollout {rollout_id}: {err}"),
@@ -265,7 +265,7 @@ async fn validate_cutoff_bounds(
     let path = rollout_path.to_path_buf();
     let end_byte_offset = end.end_byte_offset;
     let contains_prefix = tokio::task::spawn_blocking(move || {
-        genex_rollout::rollout_contains_prefix(&path, end_byte_offset)
+        ruxex_rollout::rollout_contains_prefix(&path, end_byte_offset)
     })
     .await
     .map_err(|err| ThreadStoreError::Internal {

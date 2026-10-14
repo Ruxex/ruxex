@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use genex_app_server_protocol::PluginUninstallResponse;
+use ruxex_app_server_protocol::PluginUninstallResponse;
 
 use super::*;
 

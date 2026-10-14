@@ -1,24 +1,24 @@
 use std::io::IsTerminal;
 use std::path::PathBuf;
 
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::McpToolCallStatus;
-use genex_app_server_protocol::PatchApplyStatus;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::TurnStatus;
-use genex_core::config::Config;
-use genex_model_provider_info::WireApi;
-use genex_protocol::num_format::format_with_separators;
-use genex_protocol::protocol::SessionConfiguredEvent;
-use genex_utils_path_uri::PathUri;
-use genex_utils_sandbox_summary::summarize_permission_profile;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::McpToolCallStatus;
+use ruxex_app_server_protocol::PatchApplyStatus;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_core::config::Config;
+use ruxex_model_provider_info::WireApi;
+use ruxex_protocol::num_format::format_with_separators;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_sandbox_summary::summarize_permission_profile;
 use owo_colors::OwoColorize;
 use owo_colors::Style;
 
 use crate::event_processor::EventProcessor;
-use crate::event_processor::GenexStatus;
+use crate::event_processor::RuxexStatus;
 use crate::event_processor::handle_last_message;
 
 pub(crate) struct EventProcessorWithHumanOutput {
@@ -100,7 +100,7 @@ impl EventProcessorWithHumanOutput {
             ThreadItem::AgentMessage { text, .. } => {
                 eprintln!(
                     "{}\n{}",
-                    "genex".style(self.italic).style(self.magenta),
+                    "ruxex".style(self.italic).style(self.magenta),
                     text
                 );
                 self.final_message = Some(text);
@@ -224,7 +224,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         eprintln!("{}\n{}", "user".style(self.cyan), prompt);
     }
 
-    fn process_server_notification(&mut self, notification: ServerNotification) -> GenexStatus {
+    fn process_server_notification(&mut self, notification: ServerNotification) -> RuxexStatus {
         match notification {
             ServerNotification::ConfigWarning(notification) => {
                 let details = notification
@@ -237,16 +237,16 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     notification.summary,
                     details
                 );
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::Warning(notification) => self.process_warning(notification.message),
             ServerNotification::AuthRecoveryStarted(notification) => {
                 eprintln!("{}", notification.message);
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::AuthRecoveryCompleted(notification) => {
                 eprintln!("{}", notification.message.style(self.green));
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::Error(notification) => {
                 eprintln!(
@@ -254,7 +254,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     "ERROR:".style(self.red).style(self.bold),
                     notification.error
                 );
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::DeprecationNotice(notification) => {
                 eprintln!(
@@ -265,7 +265,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 if let Some(details) = notification.details {
                     eprintln!("{}", details.style(self.dimmed));
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::HookStarted(notification) => {
                 eprintln!(
@@ -273,7 +273,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     "hook:".style(self.bold),
                     format!("{:?}", notification.run.event_name).style(self.dimmed)
                 );
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::HookCompleted(notification) => {
                 eprintln!(
@@ -282,15 +282,15 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     format!("{:?}", notification.run.event_name).style(self.dimmed),
                     notification.run.status
                 );
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ItemStarted(notification) => {
                 self.render_item_started(&notification.item);
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ItemCompleted(notification) => {
                 self.render_item_completed(notification.item);
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::ModelRerouted(notification) => {
                 eprintln!(
@@ -299,12 +299,12 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     notification.from_model,
                     notification.to_model
                 );
-                GenexStatus::Running
+                RuxexStatus::Running
             }
-            ServerNotification::ModelVerification(_) => GenexStatus::Running,
+            ServerNotification::ModelVerification(_) => RuxexStatus::Running,
             ServerNotification::ThreadTokenUsageUpdated(notification) => {
                 self.last_total_token_usage = Some(notification.token_usage);
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::TurnCompleted(notification) => match notification.turn.status {
                 TurnStatus::Completed => {
@@ -320,7 +320,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                         self.final_message = Some(final_message);
                     }
                     self.emit_final_message_on_shutdown = true;
-                    GenexStatus::InitiateShutdown
+                    RuxexStatus::InitiateShutdown
                 }
                 TurnStatus::Failed => {
                     self.final_message = None;
@@ -329,22 +329,22 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                     if let Some(error) = notification.turn.error {
                         eprintln!("{} {}", "ERROR:".style(self.red).style(self.bold), error);
                     }
-                    GenexStatus::InitiateShutdown
+                    RuxexStatus::InitiateShutdown
                 }
                 TurnStatus::Interrupted => {
                     self.final_message = None;
                     self.final_message_rendered = false;
                     self.emit_final_message_on_shutdown = false;
                     eprintln!("{}", "turn interrupted".style(self.dimmed));
-                    GenexStatus::InitiateShutdown
+                    RuxexStatus::InitiateShutdown
                 }
-                TurnStatus::InProgress => GenexStatus::Running,
+                TurnStatus::InProgress => RuxexStatus::Running,
             },
             ServerNotification::TurnDiffUpdated(notification) => {
                 if !notification.diff.trim().is_empty() {
                     eprintln!("{}", notification.diff);
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
             ServerNotification::TurnPlanUpdated(notification) => {
                 if let Some(explanation) = notification.explanation {
@@ -352,13 +352,13 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                 }
                 for step in notification.plan {
                     match step.status {
-                        genex_app_server_protocol::TurnPlanStepStatus::Completed => {
+                        ruxex_app_server_protocol::TurnPlanStepStatus::Completed => {
                             eprintln!("  {} {}", "✓".style(self.green), step.step);
                         }
-                        genex_app_server_protocol::TurnPlanStepStatus::InProgress => {
+                        ruxex_app_server_protocol::TurnPlanStepStatus::InProgress => {
                             eprintln!("  {} {}", "→".style(self.cyan), step.step);
                         }
-                        genex_app_server_protocol::TurnPlanStepStatus::Pending => {
+                        ruxex_app_server_protocol::TurnPlanStepStatus::Pending => {
                             eprintln!(
                                 "  {} {}",
                                 "•".style(self.dimmed),
@@ -367,19 +367,19 @@ impl EventProcessor for EventProcessorWithHumanOutput {
                         }
                     }
                 }
-                GenexStatus::Running
+                RuxexStatus::Running
             }
-            ServerNotification::TurnStarted(_) => GenexStatus::Running,
-            _ => GenexStatus::Running,
+            ServerNotification::TurnStarted(_) => RuxexStatus::Running,
+            _ => RuxexStatus::Running,
         }
     }
 
-    fn process_warning(&mut self, message: String) -> GenexStatus {
+    fn process_warning(&mut self, message: String) -> RuxexStatus {
         eprintln!(
             "{} {message}",
             "warning:".style(self.yellow).style(self.bold)
         );
-        GenexStatus::Running
+        RuxexStatus::Running
     }
 
     fn print_final_output(&mut self) {
@@ -418,7 +418,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         {
             eprintln!(
                 "{}\n{}",
-                "genex".style(self.italic).style(self.magenta),
+                "ruxex".style(self.italic).style(self.magenta),
                 message
             );
         }

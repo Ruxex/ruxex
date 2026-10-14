@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-http-client"
+name = "ruxex-http-client"
 version.workspace = true
 
 [dependencies]
 bytes = { workspace = true }
-genex-utils-rustls-provider = { workspace = true }
+ruxex-utils-rustls-provider = { workspace = true }
 futures = { workspace = true }
 http = { workspace = true }
 native-tls = "0.2"
@@ -31,7 +31,7 @@ system-configuration = { workspace = true }
 workspace = true
 
 [dev-dependencies]
-genex-utils-cargo-bin = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 opentelemetry_sdk = { workspace = true }
 pretty_assertions = { workspace = true }
 rcgen = { workspace = true }

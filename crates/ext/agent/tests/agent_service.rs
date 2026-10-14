@@ -1,11 +1,11 @@
 use anyhow::Result;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_agent_extension::AgentInvocation;
-use genex_agent_extension::AgentRunner;
-use genex_protocol::protocol::EventMsg;
+use ruxex_agent_extension::AgentInvocation;
+use ruxex_agent_extension::AgentRunner;
+use ruxex_protocol::protocol::EventMsg;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -21,7 +21,7 @@ async fn starts_resolved_agent_prompt_in_forked_thread() -> Result<()> {
         ]),
     )
     .await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
     let parent_thread_id = test.session_configured.session_id.into();
     let agent_runner = AgentRunner::new(std::sync::Arc::downgrade(&test.thread_manager));
 

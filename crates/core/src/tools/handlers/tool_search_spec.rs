@@ -1,8 +1,8 @@
-use genex_tools::JsonSchema;
-use genex_tools::TOOL_SEARCH_TOOL_NAME;
-use genex_tools::ToolSearchSourceInfo;
-use genex_tools::ToolSpec;
-use genex_utils_string::take_bytes_at_char_boundary;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::TOOL_SEARCH_TOOL_NAME;
+use ruxex_tools::ToolSearchSourceInfo;
+use ruxex_tools::ToolSpec;
+use ruxex_utils_string::take_bytes_at_char_boundary;
 use std::collections::BTreeMap;
 
 const MAX_TOOL_SEARCH_SOURCE_DESCRIPTION_BYTES: usize = 512 * 1024;
@@ -108,7 +108,7 @@ pub(crate) fn create_tool_search_tool(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_tools::JsonSchema;
+    use ruxex_tools::JsonSchema;
     use pretty_assertions::assert_eq;
     use std::collections::BTreeMap;
 

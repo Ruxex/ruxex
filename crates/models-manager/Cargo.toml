@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-models-manager"
+name = "ruxex-models-manager"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_models_manager"
+name = "ruxex_models_manager"
 path = "src/lib.rs"
 
 [lints]
@@ -14,11 +14,11 @@ workspace = true
 
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
-genex-http-client = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-prompts = { workspace = true }
-genex-utils-output-truncation = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-prompts = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["fs", "sync", "time"] }

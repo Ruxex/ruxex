@@ -7,13 +7,13 @@ use core_test_support::responses::ev_completed;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use genex_apply_patch::GENEX_CORE_APPLY_PATCH_ARG1;
+use ruxex_apply_patch::RUXEX_CORE_APPLY_PATCH_ARG1;
 use std::fs;
 use std::process::Command;
 use tempfile::tempdir;
 
-/// While we may add an `apply-patch` subcommand to the `genex` CLI multitool
-/// at some point, we must ensure that the smaller `genex-exec` CLI can still
+/// While we may add an `apply-patch` subcommand to the `ruxex` CLI multitool
+/// at some point, we must ensure that the smaller `ruxex-exec` CLI can still
 /// emulate the `apply_patch` CLI.
 #[test]
 fn test_standalone_exec_cli_can_use_apply_patch() -> anyhow::Result<()> {
@@ -22,8 +22,8 @@ fn test_standalone_exec_cli_can_use_apply_patch() -> anyhow::Result<()> {
     let absolute_path = tmp.path().join(relative_path);
     fs::write(&absolute_path, "original content\n")?;
 
-    Command::new(genex_utils_cargo_bin::cargo_bin("genex-exec")?)
-        .arg(GENEX_CORE_APPLY_PATCH_ARG1)
+    Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-exec")?)
+        .arg(RUXEX_CORE_APPLY_PATCH_ARG1)
         .arg(
             r#"*** Begin Patch
 *** Update File: source.txt
@@ -48,11 +48,11 @@ fn test_standalone_exec_cli_can_use_apply_patch() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_apply_patch_tool() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_genex_exec;
+    use core_test_support::test_ruxex_exec::test_ruxex_exec;
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let tmp_path = test.cwd_path().to_path_buf();
     let add_patch = r#"*** Begin Patch
 *** Add File: test.md
@@ -96,11 +96,11 @@ async fn test_apply_patch_tool() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_genex_exec;
+    use core_test_support::test_ruxex_exec::test_ruxex_exec;
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let freeform_add_patch = r#"*** Begin Patch
 *** Add File: app.py
 +class BaseClass:
@@ -150,10 +150,10 @@ async fn test_apply_patch_freeform_tool() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     use core_test_support::skip_if_no_network;
-    use core_test_support::test_genex_exec::test_genex_exec;
-    use genex_login::AuthDotJson;
-    use genex_login::AuthKeyringBackendKind;
-    use genex_login::save_auth;
+    use core_test_support::test_ruxex_exec::test_ruxex_exec;
+    use ruxex_login::AuthDotJson;
+    use ruxex_login::AuthKeyringBackendKind;
+    use ruxex_login::save_auth;
     use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering;
@@ -164,7 +164,7 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
 
     skip_if_no_network!(Ok(()));
 
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
     let run_dir = test.cwd_path();
     assert!(
         std::process::Command::new("git")
@@ -189,8 +189,8 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     );
     save_auth(
         test.home_path(),
-        &AuthDotJson::new(genex_login::ProviderAuth::api_key("test-api-key")),
-        genex_login::AuthCredentialsStoreMode::File,
+        &AuthDotJson::new(ruxex_login::ProviderAuth::api_key("test-api-key")),
+        ruxex_login::AuthCredentialsStoreMode::File,
         AuthKeyringBackendKind::default(),
     )?;
 
@@ -224,8 +224,8 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
     .await;
 
     test.cmd_with_server(&server)
-        .env_remove("GENEX_API_KEY")
-        .env_remove("GENEX_ANALYTICS_EVENTS_CAPTURE_FILE")
+        .env_remove("RUXEX_API_KEY")
+        .env_remove("RUXEX_ANALYTICS_EVENTS_CAPTURE_FILE")
         .arg("--skip-git-repo-check")
         .arg("-s")
         .arg("danger-full-access")
@@ -279,13 +279,13 @@ async fn shutdown_flushes_completed_turn_and_file_diff() -> anyhow::Result<()> {
         deliveries.load(Ordering::Acquire)
     );
     assert!(
-        event_types.iter().any(|event| event == "genex_turn_event"),
+        event_types.iter().any(|event| event == "ruxex_turn_event"),
         "no completed event was delivered; request paths: {request_paths:?}"
     );
     assert!(
         event_types
             .iter()
-            .any(|event| event == "genex_accepted_line_fingerprints"),
+            .any(|event| event == "ruxex_accepted_line_fingerprints"),
         "no accepted-line event was delivered; request paths: {request_paths:?}"
     );
 

@@ -13,11 +13,11 @@ use std::time::Instant;
 
 use futures::Stream;
 use futures::StreamExt;
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::WaitRequest;
-use genex_code_mode_protocol::grpc as proto;
-use genex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
-use genex_protocol::protocol::W3cTraceContext;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::WaitRequest;
+use ruxex_code_mode_protocol::grpc as proto;
+use ruxex_code_mode_protocol::grpc::code_mode_host_server::CodeModeHost;
+use ruxex_protocol::protocol::W3cTraceContext;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::Request;
@@ -303,7 +303,7 @@ impl CodeModeHost for GrpcCodeModeHost {
         let request = request.into_inner();
         let open_session_span = tracing::info_span!("code_mode_host.grpc.open_session");
         if let Some(trace) = trace.as_ref() {
-            genex_otel::set_parent_from_w3c_trace_context(&open_session_span, trace);
+            ruxex_otel::set_parent_from_w3c_trace_context(&open_session_span, trace);
         }
         Box::pin(
             self.open_session_request(request)
@@ -373,10 +373,10 @@ impl CodeModeHost for GrpcCodeModeHost {
             call_id = %request.tool_call_id,
         );
         if let Some(trace) = trace.as_ref() {
-            genex_otel::set_parent_from_w3c_trace_context(&execute_span, trace);
+            ruxex_otel::set_parent_from_w3c_trace_context(&execute_span, trace);
         }
         let callback_traceparent =
-            genex_otel::span_w3c_trace_context(&execute_span).and_then(|trace| trace.traceparent);
+            ruxex_otel::span_w3c_trace_context(&execute_span).and_then(|trace| trace.traceparent);
         Box::pin(
             self.execute_request(request, callback_traceparent)
                 .instrument(execute_span),

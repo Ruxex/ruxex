@@ -3,23 +3,23 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::ConfigLayerEntry;
-use genex_config::ConfigLayerSource;
-use genex_config::ConfigLayerStack;
-use genex_config::HookEventsToml;
-use genex_config::HookHandlerConfig;
-use genex_config::HookStateToml;
-use genex_config::HooksFile;
-use genex_config::ManagedHooksRequirementsToml;
-use genex_config::MatcherGroup;
-use genex_config::RequirementSource;
-use genex_config::TomlValue;
-use genex_config::version_for_toml;
-use genex_plugin::PluginHookSource;
-use genex_plugin::is_allowlisted_bundled_cleanup_hook;
-use genex_protocol::protocol::HookEventName;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::ConfigLayerEntry;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerStack;
+use ruxex_config::HookEventsToml;
+use ruxex_config::HookHandlerConfig;
+use ruxex_config::HookStateToml;
+use ruxex_config::HooksFile;
+use ruxex_config::ManagedHooksRequirementsToml;
+use ruxex_config::MatcherGroup;
+use ruxex_config::RequirementSource;
+use ruxex_config::TomlValue;
+use ruxex_config::version_for_toml;
+use ruxex_plugin::PluginHookSource;
+use ruxex_plugin::is_allowlisted_bundled_cleanup_hook;
+use ruxex_protocol::protocol::HookEventName;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -35,8 +35,8 @@ use crate::events::session_end::SESSION_END_DEFAULT_TIMEOUT_SEC;
 use crate::events::session_end::SESSION_END_MAX_TIMEOUT_SEC;
 use crate::output_spill::AdditionalContextLimit;
 use crate::output_spill::DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT;
-use genex_protocol::protocol::HookSource;
-use genex_protocol::protocol::HookTrustStatus;
+use ruxex_protocol::protocol::HookSource;
+use ruxex_protocol::protocol::HookTrustStatus;
 
 pub(crate) struct DiscoveryResult {
     pub handlers: Vec<ConfiguredHandler>,
@@ -400,9 +400,9 @@ fn config_toml_source_path(layer: &ConfigLayerEntry) -> AbsolutePathBuf {
         ConfigLayerSource::PackagedDefaults { file }
         | ConfigLayerSource::System { file }
         | ConfigLayerSource::User { file, .. } => file.clone(),
-        ConfigLayerSource::Project { dot_genex_folder } => layer
+        ConfigLayerSource::Project { dot_ruxex_folder } => layer
             .hooks_config_folder()
-            .unwrap_or_else(|| dot_genex_folder.clone())
+            .unwrap_or_else(|| dot_ruxex_folder.clone())
             .join(CONFIG_TOML_FILE),
         ConfigLayerSource::Mdm { domain, key } => {
             synthetic_layer_path(&format!("<mdm:{domain}:{key}>/{CONFIG_TOML_FILE}"))
@@ -465,7 +465,7 @@ fn append_matcher_groups(
     warnings: &mut Vec<String>,
     display_order: &mut i64,
     source: &mut HookHandlerSource<'_>,
-    event_name: genex_protocol::protocol::HookEventName,
+    event_name: ruxex_protocol::protocol::HookEventName,
     groups: Vec<MatcherGroup>,
 ) {
     for (group_index, group) in groups.into_iter().enumerate() {
@@ -516,11 +516,11 @@ fn append_matcher_groups(
                     }
                     let additional_context_limit = if matches!(
                         event_name,
-                        genex_protocol::protocol::HookEventName::PreToolUse
-                            | genex_protocol::protocol::HookEventName::PostToolUse
-                            | genex_protocol::protocol::HookEventName::SessionStart
-                            | genex_protocol::protocol::HookEventName::UserPromptSubmit
-                            | genex_protocol::protocol::HookEventName::SubagentStart
+                        ruxex_protocol::protocol::HookEventName::PreToolUse
+                            | ruxex_protocol::protocol::HookEventName::PostToolUse
+                            | ruxex_protocol::protocol::HookEventName::SessionStart
+                            | ruxex_protocol::protocol::HookEventName::UserPromptSubmit
+                            | ruxex_protocol::protocol::HookEventName::SubagentStart
                     ) {
                         additional_context_limit
                     } else {
@@ -749,7 +749,7 @@ struct NormalizedHookIdentity {
 }
 
 fn hook_hash(
-    event_name: genex_protocol::protocol::HookEventName,
+    event_name: ruxex_protocol::protocol::HookEventName,
     matcher: Option<&str>,
     group: &MatcherGroup,
     normalized_handler: &HookHandlerConfig,
@@ -826,16 +826,16 @@ fn hook_source_for_requirement_source(source: Option<&RequirementSource>) -> Hoo
 
 #[cfg(test)]
 mod tests {
-    use genex_config::ConfigLayerEntry;
-    use genex_config::ConfigLayerSource;
-    use genex_config::HookEventsToml;
-    use genex_config::RequirementSource;
-    use genex_protocol::protocol::HookEventName;
-    use genex_protocol::protocol::HookExecutionMode;
-    use genex_protocol::protocol::HookSource;
-    use genex_utils_absolute_path::AbsolutePathBuf;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_config::ConfigLayerEntry;
+    use ruxex_config::ConfigLayerSource;
+    use ruxex_config::HookEventsToml;
+    use ruxex_config::RequirementSource;
+    use ruxex_protocol::protocol::HookEventName;
+    use ruxex_protocol::protocol::HookExecutionMode;
+    use ruxex_protocol::protocol::HookSource;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
 
     use super::ConfiguredHandler;
@@ -846,11 +846,11 @@ mod tests {
     use super::normalize_command_hook;
     use crate::output_spill::AdditionalContextLimit;
     use crate::output_spill::DEFAULT_HOOK_OUTPUT_TOKEN_LIMIT;
-    use genex_config::HookHandlerConfig;
-    use genex_config::HookStateToml;
-    use genex_config::MatcherGroup;
-    use genex_config::TomlValue;
-    use genex_protocol::protocol::HookTrustStatus;
+    use ruxex_config::HookHandlerConfig;
+    use ruxex_config::HookStateToml;
+    use ruxex_config::MatcherGroup;
+    use ruxex_config::TomlValue;
+    use ruxex_protocol::protocol::HookTrustStatus;
 
     fn source_path() -> AbsolutePathBuf {
         test_path_buf("/tmp/hooks.json").abs()
@@ -900,7 +900,7 @@ mod tests {
         let source = RequirementSource::Composite {
             sources: vec![
                 RequirementSource::SystemRequirementsToml {
-                    file: test_path_buf("/etc/genex/requirements.toml").abs(),
+                    file: test_path_buf("/etc/ruxex/requirements.toml").abs(),
                 },
                 RequirementSource::EnterpriseManaged {
                     id: "layer-1".to_string(),
@@ -1637,8 +1637,8 @@ mod tests {
 
     #[test]
     fn hook_metadata_for_config_layer_source_discards_source_details() {
-        let config_file = test_path_buf("/tmp/.genex/config.toml").abs();
-        let dot_genex_folder = test_path_buf("/tmp/worktree/.genex").abs();
+        let config_file = test_path_buf("/tmp/.ruxex/config.toml").abs();
+        let dot_ruxex_folder = test_path_buf("/tmp/worktree/.ruxex").abs();
 
         assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::System {
@@ -1655,13 +1655,13 @@ mod tests {
         );
         assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::Project {
-                dot_genex_folder
+                dot_ruxex_folder
             }),
             (HookSource::Project, false),
         );
         assert_eq!(
             super::hook_metadata_for_config_layer_source(&ConfigLayerSource::Mdm {
-                domain: "com.genex.genex".to_string(),
+                domain: "com.ruxex.ruxex".to_string(),
                 key: "config".to_string(),
             }),
             (HookSource::Mdm, true),

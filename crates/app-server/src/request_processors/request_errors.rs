@@ -1,9 +1,9 @@
 use super::*;
-use genex_protocol::error::GenexErrorDetails;
+use ruxex_protocol::error::RuxexErrorDetails;
 
-pub(super) fn environment_selection_error(err: GenexErr) -> JSONRPCErrorError {
+pub(super) fn environment_selection_error(err: RuxexErr) -> JSONRPCErrorError {
     match err.details() {
-        GenexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
+        RuxexErrorDetails::InvalidRequest(message) => invalid_request(message.clone()),
         _ => internal_error(format!("failed to validate environment selections: {err}")),
     }
 }

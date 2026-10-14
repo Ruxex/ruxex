@@ -7,8 +7,8 @@ use crate::tools::handlers::new_context_window_spec::NEW_CONTEXT_WINDOW_TOOL_NAM
 use crate::tools::handlers::new_context_window_spec::create_new_context_window_tool;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 
 pub(crate) const NEW_CONTEXT_WINDOW_MESSAGE: &str =
     "A new context window will start without summarizing conversation history.";
@@ -24,7 +24,7 @@ impl ToolExecutor<ToolInvocation> for NewContextWindowHandler {
         create_new_context_window_tool()
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

@@ -4,16 +4,16 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeSessionDelegate;
-use genex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
-use genex_code_mode_protocol::ExecuteRequest;
-use genex_code_mode_protocol::RuntimeResponse;
-use genex_code_mode_protocol::StartedCell;
-use genex_code_mode_protocol::WaitOutcome;
-use genex_code_mode_protocol::WaitRequest;
-use genex_code_mode_protocol::grpc;
-use genex_protocol::protocol::W3cTraceContext;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::DEFAULT_EXEC_YIELD_TIME_MS;
+use ruxex_code_mode_protocol::ExecuteRequest;
+use ruxex_code_mode_protocol::RuntimeResponse;
+use ruxex_code_mode_protocol::StartedCell;
+use ruxex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::WaitRequest;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_protocol::protocol::W3cTraceContext;
 use tokio::sync::OwnedMutexGuard;
 use tokio::sync::oneshot;
 use tracing::Instrument;
@@ -79,7 +79,7 @@ impl SessionInner {
             execution.id = %execution_id,
             call_id = %request.tool_call_id,
         );
-        let trace = genex_otel::span_w3c_trace_context(&execute_span);
+        let trace = ruxex_otel::span_w3c_trace_context(&execute_span);
         let request = conversion::execute_request(&self.id, execution_id.clone(), request)?;
         self.state
             .lock()

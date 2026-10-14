@@ -35,7 +35,7 @@ use crate::upstream::UpstreamClient;
 use crate::upstream::proxy_for_connect;
 use anyhow::Context as _;
 use anyhow::Result;
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use rama_core::Layer;
 use rama_core::Service;
 use rama_core::error::ErrorExt as _;

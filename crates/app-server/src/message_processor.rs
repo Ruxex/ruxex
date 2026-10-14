@@ -48,36 +48,36 @@ use crate::thread_state::ConnectionCapabilities;
 use crate::thread_state::ThreadStateManager;
 use crate::transport::AppServerTransport;
 use crate::turn_cost_worker::TurnCostWorker;
-use genex_app_server_protocol::ClientNotification;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::ExperimentalApi;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCRequest;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::UserVerificationCancelResponse;
-use genex_app_server_protocol::experimental_required_message;
-use genex_arg0::Arg0DispatchPaths;
-use genex_code_mode::CodeModeSessionProvider;
-use genex_core::ThreadManager;
-use genex_core::config::Config;
-use genex_core::config::ThreadStoreConfig;
-use genex_exec_server::EnvironmentManager;
-use genex_extension_api::TurnStartAdmission;
-use genex_goal_extension::GoalService;
-use genex_home::GenexHomeUserInstructionsProvider;
-use genex_protocol::ThreadId;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_queue_extension::QueuedItemService;
-use genex_rollout::StateDbHandle;
-use genex_state::log_db::LogDbLayer;
-use genex_thread_store::LocalQueueStore;
-use genex_thread_store::QueueStore;
+use ruxex_app_server_protocol::ClientNotification;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ClientResponsePayload;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::ExperimentalApi;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCRequest;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::UserVerificationCancelResponse;
+use ruxex_app_server_protocol::experimental_required_message;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_code_mode::CodeModeSessionProvider;
+use ruxex_core::ThreadManager;
+use ruxex_core::config::Config;
+use ruxex_core::config::ThreadStoreConfig;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_extension_api::TurnStartAdmission;
+use ruxex_goal_extension::GoalService;
+use ruxex_home::RuxexHomeUserInstructionsProvider;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_queue_extension::QueuedItemService;
+use ruxex_rollout::StateDbHandle;
+use ruxex_state::log_db::LogDbLayer;
+use ruxex_thread_store::LocalQueueStore;
+use ruxex_thread_store::QueueStore;
 use tokio::sync::Mutex;
 use tokio::sync::Semaphore;
 use tokio::sync::broadcast;
@@ -265,7 +265,7 @@ impl MessageProcessor {
         // The thread store is intentionally process-scoped. Config reloads can
         // affect per-thread behavior, but they must not move newly started,
         // resumed, or forked threads to a different persistence backend/root.
-        let thread_store = genex_core::thread_store_from_config(config.as_ref(), state_db.clone());
+        let thread_store = ruxex_core::thread_store_from_config(config.as_ref(), state_db.clone());
         // Queue persistence requires SQLite, so in-memory thread stores and
         // app servers without a state database do not have a queue backend.
         let queue_store: Option<Arc<dyn QueueStore>> = match &config.experimental_thread_store {
@@ -277,8 +277,8 @@ impl MessageProcessor {
         let environment_manager_for_requests = Arc::clone(&environment_manager);
         let environment_manager_for_extensions = Arc::clone(&environment_manager);
         let restriction_product = session_source.restriction_product();
-        let executor_skill_provider: Arc<dyn genex_skills_extension::SkillProvider> = Arc::new(
-            genex_skills_extension::ExecutorSkillProvider::new_with_restriction_product(
+        let executor_skill_provider: Arc<dyn ruxex_skills_extension::SkillProvider> = Arc::new(
+            ruxex_skills_extension::ExecutorSkillProvider::new_with_restriction_product(
                 Arc::clone(&environment_manager_for_extensions),
                 restriction_product,
             ),
@@ -300,7 +300,7 @@ impl MessageProcessor {
             let manager = ThreadManager::new_with_provider(
                 config.as_ref(),
                 Arc::clone(&provider),
-                genex_core::build_models_manager_with_provider(
+                ruxex_core::build_models_manager_with_provider(
                     config.as_ref(),
                     Arc::clone(&provider),
                 ),
@@ -317,12 +317,12 @@ impl MessageProcessor {
                     queue_service: queue_service.clone(),
                     turn_start_admission: Some(Arc::clone(&turn_start_admission)),
                 }),
-                Arc::new(GenexHomeUserInstructionsProvider::new(
-                    config.genex_home.clone(),
+                Arc::new(RuxexHomeUserInstructionsProvider::new(
+                    config.ruxex_home.clone(),
                 )),
-                genex_core::passthrough_image_store(),
+                ruxex_core::passthrough_image_store(),
                 Arc::clone(&thread_store),
-                genex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
+                ruxex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
                 installation_id,
                 Some(app_server_attestation_provider(
                     outgoing.clone(),
@@ -344,7 +344,7 @@ impl MessageProcessor {
         let turn_cost_worker = TurnCostWorker::spawn(Arc::clone(&config));
         let skills_watcher = SkillsWatcher::new(
             thread_manager.skills_service(),
-            &config.genex_home,
+            &config.ruxex_home,
             outgoing.clone(),
         );
 
@@ -554,16 +554,16 @@ impl MessageProcessor {
             Arc::clone(&self.outgoing),
             request_context.clone(),
             async {
-                let genex_request = deserialize_client_request(request);
-                let result = match genex_request {
-                    Ok(genex_request) => {
+                let ruxex_request = deserialize_client_request(request);
+                let result = match ruxex_request {
+                    Ok(ruxex_request) => {
                         // Websocket callers finalize outbound readiness in lib.rs after mirroring
                         // session state into outbound state and sending initialize notifications to
                         // this specific connection. Passing `None` avoids marking the connection
                         // ready too early from inside the shared request handler.
                         self.handle_client_request(
                             request_id.clone(),
-                            genex_request,
+                            ruxex_request,
                             Arc::clone(&session),
                             /*outbound_initialized*/ None,
                             request_context.clone(),
@@ -666,13 +666,13 @@ impl MessageProcessor {
 
     pub(crate) async fn daemon_recovery_snapshot(
         &self,
-    ) -> genex_app_server_transport::daemon_recovery::RecoverySnapshot {
+    ) -> ruxex_app_server_transport::daemon_recovery::RecoverySnapshot {
         self.thread_processor.daemon_recovery_snapshot().await
     }
 
     pub(crate) async fn restore_daemon_threads(
         &self,
-        mut snapshot: genex_app_server_transport::daemon_recovery::RecoverySnapshot,
+        mut snapshot: ruxex_app_server_transport::daemon_recovery::RecoverySnapshot,
     ) {
         for thread_id in snapshot.loaded {
             let Ok(_permit) = self.turn_admission.admit() else {
@@ -682,7 +682,7 @@ impl MessageProcessor {
                 .thread_processor
                 .thread_resume(
                     ThreadResumeTarget::DaemonRecovery(snapshot.interrupted.remove(&thread_id)),
-                    genex_app_server_protocol::ThreadResumeParams {
+                    ruxex_app_server_protocol::ThreadResumeParams {
                         thread_id: thread_id.clone(),
                         exclude_turns: true,
                         ..Default::default()
@@ -819,7 +819,7 @@ impl MessageProcessor {
     async fn handle_client_request(
         self: &Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        genex_request: ClientRequest,
+        ruxex_request: ClientRequest,
         session: Arc<ConnectionSessionState>,
         // `Some(...)` means the caller wants initialize to immediately mark the
         // connection outbound-ready. Websocket JSON-RPC calls pass `None` so
@@ -828,7 +828,7 @@ impl MessageProcessor {
         request_context: RequestContext,
     ) -> Result<(), JSONRPCErrorError> {
         let connection_id = connection_request_id.connection_id;
-        if let ClientRequest::Initialize { request_id, params } = genex_request {
+        if let ClientRequest::Initialize { request_id, params } = ruxex_request {
             let connection_initialized = self
                 .initialize_processor
                 .initialize(
@@ -848,7 +848,7 @@ impl MessageProcessor {
 
         self.dispatch_initialized_client_request(
             connection_request_id,
-            genex_request,
+            ruxex_request,
             session,
             request_context,
         )
@@ -858,7 +858,7 @@ impl MessageProcessor {
     async fn dispatch_initialized_client_request(
         self: &Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        genex_request: ClientRequest,
+        ruxex_request: ClientRequest,
         session: Arc<ConnectionSessionState>,
         request_context: RequestContext,
     ) -> Result<(), JSONRPCErrorError> {
@@ -866,13 +866,13 @@ impl MessageProcessor {
             return Err(invalid_request("Not initialized"));
         }
 
-        if let Some(reason) = genex_request.experimental_reason()
+        if let Some(reason) = ruxex_request.experimental_reason()
             && !session.experimental_api_enabled()
         {
             return Err(invalid_request(experimental_required_message(reason)));
         }
         let connection_id = connection_request_id.connection_id;
-        let (turn_admission, recheck_turn_admission) = match &genex_request {
+        let (turn_admission, recheck_turn_admission) = match &ruxex_request {
             ClientRequest::ThreadStart { .. }
             | ClientRequest::ThreadFork { .. }
             | ClientRequest::ThreadResume { .. }
@@ -890,7 +890,7 @@ impl MessageProcessor {
             _ => (None, false),
         };
 
-        let serialization_scope = genex_request.serialization_scope();
+        let serialization_scope = ruxex_request.serialization_scope();
         let error_request_id = connection_request_id.clone();
         let rpc_gate = Arc::clone(&session.rpc_gate);
         let processor = Arc::clone(self);
@@ -909,7 +909,7 @@ impl MessageProcessor {
                 // Keep queued requests small to avoid large stack temporaries during construction.
                 let result = Box::pin(processor_for_request.handle_initialized_client_request(
                     connection_request_id,
-                    genex_request,
+                    ruxex_request,
                     request_context,
                     session,
                 ))
@@ -937,7 +937,7 @@ impl MessageProcessor {
     async fn handle_initialized_client_request(
         self: Arc<Self>,
         connection_request_id: ConnectionRequestId,
-        genex_request: ClientRequest,
+        ruxex_request: ClientRequest,
         request_context: RequestContext,
         session: Arc<ConnectionSessionState>,
     ) -> Result<(), JSONRPCErrorError> {
@@ -947,9 +947,9 @@ impl MessageProcessor {
         let client_mcp_extensions = session.client_mcp_extensions();
         let request_id = ConnectionRequestId {
             connection_id,
-            request_id: genex_request.id().clone(),
+            request_id: ruxex_request.id().clone(),
         };
-        let result: Result<Option<ClientResponsePayload>, JSONRPCErrorError> = match genex_request {
+        let result: Result<Option<ClientResponsePayload>, JSONRPCErrorError> = match ruxex_request {
             ClientRequest::Initialize { .. } => {
                 panic!("Initialize should be handled before initialized request dispatch");
             }

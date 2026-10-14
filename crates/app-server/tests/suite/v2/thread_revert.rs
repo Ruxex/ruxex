@@ -6,43 +6,43 @@ use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_request_user_input_sse_response;
 use app_test_support::write_models_cache_with_models;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItemsListParams;
-use genex_app_server_protocol::ThreadItemsListResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadRevertParams;
-use genex_app_server_protocol::ThreadRevertResponse;
-use genex_app_server_protocol::ThreadRevertedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadTurnsListResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_rollout::RolloutItem;
-use genex_rollout::read_session_meta_line;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItemsListParams;
+use ruxex_app_server_protocol::ThreadItemsListResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadRevertParams;
+use ruxex_app_server_protocol::ThreadRevertResponse;
+use ruxex_app_server_protocol::ThreadRevertedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadTurnsListResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::read_session_meta_line;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::load_default_config_for_test;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -56,16 +56,16 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_revert_preserves_model_selected_multi_agent_version(restart: bool) -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::MultiAgentV2)
-        .write(genex_home.path())?;
-    let config = load_default_config_for_test(&genex_home).await;
-    let mut model = genex_core::test_support::construct_model_info_offline("mock-model", &config);
+        .write(ruxex_home.path())?;
+    let config = load_default_config_for_test(&ruxex_home).await;
+    let mut model = ruxex_core::test_support::construct_model_info_offline("mock-model", &config);
     model.multi_agent_version = Some(MultiAgentVersion::V2);
-    write_models_cache_with_models(genex_home.path(), vec![model]).await?;
+    write_models_cache_with_models(ruxex_home.path(), vec![model]).await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -98,7 +98,7 @@ async fn thread_revert_preserves_model_selected_multi_agent_version(restart: boo
         // Restart before another turn can persist a replacement TurnContext.
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build()
             .await?;
         initialize_experimental(&mut mcp).await?;
@@ -151,7 +151,7 @@ async fn thread_revert_preserves_model_selected_multi_agent_version(restart: boo
 #[tokio::test]
 async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let updated_workspace = TempDir::new()?;
     let saved_cwd = AbsolutePathBuf::from_absolute_path(updated_workspace.path().canonicalize()?)?
         .into_path_buf();
@@ -160,10 +160,10 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
         AbsolutePathBuf::from_absolute_path(&saved_cwd)?,
         AbsolutePathBuf::from_absolute_path(extra_workspace.path().canonicalize()?)?,
     ];
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     // This fixture checks host-native cwd and workspace restoration across fork and revert.
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -197,7 +197,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
             request_id,
             params: ThreadForkParams {
                 thread_id: parent.id.clone(),
-                cwd: Some(genex_home.path().to_string_lossy().into_owned()),
+                cwd: Some(ruxex_home.path().to_string_lossy().into_owned()),
                 ..Default::default()
             },
         })
@@ -213,7 +213,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
     let inherited_revert_cutoff =
         std::fs::read_to_string(parent.path.as_ref().expect("parent rollout"))?
             .lines()
-            .map(genex_rollout::parse_rollout_line)
+            .map(ruxex_rollout::parse_rollout_line)
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .find_map(|line| match line.item {
@@ -276,7 +276,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
 
         mcp.shutdown_gracefully().await?;
         mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .without_auto_env()
             .build()
             .await?;
@@ -315,7 +315,7 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
             .expect("resumed model request")
             .body_json::<Value>()?;
         let metadata: Value = serde_json::from_str(
-            body["client_metadata"]["x-genex-turn-metadata"]
+            body["client_metadata"]["x-ruxex-turn-metadata"]
                 .as_str()
                 .expect("turn metadata"),
         )?;
@@ -333,10 +333,10 @@ async fn thread_revert_preserves_fork_cutoff_after_cold_resume() -> Result<()> {
 #[tokio::test]
 async fn thread_revert_replaces_paginated_history_before_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -420,7 +420,7 @@ async fn thread_revert_replaces_paginated_history_before_turn() -> Result<()> {
 
     mcp.shutdown_gracefully().await?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;
@@ -518,7 +518,7 @@ async fn thread_revert_interrupts_active_turn_and_keeps_thread_loaded() -> Resul
     .await;
     MockResponsesConfig::new(&server.uri()).write(home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build()
         .await?;
     initialize_experimental(&mut mcp).await?;

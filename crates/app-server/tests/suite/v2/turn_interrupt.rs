@@ -7,20 +7,20 @@ use app_test_support::create_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ServerRequestResolvedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ServerRequestResolvedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::skip_if_remote;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -47,8 +47,8 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "10".to_string()];
 
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -65,10 +65,10 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("workspace-write")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&genex_home)?;
+        .write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(&genex_home)
+        .with_ruxex_home(&ruxex_home)
         .build_initialized()
         .await?;
 
@@ -127,8 +127,8 @@ async fn turn_interrupt_aborts_running_turn() -> Result<()> {
 #[tokio::test]
 async fn turn_interrupt_rejects_completed_turn() -> Result<()> {
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
 
     let server = create_mock_responses_server_sequence_unchecked(vec![
         create_final_assistant_message_sse_response("done")?,
@@ -137,10 +137,10 @@ async fn turn_interrupt_rejects_completed_turn() -> Result<()> {
     MockResponsesConfig::new(&server.uri())
         .with_sandbox_mode("workspace-write")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&genex_home)?;
+        .write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(&genex_home)
+        .with_ruxex_home(&ruxex_home)
         .build_initialized()
         .await?;
 
@@ -214,8 +214,8 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
     ];
 
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -230,10 +230,10 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
         .with_root_config(r#"approvals_reviewer = "user""#)
-        .write(&genex_home)?;
+        .write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(&genex_home)
+        .with_ruxex_home(&ruxex_home)
         .build_initialized()
         .await?;
 
@@ -255,7 +255,7 @@ async fn turn_interrupt_resolves_pending_command_approval_request() -> Result<()
                     text_elements: Vec::new(),
                 }],
                 cwd: Some(working_directory),
-                approval_policy: Some(genex_app_server_protocol::AskForApproval::UnlessTrusted),
+                approval_policy: Some(ruxex_app_server_protocol::AskForApproval::UnlessTrusted),
                 ..Default::default()
             },
         })

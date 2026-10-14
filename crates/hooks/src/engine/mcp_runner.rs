@@ -15,7 +15,7 @@ use crate::mcp::HookMcpExecutor;
 
 /// Expands an MCP argument template against this hook event and invokes the configured tool.
 #[tracing::instrument(
-    name = "genex.hooks.mcp_tool",
+    name = "ruxex.hooks.mcp_tool",
     level = "trace",
     skip_all,
     fields(

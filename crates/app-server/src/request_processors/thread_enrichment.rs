@@ -2,13 +2,13 @@ use super::apply_live_thread_settings;
 use super::thread_input::can_accept_direct_input;
 use crate::thread_status::ThreadWatchManager;
 use crate::thread_status::resolve_thread_status;
-use genex_app_server_protocol::SessionSource;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadStatus;
-use genex_core::ThreadManager;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_app_server_protocol::SessionSource;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_core::ThreadManager;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::SubAgentSource;
 
 pub(super) async fn enrich_loaded_threads<T>(
     thread_manager: &ThreadManager,

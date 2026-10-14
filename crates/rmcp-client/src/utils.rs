@@ -1,8 +1,8 @@
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_config::types::McpServerEnvVar;
-use genex_network_proxy::CUSTOM_CA_ENV_KEYS;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_config::types::McpServerEnvVar;
+use ruxex_network_proxy::CUSTOM_CA_ENV_KEYS;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 
-pub(crate) const MCP_USER_AGENT: &str = concat!("genex-mcp-client/", env!("CARGO_PKG_VERSION"));
+pub(crate) const MCP_USER_AGENT: &str = concat!("ruxex-mcp-client/", env!("CARGO_PKG_VERSION"));
 
 pub(crate) fn create_env_for_mcp_server(
     extra_env: Option<HashMap<OsString, OsString>>,
@@ -326,7 +326,7 @@ mod tests {
     fn create_env_preserves_path_when_it_is_not_utf8() {
         use std::os::unix::ffi::OsStrExt;
 
-        let raw_path = std::ffi::OsStr::from_bytes(b"/tmp/genex-\xFF/bin");
+        let raw_path = std::ffi::OsStr::from_bytes(b"/tmp/ruxex-\xFF/bin");
         let expected = raw_path.to_os_string();
         let _guard = EnvVarGuard::set("PATH", raw_path);
 

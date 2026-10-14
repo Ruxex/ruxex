@@ -2,36 +2,36 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use genex_config::McpServerConfig;
-use genex_config::McpServerOAuthConfig;
-use genex_config::McpServerTransportConfig;
-use genex_config::load_global_mcp_servers;
-use genex_login::default_client::is_first_party_originator;
-use genex_login::default_client::originator;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::request_user_input::RequestUserInputArgs;
-use genex_protocol::request_user_input::RequestUserInputQuestion;
-use genex_protocol::request_user_input::RequestUserInputQuestionOption;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_rmcp_client::McpOAuthClientRegistration;
-use genex_rmcp_client::OAuthDiscoveryTimeout;
-use genex_rmcp_client::StreamableHttpRedirectMode;
-use genex_rmcp_client::perform_oauth_login;
+use ruxex_config::McpServerConfig;
+use ruxex_config::McpServerOAuthConfig;
+use ruxex_config::McpServerTransportConfig;
+use ruxex_config::load_global_mcp_servers;
+use ruxex_login::default_client::is_first_party_originator;
+use ruxex_login::default_client::originator;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::request_user_input::RequestUserInputArgs;
+use ruxex_protocol::request_user_input::RequestUserInputQuestion;
+use ruxex_protocol::request_user_input::RequestUserInputQuestionOption;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_rmcp_client::McpOAuthClientRegistration;
+use ruxex_rmcp_client::OAuthDiscoveryTimeout;
+use ruxex_rmcp_client::StreamableHttpRedirectMode;
+use ruxex_rmcp_client::perform_oauth_login;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 
 use crate::config::edit::ConfigEditsBuilder;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use genex_mcp::ElicitationReviewerHandle;
-use genex_mcp::McpOAuthLoginSupport;
-use genex_mcp::McpPermissionPromptAutoApproveContext;
-use genex_mcp::mcp_permission_prompt_is_auto_approved;
-use genex_mcp::oauth_login_support;
-use genex_mcp::resolve_oauth_scopes;
-use genex_mcp::should_retry_without_scopes;
-use genex_skills::SkillMetadata;
-use genex_skills::SkillToolDependency;
+use ruxex_mcp::ElicitationReviewerHandle;
+use ruxex_mcp::McpOAuthLoginSupport;
+use ruxex_mcp::McpPermissionPromptAutoApproveContext;
+use ruxex_mcp::mcp_permission_prompt_is_auto_approved;
+use ruxex_mcp::oauth_login_support;
+use ruxex_mcp::resolve_oauth_scopes;
+use ruxex_mcp::should_retry_without_scopes;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillToolDependency;
 
 const SKILL_MCP_DEPENDENCY_PROMPT_ID: &str = "skill_mcp_dependency_install";
 const MCP_DEPENDENCY_OPTION_INSTALL: &str = "Install";
@@ -54,7 +54,7 @@ pub(crate) async fn maybe_prompt_and_install_mcp_dependencies(
     if mentioned_skills.is_empty()
         || !config
             .features
-            .enabled(genex_features::Feature::SkillMcpDependencyInstall)
+            .enabled(ruxex_features::Feature::SkillMcpDependencyInstall)
     {
         return;
     }
@@ -123,8 +123,8 @@ async fn maybe_install_mcp_dependencies(
     }
 
     let config = turn_context.config.as_ref();
-    let genex_home = config.genex_home.clone();
-    let mut servers = match load_global_mcp_servers(&genex_home).await {
+    let ruxex_home = config.ruxex_home.clone();
+    let mut servers = match load_global_mcp_servers(&ruxex_home).await {
         Ok(servers) => servers,
         Err(err) => {
             warn!("failed to load MCP servers while installing skill dependencies: {err}");
@@ -145,7 +145,7 @@ async fn maybe_install_mcp_dependencies(
         return;
     }
 
-    if let Err(err) = ConfigEditsBuilder::new(&genex_home)
+    if let Err(err) = ConfigEditsBuilder::new(&ruxex_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await
@@ -412,7 +412,7 @@ fn mcp_dependency_to_server_config(
                 env_http_headers: None,
                 http_headers_helper: None,
             },
-            environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            environment_id: ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
             enabled: true,
             required: false,
             supports_parallel_tool_calls: false,
@@ -451,7 +451,7 @@ fn mcp_dependency_to_server_config(
                 env_vars: Vec::new(),
                 cwd: None,
             },
-            environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            environment_id: ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
             enabled: true,
             required: false,
             supports_parallel_tool_calls: false,
@@ -532,9 +532,9 @@ fn collect_missing_mcp_dependencies(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_protocol::protocol::SkillScope;
-    use genex_skills::SkillDependencies;
-    use genex_skills::SkillToolDependency;
+    use ruxex_protocol::protocol::SkillScope;
+    use ruxex_skills::SkillDependencies;
+    use ruxex_skills::SkillToolDependency;
     use std::collections::HashMap;
 
     fn dependency(transport: Option<&str>, value: &str) -> SkillToolDependency {
@@ -557,7 +557,7 @@ mod tests {
             interface: None,
             dependencies: Some(SkillDependencies { tools }),
             policy: None,
-            path_to_skills_md: genex_utils_absolute_path::AbsolutePathBuf::try_from(
+            path_to_skills_md: ruxex_utils_absolute_path::AbsolutePathBuf::try_from(
                 "/tmp/skill/SKILL.md",
             )
             .expect("absolute skill path"),

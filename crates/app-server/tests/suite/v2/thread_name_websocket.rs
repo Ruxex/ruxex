@@ -14,15 +14,15 @@ use anyhow::Result;
 use app_test_support::create_fake_rollout_with_text_elements;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
-use genex_app_server_protocol::JSONRPCNotification;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::ThreadNameUpdatedNotification;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSetNameParams;
-use genex_app_server_protocol::ThreadSetNameResponse;
-use genex_core::find_thread_name_by_id;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::JSONRPCNotification;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::ThreadNameUpdatedNotification;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSetNameParams;
+use ruxex_app_server_protocol::ThreadSetNameResponse;
+use ruxex_core::find_thread_name_by_id;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use tempfile::TempDir;
@@ -32,11 +32,11 @@ use tokio::time::timeout;
 #[tokio::test]
 async fn thread_name_updated_broadcasts_for_loaded_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
-    let conversation_id = create_rollout(genex_home.path(), "2025-01-05T12-00-00")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
+    let conversation_id = create_rollout(ruxex_home.path(), "2025-01-05T12-00-00")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
 
     let result = async {
         let mut ws1 = connect_websocket(bind_addr).await?;
@@ -80,7 +80,7 @@ async fn thread_name_updated_broadcasts_for_loaded_threads() -> Result<()> {
         let ws2_notification =
             read_notification_for_method(&mut ws2, "thread/name/updated").await?;
         assert_thread_name_updated(ws2_notification, &conversation_id, renamed)?;
-        assert_legacy_thread_name(genex_home.path(), &conversation_id, renamed).await?;
+        assert_legacy_thread_name(ruxex_home.path(), &conversation_id, renamed).await?;
 
         assert_no_message(&mut ws1, Duration::from_millis(250)).await?;
         assert_no_message(&mut ws2, Duration::from_millis(250)).await?;
@@ -98,11 +98,11 @@ async fn thread_name_updated_broadcasts_for_loaded_threads() -> Result<()> {
 #[tokio::test]
 async fn thread_name_updated_broadcasts_for_not_loaded_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    create_config_toml(genex_home.path(), &server.uri(), "never")?;
-    let conversation_id = create_rollout(genex_home.path(), "2025-01-05T12-05-00")?;
+    let ruxex_home = TempDir::new()?;
+    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
+    let conversation_id = create_rollout(ruxex_home.path(), "2025-01-05T12-05-00")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(genex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(ruxex_home.path()).await?;
 
     let result = async {
         let mut ws1 = connect_websocket(bind_addr).await?;
@@ -132,7 +132,7 @@ async fn thread_name_updated_broadcasts_for_not_loaded_threads() -> Result<()> {
         let ws2_notification =
             read_notification_for_method(&mut ws2, "thread/name/updated").await?;
         assert_thread_name_updated(ws2_notification, &conversation_id, renamed)?;
-        assert_legacy_thread_name(genex_home.path(), &conversation_id, renamed).await?;
+        assert_legacy_thread_name(ruxex_home.path(), &conversation_id, renamed).await?;
 
         assert_no_message(&mut ws1, Duration::from_millis(250)).await?;
         assert_no_message(&mut ws2, Duration::from_millis(250)).await?;
@@ -156,9 +156,9 @@ async fn initialize_both_clients(ws1: &mut WsClient, ws2: &mut WsClient) -> Resu
     Ok(())
 }
 
-fn create_rollout(genex_home: &std::path::Path, filename_ts: &str) -> Result<String> {
+fn create_rollout(ruxex_home: &std::path::Path, filename_ts: &str) -> Result<String> {
     create_fake_rollout_with_text_elements(
-        genex_home,
+        ruxex_home,
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -179,13 +179,13 @@ fn assert_thread_name_updated(
 }
 
 async fn assert_legacy_thread_name(
-    genex_home: &Path,
+    ruxex_home: &Path,
     conversation_id: &str,
     expected_name: &str,
 ) -> Result<()> {
     let thread_id = ThreadId::from_string(conversation_id)?;
     assert_eq!(
-        find_thread_name_by_id(genex_home, &thread_id)
+        find_thread_name_by_id(ruxex_home, &thread_id)
             .await?
             .as_deref(),
         Some(expected_name)

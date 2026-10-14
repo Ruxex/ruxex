@@ -2,24 +2,24 @@ use super::*;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::write_mock_responses_config_toml;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ImageReference;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadItemsListParams;
-use genex_app_server_protocol::ThreadItemsListResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput;
-use genex_protocol::protocol::AgentMessageEvent;
-use genex_protocol::protocol::ThreadRolledBackEvent;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_rollout::CompactedItem;
-use genex_rollout::RolloutLine;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ImageReference;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadItemsListParams;
+use ruxex_app_server_protocol::ThreadItemsListResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_protocol::protocol::AgentMessageEvent;
+use ruxex_protocol::protocol::ThreadRolledBackEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_rollout::CompactedItem;
+use ruxex_rollout::RolloutLine;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
@@ -318,9 +318,9 @@ async fn transcript_preview_for_history_mode(
         }))
         .collect();
     let server = create_mock_responses_server_sequence(model_responses).await;
-    let genex_home = tempdir().expect("tempdir");
+    let ruxex_home = tempdir().expect("tempdir");
     write_mock_responses_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         &server.uri(),
         &Default::default(),
         /*auto_compact_limit*/ 100_000,
@@ -329,8 +329,8 @@ async fn transcript_preview_for_history_mode(
     )
     .expect("write mock config");
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.path().to_path_buf())
-        .fallback_cwd(Some(genex_home.path().to_path_buf()))
+        .ruxex_home(ruxex_home.path().to_path_buf())
+        .fallback_cwd(Some(ruxex_home.path().to_path_buf()))
         .build()
         .await
         .expect("build config");
@@ -343,7 +343,7 @@ async fn transcript_preview_for_history_mode(
             request_id: RequestId::String(String::from("preview-thread-start")),
             params: ThreadStartParams {
                 model: Some(String::from("mock-model")),
-                cwd: Some(genex_home.path().display().to_string()),
+                cwd: Some(ruxex_home.path().display().to_string()),
                 history_mode: Some(history_mode),
                 ..Default::default()
             },
@@ -415,7 +415,7 @@ async fn transcript_preview_for_history_mode(
         append_transcript_preview_lines(
             &mut first_page_lines,
             first_page.data.iter().map(|entry| &entry.item),
-            genex_home.path(),
+            ruxex_home.path(),
             /*inline_visualization_context*/ None,
         );
         assert_eq!(first_page_lines, Vec::new());

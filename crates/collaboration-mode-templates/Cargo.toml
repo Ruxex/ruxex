@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-collaboration-mode-templates"
+name = "ruxex-collaboration-mode-templates"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_collaboration_mode_templates"
+name = "ruxex_collaboration_mode_templates"
 path = "src/lib.rs"
 test = false
 

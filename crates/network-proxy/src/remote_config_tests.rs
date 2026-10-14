@@ -132,7 +132,7 @@ fn launch_config_materializes_audit_and_execution_attribution() {
     let audit_metadata = NetworkProxyAuditMetadata {
         conversation_id: Some("conversation-1".to_string()),
         user_account_id: Some("account-1".to_string()),
-        originator: Some("genex_cli_rs".to_string()),
+        originator: Some("ruxex_cli_rs".to_string()),
         model: Some("model-1".to_string()),
         ..NetworkProxyAuditMetadata::default()
     };

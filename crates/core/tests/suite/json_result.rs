@@ -1,21 +1,21 @@
 #![cfg(not(target_os = "windows"))]
 
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnStartOptions;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use responses::ev_assistant_message;
@@ -36,11 +36,11 @@ const SCHEMA: &str = r#"
 "#;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn genex_returns_json_result_for_model5() -> anyhow::Result<()> {
-    genex_returns_json_result("legacy-model".to_string()).await
+async fn ruxex_returns_json_result_for_model5() -> anyhow::Result<()> {
+    ruxex_returns_json_result("legacy-model".to_string()).await
 }
 
-async fn genex_returns_json_result(model: String) -> anyhow::Result<()> {
+async fn ruxex_returns_json_result(model: String) -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -63,20 +63,20 @@ async fn genex_returns_json_result(model: String) -> anyhow::Result<()> {
             return false;
         };
 
-        format.get("name") == Some(&serde_json::Value::String("genex_output_schema".into()))
+        format.get("name") == Some(&serde_json::Value::String("ruxex_output_schema".into()))
             && format.get("type") == Some(&serde_json::Value::String("json_schema".into()))
             && format.get("strict") == Some(&serde_json::Value::Bool(true))
             && format.get("schema") == Some(&expected_schema)
     };
     responses::mount_sse_once_match(&server, match_json_text_param, sse1).await;
 
-    let TestGenex { genex, config, .. } = test_genex().build(&server).await?;
+    let TestRuxex { ruxex, config, .. } = test_ruxex().build(&server).await?;
     let cwd = config.cwd.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.as_path());
 
     // 1) Normal user input – should hit server once.
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "hello world".into(),
@@ -104,7 +104,7 @@ async fn genex_returns_json_result(model: String) -> anyhow::Result<()> {
         )
         .await?;
 
-    let message = wait_for_event(&genex, |ev| matches!(ev, EventMsg::AgentMessage(_))).await;
+    let message = wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::AgentMessage(_))).await;
     if let EventMsg::AgentMessage(message) = message {
         let json: serde_json::Value = serde_json::from_str(&message.message)?;
         assert_eq!(

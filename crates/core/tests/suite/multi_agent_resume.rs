@@ -1,13 +1,13 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::AgentRoleConfig;
-use genex_features::Feature;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::AgentRoleConfig;
+use ruxex_features::Feature;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::assert_parent_turn;
 use core_test_support::responses::assert_root_turn;
 use core_test_support::responses::ev_assistant_message;
@@ -18,7 +18,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -132,7 +132,7 @@ async fn mount_root_collaboration_call(
 }
 
 fn configure_multi_agent_v2_with_role(
-    config: &mut genex_core::config::Config,
+    config: &mut ruxex_core::config::Config,
     model_provider_base_url: &str,
 ) {
     config
@@ -146,7 +146,7 @@ fn configure_multi_agent_v2_with_role(
     config.multi_agent_v2.subagent_developer_instructions =
         Some(SUBAGENT_DEVELOPER_INSTRUCTIONS.to_string());
     config.multi_agent_v2.max_concurrent_threads_per_session = 3;
-    let role_path = config.genex_home.join("durable-worker-role.toml");
+    let role_path = config.ruxex_home.join("durable-worker-role.toml");
     std::fs::write(
         &role_path,
         format!(
@@ -242,13 +242,13 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     .await;
 
     let initial_model_provider_base_url = format!("{}/v1", server.uri());
-    let mut initial_builder = test_genex().with_config(move |config| {
+    let mut initial_builder = test_ruxex().with_config(move |config| {
         configure_multi_agent_v2_with_role(config, &initial_model_provider_base_url);
     });
     let initial = initial_builder.build_with_auto_env(&server).await?;
     let root_thread_id = initial.session_configured.thread_id;
     initial
-        .genex
+        .ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: INITIAL_PROMPT.to_string(),
@@ -260,7 +260,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
             }),
         )
         .await?;
-    wait_for_event(&initial.genex, |event| {
+    wait_for_event(&initial.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -272,12 +272,12 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
             .into_iter()
             .find_map(|request| {
                 let body = request.body_json();
-                if body["client_metadata"]["x-genex-parent-thread-id"] != json!(root_thread_id) {
+                if body["client_metadata"]["x-ruxex-parent-thread-id"] != json!(root_thread_id) {
                     return None;
                 }
                 body["client_metadata"]["thread_id"]
                     .as_str()
-                    .and_then(|thread_id| genex_protocol::ThreadId::from_string(thread_id).ok())
+                    .and_then(|thread_id| ruxex_protocol::ThreadId::from_string(thread_id).ok())
             })
         {
             break thread_id;
@@ -300,7 +300,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     }));
     assert_eq!(
         worker_thread.config().await.model_provider,
-        initial.genex.config().await.model_provider,
+        initial.ruxex.config().await.model_provider,
         "roles must inherit the parent's complete model provider",
     );
     let initial_worker_config = worker_thread.config_snapshot().await;
@@ -366,7 +366,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     .await;
     sibling_thread.flush_rollout().await?;
     worker_thread.flush_rollout().await?;
-    initial.genex.flush_rollout().await?;
+    initial.ruxex.flush_rollout().await?;
     sibling_thread.shutdown_and_wait().await?;
     worker_thread.shutdown_and_wait().await?;
     drop(sibling_thread);
@@ -420,7 +420,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     .await;
 
     let resumed_model_provider_base_url = format!("{}/v1", server.uri());
-    let mut resume_builder = test_genex().with_config(move |config| {
+    let mut resume_builder = test_ruxex().with_config(move |config| {
         configure_multi_agent_v2_with_role(config, &resumed_model_provider_base_url);
     });
     let resumed = resume_builder.restart(&server, &initial).await?;
@@ -459,8 +459,8 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
         ]),
     )
     .await;
-    resumed.genex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.genex, |event| {
+    resumed.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -468,7 +468,7 @@ async fn cold_root_resume_restores_agent_identity_and_role_on_followup() -> Resu
     let redirected_server = start_mock_server().await;
     let redirected_base_url = format!("{}/v1", redirected_server.uri());
     std::fs::write(
-        resumed.config.genex_home.join("durable-worker-role.toml"),
+        resumed.config.ruxex_home.join("durable-worker-role.toml"),
         format!(
             r#"model = "{ROLE_MODEL}"
 model_reasoning_effort = "high"
@@ -504,7 +504,7 @@ base_url = "{redirected_base_url}"
         .expect("queued message should lazily reload the original worker");
     assert_eq!(
         reloaded_worker.config().await.model_provider,
-        resumed.genex.config().await.model_provider,
+        resumed.ruxex.config().await.model_provider,
         "cold reload must preserve the parent's complete model provider",
     );
     resumed.submit_turn(FOLLOWUP_PROMPT).await?;
@@ -530,8 +530,8 @@ base_url = "{redirected_base_url}"
         ]),
     )
     .await;
-    resumed.genex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.genex, |event| {
+    resumed.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -554,7 +554,7 @@ base_url = "{redirected_base_url}"
             && request.body_contains_text(QUEUED_MESSAGE)
             && !request.body_contains_text(FOLLOWUP_TASK)
     }));
-    let body_for = |text: &str, thread: genex_protocol::ThreadId| {
+    let body_for = |text: &str, thread: ruxex_protocol::ThreadId| {
         requests
             .iter()
             .find_map(|request| {
@@ -606,7 +606,7 @@ base_url = "{redirected_base_url}"
     ] {
         if let Some(parent_thread) = parent_thread {
             assert_eq!(
-                body["client_metadata"]["x-genex-parent-thread-id"],
+                body["client_metadata"]["x-ruxex-parent-thread-id"],
                 json!(parent_thread)
             );
         }

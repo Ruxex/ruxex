@@ -42,25 +42,25 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_app_server_protocol::AdditionalPermissionProfile;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionApprovalKind;
-use genex_app_server_protocol::FileChangeApprovalDecision;
-use genex_app_server_protocol::FileSystemAccessMode;
-use genex_app_server_protocol::FileSystemPath;
-use genex_app_server_protocol::FileSystemSandboxEntry;
-use genex_app_server_protocol::FileSystemSpecialPath;
-use genex_app_server_protocol::McpServerElicitationAction;
-use genex_app_server_protocol::NetworkApprovalContext;
-use genex_app_server_protocol::NetworkApprovalProtocol;
-use genex_app_server_protocol::NetworkPolicyRuleAction;
-use genex_app_server_protocol::RequestId;
-use genex_features::Features;
-use genex_protocol::ThreadId;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_app_server_protocol::AdditionalPermissionProfile;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionApprovalKind;
+use ruxex_app_server_protocol::FileChangeApprovalDecision;
+use ruxex_app_server_protocol::FileSystemAccessMode;
+use ruxex_app_server_protocol::FileSystemPath;
+use ruxex_app_server_protocol::FileSystemSandboxEntry;
+use ruxex_app_server_protocol::FileSystemSpecialPath;
+use ruxex_app_server_protocol::McpServerElicitationAction;
+use ruxex_app_server_protocol::NetworkApprovalContext;
+use ruxex_app_server_protocol::NetworkApprovalProtocol;
+use ruxex_app_server_protocol::NetworkPolicyRuleAction;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_features::Features;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -439,7 +439,7 @@ impl ApprovalOverlay {
         self.app_event_tx.request_permissions_response(
             thread_id,
             call_id.to_string(),
-            genex_protocol::request_permissions::RequestPermissionsResponse {
+            ruxex_protocol::request_permissions::RequestPermissionsResponse {
                 permissions: granted_permissions,
                 scope,
             },
@@ -898,7 +898,7 @@ fn exec_options(
                 shortcuts: keymap.deny.clone(),
             }),
             CommandExecutionApprovalDecision::Cancel => Some(ApprovalOption {
-                label: "No, and tell Genex what to do differently".to_string(),
+                label: "No, and tell Ruxex what to do differently".to_string(),
                 decision: ApprovalDecision::Command(CommandExecutionApprovalDecision::Cancel),
                 shortcuts: keymap.decline.clone(),
             }),
@@ -1014,7 +1014,7 @@ fn patch_options(keymap: &ApprovalKeymap) -> Vec<ApprovalOption> {
             shortcuts: keymap.approve_for_session.clone(),
         },
         ApprovalOption {
-            label: "No, and tell Genex what to do differently".to_string(),
+            label: "No, and tell Ruxex what to do differently".to_string(),
             decision: ApprovalDecision::FileChange(FileChangeApprovalDecision::Cancel),
             shortcuts: keymap.decline.clone(),
         },

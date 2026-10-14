@@ -1,6 +1,6 @@
-use genex_file_system::ExecutorFileSystem;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::ExecutorFileSystem;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::io;
 use std::io::ErrorKind;
 

@@ -1,20 +1,20 @@
-use genex_protocol::ThreadId;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::security_risk::SecurityRiskScore;
-use genex_protocol::user_input::UserInput;
-use genex_rollout::CompactedItem;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::security_risk::SecurityRiskScore;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout::CompactedItem;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 
@@ -76,7 +76,7 @@ fn projects_failed_turn_completion_as_snapshot() {
     let error = ErrorEvent {
         misalignment: None,
         message: "request failed".to_string(),
-        genex_error_info: None,
+        ruxex_error_info: None,
     };
 
     let changes = project(RolloutItem::EventMsg(EventMsg::TurnComplete(
@@ -101,7 +101,7 @@ fn projects_failed_turn_completion_as_snapshot() {
                 error: Some(TurnError {
                     misalignment: None,
                     message: "request failed".to_string(),
-                    genex_error_info: None,
+                    ruxex_error_info: None,
                     additional_details: None,
                 }),
                 started_at: Some(10),

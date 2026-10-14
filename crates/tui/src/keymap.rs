@@ -25,9 +25,9 @@ use crate::key_hint::ShortcutHint;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_config::types::KeybindingsSpec;
-use genex_config::types::MAX_FUNCTION_KEY;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::KeybindingsSpec;
+use ruxex_config::types::MAX_FUNCTION_KEY;
+use ruxex_config::types::TuiKeymap;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -2181,8 +2181,8 @@ impl RuntimeKeymap {
                     }
                     return Err(format!(
                         "Ambiguous approval overlay keymap bindings: `{previous}` and `{action}` use the same key. \
-Set unique keys in `~/.genex/config.toml` and retry. \
-See the Genex keymap documentation for supported actions and examples."
+Set unique keys in `~/.ruxex/config.toml` and retry. \
+See the Ruxex keymap documentation for supported actions and examples."
                     ));
                 }
             }
@@ -2207,8 +2207,8 @@ fn validate_unique<'a>(
             if let Some(previous) = seen.insert(key, action) {
                 return Err(format!(
                     "Ambiguous `tui.keymap.{context}` bindings: `{previous}` and `{action}` use the same key. \
-Set unique keys in `~/.genex/config.toml` and retry. \
-See the Genex keymap documentation for supported actions and examples."
+Set unique keys in `~/.ruxex/config.toml` and retry. \
+See the Ruxex keymap documentation for supported actions and examples."
                 ));
             }
         }
@@ -2243,8 +2243,8 @@ fn validate_no_shadow_with_allowed_overlaps<const N: usize, const M: usize, cons
                 }
                 return Err(format!(
                     "Ambiguous `tui.keymap.{context}` bindings: `{previous}` shadows `{action}` with the same key. \
-Set unique keys in `~/.genex/config.toml` and retry. \
-See the Genex keymap documentation for supported actions and examples."
+Set unique keys in `~/.ruxex/config.toml` and retry. \
+See the Ruxex keymap documentation for supported actions and examples."
                 ));
             }
         }
@@ -2276,8 +2276,8 @@ fn validate_no_reserved<'a, const A: usize>(
                 }
                 return Err(format!(
                     "Ambiguous `tui.keymap.{context}` bindings: `{action}` uses a key reserved by `{reserved_action}`. \
-Set a different key in `~/.genex/config.toml` and retry. \
-See the Genex keymap documentation for supported actions and examples."
+Set a different key in `~/.ruxex/config.toml` and retry. \
+See the Ruxex keymap documentation for supported actions and examples."
                 ));
             }
         }
@@ -2460,7 +2460,7 @@ fn parse_bindings(spec: &KeybindingsSpec, path: &str) -> Result<Vec<KeyBinding>,
         let binding = parse_keybinding(raw.as_str()).ok_or_else(|| {
             format!(
                 "Invalid `{path}` = `{}`. Use values like `ctrl-a`, `shift-enter`, or `page-down`. \
-See the Genex keymap documentation for supported actions and examples.",
+See the Ruxex keymap documentation for supported actions and examples.",
                 raw.as_str()
             )
         })?;
@@ -2536,7 +2536,7 @@ fn parse_keybinding(spec: &str) -> Option<KeyBinding> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_config::types::KeybindingSpec;
+    use ruxex_config::types::KeybindingSpec;
 
     fn one(spec: &str) -> KeybindingsSpec {
         KeybindingsSpec::One(KeybindingSpec(spec.to_string()))

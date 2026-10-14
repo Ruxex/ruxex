@@ -4,14 +4,14 @@ use std::time::Duration;
 
 use anyhow::Result;
 use futures::future::BoxFuture;
-use genex_exec_server::ExecServerError;
-use genex_exec_server::HttpClient;
-use genex_exec_server::HttpRequestParams;
-use genex_exec_server::HttpRequestResponse;
-use genex_exec_server::HttpResponseBodyStream;
-use genex_exec_server::RouteAwareHttpClient;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
+use ruxex_exec_server::ExecServerError;
+use ruxex_exec_server::HttpClient;
+use ruxex_exec_server::HttpRequestParams;
+use ruxex_exec_server::HttpRequestResponse;
+use ruxex_exec_server::HttpResponseBodyStream;
+use ruxex_exec_server::RouteAwareHttpClient;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 use pretty_assertions::assert_eq;
 use rmcp::transport::auth::AuthorizationManager;
 use rmcp::transport::auth::AuthorizationMetadata;
@@ -362,7 +362,7 @@ async fn oauth_registration_redirects_never_forward_resource_only_headers() -> R
                     .method("POST")
                     .uri(format!("{}/register", resource_server.uri()))
                     .header("content-type", "application/json")
-                    .body(br#"{"client_name":"Genex"}"#.to_vec())?,
+                    .body(br#"{"client_name":"Ruxex"}"#.to_vec())?,
                 OAuthHttpRedirectPolicy::Follow,
                 /*timeout*/ None,
             )

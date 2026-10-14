@@ -64,7 +64,7 @@ export function Composer({ threadId, activeTurnId }: ComposerProps) {
         className="textarea textarea-ghost min-h-24 w-full resize-none"
         value={message}
         onChange={(event) => setMessage(event.target.value)}
-        placeholder="Ask Genex to work on something…"
+        placeholder="Ask Ruxex to work on something…"
         disabled={isPending}
         aria-label="Message"
       />

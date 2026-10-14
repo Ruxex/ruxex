@@ -1,11 +1,11 @@
 [package]
-name = "genex-process-hardening"
+name = "ruxex-process-hardening"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_process_hardening"
+name = "ruxex_process_hardening"
 path = "src/lib.rs"
 doctest = false
 

@@ -4,10 +4,10 @@ mod osc9;
 use std::io;
 
 use bel::BelBackend;
-use genex_config::types::NotificationMethod;
-use genex_terminal_detection::TerminalInfo;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
+use ruxex_config::types::NotificationMethod;
+use ruxex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
 use osc9::Osc9Backend;
 
 #[derive(Debug)]
@@ -65,9 +65,9 @@ fn supports_osc9(terminal: &TerminalInfo) -> bool {
 mod tests {
     use super::detect_backend;
     use super::supports_osc9;
-    use genex_config::types::NotificationMethod;
-    use genex_terminal_detection::TerminalInfo;
-    use genex_terminal_detection::TerminalName;
+    use ruxex_config::types::NotificationMethod;
+    use ruxex_terminal_detection::TerminalInfo;
+    use ruxex_terminal_detection::TerminalName;
     use pretty_assertions::assert_eq;
 
     fn test_terminal(name: TerminalName) -> TerminalInfo {

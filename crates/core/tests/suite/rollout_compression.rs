@@ -8,19 +8,19 @@ use std::time::SystemTime;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_core::GenexThread;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::ForkBoundary;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_thread_store::PrepareForkParams;
+use ruxex_core::RuxexThread;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::ForkBoundary;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_thread_store::PrepareForkParams;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -29,7 +29,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
@@ -39,7 +39,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(|config| {
             config.model_provider.name = "Local compaction test provider".to_string();
@@ -52,7 +52,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         .await?;
     turn(
         &server,
-        &test.genex,
+        &test.ruxex,
         "Create a checkpoint",
         "OBSOLETE_PRE_CHECKPOINT_REPLY",
     )
@@ -65,14 +65,14 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         ]),
     )
     .await;
-    test.genex.submit(Op::Compact).await?;
-    wait_for_event(&test.genex, |event| {
+    test.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
     turn(
         &server,
-        &test.genex,
+        &test.ruxex,
         "shared-compression: inherited parent turn",
         "INHERITED_COMPRESSION_REPLY",
     )
@@ -88,13 +88,13 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     let child = test
         .thread_manager
         .fork_prepared_thread(
-            genex_core::StartThreadOptions::new(test.config.clone()),
+            ruxex_core::StartThreadOptions::new(test.config.clone()),
             prepared,
         )
         .await?;
     turn(
         &server,
-        &test.genex,
+        &test.ruxex,
         "shared-compression: parent AFTER fork cutoff",
         "POST_FORK_COMPRESSION_REPLY",
     )
@@ -107,12 +107,12 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
     )
     .await?;
 
-    let parent_path = test.genex.rollout_path().context("parent rollout")?;
+    let parent_path = test.ruxex.rollout_path().context("parent rollout")?;
     let child_path = child.thread.rollout_path().context("child rollout")?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     child.thread.shutdown_and_wait().await?;
     assert_eq!(
-        genex_rollout::read_session_meta_line(&child_path)
+        ruxex_rollout::read_session_meta_line(&child_path)
             .await?
             .meta
             .history_base
@@ -138,7 +138,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
         .enable(Feature::LocalThreadStoreCompression)?;
     // Use production feature wiring, rather than manually writing zstd files or calling the worker.
     let store =
-        genex_core::thread_store_from_config(&config, genex_core::init_state_db(&config).await);
+        ruxex_core::thread_store_from_config(&config, ruxex_core::init_state_db(&config).await);
     tokio::time::timeout(Duration::from_secs(30), async {
         loop {
             if paths
@@ -173,7 +173,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
                 history: Arc::new(context.items),
                 rollout_path: Some(child_path),
             }),
-            genex_core::test_support::credential_manager_from_auth(genex_login::GenexAuth::from_api_key(
+            ruxex_core::test_support::credential_manager_from_auth(ruxex_login::RuxexAuth::from_api_key(
                 "dummy",
             )),
             /*parent_trace*/ None,
@@ -217,7 +217,7 @@ async fn compressed_shared_fork_resume_preserves_checkpoint_and_frozen_history()
 
 async fn turn(
     server: &MockServer,
-    thread: &Arc<GenexThread>,
+    thread: &Arc<RuxexThread>,
     prompt: &str,
     reply: &str,
 ) -> Result<ResponseMock> {

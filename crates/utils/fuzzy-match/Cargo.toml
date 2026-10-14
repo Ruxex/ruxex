@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-fuzzy-match"
+name = "ruxex-utils-fuzzy-match"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

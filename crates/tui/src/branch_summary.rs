@@ -477,7 +477,7 @@ async fn run_git_command(
     let mut argv = Vec::with_capacity(args.len() + 3);
     argv.push("git".to_string());
     argv.push("-c".to_string());
-    argv.push(genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string());
+    argv.push(ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string());
     argv.extend(args.iter().map(|arg| (*arg).to_string()));
     runner
         .run(
@@ -683,7 +683,7 @@ mod tests {
                 1..1,
                 [
                     "-c".to_string(),
-                    genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string(),
+                    ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string(),
                 ],
             );
         }
@@ -722,7 +722,7 @@ mod tests {
                     1..1,
                     [
                         "-c".to_string(),
-                        genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string(),
+                        ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG.to_string(),
                     ],
                 );
             }

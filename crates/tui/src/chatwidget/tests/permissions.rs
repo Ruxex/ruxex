@@ -1,14 +1,14 @@
 use super::*;
 use crate::legacy_core::config::PermissionProfileCatalogEntry;
 use crate::permission_discovery::PermissionDiscovery as Discovery;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 
 #[cfg(target_os = "windows")]
@@ -29,7 +29,7 @@ async fn remote_windows_agent_permission_uses_server_selection() {
         /*return_to_permissions*/ false,
     );
     actions[0](&chat.app_event_tx);
-    assert!(matches!(events.try_recv(), Ok(AppEvent::GenexOp(_))));
+    assert!(matches!(events.try_recv(), Ok(AppEvent::RuxexOp(_))));
     assert!(matches!(
         events.try_recv(),
         Ok(AppEvent::UpdateAskForApprovalPolicy(_))
@@ -52,7 +52,7 @@ async fn permission_discovery_discards_stale_results_and_preserves_covering_moda
     assert!(chat.permission_popup_request_is_current(second));
     chat.update_account_state(
         /*status_account_display*/ None, /*plan_type*/ None,
-        /*has_managed_account*/ false, /*has_genex_backend_auth*/ false,
+        /*has_managed_account*/ false, /*has_ruxex_backend_auth*/ false,
     );
     chat.on_permission_profiles_loaded(second, Ok(Discovery::local(&chat.config)));
     assert!(!chat.bottom_pane.has_active_view());
@@ -116,12 +116,12 @@ fn app_server_workspace_write_profile(extra_root: AbsolutePathBuf) -> Permission
 }
 
 pub(super) fn requirements_stack(
-    requirements_toml: genex_config::ConfigRequirementsToml,
+    requirements_toml: ruxex_config::ConfigRequirementsToml,
 ) -> ConfigLayerStack {
-    let mut requirements_with_sources = genex_config::ConfigRequirementsWithSources::default();
+    let mut requirements_with_sources = ruxex_config::ConfigRequirementsWithSources::default();
     requirements_with_sources
         .merge_unset_fields(RequirementSource::Unknown, requirements_toml.clone());
-    let requirements = genex_config::ConfigRequirements::try_from(requirements_with_sources)
+    let requirements = ruxex_config::ConfigRequirements::try_from(requirements_with_sources)
         .expect("windows sandbox requirements");
 
     ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)
@@ -423,7 +423,7 @@ async fn startup_windows_sandbox_prompt_blocks_disallowed_unelevated_fallback() 
 
     let popup = render_bottom_popup(&chat, /*width*/ 120);
     assert!(
-        popup.contains("Your organization requires the default Genex agent sandbox"),
+        popup.contains("Your organization requires the default Ruxex agent sandbox"),
         "expected required sandbox prompt copy: {popup}"
     );
     assert!(
@@ -717,7 +717,7 @@ async fn approvals_popup_navigation_skips_disabled() {
     assert!(
         app_events.iter().any(|ev| matches!(
             ev,
-            AppEvent::GenexOp(Op::OverrideTurnContext {
+            AppEvent::RuxexOp(Op::OverrideTurnContext {
                 approval_policy: Some(AskForApproval::OnRequest),
                 ..
             })
@@ -727,7 +727,7 @@ async fn approvals_popup_navigation_skips_disabled() {
     assert!(
         !app_events.iter().any(|ev| matches!(
             ev,
-            AppEvent::GenexOp(Op::OverrideTurnContext {
+            AppEvent::RuxexOp(Op::OverrideTurnContext {
                 approval_policy: Some(AskForApproval::Never),
                 ..
             })
@@ -1011,7 +1011,7 @@ async fn permissions_selection_sends_approvals_reviewer_in_override_turn_context
 
     let op = std::iter::from_fn(|| rx.try_recv().ok())
         .find_map(|event| match event {
-            AppEvent::GenexOp(op @ Op::OverrideTurnContext { .. }) => Some(op),
+            AppEvent::RuxexOp(op @ Op::OverrideTurnContext { .. }) => Some(op),
             _ => None,
         })
         .expect("expected OverrideTurnContext op");

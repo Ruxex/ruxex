@@ -2,17 +2,17 @@
 
 use super::*;
 use crate::ResolvedModelMessages;
-use genex_context_fragments::AnnotatedContent;
-use genex_context_fragments::RenderedFragment;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::test_support::test_path_buf;
+use ruxex_context_fragments::AnnotatedContent;
+use ruxex_context_fragments::RenderedFragment;
+use ruxex_protocol::model_types::ApprovalMessages;
+use ruxex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::test_support::test_path_buf;
 use pretty_assertions::assert_eq;
 
 const WORKSPACE_CONTEXT: PermissionsRenderContext<'static> = PermissionsRenderContext {
@@ -72,7 +72,7 @@ fn builds_permissions_from_profile_with_denied_reads() {
         &FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
-                    value: genex_protocol::permissions::FileSystemSpecialPath::Root,
+                    value: ruxex_protocol::permissions::FileSystemSpecialPath::Root,
                 },
                 access: FileSystemAccessMode::Read,
                 missing_path_behavior: None,

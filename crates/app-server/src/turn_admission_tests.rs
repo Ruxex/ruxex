@@ -1,6 +1,6 @@
 use super::TurnAdmission;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
-use genex_extension_api::TurnStartAdmission;
+use ruxex_extension_api::TurnStartAdmission;
 use pretty_assertions::assert_eq;
 
 #[test]

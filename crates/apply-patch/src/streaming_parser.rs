@@ -511,7 +511,7 @@ mod tests {
 +    Duration::from_millis(250)
 *** Delete File: src/legacy_patch_progress.rs
 *** Update File: crates/cli/src/main.rs
-*** Move to: crates/cli/src/bin/genex.rs
+*** Move to: crates/cli/src/bin/ruxex.rs
 @@ fn run()
 -    let args = Args::parse();
 -    dispatch(args)

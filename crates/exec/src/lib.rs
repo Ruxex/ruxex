@@ -18,7 +18,7 @@ pub use cli::ReviewArgs;
 use event_processor_with_human_output::EventProcessorWithHumanOutput;
 pub use event_processor_with_jsonl_output::CollectedThreadEvents;
 pub use event_processor_with_jsonl_output::EventProcessorWithJsonOutput;
-pub use event_processor_with_jsonl_output::GenexStatus;
+pub use event_processor_with_jsonl_output::RuxexStatus;
 pub use exec_events::AgentMessageItem;
 pub use exec_events::CollabAgentState;
 pub use exec_events::CollabAgentStatus;
@@ -52,96 +52,96 @@ pub use exec_events::TurnFailedEvent;
 pub use exec_events::TurnStartedEvent;
 pub use exec_events::Usage;
 pub use exec_events::WebSearchItem;
-use genex_app_server_client::AppServerRuntime;
-use genex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-use genex_app_server_client::EnvironmentManager;
-use genex_app_server_client::ExecServerRuntimePaths;
-use genex_app_server_client::InProcessAppServerClient;
-use genex_app_server_client::InProcessClientStartArgs;
-use genex_app_server_client::InProcessServerEvent;
-use genex_app_server_client::ProviderInit;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_client::configured_app_server_runtime_from_config;
-use genex_app_server_client::provider_init_from_config_with_descriptor;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ConfigWarningNotification;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::McpServerElicitationAction;
-use genex_app_server_protocol::McpServerElicitationRequestResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ReviewStartParams;
-use genex_app_server_protocol::ReviewStartResponse;
-use genex_app_server_protocol::ReviewTarget as ApiReviewTarget;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::Thread as AppServerThread;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem as AppServerThreadItem;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSortKey;
-use genex_app_server_protocol::ThreadSource;
-use genex_app_server_protocol::ThreadSourceKind;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadUnsubscribeParams;
-use genex_app_server_protocol::ThreadUnsubscribeResponse;
-use genex_app_server_protocol::TurnInterruptParams;
-use genex_app_server_protocol::TurnInterruptResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::ConfigLoadError;
-use genex_config::ConfigLoadOptions;
-use genex_config::LoaderOverrides;
-use genex_config::format_config_error_with_source;
-use genex_core::StateDbHandle;
-use genex_core::check_execpolicy_for_warnings;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_core::config::ConfigTomlLoadResult;
-use genex_core::config::find_genex_home;
-use genex_core::config::load_config_toml_with_layer_stack;
-use genex_core::config::resolve_profile_v2_config_path;
-use genex_core::format_exec_policy_error_with_source;
-use genex_core::path_utils;
-use genex_core::read_session_meta_line;
-use genex_features::Feature;
-use genex_git_utils::get_git_repo_root;
-use genex_history::RolloutItem;
-use genex_history::RolloutLine;
-use genex_login::default_client::set_default_client_residency_requirement;
-use genex_login::default_client::set_default_originator;
-use genex_login::enforce_login_restrictions;
-use genex_model_provider::ProviderDescriptor;
-use genex_otel::set_parent_from_context;
-use genex_otel::traceparent_context_from_env;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ReviewRequest;
-use genex_protocol::protocol::ReviewTarget;
-use genex_protocol::protocol::SessionConfiguredEvent;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::user_input::UserInput;
-use genex_rollout::find_thread_meta_by_name_str;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
-use genex_utils_cli::SharedCliOptions;
-use genex_worktree::CreateWorktree;
-use genex_worktree::WorktreeManager;
-use genex_worktree::WorktreeSettings;
+use ruxex_app_server_client::AppServerRuntime;
+use ruxex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+use ruxex_app_server_client::EnvironmentManager;
+use ruxex_app_server_client::ExecServerRuntimePaths;
+use ruxex_app_server_client::InProcessAppServerClient;
+use ruxex_app_server_client::InProcessClientStartArgs;
+use ruxex_app_server_client::InProcessServerEvent;
+use ruxex_app_server_client::ProviderInit;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_client::configured_app_server_runtime_from_config;
+use ruxex_app_server_client::provider_init_from_config_with_descriptor;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::McpServerElicitationAction;
+use ruxex_app_server_protocol::McpServerElicitationRequestResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ReviewStartParams;
+use ruxex_app_server_protocol::ReviewStartResponse;
+use ruxex_app_server_protocol::ReviewTarget as ApiReviewTarget;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::Thread as AppServerThread;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem as AppServerThreadItem;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSortKey;
+use ruxex_app_server_protocol::ThreadSource;
+use ruxex_app_server_protocol::ThreadSourceKind;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadUnsubscribeParams;
+use ruxex_app_server_protocol::ThreadUnsubscribeResponse;
+use ruxex_app_server_protocol::TurnInterruptParams;
+use ruxex_app_server_protocol::TurnInterruptResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::ConfigLoadError;
+use ruxex_config::ConfigLoadOptions;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::format_config_error_with_source;
+use ruxex_core::StateDbHandle;
+use ruxex_core::check_execpolicy_for_warnings;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_core::config::ConfigTomlLoadResult;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_core::config::load_config_toml_with_layer_stack;
+use ruxex_core::config::resolve_profile_v2_config_path;
+use ruxex_core::format_exec_policy_error_with_source;
+use ruxex_core::path_utils;
+use ruxex_core::read_session_meta_line;
+use ruxex_features::Feature;
+use ruxex_git_utils::get_git_repo_root;
+use ruxex_history::RolloutItem;
+use ruxex_history::RolloutLine;
+use ruxex_login::default_client::set_default_client_residency_requirement;
+use ruxex_login::default_client::set_default_originator;
+use ruxex_login::enforce_login_restrictions;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_otel::set_parent_from_context;
+use ruxex_otel::traceparent_context_from_env;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ReviewRequest;
+use ruxex_protocol::protocol::ReviewTarget;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_rollout::find_thread_meta_by_name_str;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
+use ruxex_utils_cli::SharedCliOptions;
+use ruxex_worktree::CreateWorktree;
+use ruxex_worktree::WorktreeManager;
+use ruxex_worktree::WorktreeSettings;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::io::IsTerminal;
@@ -178,9 +178,9 @@ enum InitialOperation {
 
 enum StdinPromptBehavior {
     /// Read stdin only when there is no positional prompt, which is the legacy
-    /// `genex exec` behavior for `genex exec` with piped input.
+    /// `ruxex exec` behavior for `ruxex exec` with piped input.
     RequiredIfPiped,
-    /// Always treat stdin as the prompt, used for the explicit `genex exec -`
+    /// Always treat stdin as the prompt, used for the explicit `ruxex exec -`
     /// sentinel and similar forced-stdin call sites.
     Forced,
     /// If stdin is piped alongside a positional prompt, treat stdin as
@@ -230,7 +230,7 @@ struct ManagedExecWorktree {
 
 fn exec_root_span() -> tracing::Span {
     info_span!(
-        "genex.exec",
+        "ruxex.exec",
         otel.kind = "internal",
         thread.id = field::Empty,
         turn.id = field::Empty,
@@ -265,8 +265,8 @@ async fn run_main_with_runtime_factory(
     arg0_paths: Arg0DispatchPaths,
     provider_factory: Option<ProviderRuntimeFactory>,
 ) -> anyhow::Result<()> {
-    if let Err(err) = set_default_originator("genex_exec".to_string()) {
-        tracing::warn!(?err, "Failed to set Genex exec originator override {err:?}");
+    if let Err(err) = set_default_originator("ruxex_exec".to_string()) {
+        tracing::warn!(?err, "Failed to set Ruxex exec originator override {err:?}");
     }
 
     let Cli {
@@ -307,10 +307,10 @@ async fn run_main_with_runtime_factory(
         }
         match command.as_ref() {
             Some(ExecCommand::Resume(_)) => {
-                anyhow::bail!("--worktree is not supported with `genex exec resume`");
+                anyhow::bail!("--worktree is not supported with `ruxex exec resume`");
             }
             Some(ExecCommand::Review(_)) => {
-                anyhow::bail!("--worktree is not supported with `genex exec review`");
+                anyhow::bail!("--worktree is not supported with `ruxex exec review`");
             }
             Some(ExecCommand::Fork(_)) | None => {}
         }
@@ -355,16 +355,16 @@ async fn run_main_with_runtime_factory(
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let genex_home = match find_genex_home() {
-        Ok(genex_home) => genex_home,
+    let ruxex_home = match find_ruxex_home() {
+        Ok(ruxex_home) => ruxex_home,
         Err(err) => {
-            eprintln!("Error finding genex home: {err}");
+            eprintln!("Error finding ruxex home: {err}");
             std::process::exit(1);
         }
     };
     let user_config_path = config_profile_v2
         .as_ref()
-        .map(|profile_v2| resolve_profile_v2_config_path(&genex_home, profile_v2));
+        .map(|profile_v2| resolve_profile_v2_config_path(&ruxex_home, profile_v2));
     let loader_overrides = LoaderOverrides {
         user_config_path,
         user_config_profile: config_profile_v2,
@@ -374,7 +374,7 @@ async fn run_main_with_runtime_factory(
     };
 
     if worktree
-        && EnvironmentManager::prepare_from_genex_home(&genex_home)
+        && EnvironmentManager::prepare_from_ruxex_home(&ruxex_home)
             .await?
             .default_environment_is_remote()
     {
@@ -383,7 +383,7 @@ async fn run_main_with_runtime_factory(
 
     let managed_worktree = if worktree {
         let _gate_bootstrap = load_bootstrap_config_or_exit(
-            &genex_home,
+            &ruxex_home,
             /*cwd*/ None,
             cli_kv_overrides.clone(),
             loader_overrides.clone(),
@@ -391,7 +391,7 @@ async fn run_main_with_runtime_factory(
         )
         .await;
         let gate_config = ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -422,7 +422,7 @@ async fn run_main_with_runtime_factory(
             }
         }
         let source_config = ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -442,7 +442,7 @@ async fn run_main_with_runtime_factory(
         }
         // Allocation belongs to the host, not this session's project, profile, or overrides.
         let host_config = load_bootstrap_config_or_exit(
-            &genex_home,
+            &ruxex_home,
             /*cwd*/ None,
             Vec::new(),
             LoaderOverrides::default(),
@@ -450,7 +450,7 @@ async fn run_main_with_runtime_factory(
         )
         .await;
         let settings =
-            WorktreeSettings::for_cli(&genex_home, host_config.config_toml.desktop.as_ref())?;
+            WorktreeSettings::for_cli(&ruxex_home, host_config.config_toml.desktop.as_ref())?;
         let manager = WorktreeManager::new(settings);
         let checkout = manager.create(&CreateWorktree {
             source_cwd: config_cwd.as_path().to_path_buf(),
@@ -468,7 +468,7 @@ async fn run_main_with_runtime_factory(
     if let Some(worktree) = managed_worktree.as_ref() {
         // Destination auth can fetch source policy that the host bootstrap could not.
         let source_config = ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .loader_overrides(LoaderOverrides {
                 ignore_project_config: true,
@@ -501,8 +501,8 @@ async fn run_main_with_runtime_factory(
         cwd: resolved_cwd,
         workspace_roots: None,
         service_tier: None,
-        genex_self_exe: arg0_paths.genex_self_exe.clone(),
-        genex_linux_sandbox_exe: arg0_paths.genex_linux_sandbox_exe.clone(),
+        ruxex_self_exe: arg0_paths.ruxex_self_exe.clone(),
+        ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe.clone(),
         base_instructions: None,
         developer_instructions: None,
         compact_prompt: None,
@@ -515,7 +515,7 @@ async fn run_main_with_runtime_factory(
 
     let build_config = |overrides| {
         ConfigBuilder::default()
-            .genex_home(genex_home.to_path_buf())
+            .ruxex_home(ruxex_home.to_path_buf())
             .cli_overrides(cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .loader_overrides(loader_overrides.clone())
@@ -544,7 +544,7 @@ async fn run_main_with_runtime_factory(
     }
 
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        genex_core::otel_init::build_provider(
+        ruxex_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -561,8 +561,8 @@ async fn run_main_with_runtime_factory(
             None
         }
     };
-    genex_core::otel_init::record_process_start(otel.as_ref(), "genex_exec");
-    genex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), "genex_exec");
+    ruxex_core::otel_init::record_process_start(otel.as_ref(), "ruxex_exec");
+    ruxex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), "ruxex_exec");
 
     let otel_logger_layer = otel.as_ref().and_then(|o| o.logger_layer());
 
@@ -589,12 +589,12 @@ async fn run_main_with_runtime_factory(
         })
         .collect();
     let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
-        arg0_paths.genex_self_exe.clone(),
-        arg0_paths.genex_linux_sandbox_exe.clone(),
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
     )?;
     #[cfg(target_os = "macos")]
-    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_genex_home(
-        genex_config::allowed_symlinked_genex_home(&config.config_layer_stack, &config.genex_home),
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
+        ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
     );
     let runtime = if let Some(provider_factory) = provider_factory {
         let init =
@@ -603,13 +603,13 @@ async fn run_main_with_runtime_factory(
     } else {
         configured_app_server_runtime_from_config(&config, true).await?
     };
-    let state_db = genex_core::init_state_db(&config).await;
+    let state_db = ruxex_core::init_state_db(&config).await;
     let environment_manager = if run_loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory())
             .await?
     } else {
-        EnvironmentManager::from_genex_home(
-            config.genex_home.clone(),
+        EnvironmentManager::from_ruxex_home(
+            config.ruxex_home.clone(),
             Some(local_runtime_paths),
             config.http_client_factory(),
         )
@@ -628,7 +628,7 @@ async fn run_main_with_runtime_factory(
         session_source: SessionSource::Exec,
         enable_api_key_env: true,
         runtime: Some(runtime),
-        client_name: "genex_exec".to_string(),
+        client_name: "ruxex_exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
         opt_out_notification_methods: Vec::new(),
@@ -657,14 +657,14 @@ async fn run_main_with_runtime_factory(
 
 #[allow(clippy::print_stderr)]
 async fn load_bootstrap_config_or_exit(
-    genex_home: &Path,
+    ruxex_home: &Path,
     cwd: Option<&AbsolutePathBuf>,
-    cli_kv_overrides: Vec<(String, genex_config::TomlValue)>,
+    cli_kv_overrides: Vec<(String, ruxex_config::TomlValue)>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> ConfigTomlLoadResult {
     match load_config_toml_with_layer_stack(
-        genex_home,
+        ruxex_home,
         cwd,
         cli_kv_overrides,
         ConfigLoadOptions {
@@ -727,7 +727,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
     let (initial_operation, prompt_summary) = match (command.as_ref(), prompt, images) {
         (Some(ExecCommand::Review(review_cli)), _, _) => {
             let review_request = build_review_request(review_cli)?;
-            let summary = genex_core::review_prompts::user_facing_hint(&review_request.target);
+            let summary = ruxex_core::review_prompts::user_facing_hint(&review_request.target);
             (InitialOperation::Review { review_request }, summary)
         }
         (Some(ExecCommand::Resume(args)), root_prompt, imgs) => {
@@ -946,11 +946,11 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
 
     exec_span.record("thread.id", primary_thread_id_for_span.as_str());
 
-    // Print the effective configuration and initial request so users can see what Genex
+    // Print the effective configuration and initial request so users can see what Ruxex
     // is using.
     event_processor.print_config_summary(&config, &prompt_summary, &session_configured);
     if !json_mode
-        && let Some(message) = genex_core::config::system_bwrap_warning(
+        && let Some(message) = ruxex_core::config::system_bwrap_warning(
             &config.permissions.effective_permission_profile(),
             &config.cwd,
         )
@@ -958,7 +958,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
         event_processor.process_warning(message);
     }
 
-    info!("Genex initialized with event: {session_configured:?}");
+    info!("Ruxex initialized with event: {session_configured:?}");
 
     let (interrupt_tx, mut interrupt_rx) = mpsc::unbounded_channel::<()>();
     tokio::spawn(async move {
@@ -1105,8 +1105,8 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                     && payload.turn.id == task_id
                     && matches!(
                         payload.turn.status,
-                        genex_app_server_protocol::TurnStatus::Failed
-                            | genex_app_server_protocol::TurnStatus::Interrupted
+                        ruxex_app_server_protocol::TurnStatus::Failed
+                            | ruxex_app_server_protocol::TurnStatus::Interrupted
                     )
                 {
                     error_seen = true;
@@ -1126,8 +1126,8 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                     .await;
 
                     match event_processor.process_server_notification(notification) {
-                        GenexStatus::Running => {}
-                        GenexStatus::InitiateShutdown => {
+                        RuxexStatus::Running => {}
+                        RuxexStatus::InitiateShutdown => {
                             if let Err(err) = request_shutdown(
                                 &client,
                                 &mut request_ids,
@@ -1258,10 +1258,10 @@ fn permission_profile_id_from_active_profile(active: ActivePermissionProfile) ->
 fn sandbox_mode_from_permission_profile(
     permission_profile: &PermissionProfile,
     cwd: &Path,
-) -> Option<genex_app_server_protocol::SandboxMode> {
+) -> Option<ruxex_app_server_protocol::SandboxMode> {
     match permission_profile {
         PermissionProfile::Disabled => {
-            Some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
+            Some(ruxex_app_server_protocol::SandboxMode::DangerFullAccess)
         }
         PermissionProfile::External { .. } => None,
         PermissionProfile::Managed { .. } => {
@@ -1270,11 +1270,11 @@ fn sandbox_mode_from_permission_profile(
                 permission_profile
                     .network_sandbox_policy()
                     .is_enabled()
-                    .then_some(genex_app_server_protocol::SandboxMode::DangerFullAccess)
+                    .then_some(ruxex_app_server_protocol::SandboxMode::DangerFullAccess)
             } else if file_system_policy.can_write_local_path_with_cwd(cwd, cwd) {
-                Some(genex_app_server_protocol::SandboxMode::WorkspaceWrite)
+                Some(ruxex_app_server_protocol::SandboxMode::WorkspaceWrite)
             } else {
-                Some(genex_app_server_protocol::SandboxMode::ReadOnly)
+                Some(ruxex_app_server_protocol::SandboxMode::ReadOnly)
             }
         }
     }
@@ -1359,16 +1359,16 @@ fn session_configured_from_thread_response(
     thread_id: &str,
     forked_from_id: Option<&str>,
     parent_thread_id: Option<&str>,
-    thread_source: Option<genex_protocol::protocol::ThreadSource>,
+    thread_source: Option<ruxex_protocol::protocol::ThreadSource>,
     thread_name: Option<String>,
     rollout_path: Option<PathBuf>,
     model: String,
     service_tier: Option<String>,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
-    active_permission_profile: Option<genex_protocol::models::ActivePermissionProfile>,
+    active_permission_profile: Option<ruxex_protocol::models::ActivePermissionProfile>,
     cwd: AbsolutePathBuf,
-    reasoning_effort: Option<genex_protocol::model_types::ReasoningEffort>,
+    reasoning_effort: Option<ruxex_protocol::model_types::ReasoningEffort>,
 ) -> Result<SessionConfiguredEvent, String> {
     let session_id = SessionId::from_string(session_id)
         .map_err(|err| format!("session id `{session_id}` is invalid: {err}"))?;
@@ -1524,7 +1524,7 @@ fn should_backfill_turn_completed_items(
         return false;
     };
 
-    !thread_ephemeral && payload.turn.items_view != genex_app_server_protocol::TurnItemsView::Full
+    !thread_ephemeral && payload.turn.items_view != ruxex_app_server_protocol::TurnItemsView::Full
 }
 
 fn turn_items_for_thread(
@@ -1565,10 +1565,10 @@ async fn latest_thread_cwd(thread: &AppServerThread) -> PathBuf {
 async fn parse_latest_turn_context_cwd(path: &Path) -> Option<PathBuf> {
     let path = path.to_path_buf();
     tokio::task::spawn_blocking(move || {
-        let reader = genex_rollout::open_rollout_seekable_reader(&path).ok()?;
-        let mut scanner = genex_rollout::ReverseJsonlScanner::new(reader).ok()?;
+        let reader = ruxex_rollout::open_rollout_seekable_reader(&path).ok()?;
+        let mut scanner = ruxex_rollout::ReverseJsonlScanner::new(reader).ok()?;
         while let Some(outcome) = scanner.scan_next_rollout_line().ok()? {
-            if let genex_rollout::ScanOutcome::Parsed(RolloutLine {
+            if let ruxex_rollout::ScanOutcome::Parsed(RolloutLine {
                 item: RolloutItem::TurnContext(item),
                 ..
             }) = outcome
@@ -1666,7 +1666,7 @@ async fn resolve_resume_thread_id(
             return Ok(Some(thread.id.to_string()));
         }
         if let Some((_, session_meta)) =
-            find_thread_meta_by_name_str(&config.genex_home, session_id, Some(state_db.as_ref()))
+            find_thread_meta_by_name_str(&config.ruxex_home, session_id, Some(state_db.as_ref()))
                 .await?
             && (args.all || cwds_match(config.cwd.as_path(), &session_meta.meta.cwd))
         {

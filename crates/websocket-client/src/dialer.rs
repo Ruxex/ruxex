@@ -7,8 +7,8 @@ use std::time::Duration;
 
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use genex_http_client::OutboundProxyRoute;
-use genex_http_client::build_rustls_client_config_with_custom_ca;
+use ruxex_http_client::OutboundProxyRoute;
+use ruxex_http_client::build_rustls_client_config_with_custom_ca;
 use rustls::ClientConfig;
 use rustls::pki_types::ServerName;
 use tokio::net::TcpStream;

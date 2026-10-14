@@ -8,7 +8,7 @@ use crate::insert_history::SetScrollRegion;
 use crossterm::cursor::MoveTo;
 use crossterm::queue;
 use crossterm::style::Print;
-use genex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::TerminalInfo;
 use ratatui::backend::Backend;
 use ratatui::layout::Position;
 use ratatui::layout::Size;

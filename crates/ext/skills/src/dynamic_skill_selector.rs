@@ -11,7 +11,7 @@ mod weighted_lexical;
 pub(crate) use character_ngram::CharacterNgramSkillSelector;
 pub(crate) use character_routing_card::CharacterRoutingCardSkillSelector;
 pub(crate) use fielded_bm25::FieldedBm25SkillSelector;
-use genex_skills::SkillDependencies;
+use ruxex_skills::SkillDependencies;
 pub(crate) use lru::LruSkillSelector;
 pub(crate) use lru_plus_character_routing::LruPlusCharacterRoutingSkillSelector;
 pub(crate) use lru_plus_character_routing::LruPlusLexicalCharacterRoutingSkillSelector;

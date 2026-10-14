@@ -1,18 +1,18 @@
 use super::*;
 use crate::exec_output::StreamOutput;
-use genex_http_client::HttpResponse;
+use ruxex_http_client::HttpResponse;
 use http::Response as RawHttpResponse;
 use http::StatusCode;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 
 #[test]
-fn genex_err_debug_preserves_legacy_shape() {
+fn ruxex_err_debug_preserves_legacy_shape() {
     let actual = [
-        GenexErr::Timeout,
-        GenexErr::Stream("disconnected".to_string()),
-        GenexErr::Stream("retry later".to_string()).with_retry_delay(Duration::from_secs(2)),
-        GenexErr::InternalServerError.with_retry_delay(Duration::from_secs(3)),
+        RuxexErr::Timeout,
+        RuxexErr::Stream("disconnected".to_string()),
+        RuxexErr::Stream("retry later".to_string()).with_retry_delay(Duration::from_secs(2)),
+        RuxexErr::InternalServerError.with_retry_delay(Duration::from_secs(3)),
     ]
     .map(|err| format!("{err:?}"));
 
@@ -30,20 +30,20 @@ fn genex_err_debug_preserves_legacy_shape() {
 #[test]
 fn retryability_preserves_error_details_distinctions() {
     let errors = [
-        (GenexErr::ServerOverloaded, false),
+        (RuxexErr::ServerOverloaded, false),
         (
-            GenexErr::new(GenexErrorDetails::RateLimitExceeded("retry later".into())),
+            RuxexErr::new(RuxexErrorDetails::RateLimitExceeded("retry later".into())),
             true,
         ),
         (
-            GenexErr::RetryLimit(RetryLimitReachedError {
+            RuxexErr::RetryLimit(RetryLimitReachedError {
                 status: StatusCode::TOO_MANY_REQUESTS,
                 request_id: None,
             }),
             false,
         ),
         (
-            GenexErr::UnexpectedStatus(UnexpectedResponseError {
+            RuxexErr::UnexpectedStatus(UnexpectedResponseError {
                 status: StatusCode::TOO_MANY_REQUESTS,
                 body: String::new(),
                 user_message: None,
@@ -54,10 +54,10 @@ fn retryability_preserves_error_details_distinctions() {
             true,
         ),
         (
-            GenexErrorDetails::ToolCollision("functions.update_plan".to_string()).into(),
+            RuxexErrorDetails::ToolCollision("functions.update_plan".to_string()).into(),
             false,
         ),
-        (GenexErr::InternalServerError, true),
+        (RuxexErr::InternalServerError, true),
     ];
 
     for (err, expected) in errors {
@@ -71,10 +71,10 @@ fn retryability_preserves_error_details_distinctions() {
 
 #[test]
 fn server_overloaded_maps_to_protocol() {
-    let err = GenexErr::ServerOverloaded;
+    let err = RuxexErr::ServerOverloaded;
     assert_eq!(
-        err.to_genex_protocol_error(),
-        GenexErrorInfo::ServerOverloaded
+        err.to_ruxex_protocol_error(),
+        RuxexErrorInfo::ServerOverloaded
     );
 }
 
@@ -88,7 +88,7 @@ fn sandbox_denied_uses_aggregated_output_when_stderr_empty() {
         duration: Duration::from_millis(10),
         timed_out: false,
     };
-    let err = GenexErr::Sandbox(SandboxErr::Denied {
+    let err = RuxexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -105,7 +105,7 @@ fn sandbox_denied_reports_both_streams_when_available() {
         duration: Duration::from_millis(10),
         timed_out: false,
     };
-    let err = GenexErr::Sandbox(SandboxErr::Denied {
+    let err = RuxexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -122,7 +122,7 @@ fn sandbox_denied_reports_stdout_when_no_stderr() {
         duration: Duration::from_millis(8),
         timed_out: false,
     };
-    let err = GenexErr::Sandbox(SandboxErr::Denied {
+    let err = RuxexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });
@@ -139,7 +139,7 @@ fn to_error_event_handles_response_stream_failed() {
         .error_for_status_ref()
         .unwrap_err()
         .with_url("http://example.com".parse().unwrap());
-    let err = GenexErr::ResponseStreamFailed(ResponseStreamFailed {
+    let err = RuxexErr::ResponseStreamFailed(ResponseStreamFailed {
         source,
         request_id: Some("req-123".to_string()),
     });
@@ -151,8 +151,8 @@ fn to_error_event_handles_response_stream_failed() {
         "prefix: Error while reading the server response: HTTP status client error (429 Too Many Requests) for url (http://example.com/), request id: req-123"
     );
     assert_eq!(
-        event.genex_error_info,
-        Some(GenexErrorInfo::ResponseStreamConnectionFailed {
+        event.ruxex_error_info,
+        Some(RuxexErrorInfo::ResponseStreamConnectionFailed {
             http_status_code: Some(429)
         })
     );
@@ -168,7 +168,7 @@ fn sandbox_denied_reports_exit_code_when_no_output_available() {
         duration: Duration::from_millis(5),
         timed_out: false,
     };
-    let err = GenexErr::Sandbox(SandboxErr::Denied {
+    let err = RuxexErr::Sandbox(SandboxErr::Denied {
         output: Box::new(output),
         network_policy_decision: None,
     });

@@ -1,6 +1,6 @@
-use genex_exec_server::EnvironmentManager;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 
 /// Builds a manager without environments using the legacy outbound HTTP policy.
 pub fn environment_manager_without_environments() -> EnvironmentManager {

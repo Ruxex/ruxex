@@ -1,12 +1,12 @@
-use genex_otel::GOAL_BLOCKED_METRIC;
-use genex_otel::GOAL_BUDGET_LIMITED_METRIC;
-use genex_otel::GOAL_COMPLETED_METRIC;
-use genex_otel::GOAL_CREATED_METRIC;
-use genex_otel::GOAL_DURATION_SECONDS_METRIC;
-use genex_otel::GOAL_RESUMED_METRIC;
-use genex_otel::GOAL_TOKEN_COUNT_METRIC;
-use genex_otel::GOAL_USAGE_LIMITED_METRIC;
-use genex_otel::MetricsClient;
+use ruxex_otel::GOAL_BLOCKED_METRIC;
+use ruxex_otel::GOAL_BUDGET_LIMITED_METRIC;
+use ruxex_otel::GOAL_COMPLETED_METRIC;
+use ruxex_otel::GOAL_CREATED_METRIC;
+use ruxex_otel::GOAL_DURATION_SECONDS_METRIC;
+use ruxex_otel::GOAL_RESUMED_METRIC;
+use ruxex_otel::GOAL_TOKEN_COUNT_METRIC;
+use ruxex_otel::GOAL_USAGE_LIMITED_METRIC;
+use ruxex_otel::MetricsClient;
 
 #[derive(Clone, Default)]
 pub(crate) struct GoalMetrics {
@@ -34,16 +34,16 @@ impl GoalMetrics {
 
     pub(crate) fn record_resumed_if_status_changed(
         &self,
-        previous_status: Option<genex_state::ThreadGoalStatus>,
-        goal_status: genex_state::ThreadGoalStatus,
+        previous_status: Option<ruxex_state::ThreadGoalStatus>,
+        goal_status: ruxex_state::ThreadGoalStatus,
     ) {
-        if goal_status == genex_state::ThreadGoalStatus::Active
+        if goal_status == ruxex_state::ThreadGoalStatus::Active
             && matches!(
                 previous_status,
                 Some(
-                    genex_state::ThreadGoalStatus::Paused
-                        | genex_state::ThreadGoalStatus::Blocked
-                        | genex_state::ThreadGoalStatus::UsageLimited
+                    ruxex_state::ThreadGoalStatus::Paused
+                        | ruxex_state::ThreadGoalStatus::Blocked
+                        | ruxex_state::ThreadGoalStatus::UsageLimited
                 )
             )
         {
@@ -53,19 +53,19 @@ impl GoalMetrics {
 
     pub(crate) fn record_terminal_if_status_changed(
         &self,
-        previous_status: Option<genex_state::ThreadGoalStatus>,
-        goal: &genex_state::ThreadGoal,
+        previous_status: Option<ruxex_state::ThreadGoalStatus>,
+        goal: &ruxex_state::ThreadGoal,
     ) {
         if previous_status == Some(goal.status) {
             return;
         }
 
         let counter = match goal.status {
-            genex_state::ThreadGoalStatus::Blocked => GOAL_BLOCKED_METRIC,
-            genex_state::ThreadGoalStatus::UsageLimited => GOAL_USAGE_LIMITED_METRIC,
-            genex_state::ThreadGoalStatus::BudgetLimited => GOAL_BUDGET_LIMITED_METRIC,
-            genex_state::ThreadGoalStatus::Complete => GOAL_COMPLETED_METRIC,
-            genex_state::ThreadGoalStatus::Active | genex_state::ThreadGoalStatus::Paused => {
+            ruxex_state::ThreadGoalStatus::Blocked => GOAL_BLOCKED_METRIC,
+            ruxex_state::ThreadGoalStatus::UsageLimited => GOAL_USAGE_LIMITED_METRIC,
+            ruxex_state::ThreadGoalStatus::BudgetLimited => GOAL_BUDGET_LIMITED_METRIC,
+            ruxex_state::ThreadGoalStatus::Complete => GOAL_COMPLETED_METRIC,
+            ruxex_state::ThreadGoalStatus::Active | ruxex_state::ThreadGoalStatus::Paused => {
                 return;
             }
         };

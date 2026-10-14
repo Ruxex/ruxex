@@ -9,7 +9,7 @@ use std::path::Path;
 
 use super::CheckStatus;
 use super::DoctorCheck;
-use genex_core::config::Config;
+use ruxex_core::config::Config;
 
 const MAX_PROBE_ERROR_CHARS: usize = 120;
 const STATE_DIR_NAME: &str = "app-server-daemon";
@@ -23,7 +23,7 @@ const PID_FILE_NAME: &str = "app-server.pid";
 /// client connection problems without proving the daemon itself is broken.
 pub(super) async fn background_server_check(config: &Config) -> DoctorCheck {
     let mut details = Vec::new();
-    let state_dir = config.genex_home.join(STATE_DIR_NAME);
+    let state_dir = config.ruxex_home.join(STATE_DIR_NAME);
     details.push(format!("daemon state dir: {}", state_dir.display()));
     push_file_detail(
         &mut details,
@@ -37,7 +37,7 @@ pub(super) async fn background_server_check(config: &Config) -> DoctorCheck {
         &state_dir.join("daemon.pid"),
     );
 
-    let socket_path = match genex_app_server::app_server_control_socket_path(&config.genex_home) {
+    let socket_path = match ruxex_app_server::app_server_control_socket_path(&config.ruxex_home) {
         Ok(socket_path) => socket_path,
         Err(err) => {
             return DoctorCheck::new(
@@ -67,7 +67,7 @@ pub(super) async fn background_server_check(config: &Config) -> DoctorCheck {
     )
     .details(details);
     if status.check_status() == CheckStatus::Warning {
-        check = check.remediation("Run genex app-server daemon version for more details.");
+        check = check.remediation("Run ruxex app-server daemon version for more details.");
     }
     check
 }
@@ -143,7 +143,7 @@ async fn socket_status(socket_path: &Path) -> SocketStatus {
         return SocketStatus::NotRunning;
     }
 
-    match genex_app_server_daemon::probe_app_server_version(socket_path).await {
+    match ruxex_app_server_daemon::probe_app_server_version(socket_path).await {
         Ok(app_server_version) => SocketStatus::Running(app_server_version),
         Err(err) => SocketStatus::StaleOrUnreachable(concise_probe_error(&err, socket_path)),
     }
@@ -176,21 +176,21 @@ fn concise_probe_error(err: &anyhow::Error, socket_path: &Path) -> String {
 mod tests {
     use std::path::PathBuf;
 
-    use genex_core::config::ConfigBuilder;
+    use ruxex_core::config::ConfigBuilder;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    async fn test_config(genex_home: PathBuf) -> Config {
+    async fn test_config(ruxex_home: PathBuf) -> Config {
         ConfigBuilder::default()
-            .genex_home(genex_home)
+            .ruxex_home(ruxex_home)
             .build()
             .await
             .expect("config")
     }
 
     fn create_socket_placeholder(config: &Config) {
-        let socket_path = genex_app_server::app_server_control_socket_path(&config.genex_home)
+        let socket_path = ruxex_app_server::app_server_control_socket_path(&config.ruxex_home)
             .expect("socket path");
         std::fs::create_dir_all(socket_path.parent().expect("socket parent"))
             .expect("create socket dir");

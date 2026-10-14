@@ -1,9 +1,9 @@
 //! Resolves an executor sandbox context to a concrete local sandbox implementation.
 
-use genex_protocol::models::PermissionProfile;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::SandboxablePreference;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxablePreference;
 
 pub(crate) fn select_sandbox(
     manager: &SandboxManager,

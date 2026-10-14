@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use genex_config::HookEventsToml;
-use genex_config::HookHandlerConfig;
-use genex_config::MatcherGroup;
-use genex_exec_server::CapabilityRootDiscovery;
-use genex_exec_server::CapabilityTextFile;
-use genex_exec_server::DiscoveredPluginFiles;
-use genex_exec_server::ExecutorCapabilityDiscoverySnapshot;
-use genex_plugin::ExecutorPluginHookSource;
-use genex_protocol::capabilities::CapabilityRootLocation;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::HookEventsToml;
+use ruxex_config::HookHandlerConfig;
+use ruxex_config::MatcherGroup;
+use ruxex_exec_server::CapabilityRootDiscovery;
+use ruxex_exec_server::CapabilityTextFile;
+use ruxex_exec_server::DiscoveredPluginFiles;
+use ruxex_exec_server::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_plugin::ExecutorPluginHookSource;
+use ruxex_protocol::capabilities::CapabilityRootLocation;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -78,14 +78,14 @@ fn cleanup_hook_manifest() -> serde_json::Value {
 
 fn expected_source(index: usize) -> ExecutorPluginHookSource {
     ExecutorPluginHookSource {
-        plugin_id: PluginId::parse("computer-use@genex-bundled").expect("plugin id"),
+        plugin_id: PluginId::parse("computer-use@ruxex-bundled").expect("plugin id"),
         environment_id: "executor-a".to_string(),
         mcp_environment_id: None,
         mcp_metadata: None,
         plugin_root: PathUri::parse("file:///plugins/computer-use").expect("plugin root"),
-        manifest_path: PathUri::parse("file:///plugins/computer-use/.genex-plugin/plugin.json")
+        manifest_path: PathUri::parse("file:///plugins/computer-use/.ruxex-plugin/plugin.json")
             .expect("manifest path"),
-        source_relative_path: format!(".genex-plugin/plugin.json#hooks[{index}]"),
+        source_relative_path: format!(".ruxex-plugin/plugin.json#hooks[{index}]"),
         hooks: HookEventsToml {
             stop: vec![MatcherGroup {
                 matcher: None,
@@ -124,9 +124,9 @@ fn discovers_allowlisted_executor_plugin_hook_sources() {
         ]
     });
     let snapshot = snapshot_for_manifest(
-        "computer-use@genex-bundled",
+        "computer-use@ruxex-bundled",
         "executor-a",
-        "file:///plugins/computer-use/.genex-plugin/plugin.json",
+        "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
         manifest,
     );
 
@@ -152,13 +152,13 @@ fn discovers_unified_computer_use_cleanup_hooks() {
     manifest["name"] = json!("unified-computer-use");
     manifest["hooks"]["hooks"]["Stop"][0]["hooks"][0]["server"] = json!("cua_repl");
     let snapshot = snapshot_for_manifest(
-        "unified-computer-use@genex-bundled",
+        "unified-computer-use@ruxex-bundled",
         "executor-a",
-        "file:///plugins/computer-use/.genex-plugin/plugin.json",
+        "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
         manifest,
     );
     let mut expected = expected_source(/*index*/ 0);
-    expected.plugin_id = PluginId::parse("unified-computer-use@genex-bundled").expect("plugin id");
+    expected.plugin_id = PluginId::parse("unified-computer-use@ruxex-bundled").expect("plugin id");
     let HookHandlerConfig::McpTool { server, .. } = &mut expected.hooks.stop[0].hooks[0] else {
         panic!("expected an MCP tool hook");
     };
@@ -195,9 +195,9 @@ fn filters_mixed_handlers_without_rewriting_allowed_groups() {
             json!({ "type": "mcp_tool", "server": "node_repl", "tool": "other" }),
         );
     let snapshot = snapshot_for_manifest(
-        "computer-use@genex-bundled",
+        "computer-use@ruxex-bundled",
         "executor-a",
-        "file:///plugins/computer-use/.genex-plugin/plugin.json",
+        "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
         manifest,
     );
 
@@ -216,9 +216,9 @@ fn preserves_allowlisted_executor_plugin_hook_options() {
     handler["statusMessage"] = json!("Cleaning up Computer Use");
     manifest["hooks"]["hooks"]["Interrupt"] = manifest["hooks"]["hooks"]["Stop"].clone();
     let snapshot = snapshot_for_manifest(
-        "computer-use@genex-bundled",
+        "computer-use@ruxex-bundled",
         "executor-a",
-        "file:///plugins/computer-use/.genex-plugin/plugin.json",
+        "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
         manifest,
     );
 
@@ -261,7 +261,7 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
     for (name, plugin_id, manifest) in [
         (
             "unallowlisted bundled plugin",
-            "another-plugin@genex-bundled",
+            "another-plugin@ruxex-bundled",
             cleanup_hook_manifest(),
         ),
         (
@@ -271,24 +271,24 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
         ),
         (
             "bundled alpha marketplace",
-            "computer-use@genex-bundled-alpha",
+            "computer-use@ruxex-bundled-alpha",
             cleanup_hook_manifest(),
         ),
         (
             "bundled marketplace suffix",
-            "computer-use@fake-genex-bundled",
+            "computer-use@fake-ruxex-bundled",
             cleanup_hook_manifest(),
         ),
-        ("wrong event", "computer-use@genex-bundled", wrong_event),
-        ("wrong handler", "computer-use@genex-bundled", wrong_handler),
-        ("wrong server", "computer-use@genex-bundled", wrong_server),
-        ("wrong tool", "computer-use@genex-bundled", wrong_tool),
-        ("wrong matcher", "computer-use@genex-bundled", wrong_matcher),
+        ("wrong event", "computer-use@ruxex-bundled", wrong_event),
+        ("wrong handler", "computer-use@ruxex-bundled", wrong_handler),
+        ("wrong server", "computer-use@ruxex-bundled", wrong_server),
+        ("wrong tool", "computer-use@ruxex-bundled", wrong_tool),
+        ("wrong matcher", "computer-use@ruxex-bundled", wrong_matcher),
     ] {
         let snapshot = snapshot_for_manifest(
             plugin_id,
             "executor-a",
-            "file:///plugins/computer-use/.genex-plugin/plugin.json",
+            "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
             manifest,
         );
 
@@ -303,9 +303,9 @@ fn ignores_unallowlisted_executor_plugin_hooks() {
 #[test]
 fn ignores_file_backed_executor_plugin_hooks() {
     let file_backed = snapshot_for_manifest(
-        "computer-use@genex-bundled",
+        "computer-use@ruxex-bundled",
         "executor-a",
-        "file:///plugins/computer-use/.genex-plugin/plugin.json",
+        "file:///plugins/computer-use/.ruxex-plugin/plugin.json",
         json!({
             "name": "computer-use",
             "hooks": "./hooks/hooks.json"

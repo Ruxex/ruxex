@@ -17,16 +17,16 @@ use app_test_support::ApiKeyAuthFixture;
 use app_test_support::write_api_key_auth;
 use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::LoaderOverrides;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_core::config::ConfigBuilder;
-use genex_exec_server::EnvironmentManager;
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_protocol::protocol::SessionSource;
-use genex_providers::create_model_provider;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_login::AuthHeaders;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_providers::create_model_provider;
 use http::HeaderMap;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -122,12 +122,12 @@ impl Harness {
         let home = tempfile::tempdir()?;
         let config = Arc::new(
             ConfigBuilder::default()
-                .genex_home(home.path().into())
+                .ruxex_home(home.path().into())
                 .build()
                 .await?,
         );
         let auth = CredentialManager::from_auth_for_testing_with_home(
-            GenexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),
+            RuxexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),
             home.path().into(),
         );
         let provider = Arc::new(BlockingProvider::default());
@@ -147,7 +147,7 @@ impl Harness {
             LoaderOverrides::default(),
             /*strict_config*/ false,
             Arg0DispatchPaths::default(),
-            Arc::new(genex_config::NoopThreadConfigLoader),
+            Arc::new(ruxex_config::NoopThreadConfigLoader),
         );
         let (sender, messages) = mpsc::channel(/*buffer*/ 16);
         let outgoing = Arc::new(OutgoingMessageSender::new(sender, ()));

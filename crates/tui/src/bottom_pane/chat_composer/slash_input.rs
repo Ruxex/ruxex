@@ -16,8 +16,8 @@ use crate::bottom_pane::slash_commands::SlashCommandItem;
 use crate::bottom_pane::slash_commands::find_slash_command;
 use crate::bottom_pane::slash_commands::has_slash_command_prefix;
 use crate::slash_command::SlashCommand;
-use genex_protocol::user_input::ByteRange;
-use genex_protocol::user_input::TextElement;
+use ruxex_protocol::user_input::ByteRange;
+use ruxex_protocol::user_input::TextElement;
 
 use super::super::footer::reset_mode_after_activity;
 use super::ActivePopup;

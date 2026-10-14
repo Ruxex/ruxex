@@ -3,12 +3,12 @@ use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
 use app_test_support::write_mock_responses_config_toml;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_host_windows;
 use core_test_support::skip_if_remote;
@@ -27,10 +27,10 @@ async fn builder_interposes_fixed_delay_for_auto_env() -> Result<()> {
     skip_if_host_windows!(Ok(()));
     skip_if_remote!(Ok(()), "the fixed-delay fixture is local-only");
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let requested_delay = Duration::from_secs(1);
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_exec_server_delay(requested_delay)
         .build()
         .await?;
@@ -70,9 +70,9 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
         ]),
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     write_mock_responses_config_toml(
-        genex_home.path(),
+        ruxex_home.path(),
         &server.uri(),
         &BTreeMap::new(),
         /*auto_compact_limit*/ 100_000,
@@ -81,7 +81,7 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -149,11 +149,11 @@ async fn thread_start_with_auto_env_exposes_fixture_cwd_to_model() -> Result<()>
 
 #[tokio::test]
 async fn auto_env_rejects_explicit_environment_config() -> Result<()> {
-    let genex_home = TempDir::new()?;
-    std::fs::write(genex_home.path().join("environments.toml"), "")?;
+    let ruxex_home = TempDir::new()?;
+    std::fs::write(ruxex_home.path().join("environments.toml"), "")?;
 
     let result = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await;
     let Err(err) = result else {
@@ -163,7 +163,7 @@ async fn auto_env_rejects_explicit_environment_config() -> Result<()> {
         err.to_string(),
         format!(
             "automatic environment cannot be used when {} exists",
-            genex_home.path().join("environments.toml").display()
+            ruxex_home.path().join("environments.toml").display()
         )
     );
 

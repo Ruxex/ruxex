@@ -1,22 +1,22 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
-use genex_core::exec::ExecCapturePolicy;
-use genex_core::exec::ExecParams;
-use genex_core::exec::process_exec_tool_call;
-use genex_core::exec_env::create_env;
-use genex_core::sandboxing::SandboxPermissions;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core::exec::ExecCapturePolicy;
+use ruxex_core::exec::ExecParams;
+use ruxex_core::exec::process_exec_tool_call;
+use ruxex_core::exec_env::create_env;
+use ruxex_core::sandboxing::SandboxPermissions;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -49,8 +49,8 @@ fn create_env_from_core_vars() -> HashMap<String, String> {
     create_env(&policy, /*thread_id*/ None)
 }
 
-fn genex_linux_sandbox_exe() -> PathBuf {
-    let sandbox_program = PathBuf::from(env!("CARGO_BIN_EXE_genex-linux-sandbox"));
+fn ruxex_linux_sandbox_exe() -> PathBuf {
+    let sandbox_program = PathBuf::from(env!("CARGO_BIN_EXE_ruxex-linux-sandbox"));
     match sandbox_program.canonicalize() {
         Ok(path) => path,
         Err(_) => sandbox_program,
@@ -71,7 +71,7 @@ async fn run_cmd_output(
     cmd: &[&str],
     writable_roots: &[PathBuf],
     timeout_ms: u64,
-) -> genex_protocol::exec_output::ExecToolCallOutput {
+) -> ruxex_protocol::exec_output::ExecToolCallOutput {
     run_cmd_result_with_writable_roots(
         cmd,
         writable_roots,
@@ -89,7 +89,7 @@ async fn run_cmd_result_with_writable_roots(
     timeout_ms: u64,
     use_legacy_landlock: bool,
     network_access: bool,
-) -> Result<genex_protocol::exec_output::ExecToolCallOutput> {
+) -> Result<ruxex_protocol::exec_output::ExecToolCallOutput> {
     let writable_roots = writable_roots
         .iter()
         .map(|path| AbsolutePathBuf::try_from(path.as_path()).unwrap())
@@ -117,7 +117,7 @@ async fn run_cmd_result_with_permission_profile(
     permission_profile: PermissionProfile,
     timeout_ms: u64,
     use_legacy_landlock: bool,
-) -> Result<genex_protocol::exec_output::ExecToolCallOutput> {
+) -> Result<ruxex_protocol::exec_output::ExecToolCallOutput> {
     let cwd = AbsolutePathBuf::current_dir().expect("cwd should exist");
     run_cmd_result_with_permission_profile_for_cwd(
         cmd,
@@ -137,7 +137,7 @@ async fn run_cmd_result_with_cwd_and_writable_roots(
     timeout_ms: u64,
     use_legacy_landlock: bool,
     network_access: bool,
-) -> Result<genex_protocol::exec_output::ExecToolCallOutput> {
+) -> Result<ruxex_protocol::exec_output::ExecToolCallOutput> {
     let writable_roots = writable_roots
         .iter()
         .map(|path| AbsolutePathBuf::try_from(path.as_path()).unwrap())
@@ -171,7 +171,7 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
     env: HashMap<String, String>,
     timeout_ms: u64,
     use_legacy_landlock: bool,
-) -> Result<genex_protocol::exec_output::ExecToolCallOutput> {
+) -> Result<ruxex_protocol::exec_output::ExecToolCallOutput> {
     let sandbox_cwd = cwd.clone();
     let params = ExecParams {
         command: cmd.iter().copied().map(str::to_owned).collect(),
@@ -185,21 +185,21 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
         justification: None,
         arg0: None,
     };
-    let genex_linux_sandbox_exe = Some(genex_linux_sandbox_exe());
+    let ruxex_linux_sandbox_exe = Some(ruxex_linux_sandbox_exe());
 
     process_exec_tool_call(
         params,
         &permission_profile,
         &sandbox_cwd,
-        &genex_linux_sandbox_exe,
-        /*genex_self_exe*/ &None,
+        &ruxex_linux_sandbox_exe,
+        /*ruxex_self_exe*/ &None,
         use_legacy_landlock,
         /*stdout_stream*/ None,
     )
     .await
 }
 
-fn is_bwrap_unavailable_output(output: &genex_protocol::exec_output::ExecToolCallOutput) -> bool {
+fn is_bwrap_unavailable_output(output: &ruxex_protocol::exec_output::ExecToolCallOutput) -> bool {
     output.stderr.text.contains(BWRAP_UNAVAILABLE_ERR)
         || (output
             .stderr
@@ -222,28 +222,28 @@ async fn should_skip_bwrap_tests() -> bool {
     {
         Ok(output) => is_bwrap_unavailable_output(&output),
         Err(err) => match err.details() {
-            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 is_bwrap_unavailable_output(output)
             }
             // Probe timeouts are not actionable for the bwrap-specific assertions below;
             // skip rather than fail the whole suite.
-            GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => true,
+            RuxexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => true,
             details => panic!("bwrap availability probe failed unexpectedly: {details:?}"),
         },
     }
 }
 
 fn expect_denied(
-    result: Result<genex_protocol::exec_output::ExecToolCallOutput>,
+    result: Result<ruxex_protocol::exec_output::ExecToolCallOutput>,
     context: &str,
-) -> genex_protocol::exec_output::ExecToolCallOutput {
+) -> ruxex_protocol::exec_output::ExecToolCallOutput {
     match result {
         Ok(output) => {
             assert_ne!(output.exit_code, 0, "{context}: expected nonzero exit code");
             output
         }
         Err(err) => match err.details() {
-            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
             details => panic!("{context}: {details:?}"),
@@ -467,7 +467,7 @@ async fn sandbox_inner_stage_rejects_retained_capabilities() {
         .expect("read-only permission profile should serialize");
     let output = std::process::Command::new("unshare")
         .args(["--user", "--map-root-user", "--"])
-        .arg(genex_linux_sandbox_exe())
+        .arg(ruxex_linux_sandbox_exe())
         .args(["--sandbox-policy-cwd", "/", "--permission-profile"])
         .arg(permission_profile)
         .args([
@@ -518,14 +518,14 @@ async fn assert_network_blocked(cmd: &[&str]) {
         arg0: None,
     };
 
-    let genex_linux_sandbox_exe: Option<PathBuf> = Some(genex_linux_sandbox_exe());
+    let ruxex_linux_sandbox_exe: Option<PathBuf> = Some(ruxex_linux_sandbox_exe());
     let permission_profile = PermissionProfile::read_only();
     let result = process_exec_tool_call(
         params,
         &permission_profile,
         &sandbox_cwd,
-        &genex_linux_sandbox_exe,
-        /*genex_self_exe*/ &None,
+        &ruxex_linux_sandbox_exe,
+        /*ruxex_self_exe*/ &None,
         /*use_legacy_landlock*/ false,
         /*stdout_stream*/ None,
     )
@@ -534,7 +534,7 @@ async fn assert_network_blocked(cmd: &[&str]) {
     let output = match result {
         Ok(output) => output,
         Err(err) => match err.details() {
-            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
             details => panic!("expected sandbox denied error, got: {details:?}"),
@@ -588,14 +588,14 @@ async fn sandbox_blocks_protected_metadata_writes_inside_writable_root() {
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
     let dot_git = tmpdir.path().join(".git");
-    let dot_genex = tmpdir.path().join(".genex");
+    let dot_ruxex = tmpdir.path().join(".ruxex");
     let dot_aws = tmpdir.path().join(".aws");
     std::fs::create_dir_all(&dot_git).expect("create .git");
-    std::fs::create_dir_all(&dot_genex).expect("create .genex");
+    std::fs::create_dir_all(&dot_ruxex).expect("create .ruxex");
     std::fs::create_dir_all(&dot_aws).expect("create .aws");
 
     let git_target = dot_git.join("config");
-    let genex_target = dot_genex.join("config.toml");
+    let ruxex_target = dot_ruxex.join("config.toml");
     let aws_target = dot_aws.join("config");
 
     let git_output = expect_denied(
@@ -614,12 +614,12 @@ async fn sandbox_blocks_protected_metadata_writes_inside_writable_root() {
         ".git write should be denied under bubblewrap",
     );
 
-    let genex_output = expect_denied(
+    let ruxex_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", genex_target.to_string_lossy()),
+                &format!("echo denied > {}", ruxex_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -627,10 +627,10 @@ async fn sandbox_blocks_protected_metadata_writes_inside_writable_root() {
             /*network_access*/ true,
         )
         .await,
-        ".genex write should be denied under bubblewrap",
+        ".ruxex write should be denied under bubblewrap",
     );
     assert_ne!(git_output.exit_code, 0);
-    assert_ne!(genex_output.exit_code, 0);
+    assert_ne!(ruxex_output.exit_code, 0);
 
     let aws_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -651,7 +651,7 @@ async fn sandbox_blocks_protected_metadata_writes_inside_writable_root() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_genex_symlink_replacement_attack() {
+async fn sandbox_blocks_ruxex_symlink_replacement_attack() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -660,20 +660,20 @@ async fn sandbox_blocks_genex_symlink_replacement_attack() {
     use std::os::unix::fs::symlink;
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
-    let decoy = tmpdir.path().join("decoy-genex");
+    let decoy = tmpdir.path().join("decoy-ruxex");
     std::fs::create_dir_all(&decoy).expect("create decoy dir");
 
-    let dot_genex = tmpdir.path().join(".genex");
-    symlink(&decoy, &dot_genex).expect("create .genex symlink");
+    let dot_ruxex = tmpdir.path().join(".ruxex");
+    symlink(&decoy, &dot_ruxex).expect("create .ruxex symlink");
 
-    let genex_target = dot_genex.join("config.toml");
+    let ruxex_target = dot_ruxex.join("config.toml");
 
-    let genex_output = expect_denied(
+    let ruxex_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", genex_target.to_string_lossy()),
+                &format!("echo denied > {}", ruxex_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -681,13 +681,13 @@ async fn sandbox_blocks_genex_symlink_replacement_attack() {
             /*network_access*/ true,
         )
         .await,
-        ".genex symlink replacement should be denied",
+        ".ruxex symlink replacement should be denied",
     );
-    assert_ne!(genex_output.exit_code, 0);
+    assert_ne!(ruxex_output.exit_code, 0);
 }
 
 #[tokio::test]
-async fn sandbox_reports_genex_symlink_build_failure_without_panicking() {
+async fn sandbox_reports_ruxex_symlink_build_failure_without_panicking() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -696,11 +696,11 @@ async fn sandbox_reports_genex_symlink_build_failure_without_panicking() {
     use std::os::unix::fs::symlink;
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
-    let decoy = tmpdir.path().join("decoy-genex");
+    let decoy = tmpdir.path().join("decoy-ruxex");
     std::fs::create_dir_all(&decoy).expect("create decoy dir");
 
-    let dot_genex = tmpdir.path().join(".genex");
-    symlink(&decoy, &dot_genex).expect("create .genex symlink");
+    let dot_ruxex = tmpdir.path().join(".ruxex");
+    symlink(&decoy, &dot_ruxex).expect("create .ruxex symlink");
 
     let output = match run_cmd_result_with_writable_roots(
         &["bash", "-lc", "true"],
@@ -712,12 +712,12 @@ async fn sandbox_reports_genex_symlink_build_failure_without_panicking() {
     .await
     {
         Err(err) => match err.details() {
-            GenexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
+            RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
-            details => panic!(".genex symlink build failure should deny: {details:?}"),
+            details => panic!(".ruxex symlink build failure should deny: {details:?}"),
         },
-        Ok(output) => panic!(".genex symlink build failure should deny: {output:?}"),
+        Ok(output) => panic!(".ruxex symlink build failure should deny: {output:?}"),
     };
 
     assert_eq!(output.exit_code, 1);
@@ -757,7 +757,7 @@ async fn sandbox_rejects_symlinked_synthetic_mount_registry() {
     std::fs::create_dir_all(&registry_target).expect("create registry target");
     let effective_uid = unsafe { libc::geteuid() };
     let registry = temp.path().join(format!(
-        "genex-bwrap-synthetic-mount-targets-{effective_uid}"
+        "ruxex-bwrap-synthetic-mount-targets-{effective_uid}"
     ));
     std::os::unix::fs::symlink(&registry_target, &registry).expect("symlink registry");
 
@@ -846,11 +846,11 @@ async fn sandbox_keeps_parent_repo_discovery_while_blocking_child_metadata() {
         r#"set -e
 test "$(git rev-parse --show-toplevel)" = '{repo}'
 touch "$TMPDIR/writable-sibling"
-registry="${{TMPDIR:-/tmp}}/genex-bwrap-synthetic-mount-targets-$(id -u)"
+registry="${{TMPDIR:-/tmp}}/ruxex-bwrap-synthetic-mount-targets-$(id -u)"
 if touch "$registry/forged-marker" 2>/dev/null; then
   exit 22
 fi
-redirected_registry='{redirected_tmp}'/genex-bwrap-synthetic-mount-targets-$(id -u)
+redirected_registry='{redirected_tmp}'/ruxex-bwrap-synthetic-mount-targets-$(id -u)
 for marker_dir in "$registry"/*; do
   [ -d "$marker_dir" ] || continue
   mkdir -p "$redirected_registry/${{marker_dir##*/}}"
@@ -858,7 +858,7 @@ for marker_dir in "$registry"/*; do
 done
 ln -sfn '{redirected_tmp}' "$TMPDIR"
 git status --short > status.before
-if grep -E '(^|[[:space:]])\.(git|genex|agents|aws)(/|$)' status.before; then
+if grep -E '(^|[[:space:]])\.(git|ruxex|agents|aws)(/|$)' status.before; then
   cat status.before
   exit 21
 fi
@@ -907,9 +907,9 @@ fi
     assert_ne!(git_init_output.exit_code, 0);
     assert!(!subdir.join(".git").exists());
 
-    let mkdir_genex_output = expect_denied(
+    let mkdir_ruxex_output = expect_denied(
         run_cmd_result_with_cwd_and_writable_roots(
-            &["mkdir", ".genex"],
+            &["mkdir", ".ruxex"],
             &subdir,
             std::slice::from_ref(&subdir),
             LONG_TIMEOUT_MS,
@@ -917,10 +917,10 @@ fi
             /*network_access*/ true,
         )
         .await,
-        "child .genex directory creation should be denied",
+        "child .ruxex directory creation should be denied",
     );
-    assert_ne!(mkdir_genex_output.exit_code, 0);
-    assert!(!subdir.join(".genex").exists());
+    assert_ne!(mkdir_ruxex_output.exit_code, 0);
+    assert!(!subdir.join(".ruxex").exists());
     assert!(!subdir.join(".aws").exists());
 
     let mkdir_aws_output = expect_denied(
@@ -963,7 +963,7 @@ printf '%s\n' '{{"message":"ok"}}' | python3 jsonl_viewer.py | grep -q ok
 
     assert!(subdir.join("jsonl_viewer.py").is_file());
     assert!(!subdir.join(".git").exists());
-    assert!(!subdir.join(".genex").exists());
+    assert!(!subdir.join(".ruxex").exists());
     assert!(!subdir.join(".agents").exists());
     assert!(!subdir.join(".aws").exists());
 }
@@ -981,7 +981,7 @@ async fn sandbox_blocks_explicit_split_policy_carveouts_under_bwrap() {
     let blocked_target = blocked.join("secret.txt");
     // These tests bypass the usual legacy-policy bridge, so explicitly keep
     // the sandbox helper binary and minimal runtime paths readable.
-    let sandbox_helper_dir = genex_linux_sandbox_exe()
+    let sandbox_helper_dir = ruxex_linux_sandbox_exe()
         .parent()
         .expect("sandbox helper should have a parent")
         .to_path_buf();
@@ -1055,7 +1055,7 @@ async fn sandbox_starts_with_denied_tmp_without_exposing_registry() {
     std::fs::write(temp.path().join("AGENTS.md"), "project instructions\n")
         .expect("write instructions");
     let cwd = AbsolutePathBuf::try_from(temp.path()).expect("absolute workspace");
-    let sandbox_helper = genex_linux_sandbox_exe();
+    let sandbox_helper = ruxex_linux_sandbox_exe();
     let helper_dir = AbsolutePathBuf::try_from(sandbox_helper.parent().expect("helper parent"))
         .expect("absolute helper directory");
 
@@ -1096,7 +1096,7 @@ async fn sandbox_starts_with_denied_tmp_without_exposing_registry() {
 cat AGENTS.md
 test ! -r "$DENIED_SECRET"
 if printf modified > "$DENIED_SECRET" 2>/dev/null; then exit 1; fi
-registry="$TMPDIR/genex-bwrap-synthetic-mount-targets-$(id -u)"
+registry="$TMPDIR/ruxex-bwrap-synthetic-mount-targets-$(id -u)"
 test ! -e "$registry"
 "#,
                 ],
@@ -1134,7 +1134,7 @@ async fn sandbox_reenables_writable_subpaths_under_unreadable_parents() {
     let allowed_target = allowed.join("note.txt");
     // These tests bypass the usual legacy-policy bridge, so explicitly keep
     // the sandbox helper binary and minimal runtime paths readable.
-    let sandbox_helper_dir = genex_linux_sandbox_exe()
+    let sandbox_helper_dir = ruxex_linux_sandbox_exe()
         .parent()
         .expect("sandbox helper should have a parent")
         .to_path_buf();

@@ -34,7 +34,7 @@ impl ReadMetrics {
 
 impl Drop for ReadMetrics {
     fn drop(&mut self) {
-        let Some(metrics) = genex_otel::global() else {
+        let Some(metrics) = ruxex_otel::global() else {
             return;
         };
         let (outcome, stage, error_kind) = match self.failure {
@@ -48,9 +48,9 @@ impl Drop for ReadMetrics {
             ("stage", stage),
             ("error_kind", error_kind),
         ];
-        let _ = metrics.counter("genex.rollout_compression.read", /*inc*/ 1, &tags);
+        let _ = metrics.counter("ruxex.rollout_compression.read", /*inc*/ 1, &tags);
         let _ = metrics.record_duration(
-            "genex.rollout_compression.read.io_duration_ms",
+            "ruxex.rollout_compression.read.io_duration_ms",
             self.duration,
             &tags,
         );

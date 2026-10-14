@@ -1,15 +1,15 @@
 //! Verifies that root service-tier changes reach existing child turns and future work.
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::AgentRoleConfig;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::AgentRoleConfig;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -19,7 +19,7 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -71,7 +71,7 @@ fn configure_flex_role(config: &mut Config) {
     }
     config.model_provider.request_max_retries = Some(0);
     config.model_provider.stream_max_retries = Some(0);
-    let role_path = config.genex_home.join("flex-worker.toml");
+    let role_path = config.ruxex_home.join("flex-worker.toml");
     std::fs::write(&role_path, "service_tier = \"flex\"\n")
         .expect("flex role should be written");
     config.agent_roles.insert(
@@ -84,7 +84,7 @@ fn configure_flex_role(config: &mut Config) {
     );
 }
 
-async fn wait_for_turn_complete(thread: &genex_core::GenexThread) {
+async fn wait_for_turn_complete(thread: &ruxex_core::RuxexThread) {
     wait_for_event(thread, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 }
 
@@ -159,7 +159,7 @@ async fn root_service_tier_change_updates_existing_subagent(
     let initial_service_tier_owned = initial_service_tier.map(str::to_string);
     let updated_request_service_tier = updated_service_tier
         .filter(|service_tier| *service_tier != SERVICE_TIER_DEFAULT_REQUEST_VALUE);
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-b")
         .with_config(move |config| {
             config.service_tier = initial_service_tier_owned;
@@ -230,7 +230,7 @@ async fn root_service_tier_change_updates_existing_subagent(
     assert_request_service_tier(&initial_child_request, initial_service_tier);
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             service_tier: Some(updated_service_tier.map(str::to_string)),
             ..Default::default()
@@ -307,7 +307,7 @@ async fn root_service_tier_change_updates_existing_subagent(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-b")
         .with_config(|config| {
             config.service_tier = Some("flex".to_string());
@@ -364,7 +364,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     );
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             service_tier: Some(None),
             ..Default::default()
@@ -377,7 +377,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     let reloaded_thread = test.thread_manager.get_thread(original_thread_id).await?;
     assert_eq!(
         reloaded_thread.config_snapshot().await.service_tier,
-        test.genex.config_snapshot().await.service_tier,
+        test.ruxex.config_snapshot().await.service_tier,
         "reload ignores the role tier and preserves the root-owned preference"
     );
 
@@ -391,7 +391,7 @@ async fn evicted_role_subagent_uses_root_service_tier_after_reload() -> Result<(
     wait_for_turn_complete(&reloaded_thread).await;
     assert_request_service_tier(&reloaded_request, /*expected*/ None);
     reloaded_thread.shutdown_and_wait().await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     Ok(())
 }

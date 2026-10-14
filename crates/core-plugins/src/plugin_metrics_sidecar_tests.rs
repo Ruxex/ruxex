@@ -1,8 +1,8 @@
 use super::*;
 use crate::PluginMeasurementDefinition;
 use crate::PluginMetricsOperation;
-use genex_plugin::PluginId;
-use genex_protocol::models::LegacyReadWriteRoots;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::models::LegacyReadWriteRoots;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

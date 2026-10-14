@@ -14,9 +14,9 @@
 //! efforts require the explicit advanced-reasoning picker.
 
 use crossterm::event::KeyEvent;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
 
 use super::ChatWidget;
 use super::PARENT_OWNED_INPUT_MESSAGE;

@@ -4,30 +4,30 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use core_test_support::responses;
 use core_test_support::skip_if_wine_exec;
-use genex_app_server_protocol::ApprovalsReviewer;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::ThreadSettingsUpdateParams;
-use genex_app_server_protocol::ThreadSettingsUpdateResponse;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnSettingsUpdateParams;
-use genex_app_server_protocol::TurnSettingsUpdateResponse;
-use genex_app_server_protocol::TurnSettingsUpdateStatus;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_features::Feature;
-use genex_models_manager::test_support::test_models_response;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_app_server_protocol::ApprovalsReviewer;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
+use ruxex_app_server_protocol::ThreadSettingsUpdateResponse;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnSettingsUpdateParams;
+use ruxex_app_server_protocol::TurnSettingsUpdateResponse;
+use ruxex_app_server_protocol::TurnSettingsUpdateStatus;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_features::Feature;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ReasoningEffort;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -95,12 +95,12 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         ],
     )
     .await;
-    let genex_home = TempDir::new()?;
-    mock_config(genex_home.path(), &server.uri())?
+    let ruxex_home = TempDir::new()?;
+    mock_config(ruxex_home.path(), &server.uri())?
         .enable_feature(Feature::StepModelSwitching)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     if matches!(scenario, UpdateScenario::Rejected) {
-        let path = genex_home.path().join("step-models.json");
+        let path = ruxex_home.path().join("step-models.json");
         let mut catalog: ModelCatalog = serde_json::from_slice(&std::fs::read(&path)?)?;
         for model in &mut catalog.models {
             model.node_repl_disabled = model.slug == MODEL_B;
@@ -108,7 +108,7 @@ async fn settings_updates_report_results_and_preserve_the_target_on_saved_thread
         std::fs::write(path, serde_json::to_vec(&catalog)?)?;
     }
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -285,12 +285,12 @@ async fn turn_settings_update_reports_unavailable_without_starting_or_changing_a
         ]),
     )
     .await;
-    let genex_home = TempDir::new()?;
-    mock_config(genex_home.path(), &server.uri())?
+    let ruxex_home = TempDir::new()?;
+    mock_config(ruxex_home.path(), &server.uri())?
         .enable_feature(Feature::StepModelSwitching)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -363,10 +363,10 @@ async fn disabled_turn_settings_update_reports_rejection_without_changing_future
         ]),
     )
     .await;
-    let genex_home = TempDir::new()?;
-    mock_config(genex_home.path(), &server.uri())?.write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_config(ruxex_home.path(), &server.uri())?.write(ruxex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let request_id = app
@@ -459,13 +459,13 @@ async fn live_reviewer_updates_route_approvals_without_changing_future_turns(
         replies.push(responses::sse_completed(&format!("done-{index}")));
     }
     let requests = responses::mount_sse_sequence(&server, replies).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     // Reviewer-only updates do not require the experimental model-switching feature.
-    mock_config(genex_home.path(), &server.uri())?
+    mock_config(ruxex_home.path(), &server.uri())?
         .enable_feature(Feature::GuardianApproval)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut app = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let id = app
@@ -547,7 +547,7 @@ async fn start_turn(app: &mut TestAppServer, thread_id: &str) -> Result<String> 
     Ok(response.turn.id)
 }
 
-fn mock_config(genex_home: &Path, server_uri: &str) -> Result<MockResponsesConfig> {
+fn mock_config(ruxex_home: &Path, server_uri: &str) -> Result<MockResponsesConfig> {
     let model = test_models_response()?
         .models
         .into_iter()
@@ -561,7 +561,7 @@ fn mock_config(genex_home: &Path, server_uri: &str) -> Result<MockResponsesConfi
             model
         })
         .collect();
-    let catalog_path = genex_home.join("step-models.json");
+    let catalog_path = ruxex_home.join("step-models.json");
     std::fs::write(&catalog_path, serde_json::to_vec(&ModelCatalog { models })?)?;
     let catalog_path = serde_json::to_string(&catalog_path)?;
     Ok(MockResponsesConfig::new(server_uri)

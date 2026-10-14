@@ -31,8 +31,8 @@ use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::tui::Tui;
 use crate::tui::TuiEvent;
-use genex_app_server_client::AppServerRequestHandle;
-use genex_app_server_protocol::HooksListEntry;
+use ruxex_app_server_client::AppServerRequestHandle;
+use ruxex_app_server_protocol::HooksListEntry;
 use std::path::PathBuf;
 
 pub(crate) enum StartupHooksReviewOutcome {
@@ -317,12 +317,12 @@ mod tests {
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
     use crossterm::event::KeyModifiers;
-    use genex_app_server_protocol::HookEventName;
-    use genex_app_server_protocol::HookHandlerMetadata;
-    use genex_app_server_protocol::HookMetadata;
-    use genex_app_server_protocol::HookSource;
-    use genex_app_server_protocol::HookTrustStatus;
-    use genex_app_server_protocol::HooksListEntry;
+    use ruxex_app_server_protocol::HookEventName;
+    use ruxex_app_server_protocol::HookHandlerMetadata;
+    use ruxex_app_server_protocol::HookMetadata;
+    use ruxex_app_server_protocol::HookSource;
+    use ruxex_app_server_protocol::HookTrustStatus;
+    use ruxex_app_server_protocol::HooksListEntry;
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use tokio::sync::mpsc::unbounded_channel;

@@ -3,31 +3,31 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
-use genex_app_server::INVALID_PARAMS_ERROR_CODE;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadArchiveParams;
-use genex_app_server_protocol::ThreadArchiveResponse;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadSection;
-use genex_app_server_protocol::ThreadSectionAppearance;
-use genex_app_server_protocol::ThreadSectionCreateParams;
-use genex_app_server_protocol::ThreadSectionCreateResponse;
-use genex_app_server_protocol::ThreadSectionDeleteParams;
-use genex_app_server_protocol::ThreadSectionDeleteResponse;
-use genex_app_server_protocol::ThreadSectionListParams;
-use genex_app_server_protocol::ThreadSectionListResponse;
-use genex_app_server_protocol::ThreadSectionMoveParams;
-use genex_app_server_protocol::ThreadSectionMoveResponse;
-use genex_app_server_protocol::ThreadSectionUpdateParams;
-use genex_app_server_protocol::ThreadSectionUpdateResponse;
-use genex_app_server_protocol::ThreadUnarchiveParams;
-use genex_app_server_protocol::ThreadUnarchiveResponse;
-use genex_state::PINNED_THREAD_SECTION_ID;
-use genex_state::PINNED_THREAD_SECTION_NAME;
+use ruxex_app_server::INVALID_PARAMS_ERROR_CODE;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadArchiveParams;
+use ruxex_app_server_protocol::ThreadArchiveResponse;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadSection;
+use ruxex_app_server_protocol::ThreadSectionAppearance;
+use ruxex_app_server_protocol::ThreadSectionCreateParams;
+use ruxex_app_server_protocol::ThreadSectionCreateResponse;
+use ruxex_app_server_protocol::ThreadSectionDeleteParams;
+use ruxex_app_server_protocol::ThreadSectionDeleteResponse;
+use ruxex_app_server_protocol::ThreadSectionListParams;
+use ruxex_app_server_protocol::ThreadSectionListResponse;
+use ruxex_app_server_protocol::ThreadSectionMoveParams;
+use ruxex_app_server_protocol::ThreadSectionMoveResponse;
+use ruxex_app_server_protocol::ThreadSectionUpdateParams;
+use ruxex_app_server_protocol::ThreadSectionUpdateResponse;
+use ruxex_app_server_protocol::ThreadUnarchiveParams;
+use ruxex_app_server_protocol::ThreadUnarchiveResponse;
+use ruxex_state::PINNED_THREAD_SECTION_ID;
+use ruxex_state::PINNED_THREAD_SECTION_NAME;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -53,11 +53,11 @@ async fn section_request_error(
 #[tokio::test]
 async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -141,7 +141,7 @@ async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart(
 
     drop(server);
     let mut restarted = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let persisted: ThreadSectionListResponse = restarted
@@ -184,23 +184,23 @@ async fn custom_sections_remain_discoverable_across_ordered_updates_and_restart(
 #[tokio::test]
 async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let first_thread = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
     )?;
     let archived_thread = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-06T09-00-00",
         "2025-01-06T09:00:00Z",
         "Archived thread",
     )?;
     let mut server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let request_id = server
@@ -302,7 +302,7 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
 
     drop(server);
     let mut restarted = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let restored_after_restart: ThreadReadResponse = restarted
@@ -329,11 +329,11 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
 async fn custom_section_management_rejects_empty_names_missing_ids_and_pinned_mutations()
 -> Result<()> {
     let responses = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&responses.uri())
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let missing_id = Uuid::now_v7().to_string();

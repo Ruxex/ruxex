@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use genex_protocol::user_input::UserInput;
-use genex_skills::extract_tool_mentions;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills::extract_tool_mentions;
 
 use crate::catalog::SkillAuthority;
 use crate::catalog::SkillCatalog;

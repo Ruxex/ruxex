@@ -1,9 +1,9 @@
-use genex_http_client::HttpClientFactory;
-use genex_models_manager::manager::ModelCatalogAuthContext;
-use genex_models_manager::manager::ModelCatalogFuture;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_models_manager::manager::ModelCatalogSource;
-use genex_protocol::error::Result as CoreResult;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_models_manager::manager::ModelCatalogAuthContext;
+use ruxex_models_manager::manager::ModelCatalogFuture;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_models_manager::manager::ModelCatalogSource;
+use ruxex_protocol::error::Result as CoreResult;
 
 use crate::contract::ListModelsRequest;
 use crate::contract::SharedModelProvider;
@@ -59,7 +59,7 @@ impl ModelCatalogSource for ProviderModelCatalogSource {
                 .provider
                 .list_models(ListModelsRequest::new(client_version))
                 .await
-                .map_err(|error| genex_protocol::error::GenexErr::Fatal(error.to_string()))?;
+                .map_err(|error| ruxex_protocol::error::RuxexErr::Fatal(error.to_string()))?;
 
             Ok(ModelCatalogSnapshot {
                 catalog: catalog.catalog,

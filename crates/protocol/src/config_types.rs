@@ -1,5 +1,5 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_redacted_string::RedactedString;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_redacted_string::RedactedString;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -15,7 +15,7 @@ use wildmatch::WildMatchPattern;
 
 use crate::model_types::ReasoningEffort;
 
-/// Limit for the text included in `genex.tool_result` log records.
+/// Limit for the text included in `ruxex.tool_result` log records.
 /// This does not affect model-visible output. Raising it can expose more tool data to logs.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
 #[serde(default)]
@@ -106,7 +106,7 @@ pub enum SandboxMode {
     DangerFullAccess,
 }
 
-/// Validated plain profile-v2 name used to select `$GENEX_HOME/<name>.config.toml`.
+/// Validated plain profile-v2 name used to select `$RUXEX_HOME/<name>.config.toml`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProfileV2Name(String);
 
@@ -598,7 +598,7 @@ impl ModeKind {
     }
 }
 
-/// Collaboration mode for a Genex session.
+/// Collaboration mode for a Ruxex session.
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub struct CollaborationMode {

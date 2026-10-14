@@ -25,20 +25,20 @@ use std::time::UNIX_EPOCH;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_exec_server::CopyOptions;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_exec_server::FileMetadata;
-use genex_exec_server::FileSystemSandboxContext;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadDirectoryEntry;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server::RemoveOptions;
-use genex_exec_server::WalkEntry;
-use genex_exec_server::WalkEntryKind;
-use genex_exec_server::WalkOptions;
-use genex_exec_server::WalkOutcome;
-use genex_exec_server::WriteFileOptions;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::CopyOptions;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadDirectoryEntry;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_exec_server::WalkEntry;
+use ruxex_exec_server::WalkEntryKind;
+use ruxex_exec_server::WalkOptions;
+use ruxex_exec_server::WalkOutcome;
+use ruxex_exec_server::WriteFileOptions;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use test_case::test_case;
@@ -698,7 +698,7 @@ async fn file_system_walk_reports_non_utf8_names(
     use std::ffi::OsString;
     use std::os::unix::ffi::OsStringExt;
 
-    use genex_exec_server::WalkError;
+    use ruxex_exec_server::WalkError;
 
     let context = create_file_system_context(implementation).await?;
     let tmp = TempDir::new()?;
@@ -843,7 +843,7 @@ async fn file_system_sandboxed_write_allows_explicit_alias_roots(
     let file_system = context.file_system;
 
     let tmp = tempfile::Builder::new()
-        .prefix("genex-fs-sandbox-alias-")
+        .prefix("ruxex-fs-sandbox-alias-")
         .tempdir_in(&alias_root)?;
     let file_path = tmp.path().join("note.txt");
     let sandbox = workspace_write_sandbox(alias_root.clone());

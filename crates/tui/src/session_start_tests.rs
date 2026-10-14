@@ -2,8 +2,8 @@ use super::*;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::rollout_path;
-use genex_config::LoaderOverrides;
-use genex_protocol::ThreadId;
+use ruxex_config::LoaderOverrides;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use std::cell::Cell;
 use tempfile::TempDir;
@@ -34,23 +34,23 @@ async fn archived_session_requires_confirmation_before_resume_or_fork() -> Resul
         SessionStartAction::Resume(ResumeModelSettings::RestoreFromThread),
         SessionStartAction::Fork(crate::app_server_session::ForkPermissionMode::InheritSaved),
     ] {
-        let genex_home = TempDir::new()?;
+        let ruxex_home = TempDir::new()?;
         let config = ConfigBuilder::default()
-            .genex_home(genex_home.path().to_path_buf())
+            .ruxex_home(ruxex_home.path().to_path_buf())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .build()
             .await?;
         let timestamp = "2025-01-05T12-00-00";
         let id = create_fake_paginated_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             timestamp,
             "2025-01-05T12:00:00Z",
             "Archived saved user message",
             /*git_info*/ None,
         )
         .expect("create source rollout");
-        let active_path = rollout_path(genex_home.path(), timestamp, &id);
-        let archived_dir = genex_home.path().join("archived_sessions");
+        let active_path = rollout_path(ruxex_home.path(), timestamp, &id);
+        let archived_dir = ruxex_home.path().join("archived_sessions");
         std::fs::create_dir_all(&archived_dir)?;
         let archived_path = archived_dir.join(active_path.file_name().unwrap());
         std::fs::rename(&active_path, &archived_path)?;
@@ -176,14 +176,14 @@ fn session_start_error_surfaces_archived_guidance_without_rollout_path() {
         ThreadId::from_string("019e72f4-e09a-70f2-b2c2-a153a57b8cc0").expect("thread id");
     let target_session = SessionTarget {
         path: Some(std::path::PathBuf::from(
-            "/Users/me/.genex/archived_sessions/rollout.jsonl",
+            "/Users/me/.ruxex/archived_sessions/rollout.jsonl",
         )),
         thread_id,
         cwd: None,
         history_mode: None,
     };
     let expected = format!(
-        "session {thread_id} is archived. Run `genex unarchive {thread_id}` to unarchive it first."
+        "session {thread_id} is archived. Run `ruxex unarchive {thread_id}` to unarchive it first."
     );
 
     for action in ["resume", "fork"] {

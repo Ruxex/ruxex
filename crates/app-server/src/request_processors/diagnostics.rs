@@ -1,9 +1,9 @@
-use genex_app_server_protocol::ServerDiagnosticsGauge;
-use genex_app_server_protocol::ServerDiagnosticsProcess;
-use genex_app_server_protocol::ServerDiagnosticsResponse;
+use ruxex_app_server_protocol::ServerDiagnosticsGauge;
+use ruxex_app_server_protocol::ServerDiagnosticsProcess;
+use ruxex_app_server_protocol::ServerDiagnosticsResponse;
 
 pub(crate) fn read_server_diagnostics() -> ServerDiagnosticsResponse {
-    let diagnostics = genex_diagnostics::snapshot();
+    let diagnostics = ruxex_diagnostics::snapshot();
 
     ServerDiagnosticsResponse {
         process: ServerDiagnosticsProcess {

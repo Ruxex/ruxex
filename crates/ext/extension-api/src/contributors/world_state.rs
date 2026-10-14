@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use genex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
-use genex_protocol::ThreadId;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_exec_server_protocol::ExecutorCapabilityDiscoverySnapshot;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use serde_json::Value;
 
 use crate::ExtensionData;

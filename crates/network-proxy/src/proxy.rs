@@ -22,7 +22,7 @@ use crate::state::NetworkProxyState;
 use anyhow::Context;
 use anyhow::Result;
 use clap::Parser;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ use tracing::warn;
 use self::execution_scope::ExecutionScope;
 
 #[derive(Debug, Clone, Parser)]
-#[command(name = "genex-network-proxy", about = "Genex network sandbox proxy")]
+#[command(name = "ruxex-network-proxy", about = "Ruxex network sandbox proxy")]
 pub struct Args {}
 
 #[derive(Debug)]
@@ -120,7 +120,7 @@ pub struct NetworkProxyBuilder {
     state: Option<Arc<NetworkProxyState>>,
     http_addr: Option<SocketAddr>,
     socks_addr: Option<SocketAddr>,
-    managed_by_genex: bool,
+    managed_by_ruxex: bool,
     managed_proxy_routing: ManagedProxyRouting,
     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
     blocked_request_observer: Option<Arc<dyn BlockedRequestObserver>>,
@@ -132,7 +132,7 @@ impl Default for NetworkProxyBuilder {
             state: None,
             http_addr: None,
             socks_addr: None,
-            managed_by_genex: true,
+            managed_by_ruxex: true,
             managed_proxy_routing: ManagedProxyRouting::default(),
             policy_decider: None,
             blocked_request_observer: None,
@@ -156,8 +156,8 @@ impl NetworkProxyBuilder {
         self
     }
 
-    pub fn managed_by_genex(mut self, managed_by_genex: bool) -> Self {
-        self.managed_by_genex = managed_by_genex;
+    pub fn managed_by_ruxex(mut self, managed_by_ruxex: bool) -> Self {
+        self.managed_by_ruxex = managed_by_ruxex;
         self
     }
 
@@ -206,7 +206,7 @@ impl NetworkProxyBuilder {
             .await;
         let current_cfg = state.current_cfg().await?;
         let (requested_http_addr, requested_socks_addr, reserved_listeners) =
-            if self.managed_by_genex {
+            if self.managed_by_ruxex {
                 let runtime = config::resolve_runtime(&current_cfg)?;
                 let reserved = reserve_loopback_ephemeral_listeners(current_cfg.enable_socks5)
                     .context("reserve managed loopback proxy listeners")?;
@@ -421,8 +421,8 @@ pub const PROXY_URL_ENV_KEYS: &[&str] = &[
 ];
 
 pub const ALL_PROXY_ENV_KEYS: &[&str] = &["ALL_PROXY", "all_proxy"];
-pub const PROXY_ACTIVE_ENV_KEY: &str = "GENEX_NETWORK_PROXY_ACTIVE";
-pub const ALLOW_LOCAL_BINDING_ENV_KEY: &str = "GENEX_NETWORK_ALLOW_LOCAL_BINDING";
+pub const PROXY_ACTIVE_ENV_KEY: &str = "RUXEX_NETWORK_PROXY_ACTIVE";
+pub const ALLOW_LOCAL_BINDING_ENV_KEY: &str = "RUXEX_NETWORK_ALLOW_LOCAL_BINDING";
 const ELECTRON_GET_USE_PROXY_ENV_KEY: &str = "ELECTRON_GET_USE_PROXY";
 const NODE_USE_ENV_PROXY_ENV_KEY: &str = "NODE_USE_ENV_PROXY";
 #[cfg(any(target_os = "macos", test))]
@@ -478,7 +478,7 @@ pub fn is_managed_proxy_env_var(key: &str, value: &str) -> bool {
     #[cfg(target_os = "macos")]
     {
         key == PROXY_GIT_SSH_COMMAND_ENV_KEY
-            && value.starts_with(GENEX_PROXY_GIT_SSH_COMMAND_MARKER)
+            && value.starts_with(RUXEX_PROXY_GIT_SSH_COMMAND_MARKER)
     }
     #[cfg(not(target_os = "macos"))]
     {
@@ -516,12 +516,12 @@ pub const DEFAULT_NO_PROXY_VALUE: &str = concat!(
 );
 
 #[cfg(target_os = "macos")]
-pub const GENEX_PROXY_GIT_SSH_COMMAND_MARKER: &str = "GENEX_PROXY_GIT_SSH_COMMAND=1 ";
+pub const RUXEX_PROXY_GIT_SSH_COMMAND_MARKER: &str = "RUXEX_PROXY_GIT_SSH_COMMAND=1 ";
 #[cfg(target_os = "macos")]
-const GENEX_PROXY_GIT_SSH_COMMAND_PREFIX: &str =
-    "GENEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x ";
+const RUXEX_PROXY_GIT_SSH_COMMAND_PREFIX: &str =
+    "RUXEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x ";
 #[cfg(target_os = "macos")]
-const GENEX_PROXY_GIT_SSH_COMMAND_SUFFIX: &str = " %h %p'";
+const RUXEX_PROXY_GIT_SSH_COMMAND_SUFFIX: &str = " %h %p'";
 
 pub fn proxy_url_env_value<'a>(
     env: &'a HashMap<String, String>,
@@ -547,14 +547,14 @@ fn set_env_keys(env: &mut HashMap<String, String>, keys: &[&str], value: &str) {
 }
 
 #[cfg(target_os = "macos")]
-fn genex_proxy_git_ssh_command(socks_addr: SocketAddr) -> String {
-    format!("{GENEX_PROXY_GIT_SSH_COMMAND_PREFIX}{socks_addr}{GENEX_PROXY_GIT_SSH_COMMAND_SUFFIX}")
+fn ruxex_proxy_git_ssh_command(socks_addr: SocketAddr) -> String {
+    format!("{RUXEX_PROXY_GIT_SSH_COMMAND_PREFIX}{socks_addr}{RUXEX_PROXY_GIT_SSH_COMMAND_SUFFIX}")
 }
 
 #[cfg(target_os = "macos")]
-fn is_genex_proxy_git_ssh_command(command: &str) -> bool {
-    command.starts_with(GENEX_PROXY_GIT_SSH_COMMAND_PREFIX)
-        && command.ends_with(GENEX_PROXY_GIT_SSH_COMMAND_SUFFIX)
+fn is_ruxex_proxy_git_ssh_command(command: &str) -> bool {
+    command.starts_with(RUXEX_PROXY_GIT_SSH_COMMAND_PREFIX)
+        && command.ends_with(RUXEX_PROXY_GIT_SSH_COMMAND_SUFFIX)
 }
 
 fn apply_proxy_env_overrides(
@@ -635,14 +635,14 @@ fn apply_proxy_env_overrides(
     #[cfg(target_os = "macos")]
     if socks_enabled {
         // Preserve existing SSH wrappers (for example: Secretive/Teleport setups)
-        // but refresh a previously injected Genex fallback so it cannot point
+        // but refresh a previously injected Ruxex fallback so it cannot point
         // at a stale proxy port after the proxy is restarted.
         match env.get(GIT_SSH_COMMAND_ENV_KEY) {
-            Some(command) if !is_genex_proxy_git_ssh_command(command) => {}
+            Some(command) if !is_ruxex_proxy_git_ssh_command(command) => {}
             _ => {
                 env.insert(
                     GIT_SSH_COMMAND_ENV_KEY.to_string(),
-                    genex_proxy_git_ssh_command(socks_addr),
+                    ruxex_proxy_git_ssh_command(socks_addr),
                 );
             }
         }
@@ -1433,7 +1433,7 @@ mod tests {
         let (result, events) = crate::network_policy::test_support::capture_events(|| async {
             NetworkProxy::builder()
                 .state(state)
-                .managed_by_genex(/*managed_by_genex*/ false)
+                .managed_by_ruxex(/*managed_by_ruxex*/ false)
                 .build()
                 .await
         })
@@ -1498,7 +1498,7 @@ mod tests {
             });
         let proxy = NetworkProxy::builder()
             .state(Arc::new(network_proxy_state_for_policy(config)))
-            .managed_by_genex(/*managed_by_genex*/ false)
+            .managed_by_ruxex(/*managed_by_ruxex*/ false)
             .build()
             .await?;
         let scoped = proxy.for_execution(
@@ -1585,7 +1585,7 @@ mod tests {
                     std::future::pending::<crate::NetworkDecision>().await
                 }
             })
-            .managed_by_genex(/*managed_by_genex*/ false)
+            .managed_by_ruxex(/*managed_by_ruxex*/ false)
             .build()
             .await?;
         let scoped = proxy.for_execution(
@@ -1647,7 +1647,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn non_genex_managed_proxy_builder_uses_configured_ports() {
+    async fn non_ruxex_managed_proxy_builder_uses_configured_ports() {
         let settings = NetworkProxyConfig {
             proxy_url: "http://127.0.0.1:43128".to_string(),
             socks_url: "http://127.0.0.1:48081".to_string(),
@@ -1656,7 +1656,7 @@ mod tests {
         let state = Arc::new(network_proxy_state_for_policy(settings));
         let proxy = NetworkProxy::builder()
             .state(state)
-            .managed_by_genex(/*managed_by_genex*/ false)
+            .managed_by_ruxex(/*managed_by_ruxex*/ false)
             .build()
             .await
             .unwrap();
@@ -1697,7 +1697,7 @@ mod tests {
         };
         let proxy = NetworkProxy::builder()
             .state(Arc::new(network_proxy_state_for_policy(config.clone())))
-            .managed_by_genex(/*managed_by_genex*/ false)
+            .managed_by_ruxex(/*managed_by_ruxex*/ false)
             .build()
             .await?;
 
@@ -2015,7 +2015,7 @@ mod tests {
         assert_eq!(
             env.get(GIT_SSH_COMMAND_ENV_KEY),
             Some(
-                &"GENEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+                &"RUXEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
                     .to_string()
             )
         );
@@ -2066,7 +2066,7 @@ mod tests {
     #[test]
     fn apply_proxy_env_overrides_sets_mitm_ca_trust_bundle_vars() {
         let mut env = HashMap::new();
-        let mitm_ca_trust_bundle_path = Path::new("/tmp/genex-proxy/ca-bundle.pem");
+        let mitm_ca_trust_bundle_path = Path::new("/tmp/ruxex-proxy/ca-bundle.pem");
         let mitm_ca_trust_bundle = crate::certs::ManagedMitmCaTrustBundle {
             path: mitm_ca_trust_bundle_path.to_path_buf(),
             startup_env_values: HashMap::new(),
@@ -2095,7 +2095,7 @@ mod tests {
             "REQUESTS_CA_BUNDLE".to_string(),
             command_ca_bundle_path.clone(),
         )]);
-        let mitm_ca_trust_bundle_path = Path::new("/tmp/genex-proxy/ca-bundle.pem");
+        let mitm_ca_trust_bundle_path = Path::new("/tmp/ruxex-proxy/ca-bundle.pem");
         let mitm_ca_trust_bundle = crate::certs::ManagedMitmCaTrustBundle {
             path: mitm_ca_trust_bundle_path.to_path_buf(),
             startup_env_values: HashMap::new(),
@@ -2172,7 +2172,7 @@ mod tests {
         assert_eq!(
             env.get(GIT_SSH_COMMAND_ENV_KEY),
             Some(
-                &"GENEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
+                &"RUXEX_PROXY_GIT_SSH_COMMAND=1 ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:8081 %h %p'"
                     .to_string()
             )
         );
@@ -2228,11 +2228,11 @@ mod tests {
 
     #[cfg(target_os = "macos")]
     #[test]
-    fn apply_proxy_env_overrides_refreshes_previous_genex_proxy_git_ssh_command() {
+    fn apply_proxy_env_overrides_refreshes_previous_ruxex_proxy_git_ssh_command() {
         let mut env = HashMap::new();
         env.insert(
             GIT_SSH_COMMAND_ENV_KEY.to_string(),
-            genex_proxy_git_ssh_command(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8081)),
+            ruxex_proxy_git_ssh_command(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 8081)),
         );
 
         apply_proxy_env_overrides(
@@ -2246,7 +2246,7 @@ mod tests {
 
         assert_eq!(
             env.get(GIT_SSH_COMMAND_ENV_KEY),
-            Some(&genex_proxy_git_ssh_command(SocketAddr::new(
+            Some(&ruxex_proxy_git_ssh_command(SocketAddr::new(
                 IpAddr::V4(Ipv4Addr::LOCALHOST),
                 48081,
             )))

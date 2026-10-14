@@ -1,7 +1,7 @@
-//! Built-in model-provider implementations for Genex.
+//! Built-in model-provider implementations for Ruxex.
 //!
 //! This crate contains concrete adapters only. The provider-neutral contract lives in
-//! [`genex_model_provider`], and hosts choose one concrete implementation and inject it into an
+//! [`ruxex_model_provider`], and hosts choose one concrete implementation and inject it into an
 //! `AppServerRuntime`.
 
 pub mod cloudflare;
@@ -9,8 +9,8 @@ mod provider;
 
 pub use cloudflare::CloudflareModelProvider;
 pub use cloudflare::create_cloudflare_provider;
-pub use genex_model_provider::SharedModelProvider;
-pub use genex_model_provider_info::ModelProviderInfo;
+pub use ruxex_model_provider::SharedModelProvider;
+pub use ruxex_model_provider_info::ModelProviderInfo;
 pub use provider::create_model_provider;
 pub use provider::create_model_provider_with_http_client_factory;
 
@@ -19,25 +19,25 @@ mod tests {
     use std::collections::BTreeMap;
     use std::sync::Arc;
 
-    use genex_model_provider::ChatRequest;
-    use genex_model_provider::ListModelsRequest;
-    use genex_model_provider::ModelProvider;
-    use genex_model_provider::ProviderAccountState;
-    use genex_model_provider::ProviderAuthEnvironment;
-    use genex_model_provider::ProviderAuthField;
-    use genex_model_provider::ProviderAuthState;
-    use genex_model_provider::ProviderCapabilities;
-    use genex_model_provider::ProviderChatStream;
-    use genex_model_provider::ProviderDescriptor;
-    use genex_model_provider::ProviderError;
-    use genex_model_provider::ProviderFuture;
-    use genex_model_provider::ProviderModelCatalog;
-    use genex_model_provider::ProviderRequestSnapshot;
-    use genex_model_provider::ProviderResult;
-    use genex_model_provider::ProviderUsage;
-    use genex_model_provider::SharedModelProvider;
-    use genex_model_provider::UsageRequest;
-    use genex_model_provider_info::ModelProviderInfo;
+    use ruxex_model_provider::ChatRequest;
+    use ruxex_model_provider::ListModelsRequest;
+    use ruxex_model_provider::ModelProvider;
+    use ruxex_model_provider::ProviderAccountState;
+    use ruxex_model_provider::ProviderAuthEnvironment;
+    use ruxex_model_provider::ProviderAuthField;
+    use ruxex_model_provider::ProviderAuthState;
+    use ruxex_model_provider::ProviderCapabilities;
+    use ruxex_model_provider::ProviderChatStream;
+    use ruxex_model_provider::ProviderDescriptor;
+    use ruxex_model_provider::ProviderError;
+    use ruxex_model_provider::ProviderFuture;
+    use ruxex_model_provider::ProviderModelCatalog;
+    use ruxex_model_provider::ProviderRequestSnapshot;
+    use ruxex_model_provider::ProviderResult;
+    use ruxex_model_provider::ProviderUsage;
+    use ruxex_model_provider::SharedModelProvider;
+    use ruxex_model_provider::UsageRequest;
+    use ruxex_model_provider_info::ModelProviderInfo;
 
     use super::create_model_provider;
 
@@ -69,7 +69,7 @@ mod tests {
 
         fn auth_state(&self) -> ProviderAuthState {
             ProviderAuthState {
-                status: genex_protocol::account::ProviderAuthStatus::Unauthenticated,
+                status: ruxex_protocol::account::ProviderAuthStatus::Unauthenticated,
                 account_id: None,
                 display_name: None,
                 managed_auth: false,

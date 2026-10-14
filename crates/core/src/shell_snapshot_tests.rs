@@ -10,13 +10,13 @@ use crate::tools::runtimes::prepare_brokered_shell_snapshot_env;
 use core_test_support::PathBufExt;
 use core_test_support::PathExt;
 #[cfg(unix)]
-use genex_network_proxy::CredentialProviderConfig;
+use ruxex_network_proxy::CredentialProviderConfig;
 #[cfg(unix)]
-use genex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConfig;
 #[cfg(unix)]
-use genex_protocol::config_types::EnvironmentVariablePattern;
+use ruxex_protocol::config_types::EnvironmentVariablePattern;
 #[cfg(unix)]
-use genex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
 #[cfg(unix)]
 use std::os::unix::ffi::OsStrExt;
@@ -145,19 +145,19 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     use crate::environment_selection::ThreadEnvironments;
     use crate::environment_selection::TurnEnvironmentSnapshot;
     use crate::tools::sandboxing::SandboxAttempt;
-    use genex_exec_server::EnvironmentManager;
-    use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-    use genex_protocol::protocol::EnvironmentConfig;
-    use genex_protocol::protocol::EnvironmentConfigState;
-    use genex_protocol::protocol::TurnEnvironmentSelection;
-    use genex_sandboxing::SandboxManager;
-    use genex_sandboxing::SandboxType;
+    use ruxex_exec_server::EnvironmentManager;
+    use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+    use ruxex_protocol::protocol::EnvironmentConfig;
+    use ruxex_protocol::protocol::EnvironmentConfigState;
+    use ruxex_protocol::protocol::TurnEnvironmentSelection;
+    use ruxex_sandboxing::SandboxManager;
+    use ruxex_sandboxing::SandboxType;
     use tokio_util::sync::CancellationToken;
 
     let dir = tempdir()?;
-    std::fs::create_dir(dir.path().join(".genex"))?;
+    std::fs::create_dir(dir.path().join(".ruxex"))?;
     std::fs::write(
-        dir.path().join(".genex/startup.sh"),
+        dir.path().join(".ruxex/startup.sh"),
         "printf started > startup-ran\n",
     )?;
     let session_id = ThreadId::new();
@@ -171,7 +171,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         "test".to_string(),
         /*log_user_prompts*/ false,
         "test".to_string(),
-        genex_protocol::protocol::SessionSource::Cli,
+        ruxex_protocol::protocol::SessionSource::Cli,
     );
     let shell = Shell {
         shell_type: ShellType::Bash,
@@ -193,7 +193,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
+            ruxex_network_proxy::ManagedProxyRouting::DedicatedListeners,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -212,7 +212,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     ] {
         let (_sender, receiver) = watch::channel(state);
         let config = Arc::new(ShellSnapshotConfig {
-            genex_home: dir.path().abs(),
+            ruxex_home: dir.path().abs(),
             session_id,
             session_telemetry: session_telemetry.clone(),
             state_db: None,
@@ -229,7 +229,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
                 ShellEnvironmentPolicy {
                     r#set: HashMap::from([(
                         "BASH_ENV".to_string(),
-                        "./.genex/startup.sh".to_string(),
+                        "./.ruxex/startup.sh".to_string(),
                     )]),
                     ..ShellEnvironmentPolicy::default()
                 },
@@ -334,13 +334,13 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
 
     // Identical concurrent captures must not share one command's cancellation.
     fs::write(
-        dir.path().join(".genex/startup.sh"),
+        dir.path().join(".ruxex/startup.sh"),
         "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf started > capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
     config.shell_environment_policy.r#set.insert(
         "BASH_ENV".into(),
-        dir.path().join(".genex/startup.sh").display().to_string(),
+        dir.path().join(".ruxex/startup.sh").display().to_string(),
     );
     environments.set_snapshot_credential_broker(SnapshotCredentialBrokerState::Ready(
         started_proxy.proxy(),
@@ -349,12 +349,12 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     let turn = environments.snapshot().await;
     let environment = turn.primary().expect("brokered environment");
     let mut tool_config = crate::config::ConfigBuilder::without_managed_config_for_tests()
-        .genex_home(dir.path().to_path_buf())
+        .ruxex_home(dir.path().to_path_buf())
         .build()
         .await?;
     tool_config
         .features
-        .enable(genex_features::Feature::ShellSnapshot)?;
+        .enable(ruxex_features::Feature::ShellSnapshot)?;
     tool_config.permissions.network = Some(network_spec);
     let cwd = dir.path().abs();
     let cwd_uri = PathUri::from_abs_path(&cwd);
@@ -467,9 +467,9 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         (original_config, false),
     ] {
         proxy
-            .replace_config_state(genex_network_proxy::build_config_state(
+            .replace_config_state(ruxex_network_proxy::build_config_state(
                 config,
-                genex_network_proxy::NetworkProxyConstraints::default(),
+                ruxex_network_proxy::NetworkProxyConstraints::default(),
             )?)
             .await?;
         assert_eq!(
@@ -502,7 +502,7 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
     fs::remove_file(dir.path().join("finish-startup")).await?;
     fs::remove_file(dir.path().join("capture-started")).await?;
     fs::write(
-        dir.path().join(".genex/startup.sh"),
+        dir.path().join(".ruxex/startup.sh"),
         "export PROVIDER_API_KEY=sk-snapshot-cache-test\nprintf x >> capture-started\nwhile [ ! -f finish-startup ]; do sleep 0.01; done\n",
     )
     .await?;
@@ -515,9 +515,9 @@ async fn inactive_profiles_keep_snapshots_but_active_brokers_require_sandbox() -
         let mut config = proxy.current_cfg().await?;
         config.allow_local_binding = !config.allow_local_binding;
         proxy
-            .replace_config_state(genex_network_proxy::build_config_state(
+            .replace_config_state(ruxex_network_proxy::build_config_state(
                 config,
-                genex_network_proxy::NetworkProxyConstraints::default(),
+                ruxex_network_proxy::NetworkProxyConstraints::default(),
             )?)
             .await?;
         fs::write(dir.path().join("finish-startup"), "").await?;
@@ -615,7 +615,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     let started_proxy = network_spec
         .start_proxy(
             &permission_profile,
-            genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
+            ruxex_network_proxy::ManagedProxyRouting::DedicatedListeners,
             /*policy_decider*/ None,
             /*blocked_request_observer*/ None,
             /*enable_network_approval_flow*/ false,
@@ -707,7 +707,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
         assert!(!snapshot.contains(secret), "snapshot exposed {secret}");
     }
     assert!(!snapshot.contains("attacker.example"));
-    assert!(!snapshot.contains("GENEX_NETWORK_PROXY_BROKERED_CREDENTIALS"));
+    assert!(!snapshot.contains("RUXEX_NETWORK_PROXY_BROKERED_CREDENTIALS"));
     assert!(snapshot.contains("api.snapshot.example"));
     assert!(!snapshot.contains("attacker.vendor.example"));
     assert!(snapshot.contains("EXCLUDED_PARENT_HOME=\"missing\""));
@@ -732,7 +732,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     fs::write(
         &validation_path,
         "test \"${HOME-missing}\" = missing && \
-         test \"${GENEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}\" = 1\n",
+         test \"${RUXEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE-}\" = 1\n",
     )
     .await?;
     validate_snapshot(
@@ -908,7 +908,7 @@ async fn snapshot_discovers_and_redacts_shell_initialized_credentials() -> Resul
     }
     assert_eq!(env.get("PROVIDER_BASE_URL").map(String::as_str), None);
     let explicit_vendor_policy = ShellEnvironmentPolicy {
-        inherit: genex_protocol::config_types::ShellEnvironmentPolicyInherit::None,
+        inherit: ruxex_protocol::config_types::ShellEnvironmentPolicyInherit::None,
         r#set: HashMap::from([("VENDOR_PASSWORD".to_string(), "pin_abcdefgh".to_string())]),
         ..ShellEnvironmentPolicy::default()
     };
@@ -1668,8 +1668,8 @@ async fn timed_out_snapshot_shell_is_terminated() -> Result<()> {
     Ok(())
 }
 
-async fn write_rollout_stub(genex_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
-    let dir = genex_home
+async fn write_rollout_stub(ruxex_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
+    let dir = ruxex_home
         .join("sessions")
         .join("2025")
         .join("01")
@@ -1683,8 +1683,8 @@ async fn write_rollout_stub(genex_home: &Path, session_id: ThreadId) -> Result<P
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> {
     let dir = tempdir()?;
-    let genex_home = dir.path().abs();
-    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
+    let ruxex_home = dir.path().abs();
+    let snapshot_dir = ruxex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let live_session = ThreadId::new();
@@ -1693,12 +1693,12 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
     let orphan_snapshot = snapshot_dir.join(format!("{orphan_session}.456.sh"));
     let invalid_snapshot = snapshot_dir.join("not-a-snapshot.txt");
 
-    write_rollout_stub(&genex_home, live_session).await?;
+    write_rollout_stub(&ruxex_home, live_session).await?;
     fs::write(&live_snapshot, "live").await?;
     fs::write(&orphan_snapshot, "orphan").await?;
     fs::write(&invalid_snapshot, "invalid").await?;
 
-    cleanup_stale_snapshots(&genex_home, ThreadId::new(), /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&ruxex_home, ThreadId::new(), /*state_db*/ None).await?;
 
     assert_eq!(live_snapshot.exists(), true);
     assert_eq!(orphan_snapshot.exists(), false);
@@ -1710,18 +1710,18 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
     let dir = tempdir()?;
-    let genex_home = dir.path().abs();
-    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
+    let ruxex_home = dir.path().abs();
+    let snapshot_dir = ruxex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let stale_session = ThreadId::new();
     let stale_snapshot = snapshot_dir.join(format!("{stale_session}.123.sh"));
-    let rollout_path = write_rollout_stub(&genex_home, stale_session).await?;
+    let rollout_path = write_rollout_stub(&ruxex_home, stale_session).await?;
     fs::write(&stale_snapshot, "stale").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(&genex_home, ThreadId::new(), /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&ruxex_home, ThreadId::new(), /*state_db*/ None).await?;
 
     assert_eq!(stale_snapshot.exists(), false);
     Ok(())
@@ -1731,18 +1731,18 @@ async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
 #[tokio::test]
 async fn cleanup_stale_snapshots_skips_active_session() -> Result<()> {
     let dir = tempdir()?;
-    let genex_home = dir.path().abs();
-    let snapshot_dir = genex_home.join(SNAPSHOT_DIR);
+    let ruxex_home = dir.path().abs();
+    let snapshot_dir = ruxex_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let active_session = ThreadId::new();
     let active_snapshot = snapshot_dir.join(format!("{active_session}.123.sh"));
-    let rollout_path = write_rollout_stub(&genex_home, active_session).await?;
+    let rollout_path = write_rollout_stub(&ruxex_home, active_session).await?;
     fs::write(&active_snapshot, "active").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(&genex_home, active_session, /*state_db*/ None).await?;
+    cleanup_stale_snapshots(&ruxex_home, active_session, /*state_db*/ None).await?;
 
     assert_eq!(active_snapshot.exists(), true);
     Ok(())

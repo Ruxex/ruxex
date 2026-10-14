@@ -46,7 +46,7 @@
       "$ref": "#/definitions/NullableString"
     },
     "turn_id": {
-      "description": "Genex extension: expose the active turn id to internal turn-scoped hooks.",
+      "description": "Ruxex extension: expose the active turn id to internal turn-scoped hooks.",
       "type": "string"
     }
   },

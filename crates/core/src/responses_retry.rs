@@ -6,12 +6,12 @@ use crate::client::ModelClientSession;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::util::backoff;
-use genex_client::RetryOperation;
-use genex_features::Feature;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::WarningEvent;
+use ruxex_client::RetryOperation;
+use ruxex_features::Feature;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::WarningEvent;
 use tracing::warn;
 
 const INITIAL_CONNECTION_RETRY_DELAY: Duration = Duration::from_secs(5);
@@ -44,12 +44,12 @@ impl Default for ResponsesStreamRetryState {
 pub(crate) async fn handle_retryable_response_stream_error(
     retry_state: &mut ResponsesStreamRetryState,
     max_retries: u64,
-    err: GenexErr,
+    err: RuxexErr,
     client_session: &mut ModelClientSession,
     sess: &Session,
     turn_context: &TurnContext,
     request: ResponsesStreamRequest,
-) -> Result<(), GenexErr> {
+) -> Result<(), RuxexErr> {
     let operation = match request {
         ResponsesStreamRequest::Sampling => RetryOperation::Sampling,
         ResponsesStreamRequest::RemoteCompactionV2 => RetryOperation::RemoteCompactionV2,
@@ -60,7 +60,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
         .features
         .enabled(Feature::UnboundedConnectionRetries)
         && matches!(request, ResponsesStreamRequest::Sampling)
-        && matches!(err.details(), GenexErrorDetails::ConnectionFailed(_))
+        && matches!(err.details(), RuxexErrorDetails::ConnectionFailed(_))
         && !turn_context.session_source.is_internal()
     {
         let retry_delay = retry_state.connection_retry_delay;
@@ -73,7 +73,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
         sess.notify_stream_error(turn_context, "Reconnecting... waiting for network", err)
             .await;
         retry_state.connection_retries = retry_state.connection_retries.saturating_add(1);
-        genex_client::record_retry!(retry_state.connection_retries, retry_delay, operation);
+        ruxex_client::record_retry!(retry_state.connection_retries, retry_delay, operation);
         tokio::time::sleep(retry_delay).await;
         retry_state.connection_retry_delay = retry_delay
             .saturating_mul(2)
@@ -119,7 +119,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
             )
             .await;
         }
-        genex_client::record_retry!(retry_count, delay, operation);
+        ruxex_client::record_retry!(retry_count, delay, operation);
         tokio::time::sleep(delay).await;
         return Ok(());
     }
@@ -130,7 +130,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
 fn log_retry(
     request: ResponsesStreamRequest,
     turn_context: &TurnContext,
-    err: &GenexErr,
+    err: &RuxexErr,
     retries: u64,
     max_retries: u64,
     delay: Duration,

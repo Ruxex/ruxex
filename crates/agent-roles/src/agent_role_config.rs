@@ -1,5 +1,5 @@
-use genex_config::config_toml::ConfigToml;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::Path;

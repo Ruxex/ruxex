@@ -1,11 +1,11 @@
-use genex_apply_patch::ApplyPatchAction;
-use genex_apply_patch::ApplyPatchFileChange;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::protocol::AskForApproval;
-use genex_sandboxing::get_platform_sandbox;
-use genex_utils_path_uri::PathUri;
+use ruxex_apply_patch::ApplyPatchAction;
+use ruxex_apply_patch::ApplyPatchFileChange;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_sandboxing::get_platform_sandbox;
+use ruxex_utils_path_uri::PathUri;
 
 const PATCH_REJECTED_OUTSIDE_PROJECT_REASON: &str =
     "writing outside of the project; rejected by user approval settings";

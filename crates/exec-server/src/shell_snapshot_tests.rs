@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use genex_otel::MetricsClient;
-use genex_otel::MetricsConfig;
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_otel::MetricsClient;
+use ruxex_otel::MetricsConfig;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::MetricData;
@@ -49,7 +49,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
             "-lc".to_string(),
             "true".to_string(),
         ],
-        cwd: genex_utils_path_uri::PathUri::from_host_native_path(home.path())?,
+        cwd: ruxex_utils_path_uri::PathUri::from_host_native_path(home.path())?,
         env: HashMap::from([
             (
                 "HOME".to_string(),
@@ -77,7 +77,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory(
             "test",
-            "genex-exec-server",
+            "ruxex-exec-server",
             env!("CARGO_PKG_VERSION"),
             InMemoryMetricExporter::default(),
         )
@@ -171,7 +171,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
         .flat_map(opentelemetry_sdk::metrics::data::ScopeMetrics::metrics)
     {
         match metric.name() {
-            "genex.shell_snapshot" => {
+            "ruxex.shell_snapshot" => {
                 let AggregatedMetrics::U64(MetricData::Sum(sum)) = metric.data() else {
                     panic!("expected shell snapshot counter");
                 };
@@ -183,7 +183,7 @@ async fn snapshot_failure_retries_are_bounded_and_single_flight(
                     counters.insert(tags, point.value());
                 }
             }
-            "genex.shell_snapshot.duration_ms" => {
+            "ruxex.shell_snapshot.duration_ms" => {
                 let AggregatedMetrics::F64(MetricData::Histogram(histogram)) = metric.data() else {
                     panic!("expected shell snapshot duration histogram");
                 };
@@ -303,7 +303,7 @@ fn snapshot_preserves_profile_exports_with_restrictive_inheritance() {
 fn snapshot_caches_only_unmanaged_proxy_state() {
     for (exports, expected) in [
         (
-            "PROFILE_ALLOWED=profile\0HTTP_PROXY=http://127.0.0.1:4321\0GENEX_NETWORK_PROXY_ACTIVE=1\0GENEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE=1\0",
+            "PROFILE_ALLOWED=profile\0HTTP_PROXY=http://127.0.0.1:4321\0RUXEX_NETWORK_PROXY_ACTIVE=1\0RUXEX_NETWORK_PROXY_CREDENTIAL_BROKER_ACTIVE=1\0",
             HashMap::from([("PROFILE_ALLOWED".to_string(), "profile".to_string())]),
         ),
         (
@@ -324,4 +324,4 @@ fn snapshot_caches_only_unmanaged_proxy_state() {
         assert_eq!(snapshot.environment, expected);
     }
 }
-use genex_shell_command::shell_detect::ShellType;
+use ruxex_shell_command::shell_detect::ShellType;

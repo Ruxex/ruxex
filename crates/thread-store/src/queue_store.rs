@@ -1,10 +1,10 @@
 use std::fmt::Display;
 use std::future::Future;
 
-use genex_protocol::ThreadId;
-use genex_rollout::StateDbHandle;
-use genex_state::QueuedUserSubmissionRecord;
-use genex_state::SqliteQueueStore;
+use ruxex_protocol::ThreadId;
+use ruxex_rollout::StateDbHandle;
+use ruxex_state::QueuedUserSubmissionRecord;
+use ruxex_state::SqliteQueueStore;
 
 use crate::MAX_QUEUE_ITEMS;
 use crate::ThreadStoreError;

@@ -18,20 +18,20 @@ use crate::context::world_state::PersistentModeState;
 use crate::context::world_state::PluginsInstructionsState;
 use crate::context::world_state::ToolsState;
 use crate::context::world_state::WorldState;
-use genex_extension_api::WorldStateContributionInput;
-use genex_features::Feature;
-use genex_prompts::ApprovalPromptContext;
-use genex_prompts::ResolvedModelMessages;
-use genex_prompts::render_model_instructions;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::models::BaseInstructionsProvenance;
+use ruxex_extension_api::WorldStateContributionInput;
+use ruxex_features::Feature;
+use ruxex_prompts::ApprovalPromptContext;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_prompts::render_model_instructions;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::models::BaseInstructionsProvenance;
 
 impl Session {
     #[tracing::instrument(name = "world_state.build", level = "info", skip_all)]
     pub(crate) async fn build_world_state_for_step(
         &self,
         step_context: &StepContext,
-    ) -> GenexResult<WorldState> {
+    ) -> RuxexResult<WorldState> {
         let turn_context = step_context.turn.as_ref();
         let settings = &step_context.settings;
         let model_info = settings.model_info.as_ref();
@@ -48,7 +48,7 @@ impl Session {
                     turn_context.config.base_instructions_provenance,
                     Some(BaseInstructionsProvenance::Model { .. })
                 )) {
-            genex_prompts::without_update_plan_instructions(&model_instructions)
+            ruxex_prompts::without_update_plan_instructions(&model_instructions)
         } else {
             model_instructions
         };
@@ -99,7 +99,7 @@ impl Session {
                 turn_context
                     .session_source
                     .get_agent_path()
-                    .unwrap_or_else(genex_protocol::AgentPath::root),
+                    .unwrap_or_else(ruxex_protocol::AgentPath::root),
                 window_ids.first_window_id,
                 window_ids.previous_window_id,
                 window_ids.window_id,

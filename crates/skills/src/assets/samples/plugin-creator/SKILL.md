@@ -1,6 +1,6 @@
 ---
 name: plugin-creator
-description: Create and scaffold plugin directories for Genex with a required `.genex-plugin/plugin.json`, optional plugin folders/files, valid manifest defaults, and personal-marketplace entries by default. Use when Genex needs to create a new personal plugin, add optional plugin structure, generate or update marketplace entries for plugin ordering and availability metadata, or update an existing local plugin during development with the CLI-driven cachebuster and reinstall flow.
+description: Create and scaffold plugin directories for Ruxex with a required `.ruxex-plugin/plugin.json`, optional plugin folders/files, valid manifest defaults, and personal-marketplace entries by default. Use when Ruxex needs to create a new personal plugin, add optional plugin structure, generate or update marketplace entries for plugin ordering and availability metadata, or update an existing local plugin during development with the CLI-driven cachebuster and reinstall flow.
 ---
 
 # Plugin Creator
@@ -17,10 +17,10 @@ description: Create and scaffold plugin directories for Genex with a required `.
 python3 scripts/create_basic_plugin.py <plugin-name>
 ```
 
-2. Edit `<plugin-path>/.genex-plugin/plugin.json` when the request gives specific metadata.
+2. Edit `<plugin-path>/.ruxex-plugin/plugin.json` when the request gives specific metadata.
    The scaffold starts with valid defaults and must not contain `[TODO: ...]` placeholders.
 
-3. Generate or update the personal marketplace entry when the plugin should appear in Genex UI ordering:
+3. Generate or update the personal marketplace entry when the plugin should appear in Ruxex UI ordering:
 
 ```bash
 # Personal marketplace entries default to `~/.agents/plugins/marketplace.json`.
@@ -85,7 +85,7 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
   `~/.agents/plugins/marketplace.json`, with plugins generally being stored in
   `~/plugins/<plugin-name>/`.
 - Creates plugin root at `/<parent-plugin-directory>/<plugin-name>/`.
-- Always creates `/<parent-plugin-directory>/<plugin-name>/.genex-plugin/plugin.json`.
+- Always creates `/<parent-plugin-directory>/<plugin-name>/.ruxex-plugin/plugin.json`.
 - Fills the manifest with the validated schema shape that the ingestion path accepts.
 - Creates or updates `~/.agents/plugins/marketplace.json` when `--with-marketplace` is set.
   - If the marketplace file does not exist yet, seed a personal marketplace root before adding the first plugin entry.
@@ -112,7 +112,7 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
   name is already taken and you need to seed a different new marketplace file.
 - Do not use `--marketplace-name` to rename an existing marketplace file in place. If the file
   already exists, its top-level `name` must already match.
-- If the user specifies a different marketplace path, treat that marketplace as needing explicit installation via `genex plugin marketplace add`.
+- If the user specifies a different marketplace path, treat that marketplace as needing explicit installation via `ruxex plugin marketplace add`.
 - Plugin names must match `[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*`.
 - Marketplace names must match `[A-Za-z0-9_-]+`.
 - For existing marketplaces, always validate names with `scripts/read_marketplace_name.py`; stop if
@@ -122,7 +122,7 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
   install commands.
 - In either location, the generated source path remains `./plugins/<plugin-name>`.
 - Marketplace root metadata supports top-level `name` plus optional `interface.displayName`.
-- Treat plugin order in `plugins[]` as render order in Genex. Append new entries unless a user explicitly asks to reorder the list.
+- Treat plugin order in `plugins[]` as render order in Ruxex. Append new entries unless a user explicitly asks to reorder the list.
 - `displayName` belongs inside the marketplace `interface` object, not individual `plugins[]` entries.
 - Each generated marketplace entry must include all of:
   - `policy.installation`
@@ -188,7 +188,7 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
 ## Required behavior
 
 - Outer folder name and `plugin.json` `"name"` are always the same normalized plugin name.
-- Do not remove required structure; keep `.genex-plugin/plugin.json` present.
+- Do not remove required structure; keep `.ruxex-plugin/plugin.json` present.
 - Do not leave `[TODO: ...]` placeholders in plugin manifests.
 - Keep `apps` and `mcpServers` out of `plugin.json` unless their companion files are actually created.
 - Omit unsupported plugin manifest fields that validation rejects, including `hooks`.
@@ -199,18 +199,18 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
 - Keep marketplace `source.path` relative to the selected marketplace root as `./plugins/<plugin-name>`.
 - Only use `--marketplace-name` when creating a new marketplace file whose name should not be
   `personal` because that name is already taken or installed elsewhere.
-- If Genex would need approval to write the marketplace file, ask for that approval before
+- If Ruxex would need approval to write the marketplace file, ask for that approval before
   proceeding. If the user prefers to run the write themselves, provide the exact scaffold command
   and then continue from validation or subsequent plugin edits instead of leaving the workflow
   vague.
 - For updates to an existing local plugin during development, do not hand-edit marketplace config
   or `marketplace.json`. Use the update flow documented in
   `references/installing-and-updating.md` and `scripts/update_plugin_cachebuster.py`.
-- Do not tell the user to run `genex plugin marketplace add` for the default personal-marketplace
+- Do not tell the user to run `ruxex plugin marketplace add` for the default personal-marketplace
   flow. That command is for explicit non-default marketplace configuration, not for the standard
   `~/.agents/plugins/marketplace.json` path.
 - If the user provided a non-default `--marketplace-path`, make sure that marketplace is installed
-  before giving reinstall instructions. Use `genex plugin marketplace add <path-to-marketplace-root>`
+  before giving reinstall instructions. Use `ruxex plugin marketplace add <path-to-marketplace-root>`
   when that explicit marketplace has not been configured yet.
 - When the workflow created or updated a marketplace-backed plugin, end the final user-facing
   response with a short Codex app handoff. Say `To view this in the Codex app:` and write
@@ -220,7 +220,7 @@ See `references/installing-and-updating.md` for the expected cachebuster and rei
   The Share deeplink uses the same URL with `&mode=share`.
 - Replace the placeholders with the real normalized plugin name and absolute `marketplace.json`
   path from the scaffolded plugin. URL-encode the path segment and query value when needed.
-- Do not add `pluginName` or `hostId` query parameters to these deeplinks. Genex derives both after
+- Do not add `pluginName` or `hostId` query parameters to these deeplinks. Ruxex derives both after
   the user clicks the link.
 - Do not emit the `View <normalized plugin name>` or `Share <normalized plugin name>` links when no marketplace entry was
   created or updated.

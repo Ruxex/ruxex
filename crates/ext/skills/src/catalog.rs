@@ -1,12 +1,12 @@
-use genex_protocol::protocol::SkillScope;
-use genex_skills::SkillDependencies;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::SkillDependencies;
+use ruxex_utils_path_uri::PathUri;
 use std::sync::Arc;
 
 /// Source authority that owns a skill package and must be used to read it.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SkillSourceKind {
-    /// Genex-hosted skills, including bundled, user, repo, plugin-installed,
+    /// Ruxex-hosted skills, including bundled, user, repo, plugin-installed,
     /// and downloaded/materialized remote skills.
     Host,
     /// Skills owned by an execution environment.

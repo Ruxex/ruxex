@@ -1,14 +1,14 @@
 use crate::config::MultiAgentV2Config;
 use crate::context::MultiAgentRoleInstructions;
 use crate::session::step_context::StepContext;
-use genex_prompts::ResolvedMessage;
-use genex_prompts::ResolvedModelMessages;
-use genex_prompts::ResolvedMultiAgentMessages;
-use genex_protocol::config_types::MultiAgentMode;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
+use ruxex_prompts::ResolvedMessage;
+use ruxex_prompts::ResolvedModelMessages;
+use ruxex_prompts::ResolvedMultiAgentMessages;
+use ruxex_protocol::config_types::MultiAgentMode;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ResolvedMultiAgentV2UsageHints {

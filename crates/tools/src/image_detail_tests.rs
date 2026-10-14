@@ -1,9 +1,9 @@
 use super::*;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

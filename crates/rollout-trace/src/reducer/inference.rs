@@ -22,7 +22,7 @@ use crate::raw_event::RawTraceEventPayload;
 pub(super) struct StartedInferenceCall {
     pub(super) inference_call_id: InferenceCallId,
     pub(super) thread_id: String,
-    pub(super) genex_turn_id: String,
+    pub(super) ruxex_turn_id: String,
     pub(super) model: String,
     pub(super) request_payload: RawPayloadRef,
 }
@@ -51,17 +51,17 @@ impl TraceReducer {
 
         let inference_call_id = started.inference_call_id.clone();
         let thread_id = started.thread_id.clone();
-        let genex_turn_id = started.genex_turn_id.clone();
+        let ruxex_turn_id = started.ruxex_turn_id.clone();
         let request_payload = started.request_payload.clone();
-        let Some(turn) = self.rollout.genex_turns.get(&genex_turn_id) else {
+        let Some(turn) = self.rollout.ruxex_turns.get(&ruxex_turn_id) else {
             bail!(
-                "inference start {inference_call_id} referenced unknown genex turn {genex_turn_id}"
+                "inference start {inference_call_id} referenced unknown ruxex turn {ruxex_turn_id}"
             );
         };
         if turn.thread_id != thread_id {
             bail!(
                 "inference start {inference_call_id} used thread {thread_id}, \
-                 but genex turn {genex_turn_id} belongs to {}",
+                 but ruxex turn {ruxex_turn_id} belongs to {}",
                 turn.thread_id
             );
         }
@@ -70,7 +70,7 @@ impl TraceReducer {
             wall_time_unix_ms,
             &inference_call_id,
             &thread_id,
-            &genex_turn_id,
+            &ruxex_turn_id,
             &request_payload,
         )?;
 
@@ -81,7 +81,7 @@ impl TraceReducer {
             InferenceCall {
                 inference_call_id,
                 thread_id,
-                genex_turn_id,
+                ruxex_turn_id,
                 execution: ExecutionWindow {
                     started_at_unix_ms: wall_time_unix_ms,
                     started_seq: seq,
@@ -106,13 +106,13 @@ impl TraceReducer {
     /// Closes any inference streams that are still live when the owning turn ends.
     ///
     /// Normal completion events close the active inference before the turn ends.
-    /// If a call is still `Running`, Genex stopped observing that provider stream
+    /// If a call is still `Running`, Ruxex stopped observing that provider stream
     /// earlier and the reduced graph should not present it as live.
     pub(super) fn close_running_inference_calls_for_turn_end(
         &mut self,
         seq: RawEventSeq,
         wall_time_unix_ms: i64,
-        genex_turn_id: &str,
+        ruxex_turn_id: &str,
         turn_status: &ExecutionStatus,
     ) {
         let inference_status = match turn_status {
@@ -122,7 +122,7 @@ impl TraceReducer {
             ExecutionStatus::Aborted => ExecutionStatus::Aborted,
         };
         for inference in self.rollout.inference_calls.values_mut() {
-            if inference.genex_turn_id == genex_turn_id
+            if inference.ruxex_turn_id == ruxex_turn_id
                 && inference.execution.status == ExecutionStatus::Running
             {
                 inference.execution.ended_at_unix_ms = Some(wall_time_unix_ms);

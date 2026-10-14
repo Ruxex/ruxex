@@ -8,7 +8,7 @@ import type { TurnStatus } from "./TurnStatus";
 
 export type Turn = {
 /**
- * Identifier for this turn. Genex-generated turn IDs are UUIDv7.
+ * Identifier for this turn. Ruxex-generated turn IDs are UUIDv7.
  */
 id: string,
 /**

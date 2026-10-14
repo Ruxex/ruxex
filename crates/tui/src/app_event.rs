@@ -13,29 +13,29 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
 use crate::inline_visualization::InlineVisualizationContext;
-use genex_app_server_protocol::DynamicToolCallResponse;
-use genex_app_server_protocol::MarketplaceAddResponse;
-use genex_app_server_protocol::MarketplaceRemoveResponse;
-use genex_app_server_protocol::MarketplaceUpgradeResponse;
-use genex_app_server_protocol::McpServerStatus;
-use genex_app_server_protocol::McpServerStatusDetail;
-use genex_app_server_protocol::PluginInstallResponse;
-use genex_app_server_protocol::PluginListResponse;
-use genex_app_server_protocol::PluginReadParams;
-use genex_app_server_protocol::PluginReadResponse;
-use genex_app_server_protocol::PluginUninstallResponse;
-use genex_app_server_protocol::RequestId as AppServerRequestId;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_app_server_protocol::ThreadItemsListResponse;
-use genex_file_search::FileMatch;
-use genex_message_history::HistoryBatchCursor;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_approval_presets::ApprovalPreset;
+use ruxex_app_server_protocol::DynamicToolCallResponse;
+use ruxex_app_server_protocol::MarketplaceAddResponse;
+use ruxex_app_server_protocol::MarketplaceRemoveResponse;
+use ruxex_app_server_protocol::MarketplaceUpgradeResponse;
+use ruxex_app_server_protocol::McpServerStatus;
+use ruxex_app_server_protocol::McpServerStatusDetail;
+use ruxex_app_server_protocol::PluginInstallResponse;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::PluginReadParams;
+use ruxex_app_server_protocol::PluginReadResponse;
+use ruxex_app_server_protocol::PluginUninstallResponse;
+use ruxex_app_server_protocol::RequestId as AppServerRequestId;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_app_server_protocol::ThreadItemsListResponse;
+use ruxex_file_search::FileMatch;
+use ruxex_message_history::HistoryBatchCursor;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_approval_presets::ApprovalPreset;
 use strum_macros::IntoStaticStr;
 use uuid::Uuid;
 
@@ -47,11 +47,11 @@ use crate::bottom_pane::TerminalTitleItem;
 use crate::chatwidget::AstraModelPickerAction;
 use crate::chatwidget::UserMessage;
 use crate::goal_files::GoalDraft;
-use genex_app_server_protocol::AskForApproval;
-use genex_features::Feature;
-use genex_plugin::PluginCapabilitySummary;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::models::ActivePermissionProfile;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_features::Feature;
+use ruxex_plugin::PluginCapabilitySummary;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::models::ActivePermissionProfile;
 
 use crate::history_cell::HistoryCell;
 
@@ -75,8 +75,8 @@ pub(crate) enum ManagedWorktreeMode {
 pub(crate) struct ManagedWorktreeTransition {
     pub(crate) source_thread_id: ThreadId,
     pub(crate) source_cwd: AbsolutePathBuf,
-    pub(crate) manager: genex_worktree::WorktreeManager,
-    pub(crate) checkout: genex_worktree::ManagedWorktree,
+    pub(crate) manager: ruxex_worktree::WorktreeManager,
+    pub(crate) checkout: ruxex_worktree::ManagedWorktree,
     pub(crate) config: Box<crate::legacy_core::config::Config>,
     pub(crate) mode: ManagedWorktreeMode,
     pub(crate) name: Option<String>,
@@ -90,8 +90,8 @@ pub(crate) struct ManagedWorktreeCreated {
     pub(crate) name: Option<String>,
     pub(crate) result: Result<
         (
-            genex_worktree::WorktreeManager,
-            genex_worktree::ManagedWorktree,
+            ruxex_worktree::WorktreeManager,
+            ruxex_worktree::ManagedWorktree,
         ),
         String,
     >,
@@ -326,7 +326,7 @@ pub(crate) enum AppEvent {
         server_name: String,
         request_id: AppServerRequestId,
         attempt_id: Uuid,
-        result: Result<genex_app_server_protocol::UserVerificationProof, String>,
+        result: Result<ruxex_app_server_protocol::UserVerificationProof, String>,
     },
 
     /// Interrupt, fork, and retry a safety-buffered turn with the server-selected model.
@@ -539,7 +539,7 @@ pub(crate) enum AppEvent {
 
     /// Forward a command to the Agent. Using an `AppEvent` for this avoids
     /// bubbling channels through layers of widgets.
-    GenexOp(AppCommand),
+    RuxexOp(AppCommand),
 
     /// A blocking image-preparation worker has finished; payload stays with its widget.
     ImagesPrepared(Uuid),
@@ -625,7 +625,7 @@ pub(crate) enum AppEvent {
     /// Result of fetching lifecycle hook inventory.
     HooksLoaded {
         cwd: PathBuf,
-        result: Result<genex_app_server_protocol::HooksListResponse, String>,
+        result: Result<ruxex_app_server_protocol::HooksListResponse, String>,
     },
 
     /// Open the prompt for adding a marketplace source.

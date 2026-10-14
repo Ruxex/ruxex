@@ -10,12 +10,12 @@ use std::time::UNIX_EPOCH;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use futures::FutureExt;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_exec_server::RouteAwareHttpClient;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_keyring_store::CredentialStoreError;
-use genex_keyring_store::tests::MockKeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_exec_server::RouteAwareHttpClient;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_keyring_store::CredentialStoreError;
+use ruxex_keyring_store::tests::MockKeyringStore;
 use pretty_assertions::assert_eq;
 use pretty_assertions::assert_ne;
 use serde_json::json;
@@ -30,7 +30,7 @@ use super::*;
 use crate::EmaAuthFailure;
 use crate::WrappedOAuthTokenResponse;
 use crate::oauth::ResolvedOAuthCredentialStore;
-use crate::oauth::test_support::TempGenexHome;
+use crate::oauth::test_support::TempRuxexHome;
 
 fn credentials(issuer: &str, subject: &str, expires_at: u64) -> StoredOAuthTokens {
     let assertion = format!(
@@ -231,7 +231,7 @@ impl KeyringStore for GatedKeyringStore {
 
 #[tokio::test(flavor = "current_thread")]
 async fn refresh_subject_reread_is_cancellable_and_releases_guard_on_failure() -> Result<()> {
-    let _home = TempGenexHome::new();
+    let _home = TempRuxexHome::new();
     let (_server, issuer) = discovery().await;
     let store = ResolvedOAuthCredentialStore::Keyring(AuthKeyringBackendKind::Direct);
     let stored = credentials(&issuer, "user", /*expires_at*/ 0);
@@ -298,7 +298,7 @@ async fn refresh_subject_reread_is_cancellable_and_releases_guard_on_failure() -
                 }));
             }
         }
-        // Drain the detached read before TempGenexHome changes the process environment.
+        // Drain the detached read before TempRuxexHome changes the process environment.
         let _released = tokio::time::timeout(
             REREAD_TEST_TIMEOUT,
             RefreshCredentialLock::acquire_for_server(&stored.server_name, &issuer),
@@ -310,7 +310,7 @@ async fn refresh_subject_reread_is_cancellable_and_releases_guard_on_failure() -
 
 #[tokio::test]
 async fn refresh_subject_rereads_pinned_credentials_after_id_token_expiry() -> Result<()> {
-    let _home = TempGenexHome::new();
+    let _home = TempRuxexHome::new();
     let (_server, issuer) = discovery().await;
     let store = ResolvedOAuthCredentialStore::Keyring(AuthKeyringBackendKind::Direct);
     let stored = credentials(&issuer, "user", /*expires_at*/ 0);
@@ -338,7 +338,7 @@ async fn refresh_subject_rereads_pinned_credentials_after_id_token_expiry() -> R
 
 #[tokio::test]
 async fn refresh_subject_rejects_removed_replaced_or_missing_credentials() -> Result<()> {
-    let _home = TempGenexHome::new();
+    let _home = TempRuxexHome::new();
     let (server, issuer) = discovery().await;
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
     let store = ResolvedOAuthCredentialStore::Keyring(AuthKeyringBackendKind::Direct);

@@ -5,48 +5,48 @@ use crate::config_manager_service::ConfigManagerError;
 use crate::error_code::internal_error;
 use crate::error_code::invalid_request;
 use crate::outgoing_message::OutgoingMessageSender;
-use genex_app_server_protocol::AllowDenyRequirement;
-use genex_app_server_protocol::BrowserUseAccessApprovalLifetime;
-use genex_app_server_protocol::BrowserUseOriginPolicy;
-use genex_app_server_protocol::BrowserUseRequirements;
-use genex_app_server_protocol::CliAuthCredentialsStoreMode;
-use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::ComputerUseMacosRequirements;
-use genex_app_server_protocol::ComputerUseRequirements;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigReadParams;
-use genex_app_server_protocol::ConfigReadResponse;
-use genex_app_server_protocol::ConfigRequirements;
-use genex_app_server_protocol::ConfigRequirementsReadResponse;
-use genex_app_server_protocol::ConfigValueWriteParams;
-use genex_app_server_protocol::ConfigWriteErrorCode;
-use genex_app_server_protocol::ConfigWriteResponse;
-use genex_app_server_protocol::ConfiguredHookHandler;
-use genex_app_server_protocol::ConfiguredHookMatcherGroup;
-use genex_app_server_protocol::InAppBrowserRequirements;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::ManagedHooksRequirements;
-use genex_app_server_protocol::ModelProviderAuthField;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::ModelProviderReadResponse;
-use genex_app_server_protocol::ModelsRequirements;
-use genex_app_server_protocol::NetworkDomainPermission;
-use genex_app_server_protocol::NetworkRequirements;
-use genex_app_server_protocol::NetworkUnixSocketPermission;
-use genex_app_server_protocol::NewThreadModelDefaults;
-use genex_app_server_protocol::RemoteCompactionSupport;
-use genex_app_server_protocol::SandboxMode;
-use genex_config::ConfigRequirementsToml;
-use genex_config::HookEventsToml;
-use genex_config::HookHandlerConfig as CoreHookHandlerConfig;
-use genex_config::ManagedHooksRequirementsToml;
-use genex_config::MatcherGroup as CoreMatcherGroup;
-use genex_config::ResidencyRequirement as CoreResidencyRequirement;
-use genex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
-use genex_core::ThreadManager;
-use genex_features::feature_for_key;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::WebSearchMode;
+use ruxex_app_server_protocol::AllowDenyRequirement;
+use ruxex_app_server_protocol::BrowserUseAccessApprovalLifetime;
+use ruxex_app_server_protocol::BrowserUseOriginPolicy;
+use ruxex_app_server_protocol::BrowserUseRequirements;
+use ruxex_app_server_protocol::CliAuthCredentialsStoreMode;
+use ruxex_app_server_protocol::ClientResponsePayload;
+use ruxex_app_server_protocol::ComputerUseMacosRequirements;
+use ruxex_app_server_protocol::ComputerUseRequirements;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigReadParams;
+use ruxex_app_server_protocol::ConfigReadResponse;
+use ruxex_app_server_protocol::ConfigRequirements;
+use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+use ruxex_app_server_protocol::ConfigValueWriteParams;
+use ruxex_app_server_protocol::ConfigWriteErrorCode;
+use ruxex_app_server_protocol::ConfigWriteResponse;
+use ruxex_app_server_protocol::ConfiguredHookHandler;
+use ruxex_app_server_protocol::ConfiguredHookMatcherGroup;
+use ruxex_app_server_protocol::InAppBrowserRequirements;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::ManagedHooksRequirements;
+use ruxex_app_server_protocol::ModelProviderAuthField;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use ruxex_app_server_protocol::ModelProviderReadResponse;
+use ruxex_app_server_protocol::ModelsRequirements;
+use ruxex_app_server_protocol::NetworkDomainPermission;
+use ruxex_app_server_protocol::NetworkRequirements;
+use ruxex_app_server_protocol::NetworkUnixSocketPermission;
+use ruxex_app_server_protocol::NewThreadModelDefaults;
+use ruxex_app_server_protocol::RemoteCompactionSupport;
+use ruxex_app_server_protocol::SandboxMode;
+use ruxex_config::ConfigRequirementsToml;
+use ruxex_config::HookEventsToml;
+use ruxex_config::HookHandlerConfig as CoreHookHandlerConfig;
+use ruxex_config::ManagedHooksRequirementsToml;
+use ruxex_config::MatcherGroup as CoreMatcherGroup;
+use ruxex_config::ResidencyRequirement as CoreResidencyRequirement;
+use ruxex_config::SandboxModeRequirement as CoreSandboxModeRequirement;
+use ruxex_core::ThreadManager;
+use ruxex_features::feature_for_key;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::WebSearchMode;
 use serde_json::json;
 use std::path::PathBuf;
 
@@ -176,10 +176,10 @@ impl ConfigRequestProcessor {
             external_web_access: capabilities.external_web_access,
             history_notes: capabilities.history_notes,
             remote_compaction: match capabilities.remote_compaction {
-                genex_model_provider::RemoteCompactionSupport::Unsupported => {
+                ruxex_model_provider::RemoteCompactionSupport::Unsupported => {
                     RemoteCompactionSupport::Unsupported
                 }
-                genex_model_provider::RemoteCompactionSupport::V2 => RemoteCompactionSupport::V2,
+                ruxex_model_provider::RemoteCompactionSupport::V2 => RemoteCompactionSupport::V2,
             },
         })
     }
@@ -226,7 +226,7 @@ impl ConfigRequestProcessor {
     async fn load_latest_config(
         &self,
         fallback_cwd: Option<PathBuf>,
-    ) -> Result<genex_core::config::Config, JSONRPCErrorError> {
+    ) -> Result<ruxex_core::config::Config, JSONRPCErrorError> {
         self.config_manager
             .load_latest_config(fallback_cwd)
             .await
@@ -241,7 +241,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigValueWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let _pending_changes = genex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = ruxex_core_plugins::toggles::collect_plugin_enabled_candidates(
             [(&params.key_path, &params.value)].into_iter(),
         );
         let response = self
@@ -256,7 +256,7 @@ impl ConfigRequestProcessor {
         &self,
         params: ConfigBatchWriteParams,
     ) -> Result<ConfigWriteResponse, JSONRPCErrorError> {
-        let _pending_changes = genex_core_plugins::toggles::collect_plugin_enabled_candidates(
+        let _pending_changes = ruxex_core_plugins::toggles::collect_plugin_enabled_candidates(
             params
                 .edits
                 .iter()
@@ -320,9 +320,9 @@ fn map_requirements_to_api(
     Some(ConfigRequirements {
         allowed_login_methods: Some(allowed_login_methods),
         application: requirements.application.map(|application| {
-            genex_app_server_protocol::ApplicationRequirements {
+            ruxex_app_server_protocol::ApplicationRequirements {
                 network: application.network.map(|network| {
-                    genex_app_server_protocol::ApplicationNetworkRequirements {
+                    ruxex_app_server_protocol::ApplicationNetworkRequirements {
                         enabled: network.enabled,
                         domains: network
                             .domains
@@ -337,16 +337,16 @@ fn map_requirements_to_api(
         }),
         cli_auth_credentials_store: requirements.cli_auth_credentials_store.map(
             |mode| match mode {
-                genex_config::types::AuthCredentialsStoreMode::File => {
+                ruxex_config::types::AuthCredentialsStoreMode::File => {
                     CliAuthCredentialsStoreMode::File
                 }
-                genex_config::types::AuthCredentialsStoreMode::Keyring => {
+                ruxex_config::types::AuthCredentialsStoreMode::Keyring => {
                     CliAuthCredentialsStoreMode::Keyring
                 }
-                genex_config::types::AuthCredentialsStoreMode::Auto => {
+                ruxex_config::types::AuthCredentialsStoreMode::Auto => {
                     CliAuthCredentialsStoreMode::Auto
                 }
-                genex_config::types::AuthCredentialsStoreMode::Ephemeral => {
+                ruxex_config::types::AuthCredentialsStoreMode::Ephemeral => {
                     CliAuthCredentialsStoreMode::Ephemeral
                 }
             },
@@ -356,7 +356,7 @@ fn map_requirements_to_api(
         allowed_approval_policies: requirements.allowed_approval_policies.map(|policies| {
             policies
                 .into_iter()
-                .map(genex_app_server_protocol::AskForApproval::from)
+                .map(ruxex_app_server_protocol::AskForApproval::from)
                 .collect()
         }),
         allowed_sandbox_modes: requirements.allowed_sandbox_modes.map(|modes| {
@@ -415,7 +415,7 @@ fn map_requirements_to_api(
 }
 
 fn map_computer_use_requirements_to_api(
-    computer_use: genex_config::ComputerUseRequirementsToml,
+    computer_use: ruxex_config::ComputerUseRequirementsToml,
 ) -> ComputerUseRequirements {
     ComputerUseRequirements {
         allow_locked_computer_use: computer_use.allow_locked_computer_use,
@@ -439,7 +439,7 @@ fn map_computer_use_requirements_to_api(
 }
 
 fn map_browser_use_requirements_to_api(
-    browser_use: genex_config::BrowserUseRequirementsToml,
+    browser_use: ruxex_config::BrowserUseRequirementsToml,
 ) -> BrowserUseRequirements {
     BrowserUseRequirements {
         allow_webmcp: browser_use.allow_webmcp,
@@ -459,7 +459,7 @@ fn map_browser_use_requirements_to_api(
 }
 
 fn map_browser_use_origin_policy_to_api(
-    policy: genex_config::BrowserUseOriginPolicyToml,
+    policy: ruxex_config::BrowserUseOriginPolicyToml,
 ) -> BrowserUseOriginPolicy {
     BrowserUseOriginPolicy {
         access: policy.access.map(map_allow_deny_requirement_to_api),
@@ -477,22 +477,22 @@ fn map_browser_use_origin_policy_to_api(
 }
 
 fn map_allow_deny_requirement_to_api(
-    requirement: genex_config::AllowDenyRequirementToml,
+    requirement: ruxex_config::AllowDenyRequirementToml,
 ) -> AllowDenyRequirement {
     match requirement {
-        genex_config::AllowDenyRequirementToml::Allow => AllowDenyRequirement::Allow,
-        genex_config::AllowDenyRequirementToml::Deny => AllowDenyRequirement::Deny,
+        ruxex_config::AllowDenyRequirementToml::Allow => AllowDenyRequirement::Allow,
+        ruxex_config::AllowDenyRequirementToml::Deny => AllowDenyRequirement::Deny,
     }
 }
 
 fn map_browser_use_access_approval_lifetime_to_api(
-    lifetime: genex_config::BrowserUseAccessApprovalLifetimeToml,
+    lifetime: ruxex_config::BrowserUseAccessApprovalLifetimeToml,
 ) -> BrowserUseAccessApprovalLifetime {
     match lifetime {
-        genex_config::BrowserUseAccessApprovalLifetimeToml::Turn => {
+        ruxex_config::BrowserUseAccessApprovalLifetimeToml::Turn => {
             BrowserUseAccessApprovalLifetime::Turn
         }
-        genex_config::BrowserUseAccessApprovalLifetimeToml::Thread => {
+        ruxex_config::BrowserUseAccessApprovalLifetimeToml::Thread => {
             BrowserUseAccessApprovalLifetime::Thread
         }
     }
@@ -596,27 +596,27 @@ fn map_sandbox_mode_requirement_to_api(mode: CoreSandboxModeRequirement) -> Opti
 
 fn map_residency_requirement_to_api(
     residency: CoreResidencyRequirement,
-) -> genex_app_server_protocol::ResidencyRequirement {
+) -> ruxex_app_server_protocol::ResidencyRequirement {
     match residency {
-        CoreResidencyRequirement::Us => genex_app_server_protocol::ResidencyRequirement::Us,
+        CoreResidencyRequirement::Us => ruxex_app_server_protocol::ResidencyRequirement::Us,
     }
 }
 
 fn map_network_requirements_to_api(
-    network: genex_config::NetworkRequirementsToml,
+    network: ruxex_config::NetworkRequirementsToml,
 ) -> NetworkRequirements {
     let allowed_domains = network
         .domains
         .as_ref()
-        .and_then(genex_config::NetworkDomainPermissionsToml::allowed_domains);
+        .and_then(ruxex_config::NetworkDomainPermissionsToml::allowed_domains);
     let denied_domains = network
         .domains
         .as_ref()
-        .and_then(genex_config::NetworkDomainPermissionsToml::denied_domains);
+        .and_then(ruxex_config::NetworkDomainPermissionsToml::denied_domains);
     let allow_unix_sockets = network
         .unix_sockets
         .as_ref()
-        .map(genex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
+        .map(ruxex_config::NetworkUnixSocketPermissionsToml::allow_unix_sockets)
         .filter(|entries| !entries.is_empty());
 
     NetworkRequirements {
@@ -653,20 +653,20 @@ fn map_network_requirements_to_api(
 }
 
 fn map_network_domain_permission_to_api(
-    permission: genex_config::NetworkDomainPermissionToml,
+    permission: ruxex_config::NetworkDomainPermissionToml,
 ) -> NetworkDomainPermission {
     match permission {
-        genex_config::NetworkDomainPermissionToml::Allow => NetworkDomainPermission::Allow,
-        genex_config::NetworkDomainPermissionToml::Deny => NetworkDomainPermission::Deny,
+        ruxex_config::NetworkDomainPermissionToml::Allow => NetworkDomainPermission::Allow,
+        ruxex_config::NetworkDomainPermissionToml::Deny => NetworkDomainPermission::Deny,
     }
 }
 
 fn map_network_unix_socket_permission_to_api(
-    permission: genex_config::NetworkUnixSocketPermissionToml,
+    permission: ruxex_config::NetworkUnixSocketPermissionToml,
 ) -> NetworkUnixSocketPermission {
     match permission {
-        genex_config::NetworkUnixSocketPermissionToml::Allow => NetworkUnixSocketPermission::Allow,
-        genex_config::NetworkUnixSocketPermissionToml::Deny => NetworkUnixSocketPermission::Deny,
+        ruxex_config::NetworkUnixSocketPermissionToml::Allow => NetworkUnixSocketPermission::Allow,
+        ruxex_config::NetworkUnixSocketPermissionToml::Deny => NetworkUnixSocketPermission::Deny,
     }
 }
 

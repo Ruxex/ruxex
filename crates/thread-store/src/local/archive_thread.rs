@@ -8,14 +8,14 @@ use crate::ArchiveThreadsParams;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
 use chrono::Utc;
-use genex_rollout::RolloutReferenceIndex;
+use ruxex_rollout::RolloutReferenceIndex;
 use tracing::warn;
 
 use super::thread_rollout_resolver;
 pub(super) async fn archive_threads(
     store: &LocalThreadStore,
     params: ArchiveThreadsParams,
-) -> ThreadStoreResult<Vec<genex_protocol::ThreadId>> {
+) -> ThreadStoreResult<Vec<ruxex_protocol::ThreadId>> {
     let thread_ids = params.thread_ids;
     if thread_ids.is_empty() {
         return Ok(Vec::new());
@@ -41,7 +41,7 @@ pub(super) async fn archive_threads(
     let _writer_guards = store.acquire_writer_locks(&lock_thread_ids).await?;
     // Only inspect active files whose names belong to the threads being archived.
     let reference_index = RolloutReferenceIndex::scan_unarchived_threads(
-        store.config.genex_home.as_path(),
+        store.config.ruxex_home.as_path(),
         &thread_ids,
     )
     .await
@@ -66,7 +66,7 @@ pub(super) async fn archive_threads(
 
 async fn archive_thread_with_paths(
     store: &LocalThreadStore,
-    thread_id: genex_protocol::ThreadId,
+    thread_id: ruxex_protocol::ThreadId,
     mut rollout_paths: Vec<std::path::PathBuf>,
 ) -> ThreadStoreResult<()> {
     let state_db_ctx = store.state_db().await;
@@ -79,8 +79,8 @@ async fn archive_thread_with_paths(
 
     let archive_folder = store
         .config
-        .genex_home
-        .join(genex_rollout::ARCHIVED_SESSIONS_SUBDIR);
+        .ruxex_home
+        .join(ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR);
     std::fs::create_dir_all(&archive_folder).map_err(|err| ThreadStoreError::Internal {
         message: format!("failed to archive thread: {err}"),
     })?;
@@ -90,11 +90,11 @@ async fn archive_thread_with_paths(
     let mut archived_path = None;
     let mut rollout_moves = Vec::new();
     for rollout_path in rollout_paths {
-        if rollout_path_is_archived(store.config.genex_home.as_path(), rollout_path.as_path()) {
+        if rollout_path_is_archived(store.config.ruxex_home.as_path(), rollout_path.as_path()) {
             continue;
         }
         let canonical_rollout_path = scoped_rollout_path(
-            store.config.genex_home.join(genex_rollout::SESSIONS_SUBDIR),
+            store.config.ruxex_home.join(ruxex_rollout::SESSIONS_SUBDIR),
             rollout_path.as_path(),
             "sessions",
         )?;
@@ -154,11 +154,11 @@ mod tests {
     use std::time::Duration;
 
     use chrono::Utc;
-    use genex_protocol::ThreadId;
-    use genex_protocol::protocol::SessionSource;
-    use genex_protocol::protocol::ThreadHistoryMode;
-    use genex_rollout::ARCHIVED_SESSIONS_SUBDIR;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_protocol::ThreadId;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use uuid::Uuid;
@@ -323,7 +323,7 @@ mod tests {
         let selected_rollout_path = alternate_directory
             .join("..")
             .join(active_path.file_name().expect("file name"));
-        let runtime = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let runtime = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await
@@ -333,7 +333,7 @@ mod tests {
             .mark_backfill_complete(/*last_watermark*/ None)
             .await
             .expect("backfill should be complete");
-        let mut builder = genex_state::ThreadMetadataBuilder::new(
+        let mut builder = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             selected_rollout_path,
             Utc::now(),

@@ -2,9 +2,9 @@ use std::process::Output;
 use std::process::Stdio;
 use std::time::Duration;
 
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 #[cfg(unix)]
-use genex_utils_pty::process_group::kill_process_group;
+use ruxex_utils_pty::process_group::kill_process_group;
 use tokio::process::Child;
 use tokio::process::Command;
 use tokio::time::timeout;

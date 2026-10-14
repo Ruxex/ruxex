@@ -6,16 +6,16 @@ use crate::tools::context::boxed_tool_output;
 use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageDelivery;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::AsyncUserInputQuestion;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::MessagePhase;
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageDelivery;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::AsyncUserInputQuestion;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
@@ -74,7 +74,7 @@ impl ToolExecutor<ToolInvocation> for RequestUserInputAsyncHandler {
         })
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

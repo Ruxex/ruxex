@@ -4,25 +4,25 @@ use super::parse_turn_item;
 use crate::context::ContextualUserFragment;
 use crate::context::InternalContextSource;
 use crate::context::InternalModelContextFragment;
-use genex_protocol::ResponseItemId;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::HookPromptFragment;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::WebSearchItem;
-use genex_protocol::items::build_hook_prompt_message;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ReasoningItemContent;
-use genex_protocol::models::ReasoningItemReasoningSummary;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::WebSearchAction;
-use genex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
-use genex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
-use genex_protocol::user_input::UserInput;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::HookPromptFragment;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::WebSearchItem;
+use ruxex_protocol::items::build_hook_prompt_message;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ReasoningItemContent;
+use ruxex_protocol::models::ReasoningItemReasoningSummary;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::WebSearchAction;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
+use ruxex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -299,7 +299,7 @@ fn parses_assistant_message_input_text_for_backward_compatibility() {
 #[test]
 fn skips_unnamed_image_label_text() {
     let image_url = "data:image/png;base64,abc".to_string();
-    let label = genex_protocol::models::image_open_tag_text();
+    let label = ruxex_protocol::models::image_open_tag_text();
     let user_text = "Please review this image.".to_string();
 
     let item = ResponseItem::Message {
@@ -314,7 +314,7 @@ fn skips_unnamed_image_label_text() {
                 detail: Some(DEFAULT_IMAGE_DETAIL),
             },
             ContentItem::InputText {
-                text: genex_protocol::models::image_close_tag_text(),
+                text: ruxex_protocol::models::image_close_tag_text(),
             },
             ContentItem::InputText {
                 text: user_text.clone(),
@@ -496,7 +496,7 @@ fn parses_agent_message() {
         id: Some(ResponseItemId::with_suffix("msg", "1")),
         role: "assistant".to_string(),
         content: vec![ContentItem::OutputText {
-            text: "Hello from Genex".to_string(),
+            text: "Hello from Ruxex".to_string(),
         }],
         phase: None,
         internal_chat_message_metadata_passthrough: None,
@@ -509,7 +509,7 @@ fn parses_agent_message() {
             let Some(AgentMessageContent::Text { text }) = message.content.first() else {
                 panic!("expected agent message text content");
             };
-            assert_eq!(text, "Hello from Genex");
+            assert_eq!(text, "Hello from Ruxex");
         }
         other => panic!("expected TurnItem::AgentMessage, got {other:?}"),
     }

@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeNestedToolCall;
-use genex_code_mode_protocol::CodeModeSessionDelegate;
-use genex_code_mode_protocol::NotificationFuture;
-use genex_code_mode_protocol::RuntimeResponse;
-use genex_code_mode_protocol::StartedCell;
-use genex_code_mode_protocol::ToolInvocationFuture;
-use genex_code_mode_protocol::WaitOutcome;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeNestedToolCall;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::NotificationFuture;
+use ruxex_code_mode_protocol::RuntimeResponse;
+use ruxex_code_mode_protocol::StartedCell;
+use ruxex_code_mode_protocol::ToolInvocationFuture;
+use ruxex_code_mode_protocol::WaitOutcome;
 use tokio_util::sync::CancellationToken;
 
 pub(super) struct GenerationDelegate {

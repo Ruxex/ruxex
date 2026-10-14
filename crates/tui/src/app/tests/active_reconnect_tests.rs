@@ -111,7 +111,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
         &mut session,
         &mut events,
         connected,
-        GENEX_CLI_VERSION,
+        RUXEX_CLI_VERSION,
     )
     .await?;
     assert!(app.pending_server_profiles.contains_key(&primary));
@@ -141,7 +141,7 @@ async fn reconnect_reconciles_offscreen_pending_profile_before_restoring_permiss
     app.chat_widget
         .handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
     while let Ok(event) = events.try_recv() {
-        if matches!(event, AppEvent::GenexOp(AppCommand::UserTurn { .. })) {
+        if matches!(event, AppEvent::RuxexOp(AppCommand::UserTurn { .. })) {
             app.handle_event(&mut tui, &mut session, event).await?;
         }
     }
@@ -168,7 +168,7 @@ pub(super) async fn drain_history(
     while let Ok(event) = events.try_recv() {
         assert!(!matches!(
             event,
-            AppEvent::GenexOp(AppCommand::UserTurn { .. })
+            AppEvent::RuxexOp(AppCommand::UserTurn { .. })
         ));
         if matches!(
             event,

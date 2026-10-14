@@ -1,6 +1,6 @@
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadTimelineEntry;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadTimelineEntry;
+use ruxex_protocol::ThreadId;
 use serde::Deserialize;
 use serde::Serialize;
 

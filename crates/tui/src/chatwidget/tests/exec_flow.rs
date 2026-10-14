@@ -153,7 +153,7 @@ async fn exec_approval_uses_approval_id_when_present() {
             assert_eq!(id, "approval-subcommand");
             assert_matches!(
                 decision,
-                genex_app_server_protocol::CommandExecutionApprovalDecision::Accept
+                ruxex_app_server_protocol::CommandExecutionApprovalDecision::Accept
             );
             found = true;
             break;
@@ -244,7 +244,7 @@ async fn exec_end_without_begin_uses_event_command() {
         "-lc".to_string(),
         "echo orphaned".to_string(),
     ];
-    let command_actions = genex_shell_command::parse_command::parse_command(&command)
+    let command_actions = ruxex_shell_command::parse_command::parse_command(&command)
         .into_iter()
         .map(|parsed| AppServerCommandAction::from_core_with_cwd(parsed, &chat.config.cwd))
         .collect();
@@ -254,7 +254,7 @@ async fn exec_end_without_begin_uses_event_command() {
         AppServerThreadItem::CommandExecution {
             model_context: None,
             id: "call-orphan".to_string(),
-            command: genex_shell_command::parse_command::shlex_join(&command),
+            command: ruxex_shell_command::parse_command::shlex_join(&command),
             cwd: cwd.into(),
             process_id: None,
             plugin_id: None,
@@ -777,7 +777,7 @@ async fn apply_patch_approval_sends_op_with_call_id() {
             assert_eq!(id, "call-999");
             assert_matches!(
                 decision,
-                genex_app_server_protocol::FileChangeApprovalDecision::Accept
+                ruxex_app_server_protocol::FileChangeApprovalDecision::Accept
             );
             found = true;
             break;
@@ -819,17 +819,17 @@ async fn apply_patch_full_flow_integration_like() {
     }
     let op = maybe_op.expect("expected thread-scoped op after key press");
 
-    // 3) App forwards to widget.submit_op, which pushes onto genex_op_tx
+    // 3) App forwards to widget.submit_op, which pushes onto ruxex_op_tx
     chat.submit_op(op);
     let forwarded = op_rx
         .try_recv()
-        .expect("expected op forwarded to genex channel");
+        .expect("expected op forwarded to ruxex channel");
     match forwarded {
         Op::PatchApproval { id, decision } => {
             assert_eq!(id, "call-1");
             assert_matches!(
                 decision,
-                genex_app_server_protocol::FileChangeApprovalDecision::Accept
+                ruxex_app_server_protocol::FileChangeApprovalDecision::Accept
             );
         }
         other => panic!("unexpected op forwarded: {other:?}"),

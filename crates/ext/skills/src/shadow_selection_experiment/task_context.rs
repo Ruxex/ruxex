@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::sync::PoisonError;
 
-use genex_protocol::user_input::UserInput;
-use genex_utils_string::take_bytes_at_char_boundary;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_string::take_bytes_at_char_boundary;
 
 use super::ShadowQuery;
 

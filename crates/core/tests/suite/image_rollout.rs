@@ -1,33 +1,33 @@
 use anyhow::Context;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_attachment_store::AttachmentStore;
-use genex_attachment_store::AttachmentStoreError;
-use genex_attachment_store::AttachmentStoreErrorKind;
-use genex_attachment_store::ResolveFuture;
-use genex_attachment_store::ResolveRequest;
-use genex_attachment_store::UploadFuture;
-use genex_attachment_store::UploadRequest;
-use genex_attachment_store::UploadResult;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_history::RolloutItem;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::ImageDetail;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_utils_image::data_url_from_bytes;
+use ruxex_attachment_store::AttachmentStore;
+use ruxex_attachment_store::AttachmentStoreError;
+use ruxex_attachment_store::AttachmentStoreErrorKind;
+use ruxex_attachment_store::ResolveFuture;
+use ruxex_attachment_store::ResolveRequest;
+use ruxex_attachment_store::UploadFuture;
+use ruxex_attachment_store::UploadRequest;
+use ruxex_attachment_store::UploadResult;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::ImageDetail;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_image::data_url_from_bytes;
 use core_test_support::TempDirExt;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
@@ -38,10 +38,10 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::responses::strip_metadata;
 use core_test_support::responses::strip_response_item_id;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use image::GenericImageView;
 use image::ImageBuffer;
@@ -88,7 +88,7 @@ fn find_user_message_with_image(text: &str) -> Option<ResponseItem> {
         if trimmed.is_empty() {
             continue;
         }
-        let rollout = match genex_rollout::parse_rollout_line(trimmed) {
+        let rollout = match ruxex_rollout::parse_rollout_line(trimmed) {
             Ok(rollout) => rollout,
             Err(_) => continue,
         };
@@ -147,13 +147,13 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         home: _home,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let rel_path = "images/paste.png";
     let abs_path = cwd.path().join(rel_path);
@@ -170,7 +170,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::LocalImage {
@@ -200,11 +200,11 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
-    genex.submit(Op::Shutdown).await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = genex.rollout_path().expect("rollout path");
+    let rollout_path = ruxex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with input image in rollout");
@@ -215,7 +215,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
         role: "user".to_string(),
         content: vec![
             ContentItem::InputText {
-                text: genex_protocol::models::local_image_open_tag_text_with_path(
+                text: ruxex_protocol::models::local_image_open_tag_text_with_path(
                     /*label_number*/ 1, &abs_path,
                 ),
             },
@@ -224,7 +224,7 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
                 detail: Some(DEFAULT_IMAGE_DETAIL),
             },
             ContentItem::InputText {
-                text: genex_protocol::models::image_close_tag_text(),
+                text: ruxex_protocol::models::image_close_tag_text(),
             },
             ContentItem::InputText {
                 text: "pasted image".to_string(),
@@ -245,13 +245,13 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
 
     let server = start_mock_server().await;
 
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         home: _home,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==".to_string();
 
@@ -266,7 +266,7 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Image {
@@ -298,11 +298,11 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
-    genex.submit(Op::Shutdown).await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = genex.rollout_path().expect("rollout path");
+    let rollout_path = ruxex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with input image in rollout");
@@ -335,7 +335,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_genex().build_with_auto_env(&server).await?;
+    let test = test_ruxex().build_with_auto_env(&server).await?;
     let response_mock = responses::mount_sse_once(
         &server,
         sse(vec![
@@ -346,7 +346,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
     )
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![
             UserInput::Image {
                 image: ImageReference::File {
@@ -360,7 +360,7 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
             },
         ]))
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -377,8 +377,8 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
             })
     }));
 
-    test.genex.shutdown_and_wait().await?;
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    test.ruxex.shutdown_and_wait().await?;
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let rollout_text = read_rollout_text(&rollout_path).await?;
     let actual = find_user_message_with_image(&rollout_text)
         .expect("expected user message with file image in rollout");
@@ -411,7 +411,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let initial = test_genex().build_with_auto_env(&server).await?;
+    let initial = test_ruxex().build_with_auto_env(&server).await?;
     responses::mount_sse_once(
         &server,
         sse(vec![
@@ -428,7 +428,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .rollout_path
         .clone()
         .context("initial rollout path")?;
-    initial.genex.shutdown_and_wait().await?;
+    initial.ruxex.shutdown_and_wait().await?;
 
     let image_path = initial.cwd.path().join("large-image.png");
     ImageBuffer::from_pixel(
@@ -441,7 +441,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
 
     let mut rollout_lines = fs::read_to_string(&rollout_path)?
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<serde_json::Result<Vec<_>>>()?;
     let historical_content = rollout_lines
         .iter_mut()
@@ -476,7 +476,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     fs::write(&rollout_path, format!("{rollout}\n"))?;
 
     let resume_image_store = Arc::new(RecordingFileAttachmentStore::default());
-    let mut resume_builder = test_genex()
+    let mut resume_builder = test_ruxex()
         .with_image_store(resume_image_store.clone())
         .with_config(|config| {
             let _ = config.features.enable(Feature::ImageResizeNotice);
@@ -497,7 +497,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
     )
     .await;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Image {
             image: ImageReference::Inline {
                 image_url: original_image_url.clone(),
@@ -505,7 +505,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
             detail: Some(ImageDetail::High),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -589,7 +589,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         Some(expected_notice)
     );
 
-    resumed.genex.shutdown_and_wait().await?;
+    resumed.ruxex.shutdown_and_wait().await?;
     let replayed = resume_builder
         .resume(&server, resumed.home.clone(), rollout_path.clone())
         .await?;
@@ -620,7 +620,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .collect::<Vec<_>>();
     assert_eq!(replayed_notices, vec![expected_notice.to_string()]);
 
-    let replayed = test_genex()
+    let replayed = test_ruxex()
         .with_config(|config| {
             let _ = config.features.enable(Feature::ImageResizeNotice);
             let _ = config
@@ -631,7 +631,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .await?;
     let existing_rollout_lines = fs::read_to_string(&rollout_path)?.lines().count();
     replayed
-        .genex
+        .ruxex
         .inject_response_items(vec![
             ResponseInputItem::Message {
                 role: "user".to_string(),
@@ -658,7 +658,7 @@ async fn resumed_history_only_emits_resize_notices_for_new_images() -> anyhow::R
         .lines()
         .skip(existing_rollout_lines)
         .filter_map(|line| {
-            let RolloutItem::ResponseItem(envelope) = genex_rollout::parse_rollout_line(line)
+            let RolloutItem::ResponseItem(envelope) = ruxex_rollout::parse_rollout_line(line)
                 .expect("new rollout line should deserialize")
                 .item
             else {

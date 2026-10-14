@@ -1,8 +1,8 @@
-use genex_git_utils::merge_base_with_head;
-use genex_protocol::protocol::ReviewRequest;
-use genex_protocol::protocol::ReviewTarget;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_template::Template;
+use ruxex_git_utils::merge_base_with_head;
+use ruxex_protocol::protocol::ReviewRequest;
+use ruxex_protocol::protocol::ReviewTarget;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_template::Template;
 use std::sync::LazyLock;
 
 /// Review thread system prompt.

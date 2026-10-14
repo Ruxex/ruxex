@@ -1,10 +1,10 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -13,7 +13,7 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::responses::start_websocket_server_with_headers;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -30,7 +30,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
     ]])
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model_info_override("example-model-2", |model_info| {
             model_info.tool_mode = Some(ToolMode::CodeMode);
             model_info.node_repl_auto_review_required = true;
@@ -44,7 +44,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
     let test = builder.build_with_websocket_server(&server).await?;
 
     test.submit_turn("non-lite turn").await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "lite turn".into(),
@@ -56,7 +56,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -79,7 +79,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
         [(&non_lite_turn, true, false), (&lite_turn, false, true)]
     {
         let metadata: Value = serde_json::from_str(
-            request["client_metadata"]["x-genex-turn-metadata"]
+            request["client_metadata"]["x-ruxex-turn-metadata"]
                 .as_str()
                 .expect("websocket request should include turn metadata"),
         )?;
@@ -113,7 +113,7 @@ async fn websocket_model_switch_to_responses_lite_omits_top_level_tools() -> Res
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_test_genex_shell_chain() -> Result<()> {
+async fn websocket_test_ruxex_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "exec-command-call";
@@ -131,7 +131,7 @@ async fn websocket_test_genex_shell_chain() -> Result<()> {
     ]])
     .await;
 
-    let mut builder = test_genex().with_windows_cmd_shell();
+    let mut builder = test_ruxex().with_windows_cmd_shell();
 
     let test = builder.build_with_websocket_server(&server).await?;
     test.submit_turn_with_policy("run the echo command", test.config.legacy_sandbox_policy())
@@ -180,7 +180,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     ]])
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("example-model-2")
         .with_config(move |config| {
             config.update_plan_enabled = update_plan_enabled;
@@ -209,7 +209,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(warmup["type"].as_str(), Some("response.create"));
     assert_eq!(warmup["generate"].as_bool(), Some(false));
     let warmup_metadata: Value = serde_json::from_str(
-        warmup["client_metadata"]["x-genex-turn-metadata"]
+        warmup["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("warmup turn metadata"),
     )?;
@@ -217,7 +217,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(warmup_metadata["metrics_enabled"].as_bool(), Some(false));
     assert_eq!(
         warmup_metadata["window_id"].as_str(),
-        warmup["client_metadata"]["x-genex-window-id"].as_str()
+        warmup["client_metadata"]["x-ruxex-window-id"].as_str()
     );
     assert!(
         turn["tools"]
@@ -228,7 +228,7 @@ async fn websocket_first_turn_uses_startup_prewarm_and_create(
     assert_eq!(turn["type"].as_str(), Some("response.create"));
     assert_eq!(turn.get("generate"), None);
     let turn_metadata: Value = serde_json::from_str(
-        turn["client_metadata"]["x-genex-turn-metadata"]
+        turn["client_metadata"]["x-ruxex-turn-metadata"]
             .as_str()
             .expect("turn metadata"),
     )?;
@@ -269,7 +269,7 @@ async fn websocket_first_turn_handles_handshake_delay_with_startup_prewarm() -> 
     }])
     .await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_websocket_server(&server).await?;
     test.submit_turn_with_policy("hello", test.config.legacy_sandbox_policy())
         .await?;
@@ -297,7 +297,7 @@ async fn websocket_first_turn_handles_handshake_delay_with_startup_prewarm() -> 
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_v2_test_genex_shell_chain() -> Result<()> {
+async fn websocket_v2_test_ruxex_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "exec-command-call";
@@ -320,7 +320,7 @@ async fn websocket_v2_test_genex_shell_chain() -> Result<()> {
     ]])
     .await;
 
-    let mut builder = test_genex().with_windows_cmd_shell();
+    let mut builder = test_ruxex().with_windows_cmd_shell();
 
     let test = builder.build_with_websocket_server(&server).await?;
     test.submit_turn_with_policy("run the echo command", test.config.legacy_sandbox_policy())
@@ -388,7 +388,7 @@ async fn websocket_v2_first_turn_uses_updated_fast_tier_after_startup_prewarm() 
     ]])
     .await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_websocket_server(&server).await?;
 
     let warmup = server
@@ -438,7 +438,7 @@ async fn websocket_v2_first_turn_drops_fast_tier_after_startup_prewarm() -> Resu
     ]])
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.service_tier = Some(ServiceTier::Flex.request_value().to_string());
     });
     let test = builder.build_with_websocket_server(&server).await?;
@@ -495,7 +495,7 @@ async fn websocket_v2_next_turn_uses_updated_service_tier() -> Result<()> {
     ]])
     .await;
 
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_websocket_server(&server).await?;
 
     let warmup = server

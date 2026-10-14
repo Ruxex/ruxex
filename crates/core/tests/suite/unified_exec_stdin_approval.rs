@@ -1,23 +1,23 @@
 //! Exercises retained terminal grants and strict stdin review through the agent API.
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_core::config::Constrained;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_features::Feature;
-use genex_protocol::approvals::ExecApprovalKind;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_core::config::Constrained;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_features::Feature;
+use ruxex_protocol::approvals::ExecApprovalKind;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -28,9 +28,9 @@ use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_target_windows;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::TestGenexHarness;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::TestRuxexHarness;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -46,8 +46,8 @@ fn tool_response(id: &str, tool: &str, args: Value) -> String {
     ])
 }
 
-async fn harness(builder: TestGenexBuilder) -> Result<TestGenexHarness> {
-    TestGenexHarness::with_auto_env_builder(builder.with_config(|config| {
+async fn harness(builder: TestRuxexBuilder) -> Result<TestRuxexHarness> {
+    TestRuxexHarness::with_auto_env_builder(builder.with_config(|config| {
         for feature in [
             Feature::WriteStdinApproval,
             Feature::ExecPermissionApprovals,
@@ -72,7 +72,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
     skip_if_target_windows!(Ok(()), "uses a POSIX interactive shell");
     skip_if_no_network!(Ok(()));
     skip_if_sandbox!(Ok(()));
-    let harness = harness(test_genex()).await?;
+    let harness = harness(test_ruxex()).await?;
     let test = harness.test();
     harness.create_dir_all("allowed").await?;
     let directory = test
@@ -96,18 +96,18 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         "exec_command",
     )
     .await;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "open terminal".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let request = wait_for_event_match(&test.genex, |event| match event {
+    let request = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::RequestPermissions(request) => Some(request.clone()),
         _ => None,
     })
     .await;
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: request.call_id,
             response: RequestPermissionsResponse {
@@ -117,7 +117,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
             },
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -139,7 +139,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         tool_response("allowed", "write_stdin", json!({"session_id":1000, "chars":"test -z \"${REJECTED-}\" && printf allowed > allowed/result; exit\n"})),
         sse(vec![ev_completed("done")]),
     ]).await;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "send input".into(),
             text_elements: Vec::new(),
@@ -149,7 +149,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
         ("denied", ReviewDecision::denied("blocked input")),
         ("allowed", ReviewDecision::Approved),
     ] {
-        let request = wait_for_event_match(&test.genex, |event| match event {
+        let request = wait_for_event_match(&test.ruxex, |event| match event {
             EventMsg::ExecApprovalRequest(request) => Some(request.clone()),
             _ => None,
         })
@@ -168,7 +168,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
                 permissions.clone()
             )?)
         );
-        test.genex
+        test.ruxex
             .submit(Op::ExecApproval {
                 id: id.into(),
                 turn_id: Some(request.turn_id),
@@ -176,7 +176,7 @@ async fn stdin_reviews_retained_grants_after_turn_permissions_expire() -> Result
             })
             .await?;
     }
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -201,11 +201,11 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
     #[derive(Default)]
     struct ReviewedCalls(Mutex<Vec<String>>);
 
-    impl genex_extension_api::ApprovalReviewContributor for ReviewedCalls {
+    impl ruxex_extension_api::ApprovalReviewContributor for ReviewedCalls {
         fn decide<'a>(
             &'a self,
-            input: &'a genex_extension_api::ApprovalDecisionInput<'_>,
-        ) -> genex_extension_api::ExtensionFuture<'a, Option<genex_extension_api::ApprovalDecision>>
+            input: &'a ruxex_extension_api::ApprovalDecisionInput<'_>,
+        ) -> ruxex_extension_api::ExtensionFuture<'a, Option<ruxex_extension_api::ApprovalDecision>>
         {
             self.0
                 .lock()
@@ -218,7 +218,7 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
     let calls = Arc::new(ReviewedCalls::default());
     let mut extensions = ExtensionRegistryBuilder::<Config>::new();
     extensions.approval_review_contributor(calls.clone());
-    let harness = harness(test_genex().with_extensions(Arc::new(extensions.build()))).await?;
+    let harness = harness(test_ruxex().with_extensions(Arc::new(extensions.build()))).await?;
     let test = harness.test();
     let opened = mount_sse_sequence(
         harness.server(),
@@ -256,7 +256,7 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
         decision("allow"),
         sse(vec![ev_completed("done")]),
     ]).await;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "send input".into(),
@@ -274,12 +274,12 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
             }),
         )
         .await?;
-    let request = wait_for_event_match(&test.genex, |event| match event {
+    let request = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::RequestPermissions(request) => Some(request.clone()),
         _ => None,
     })
     .await;
-    test.genex
+    test.ruxex
         .submit(Op::RequestPermissionsResponse {
             id: request.call_id,
             response: RequestPermissionsResponse {
@@ -289,7 +289,7 @@ async fn strict_stdin_review_reaches_guardian_with_sandbox_prompts_disabled() ->
             },
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

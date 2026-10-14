@@ -2,7 +2,7 @@
 //! using macOS's native system resolver. We have to
 //! do this rather than relying on the default behavior
 //! (which reads /etc/resolv.conf) since default behavior
-//! breaks Genex's ability to interact with network paths
+//! breaks Ruxex's ability to interact with network paths
 //! that are provided by applications that modify / hook
 //! into macOS DNS behavior (i.e. proxies, VPNs, etc)
 use rama_dns::DnsResolver;

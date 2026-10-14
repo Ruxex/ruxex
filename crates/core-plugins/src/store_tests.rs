@@ -1,5 +1,5 @@
 use super::*;
-use genex_plugin::PluginId;
+use ruxex_plugin::PluginId;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 
@@ -10,13 +10,13 @@ fn write_plugin_with_version(
     manifest_version: Option<&str>,
 ) {
     let plugin_root = root.join(dir_name);
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::create_dir_all(plugin_root.join("skills")).unwrap();
     let version = manifest_version
         .map(|manifest_version| format!(r#","version":"{manifest_version}""#))
         .unwrap_or_default();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         format!(r#"{{"name":"{manifest_name}"{version}}}"#),
     )
     .unwrap();
@@ -34,9 +34,9 @@ fn write_plugin(root: &Path, dir_name: &str, manifest_name: &str) {
 }
 
 #[test]
-fn try_new_rejects_relative_genex_home() {
+fn try_new_rejects_relative_ruxex_home() {
     let err = PluginStore::try_new(PathBuf::from("relative"))
-        .expect_err("relative genex home should fail");
+        .expect_err("relative ruxex home should fail");
     let err = err.to_string().replace('\\', "/");
 
     assert_eq!(
@@ -67,7 +67,7 @@ fn install_copies_plugin_into_default_marketplace() {
             installed_path: AbsolutePathBuf::try_from(installed_path.clone()).unwrap(),
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
     assert!(installed_path.join("skills/SKILL.md").is_file());
 }
 
@@ -75,9 +75,9 @@ fn install_copies_plugin_into_default_marketplace() {
 fn install_accepts_manifest_mcp_server_objects() {
     let tmp = tempdir().unwrap();
     let plugin_root = tmp.path().join("counter-sample");
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).unwrap();
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).unwrap();
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "counter-sample",
   "version": "1.1.1",
@@ -108,7 +108,7 @@ fn install_accepts_manifest_mcp_server_objects() {
             installed_path: AbsolutePathBuf::try_from(installed_path.clone()).unwrap(),
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
 }
 
 #[cfg(unix)]
@@ -116,7 +116,7 @@ fn install_accepts_manifest_mcp_server_objects() {
 fn install_rejects_symlinked_manifest_that_hides_lower_precedence_mcp_server() {
     let tmp = tempdir().unwrap();
     let plugin_root = tmp.path().join("manifest-switch");
-    let manifest_path = plugin_root.join(".genex-plugin/plugin.json");
+    let manifest_path = plugin_root.join(".ruxex-plugin/plugin.json");
     let claude_path = plugin_root.join(".claude-plugin/plugin.json");
     fs::create_dir_all(manifest_path.parent().unwrap()).unwrap();
     fs::create_dir_all(claude_path.parent().unwrap()).unwrap();
@@ -160,7 +160,7 @@ fn install_rejects_symlinked_manifest_directory() {
     )
     .unwrap();
     fs::write(&claude_path, r#"{"name":"manifest-switch"}"#).unwrap();
-    std::os::unix::fs::symlink(&manifest_directory, plugin_root.join(".genex-plugin")).unwrap();
+    std::os::unix::fs::symlink(&manifest_directory, plugin_root.join(".ruxex-plugin")).unwrap();
     let plugin_id = PluginId::new("manifest-switch".to_string(), "debug".to_string()).unwrap();
 
     let err = PluginStore::new(tmp.path().to_path_buf())
@@ -273,7 +273,7 @@ fn install_with_version_uses_requested_cache_version() {
             installed_path: AbsolutePathBuf::try_from(installed_path.clone()).unwrap(),
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn install_prefers_on_disk_manifest_version_over_fallback() {
             installed_path: AbsolutePathBuf::try_from(installed_path.clone()).unwrap(),
         }
     );
-    assert!(installed_path.join(".genex-plugin/plugin.json").is_file());
+    assert!(installed_path.join(".ruxex-plugin/plugin.json").is_file());
 }
 
 #[test]
@@ -326,7 +326,7 @@ fn install_stages_fallback_manifest_when_source_has_no_manifest() {
         .expect("install plugin with fallback manifest");
 
     assert_eq!(
-        fs::read_to_string(result.installed_path.join(".genex-plugin/plugin.json")).unwrap(),
+        fs::read_to_string(result.installed_path.join(".ruxex-plugin/plugin.json")).unwrap(),
         manifest,
     );
 }
@@ -390,7 +390,7 @@ fn agent_plugin_install_does_not_migrate_commands() {
     assert!(
         !result
             .installed_path
-            .join(".genex-plugin/migrated-command-skills")
+            .join(".ruxex-plugin/migrated-command-skills")
             .exists()
     );
 }

@@ -7,7 +7,7 @@ use crate::StoredThreadSection;
 use crate::StoredThreadSectionsPage;
 use crate::ThreadStoreError;
 use crate::ThreadStoreResult;
-use genex_rollout::StateDbHandle;
+use ruxex_rollout::StateDbHandle;
 
 pub(super) async fn list_thread_sections(
     store: &LocalThreadStore,

@@ -1,21 +1,21 @@
-//! Resolution and definitions for the model provider mounted by Genex.
+//! Resolution and definitions for the model provider mounted by Ruxex.
 //!
 //! Providers can be defined in two places:
-//!   1. Built-in defaults compiled into the binary so Genex works out-of-the-box.
-//!   2. A single user-defined entry inside `~/.genex/config.toml` under the
+//!   1. Built-in defaults compiled into the binary so Ruxex works out-of-the-box.
+//!   2. A single user-defined entry inside `~/.ruxex/config.toml` under the
 //!      `model_provider` key.
 //!
 //! API provider construction applies the process-wide managed residency policy also
 //! used by default HTTP headers.
 
-use genex_api::Provider as ApiProvider;
-use genex_api::RetryConfig as ApiRetryConfig;
-use genex_protocol::auth::AuthMode;
-use genex_protocol::config_types::ModelProviderAuthInfo;
-use genex_protocol::error::EnvVarError;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_utils_redacted_string::RedactedString;
+use ruxex_api::Provider as ApiProvider;
+use ruxex_api::RetryConfig as ApiRetryConfig;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_protocol::config_types::ModelProviderAuthInfo;
+use ruxex_protocol::error::EnvVarError;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_utils_redacted_string::RedactedString;
 use http::HeaderMap;
 use http::header::HeaderName;
 use http::header::HeaderValue;
@@ -176,7 +176,7 @@ pub struct ModelProviderInfo {
     pub supports_standalone_web_search: bool,
 }
 
-/// The single provider configuration selected for one Genex runtime.
+/// The single provider configuration selected for one Ruxex runtime.
 ///
 /// Configuration files may still use the historical provider map while they
 /// are being migrated, but this is the boundary passed to runtime code. A
@@ -214,7 +214,7 @@ impl ModelProviderInfo {
         }
     }
 
-    fn build_header_map(&self) -> GenexResult<HeaderMap> {
+    fn build_header_map(&self) -> RuxexResult<HeaderMap> {
         let capacity = self.http_headers.as_ref().map_or(0, HashMap::len)
             + self.env_http_headers.as_ref().map_or(0, HashMap::len);
         let mut headers = HeaderMap::with_capacity(capacity);
@@ -244,7 +244,7 @@ impl ModelProviderInfo {
     }
 
     /// Builds an API provider with managed residency taking precedence over configured headers.
-    pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> GenexResult<ApiProvider> {
+    pub fn to_api_provider(&self, _auth_mode: Option<AuthMode>) -> RuxexResult<ApiProvider> {
         let default_base_url = "https://example.com/v1";
         let base_url = self
             .base_url
@@ -284,14 +284,14 @@ impl ModelProviderInfo {
     /// If `env_key` is Some, returns the API key for this provider if present
     /// (and non-empty) in the environment. If `env_key` is required but
     /// cannot be found, returns an error.
-    pub fn api_key(&self) -> GenexResult<Option<String>> {
+    pub fn api_key(&self) -> RuxexResult<Option<String>> {
         match &self.env_key {
             Some(env_key) => {
                 let api_key = std::env::var(env_key)
                     .ok()
                     .filter(|v| !v.trim().is_empty())
                     .ok_or_else(|| {
-                        GenexErr::EnvVar(EnvVarError {
+                        RuxexErr::EnvVar(EnvVarError {
                             var: env_key.clone(),
                             instructions: self.env_key_instructions.clone(),
                         })

@@ -9,9 +9,9 @@ use crate::test_support::curated_plugins_repo_path;
 use crate::test_support::write_curated_plugin_sha_with;
 use crate::test_support::write_test_api_curated_marketplace;
 use crate::test_support::write_test_curated_marketplace;
-use genex_plugin::PluginLoadOutcome;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::SkillDiscoveryMode;
+use ruxex_plugin::PluginLoadOutcome;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::SkillDiscoveryMode;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -41,8 +41,8 @@ fn loaded_plugin(config_name: &str, root: &Path, enabled: bool) -> LoadedPlugin 
         error: None,
     }
 }
-fn synced_plugin_root(genex_home: &Path, marketplace: &str, plugin_name: &str) -> AbsolutePathBuf {
-    let synced_root = curated_plugins_repo_path(genex_home);
+fn synced_plugin_root(ruxex_home: &Path, marketplace: &str, plugin_name: &str) -> AbsolutePathBuf {
+    let synced_root = curated_plugins_repo_path(ruxex_home);
     match marketplace {
         TEST_CURATED_MARKETPLACE_NAME => {
             write_test_curated_marketplace(&synced_root, &[plugin_name])
@@ -54,7 +54,7 @@ fn synced_plugin_root(genex_home: &Path, marketplace: &str, plugin_name: &str) -
     }
     let plugin_id =
         PluginId::new(plugin_name.to_string(), marketplace.to_string()).expect("plugin id");
-    let root = PluginStore::new(genex_home.to_path_buf())
+    let root = PluginStore::new(ruxex_home.to_path_buf())
         .plugin_root(&plugin_id, TEST_CURATED_PLUGIN_CACHE_VERSION);
     fs::create_dir_all(root.as_path()).expect("create cached plugin root");
     root
@@ -73,11 +73,11 @@ fn script_fixture() -> (TempDir, AbsolutePathBuf, AbsolutePathBuf) {
 #[test]
 fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
     let temp = TempDir::new().expect("temp dir");
-    let marketplace_root = temp.path().join("genex-primary-runtime");
+    let marketplace_root = temp.path().join("ruxex-primary-runtime");
     let source_root = marketplace_root.join("plugins/presentations");
-    fs::create_dir_all(source_root.join(".genex-plugin")).expect("create manifest directory");
+    fs::create_dir_all(source_root.join(".ruxex-plugin")).expect("create manifest directory");
     fs::write(
-        source_root.join(".genex-plugin/plugin.json"),
+        source_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"presentations","version":"0.1.29"}"#,
     )
     .expect("write plugin manifest");
@@ -91,7 +91,7 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
     fs::write(
         marketplace_root.join(".agents/plugins/marketplace.json"),
         r#"{
-  "name": "genex-primary-runtime",
+  "name": "ruxex-primary-runtime",
   "plugins": [
     {
       "name": "presentations",
@@ -104,7 +104,7 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
 }"#,
     )
     .expect("write marketplace manifest");
-    let plugin_id = PluginId::parse("presentations@genex-primary-runtime").expect("plugin id");
+    let plugin_id = PluginId::parse("presentations@ruxex-primary-runtime").expect("plugin id");
     let plugin_root = PluginStore::new(temp.path().to_path_buf())
         .install(path(&source_root), plugin_id.clone())
         .expect("install plugin")
@@ -144,22 +144,22 @@ fn resolves_primary_runtime_scripts_from_the_installed_plugin_cache() {
         })
     );
 }
-fn roots_for(genex_home: &Path, plugins: Vec<LoadedPlugin>) -> TrustedPluginRoots {
+fn roots_for(ruxex_home: &Path, plugins: Vec<LoadedPlugin>) -> TrustedPluginRoots {
     TrustedPluginRoots::from_plugin_load_outcome(
         &PluginLoadOutcome::from_plugins(plugins),
-        genex_home,
+        ruxex_home,
     )
 }
 
 #[test]
 fn recognizes_windows_executor_plugin_cache_root() {
     let attribution = PluginCommandAttribution {
-        plugin_id: PluginId::parse("presentations@genex-primary-runtime").expect("plugin id"),
+        plugin_id: PluginId::parse("presentations@ruxex-primary-runtime").expect("plugin id"),
         normalized_relative_path:
             "skills/presentations/container_tools/mark_artifact_operation_started.mjs".to_string(),
     };
     let script = PathUri::parse(
-        "file:///C:/Users/user/.genex/plugins/cache/genex-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
+        "file:///C:/Users/user/.ruxex/plugins/cache/ruxex-primary-runtime/presentations/0.1.29/skills/presentations/container_tools/mark_artifact_operation_started.mjs",
     )
     .expect("Windows script URI");
 
@@ -177,7 +177,7 @@ fn only_emits_safe_normalized_relative_script_paths() {
     );
     assert_eq!(
         normalized_relative_script_path(Path::new(
-            "/home/user/.genex/plugins/cache/test-curated/sample/scripts/run.py"
+            "/home/user/.ruxex/plugins/cache/test-curated/sample/scripts/run.py"
         )),
         None
     );

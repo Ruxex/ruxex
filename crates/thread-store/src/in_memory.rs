@@ -10,15 +10,15 @@ use std::sync::atomic::Ordering;
 
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::SessionContextWindow;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_rollout::RolloutItem;
-use genex_rollout::persisted_rollout_items;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::SessionContextWindow;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::persisted_rollout_items;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 use crate::AppendThreadItemsParams;
 use crate::ArchiveThreadParams;
@@ -61,18 +61,18 @@ mod tests {
     use crate::StoredTurnItemsView;
     use crate::ThreadPersistenceMetadata;
     use crate::ThreadSortKey;
-    use genex_protocol::models::BaseInstructions;
-    use genex_protocol::protocol::SessionSource;
-    use genex_protocol::protocol::ThreadHistoryMode;
+    use ruxex_protocol::models::BaseInstructions;
+    use ruxex_protocol::protocol::SessionSource;
+    use ruxex_protocol::protocol::ThreadHistoryMode;
 
     #[tokio::test]
     async fn deletion_cleans_associated_sqlite_and_shared_memory()
     -> Result<(), Box<dyn std::error::Error>> {
-        use genex_utils_absolute_path::test_support::PathExt;
+        use ruxex_utils_absolute_path::test_support::PathExt;
         use pretty_assertions::assert_eq;
 
         let home = tempfile::TempDir::new()?;
-        let state_db = genex_state::StateRuntime::init(genex_state::SqliteConfig::new_for_testing(
+        let state_db = ruxex_state::StateRuntime::init(ruxex_state::SqliteConfig::new_for_testing(
             home.path().abs(),
         ))
         .await?;
@@ -85,7 +85,7 @@ mod tests {
                 ThreadHistoryMode::Paginated,
             ))
             .await?;
-        let metadata = genex_state::ThreadMetadataBuilder::new(
+        let metadata = ruxex_state::ThreadMetadataBuilder::new(
             thread_id,
             home.path().join("thread.jsonl"),
             Utc::now(),
@@ -191,7 +191,7 @@ mod tests {
         store
             .move_thread_to_section(MoveThreadToSectionParams {
                 thread_id: grandchild_thread_id,
-                section: Some(genex_state::PINNED_THREAD_SECTION_ID.to_string()),
+                section: Some(ruxex_state::PINNED_THREAD_SECTION_ID.to_string()),
                 before_thread_id: None,
             })
             .await
@@ -262,7 +262,7 @@ mod tests {
                 sort_direction: SortDirection::Desc,
                 allowed_sources: Vec::new(),
                 cwd_filters: None,
-                section: Some(Some(genex_state::PINNED_THREAD_SECTION_ID.to_string())),
+                section: Some(Some(ruxex_state::PINNED_THREAD_SECTION_ID.to_string())),
                 project_id: None,
                 archived: false,
                 search_term: None,
@@ -516,7 +516,7 @@ pub struct InMemoryThreadStoreCalls {
 pub struct InMemoryThreadStore {
     state: Arc<tokio::sync::Mutex<InMemoryThreadStoreState>>,
     omit_metadata_update_result: Arc<AtomicBool>,
-    state_db: Option<genex_rollout::StateDbHandle>,
+    state_db: Option<ruxex_rollout::StateDbHandle>,
 }
 
 #[derive(Default)]
@@ -544,7 +544,7 @@ impl InMemoryThreadStore {
     }
 
     /// Shares this debug store's thread data while owning cleanup of the caller's SQLite state.
-    pub fn with_state_db(&self, state_db: Option<genex_rollout::StateDbHandle>) -> Self {
+    pub fn with_state_db(&self, state_db: Option<ruxex_rollout::StateDbHandle>) -> Self {
         Self {
             state: Arc::clone(&self.state),
             omit_metadata_update_result: Arc::clone(&self.omit_metadata_update_result),
@@ -1095,9 +1095,9 @@ fn stored_thread_from_state(
             .sections
             .get(&thread_id)
             .cloned()
-            .map(|id| genex_state::ThreadSection {
-                name: if id == genex_state::PINNED_THREAD_SECTION_ID {
-                    genex_state::PINNED_THREAD_SECTION_NAME.to_string()
+            .map(|id| ruxex_state::ThreadSection {
+                name: if id == ruxex_state::PINNED_THREAD_SECTION_ID {
+                    ruxex_state::PINNED_THREAD_SECTION_NAME.to_string()
                 } else {
                     id.clone()
                 },
@@ -1137,7 +1137,7 @@ fn stored_thread_from_state(
     })
 }
 
-fn git_info_from_patch(patch: &ThreadMetadataPatch) -> Option<genex_protocol::protocol::GitInfo> {
+fn git_info_from_patch(patch: &ThreadMetadataPatch) -> Option<ruxex_protocol::protocol::GitInfo> {
     let git_info = patch.git_info.as_ref()?;
     let sha = git_info.sha.clone().flatten();
     let branch = git_info.branch.clone().flatten();
@@ -1145,8 +1145,8 @@ fn git_info_from_patch(patch: &ThreadMetadataPatch) -> Option<genex_protocol::pr
     if sha.is_none() && branch.is_none() && origin_url.is_none() {
         return None;
     }
-    Some(genex_protocol::protocol::GitInfo {
-        commit_hash: sha.as_deref().map(genex_git_utils::GitSha::new),
+    Some(ruxex_protocol::protocol::GitInfo {
+        commit_hash: sha.as_deref().map(ruxex_git_utils::GitSha::new),
         branch,
         repository_url: origin_url,
     })

@@ -1,10 +1,10 @@
-use genex_config::Constrained;
-use genex_config::ConstraintResult;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::models::ProfileWorkspaceRoot;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::Constrained;
+use ruxex_config::ConstraintResult;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::models::ProfileWorkspaceRoot;
+use ruxex_utils_path_uri::PathUri;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct PermissionProfileState {
@@ -95,9 +95,9 @@ impl PermissionProfileState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_config::Constrained;
-    use genex_protocol::models::ActivePermissionProfile;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_config::Constrained;
+    use ruxex_protocol::models::ActivePermissionProfile;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
 
     fn constrained(profile: PermissionProfile) -> Constrained<PermissionProfile> {
         Constrained::allow_any(profile)

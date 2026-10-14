@@ -1,6 +1,6 @@
 use crate::RolloutItem;
 use crate::protocol::EventMsg;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ResponseItem;
 
 /// Whether a rollout `item` should be persisted in rollout files.
 pub fn is_persisted_rollout_item(item: &RolloutItem) -> bool {
@@ -9,7 +9,7 @@ pub fn is_persisted_rollout_item(item: &RolloutItem) -> bool {
         RolloutItem::InterAgentCommunication(_)
         | RolloutItem::InterAgentCommunicationMetadata { .. } => true,
         RolloutItem::EventMsg(ev) => should_persist_event_msg(ev),
-        // Persist Genex executive markers so we can analyze flows (e.g., compaction, API turns).
+        // Persist Ruxex executive markers so we can analyze flows (e.g., compaction, API turns).
         RolloutItem::Compacted(_)
         | RolloutItem::TurnContext(_)
         | RolloutItem::TokenUsageRecord(_)

@@ -3,7 +3,7 @@ use crate::context::AvailablePluginsInstructions;
 #[cfg(test)]
 use crate::context::ContextualUserFragment;
 use crate::plugins::PluginCapabilitySummary;
-use genex_utils_string::take_bytes_at_char_boundary;
+use ruxex_utils_string::take_bytes_at_char_boundary;
 
 const MAX_EXPLICIT_PLUGIN_INSTRUCTIONS_BYTES: usize = 4 * 1024;
 const TRUNCATED_PLUGIN_INSTRUCTIONS_SUFFIX: &str =

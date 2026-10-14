@@ -5,12 +5,12 @@ use std::path::Path;
 use crate::app_server_session::AppServerSession;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadSortKey;
-use genex_app_server_protocol::ThreadSourceKind;
-use genex_protocol::ThreadId;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadSortKey;
+use ruxex_app_server_protocol::ThreadSourceKind;
+use ruxex_protocol::ThreadId;
 
 #[derive(Clone, Copy)]
 pub(super) enum SessionCollection {
@@ -46,7 +46,7 @@ pub(super) fn display_label(thread: &Thread) -> &str {
 /// Resolve server-listed labels and reject distinct matches before selecting an ID.
 pub(super) async fn lookup(
     app_server: &mut AppServerSession,
-    genex_home: &Path,
+    ruxex_home: &Path,
     name: &str,
     collections: &[SessionCollection],
     source_kind_filters: &[Vec<ThreadSourceKind>],
@@ -92,12 +92,12 @@ pub(super) async fn lookup(
                     if !app_server.uses_remote_workspace()
                         && let Some(path) = thread.path.as_ref()
                     {
-                        let expected_root = genex_home.join(match collection {
-                            SessionCollection::Active => genex_rollout::SESSIONS_SUBDIR,
-                            SessionCollection::Archived => genex_rollout::ARCHIVED_SESSIONS_SUBDIR,
+                        let expected_root = ruxex_home.join(match collection {
+                            SessionCollection::Active => ruxex_rollout::SESSIONS_SUBDIR,
+                            SessionCollection::Archived => ruxex_rollout::ARCHIVED_SESSIONS_SUBDIR,
                         });
                         if !path.starts_with(expected_root)
-                            || genex_rollout::existing_rollout_path(path).await.is_none()
+                            || ruxex_rollout::existing_rollout_path(path).await.is_none()
                         {
                             continue;
                         }

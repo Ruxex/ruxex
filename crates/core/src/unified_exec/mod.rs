@@ -28,11 +28,11 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::Weak;
 
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_tools::UnifiedExecShellMode;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_tools::UnifiedExecShellMode;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_path_uri::PathUri;
 use rand::Rng;
 use rand::rng;
 use tokio::sync::Mutex;
@@ -45,7 +45,7 @@ use crate::session::turn_context::TurnContext;
 use crate::session::turn_context::TurnEnvironment;
 use crate::shell::ShellType;
 use crate::tools::network_approval::DeferredNetworkApproval;
-use genex_core_plugins::PluginMetricsSidecar;
+use ruxex_core_plugins::PluginMetricsSidecar;
 
 mod async_watcher;
 mod errors;

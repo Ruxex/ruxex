@@ -16,7 +16,7 @@ pub struct ResponsesConnectionKey {
 }
 
 impl ResponsesConnectionKey {
-    pub fn new(provider: &genex_api::Provider, auth_revision: Option<u64>) -> Self {
+    pub fn new(provider: &ruxex_api::Provider, auth_revision: Option<u64>) -> Self {
         Self {
             base_url: provider.base_url.clone(),
             auth_revision,
@@ -110,7 +110,7 @@ pub use contract::build_provider_text_controls;
 pub use contract::headers_to_http;
 pub use factory::ModelProviderFactory;
 pub use factory::ProviderInit;
-pub use genex_protocol::account::ProviderAccount;
+pub use ruxex_protocol::account::ProviderAccount;
 pub use home_marker::PROVIDER_HOME_FORMAT_VERSION;
 pub use home_marker::PROVIDER_HOME_MARKER_FILE;
 pub use home_marker::ProviderHomeError;

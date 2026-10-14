@@ -9,9 +9,9 @@ use anyhow::Result;
 use base64::Engine;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
 use serde_json::Value;
 use tokio::net::TcpListener;
 use tokio::sync::Notify;
@@ -88,7 +88,7 @@ pub fn assert_root_turn(body: &Value, expected: Option<&str>) -> Result<()> {
 
 fn assert_turn_id(body: &Value, key: &str, expected: Option<&str>) -> Result<()> {
     let metadata = &body["client_metadata"];
-    let payload = metadata["x-genex-turn-metadata"]
+    let payload = metadata["x-ruxex-turn-metadata"]
         .as_str()
         .expect("canonical turn metadata");
     let canonical: Value = serde_json::from_str(payload)?;

@@ -22,7 +22,7 @@ export function ProjectSidebar({
     <aside className="w-72 shrink-0 border-r border-base-300 bg-base-100 p-4">
       <div className="mb-5 flex items-center justify-between gap-2">
         <Link className="text-lg font-semibold" to="/">
-          Genex Desktop
+          Ruxex Desktop
         </Link>
         <Link className="btn btn-primary btn-xs" to="/chat/new">
           New chat

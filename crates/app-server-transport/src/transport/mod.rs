@@ -4,11 +4,11 @@ use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingError;
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::QueuedOutgoingMessage;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_core::config::find_genex_home;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::path::PathBuf;
@@ -46,23 +46,23 @@ const APP_SERVER_CONTROL_SOCKET_FILE_NAME: &str = "app-server-control.sock";
 const APP_SERVER_STARTUP_LOCK_FILE_NAME: &str = "app-server-startup.lock";
 const DAEMON_RECOVERY_FILE_NAME: &str = "loaded-threads.json";
 
-pub fn daemon_recovery_file_path(genex_home: &Path) -> PathBuf {
-    genex_home
+pub fn daemon_recovery_file_path(ruxex_home: &Path) -> PathBuf {
+    ruxex_home
         .join("app-server-daemon")
         .join(DAEMON_RECOVERY_FILE_NAME)
 }
 
-pub fn app_server_control_socket_path(genex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
+pub fn app_server_control_socket_path(ruxex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(
-        genex_home
+        ruxex_home
             .join(APP_SERVER_CONTROL_SOCKET_DIR_NAME)
             .join(APP_SERVER_CONTROL_SOCKET_FILE_NAME),
     )
 }
 
-pub fn app_server_startup_lock_path(genex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
+pub fn app_server_startup_lock_path(ruxex_home: &Path) -> std::io::Result<AbsolutePathBuf> {
     AbsolutePathBuf::from_absolute_path(
-        genex_home
+        ruxex_home
             .join(APP_SERVER_CONTROL_SOCKET_DIR_NAME)
             .join(APP_SERVER_STARTUP_LOCK_FILE_NAME),
     )
@@ -117,13 +117,13 @@ impl AppServerTransport {
 
         if let Some(raw_socket_path) = listen_url.strip_prefix("unix://") {
             let socket_path = if raw_socket_path.is_empty() {
-                let genex_home = find_genex_home().map_err(|err| {
+                let ruxex_home = find_ruxex_home().map_err(|err| {
                     AppServerTransportParseError::InvalidUnixSocketPath {
                         listen_url: listen_url.to_string(),
-                        message: format!("failed to resolve GENEX_HOME: {err}"),
+                        message: format!("failed to resolve RUXEX_HOME: {err}"),
                     }
                 })?;
-                app_server_control_socket_path(&genex_home).map_err(|err| {
+                app_server_control_socket_path(&ruxex_home).map_err(|err| {
                     AppServerTransportParseError::InvalidUnixSocketPath {
                         listen_url: listen_url.to_string(),
                         message: err.to_string(),
@@ -288,15 +288,15 @@ fn response_serialization_error(
 mod tests {
     use super::*;
     use crate::outgoing_message::OutgoingResponse;
-    use genex_app_server_protocol::ClientResponsePayload;
-    use genex_app_server_protocol::ConfigWarningNotification;
-    use genex_app_server_protocol::JSONRPCNotification;
-    use genex_app_server_protocol::JSONRPCRequest;
-    use genex_app_server_protocol::JSONRPCResponse;
-    use genex_app_server_protocol::RequestId;
-    use genex_app_server_protocol::ServerNotification;
-    use genex_app_server_protocol::ServerNotificationEnvelope;
-    use genex_app_server_protocol::ThreadArchiveResponse;
+    use ruxex_app_server_protocol::ClientResponsePayload;
+    use ruxex_app_server_protocol::ConfigWarningNotification;
+    use ruxex_app_server_protocol::JSONRPCNotification;
+    use ruxex_app_server_protocol::JSONRPCRequest;
+    use ruxex_app_server_protocol::JSONRPCResponse;
+    use ruxex_app_server_protocol::RequestId;
+    use ruxex_app_server_protocol::ServerNotification;
+    use ruxex_app_server_protocol::ServerNotificationEnvelope;
+    use ruxex_app_server_protocol::ThreadArchiveResponse;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use tokio::time::Duration;
@@ -359,7 +359,7 @@ mod tests {
         use std::os::unix::ffi::OsStringExt;
         use std::path::PathBuf;
 
-        let genex_home =
+        let ruxex_home =
             AbsolutePathBuf::from_absolute_path(PathBuf::from(OsString::from_vec(vec![
                 b'/', b'b', b'a', b'd', 0xff,
             ])))
@@ -367,12 +367,12 @@ mod tests {
         let message = OutgoingMessage::Response(OutgoingResponse {
             id: RequestId::Integer(7),
             result: Box::new(ClientResponsePayload::Initialize(
-                genex_app_server_protocol::InitializeResponse {
-                    user_agent: "genex-test-agent".to_string(),
-                    genex_home: genex_home,
+                ruxex_app_server_protocol::InitializeResponse {
+                    user_agent: "ruxex-test-agent".to_string(),
+                    ruxex_home: ruxex_home,
                     platform_family: "unix".to_string(),
                     platform_os: "linux".to_string(),
-                    app_server_identity: genex_app_server_protocol::AppServerIdentity {
+                    app_server_identity: ruxex_app_server_protocol::AppServerIdentity {
                         signature: "test".to_string(),
                         version: "app-server/1;provider/1".to_string(),
                         build_version: None,

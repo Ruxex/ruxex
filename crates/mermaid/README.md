@@ -1,4 +1,4 @@
-# genex-mermaid
+# ruxex-mermaid
 
 Standalone, bounded Mermaid text renderer.
 It uses the existing `unicode-width` dependency; no Mermaid runtime or new external
@@ -60,10 +60,10 @@ independent of the caller's maximum width. The library performs no I/O.
 From the repository, preview a file, optionally specifying the available width:
 
 ```sh
-cargo run -p genex-mermaid --example render -- 180 < diagram.mmd
+cargo run -p ruxex-mermaid --example render -- 180 < diagram.mmd
 ```
 
-Run `just test -p genex-mermaid --lib`. Coverage includes complex snapshots for every
+Run `just test -p ruxex-mermaid --lib`. Coverage includes complex snapshots for every
 family, relationship endpoints, all ER cardinalities, width/error bounds,
 truncated input, and reconstruction of every edge in all 512 directed three-node
 graphs in each of the four layout directions.

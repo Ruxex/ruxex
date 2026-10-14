@@ -13,7 +13,7 @@ use std::time::Instant;
 
 use async_channel::Sender;
 use futures::future::try_join;
-use genex_protocol::shell_environment::scrub_non_inheritable_env_vars;
+use ruxex_protocol::shell_environment::scrub_non_inheritable_env_vars;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 use tokio::sync::Semaphore;
@@ -34,11 +34,11 @@ use super::dispatcher::hook_source_label;
 use super::dispatcher::scope_for_event;
 use crate::output_spill::AdditionalContext;
 use crate::output_spill::HookOutputSpiller;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::HookCompletedEvent;
-use genex_protocol::protocol::HookHandlerType;
-use genex_protocol::protocol::HookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::HookCompletedEvent;
+use ruxex_protocol::protocol::HookHandlerType;
+use ruxex_protocol::protocol::HookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind;
 
 const MAX_CONCURRENT_ASYNC_HOOKS: usize = 8;
 
@@ -186,7 +186,7 @@ impl CommandHookRuntime {
 }
 
 #[tracing::instrument(
-    name = "genex.hooks.command",
+    name = "ruxex.hooks.command",
     level = "trace",
     skip_all,
     fields(
@@ -224,7 +224,7 @@ pub(crate) async fn run_command(
     // shell startup can otherwise stop the hook on background terminal I/O.
     // SAFETY: detach_from_tty only performs async-signal-safe process setup.
     unsafe {
-        command.pre_exec(genex_utils_pty::process_group::detach_from_tty);
+        command.pre_exec(ruxex_utils_pty::process_group::detach_from_tty);
     }
 
     let child = command.spawn();
@@ -321,7 +321,7 @@ impl Drop for ProcessTreeGuard {
             return;
         };
 
-        let _ = genex_utils_pty::process_group::kill_process_group(process_id);
+        let _ = ruxex_utils_pty::process_group::kill_process_group(process_id);
     }
 }
 

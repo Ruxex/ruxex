@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 /// Instructions supplied by the host.
 ///

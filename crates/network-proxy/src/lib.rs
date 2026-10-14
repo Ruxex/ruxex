@@ -80,7 +80,7 @@ pub use proxy::ALLOW_LOCAL_BINDING_ENV_KEY;
 pub use proxy::Args;
 pub use proxy::DEFAULT_NO_PROXY_VALUE;
 #[cfg(target_os = "macos")]
-pub use proxy::GENEX_PROXY_GIT_SSH_COMMAND_MARKER;
+pub use proxy::RUXEX_PROXY_GIT_SSH_COMMAND_MARKER;
 pub use proxy::ManagedNetworkSandboxContext;
 pub use proxy::ManagedProxyRouting;
 pub use proxy::NO_PROXY_ENV_KEYS;

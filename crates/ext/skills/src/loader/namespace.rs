@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use futures::StreamExt;
-use genex_exec_server::ExecutorFileSystem;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::plugin_namespace_for_root_uri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::plugin_namespace_for_root_uri;
 
 use super::discovery::MAX_CONCURRENT_SKILL_LOADS;
 

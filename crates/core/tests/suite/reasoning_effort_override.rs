@@ -1,27 +1,27 @@
 //! Trusted reasoning-effort updates follow surviving history and the next turn's selected settings.
 
-use genex_core::ForkSnapshot;
-use genex_core::RecoverTurnRequest;
-use genex_core::StartIfIdleSubmission;
-use genex_core::SuspendTurnOutcome;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::ForkSnapshot;
+use ruxex_core::RecoverTurnRequest;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::SuspendTurnOutcome;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::skip_if_no_network;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -30,8 +30,8 @@ use std::time::Duration;
 use test_case::test_case;
 use wiremock::ResponseTemplate;
 
-fn override_builder() -> TestGenexBuilder {
-    test_genex()
+fn override_builder() -> TestRuxexBuilder {
+    test_ruxex()
         .with_model_info_override("legacy-model", |model| {
             model.use_responses_lite = true;
         })
@@ -87,7 +87,7 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
     };
     let test = builder().build_with_auto_env(&server).await?;
     let submission = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "recover this turn".to_string(),
             text_elements: Vec::new(),
@@ -96,19 +96,19 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
     let TurnInputSubmission::Started { turn_id } = submission else {
         panic!("expected a new turn");
     };
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::RawResponseItem(raw)
             if matches!(&raw.item, ResponseItem::ConfigurationUpdate { .. }))
     })
     .await;
-    let thread_settings = test.genex.restorable_thread_settings().await;
+    let thread_settings = test.ruxex.restorable_thread_settings().await;
     assert_eq!(
-        test.genex.suspend_turn_and_shutdown().await?,
+        test.ruxex.suspend_turn_and_shutdown().await?,
         SuspendTurnOutcome::Suspended {
             turn_id: turn_id.clone(),
         },
     );
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     test.thread_manager
         .remove_thread(&test.session_configured.thread_id)
         .await
@@ -129,12 +129,12 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
         .resume(&recovery_server, Arc::clone(&test.home), rollout_path)
         .await?;
     resumed
-        .genex
+        .ruxex
         .restore_thread_settings(thread_settings)
         .await?;
     assert_eq!(
         resumed
-            .genex
+            .ruxex
             .recover_turn_if_idle(RecoverTurnRequest {
                 turn_id: turn_id.clone(),
                 thread_settings: Default::default(),
@@ -144,7 +144,7 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
             .await?,
         StartIfIdleSubmission::Started { turn_id },
     );
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -193,7 +193,7 @@ async fn reasoning_effort_override_persistent_transitions(
         initial_effort,
     ] {
         submit_thread_settings(
-            &test.genex,
+            &test.ruxex,
             ThreadSettingsOverrides {
                 effort: Some(Some(effort)),
                 ..Default::default()
@@ -240,7 +240,7 @@ async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
     let test = override_builder().build_with_auto_env(&server).await?;
     test.submit_text_turn("first message").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -250,7 +250,7 @@ async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
     test.submit_text_turn("second message").await?;
     test.submit_text_turn("third message").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::Low)),
             ..Default::default()
@@ -341,7 +341,7 @@ async fn reasoning_effort_override_normalizes_ultra_before_comparing_updates(
         .await?;
     test.submit_text_turn("ultra selection").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(resolved_effort.clone())),
             ..Default::default()
@@ -434,18 +434,18 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
             Some("previous turn"),
         );
         if matches!(startup, PrewarmStartup::Fork) {
-            previous.genex.shutdown_and_wait().await?;
+            previous.ruxex.shutdown_and_wait().await?;
             let mut config = previous.config.clone();
             configure_prewarm(&mut config);
             let forked = previous
                 .thread_manager
                 .fork_thread(
                     ForkSnapshot::Interrupted,
-                    genex_core::StartThreadOptions::new(config.clone()),
-                    previous.genex.rollout_path().expect("rollout path"),
+                    ruxex_core::StartThreadOptions::new(config.clone()),
+                    previous.ruxex.rollout_path().expect("rollout path"),
                 )
                 .await?;
-            previous.genex = forked.thread;
+            previous.ruxex = forked.thread;
             previous.session_configured = forked.session_configured;
             previous.config = config;
             previous
@@ -463,7 +463,7 @@ async fn reasoning_effort_override_websocket_prewarm_preserves_baseline(
     assert_eq!(warmup.body_json()["generate"], false);
     assert_eq!(warmup.body_json()["reasoning"]["effort"], "medium");
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -540,7 +540,7 @@ async fn reasoning_effort_override_websocket_appends_then_replays_after_reconnec
     assert_eq!(warmup.body_json()["generate"], false);
     test.submit_text_turn("first message").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -631,7 +631,7 @@ async fn reasoning_effort_override_unavailable_uses_request_effort(
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_text_turn("first").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -682,7 +682,7 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
     initial.submit_text_turn("before resume").await?;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let resumed = override_builder()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -694,8 +694,8 @@ async fn reasoning_effort_override_disabled_on_resume_retires_update_at_compacti
         .restart(&server, &initial)
         .await?;
     resumed.submit_text_turn("after resume").await?;
-    resumed.genex.submit(Op::Compact).await?;
-    wait_for_event(&resumed.genex, |event| {
+    resumed.ruxex.submit(Op::Compact).await?;
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -764,7 +764,7 @@ async fn reasoning_effort_override_model_switch_reestablishes_selected_effort(
         .await?;
     test.submit_text_turn("first model").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some("example-model".to_string()),
             effort: Some(Some(effort.clone())),
@@ -821,7 +821,7 @@ async fn reasoning_effort_override_resume_refreshes_selected_effort(
     let test = override_builder().build_with_auto_env(&server).await?;
     test.submit_text_turn("medium turn").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -896,7 +896,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     .await;
     let managed_auth_base_url = format!("{}/backend-api", server.uri());
     let test = override_builder()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model_info_override("legacy-model", |model| {
             model.comp_hash = Some("original".to_string());
         })
@@ -913,7 +913,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
         .await?;
     test.submit_text_turn("first").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             effort: Some(Some(ReasoningEffort::High)),
             ..Default::default()
@@ -922,7 +922,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
     .await?;
     test.submit_text_turn("second").await?;
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some("example-model-2".to_string()),
             ..Default::default()

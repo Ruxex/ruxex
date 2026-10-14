@@ -11,38 +11,38 @@ use crate::TS;
 use crate::protocol::item_builders::CommandExecutionPresentation;
 use crate::protocol::item_builders::convert_patch_changes;
 use crate::protocol::item_builders::review_output_text;
-use genex_experimental_api_macros::ExperimentalApi;
-use genex_extension_items::ExtensionItem;
-pub use genex_extension_items::image_generation::ImageGenerationFailure;
-pub use genex_extension_items::image_generation::ImageGenerationItem;
-pub use genex_extension_items::sleep::SleepItem;
-pub use genex_extension_items::web_search::WebSearchAction;
-pub use genex_extension_items::web_search::WebSearchItem;
-use genex_protocol::approvals::ExecApprovalKind as CoreExecApprovalKind;
-use genex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
-pub use genex_protocol::items::AgentMessageDelivery;
-pub use genex_protocol::items::AsyncUserInputQuestion;
-use genex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
-use genex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
-use genex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
-use genex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
-pub use genex_protocol::items::McpAppDisplayMode;
-pub use genex_protocol::items::McpAppUi;
-use genex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
-use genex_protocol::items::TurnItem as CoreTurnItem;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::parse_command::ParsedCommand as CoreParsedCommand;
-use genex_protocol::protocol::AgentStatus as CoreAgentStatus;
-use genex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
-use genex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
-use genex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
-use genex_protocol::protocol::ReviewDecision as CoreReviewDecision;
-use genex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_experimental_api_macros::ExperimentalApi;
+use ruxex_extension_items::ExtensionItem;
+pub use ruxex_extension_items::image_generation::ImageGenerationFailure;
+pub use ruxex_extension_items::image_generation::ImageGenerationItem;
+pub use ruxex_extension_items::sleep::SleepItem;
+pub use ruxex_extension_items::web_search::WebSearchAction;
+pub use ruxex_extension_items::web_search::WebSearchItem;
+use ruxex_protocol::approvals::ExecApprovalKind as CoreExecApprovalKind;
+use ruxex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
+pub use ruxex_protocol::items::AgentMessageDelivery;
+pub use ruxex_protocol::items::AsyncUserInputQuestion;
+use ruxex_protocol::items::CollabAgentTool as CoreCollabAgentTool;
+use ruxex_protocol::items::CollabAgentToolCallStatus as CoreCollabAgentToolCallStatus;
+use ruxex_protocol::items::CommandExecutionStatus as CoreCommandExecutionStatus;
+use ruxex_protocol::items::DynamicToolCallStatus as CoreDynamicToolCallStatus;
+pub use ruxex_protocol::items::McpAppDisplayMode;
+pub use ruxex_protocol::items::McpAppUi;
+use ruxex_protocol::items::McpToolCallStatus as CoreMcpToolCallStatus;
+use ruxex_protocol::items::TurnItem as CoreTurnItem;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::parse_command::ParsedCommand as CoreParsedCommand;
+use ruxex_protocol::protocol::AgentStatus as CoreAgentStatus;
+use ruxex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
+use ruxex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use ruxex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use ruxex_protocol::protocol::ReviewDecision as CoreReviewDecision;
+use ruxex_protocol::protocol::SubAgentActivityKind as CoreSubAgentActivityKind;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -242,7 +242,7 @@ pub enum ThreadItem {
         #[serde(skip)]
         #[schemars(skip)]
         #[ts(skip)]
-        model_context: Option<genex_protocol::items::ModelInvocationContext>,
+        model_context: Option<ruxex_protocol::items::ModelInvocationContext>,
         id: String,
         /// Trusted first-party plugin id when this command resolves to one plugin script.
         #[serde(default)]
@@ -408,19 +408,19 @@ impl ThreadItem {
 }
 
 pub(crate) fn web_search_action_from_core(
-    value: genex_protocol::models::WebSearchAction,
+    value: ruxex_protocol::models::WebSearchAction,
 ) -> WebSearchAction {
     match value {
-        genex_protocol::models::WebSearchAction::Search { query, queries } => {
+        ruxex_protocol::models::WebSearchAction::Search { query, queries } => {
             WebSearchAction::Search { query, queries }
         }
-        genex_protocol::models::WebSearchAction::OpenPage { url } => {
+        ruxex_protocol::models::WebSearchAction::OpenPage { url } => {
             WebSearchAction::OpenPage { url }
         }
-        genex_protocol::models::WebSearchAction::FindInPage { url, pattern } => {
+        ruxex_protocol::models::WebSearchAction::FindInPage { url, pattern } => {
             WebSearchAction::FindInPage { url, pattern }
         }
-        genex_protocol::models::WebSearchAction::Other => WebSearchAction::Other,
+        ruxex_protocol::models::WebSearchAction::Other => WebSearchAction::Other,
     }
 }
 
@@ -611,8 +611,8 @@ impl From<CoreTurnItem> for ThreadItem {
     }
 }
 
-impl From<genex_protocol::items::HookPromptFragment> for HookPromptFragment {
-    fn from(value: genex_protocol::items::HookPromptFragment) -> Self {
+impl From<ruxex_protocol::items::HookPromptFragment> for HookPromptFragment {
+    fn from(value: ruxex_protocol::items::HookPromptFragment) -> Self {
         Self {
             text: value.text,
             hook_run_id: value.hook_run_id,
@@ -1167,18 +1167,18 @@ pub enum DynamicToolCallOutputContentItem {
     InputAudio { audio_url: String },
 }
 
-impl From<genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem>
+impl From<ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem>
     for DynamicToolCallOutputContentItem
 {
-    fn from(item: genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem) -> Self {
+    fn from(item: ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem) -> Self {
         match item {
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
                 Self::InputText { text }
             }
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url,
             } => Self::InputImage { image_url },
-            genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
+            ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputAudio {
                 audio_url,
             } => Self::InputAudio { audio_url },
         }
@@ -1186,7 +1186,7 @@ impl From<genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem>
 }
 
 impl From<DynamicToolCallOutputContentItem>
-    for genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem
+    for ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem
 {
     fn from(item: DynamicToolCallOutputContentItem) -> Self {
         match item {

@@ -10,9 +10,9 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TS, Hash)]
 #[ts(type = "string")]
-/// Identifier for a Genex thread.
+/// Identifier for a Ruxex thread.
 ///
-/// Genex-generated thread IDs are UUIDv7, and some use cases rely on that.
+/// Ruxex-generated thread IDs are UUIDv7, and some use cases rely on that.
 pub struct ThreadId {
     pub(crate) uuid: Uuid,
 }

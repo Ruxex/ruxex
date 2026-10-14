@@ -12,17 +12,17 @@ use std::sync::Weak;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
-use genex_code_mode::CellId;
-use genex_features::Feature;
-use genex_features::Features;
-use genex_history::InitialHistory;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::models::ExecutedToolCall;
-use genex_protocol::models::ExecutedToolCallArguments;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::bound_executed_tool_calls_for_prompt;
-use genex_protocol::models::bound_executed_tool_calls_for_prompt_prioritizing_recent;
-use genex_protocol::models::executed_tool_call_metadata_bytes;
+use ruxex_code_mode::CellId;
+use ruxex_features::Feature;
+use ruxex_features::Features;
+use ruxex_history::InitialHistory;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::models::ExecutedToolCall;
+use ruxex_protocol::models::ExecutedToolCallArguments;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::bound_executed_tool_calls_for_prompt;
+use ruxex_protocol::models::bound_executed_tool_calls_for_prompt_prioritizing_recent;
+use ruxex_protocol::models::executed_tool_call_metadata_bytes;
 use indexmap::IndexMap;
 use serde_json::Value as JsonValue;
 
@@ -441,7 +441,7 @@ impl ExecutedToolCalls {
         let ToolCallSource::CodeMode { cell_id, .. } = source else {
             return false;
         };
-        let metadata = genex_protocol::models::ToolResultMetadata::new(metadata);
+        let metadata = ruxex_protocol::models::ToolResultMetadata::new(metadata);
         let has_metadata = metadata.is_some();
         let mut state = self.lock_state();
         let Some(state) = state.as_mut() else {
@@ -550,7 +550,7 @@ fn recorded_call(call: &ToolCall) -> (ExecutedToolCall, usize) {
             serialized_json_bytes(arguments).unwrap_or(usize::MAX)
         }
     };
-    let name = genex_tools::code_mode_name_for_tool_name(&call.tool_name);
+    let name = ruxex_tools::code_mode_name_for_tool_name(&call.tool_name);
     let recorded_call = if original_bytes > MAX_EXECUTED_TOOL_CALL_ARGUMENT_BYTES {
         ExecutedToolCall::truncated(name, original_bytes, MAX_EXECUTED_TOOL_CALL_ARGUMENT_BYTES)
     } else {

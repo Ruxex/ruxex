@@ -1,11 +1,11 @@
 [package]
-name = "genex-uds"
+name = "ruxex-uds"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_uds"
+name = "ruxex_uds"
 path = "src/lib.rs"
 doctest = false
 

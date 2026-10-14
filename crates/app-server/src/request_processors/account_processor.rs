@@ -1,12 +1,12 @@
 use super::*;
-use genex_app_server_protocol::Account;
-use genex_app_server_protocol::AccountDeleteParams;
-use genex_app_server_protocol::AccountDeleteResponse;
-use genex_app_server_protocol::GetAccountResponse;
+use ruxex_app_server_protocol::Account;
+use ruxex_app_server_protocol::AccountDeleteParams;
+use ruxex_app_server_protocol::AccountDeleteResponse;
+use ruxex_app_server_protocol::GetAccountResponse;
 
 #[derive(Clone)]
 pub(crate) struct AccountRequestProcessor {
-    provider: genex_model_provider::SharedModelProvider,
+    provider: ruxex_model_provider::SharedModelProvider,
     thread_manager: Arc<ThreadManager>,
     outgoing: Arc<OutgoingMessageSender>,
     config_manager: ConfigManager,
@@ -14,7 +14,7 @@ pub(crate) struct AccountRequestProcessor {
 
 impl AccountRequestProcessor {
     pub(crate) fn new(
-        provider: genex_model_provider::SharedModelProvider,
+        provider: ruxex_model_provider::SharedModelProvider,
         thread_manager: Arc<ThreadManager>,
         outgoing: Arc<OutgoingMessageSender>,
         config_manager: ConfigManager,
@@ -95,13 +95,13 @@ impl AccountRequestProcessor {
             .map_err(|err| invalid_request(err.to_string()))?;
         let usage = self
             .provider
-            .usage(genex_model_provider::UsageRequest::default())
+            .usage(ruxex_model_provider::UsageRequest::default())
             .await
             .map_err(|err| invalid_request(err.to_string()))?;
         let usage = match usage {
-            genex_model_provider::ProviderUsage::Unsupported => None,
-            genex_model_provider::ProviderUsage::Available(snapshot) => {
-                Some(genex_app_server_protocol::RateLimitSnapshot::from(snapshot))
+            ruxex_model_provider::ProviderUsage::Unsupported => None,
+            ruxex_model_provider::ProviderUsage::Available(snapshot) => {
+                Some(ruxex_app_server_protocol::RateLimitSnapshot::from(snapshot))
             }
         };
         Ok(GetAccountResponse {
@@ -143,7 +143,7 @@ impl AccountRequestProcessor {
                 let refresh_thread_manager = Arc::clone(thread_manager);
                 let refresh_config_manager = config_manager.clone();
                 let on_effective_plugins_changed: Arc<
-                    dyn Fn(genex_core_plugins::EffectivePluginsChange) + Send + Sync,
+                    dyn Fn(ruxex_core_plugins::EffectivePluginsChange) + Send + Sync,
                 > = Arc::new(move |_change| {
                     Self::spawn_effective_plugins_changed_task(
                         Arc::clone(&refresh_thread_manager),

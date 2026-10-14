@@ -1,17 +1,17 @@
 #![recursion_limit = "256"]
 
 use clap::Parser;
-use genex_app_server::AppServerCodeModeHostArgs;
-use genex_app_server::AppServerRuntimeOptions;
-use genex_app_server::AppServerTransport;
-use genex_app_server::AppServerWebsocketAuthArgs;
-use genex_app_server::PluginStartupTasks;
-use genex_app_server::run_main_with_transport_options;
-use genex_arg0::Arg0DispatchPaths;
-use genex_arg0::arg0_dispatch_or_else;
-use genex_config::LoaderOverrides;
-use genex_protocol::protocol::SessionSource;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_app_server::AppServerCodeModeHostArgs;
+use ruxex_app_server::AppServerRuntimeOptions;
+use ruxex_app_server::AppServerTransport;
+use ruxex_app_server::AppServerWebsocketAuthArgs;
+use ruxex_app_server::PluginStartupTasks;
+use ruxex_app_server::run_main_with_transport_options;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_arg0::arg0_dispatch_or_else;
+use ruxex_config::LoaderOverrides;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_utils_cli::CliConfigOverrides;
 
 #[cfg(all(
     target_os = "linux",
@@ -23,7 +23,7 @@ static ALLOCATOR: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 // Debug-only test hook: lets integration tests point the server at a temporary
 // managed config file without writing to /etc.
-const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "GENEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
+const DISABLE_MANAGED_CONFIG_ENV_VAR: &str = "RUXEX_APP_SERVER_DISABLE_MANAGED_CONFIG";
 
 #[derive(Debug, Parser)]
 #[command(version)]
@@ -111,7 +111,7 @@ fn main() -> anyhow::Result<()> {
             runtime_options,
         )
         .await?;
-        if exit == genex_app_server::AppServerExit::Forced {
+        if exit == ruxex_app_server::AppServerExit::Forced {
             // Runtime teardown can wait forever for blocked rollout I/O.
             std::process::exit(0);
         }

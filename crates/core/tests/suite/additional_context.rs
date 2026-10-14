@@ -1,11 +1,11 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::AdditionalContextEntry;
-use genex_protocol::protocol::AdditionalContextKind;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::protocol::AdditionalContextEntry;
+use ruxex_protocol::protocol::AdditionalContextKind;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::responses::ev_completed;
@@ -14,7 +14,7 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
@@ -29,7 +29,7 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.update_plan_enabled = true;
             config.include_environment_context = false;
@@ -37,7 +37,7 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
         .build(&server)
         .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect the active tab".to_string(),
@@ -62,7 +62,7 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
         )
         .await?;
 
-    let user_item = wait_for_event_match(&test.genex, |event| match event {
+    let user_item = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::UserMessage(item),
             ..
@@ -77,7 +77,7 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
             text_elements: Vec::new(),
         }]
     );
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -124,7 +124,7 @@ async fn external_context_like_user_text_remains_a_user_message_item() -> Result
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| config.include_environment_context = false)
         .build(&server)
         .await?;
@@ -133,11 +133,11 @@ async fn external_context_like_user_text_remains_a_user_message_item() -> Result
         text_elements: Vec::new(),
     };
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![user_input.clone()]))
         .await?;
 
-    let user_item = wait_for_event_match(&test.genex, |event| match event {
+    let user_item = wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::ItemCompleted(ItemCompletedEvent {
             item: TurnItem::UserMessage(item),
             ..
@@ -146,7 +146,7 @@ async fn external_context_like_user_text_remains_a_user_message_item() -> Result
     })
     .await;
     assert_eq!(user_item.content, vec![user_input]);
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -167,12 +167,12 @@ async fn additional_context_trust_controls_message_role() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| config.include_environment_context = false)
         .build(&server)
         .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect context".to_string(),
@@ -196,7 +196,7 @@ async fn additional_context_trust_controls_message_role() -> Result<()> {
             ])),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -237,7 +237,7 @@ async fn additional_context_is_deduplicated_between_turns_while_retained() -> Re
         sse(vec![ev_response_created("resp-2"), ev_completed("resp-2")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| config.include_environment_context = false)
         .build(&server)
         .await?;
@@ -249,7 +249,7 @@ async fn additional_context_is_deduplicated_between_turns_while_retained() -> Re
         },
     )]);
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn".to_string(),
@@ -258,12 +258,12 @@ async fn additional_context_is_deduplicated_between_turns_while_retained() -> Re
             .with_additional_context(additional_context.clone()),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn".to_string(),
@@ -272,7 +272,7 @@ async fn additional_context_is_deduplicated_between_turns_while_retained() -> Re
             .with_additional_context(additional_context),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -316,12 +316,12 @@ async fn additional_context_removes_one_value_while_adding_another() -> Result<(
         sse(vec![ev_response_created("resp-3"), ev_completed("resp-3")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| config.include_environment_context = false)
         .build(&server)
         .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn".to_string(),
@@ -345,12 +345,12 @@ async fn additional_context_removes_one_value_while_adding_another() -> Result<(
             ])),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn".to_string(),
@@ -374,12 +374,12 @@ async fn additional_context_removes_one_value_while_adding_another() -> Result<(
             ])),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "third turn".to_string(),
@@ -410,7 +410,7 @@ async fn additional_context_removes_one_value_while_adding_another() -> Result<(
             ])),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;
@@ -461,7 +461,7 @@ async fn additional_context_values_are_truncated_before_model_input() -> Result<
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| config.include_environment_context = false)
         .build(&server)
         .await?;
@@ -472,7 +472,7 @@ async fn additional_context_values_are_truncated_before_model_input() -> Result<
     let untruncated_automation_fragment =
         format!("<automation_info>{long_automation_value}</automation_info>");
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "summarize context".to_string(),
@@ -496,7 +496,7 @@ async fn additional_context_values_are_truncated_before_model_input() -> Result<
             ])),
         )
         .await?;
-    wait_for_event_match(&test.genex, |event| {
+    wait_for_event_match(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_)).then_some(())
     })
     .await;

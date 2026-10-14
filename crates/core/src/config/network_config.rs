@@ -7,17 +7,17 @@
 //! Environment policy conversion drops listener addresses, and final validation
 //! uses the same policy resolver as command execution.
 
-use genex_config::NetworkConstraints;
-use genex_config::Sourced;
-use genex_config::permissions_toml::NetworkToml;
-use genex_execpolicy::Policy;
-use genex_features::FeatureToml;
-use genex_features::FeaturesToml;
-use genex_network_proxy::EnvironmentNetworkPolicy;
-use genex_network_proxy::NetworkProxyConfig;
-use genex_network_proxy::NetworkProxyConstraints;
-use genex_network_proxy::build_config_state;
-use genex_protocol::models::PermissionProfile;
+use ruxex_config::NetworkConstraints;
+use ruxex_config::Sourced;
+use ruxex_config::permissions_toml::NetworkToml;
+use ruxex_execpolicy::Policy;
+use ruxex_features::FeatureToml;
+use ruxex_features::FeaturesToml;
+use ruxex_network_proxy::EnvironmentNetworkPolicy;
+use ruxex_network_proxy::NetworkProxyConfig;
+use ruxex_network_proxy::NetworkProxyConstraints;
+use ruxex_network_proxy::build_config_state;
+use ruxex_protocol::models::PermissionProfile;
 
 use super::NetworkProxySpec;
 use super::permissions::apply_network_proxy_feature_config;

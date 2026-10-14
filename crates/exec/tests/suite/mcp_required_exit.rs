@@ -2,16 +2,16 @@
 #![allow(clippy::unwrap_used)]
 
 use core_test_support::responses;
-use core_test_support::test_genex_exec::test_genex_exec;
+use core_test_support::test_ruxex_exec::test_ruxex_exec;
 use predicates::str::contains;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn exits_non_zero_when_required_mcp_server_fails_to_initialize() -> anyhow::Result<()> {
-    let test = test_genex_exec();
+    let test = test_ruxex_exec();
 
     let config_toml = r#"
         [mcp_servers.required_broken]
-        command = "genex-definitely-not-a-real-binary"
+        command = "ruxex-definitely-not-a-real-binary"
         required = true
     "#;
     std::fs::write(test.home_path().join("config.toml"), config_toml)?;

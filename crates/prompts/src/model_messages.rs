@@ -3,9 +3,9 @@
 //! Prompt composition and runtime settings remain with consumers; each accessor
 //! selects and resolves only the requested message family.
 
-use genex_protocol::model_types::ConfirmationPolicies;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::ConfirmationPolicies;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ModelMessages;
 use permissions::ResolvedApprovalMessages;
 use permissions::ResolvedPermissionMessages;
 

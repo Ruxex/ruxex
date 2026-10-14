@@ -48,7 +48,7 @@ pub fn new_approval_decision_cell(
     actor: ApprovalDecisionActor,
 ) -> Box<dyn HistoryCell> {
     use ReviewDecision::*;
-    use genex_protocol::approvals::NetworkPolicyRuleAction;
+    use ruxex_protocol::approvals::NetworkPolicyRuleAction;
 
     let (symbol, summary): (Span<'static>, Vec<Span<'static>>) = match decision {
         Approved => match subject {
@@ -57,7 +57,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         actor.subject().into(),
                         "approved".bold(),
-                        " genex to run ".into(),
+                        " ruxex to run ".into(),
                         Span::from(snippet).dim(),
                         " this time".bold(),
                     ]
@@ -76,7 +76,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     actor.subject().into(),
                     "approved".bold(),
-                    " genex network access to ".into(),
+                    " ruxex network access to ".into(),
                     Span::from(target).dim(),
                     " this time".bold(),
                 ],
@@ -91,7 +91,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     actor.subject().into(),
                     "approved".bold(),
-                    " genex to always run commands that start with ".into(),
+                    " ruxex to always run commands that start with ".into(),
                     snippet,
                 ],
             )
@@ -102,7 +102,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         actor.subject().into(),
                         "approved".bold(),
-                        " genex to run ".into(),
+                        " ruxex to run ".into(),
                         Span::from(snippet).dim(),
                         " every time this session".bold(),
                     ]
@@ -121,7 +121,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     actor.subject().into(),
                     "approved".bold(),
-                    " genex network access to ".into(),
+                    " ruxex network access to ".into(),
                     Span::from(target).dim(),
                     " every time this session".bold(),
                 ],
@@ -140,7 +140,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         actor.subject().into(),
                         "persisted".bold(),
-                        " Genex network access to ".into(),
+                        " Ruxex network access to ".into(),
                         Span::from(target).dim(),
                     ],
                 ),
@@ -149,7 +149,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         actor.subject().into(),
                         "denied".bold(),
-                        " genex network access to ".into(),
+                        " ruxex network access to ".into(),
                         Span::from(target).dim(),
                         " and saved that rule".into(),
                     ],
@@ -163,7 +163,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         actor.subject().into(),
                         "did not approve".bold(),
-                        " genex to run ".into(),
+                        " ruxex to run ".into(),
                         snippet,
                     ]
                 } else {
@@ -180,7 +180,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     actor.subject().into(),
                     "did not approve".bold(),
-                    " genex network access to ".into(),
+                    " ruxex network access to ".into(),
                     Span::from(target).dim(),
                 ],
             ),
@@ -191,7 +191,7 @@ pub fn new_approval_decision_cell(
                     vec![
                         "Review ".into(),
                         "timed out".bold(),
-                        " before genex could run ".into(),
+                        " before ruxex could run ".into(),
                         Span::from(snippet).dim(),
                     ]
                 } else {
@@ -208,7 +208,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     "Review ".into(),
                     "timed out".bold(),
-                    " before genex could access ".into(),
+                    " before ruxex could access ".into(),
                     Span::from(target).dim(),
                 ],
             ),
@@ -236,7 +236,7 @@ pub fn new_approval_decision_cell(
                 vec![
                     actor.subject().into(),
                     "canceled".bold(),
-                    " the request for genex network access to ".into(),
+                    " the request for ruxex network access to ".into(),
                     Span::from(target).dim(),
                 ],
             ),

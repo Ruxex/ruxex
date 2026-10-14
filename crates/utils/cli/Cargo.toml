@@ -1,5 +1,5 @@
 [package]
-name = "genex-utils-cli"
+name = "ruxex-utils-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,8 +9,8 @@ workspace = true
 
 [dependencies]
 clap = { workspace = true, features = ["derive", "wrap_help"] }
-genex-protocol = { workspace = true }
-genex-shell-command = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-shell-command = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
 

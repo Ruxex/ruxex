@@ -9,13 +9,13 @@ use crate::config::Config;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
-use genex_models_manager::manager::RefreshStrategy;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
-use genex_protocol::model_types::ModelPreset;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::protocol::MultiAgentVersion;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::model_types::ModelPreset;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::protocol::MultiAgentVersion;
 
 pub(crate) const MAX_SPAWN_AGENT_MODEL_OVERRIDES: usize = 5;
 

@@ -1,7 +1,7 @@
 use super::*;
 use crate::bottom_pane::preview_line_for_title_items;
 use crate::chatwidget::ThreadUsageOutcome;
-use genex_app_server_protocol::ThreadUsage;
+use ruxex_app_server_protocol::ThreadUsage;
 use pretty_assertions::assert_eq;
 use ratatui::text::Line;
 
@@ -93,7 +93,7 @@ async fn status_surface_hostname_preview_uses_current_machine_hostname() {
 
     assert_eq!(
         status_preview_line(&mut chat, &[StatusLineItem::Hostname]),
-        genex_config::os_host_name().expect("machine hostname")
+        ruxex_config::os_host_name().expect("machine hostname")
     );
 }
 
@@ -126,7 +126,7 @@ async fn status_surface_thread_usage_previews_omit_unavailable_usd_estimates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     let thread_id = ThreadId::new();
     chat.thread_id = Some(thread_id);
-    chat.has_genex_backend_auth = true;
+    chat.has_ruxex_backend_auth = true;
     chat.plan_type = Some(PlanType::Business);
     chat.local_settings.tui.status_line = Some(vec![
         "thread-credits".to_string(),

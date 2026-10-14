@@ -1,23 +1,23 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-skills"
+name = "ruxex-skills"
 version.workspace = true
 build = "build.rs"
 
 [lib]
 doctest = false
-name = "genex_skills"
+name = "ruxex_skills"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-protocol = { workspace = true }
-genex-shell-command = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 include_dir = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true }

@@ -1,13 +1,13 @@
 use anyhow::Result;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_features::Feature;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::protocol::EnvironmentConfig;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_features::Feature;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::protocol::EnvironmentConfig;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -17,7 +17,7 @@ use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -169,7 +169,7 @@ async fn v2_nested_spawn_checks_shared_active_execution_capacity() -> Result<()>
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-b")
         .with_config(|config| {
             config
@@ -217,7 +217,7 @@ async fn child_turn_start_preserves_root_attribution() -> Result<()> {
     )
     .await;
     let worker = mount_completed_worker(&server, FIRST_TASK, "first-call").await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model("provider-model-b")
         .with_config(|config| {
             config.features.enable(Feature::Collab).unwrap();
@@ -237,7 +237,7 @@ async fn child_turn_start_preserves_root_attribution() -> Result<()> {
         thread.flush_rollout().await?;
         let history = thread.load_history(/*include_archived*/ false).await?;
         for item in history.items {
-            if let genex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event)) = item {
+            if let ruxex_history::RolloutItem::EventMsg(EventMsg::TurnStarted(event)) = item {
                 starts.push((thread_id, event));
             }
         }
@@ -311,7 +311,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     let reloaded_worker_request =
         mount_completed_worker(&server, FOLLOWUP_TASK, "followup-call").await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model("provider-model-b")
         .with_exec_server_url("none")
         .with_config(|config| {
@@ -401,7 +401,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     let mut created_threads = test.thread_manager.subscribe_thread_created();
 
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             environments: Some(TurnEnvironmentSelections::new(
                 test.config.cwd.clone(),
@@ -430,7 +430,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
     }
     if reload == ResidencyReload::Sender {
         submit_thread_settings(
-            &test.genex,
+            &test.ruxex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(
                     test.config.cwd.clone(),
@@ -460,7 +460,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
 
     if reload != ResidencyReload::Sender {
         submit_thread_settings(
-            &test.genex,
+            &test.ruxex,
             ThreadSettingsOverrides {
                 environments: Some(TurnEnvironmentSelections::new(
                     test.config.cwd.clone(),
@@ -471,7 +471,7 @@ async fn v2_residency_reload_preserves_inherited_environment_and_tools(
         )
         .await?;
         assert_eq!(
-            test.genex.config_snapshot().await.environments.environments,
+            test.ruxex.config_snapshot().await.environments.environments,
             vec![parent_environment]
         );
         let result = test

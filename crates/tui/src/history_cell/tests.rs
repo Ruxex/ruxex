@@ -10,16 +10,16 @@ use crate::line_truncation::line_width;
 use crate::render::highlight::MAX_HIGHLIGHT_LINE_BYTES;
 use crate::session_state::ThreadSessionState;
 use crate::wrapping::word_wrap_lines;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::McpAuthStatus;
-use genex_config::types::McpServerConfig;
-use genex_otel::RuntimeMetricTotals;
-use genex_otel::RuntimeMetricsSummary;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
-use genex_protocol::error::UnexpectedResponseError;
-use genex_protocol::parse_command::ParsedCommand;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::McpAuthStatus;
+use ruxex_config::types::McpServerConfig;
+use ruxex_otel::RuntimeMetricTotals;
+use ruxex_otel::RuntimeMetricsSummary;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
+use ruxex_protocol::error::UnexpectedResponseError;
+use ruxex_protocol::parse_command::ParsedCommand;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use dirs::home_dir;
 use http::StatusCode;
 use pretty_assertions::assert_eq;
@@ -29,9 +29,9 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use genex_protocol::mcp::CallToolResult;
-use genex_protocol::mcp::Tool;
+use ruxex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use ruxex_protocol::mcp::CallToolResult;
+use ruxex_protocol::mcp::Tool;
 use rmcp::model::ContentBlock;
 
 const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
@@ -39,9 +39,9 @@ const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAA
 
 
 async fn test_config() -> Config {
-    let genex_home = std::env::temp_dir();
+    let ruxex_home = std::env::temp_dir();
     ConfigBuilder::default()
-        .genex_home(genex_home.clone())
+        .ruxex_home(ruxex_home.clone())
         .build()
         .await
         .expect("config")
@@ -274,7 +274,7 @@ fn source_backed_cells_render_raw_source_without_prefix_or_style() {
 #[test]
 fn proposed_plan_cell_renders_markdown_table() {
     let plan = new_proposed_plan(
-        "## Plan\n\n| Step | Owner |\n| --- | --- |\n| Verify | Genex |\n".to_string(),
+        "## Plan\n\n| Step | Owner |\n| --- | --- |\n| Verify | Ruxex |\n".to_string(),
         &test_cwd(),
     );
 
@@ -343,7 +343,7 @@ fn composite_cell_preserves_child_web_links() {
 #[test]
 fn proposed_plan_cell_unwraps_markdown_fenced_table() {
     let plan = new_proposed_plan(
-        "## Plan\n\n```markdown\n| Step | Owner |\n| --- | --- |\n| Verify | Genex |\n```\n"
+        "## Plan\n\n```markdown\n| Step | Owner |\n| --- | --- |\n| Verify | Ruxex |\n```\n"
             .to_string(),
         &test_cwd(),
     );
@@ -422,7 +422,7 @@ fn session_configured_event(model: &str) -> ThreadSessionState {
         model: model.to_string(),
         service_tier: None,
         approval_policy: AskForApproval::Never,
-        approvals_reviewer: genex_protocol::config_types::ApprovalsReviewer::User,
+        approvals_reviewer: ruxex_protocol::config_types::ApprovalsReviewer::User,
         permission_profile: PermissionProfile::read_only(),
         active_permission_profile: None,
         cwd: test_path_buf("/tmp/project").abs(),
@@ -594,7 +594,7 @@ fn prefixed_wrapped_history_cell_indents_wrapped_lines() {
     let summary = Line::from(vec![
         "You ".into(),
         "approved".bold(),
-        " genex to run ".into(),
+        " ruxex to run ".into(),
         "echo something really long to ensure wrapping happens".dim(),
         " this time".bold(),
     ]);
@@ -603,7 +603,7 @@ fn prefixed_wrapped_history_cell_indents_wrapped_lines() {
     assert_eq!(
         rendered,
         vec![
-            "✔ You approved genex to".to_string(),
+            "✔ You approved ruxex to".to_string(),
             "  run echo something".to_string(),
             "  really long to ensure".to_string(),
             "  wrapping happens this".to_string(),
@@ -816,7 +816,7 @@ fn session_header_uses_injected_provider_name() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
     assert!(rendered.contains("provider Injected Provider"));
-    assert!(!rendered.contains("provider Genex"));
+    assert!(!rendered.contains("provider Ruxex"));
 }
 
 
@@ -1337,7 +1337,7 @@ fn agent_markdown_cell_renders_source_at_different_widths() {
 
 #[test]
 fn agent_markdown_cell_does_not_split_words_after_inline_markdown() {
-    let source = "This paragraph is intentionally long so you can inspect soft wrapping behavior while also checking inline formatting like **bold text**, *italic text*, ***bold italic text***, `inline code`, ~~strikethrough~~, a [link to example.com](https://example.com), and a literal path like [README.md](/Users/felipe.coury/code/genex.fcoury-worktrees/README.md) without introducing manual line breaks.\n";
+    let source = "This paragraph is intentionally long so you can inspect soft wrapping behavior while also checking inline formatting like **bold text**, *italic text*, ***bold italic text***, `inline code`, ~~strikethrough~~, a [link to example.com](https://example.com), and a literal path like [README.md](/Users/felipe.coury/code/ruxex.fcoury-worktrees/README.md) without introducing manual line breaks.\n";
     let cell = AgentMarkdownCell::new(source.to_string(), &test_cwd());
 
     let lines = render_lines(&cell.display_lines(/*width*/ 190));

@@ -7,13 +7,13 @@ use app_test_support::DEFAULT_CLIENT_NAME;
 use app_test_support::TestAppServer;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::RolloutCompressResponse;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::RolloutCompressResponse;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -22,21 +22,21 @@ const READ_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 20);
 
 #[tokio::test]
 async fn rollout_compress_runs_after_startup_with_compression_disabled() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_args(&["-c", "features.local_thread_store_compression=false"])
         .build_initialized()
         .await?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
     )?;
-    let path = rollout_path(genex_home.path(), filename_ts, &thread_id);
+    let path = rollout_path(ruxex_home.path(), filename_ts, &thread_id);
     let original = std::fs::read_to_string(&path)?;
     let compressed_path = path.with_extension("jsonl.zst");
 
@@ -54,7 +54,7 @@ async fn rollout_compress_runs_after_startup_with_compression_disabled() -> Resu
     })
     .await?;
 
-    let mut reader = genex_rollout::open_rollout_line_reader(&path).await?;
+    let mut reader = ruxex_rollout::open_rollout_line_reader(&path).await?;
     let mut lines = Vec::new();
     while let Some(line) = reader.next_line().await? {
         lines.push(line);

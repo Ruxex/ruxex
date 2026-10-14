@@ -5,17 +5,17 @@ use tempfile::tempdir;
 
 #[tokio::test]
 async fn acquisition_times_out_without_stealing() -> Result<()> {
-    let genex_home = tempdir()?;
+    let ruxex_home = tempdir()?;
     let store_key = "test-store-key";
     let held_lock = RefreshCredentialLock::acquire_in(
-        genex_home.path(),
+        ruxex_home.path(),
         store_key,
         Duration::from_millis(/*millis*/ 100),
     )
     .await?;
 
     let error = RefreshCredentialLock::acquire_in(
-        genex_home.path(),
+        ruxex_home.path(),
         store_key,
         Duration::from_millis(/*millis*/ 50),
     )
@@ -31,7 +31,7 @@ async fn acquisition_times_out_without_stealing() -> Result<()> {
 
     drop(held_lock);
     let _reacquired = RefreshCredentialLock::acquire_in(
-        genex_home.path(),
+        ruxex_home.path(),
         store_key,
         Duration::from_millis(/*millis*/ 100),
     )

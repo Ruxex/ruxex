@@ -1,7 +1,7 @@
 //! The host-local rendezvous root for privileged app-server RPC sockets.
 //!
 //! Every listener uses this root, which sandboxes hide even before a daemon
-//! starts. It must not depend on HOME, TMPDIR, GENEX_HOME, or command settings.
+//! starts. It must not depend on HOME, TMPDIR, RUXEX_HOME, or command settings.
 
 use std::fs;
 use std::io;
@@ -14,7 +14,7 @@ pub fn shared_daemon_socket_directory() -> io::Result<PathBuf> {
     // Resolve the system alias /tmp -> /private/tmp on macOS.
     let temporary_root = fs::canonicalize("/tmp")?;
     let uid = unsafe { libc::geteuid() };
-    Ok(temporary_root.join(format!("genex-daemon-{uid}")))
+    Ok(temporary_root.join(format!("ruxex-daemon-{uid}")))
 }
 
 /// Creates the reserved directory, rejecting symlinks and unsafe existing owners or modes.

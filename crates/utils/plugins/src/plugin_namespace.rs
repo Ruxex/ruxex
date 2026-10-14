@@ -1,10 +1,10 @@
 //! Resolve plugin namespace from skill file paths by walking ancestors for `plugin.json`.
 
-use genex_exec_server::ExecutorFileSystem;
-use genex_exec_server::GetMetadataOptions;
-use genex_exec_server::ReadFileOptions;
-use genex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::GetMetadataOptions;
+use ruxex_exec_server::ReadFileOptions;
+use ruxex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+use ruxex_utils_path_uri::PathUri;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -131,9 +131,9 @@ mod tests {
     use super::AGENT_PLUGIN_SCHEMA_URI;
     use super::find_plugin_manifest_path;
     use super::plugin_namespace_for_root_uri;
-    use genex_exec_server::LOCAL_FS;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_path_uri::PathUri;
+    use ruxex_exec_server::LOCAL_FS;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_path_uri::PathUri;
     use std::fs;
     use tempfile::tempdir;
 
@@ -147,9 +147,9 @@ mod tests {
         let skill_path = plugin_root.join("skills/search/SKILL.md");
 
         fs::create_dir_all(skill_path.parent().expect("parent")).expect("mkdir");
-        fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("mkdir manifest");
+        fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("mkdir manifest");
         fs::write(
-            plugin_root.join(".genex-plugin/plugin.json"),
+            plugin_root.join(".ruxex-plugin/plugin.json"),
             r#"{"name":"sample"}"#,
         )
         .expect("write manifest");
@@ -233,7 +233,7 @@ mod tests {
     fn ignores_unrelated_root_plugin_manifest_before_legacy_fallback() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let legacy_path = plugin_root.join(".genex-plugin/plugin.json");
+        let legacy_path = plugin_root.join(".ruxex-plugin/plugin.json");
         fs::create_dir_all(legacy_path.parent().expect("parent")).expect("mkdir");
         fs::write(plugin_root.join("plugin.json"), r#"{"name":"npm-package"}"#)
             .expect("write unrelated root");
@@ -246,7 +246,7 @@ mod tests {
     fn rejects_nonregular_root_plugin_manifest() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let legacy_path = plugin_root.join(".genex-plugin/plugin.json");
+        let legacy_path = plugin_root.join(".ruxex-plugin/plugin.json");
         fs::create_dir_all(plugin_root.join("plugin.json")).expect("root manifest directory");
         fs::create_dir_all(legacy_path.parent().expect("parent")).expect("legacy parent");
         fs::write(&legacy_path, r#"{"name":"sample"}"#).expect("legacy manifest");
@@ -260,7 +260,7 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
         let manifest_target = tmp.path().join("manifest.json");
-        let legacy_path = plugin_root.join(".genex-plugin/plugin.json");
+        let legacy_path = plugin_root.join(".ruxex-plugin/plugin.json");
         fs::create_dir_all(&plugin_root).expect("plugin root");
         fs::write(
             &manifest_target,
@@ -279,7 +279,7 @@ mod tests {
     fn rejects_nonregular_legacy_plugin_manifest_before_lower_precedence_manifest() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let primary_path = plugin_root.join(".genex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".ruxex-plugin/plugin.json");
         let claude_path = plugin_root.join(ALTERNATE_PLUGIN_CLA_MANIFEST_RELATIVE_PATH);
         fs::create_dir_all(&primary_path).expect("nonregular primary manifest");
         fs::create_dir_all(claude_path.parent().expect("Claude manifest parent"))
@@ -294,7 +294,7 @@ mod tests {
     fn rejects_symlinked_legacy_plugin_manifest_before_lower_precedence_manifest() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let primary_path = plugin_root.join(".genex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".ruxex-plugin/plugin.json");
         let claude_path = plugin_root.join(ALTERNATE_PLUGIN_CLA_MANIFEST_RELATIVE_PATH);
         fs::create_dir_all(primary_path.parent().expect("primary manifest parent"))
             .expect("primary manifest parent");
@@ -325,7 +325,7 @@ mod tests {
         )
         .expect("benign manifest");
         fs::write(&claude_path, r#"{"name":"sample"}"#).expect("Claude manifest");
-        std::os::unix::fs::symlink(&manifest_directory, plugin_root.join(".genex-plugin"))
+        std::os::unix::fs::symlink(&manifest_directory, plugin_root.join(".ruxex-plugin"))
             .expect("primary manifest directory symlink");
 
         assert_eq!(find_plugin_manifest_path(&plugin_root), None);
@@ -355,7 +355,7 @@ mod tests {
     fn preserves_primary_claude_cursor_legacy_precedence() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("plugins/sample");
-        let primary_path = plugin_root.join(".genex-plugin/plugin.json");
+        let primary_path = plugin_root.join(".ruxex-plugin/plugin.json");
         let claude_path = plugin_root.join(".claude-plugin/plugin.json");
         let cursor_path = plugin_root.join(".cursor-plugin/plugin.json");
         for path in [&primary_path, &claude_path, &cursor_path] {

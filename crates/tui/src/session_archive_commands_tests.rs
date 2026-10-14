@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_state::ThreadMetadataBuilder;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_state::ThreadMetadataBuilder;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -24,14 +24,14 @@ use crate::tests::start_test_embedded_app_server;
 
 async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
     ConfigBuilder::default()
-        .genex_home(temp_dir.path().to_path_buf())
+        .ruxex_home(temp_dir.path().to_path_buf())
         .build()
         .await
 }
 
-async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::StateRuntime>> {
-    let runtime = genex_state::StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(config.genex_home.as_path().abs()),
+async fn state_runtime(config: &Config) -> std::io::Result<Arc<ruxex_state::StateRuntime>> {
+    let runtime = ruxex_state::StateRuntime::init(
+        ruxex_state::SqliteConfig::new_for_testing(config.ruxex_home.as_path().abs()),
     )
     .await
     .map_err(std::io::Error::other)?;
@@ -44,7 +44,7 @@ async fn state_runtime(config: &Config) -> std::io::Result<Arc<genex_state::Stat
 
 async fn start_app_server(config: Config) -> color_eyre::Result<AppServerSession> {
     Ok(AppServerSession::new(
-        genex_app_server_client::AppServerClient::InProcess(
+        ruxex_app_server_client::AppServerClient::InProcess(
             start_test_embedded_app_server(config).await?,
         ),
         ThreadParamsMode::Embedded,
@@ -65,7 +65,7 @@ fn write_rollout(
         "sessions/2025/02/01"
     };
     let rollout_path = config
-        .genex_home
+        .ruxex_home
         .join(subdir)
         .join(format!("rollout-2025-02-01T10-00-00-{thread_id}.jsonl"));
     std::fs::create_dir_all(rollout_path.parent().expect("rollout parent"))?;
@@ -74,8 +74,8 @@ fn write_rollout(
             session_id: thread_id.into(),
             id: thread_id,
             timestamp: timestamp.to_string(),
-            cwd: config.genex_home.join("project").to_path_buf(),
-            originator: "genex".to_string(),
+            cwd: config.ruxex_home.join("project").to_path_buf(),
+            originator: "ruxex".to_string(),
             cli_version: "0.0.0".to_string(),
             source,
             ..Default::default()
@@ -125,7 +125,7 @@ fn thread_metadata(
     rollout_path: PathBuf,
     name: &str,
     archived: bool,
-) -> genex_state::ThreadMetadata {
+) -> ruxex_state::ThreadMetadata {
     let created_at = DateTime::parse_from_rfc3339("2025-02-01T10:00:00Z")
         .expect("timestamp should parse")
         .with_timezone(&Utc);
@@ -136,7 +136,7 @@ fn thread_metadata(
         serde_json::from_value(serde_json::json!("cli"))
             .expect("cli session source should deserialize"),
     );
-    builder.cwd = config.genex_home.join("project").to_path_buf();
+    builder.cwd = config.ruxex_home.join("project").to_path_buf();
     let mut metadata = builder.build();
     metadata.title = name.to_string();
     metadata.first_user_message = Some("preview text".to_string());
@@ -173,7 +173,7 @@ async fn archives_by_sqlite_name() -> color_eyre::Result<()> {
     let mut app_server = start_app_server(config.clone()).await?;
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         SessionArchiveAction::Archive,
         "saved-session",
     )
@@ -225,7 +225,7 @@ async fn unarchives_by_sqlite_name() -> color_eyre::Result<()> {
     let mut app_server = start_app_server(config.clone()).await?;
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         SessionArchiveAction::Unarchive,
         "saved-session",
     )
@@ -283,7 +283,7 @@ async fn delete_refuses_same_label_in_active_and_archived_sessions() -> color_ey
     let mut app_server = start_app_server(config.clone()).await?;
     let error = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         SessionArchiveAction::Delete(DeleteConfirmation::Skip),
         "preview text",
     )
@@ -341,7 +341,7 @@ async fn refuses_action_with_stale_sqlite_collection() -> color_eyre::Result<()>
         let name = format!("stale-{listed_archived}");
         let error = run_session_archive_action_with_app_server(
             &mut app_server,
-            config.genex_home.as_path(),
+            config.ruxex_home.as_path(),
             action,
             &name,
         )
@@ -390,13 +390,13 @@ async fn trusts_sqlite_name_over_legacy_index_for_delete() -> color_eyre::Result
         ))
         .await
         .map_err(std::io::Error::other)?;
-    genex_rollout::append_thread_name(config.genex_home.as_path(), thread_id, "old-session")
+    ruxex_rollout::append_thread_name(config.ruxex_home.as_path(), thread_id, "old-session")
         .await?;
 
     let mut app_server = start_app_server(config.clone()).await?;
     let error = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "old-session",
         "do the thing",
         "stable-client-message-id",
@@ -409,7 +409,7 @@ async fn trusts_sqlite_name_over_legacy_index_for_delete() -> color_eyre::Result
     );
     let message = run_session_archive_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         SessionArchiveAction::Delete(DeleteConfirmation::Skip),
         "new-session",
     )
@@ -464,7 +464,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
     let mut app_server = start_app_server(config.clone()).await?;
     let (resolved_thread_id, response) = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "saved-session",
         "do the thing",
         "stable-client-message-id",
@@ -509,7 +509,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
         .map_err(std::io::Error::other)?;
     let (resolved_custom_thread_id, _) = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "external-session",
         "do the thing",
         "custom-client-message-id",
@@ -523,7 +523,7 @@ async fn queues_non_interactive_and_custom_sessions_by_server_label() -> color_e
 
     let duplicate_error = run_session_queue_action_with_app_server(
         &mut app_server,
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         "saved-session",
         "do the thing",
         "duplicate-client-message-id",

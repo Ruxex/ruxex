@@ -9,14 +9,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::diff_model::FileChange;
-use genex_app_server_protocol::AdditionalPermissionProfile;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionApprovalKind;
-use genex_app_server_protocol::ExecPolicyAmendment;
-use genex_app_server_protocol::NetworkApprovalContext;
-use genex_app_server_protocol::NetworkPolicyAmendment;
-use genex_app_server_protocol::NetworkPolicyRuleAction;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_protocol::AdditionalPermissionProfile;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionApprovalKind;
+use ruxex_app_server_protocol::ExecPolicyAmendment;
+use ruxex_app_server_protocol::NetworkApprovalContext;
+use ruxex_app_server_protocol::NetworkPolicyAmendment;
+use ruxex_app_server_protocol::NetworkPolicyRuleAction;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 

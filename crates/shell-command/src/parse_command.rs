@@ -1,7 +1,7 @@
 use crate::bash::extract_bash_command;
 use crate::bash::try_parse_shell;
 use crate::bash::try_parse_word_only_commands_sequence;
-use genex_protocol::parse_command::ParsedCommand;
+use ruxex_protocol::parse_command::ParsedCommand;
 use shlex::split as shlex_split;
 use shlex::try_join as shlex_try_join;
 use std::path::PathBuf;
@@ -18,7 +18,7 @@ pub fn extract_shell_command(command: &[String]) -> Option<(&str, &str)> {
 
 /// DO NOT REVIEW THIS CODE BY HAND
 /// This parsing code is quite complex and not easy to hand-modify.
-/// The easiest way to iterate is to add unit tests and have Genex fix the implementation.
+/// The easiest way to iterate is to add unit tests and have Ruxex fix the implementation.
 /// To encourage this, the tests have been put directly below this function rather than at the bottom of the
 ///
 /// Parses metadata out of an arbitrary command.
@@ -60,7 +60,7 @@ fn single_unknown_for_command(command: &[String]) -> ParsedCommand {
 
 #[cfg(test)]
 #[allow(clippy::items_after_test_module)]
-/// Tests are at the top to encourage using TDD + Genex to fix the implementation.
+/// Tests are at the top to encourage using TDD + Ruxex to fix the implementation.
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
@@ -568,10 +568,10 @@ mod tests {
     #[test]
     fn supports_grep_recursive_current_dir() {
         assert_parsed(
-            &vec_str(&["grep", "-R", "GENEX_SANDBOX_ENV_VAR", "-n", "."]),
+            &vec_str(&["grep", "-R", "RUXEX_SANDBOX_ENV_VAR", "-n", "."]),
             vec![ParsedCommand::Search {
-                cmd: "grep -R GENEX_SANDBOX_ENV_VAR -n .".to_string(),
-                query: Some("GENEX_SANDBOX_ENV_VAR".to_string()),
+                cmd: "grep -R RUXEX_SANDBOX_ENV_VAR -n .".to_string(),
+                query: Some("RUXEX_SANDBOX_ENV_VAR".to_string()),
                 path: Some(".".to_string()),
             }],
         );
@@ -583,13 +583,13 @@ mod tests {
             &vec_str(&[
                 "grep",
                 "-R",
-                "GENEX_SANDBOX_ENV_VAR",
+                "RUXEX_SANDBOX_ENV_VAR",
                 "-n",
                 "core/src/spawn.rs",
             ]),
             vec![ParsedCommand::Search {
-                cmd: "grep -R GENEX_SANDBOX_ENV_VAR -n core/src/spawn.rs".to_string(),
-                query: Some("GENEX_SANDBOX_ENV_VAR".to_string()),
+                cmd: "grep -R RUXEX_SANDBOX_ENV_VAR -n core/src/spawn.rs".to_string(),
+                query: Some("RUXEX_SANDBOX_ENV_VAR".to_string()),
                 path: Some("spawn.rs".to_string()),
             }],
         );
@@ -680,7 +680,7 @@ mod tests {
     #[test]
     fn supports_cd_and_rg_files() {
         assert_parsed(
-            &shlex_split_safe("cd genex-rs && rg --files"),
+            &shlex_split_safe("cd ruxex-rs && rg --files"),
             vec![ParsedCommand::ListFiles {
                 cmd: "rg --files".to_string(),
                 path: None,
@@ -690,13 +690,13 @@ mod tests {
 
     #[test]
     fn supports_single_string_script_with_cd_and_pipe() {
-        let inner = r#"cd /Users/pakrym/code/genex && rg -n "genex_api" genex-rs -S | head -n 50"#;
+        let inner = r#"cd /Users/pakrym/code/ruxex && rg -n "ruxex_api" ruxex-rs -S | head -n 50"#;
         assert_parsed(
             &vec_str(&["bash", "-lc", inner]),
             vec![ParsedCommand::Search {
-                cmd: "rg -n genex_api genex-rs -S".to_string(),
-                query: Some("genex_api".to_string()),
-                path: Some("genex-rs".to_string()),
+                cmd: "rg -n ruxex_api ruxex-rs -S".to_string(),
+                query: Some("ruxex_api".to_string()),
+                path: Some("ruxex-rs".to_string()),
             }],
         );
     }

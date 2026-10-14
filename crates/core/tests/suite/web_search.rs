@@ -1,15 +1,15 @@
 #![allow(clippy::unwrap_used)]
 
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::WebSearchToolType;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::WebSearchToolType;
 use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -35,7 +35,7 @@ async fn web_search_mode_cached_sets_external_web_access_false() {
     ]);
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config
             .web_search_mode
             .set(WebSearchMode::Cached)
@@ -44,7 +44,7 @@ async fn web_search_mode_cached_sets_external_web_access_false() {
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile(
         "hello cached web search",
@@ -72,7 +72,7 @@ async fn web_search_mode_takes_precedence_over_legacy_flags() {
     ]);
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config
             .features
             .enable(Feature::WebSearchRequest)
@@ -85,7 +85,7 @@ async fn web_search_mode_takes_precedence_over_legacy_flags() {
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile(
         "hello cached+live flags",
@@ -114,7 +114,7 @@ async fn web_search_mode_defaults_to_cached_when_features_disabled() {
     ]);
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config
             .web_search_mode
             .set(WebSearchMode::Cached)
@@ -131,7 +131,7 @@ async fn web_search_mode_defaults_to_cached_when_features_disabled() {
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile(
         "hello default cached web search",
@@ -169,7 +169,7 @@ async fn web_search_mode_updates_between_turns_with_permission_profile() {
     )
     .await;
 
-    let mut builder = test_genex().with_model("legacy-model").with_config(|config| {
+    let mut builder = test_ruxex().with_model("legacy-model").with_config(|config| {
         config
             .web_search_mode
             .set(WebSearchMode::Cached)
@@ -186,7 +186,7 @@ async fn web_search_mode_updates_between_turns_with_permission_profile() {
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile("hello cached", PermissionProfile::read_only())
         .await
@@ -230,7 +230,7 @@ async fn web_search_tool_config_from_config_toml_is_forwarded_to_request() {
     ]);
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
-    let home = Arc::new(tempfile::TempDir::new().expect("create genex home"));
+    let home = Arc::new(tempfile::TempDir::new().expect("create ruxex home"));
     std::fs::write(
         home.path().join("config.toml"),
         r#"web_search = "live"
@@ -243,11 +243,11 @@ location = { country = "US", city = "New York", timezone = "America/New_York" }
     )
     .expect("write config.toml");
 
-    let mut builder = test_genex().with_model("example-model-2").with_home(home);
+    let mut builder = test_ruxex().with_model("example-model-2").with_home(home);
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile(
         "hello configured web search",
@@ -288,15 +288,15 @@ async fn indexed_web_search_mode_sets_indexed_access() {
     ]);
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
-    let home = Arc::new(tempfile::TempDir::new().expect("create genex home"));
+    let home = Arc::new(tempfile::TempDir::new().expect("create ruxex home"));
     std::fs::write(home.path().join("config.toml"), r#"web_search = "indexed""#)
         .expect("write config.toml");
 
-    let mut builder = test_genex().with_model("example-model-2").with_home(home);
+    let mut builder = test_ruxex().with_model("example-model-2").with_home(home);
     let test = builder
         .build(&server)
         .await
-        .expect("create test Genex conversation");
+        .expect("create test Ruxex conversation");
 
     test.submit_turn_with_permission_profile(
         "hello indexed web search",

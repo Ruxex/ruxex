@@ -9,7 +9,7 @@ use crate::shell_detect::ShellType;
 use crate::shell_startup_script;
 use std::borrow::Cow;
 
-const SNAPSHOT_COMMAND_HELPER: &str = r#"__genex_snapshot_command() {
+const SNAPSHOT_COMMAND_HELPER: &str = r#"__ruxex_snapshot_command() {
   if command -v "$1" >/dev/null 2>&1; then
     "$@"
   else
@@ -63,7 +63,7 @@ pub fn snapshot_capture_script(
             .replace(
                 "SNAPSHOT_STARTUP_ENVIRONMENT",
                 if options.declarations && options.environment {
-                    "printf '\\0GENEX_SNAPSHOT_POSIX_STARTUP\\0%s\\0' \"$__genex_env_file\"\n    SNAPSHOT_ENVIRONMENT\n    printf '\\0'"
+                    "printf '\\0RUXEX_SNAPSHOT_POSIX_STARTUP\\0%s\\0' \"$__ruxex_env_file\"\n    SNAPSHOT_ENVIRONMENT\n    printf '\\0'"
                 } else {
                     ""
                 },
@@ -91,12 +91,12 @@ print '# Functions'
 functions
 print ''
 SNAPSHOT_COMMAND_HELPER
-setopt_count=$(setopt | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+setopt_count=$(setopt | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
 print "# setopts $setopt_count"
-setopt | __genex_snapshot_command sed 's/^/setopt /'
+setopt | __ruxex_snapshot_command sed 's/^/setopt /'
 print ''
 printf '\0'
-alias_count=$(alias -L | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+alias_count=$(alias -L | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
 print "# aliases $alias_count"
 alias -L
 print ''
@@ -121,15 +121,15 @@ echo '# Functions'
 declare -f
 echo ''
 SNAPSHOT_COMMAND_HELPER
-bash_opts=$(set -o | __genex_snapshot_command awk '$2=="on"{print $1}')
-bash_opt_count=$(printf '%s\n' "$bash_opts" | __genex_snapshot_command sed '/^$/d' | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+bash_opts=$(set -o | __ruxex_snapshot_command awk '$2=="on"{print $1}')
+bash_opt_count=$(printf '%s\n' "$bash_opts" | __ruxex_snapshot_command sed '/^$/d' | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
 echo "# setopts $bash_opt_count"
 if [ -n "$bash_opts" ]; then
   printf 'set -o %s\n' $bash_opts
 fi
 echo ''
 printf '\0'
-alias_count=$(alias -p | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+alias_count=$(alias -p | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
 echo "# aliases $alias_count"
 alias -p
 echo ''
@@ -148,17 +148,17 @@ fn sh_snapshot_script(shell_startup: SnapshotStartup) -> String {
         SnapshotStartup::Interactive => [
             posix_env_path_expansion_function(),
             r##"if [ -n "${ENV-}" ]; then
-  __genex_env_file=$(__genex_snapshot_expand_env "$ENV")
-  if [ -r "$__genex_env_file" ] && [ ! -d "$__genex_env_file" ]; then
+  __ruxex_env_file=$(__ruxex_snapshot_expand_env "$ENV")
+  if [ -r "$__ruxex_env_file" ] && [ ! -d "$__ruxex_env_file" ]; then
     SNAPSHOT_STARTUP_ENVIRONMENT
-    case "$__genex_env_file" in
-      /*) . "$__genex_env_file" ;;
-      *) . "./$__genex_env_file" ;;
+    case "$__ruxex_env_file" in
+      /*) . "$__ruxex_env_file" ;;
+      *) . "./$__ruxex_env_file" ;;
     esac
   fi
-  command unset __genex_env_file
+  command unset __ruxex_env_file
 fi
-command unset -f __genex_snapshot_expand_env
+command unset -f __ruxex_snapshot_expand_env
 "##,
         ]
         .join("\n"),
@@ -180,8 +180,8 @@ fi
 echo ''
 SNAPSHOT_COMMAND_HELPER
 if set -o >/dev/null 2>&1; then
-  sh_opts=$(set -o | __genex_snapshot_command awk '$2=="on"{print $1}')
-  sh_opt_count=$(printf '%s\n' "$sh_opts" | __genex_snapshot_command sed '/^$/d' | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+  sh_opts=$(set -o | __ruxex_snapshot_command awk '$2=="on"{print $1}')
+  sh_opt_count=$(printf '%s\n' "$sh_opts" | __ruxex_snapshot_command sed '/^$/d' | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
   echo "# setopts $sh_opt_count"
   if [ -n "$sh_opts" ]; then
     printf 'set -o %s\n' $sh_opts
@@ -192,7 +192,7 @@ fi
 echo ''
 printf '\0'
 if alias >/dev/null 2>&1; then
-  alias_count=$(alias | __genex_snapshot_command wc -l | __genex_snapshot_command tr -d ' ')
+  alias_count=$(alias | __ruxex_snapshot_command wc -l | __ruxex_snapshot_command tr -d ' ')
   echo "# aliases $alias_count"
   alias
   echo ''
@@ -256,7 +256,7 @@ impl<'a> CapturedSnapshot<'a> {
             return None;
         }
         let mut remaining = captured;
-        let startup_marker = b"\0GENEX_SNAPSHOT_POSIX_STARTUP\0";
+        let startup_marker = b"\0RUXEX_SNAPSHOT_POSIX_STARTUP\0";
         let startup_environment = if shell_type == ShellType::Sh
             && let Some(start) = remaining
                 .windows(startup_marker.len())

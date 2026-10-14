@@ -3,13 +3,13 @@ use crate::config_types::ShellEnvironmentPolicy;
 use crate::config_types::ShellEnvironmentPolicyInherit;
 use std::collections::HashMap;
 
-pub const GENEX_SESSION_ID_ENV_VAR: &str = "GENEX_SESSION_ID";
-pub const GENEX_THREAD_ID_ENV_VAR: &str = "GENEX_THREAD_ID";
-pub const GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR: &str = "GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN";
+pub const RUXEX_SESSION_ID_ENV_VAR: &str = "RUXEX_SESSION_ID";
+pub const RUXEX_THREAD_ID_ENV_VAR: &str = "RUXEX_THREAD_ID";
+pub const RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR: &str = "RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN";
 
 /// Environment variables that model-reachable child processes must not inherit.
 pub const NON_INHERITABLE_ENV_VARS: &[&str] = &[
-    GENEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
+    RUXEX_EXEC_SERVER_NOISE_AUTH_TOKEN_ENV_VAR,
     "NODE_REPL_AUTH_TOKEN",
 ];
 
@@ -22,7 +22,7 @@ pub fn is_non_inheritable_env_var(name: &str) -> bool {
 /// Configures a child command to omit non-inheritable variables from the
 /// process environment and explicit command overrides.
 ///
-/// This prevents accidental propagation of Genex launch context; it is not a
+/// This prevents accidental propagation of Ruxex launch context; it is not a
 /// filesystem security boundary for the referenced identity-token file.
 pub fn scrub_non_inheritable_env_vars(command: &mut std::process::Command) {
     let configured_names = command
@@ -120,7 +120,7 @@ where
 
     // Step 6 - Populate the thread ID environment variable when provided.
     if let Some(thread_id) = thread_id {
-        env_map.insert(GENEX_THREAD_ID_ENV_VAR.to_string(), thread_id.to_string());
+        env_map.insert(RUXEX_THREAD_ID_ENV_VAR.to_string(), thread_id.to_string());
     }
 
     // Restricted launch context cannot be restored through user-provided shell
@@ -155,7 +155,7 @@ mod non_windows_tests {
     fn core_inherit_preserves_non_windows_core_vars_case_insensitively() {
         let vars = make_vars(&[
             ("path", "/usr/bin"),
-            ("home", "/home/genex"),
+            ("home", "/home/ruxex"),
             ("TmpDir", "/tmp/custom"),
             ("PROVIDER_API_KEY", "secret"),
         ]);
@@ -169,7 +169,7 @@ mod non_windows_tests {
         let result = populate_env(vars, &policy, /*thread_id*/ None);
         let expected = HashMap::from([
             ("path".to_string(), "/usr/bin".to_string()),
-            ("home".to_string(), "/home/genex".to_string()),
+            ("home".to_string(), "/home/ruxex".to_string()),
             ("TmpDir".to_string(), "/tmp/custom".to_string()),
         ]);
 

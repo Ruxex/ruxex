@@ -1,12 +1,12 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use genex_extension_api::ExtensionData;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::ResponseItemId;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::items::TurnItem;
-use genex_utils_stream_parser::strip_citations;
+use ruxex_extension_api::ExtensionData;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::items::TurnItem;
+use ruxex_utils_stream_parser::strip_citations;
 use tokio_util::sync::CancellationToken;
 
 use crate::function_tool::FunctionCallError;
@@ -17,14 +17,14 @@ use crate::tools::call_trace;
 use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::router::ToolRouter;
 use futures::Future;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_utils_stream_parser::strip_proposed_plan_blocks;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_utils_stream_parser::strip_proposed_plan_blocks;
 use tracing::debug;
 use tracing::instrument;
 use tracing::warn;
@@ -45,7 +45,7 @@ pub(crate) fn raw_assistant_output_text_from_item(item: &ResponseItem) -> Option
         let combined = content
             .iter()
             .filter_map(|ci| match ci {
-                genex_protocol::models::ContentItem::OutputText { text } => Some(text.as_str()),
+                ruxex_protocol::models::ContentItem::OutputText { text } => Some(text.as_str()),
                 _ => None,
             })
             .collect::<String>();
@@ -165,7 +165,7 @@ pub(crate) async fn finalize_non_tool_response_item(
                 .content
                 .iter()
                 .map(|entry| match entry {
-                    genex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+                    ruxex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
                 })
                 .collect::<String>();
             let last_agent_message = if combined.trim().is_empty() {
@@ -303,7 +303,7 @@ pub(crate) async fn handle_output_item_done(
         }
         // A fatal error occurred; surface it back into history.
         Err(FunctionCallError::Fatal(message)) => {
-            return Err(GenexErr::Fatal(message));
+            return Err(RuxexErr::Fatal(message));
         }
     }
 
@@ -374,12 +374,12 @@ pub(crate) async fn finalize_turn_item(
             .content
             .iter()
             .map(|entry| match entry {
-                genex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+                ruxex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
             })
             .collect::<String>();
         let stripped = strip_hidden_assistant_markup(&combined, plan_mode);
         agent_message.content =
-            vec![genex_protocol::items::AgentMessageContent::Text { text: stripped }];
+            vec![ruxex_protocol::items::AgentMessageContent::Text { text: stripped }];
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::color::perceptual_distance;
-use genex_terminal_detection::TerminalName;
-use genex_terminal_detection::terminal_info;
+use ruxex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::terminal_info;
 use ratatui::style::Color;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

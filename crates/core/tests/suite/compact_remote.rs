@@ -4,35 +4,35 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_history::GenexHarnessMetadata;
-use genex_history::InitialHistory;
-use genex_history::RolloutItem;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::AgentPath;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::ConversationStartParams;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use genex_protocol::protocol::RealtimeEvent;
-use genex_protocol::protocol::RealtimeOutputModality;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::InitialHistory;
+use ruxex_history::RolloutItem;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::ConversationStartParams;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::RealtimeConversationRealtimeEvent;
+use ruxex_protocol::protocol::RealtimeEvent;
+use ruxex_protocol::protocol::RealtimeOutputModality;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenexBuilder;
-use core_test_support::test_genex::TestGenexHarness;
-use core_test_support::test_genex::test_genex as base_test_genex;
+use core_test_support::test_ruxex::TestRuxexBuilder;
+use core_test_support::test_ruxex::TestRuxexHarness;
+use core_test_support::test_ruxex::test_ruxex as base_test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -49,23 +49,23 @@ use wiremock::ResponseTemplate;
 mod trimming;
 
 const DUMMY_FUNCTION_NAME: &str = "test_tool";
-const TURN_STATE_HEADER: &str = "x-genex-turn-state";
+const TURN_STATE_HEADER: &str = "x-ruxex-turn-state";
 const REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 const CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE: &str =
     "Output exceeded the available model context and was truncated";
 
-fn test_genex() -> TestGenexBuilder {
-    base_test_genex().with_config(|config| {
+fn test_ruxex() -> TestRuxexBuilder {
+    base_test_ruxex().with_config(|config| {
         config.update_plan_enabled = true;
     })
 }
 
-fn remote_realtime_test_genex_builder(
+fn remote_realtime_test_ruxex_builder(
     realtime_server: &responses::WebSocketTestServer,
-) -> TestGenexBuilder {
+) -> TestRuxexBuilder {
     let realtime_base_url = realtime_server.uri().to_string();
-    test_genex()
-        .with_auth(GenexAuth::from_api_key("dummy"))
+    test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("dummy"))
         .with_config(move |config| {
             config.experimental_realtime_ws_base_url = Some(realtime_base_url);
         })
@@ -91,17 +91,17 @@ async fn start_remote_realtime_server() -> responses::WebSocketTestServer {
     .await
 }
 
-async fn start_realtime_conversation(genex: &genex_core::GenexThread) -> Result<()> {
-    genex
+async fn start_realtime_conversation(ruxex: &ruxex_core::RuxexThread) -> Result<()> {
+    ruxex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             client_managed_handoffs: false,
             delegation_ack_filler: None,
             flush_transcript_tail_on_session_end: false,
-            genex_responses_as_items: false,
-            genex_response_item_prefix: None,
-            genex_response_handoff_mode:
-                genex_protocol::protocol::GenexResponseHandoffMode::Thinking,
-            genex_response_handoff_channel_prefixes: None,
+            ruxex_responses_as_items: false,
+            ruxex_response_item_prefix: None,
+            ruxex_response_handoff_mode:
+                ruxex_protocol::protocol::RuxexResponseHandoffMode::Thinking,
+            ruxex_response_handoff_channel_prefixes: None,
             model: None,
             output_modality: RealtimeOutputModality::Audio,
             include_startup_context: true,
@@ -116,7 +116,7 @@ async fn start_realtime_conversation(genex: &genex_core::GenexThread) -> Result<
         }))
         .await?;
 
-    wait_for_event_match(genex, |msg| match msg {
+    wait_for_event_match(ruxex, |msg| match msg {
         EventMsg::RealtimeConversationStarted(started) => Some(Ok(started.clone())),
         EventMsg::Error(err) => Some(Err(err.clone())),
         _ => None,
@@ -124,7 +124,7 @@ async fn start_realtime_conversation(genex: &genex_core::GenexThread) -> Result<
     .await
     .expect("conversation start failed");
 
-    wait_for_event_match(genex, |msg| match msg {
+    wait_for_event_match(ruxex, |msg| match msg {
         EventMsg::RealtimeConversationRealtime(RealtimeConversationRealtimeEvent {
             payload:
                 RealtimeEvent::SessionUpdated {
@@ -139,9 +139,9 @@ async fn start_realtime_conversation(genex: &genex_core::GenexThread) -> Result<
     Ok(())
 }
 
-async fn close_realtime_conversation(genex: &genex_core::GenexThread) -> Result<()> {
-    genex.submit(Op::RealtimeConversationClose).await?;
-    wait_for_event_match(genex, |msg| match msg {
+async fn close_realtime_conversation(ruxex: &ruxex_core::RuxexThread) -> Result<()> {
+    ruxex.submit(Op::RealtimeConversationClose).await?;
+    wait_for_event_match(ruxex, |msg| match msg {
         EventMsg::RealtimeConversationClosed(closed) => Some(closed.clone()),
         _ => None,
     })
@@ -168,9 +168,9 @@ fn assert_request_contains_custom_realtime_start(
     );
 }
 
-async fn wait_for_turn_complete(genex: &genex_core::GenexThread) {
+async fn wait_for_turn_complete(ruxex: &ruxex_core::RuxexThread) {
     wait_for_event_with_timeout(
-        genex,
+        ruxex,
         |ev| matches!(ev, EventMsg::TurnComplete(_)),
         REMOTE_COMPACT_TURN_COMPLETE_TIMEOUT,
     )
@@ -192,7 +192,7 @@ fn annotate_retained_user_in_rollout(path: &Path, retained_text: &str) -> Result
     let mut rollout = fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?;
     rollout
         .iter_mut()
@@ -205,7 +205,7 @@ fn annotate_retained_user_in_rollout(path: &Path, retained_text: &str) -> Result
             _ => None,
         })
         .context("persisted user response missing from rollout")?
-        .metadata = Some(GenexHarnessMetadata::default());
+        .metadata = Some(RuxexHarnessMetadata::default());
 
     let contents = rollout
         .iter()
@@ -220,7 +220,7 @@ fn assert_compacted_user_metadata(path: &Path, retained_text: &str) -> Result<()
     let replacement_history = fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?
         .into_iter()
         .rev()
@@ -275,7 +275,7 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
     )
     .await;
 
-    let builder = || test_genex().with_auth(GenexAuth::from_api_key("test-api-key"));
+    let builder = || test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key"));
     let initial = builder()
         .with_pre_build_hook(|home| {
             fs::write(
@@ -293,16 +293,16 @@ async fn remote_compact_v2_retains_metadata_from_resumed_history() -> Result<()>
         .rollout_path
         .clone()
         .context("rollout path")?;
-    initial.genex.shutdown_and_wait().await?;
+    initial.ruxex.shutdown_and_wait().await?;
     annotate_retained_user_in_rollout(&rollout_path, retained_text)?;
 
     let resumed = builder()
         .resume(&server, home, rollout_path.clone())
         .await?;
-    resumed.genex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&resumed.genex).await;
+    resumed.ruxex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&resumed.ruxex).await;
     resumed.submit_turn("continue after compaction").await?;
-    resumed.genex.shutdown_and_wait().await?;
+    resumed.ruxex.shutdown_and_wait().await?;
 
     let requests = response_mock.requests();
     let compact_request = &requests[1];
@@ -329,9 +329,9 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_auto_env_builder(
-        test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let harness = TestRuxexHarness::with_auto_env_builder(
+        test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 if enabled {
                     config
@@ -351,9 +351,9 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
         phase: None,
         internal_chat_message_metadata_passthrough: None,
     };
-    let genex = &harness.test().genex;
-    let rollout_path = genex.rollout_path().context("rollout path")?;
-    genex
+    let ruxex = &harness.test().ruxex;
+    let rollout_path = ruxex.rollout_path().context("rollout path")?;
+    ruxex
         .inject_response_items(vec![developer("INJECTED_CLIENT_DEVELOPER")])
         .await?;
     let response_mock = responses::mount_sse_sequence(
@@ -376,8 +376,8 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
     .await;
 
     harness.test().submit_turn("before compact").await?;
-    genex.submit(Op::Compact).await?;
-    wait_for_turn_complete(genex).await;
+    ruxex.submit(Op::Compact).await?;
+    wait_for_turn_complete(ruxex).await;
     harness.test().submit_turn("after compact").await?;
 
     let requests = response_mock.requests();
@@ -390,10 +390,10 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
         .iter()
         .for_each(assert_compact_request_omits_harness_metadata);
 
-    genex.shutdown_and_wait().await?;
+    ruxex.shutdown_and_wait().await?;
     let replacement_history = fs::read_to_string(&rollout_path)?
         .lines()
-        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| ruxex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::Compacted(compacted) => compacted.replacement_history,
             _ => None,
@@ -416,16 +416,16 @@ async fn remote_compact_v2_retains_only_client_developer_messages_when_enabled(
 async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_auto_env_builder(
-        test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let harness = TestRuxexHarness::with_auto_env_builder(
+        test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
     )
     .await?;
-    let genex = &harness.test().genex;
-    let rollout_path = genex.rollout_path().context("rollout path")?;
+    let ruxex = &harness.test().ruxex;
+    let rollout_path = ruxex.rollout_path().context("rollout path")?;
     let responses_mock = responses::mount_sse_sequence(
         harness.server(),
         vec![
@@ -455,14 +455,14 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
     .await;
 
     harness.test().submit_turn("before compact").await?;
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "turn that triggers auto compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
     let mut preserved_prompts = Vec::new();
-    wait_for_event(genex, |event| {
+    wait_for_event(ruxex, |event| {
         if let EventMsg::UserMessage(message) = event {
             preserved_prompts.push(message.message.clone());
         }
@@ -470,11 +470,11 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
     })
     .await;
     assert_eq!(preserved_prompts, vec!["turn that triggers auto compact"]);
-    wait_for_event(genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     assert_eq!(responses_mock.requests().len(), 2);
 
-    genex.flush_rollout().await?;
-    let history = genex.load_history(/*include_archived*/ false).await?;
+    ruxex.flush_rollout().await?;
+    let history = ruxex.load_history(/*include_archived*/ false).await?;
     assert_eq!(
         history
             .items
@@ -491,11 +491,11 @@ async fn remote_compact_v2_records_usage_before_output_validation() -> Result<()
         1,
         "the accepted prompt should be saved exactly once after compaction fails"
     );
-    genex.shutdown_and_wait().await?;
+    ruxex.shutdown_and_wait().await?;
 
     let record = fs::read_to_string(&rollout_path)?
         .lines()
-        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| ruxex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::TokenUsageRecord(record) => Some(record),
             _ => None,
@@ -513,9 +513,9 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 ) -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_auto_env_builder(
-        test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let harness = TestRuxexHarness::with_auto_env_builder(
+        test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(move |config| {
                 let _ = config.features.enable(Feature::UnifiedImageBudget);
                 if let Some(enabled) = image_budget_enabled {
@@ -526,7 +526,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             }),
     )
     .await?;
-    let genex = &harness.test().genex;
+    let ruxex = &harness.test().ruxex;
     // Each original-detail image costs 10,000 estimated patch tokens.
     let image_inputs = (1..=8)
         .map(|number| {
@@ -535,7 +535,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                     image: ImageReference::File {
                         file_id: format!("file_{number}"),
                     },
-                    detail: Some(genex_protocol::models::ImageDetail::Original),
+                    detail: Some(ruxex_protocol::models::ImageDetail::Original),
                 });
             }
             let image = image::ImageBuffer::from_pixel(
@@ -552,7 +552,7 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                         BASE64_STANDARD.encode(bytes.get_ref())
                     ),
                 },
-                detail: Some(genex_protocol::models::ImageDetail::Original),
+                detail: Some(ruxex_protocol::models::ImageDetail::Original),
             })
         })
         .collect::<Result<Vec<_>>>()?;
@@ -569,10 +569,10 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
         ]),
     )
     .await;
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(input))
         .await?;
-    wait_for_turn_complete(genex).await;
+    wait_for_turn_complete(ruxex).await;
     let initial_request = initial_mock.single_request();
     let prepared_images = initial_request
         .inputs_of_type("message")
@@ -606,8 +606,8 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             ]),
         )
         .await;
-        genex.submit(Op::Compact).await?;
-        wait_for_turn_complete(genex).await;
+        ruxex.submit(Op::Compact).await?;
+        wait_for_turn_complete(ruxex).await;
         let compact_request = compact_mock.single_request();
         assert_eq!(compact_request.path(), "/v1/responses");
         assert_eq!(
@@ -623,13 +623,13 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
             ]),
         )
         .await;
-        genex
+        ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "after compact".to_string(),
                 text_elements: Vec::new(),
             }]))
             .await?;
-        wait_for_turn_complete(genex).await;
+        wait_for_turn_complete(ruxex).await;
         let follow_up = follow_up_mock.single_request();
         assert_eq!(
             follow_up.inputs_of_type("compaction")[0]["encrypted_content"],
@@ -685,10 +685,10 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
                 ]),
             )
             .await;
-            genex
+            ruxex
                 .start_or_steer_turn(TurnInputRequest::user_input(vec![image_inputs[7].clone()]))
                 .await?;
-            wait_for_turn_complete(genex).await;
+            wait_for_turn_complete(ruxex).await;
             let _ = append_mock.single_request();
         }
     }
@@ -699,8 +699,8 @@ async fn remote_compact_v2_charges_retained_images_to_token_budget(
 async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_builder(
-        test_genex().with_auth(GenexAuth::from_api_key("test-api-key")),
+    let harness = TestRuxexHarness::with_builder(
+        test_ruxex().with_auth(RuxexAuth::from_api_key("test-api-key")),
     )
     .await?;
     let image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
@@ -744,7 +744,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             .map(|item| RolloutItem::ResponseItem(item.into()))
     })
     .collect::<serde_json::Result<Vec<_>>>()?;
-    let genex = harness
+    let ruxex = harness
         .test()
         .thread_manager
         .start_thread(StartThreadOptions {
@@ -788,15 +788,15 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     )
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello remote compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
-    genex
+    ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::root().join("child").expect("valid child path"),
@@ -809,7 +809,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    genex
+    ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new(
                 AgentPath::root().join("child").expect("valid child path"),
@@ -822,7 +822,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
         })
         .await?;
     let delegated_task_ciphertext = format!("delegated compact task{}", "x".repeat(40_000));
-    genex
+    ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new_encrypted(
                 AgentPath::root(),
@@ -834,11 +834,11 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let descendant_followup_ciphertext = "descendant follow-up task";
     let worker_path = AgentPath::root().join("worker").expect("valid worker path");
-    genex
+    ruxex
         .submit(Op::InterAgentCommunication {
             communication: InterAgentCommunication::new_encrypted(
                 worker_path.join("child").expect("valid grandchild path"),
@@ -850,18 +850,18 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
             start_options: Default::default(),
         })
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
-    let compact_turn_id = genex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&genex).await;
+    let compact_turn_id = ruxex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&ruxex).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let response_requests = responses_mock.requests();
     let compact_request = &response_requests[3];
@@ -918,7 +918,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     );
     assert!(
         compact_request
-            .header("x-genex-beta-features")
+            .header("x-ruxex-beta-features")
             .as_deref()
             .is_some_and(|value| value
                 .split(',')
@@ -928,7 +928,7 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     assert_eq!(compact_request.path(), "/v1/responses");
     let compact_metadata: Value = serde_json::from_str(
         &compact_request
-            .header("x-genex-turn-metadata")
+            .header("x-ruxex-turn-metadata")
             .expect("v2 compact request should include turn metadata"),
     )
     .expect("v2 compact turn metadata should be valid json");
@@ -940,10 +940,10 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
     );
     assert_eq!(
         compact_metadata["window_id"].as_str(),
-        compact_request.header("x-genex-window-id").as_deref()
+        compact_request.header("x-ruxex-window-id").as_deref()
     );
     assert_eq!(
-        compact_request.body_json()["client_metadata"]["x-genex-window-id"].as_str(),
+        compact_request.body_json()["client_metadata"]["x-ruxex-window-id"].as_str(),
         compact_metadata["window_id"].as_str()
     );
     assert_eq!(
@@ -1049,17 +1049,17 @@ async fn remote_compact_v2_reuses_compaction_trigger_for_followups() -> Result<(
 async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_builder(
-        test_genex()
+    let harness = TestRuxexHarness::with_builder(
+        test_ruxex()
             .with_history_mode(ThreadHistoryMode::Paginated)
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_provider.request_max_retries = Some(0);
                 config.model_provider.stream_max_retries = Some(2);
             }),
     )
     .await?;
-    let genex = harness.test().genex.clone();
+    let ruxex = harness.test().ruxex.clone();
 
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
@@ -1094,24 +1094,24 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
     )
     .await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello remote compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
-    genex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&genex).await;
+    ruxex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&ruxex).await;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after compact".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let response_requests = responses_mock.requests();
     assert_eq!(
@@ -1123,7 +1123,7 @@ async fn remote_compact_v2_retries_failures_with_stream_retry_budget() -> Result
         assert_eq!("/v1/responses", compact_request.path());
         let compact_metadata: Value = serde_json::from_str(
             &compact_request
-                .header("x-genex-turn-metadata")
+                .header("x-ruxex-turn-metadata")
                 .expect("v2 compact request should include turn metadata"),
         )?;
         assert_eq!(compact_metadata["window_number"].as_u64(), Some(0));
@@ -1166,16 +1166,16 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     let second_trimmed_call_id = "second-trimmed-call";
     let retained_output = "retained tool output";
 
-    let harness = TestGenexHarness::with_builder(
-        test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let harness = TestRuxexHarness::with_builder(
+        test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_context_window = Some(2_000);
                 config.model_auto_compact_token_limit = Some(200_000);
             }),
     )
     .await?;
-    let genex = harness.test().genex.clone();
+    let ruxex = harness.test().ruxex.clone();
 
     let initial_mock = mount_sse_once(
         harness.server(),
@@ -1200,7 +1200,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     .into_iter()
     .map(serde_json::from_value)
     .collect::<serde_json::Result<Vec<ResponseItem>>>()?;
-    genex.inject_response_items(history).await?;
+    ruxex.inject_response_items(history).await?;
 
     let mut response_bodies = vec![sse(vec![
         json!({
@@ -1217,8 +1217,8 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     if automatic {
         harness.test().submit_text_turn("after compact").await?;
     } else {
-        genex.submit(Op::Compact).await?;
-        wait_for_turn_complete(&genex).await;
+        ruxex.submit(Op::Compact).await?;
+        wait_for_turn_complete(&ruxex).await;
     }
 
     let requests = compact_mock.requests();
@@ -1247,7 +1247,7 @@ async fn remote_compact_v2_rewrites_multiple_trailing_function_call_outputs(
     if automatic {
         let followup_metadata: Value = serde_json::from_str(
             &requests[1]
-                .header("x-genex-turn-metadata")
+                .header("x-ruxex-turn-metadata")
                 .context("follow-up request metadata")?,
         )?;
         assert_eq!(followup_metadata["request_kind"], "turn");
@@ -1298,7 +1298,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     let server = wiremock::MockServer::start().await;
     let initial_realtime_server = start_remote_realtime_server().await;
     let initial_instructions = "initial custom realtime start instructions";
-    let mut initial_builder = remote_realtime_test_genex_builder(&initial_realtime_server)
+    let mut initial_builder = remote_realtime_test_ruxex_builder(&initial_realtime_server)
         .with_config({
             let initial_instructions = initial_instructions.to_string();
             move |config| {
@@ -1329,11 +1329,11 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     )
     .await;
 
-    start_realtime_conversation(initial.genex.as_ref()).await?;
+    start_realtime_conversation(initial.ruxex.as_ref()).await?;
     initial.submit_turn("USER_ONE").await?;
-    close_realtime_conversation(initial.genex.as_ref()).await?;
-    initial.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&initial.genex, |ev| {
+    close_realtime_conversation(initial.ruxex.as_ref()).await?;
+    initial.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&initial.ruxex, |ev| {
         matches!(ev, EventMsg::ShutdownComplete)
     })
     .await;
@@ -1341,7 +1341,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
 
     let resumed_realtime_server = start_remote_realtime_server().await;
     let changed_instructions = "changed custom realtime start instructions";
-    let mut resume_builder = remote_realtime_test_genex_builder(&resumed_realtime_server)
+    let mut resume_builder = remote_realtime_test_ruxex_builder(&resumed_realtime_server)
         .with_config({
             let changed_instructions = changed_instructions.to_string();
             move |config| {
@@ -1350,10 +1350,10 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
         });
     let resumed = resume_builder.resume(&server, home, rollout_path).await?;
 
-    start_realtime_conversation(resumed.genex.as_ref()).await?;
+    start_realtime_conversation(resumed.ruxex.as_ref()).await?;
     resumed.submit_turn("USER_TWO").await?;
-    resumed.genex.submit(Op::Compact).await?;
-    wait_for_turn_complete(&resumed.genex).await;
+    resumed.ruxex.submit(Op::Compact).await?;
+    wait_for_turn_complete(&resumed.ruxex).await;
     resumed.submit_turn("USER_THREE").await?;
 
     let requests = responses_mock.requests();
@@ -1376,7 +1376,7 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
     assert_request_contains_custom_realtime_start(&requests[3], changed_instructions);
     assert!(!requests[3].body_contains_text(initial_instructions));
 
-    close_realtime_conversation(resumed.genex.as_ref()).await?;
+    close_realtime_conversation(resumed.ruxex.as_ref()).await?;
     resumed_realtime_server.shutdown().await;
     Ok(())
 }
@@ -1385,15 +1385,15 @@ async fn active_realtime_refreshes_changed_start_instructions_only_after_compact
 async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let harness = TestGenexHarness::with_builder(
-        test_genex()
-            .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let harness = TestRuxexHarness::with_builder(
+        test_ruxex()
+            .with_auth(RuxexAuth::from_api_key("test-api-key"))
             .with_config(|config| {
                 config.model_auto_compact_token_limit = Some(200);
             }),
     )
     .await?;
-    let genex = harness.test().genex.clone();
+    let ruxex = harness.test().ruxex.clone();
     let responses_mock = responses::mount_response_sequence(
         harness.server(),
         vec![
@@ -1427,13 +1427,13 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_http() -> Result<()> {
     .await;
 
     // Phase 1: sampling mints state and schedules inline v2 compaction.
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "RUN_WITH_MID_TURN_COMPACT_V2".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&genex).await;
+    wait_for_turn_complete(&ruxex).await;
 
     let requests = responses_mock.requests();
     assert_eq!(requests.len(), 4);
@@ -1514,8 +1514,8 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
         ],
     ]])
     .await;
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(|config| {
             config.model_auto_compact_token_limit = Some(200);
         });
@@ -1523,13 +1523,13 @@ async fn remote_mid_turn_compact_v2_sends_turn_state_over_websocket() -> Result<
 
     // Phase 1: startup prewarm stays empty, then WebSocket sampling mints state and schedules
     // inline v2 compaction.
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "RUN_WITH_WS_MID_TURN_COMPACT_V2".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_turn_complete(&test.genex).await;
+    wait_for_turn_complete(&test.ruxex).await;
 
     let requests = server.single_connection();
     assert_eq!(requests.len(), 5);

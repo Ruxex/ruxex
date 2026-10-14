@@ -1,16 +1,16 @@
 //! CLI authentication status and logout commands.
 
-use genex_app_server::AppServerRuntimeBuilder;
-use genex_core::config::Config;
-use genex_login::CredentialManager;
-use genex_model_provider::mount_provider_home;
-use genex_protocol::account::ProviderAuthStatus;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_app_server::AppServerRuntimeBuilder;
+use ruxex_core::config::Config;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_protocol::account::ProviderAuthStatus;
+use ruxex_utils_cli::CliConfigOverrides;
 use std::sync::Arc;
 
 async fn load_cli_credential_manager(config: &Config) -> anyhow::Result<Arc<CredentialManager>> {
     let provider_descriptor = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
-    mount_provider_home(&config.genex_home, &provider_descriptor)
+    mount_provider_home(&config.ruxex_home, &provider_descriptor)
         .map_err(|err| anyhow::anyhow!("failed to mount provider data root: {err}"))?;
     Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }

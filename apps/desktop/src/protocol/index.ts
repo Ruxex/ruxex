@@ -1,1 +1,1 @@
-export * from "@genex/protocol";
+export * from "@ruxex/protocol";

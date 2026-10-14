@@ -8,23 +8,23 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
 use futures::future::BoxFuture;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_exec_server::ExecServerError;
-use genex_exec_server::HttpClient;
-use genex_exec_server::HttpRedirectPolicy;
-use genex_exec_server::HttpRequestParams;
-use genex_exec_server::HttpRequestResponse;
-use genex_exec_server::HttpResponseBodyStream;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StoredOAuthTokens;
-use genex_rmcp_client::StreamableHttpBearerToken;
-use genex_rmcp_client::StreamableHttpRedirectMode;
-use genex_rmcp_client::WrappedOAuthTokenResponse;
-use genex_rmcp_client::save_oauth_tokens;
-use genex_rmcp_client::stored_oauth_credential_snapshot;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_exec_server::ExecServerError;
+use ruxex_exec_server::HttpClient;
+use ruxex_exec_server::HttpRedirectPolicy;
+use ruxex_exec_server::HttpRequestParams;
+use ruxex_exec_server::HttpRequestResponse;
+use ruxex_exec_server::HttpResponseBodyStream;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StoredOAuthTokens;
+use ruxex_rmcp_client::StreamableHttpBearerToken;
+use ruxex_rmcp_client::StreamableHttpRedirectMode;
+use ruxex_rmcp_client::WrappedOAuthTokenResponse;
+use ruxex_rmcp_client::save_oauth_tokens;
+use ruxex_rmcp_client::stored_oauth_credential_snapshot;
 use keyring::credential::Credential;
 use keyring::credential::CredentialApi;
 use keyring::credential::CredentialBuilderApi;
@@ -202,7 +202,7 @@ async fn transport_provided_bearer_token_avoids_placeholder_headers_and_redirect
         Arc::new(http_client.clone()),
         McpProtocolMode::Legacy,
         StreamableHttpRedirectMode::AgentPluginV1,
-        genex_rmcp_client::McpOAuthRefreshMode::Legacy,
+        ruxex_rmcp_client::McpOAuthRefreshMode::Legacy,
     )
     .await?;
 
@@ -230,7 +230,7 @@ async fn transport_provided_bearer_token_avoids_placeholder_headers_and_redirect
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn auto_store_remains_pinned_across_session_recovery() -> anyhow::Result<()> {
     let (_server, base_url) = spawn_streamable_http_server().await?;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
 
     let status = Command::new(std::env::current_exe()?)
         .args([
@@ -239,7 +239,7 @@ async fn auto_store_remains_pinned_across_session_recovery() -> anyhow::Result<(
             "--ignored",
             "--nocapture",
         ])
-        .env("GENEX_HOME", genex_home.path())
+        .env("RUXEX_HOME", ruxex_home.path())
         .env(CHILD_SERVER_URL_ENV, &base_url)
         .status()
         .await?;

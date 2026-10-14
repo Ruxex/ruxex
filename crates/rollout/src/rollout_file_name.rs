@@ -1,5 +1,5 @@
-use genex_protocol::RolloutId;
-use genex_protocol::ThreadId;
+use ruxex_protocol::RolloutId;
+use ruxex_protocol::ThreadId;
 use time::OffsetDateTime;
 use time::PrimitiveDateTime;
 use time::format_description::FormatItem;

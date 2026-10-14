@@ -10,30 +10,30 @@ use crate::tools::approvals::ApprovalContext;
 use crate::tools::approvals::ApprovalReviewContext;
 use crate::tools::events::truncate_rejection_message;
 use crate::tools::sandboxing::ToolError;
-use genex_network_proxy::BlockedRequest;
-use genex_network_proxy::BlockedRequestObserver;
-use genex_network_proxy::EnvironmentNetworkPolicy;
-use genex_network_proxy::NetworkDecision;
-use genex_network_proxy::NetworkPolicyDecider;
-use genex_network_proxy::NetworkPolicyRequest;
-use genex_network_proxy::NetworkProtocol;
-use genex_network_proxy::NetworkProxy;
-use genex_network_proxy::NetworkRequestCancellation;
-use genex_network_proxy::NetworkRequestCancellationReason;
-use genex_network_proxy::NetworkRequestDisconnect;
-use genex_protocol::approvals::NetworkApprovalContext;
-use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::WarningEvent;
-use genex_sandboxing::record_network_sandbox_violation;
-use genex_tools::ToolName;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::BlockedRequest;
+use ruxex_network_proxy::BlockedRequestObserver;
+use ruxex_network_proxy::EnvironmentNetworkPolicy;
+use ruxex_network_proxy::NetworkDecision;
+use ruxex_network_proxy::NetworkPolicyDecider;
+use ruxex_network_proxy::NetworkPolicyRequest;
+use ruxex_network_proxy::NetworkProtocol;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::NetworkRequestCancellation;
+use ruxex_network_proxy::NetworkRequestCancellationReason;
+use ruxex_network_proxy::NetworkRequestDisconnect;
+use ruxex_protocol::approvals::NetworkApprovalContext;
+use ruxex_protocol::approvals::NetworkApprovalProtocol;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_sandboxing::record_network_sandbox_violation;
+use ruxex_tools::ToolName;
+use ruxex_utils_path_uri::PathUri;
 use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -846,10 +846,10 @@ impl NetworkApprovalService {
                 pending_owner.complete(PendingApprovalDecision::Deny);
                 return NetworkDecision::deny(REASON_NOT_ALLOWED);
             }
-            Err(ToolError::Genex(err)) => {
+            Err(ToolError::Ruxex(err)) => {
                 let telemetry_decision = if matches!(
                     err.details(),
-                    genex_protocol::error::GenexErrorDetails::TurnAborted
+                    ruxex_protocol::error::RuxexErrorDetails::TurnAborted
                 ) {
                     ReviewDecision::Abort
                 } else {
@@ -858,7 +858,7 @@ impl NetworkApprovalService {
                 if let Some(owner_call) = owner_call.as_ref() {
                     let rejection = if matches!(
                         err.details(),
-                        genex_protocol::error::GenexErrorDetails::TurnAborted
+                        ruxex_protocol::error::RuxexErrorDetails::TurnAborted
                     ) {
                         "rejected by user".to_string()
                     } else {
@@ -1174,7 +1174,7 @@ pub(crate) async fn begin_network_approval(
                 })?;
             NetworkProxy::builder()
                 .state(Arc::new(state))
-                .managed_by_genex(/*managed_by_genex*/ false)
+                .managed_by_ruxex(/*managed_by_ruxex*/ false)
                 .build()
                 .await
                 .map_err(|error| {
@@ -1206,7 +1206,7 @@ pub(crate) async fn begin_network_approval(
             fallback_policy_decider,
         )
         .map_err(|err| {
-            ToolError::Genex(genex_protocol::error::GenexErr::Io(io::Error::other(
+            ToolError::Ruxex(ruxex_protocol::error::RuxexErr::Io(io::Error::other(
                 format!("failed to create execution-scoped network proxy: {err}"),
             )))
         })?;

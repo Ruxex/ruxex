@@ -6,9 +6,9 @@
 
 use std::path::PathBuf;
 
-use genex_protocol::ThreadId;
-use genex_rollout::find_archived_thread_path_by_id_str;
-use genex_rollout::find_thread_path_by_id_str;
+use ruxex_protocol::ThreadId;
+use ruxex_rollout::find_archived_thread_path_by_id_str;
+use ruxex_rollout::find_thread_path_by_id_str;
 
 use super::LocalThreadStore;
 use super::helpers::rollout_path_is_archived;
@@ -75,7 +75,7 @@ async fn resolve(
     scope: LookupScope,
 ) -> ThreadStoreResult<Option<ResolvedThreadRollout>> {
     if let Ok(path) = live_writer::rollout_path(store, thread_id).await
-        && genex_rollout::existing_rollout_path(path.as_path())
+        && ruxex_rollout::existing_rollout_path(path.as_path())
             .await
             .is_some()
         && let Some(resolved) = resolve_path_in_scope(store, thread_id, path, scope).await?
@@ -91,10 +91,10 @@ async fn resolve(
                 // `thread/revert`, a scan could find an older immutable rollout for the same
                 // thread. Filesystem fallback remains available only when SQLite has no row.
                 if let Some(path) =
-                    genex_rollout::existing_rollout_path(metadata.rollout_path.as_path()).await
+                    ruxex_rollout::existing_rollout_path(metadata.rollout_path.as_path()).await
                 {
                     let belongs_to_thread =
-                        match genex_rollout::read_session_meta_line(path.as_path()).await {
+                        match ruxex_rollout::read_session_meta_line(path.as_path()).await {
                             Ok(session_meta) => session_meta.meta.id == thread_id,
                             Err(_) => true,
                         };
@@ -113,7 +113,7 @@ async fn resolve(
         }
     }
     if let Some(path) = find_thread_path_by_id_str(
-        store.config.genex_home.as_path(),
+        store.config.ruxex_home.as_path(),
         &thread_id.to_string(),
         state_db_ctx.as_deref(),
     )
@@ -128,7 +128,7 @@ async fn resolve(
         return Ok(None);
     }
     let path = find_archived_thread_path_by_id_str(
-        store.config.genex_home.as_path(),
+        store.config.ruxex_home.as_path(),
         &thread_id.to_string(),
         state_db_ctx.as_deref(),
     )
@@ -156,7 +156,7 @@ async fn resolve_path_in_scope(
 }
 
 fn location_for_path(store: &LocalThreadStore, path: &std::path::Path) -> RolloutLocation {
-    if rollout_path_is_archived(store.config.genex_home.as_path(), path) {
+    if rollout_path_is_archived(store.config.ruxex_home.as_path(), path) {
         RolloutLocation::Archived
     } else {
         RolloutLocation::Unarchived
@@ -168,7 +168,7 @@ async fn resolve_path(
     path: PathBuf,
     location: RolloutLocation,
 ) -> ThreadStoreResult<ResolvedThreadRollout> {
-    let rollout_id = match genex_rollout::rollout_id_from_path(path.as_path()) {
+    let rollout_id = match ruxex_rollout::rollout_id_from_path(path.as_path()) {
         Some(rollout_id) => rollout_id,
         None => {
             return Err(ThreadStoreError::InvalidRequest {

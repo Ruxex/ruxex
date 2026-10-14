@@ -3,7 +3,7 @@
 //! Build the replacement configuration without replacing the active task's settings.
 
 use super::*;
-use genex_config::ConfigLayerSource;
+use ruxex_config::ConfigLayerSource;
 
 pub(crate) fn has_launch_setting(
     config: &Config,
@@ -30,7 +30,7 @@ pub(crate) fn has_launch_setting(
 
 pub(super) fn overlay_new_session_defaults(
     config: &mut Config,
-    defaults: &genex_app_server_protocol::Config,
+    defaults: &ruxex_app_server_protocol::Config,
     cli_kv_overrides: &[(String, TomlValue)],
     harness_overrides: &ConfigOverrides,
 ) {

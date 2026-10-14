@@ -25,8 +25,8 @@ use crate::mentions::collect_tool_mentions_from_messages;
 use crate::plugins::build_plugin_injections;
 use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
-use crate::responses_metadata::GenexResponsesMetadata;
-use crate::responses_metadata::GenexResponsesRequestKind;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesRequestKind;
 use crate::responses_retry::ResponsesStreamRequest;
 use crate::responses_retry::ResponsesStreamRetryState;
 use crate::responses_retry::handle_retryable_response_stream_error;
@@ -57,53 +57,53 @@ use crate::turn_timing::record_turn_ttft_metric;
 use crate::util::error_or_panic;
 use futures::prelude::*;
 use futures::stream::FuturesOrdered;
-use genex_async_utils::OrCancelExt;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::TurnInputContext;
-use genex_extension_api::TurnInputEnvironment;
-use genex_features::Feature;
-use genex_file_system::FindUpErrorPolicy;
-use genex_file_system::find_nearest_ancestor_with_markers;
-use genex_model_provider::ProviderRequestFormat;
-use genex_model_provider::ProviderRequestSnapshot;
-use genex_model_provider::RemoteCompactionSupport;
-use genex_protocol::ResponseItemId;
-use genex_protocol::config_types::AutoCompactTokenLimitScope;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::items::PlanItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::build_hook_prompt_message;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::AgentMessageContentDeltaEvent;
-use genex_protocol::protocol::AgentReasoningSectionBreakEvent;
-use genex_protocol::protocol::ErrorEvent;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::PlanDeltaEvent;
-use genex_protocol::protocol::ReasoningContentDeltaEvent;
-use genex_protocol::protocol::ReasoningRawContentDeltaEvent;
-use genex_protocol::protocol::SafetyBufferingEvent;
-use genex_protocol::protocol::TurnDiffEvent;
-use genex_protocol::protocol::WarningEvent;
-use genex_protocol::user_input::UserInput;
-use genex_skills::collect_explicit_skill_mentions;
-use genex_skills_extension::HostSkillPrompts;
-use genex_skills_extension::InjectedHostSkillPrompts;
-use genex_thread_store::PersistContext;
-use genex_tools::ToolName;
-use genex_utils_path_uri::PathUri;
-use genex_utils_stream_parser::AssistantTextChunk;
-use genex_utils_stream_parser::AssistantTextStreamParser;
-use genex_utils_stream_parser::ProposedPlanSegment;
-use genex_utils_stream_parser::extract_proposed_plan_text;
-use genex_utils_stream_parser::strip_citations;
+use ruxex_async_utils::OrCancelExt;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::TurnInputContext;
+use ruxex_extension_api::TurnInputEnvironment;
+use ruxex_features::Feature;
+use ruxex_file_system::FindUpErrorPolicy;
+use ruxex_file_system::find_nearest_ancestor_with_markers;
+use ruxex_model_provider::ProviderRequestFormat;
+use ruxex_model_provider::ProviderRequestSnapshot;
+use ruxex_model_provider::RemoteCompactionSupport;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::config_types::AutoCompactTokenLimitScope;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::items::PlanItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::build_hook_prompt_message;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AgentMessageContentDeltaEvent;
+use ruxex_protocol::protocol::AgentReasoningSectionBreakEvent;
+use ruxex_protocol::protocol::ErrorEvent;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::PlanDeltaEvent;
+use ruxex_protocol::protocol::ReasoningContentDeltaEvent;
+use ruxex_protocol::protocol::ReasoningRawContentDeltaEvent;
+use ruxex_protocol::protocol::SafetyBufferingEvent;
+use ruxex_protocol::protocol::TurnDiffEvent;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills::collect_explicit_skill_mentions;
+use ruxex_skills_extension::HostSkillPrompts;
+use ruxex_skills_extension::InjectedHostSkillPrompts;
+use ruxex_thread_store::PersistContext;
+use ruxex_tools::ToolName;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_stream_parser::AssistantTextChunk;
+use ruxex_utils_stream_parser::AssistantTextStreamParser;
+use ruxex_utils_stream_parser::ProposedPlanSegment;
+use ruxex_utils_stream_parser::extract_proposed_plan_text;
+use ruxex_utils_stream_parser::strip_citations;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 use tracing::error;
@@ -114,7 +114,7 @@ use tracing::trace;
 use tracing::trace_span;
 use tracing::warn;
 
-const POST_SAMPLING_TOKEN_ESTIMATE_TARGET: &str = "genex_core::post_sampling_token_estimate";
+const POST_SAMPLING_TOKEN_ESTIMATE_TARGET: &str = "ruxex_core::post_sampling_token_estimate";
 
 /// Explicit MCP startup requirements retained across restarts within one user turn.
 #[derive(Default)]
@@ -144,7 +144,7 @@ pub(crate) async fn run_turn(
     mcp_startup_requirements: &mut McpStartupRequirements,
     prewarmed_client_session: Option<ModelClientSession>,
     cancellation_token: CancellationToken,
-) -> GenexResult<Option<String>> {
+) -> RuxexResult<Option<String>> {
     // Record results from hooks that finished after the previous turn before this turn's user prompt.
     drain_async_hook_results(&sess, &turn_context, /*before_user_prompt*/ true).await;
 
@@ -171,13 +171,13 @@ pub(crate) async fn run_turn(
             PersistContext::Standard,
         )
         .await;
-        if matches!(err.details(), GenexErrorDetails::TurnAborted) {
+        if matches!(err.details(), RuxexErrorDetails::TurnAborted) {
             return Err(err);
         }
-        if matches!(err.details(), GenexErrorDetails::ToolCollision(_)) {
+        if matches!(err.details(), RuxexErrorDetails::ToolCollision(_)) {
             return Err(err);
         }
-        let error = err.to_genex_protocol_error();
+        let error = err.to_ruxex_protocol_error();
         sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
             .await;
         // Publish the failure only after prompt hooks finish, so clients cannot react to
@@ -238,7 +238,7 @@ pub(crate) async fn run_turn(
         .await
     {
         Ok(step_context) => step_context,
-        Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
+        Err(err) if matches!(err.details(), RuxexErrorDetails::TurnAborted) => {
             run_hooks_and_record_inputs(
                 &sess,
                 &turn_context,
@@ -331,7 +331,7 @@ pub(crate) async fn run_turn(
 
     let mut last_agent_message: Option<String> = None;
     let mut stop_hook_active = false;
-    // Although from the perspective of genex.rs, TurnDiffTracker has the lifecycle of a Task which contains
+    // Although from the perspective of ruxex.rs, TurnDiffTracker has the lifecycle of a Task which contains
     // many turns, from the perspective of the user, it is a single turn.
     let turn_diff_tracker = Arc::new(tokio::sync::Mutex::new(
         TurnDiffTracker::with_environment_display_roots(display_roots),
@@ -418,7 +418,7 @@ pub(crate) async fn run_turn(
                 .await?
             }
         };
-        let sampling_request_result: GenexResult<_> = async {
+        let sampling_request_result: RuxexResult<_> = async {
             super::time_reminder::maybe_record_current_time_reminder(
                 sess.as_ref(),
                 turn_context.as_ref(),
@@ -444,7 +444,7 @@ pub(crate) async fn run_turn(
             .await;
 
             let responses_metadata = sess
-                .responses_metadata(step_context.as_ref(), GenexResponsesRequestKind::Turn)
+                .responses_metadata(step_context.as_ref(), RuxexResponsesRequestKind::Turn)
                 .await;
             run_sampling_request(
                 Arc::clone(&sess),
@@ -550,10 +550,10 @@ pub(crate) async fn run_turn(
                     )
                     .await
                     {
-                        if matches!(err.details(), GenexErrorDetails::TurnAborted) {
+                        if matches!(err.details(), RuxexErrorDetails::TurnAborted) {
                             return Err(err);
                         }
-                        let error = err.to_genex_protocol_error();
+                        let error = err.to_ruxex_protocol_error();
                         sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                             .await;
                         return Ok(None);
@@ -619,23 +619,23 @@ pub(crate) async fn run_turn(
                 }
                 continue;
             }
-            Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
+            Err(err) if matches!(err.details(), RuxexErrorDetails::TurnAborted) => {
                 return Err(err);
             }
-            Err(genex_error)
+            Err(ruxex_error)
                 if matches!(
-                    genex_error.details(),
-                    GenexErrorDetails::InvalidImageRequest()
+                    ruxex_error.details(),
+                    RuxexErrorDetails::InvalidImageRequest()
                 ) =>
             {
-                let error = GenexErrorInfo::BadRequest;
+                let error = RuxexErrorInfo::BadRequest;
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
                 let event = EventMsg::Error(ErrorEvent {
                     misalignment: None,
                     message: "Invalid image in your last message. Please remove it and try again."
                         .to_string(),
-                    genex_error_info: Some(error),
+                    ruxex_error_info: Some(error),
                 });
                 sess.send_event(&turn_context, event).await;
                 break;
@@ -644,9 +644,9 @@ pub(crate) async fn run_turn(
                 info!("Turn error: {e:#}");
                 if matches!(
                     e.details(),
-                    GenexErrorDetails::MisalignmentPolicyViolation { .. }
+                    RuxexErrorDetails::MisalignmentPolicyViolation { .. }
                 ) {}
-                let error = e.to_genex_protocol_error();
+                let error = e.to_ruxex_protocol_error();
                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone())
                     .await;
                 let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));
@@ -933,7 +933,7 @@ async fn run_pre_sampling_compact(
     turn_context: &Arc<TurnContext>,
     client_session: &mut ModelClientSession,
     cancellation_token: &CancellationToken,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     maybe_run_previous_model_inline_compact(sess, turn_context, client_session, cancellation_token)
         .await?;
     let token_status =
@@ -969,14 +969,14 @@ fn comp_hash_changed(previous: Option<&str>, current: Option<&str>) -> bool {
 
 /// Captures the current model's request-scoped state for retrying previous-model compaction.
 ///
-/// Returns `None` when the active authentication does not use the Genex backend, the provider is
+/// Returns `None` when the active authentication does not use the Ruxex backend, the provider is
 /// not provider, or the previous and current model are the same.
 async fn capture_current_model_fallback_step_context(
     sess: &Arc<Session>,
     turn_context: &Arc<TurnContext>,
     previous_model: &str,
     cancellation_token: &CancellationToken,
-) -> GenexResult<Option<Arc<StepContext>>> {
+) -> RuxexResult<Option<Arc<StepContext>>> {
     let uses_managed_auth = turn_context
         .provider
         .request_snapshot()
@@ -1007,7 +1007,7 @@ async fn maybe_run_previous_model_inline_compact(
     turn_context: &Arc<TurnContext>,
     client_session: &mut ModelClientSession,
     cancellation_token: &CancellationToken,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let Some(previous_turn_settings) = sess.previous_turn_settings().await else {
         return Ok(());
     };
@@ -1108,7 +1108,7 @@ async fn run_auto_compact(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let turn_context = &step_context.turn;
     if turn_context.config.features.enabled(Feature::TokenBudget) {
         // Compaction is the reset request, so force a new context window
@@ -1190,13 +1190,13 @@ pub(crate) fn build_prompt(
 async fn run_sampling_request(
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
-    turn_store: Arc<genex_extension_api::ExtensionData>,
+    turn_store: Arc<ruxex_extension_api::ExtensionData>,
     turn_diff_tracker: SharedTurnDiffTracker,
     client_session: &mut ModelClientSession,
-    responses_metadata: &GenexResponsesMetadata,
+    responses_metadata: &RuxexResponsesMetadata,
     input: Vec<ResponseItem>,
     cancellation_token: CancellationToken,
-) -> GenexResult<(SamplingRequestResult, Vec<ResponseItem>)> {
+) -> RuxexResult<(SamplingRequestResult, Vec<ResponseItem>)> {
     let turn_context = Arc::clone(&step_context.turn);
     let base_instructions = sess.get_prompt_base_instructions().await;
 
@@ -1251,7 +1251,7 @@ async fn run_sampling_request(
                 return Ok((output, original_input.unwrap_or(prompt.input)));
             }
             Err(err) => match err.details() {
-                GenexErrorDetails::ContextWindowExceeded => {
+                RuxexErrorDetails::ContextWindowExceeded => {
                     sess.set_total_tokens_full(&turn_context).await;
                     return Err(err);
                 }
@@ -1291,11 +1291,11 @@ async fn run_sampling_request(
 pub(crate) async fn built_tools(
     sess: &Session,
     turn_context: &TurnContext,
-    model_info: &genex_protocol::model_types::ModelInfo,
+    model_info: &ruxex_protocol::model_types::ModelInfo,
     environments: &TurnEnvironmentSnapshot,
-    mcp: &Arc<genex_mcp::McpBinding>,
+    mcp: &Arc<ruxex_mcp::McpBinding>,
     step_store: &ExtensionData,
-) -> GenexResult<Arc<ToolRouter>> {
+) -> RuxexResult<Arc<ToolRouter>> {
     Ok(Arc::new(build_tool_router(
         sess,
         turn_context,
@@ -1478,11 +1478,11 @@ async fn maybe_emit_pending_agent_message_start(
 }
 
 /// Agent messages are text-only today; concatenate all text entries.
-pub(super) fn agent_message_text(item: &genex_protocol::items::AgentMessageItem) -> String {
+pub(super) fn agent_message_text(item: &ruxex_protocol::items::AgentMessageItem) -> String {
     item.content
         .iter()
         .map(|entry| match entry {
-            genex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+            ruxex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
         })
         .collect()
 }
@@ -1651,7 +1651,7 @@ async fn maybe_complete_plan_item_from_message(
 async fn emit_agent_message_in_plan_mode(
     sess: &Session,
     turn_context: &TurnContext,
-    agent_message: genex_protocol::items::AgentMessageItem,
+    agent_message: ruxex_protocol::items::AgentMessageItem,
     state: &mut PlanModeStreamState,
 ) {
     let agent_message_id = agent_message.id.clone();
@@ -1672,7 +1672,7 @@ async fn emit_agent_message_in_plan_mode(
             .pending_agent_message_items
             .remove(&agent_message_id)
             .unwrap_or_else(|| {
-                TurnItem::AgentMessage(genex_protocol::items::AgentMessageItem {
+                TurnItem::AgentMessage(ruxex_protocol::items::AgentMessageItem {
                     id: agent_message_id.clone(),
                     content: Vec::new(),
                     phase: None,
@@ -1716,7 +1716,7 @@ async fn emit_turn_item_in_plan_mode(
 async fn handle_assistant_item_done_in_plan_mode(
     sess: &Session,
     step_context: &StepContext,
-    turn_store: &genex_extension_api::ExtensionData,
+    turn_store: &ruxex_extension_api::ExtensionData,
     item: &ResponseItem,
     state: &mut PlanModeStreamState,
     previously_active_item: Option<&TurnItem>,
@@ -1771,7 +1771,7 @@ async fn drain_in_flight(
     in_flight: &mut FuturesOrdered<InFlightFuture<'static>>,
     sess: Arc<Session>,
     step_context: &StepContext,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let turn_context = &step_context.turn;
     while let Some(res) = in_flight.next().await {
         match res {
@@ -1818,13 +1818,13 @@ async fn try_run_sampling_request(
     tool_runtime: ToolCallRuntime,
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
-    turn_store: Arc<genex_extension_api::ExtensionData>,
+    turn_store: Arc<ruxex_extension_api::ExtensionData>,
     client_session: &mut ModelClientSession,
-    responses_metadata: &GenexResponsesMetadata,
+    responses_metadata: &RuxexResponsesMetadata,
     turn_diff_tracker: SharedTurnDiffTracker,
     prompt: &Prompt,
     cancellation_token: CancellationToken,
-) -> GenexResult<SamplingRequestResult> {
+) -> RuxexResult<SamplingRequestResult> {
     let turn_context = Arc::clone(&step_context.turn);
     let inference_trace = sess.services.rollout_thread_trace.inference_trace_context(
         turn_context.sub_id.as_str(),
@@ -1883,20 +1883,20 @@ async fn try_run_sampling_request(
         !sess.services.extensions.turn_item_contributors().is_empty();
     let mut active_item_is_streaming_to_client = false;
     let receiving_span = trace_span!("receiving_stream");
-    let outcome: GenexResult<SamplingRequestResult> = loop {
+    let outcome: RuxexResult<SamplingRequestResult> = loop {
         let handle_responses = trace_span!(
             parent: &receiving_span,
             "handle_responses",
             otel.name = field::Empty,
             tool_name = field::Empty,
             from = field::Empty,
-            genex.request.reasoning_effort = %reasoning_effort,
+            ruxex.request.reasoning_effort = %reasoning_effort,
             gen_ai.usage.input_tokens = field::Empty,
             gen_ai.usage.cache_read.input_tokens = field::Empty,
             gen_ai.usage.cache_write.input_tokens = field::Empty,
             gen_ai.usage.output_tokens = field::Empty,
-            genex.usage.reasoning_output_tokens = field::Empty,
-            genex.usage.total_tokens = field::Empty,
+            ruxex.usage.reasoning_output_tokens = field::Empty,
+            ruxex.usage.total_tokens = field::Empty,
         );
 
         let event = match stream
@@ -1906,8 +1906,8 @@ async fn try_run_sampling_request(
             .await
         {
             Ok(event) => event,
-            Err(genex_async_utils::CancelErr::Cancelled) => {
-                break Err(GenexErr::TurnAborted);
+            Err(ruxex_async_utils::CancelErr::Cancelled) => {
+                break Err(RuxexErr::TurnAborted);
             }
         };
 
@@ -1915,7 +1915,7 @@ async fn try_run_sampling_request(
             Some(Ok(event)) => event,
             Some(Err(err)) => break Err(err),
             None => {
-                break Err(GenexErr::Stream(
+                break Err(RuxexErr::Stream(
                     "stream closed before response.completed".into(),
                 ));
             }
@@ -2062,7 +2062,7 @@ async fn try_run_sampling_request(
                             assistant_message_stream_parsers.seed_item_text(&item_id, &raw_text);
                         if let TurnItem::AgentMessage(agent_message) = &mut turn_item {
                             agent_message.content =
-                                vec![genex_protocol::items::AgentMessageContent::Text {
+                                vec![ruxex_protocol::items::AgentMessageContent::Text {
                                     text: if plan_mode {
                                         String::new()
                                     } else {
@@ -2362,7 +2362,7 @@ async fn try_run_sampling_request(
     }
 
     if cancellation_token.is_cancelled() {
-        return Err(GenexErr::TurnAborted);
+        return Err(RuxexErr::TurnAborted);
     }
 
     if should_emit_turn_diff {
@@ -2396,10 +2396,10 @@ mod tests {
     use std::sync::Arc;
 
     use super::provider_request_uses_managed_auth;
-    use genex_model_provider::ProviderConnectionKey;
-    use genex_model_provider::ProviderCredentialSnapshot;
-    use genex_model_provider::ProviderRequestAuth;
-    use genex_model_provider::ProviderRequestSnapshot;
+    use ruxex_model_provider::ProviderConnectionKey;
+    use ruxex_model_provider::ProviderCredentialSnapshot;
+    use ruxex_model_provider::ProviderRequestAuth;
+    use ruxex_model_provider::ProviderRequestSnapshot;
 
     #[derive(Debug)]
     struct TestCredentialSnapshot;

@@ -2,7 +2,7 @@ use std::path::Component;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 
 use crate::SkillInterface;
@@ -10,7 +10,7 @@ use crate::SkillInterface;
 const MAX_NAME_LEN: usize = 64;
 const MAX_DESCRIPTION_LEN: usize = 1024;
 
-/// Interface metadata deserialized from a skill's `agents/genex.yaml` file.
+/// Interface metadata deserialized from a skill's `agents/ruxex.yaml` file.
 #[derive(Debug, Default, Deserialize)]
 pub struct SkillInterfaceFile {
     display_name: Option<String>,

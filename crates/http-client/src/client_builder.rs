@@ -8,7 +8,7 @@
 use http::HeaderMap;
 use std::time::Duration;
 
-use genex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use ruxex_utils_rustls_provider::ensure_rustls_crypto_provider;
 
 use crate::BuildCustomCaTransportError;
 use crate::BuildRouteAwareHttpClientError;
@@ -221,9 +221,9 @@ impl HttpClientBuilder {
             Ok(inner) => HttpClient::from_parts(inner, request_logging),
             Err(error) => {
                 tracing::event!(
-                    target: "genex_otel.log_only",
+                    target: "ruxex_otel.log_only",
                     tracing::Level::WARN,
-                    event.name = "genex.http_client.custom_ca_fallback",
+                    event.name = "ruxex.http_client.custom_ca_fallback",
                     "HTTP client fell back to system root certificates"
                 );
                 tracing::warn!(error = %error, "failed to build HTTP client with custom CA");

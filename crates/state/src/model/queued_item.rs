@@ -1,5 +1,5 @@
 use anyhow::Result;
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
 

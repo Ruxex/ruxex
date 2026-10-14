@@ -62,9 +62,9 @@ fn app_server_exec_approval_request_preserves_permissions_context() {
             approval_id: Some("approval-1".to_string()),
             environment_id: None,
             reason: None,
-            network_approval_context: Some(genex_app_server_protocol::NetworkApprovalContext {
+            network_approval_context: Some(ruxex_app_server_protocol::NetworkApprovalContext {
                 host: "example.com".to_string(),
-                protocol: genex_app_server_protocol::NetworkApprovalProtocol::Socks5Tcp,
+                protocol: ruxex_app_server_protocol::NetworkApprovalProtocol::Socks5Tcp,
             }),
             command: Some("ls".to_string()),
             cwd: Some(test_path_buf("/tmp").abs().into()),
@@ -89,9 +89,9 @@ fn app_server_exec_approval_request_preserves_permissions_context() {
 
     assert_eq!(
         request.network_approval_context,
-        Some(genex_app_server_protocol::NetworkApprovalContext {
+        Some(ruxex_app_server_protocol::NetworkApprovalContext {
             host: "example.com".to_string(),
-            protocol: genex_app_server_protocol::NetworkApprovalProtocol::Socks5Tcp,
+            protocol: ruxex_app_server_protocol::NetworkApprovalProtocol::Socks5Tcp,
         })
     );
     assert_eq!(
@@ -132,7 +132,7 @@ fn app_server_request_permissions_preserves_file_system_permissions() {
         started_at_ms: 0,
         cwd: cwd.clone().into(),
         reason: Some("Select a workspace root".to_string()),
-        permissions: genex_app_server_protocol::RequestPermissionProfile {
+        permissions: ruxex_app_server_protocol::RequestPermissionProfile {
             network: Some(AppServerAdditionalNetworkPermissions {
                 enabled: Some(true),
             }),
@@ -200,7 +200,7 @@ async fn exec_approval_uses_approval_id_when_present() {
             assert_eq!(id, "approval-subcommand");
             assert_matches!(
                 decision,
-                genex_app_server_protocol::CommandExecutionApprovalDecision::Accept
+                ruxex_app_server_protocol::CommandExecutionApprovalDecision::Accept
             );
             found = true;
             break;

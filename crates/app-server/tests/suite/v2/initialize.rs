@@ -4,19 +4,19 @@ use app_test_support::TestAppServer;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
-use genex_app_server_protocol::ClientInfo;
-use genex_app_server_protocol::InitializeCapabilities;
-use genex_app_server_protocol::InitializeResponse;
-use genex_app_server_protocol::JSONRPCMessage;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_features::Feature;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cargo_bin::cargo_bin;
+use ruxex_app_server_protocol::ClientInfo;
+use ruxex_app_server_protocol::InitializeCapabilities;
+use ruxex_app_server_protocol::InitializeResponse;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_features::Feature;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cargo_bin::cargo_bin;
 use core_test_support::fs_wait;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -30,13 +30,13 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
-    let expected_genex_home = AbsolutePathBuf::try_from(genex_home.path().canonicalize()?)?;
+    let ruxex_home = TempDir::new()?;
+    let expected_ruxex_home = AbsolutePathBuf::try_from(ruxex_home.path().canonicalize()?)?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -56,14 +56,14 @@ async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
     };
     let InitializeResponse {
         user_agent,
-        genex_home: response_genex_home,
+        ruxex_home: response_ruxex_home,
         platform_family,
         platform_os,
         ..
     } = to_response::<InitializeResponse>(response)?;
 
     assert!(user_agent.starts_with("codex_vscode/"));
-    assert_eq!(response_genex_home, expected_genex_home);
+    assert_eq!(response_ruxex_home, expected_ruxex_home);
     assert_eq!(platform_family, std::env::consts::FAMILY);
     assert_eq!(platform_os, std::env::consts::OS);
     Ok(())
@@ -73,12 +73,12 @@ async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
 async fn initialize_probe_does_not_override_originator() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -86,8 +86,8 @@ async fn initialize_probe_does_not_override_originator() -> Result<()> {
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "genex_app_server_daemon".to_string(),
-            title: Some("Genex App Server Daemon".to_string()),
+            name: "ruxex_app_server_daemon".to_string(),
+            title: Some("Ruxex App Server Daemon".to_string()),
             version: "0.1.0".to_string(),
         }),
     )
@@ -98,20 +98,20 @@ async fn initialize_probe_does_not_override_originator() -> Result<()> {
     };
     let InitializeResponse { user_agent, .. } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("genex_cli_rs/"));
+    assert!(user_agent.starts_with("ruxex_cli_rs/"));
     Ok(())
 }
 
 #[tokio::test]
-async fn initialize_genex_backend_does_not_override_originator() -> Result<()> {
+async fn initialize_ruxex_backend_does_not_override_originator() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -119,8 +119,8 @@ async fn initialize_genex_backend_does_not_override_originator() -> Result<()> {
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "genex-backend".to_string(),
-            title: Some("Genex Backend".to_string()),
+            name: "ruxex-backend".to_string(),
+            title: Some("Ruxex Backend".to_string()),
             version: "0.1.0".to_string(),
         }),
     )
@@ -131,7 +131,7 @@ async fn initialize_genex_backend_does_not_override_originator() -> Result<()> {
     };
     let InitializeResponse { user_agent, .. } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("genex_cli_rs/"));
+    assert!(user_agent.starts_with("ruxex_cli_rs/"));
     Ok(())
 }
 
@@ -139,17 +139,17 @@ async fn initialize_genex_backend_does_not_override_originator() -> Result<()> {
 async fn initialize_respects_originator_override_env_var() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
-    let expected_genex_home = AbsolutePathBuf::try_from(genex_home.path().canonicalize()?)?;
+    let ruxex_home = TempDir::new()?;
+    let expected_ruxex_home = AbsolutePathBuf::try_from(ruxex_home.path().canonicalize()?)?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_env_overrides(&[(
-            "GENEX_INTERNAL_ORIGINATOR_OVERRIDE",
-            Some("genex_originator_via_env_var"),
+            "RUXEX_INTERNAL_ORIGINATOR_OVERRIDE",
+            Some("ruxex_originator_via_env_var"),
         )])
         .build()
         .await?;
@@ -169,14 +169,14 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
     };
     let InitializeResponse {
         user_agent,
-        genex_home: response_genex_home,
+        ruxex_home: response_ruxex_home,
         platform_family,
         platform_os,
         ..
     } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("genex_originator_via_env_var/"));
-    assert_eq!(response_genex_home, expected_genex_home);
+    assert!(user_agent.starts_with("ruxex_originator_via_env_var/"));
+    assert_eq!(response_ruxex_home, expected_ruxex_home);
     assert_eq!(platform_family, std::env::consts::FAMILY);
     assert_eq!(platform_os, std::env::consts::OS);
     Ok(())
@@ -186,14 +186,14 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
 async fn initialize_rejects_invalid_client_name() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[("GENEX_INTERNAL_ORIGINATOR_OVERRIDE", None)])
+        .with_env_overrides(&[("RUXEX_INTERNAL_ORIGINATOR_OVERRIDE", None)])
         .build()
         .await?;
 
@@ -224,12 +224,12 @@ async fn initialize_rejects_invalid_client_name() -> Result<()> {
 async fn initialize_opt_out_notification_methods_filters_notifications() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
 
@@ -295,9 +295,9 @@ async fn initialize_opt_out_notification_methods_filters_notifications() -> Resu
 async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let genex_home = TempDir::new()?;
-    let notify_file = genex_home.path().join("notify.json");
-    let notify_capture = cargo_bin("genex-app-server-test-notify-capture")?;
+    let ruxex_home = TempDir::new()?;
+    let notify_file = ruxex_home.path().join("notify.json");
+    let notify_capture = cargo_bin("ruxex-app-server-test-notify-capture")?;
     let notify_capture = notify_capture
         .to_str()
         .expect("notify capture path should be valid UTF-8");
@@ -311,10 +311,10 @@ async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<(
             toml_basic_string(notify_file_str)
         ))
         .disable_feature(Feature::ShellSnapshot)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(

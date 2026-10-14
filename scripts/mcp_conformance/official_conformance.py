@@ -250,7 +250,7 @@ def _make_adapter_launcher(
     launcher = launcher_dir / "client"
     launcher.write_text(
         "#!/bin/sh\n"
-        f"export GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH={automatic_auth}\n"
+        f"export RUXEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH={automatic_auth}\n"
         f'exec {shlex.quote(sys.executable)} {shlex.quote(str(adapter_script))} "$@"\n',
         encoding="utf-8",
     )
@@ -312,9 +312,9 @@ def _load_adapter_report(report_path: Path) -> tuple[bool, str]:
     try:
         decoded = json.loads(report_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        return False, f"Genex adapter did not write a valid report: {exc}"
+        return False, f"Ruxex adapter did not write a valid report: {exc}"
     if not isinstance(decoded, dict):
-        return False, "Genex adapter report was not an object"
+        return False, "Ruxex adapter report was not an object"
     success = decoded.get("success") is True
     steps = decoded.get("steps")
     failed_steps: list[str] = []
@@ -325,11 +325,11 @@ def _load_adapter_report(report_path: Path) -> tuple[bool, str]:
                     f"{step.get('name')}: {step.get('detail', 'failed')}"
                 )
     if success:
-        return True, "Genex adapter completed the scenario"
+        return True, "Ruxex adapter completed the scenario"
     if failed_steps:
         return False, redact_sensitive_text("; ".join(failed_steps))[-4_000:]
     return False, redact_sensitive_text(
-        str(decoded.get("error") or "Genex adapter failed")
+        str(decoded.get("error") or "Ruxex adapter failed")
     )[-4_000:]
 
 
@@ -337,7 +337,7 @@ def _run_scenario(
     *,
     conformance_command: Sequence[str],
     adapter_launcher: Path,
-    genex_binary: Path,
+    ruxex_binary: Path,
     mode: str,
     scenario: str,
     output_dir: Path,
@@ -348,15 +348,15 @@ def _run_scenario(
     scenario_dir = output_dir / _safe_scenario_name(scenario)
     scenario_dir.mkdir(parents=True, exist_ok=True)
     adapter_report = scenario_dir / "codex-adapter.json"
-    adapter_home = scenario_dir / "genex-home"
+    adapter_home = scenario_dir / "ruxex-home"
     adapter_home.mkdir()
 
     env = dict(base_env)
     env.update(
         {
-            "GENEX_CONFORMANCE_BINARY": str(genex_binary),
-            "GENEX_CONFORMANCE_HOME": str(adapter_home),
-            "GENEX_CONFORMANCE_ADAPTER_REPORT": str(adapter_report),
+            "RUXEX_CONFORMANCE_BINARY": str(ruxex_binary),
+            "RUXEX_CONFORMANCE_HOME": str(adapter_home),
+            "RUXEX_CONFORMANCE_ADAPTER_REPORT": str(adapter_report),
         }
     )
     command = [
@@ -445,7 +445,7 @@ def run_official_mode(
     *,
     conformance_command: Sequence[str],
     adapter_script: Path,
-    genex_binary: Path,
+    ruxex_binary: Path,
     mode: str,
     scenarios: Sequence[str],
     output_dir: Path,
@@ -454,7 +454,7 @@ def run_official_mode(
 ) -> list[OfficialScenarioResult]:
     launcher = _make_adapter_launcher(
         adapter_script,
-        require_automatic_auth=base_env.get("GENEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH")
+        require_automatic_auth=base_env.get("RUXEX_CONFORMANCE_REQUIRE_AUTOMATIC_AUTH")
         == "1",
     )
     try:
@@ -462,7 +462,7 @@ def run_official_mode(
             _run_scenario(
                 conformance_command=conformance_command,
                 adapter_launcher=launcher,
-                genex_binary=genex_binary,
+                ruxex_binary=ruxex_binary,
                 mode=mode,
                 scenario=scenario,
                 output_dir=output_dir,

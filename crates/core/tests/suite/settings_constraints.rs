@@ -1,27 +1,27 @@
 use anyhow::Result;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::GenexThread;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_core::config::Constrained;
-use genex_features::Feature;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GenexErrorInfo;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::ThreadSettingsSnapshot;
-use genex_protocol::user_input::UserInput;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::RuxexThread;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_core::config::Constrained;
+use ruxex_features::Feature;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::model_types::ApprovalMessages;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::RuxexErrorInfo;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::ThreadSettingsSnapshot;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use test_case::test_case;
@@ -41,13 +41,13 @@ enum SettingsOperation {
 impl SettingsOperation {
     async fn submit(
         self,
-        genex: &GenexThread,
+        ruxex: &RuxexThread,
         thread_settings: ThreadSettingsOverrides,
     ) -> Result<ThreadSettingsSnapshot> {
         let id = match self {
-            Self::Standalone => genex.submit(Op::ThreadSettings { thread_settings }).await?,
+            Self::Standalone => ruxex.submit(Op::ThreadSettings { thread_settings }).await?,
             Self::TurnStart => {
-                let result = genex
+                let result = ruxex
                     .start_or_steer_turn(
                         TurnInputRequest::user_input(vec![UserInput::Text {
                             text: "use the protected model".to_string(),
@@ -64,14 +64,14 @@ impl SettingsOperation {
         };
         timeout(Duration::from_secs(10), async {
             loop {
-                let event = genex.next_event().await?;
+                let event = ruxex.next_event().await?;
                 if event.id != id {
                     continue;
                 }
                 match event.msg {
                     EventMsg::ThreadSettingsApplied(applied) => return Ok(applied.thread_settings),
                     EventMsg::Error(error) => {
-                        assert_eq!(error.genex_error_info, Some(GenexErrorInfo::BadRequest));
+                        assert_eq!(error.ruxex_error_info, Some(RuxexErrorInfo::BadRequest));
                         anyhow::bail!(error.message);
                     }
                     _ => {}
@@ -112,7 +112,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         workspace_write: None,
         read_only: Some(PERMISSION_INSTRUCTIONS.to_string()),
     });
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model(INITIAL_MODEL)
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(
@@ -136,7 +136,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         })
         .build_with_auto_env(&server)
         .await?;
-    let initial = test.genex.thread_settings_snapshot().await;
+    let initial = test.ruxex.thread_settings_snapshot().await;
     assert_eq!(initial.permission_profile, PermissionProfile::Disabled);
     let model_update = ThreadSettingsOverrides {
         model: Some(PROTECTED_MODEL.to_string()),
@@ -144,14 +144,14 @@ async fn protected_model_settings_use_the_proposed_permissions(
     };
 
     let error = operation
-        .submit(&test.genex, model_update.clone())
+        .submit(&test.ruxex, model_update.clone())
         .await
         .expect_err("the protected model requires restricted permissions");
     assert!(
         error.to_string().contains("you need to use auto review"),
         "{error}"
     );
-    assert_eq!(test.genex.thread_settings_snapshot().await, initial);
+    assert_eq!(test.ruxex.thread_settings_snapshot().await, initial);
     assert!(response.requests().is_empty());
 
     let expected = ThreadSettingsSnapshot {
@@ -168,7 +168,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
     };
     let applied = operation
         .submit(
-            &test.genex,
+            &test.ruxex,
             ThreadSettingsOverrides {
                 permission_profile: Some(PermissionProfile::read_only()),
                 ..model_update
@@ -176,9 +176,9 @@ async fn protected_model_settings_use_the_proposed_permissions(
         )
         .await?;
     assert_eq!(applied, expected);
-    assert_eq!(test.genex.thread_settings_snapshot().await, expected);
+    assert_eq!(test.ruxex.thread_settings_snapshot().await, expected);
     if let SettingsOperation::TurnStart = operation {
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -188,7 +188,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
     // protected model against the proposed permissions.
     let error = operation
         .submit(
-            &test.genex,
+            &test.ruxex,
             ThreadSettingsOverrides {
                 permission_profile: Some(PermissionProfile::Disabled),
                 ..Default::default()
@@ -200,7 +200,7 @@ async fn protected_model_settings_use_the_proposed_permissions(
         error.to_string().contains("you need to use auto review"),
         "{error}"
     );
-    assert_eq!(test.genex.thread_settings_snapshot().await, expected);
+    assert_eq!(test.ruxex.thread_settings_snapshot().await, expected);
 
     if let SettingsOperation::Standalone = operation {
         test.submit_text_turn("use the committed settings").await?;

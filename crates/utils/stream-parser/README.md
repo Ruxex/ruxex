@@ -1,9 +1,9 @@
-# genex-utils-stream-parser
+# ruxex-utils-stream-parser
 
 Small, dependency-free utilities for parsing streamed text incrementally.
 
-**Disclaimer**: This code is pretty complex and Genex did not manage to write it so before updating the code, make
-sure to deeply understand it and don't blindly trust Genex on it. Feel free to update the documentation as you
+**Disclaimer**: This code is pretty complex and Ruxex did not manage to write it so before updating the code, make
+sure to deeply understand it and don't blindly trust Ruxex on it. Feel free to update the documentation as you
 modify the code
 
 ## What it provides
@@ -26,8 +26,8 @@ immediately, and extracts hidden payloads separately.
 ## Example: citation streaming
 
 ```rust
-use genex_utils_stream_parser::CitationStreamParser;
-use genex_utils_stream_parser::StreamTextParser;
+use ruxex_utils_stream_parser::CitationStreamParser;
+use ruxex_utils_stream_parser::StreamTextParser;
 
 let mut parser = CitationStreamParser::new();
 
@@ -47,10 +47,10 @@ assert!(tail.extracted.is_empty());
 ## Example: raw byte streaming with split UTF-8 code points
 
 ```rust
-use genex_utils_stream_parser::CitationStreamParser;
-use genex_utils_stream_parser::Utf8StreamParser;
+use ruxex_utils_stream_parser::CitationStreamParser;
+use ruxex_utils_stream_parser::Utf8StreamParser;
 
-# fn demo() -> Result<(), genex_utils_stream_parser::Utf8StreamParserError> {
+# fn demo() -> Result<(), ruxex_utils_stream_parser::Utf8StreamParserError> {
 let mut parser = Utf8StreamParser::new(CitationStreamParser::new());
 
 // "é" split across chunks: 0xC3 + 0xA9
@@ -69,9 +69,9 @@ assert!(tail.visible_text.is_empty());
 ## Example: custom hidden tags
 
 ```rust
-use genex_utils_stream_parser::InlineHiddenTagParser;
-use genex_utils_stream_parser::InlineTagSpec;
-use genex_utils_stream_parser::StreamTextParser;
+use ruxex_utils_stream_parser::InlineHiddenTagParser;
+use ruxex_utils_stream_parser::InlineTagSpec;
+use ruxex_utils_stream_parser::StreamTextParser;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Tag {

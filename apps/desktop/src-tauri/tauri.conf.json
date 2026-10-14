@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Genex Desktop",
+  "productName": "Ruxex Desktop",
   "version": "0.1.0",
-  "identifier": "com.genex.desktop",
+  "identifier": "com.ruxex.desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Genex Desktop",
+        "title": "Ruxex Desktop",
         "width": 1280,
         "height": 800,
         "minWidth": 960,
@@ -26,6 +26,6 @@
   },
   "bundle": {
     "active": true,
-    "resources": ["resources/genex-package"]
+    "resources": ["resources/ruxex-package"]
   }
 }

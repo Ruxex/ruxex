@@ -1,9 +1,9 @@
 use super::CreateSeatbeltCommandArgsParams;
 use super::MACOS_PATH_TO_SEATBELT_EXECUTABLE;
 use super::create_seatbelt_command_args;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::os::unix::net::UnixListener;
 use std::os::unix::net::UnixStream;
@@ -11,7 +11,7 @@ use std::process::Command;
 
 #[test]
 fn daemon_sockets_are_denied_despite_network_and_tmp_write_grants() {
-    let root = genex_uds::prepare_shared_daemon_socket_directory().unwrap();
+    let root = ruxex_uds::prepare_shared_daemon_socket_directory().unwrap();
     let private = tempfile::tempdir_in(&root).unwrap();
     let workspace = tempfile::tempdir().unwrap();
     let socket = private.path().join("rpc.sock");
@@ -74,7 +74,7 @@ assert p.recv(2) == b'ok'
     .unwrap();
     let output = Command::new(MACOS_PATH_TO_SEATBELT_EXECUTABLE)
         .args(args)
-        .env("GENEX_HOME", workspace.path())
+        .env("RUXEX_HOME", workspace.path())
         .output()
         .unwrap();
     assert_eq!(

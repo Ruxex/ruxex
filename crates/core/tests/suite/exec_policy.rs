@@ -1,28 +1,28 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::EnvironmentConfig;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_execpolicy::Decision;
-use genex_execpolicy::Policy;
-use genex_execpolicy::RequirementsExecPolicy;
-use genex_features::Feature;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::PermissionProfileSnapshot;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::EnvironmentConfig;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_execpolicy::Decision;
+use ruxex_execpolicy::Policy;
+use ruxex_execpolicy::RequirementsExecPolicy;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::PermissionProfileSnapshot;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -32,9 +32,9 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_target_windows;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -55,7 +55,7 @@ fn collaboration_mode_for_model(model: String) -> CollaborationMode {
 }
 
 async fn submit_user_turn(
-    test: &core_test_support::test_genex::TestGenex,
+    test: &core_test_support::test_ruxex::TestRuxex,
     prompt: &str,
     approval_policy: AskForApproval,
     permission_profile: PermissionProfile,
@@ -64,7 +64,7 @@ async fn submit_user_turn(
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: prompt.into(),
@@ -108,7 +108,7 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
     skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
+    let mut builder = test_ruxex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -141,13 +141,13 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
     )
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "check git status".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    let event = wait_for_event(&test.genex, |event| {
+    let event = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -161,14 +161,14 @@ async fn git_status_requires_approval_under_unless_trusted() -> Result<()> {
         );
     };
     assert_eq!(approval.call_id, call_id);
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
             decision: ReviewDecision::denied("git status was not approved"),
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -198,22 +198,22 @@ prefix_rule(pattern=["git", "status"], decision="allow")
     const MIGRATION_MARKER_FILENAME: &str = ".sandbox_migration";
 
     let server = start_mock_server().await;
-    let mut migrated_builder = test_genex().with_config(|config| {
-        let policy_path = config.genex_home.join("rules/default.rules");
+    let mut migrated_builder = test_ruxex().with_config(|config| {
+        let policy_path = config.ruxex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(policy_path, LEGACY_POLICY).expect("write legacy policy");
     });
     let migrated = migrated_builder.build_with_auto_env(&server).await?;
-    let migrated_policy_path = migrated.genex_home_path().join("rules/default.rules");
+    let migrated_policy_path = migrated.ruxex_home_path().join("rules/default.rules");
     assert_eq!(fs::read_to_string(&migrated_policy_path)?, MIGRATED_POLICY);
     assert_eq!(
-        fs::read_to_string(migrated.genex_home_path().join(MIGRATION_MARKER_FILENAME))?,
+        fs::read_to_string(migrated.ruxex_home_path().join(MIGRATION_MARKER_FILENAME))?,
         "v1\n"
     );
 
-    let mut ignored_builder = test_genex().with_config(|config| {
-        let policy_path = config.genex_home.join("rules/default.rules");
+    let mut ignored_builder = test_ruxex().with_config(|config| {
+        let policy_path = config.ruxex_home.join("rules/default.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(policy_path, LEGACY_POLICY).expect("write legacy policy");
@@ -225,11 +225,11 @@ prefix_rule(pattern=["git", "status"], decision="allow")
             );
     });
     let ignored = ignored_builder.build_with_auto_env(&server).await?;
-    let ignored_policy_path = ignored.genex_home_path().join("rules/default.rules");
+    let ignored_policy_path = ignored.ruxex_home_path().join("rules/default.rules");
     assert_eq!(fs::read_to_string(&ignored_policy_path)?, LEGACY_POLICY);
     assert!(
         !ignored
-            .genex_home_path()
+            .ruxex_home_path()
             .join(MIGRATION_MARKER_FILENAME)
             .exists()
     );
@@ -242,7 +242,7 @@ async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
     let call_id = "forced-rm-denied";
     let args = json!({
@@ -283,7 +283,7 @@ async fn granular_complex_forced_rm_denial_explains_why_the_command_was_rejected
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -306,7 +306,7 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
     let call_id = "forced-rm-approval";
     let args = json!({
@@ -347,7 +347,7 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
     )
     .await?;
 
-    let approval_event = wait_for_event(&test.genex, |event| {
+    let approval_event = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -362,14 +362,14 @@ async fn granular_complex_forced_rm_requests_approval_when_allowed() -> Result<(
         Some(COMPLEX_FORCED_RM_COMMAND)
     );
 
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
             decision: ReviewDecision::denied("rejected by user"),
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -383,7 +383,7 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
     skip_if_target_windows!(Ok(()), "uses a POSIX shell command fixture");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex();
+    let mut builder = test_ruxex();
     let test = builder.build_with_auto_env(&server).await?;
     let sentinel = test.config.cwd.join("forced-rm-sentinel");
     fs::write(&sentinel, "must not be deleted")?;
@@ -420,7 +420,7 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -441,8 +441,8 @@ async fn deeply_nested_forced_rm_is_rejected_before_execution_when_approvals_are
 
 #[tokio::test]
 async fn execpolicy_blocks_shell_invocation() -> Result<()> {
-    let mut builder = test_genex().with_config(|config| {
-        let policy_path = config.genex_home.join("rules").join("policy.rules");
+    let mut builder = test_ruxex().with_config(|config| {
+        let policy_path = config.ruxex_home.join("rules").join("policy.rules");
         fs::create_dir_all(
             policy_path
                 .parent()
@@ -485,7 +485,7 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
     let session_model = test.session_configured.model.clone();
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run shell command".into(),
@@ -509,7 +509,7 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
         )
         .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -533,7 +533,7 @@ async fn malformed_custom_rules_preserve_managed_forbidden_prefix() -> Result<()
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_cloud_config_bundle(
             CloudConfigBundleFixture::loader_with_enterprise_requirement(
                 r#"
@@ -549,7 +549,7 @@ prefix_rules = [
                 .features
                 .enable(Feature::UnifiedExec)
                 .expect("test config should allow feature update");
-            let policy_path = config.genex_home.join("rules").join("broken.rules");
+            let policy_path = config.ruxex_home.join("rules").join("broken.rules");
             fs::create_dir_all(
                 policy_path
                     .parent()
@@ -611,12 +611,12 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
             .expect("test config should allow feature update");
-        let policy_path = config.genex_home.join("rules").join("approved.rules");
+        let policy_path = config.ruxex_home.join("rules").join("approved.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(
@@ -628,7 +628,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
     let server = start_mock_server().await;
     let test = builder.build_with_auto_env(&server).await?;
     let selection = test
-        .genex
+        .ruxex
         .environment_selections()
         .await
         .into_iter()
@@ -637,7 +637,7 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
     let mut invalid_policy = Policy::empty();
     invalid_policy.add_prefix_rule(&["echo".to_string()], Decision::Allow)?;
     let error = test
-        .genex
+        .ruxex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -656,13 +656,13 @@ async fn environment_command_restrictions_override_saved_prefix_approvals() -> R
         .expect_err("environment policies must not introduce command allowances");
     assert!(matches!(
         error.details(),
-        GenexErrorDetails::InvalidRequest(message)
+        RuxexErrorDetails::InvalidRequest(message)
             if message == "environment command policy cannot contain allow rules"
     ));
 
     let mut environment_policy = Policy::empty();
     environment_policy.add_prefix_rule(&["echo".to_string()], Decision::Forbidden)?;
-    test.genex
+    test.ruxex
         .environment_ready(
             &selection,
             EnvironmentConfig {
@@ -729,7 +729,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         "managed prefix fixture uses POSIX executable semantics"
     );
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -740,7 +740,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
             .set_permission_profile(PermissionProfile::Disabled)
             .expect("test config should allow unrestricted permissions");
         config.approvals_reviewer = ApprovalsReviewer::User;
-        let policy_path = config.genex_home.join("rules").join("prompt.rules");
+        let policy_path = config.ruxex_home.join("rules").join("prompt.rules");
         fs::create_dir_all(policy_path.parent().expect("rules directory"))
             .expect("create rules directory");
         fs::write(
@@ -752,7 +752,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
     let server = start_mock_server().await;
     let test = builder.build_with_auto_env(&server).await?;
     let selection = test
-        .genex
+        .ruxex
         .environment_selections()
         .await
         .into_iter()
@@ -766,7 +766,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         if attempt == "after-owner-policy" {
             let mut policy = Policy::empty();
             policy.add_prefix_rule(&["echo".to_string()], Decision::Prompt)?;
-            test.genex
+            test.ruxex
                 .environment_ready(
                     &selection,
                     EnvironmentConfig {
@@ -805,13 +805,13 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         )
         .await;
 
-        test.genex
+        test.ruxex
             .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
                 text: attempt.into(),
                 text_elements: Vec::new(),
             }]))
             .await?;
-        let event = wait_for_event(&test.genex, |event| {
+        let event = wait_for_event(&test.ruxex, |event| {
             matches!(
                 event,
                 EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -821,14 +821,14 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
         let EventMsg::ExecApprovalRequest(approval) = event else {
             panic!("expected a fresh command approval {attempt}");
         };
-        test.genex
+        test.ruxex
             .submit(Op::ExecApproval {
                 id: approval.effective_approval_id(),
                 turn_id: None,
                 decision,
             })
             .await?;
-        wait_for_event(&test.genex, |event| {
+        wait_for_event(&test.ruxex, |event| {
             matches!(event, EventMsg::TurnComplete(_))
         })
         .await;
@@ -840,7 +840,7 @@ async fn environment_command_policy_changes_invalidate_session_approvals() -> Re
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
+    let mut builder = test_ruxex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -885,7 +885,7 @@ async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> R
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -899,7 +899,7 @@ async fn unified_exec_empty_script_with_collaboration_mode_does_not_panic() -> R
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unified_exec_whitespace_script_with_collaboration_mode_does_not_panic() -> Result<()> {
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_model("example-model-2").with_config(|config| {
+    let mut builder = test_ruxex().with_model("example-model-2").with_config(|config| {
         config
             .features
             .enable(Feature::UnifiedExec)
@@ -944,7 +944,7 @@ async fn unified_exec_whitespace_script_with_collaboration_mode_does_not_panic()
     )
     .await?;
 
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

@@ -1,6 +1,6 @@
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub(crate) const NEW_CONTEXT_WINDOW_TOOL_NAME: &str = "new_context";

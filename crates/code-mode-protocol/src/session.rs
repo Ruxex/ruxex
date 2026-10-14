@@ -146,7 +146,7 @@ impl CodeModeSessionDelegate for NoopCodeModeSessionDelegate {
     fn cell_closed(&self, _cell_id: &CellId) {}
 }
 
-/// A durable code-mode session owned by one Genex thread.
+/// A durable code-mode session owned by one Ruxex thread.
 ///
 /// Cells executed in the same session share stored values. Separate sessions
 /// must keep those values isolated. Implementations may execute cells
@@ -165,7 +165,7 @@ pub trait CodeModeSession: Send + Sync {
     fn shutdown<'a>(&'a self) -> CodeModeSessionResultFuture<'a, ()>;
 }
 
-/// Creates code-mode sessions for Genex threads.
+/// Creates code-mode sessions for Ruxex threads.
 ///
 /// Implementations may share a remote host process across all sessions created
 /// by one provider.

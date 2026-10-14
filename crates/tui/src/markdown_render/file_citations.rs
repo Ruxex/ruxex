@@ -30,7 +30,7 @@ impl<'a> FileCitations<'a> {
             markdown: Cow::Borrowed(input),
             citations: Vec::new(),
         };
-        if !input.contains("genex-file-citation") {
+        if !input.contains("ruxex-file-citation") {
             return prepared;
         }
 
@@ -71,7 +71,7 @@ impl<'a> FileCitations<'a> {
             // Citations prefer literal quoting; other directives prefer escaped quotes.
             let escaping = if source
                 .trim_start_matches(':')
-                .starts_with("genex-file-citation{")
+                .starts_with("ruxex-file-citation{")
             {
                 [QuoteEscaping::Literal, QuoteEscaping::Backslash]
             } else {
@@ -91,7 +91,7 @@ impl<'a> FileCitations<'a> {
                 .count()
                 % 2
                 != 0
-                || directive.name != "genex-file-citation"
+                || directive.name != "ruxex-file-citation"
                 || directive
                     .attributes
                     .get("path")

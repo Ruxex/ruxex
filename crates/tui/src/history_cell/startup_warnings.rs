@@ -2,7 +2,7 @@
 //! Affected sources are unique; sign-in servers are a subset of MCP servers.
 
 use super::*;
-use genex_app_server_protocol::McpServerStartupFailureReason;
+use ruxex_app_server_protocol::McpServerStartupFailureReason;
 use std::collections::BTreeSet;
 
 #[derive(Clone, Debug, Default)]

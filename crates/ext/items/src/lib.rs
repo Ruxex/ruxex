@@ -1,6 +1,6 @@
-//! Typed display items owned by Genex extensions.
+//! Typed display items owned by Ruxex extensions.
 //!
-//! This crate intentionally sits below `genex-protocol` so core can carry
+//! This crate intentionally sits below `ruxex-protocol` so core can carry
 //! extension items without owning each extension's display schema.
 
 use schemars::JsonSchema;

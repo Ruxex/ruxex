@@ -1,11 +1,11 @@
 use super::*;
 use futures::StreamExt;
-use genex_config::ConfigPathContext;
-use genex_core::config::permission_profile_catalog;
-use genex_hooks::HookListEntryHandler;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::ConfigPathContext;
+use ruxex_core::config::permission_profile_catalog;
+use ruxex_hooks::HookListEntryHandler;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 
 #[derive(Clone)]
 pub(crate) struct CatalogRequestProcessor {
@@ -19,19 +19,19 @@ pub(crate) struct CatalogRequestProcessor {
 const SKILLS_LIST_CWD_CONCURRENCY: usize = 5;
 
 fn skills_to_info(
-    skills: &[genex_skills::SkillMetadata],
+    skills: &[ruxex_skills::SkillMetadata],
     disabled_paths: &HashSet<AbsolutePathBuf>,
-) -> Vec<genex_app_server_protocol::SkillMetadata> {
+) -> Vec<ruxex_app_server_protocol::SkillMetadata> {
     skills
         .iter()
         .map(|skill| {
             let enabled = !disabled_paths.contains(&skill.path_to_skills_md);
-            genex_app_server_protocol::SkillMetadata {
+            ruxex_app_server_protocol::SkillMetadata {
                 name: skill.name.clone(),
                 description: skill.description.clone(),
                 short_description: skill.short_description.clone(),
                 interface: skill.interface.clone().map(|interface| {
-                    genex_app_server_protocol::SkillInterface {
+                    ruxex_app_server_protocol::SkillInterface {
                         display_name: interface.display_name,
                         short_description: interface.short_description,
                         icon_small: interface.icon_small,
@@ -43,11 +43,11 @@ fn skills_to_info(
                     }
                 }),
                 dependencies: skill.dependencies.clone().map(|dependencies| {
-                    genex_app_server_protocol::SkillDependencies {
+                    ruxex_app_server_protocol::SkillDependencies {
                         tools: dependencies
                             .tools
                             .into_iter()
-                            .map(|tool| genex_app_server_protocol::SkillToolDependency {
+                            .map(|tool| ruxex_app_server_protocol::SkillToolDependency {
                                 r#type: tool.r#type,
                                 value: tool.value,
                                 description: tool.description,
@@ -67,7 +67,7 @@ fn skills_to_info(
         .collect()
 }
 
-fn hooks_to_info(hooks: &[genex_hooks::HookListEntry]) -> Vec<HookMetadata> {
+fn hooks_to_info(hooks: &[ruxex_hooks::HookListEntry]) -> Vec<HookMetadata> {
     hooks
         .iter()
         .filter(|hook| !hook.builtin)
@@ -106,11 +106,11 @@ fn hooks_to_info(hooks: &[genex_hooks::HookListEntry]) -> Vec<HookMetadata> {
 }
 
 fn errors_to_info(
-    errors: &[genex_skills::SkillError],
-) -> Vec<genex_app_server_protocol::SkillErrorInfo> {
+    errors: &[ruxex_skills::SkillError],
+) -> Vec<ruxex_app_server_protocol::SkillErrorInfo> {
     errors
         .iter()
-        .map(|err| genex_app_server_protocol::SkillErrorInfo {
+        .map(|err| ruxex_app_server_protocol::SkillErrorInfo {
             path: err.path.to_path_buf(),
             message: err.message.clone(),
         })
@@ -228,7 +228,7 @@ impl CatalogRequestProcessor {
 
     async fn list_models(
         thread_manager: Arc<ThreadManager>,
-        http_client_factory: genex_http_client::HttpClientFactory,
+        http_client_factory: ruxex_http_client::HttpClientFactory,
         params: ModelListParams,
     ) -> Result<ModelListResponse, JSONRPCErrorError> {
         let ModelListParams {
@@ -385,10 +385,10 @@ impl CatalogRequestProcessor {
                             let error_path = cwd.clone();
                             return (
                                 index,
-                                genex_app_server_protocol::SkillsListEntry {
+                                ruxex_app_server_protocol::SkillsListEntry {
                                     cwd,
                                     skills: Vec::new(),
-                                    errors: vec![genex_app_server_protocol::SkillErrorInfo {
+                                    errors: vec![ruxex_app_server_protocol::SkillErrorInfo {
                                         path: error_path,
                                         message: error.message,
                                     }],
@@ -400,7 +400,7 @@ impl CatalogRequestProcessor {
                     let plugins = plugins_manager.plugins_for_config(&plugins_input).await;
                     let plugin_skill_snapshots =
                         plugins_manager.plugin_skill_snapshots_for_config(&plugins_input);
-                    let skills_input = genex_skills_extension::HostSkillsLoadInput::new(
+                    let skills_input = ruxex_skills_extension::HostSkillsLoadInput::new(
                         config.cwd.clone(),
                         plugins.effective_plugin_skill_roots(),
                         config.config_layer_stack,
@@ -414,7 +414,7 @@ impl CatalogRequestProcessor {
                     let skills = skills_to_info(&outcome.skills, &outcome.disabled_paths);
                     (
                         index,
-                        genex_app_server_protocol::SkillsListEntry {
+                        ruxex_app_server_protocol::SkillsListEntry {
                             cwd,
                             skills,
                             errors,
@@ -442,7 +442,7 @@ impl CatalogRequestProcessor {
             .set_extra_roots(extra_roots);
         self.outgoing
             .send_server_notification(ServerNotification::SkillsChanged(
-                genex_app_server_protocol::SkillsChangedNotification {},
+                ruxex_app_server_protocol::SkillsChangedNotification {},
             ))
             .await;
         Ok(SkillsExtraRootsSetResponse {})
@@ -475,11 +475,11 @@ impl CatalogRequestProcessor {
                 Ok(config) => config,
                 Err(err) => {
                     let error_path = cwd.clone();
-                    data.push(genex_app_server_protocol::HooksListEntry {
+                    data.push(ruxex_app_server_protocol::HooksListEntry {
                         cwd,
                         hooks: Vec::new(),
                         warnings: Vec::new(),
-                        errors: vec![genex_app_server_protocol::HookErrorInfo {
+                        errors: vec![ruxex_app_server_protocol::HookErrorInfo {
                             path: error_path,
                             message: err.to_string(),
                         }],
@@ -487,18 +487,18 @@ impl CatalogRequestProcessor {
                     continue;
                 }
             };
-            let hooks_enabled = config.features.enabled(Feature::GenexHooks);
+            let hooks_enabled = config.features.enabled(Feature::RuxexHooks);
             let plugin_hooks = if hooks_enabled && config.features.enabled(Feature::Plugins) {
                 let plugins_input = config.plugins_config_input();
                 let plugin_outcome = plugins_manager.plugins_for_config(&plugins_input).await;
-                genex_core_plugins::PluginHookLoadOutcome {
+                ruxex_core_plugins::PluginHookLoadOutcome {
                     hook_sources: plugin_outcome.effective_plugin_hook_sources(),
                     hook_load_warnings: plugin_outcome.effective_plugin_hook_warnings(),
                 }
             } else {
-                genex_core_plugins::PluginHookLoadOutcome::default()
+                ruxex_core_plugins::PluginHookLoadOutcome::default()
             };
-            let hooks = genex_hooks::list_hooks(genex_hooks::HooksConfig {
+            let hooks = ruxex_hooks::list_hooks(ruxex_hooks::HooksConfig {
                 feature_enabled: hooks_enabled,
                 bypass_hook_trust: config.bypass_hook_trust,
                 config_layer_stack: Some(config.config_layer_stack),
@@ -506,7 +506,7 @@ impl CatalogRequestProcessor {
                 plugin_hook_load_warnings: plugin_hooks.hook_load_warnings,
                 ..Default::default()
             });
-            data.push(genex_app_server_protocol::HooksListEntry {
+            data.push(ruxex_app_server_protocol::HooksListEntry {
                 cwd,
                 hooks: hooks_to_info(&hooks.hooks),
                 warnings: hooks.warnings,
@@ -540,7 +540,7 @@ impl CatalogRequestProcessor {
             }
         };
         let edits = vec![edit];
-        ConfigEditsBuilder::new(&self.config.genex_home)
+        ConfigEditsBuilder::new(&self.config.ruxex_home)
             .with_edits(edits)
             .apply()
             .await

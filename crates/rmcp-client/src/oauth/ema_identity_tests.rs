@@ -1,15 +1,15 @@
-use genex_config::types::AuthKeyringBackendKind;
-use genex_keyring_store::tests::MockKeyringStore;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_keyring_store::tests::MockKeyringStore;
 use serde_json::json;
 
 use super::*;
 use crate::oauth::RefreshCredentialLock;
 use crate::oauth::compute_store_key;
-use crate::oauth::test_support::TempGenexHome;
+use crate::oauth::test_support::TempRuxexHome;
 
 #[tokio::test]
 async fn keyring_failure_does_not_reuse_the_pinned_refresh_token() -> Result<()> {
-    let _home = TempGenexHome::new();
+    let _home = TempRuxexHome::new();
     let tokens: StoredOAuthTokens = serde_json::from_value(json!({
         "server_name": "ema-idp:keyring-failure",
         "url": "https://idp.example",
@@ -41,10 +41,10 @@ async fn keyring_failure_does_not_reuse_the_pinned_refresh_token() -> Result<()>
 
 #[test]
 fn ordinary_oauth_names_cannot_alias_enterprise_credential_keys() -> Result<()> {
-    let _home = TempGenexHome::new();
+    let _home = TempRuxexHome::new();
     let issuer = "https://idp.example";
     let enterprise_name = "ema-idp:synthetic-identity";
-    let ordinary: genex_config::McpServerConfig = serde_json::from_value(json!({
+    let ordinary: ruxex_config::McpServerConfig = serde_json::from_value(json!({
         "url": issuer,
         "oauth": {"client_id": "idp-client"},
     }))?;

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use genex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::ExecutorFileSystem;
 use tree_sitter::Parser;
 use tree_sitter::Query;
 use tree_sitter::QueryCursor;
@@ -19,8 +19,8 @@ use crate::parser::Hunk;
 use crate::parser::ParseError;
 use crate::parser::parse_patch;
 use crate::unified_diff_from_chunks;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use std::str::Utf8Error;
 use tree_sitter::LanguageError;
 
@@ -132,7 +132,7 @@ pub async fn maybe_parse_apply_patch_verified(
     argv: &[String],
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&ruxex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     // Detect a raw patch body passed directly as the command or as the body of a shell
     // script. In these cases, report an explicit error rather than applying the patch.
@@ -159,7 +159,7 @@ pub async fn verify_apply_patch_args(
     args: ApplyPatchArgs,
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&ruxex_exec_server::FileSystemSandboxContext>,
 ) -> MaybeApplyPatchVerified {
     match try_verify_apply_patch_args(args, cwd, fs, sandbox).await {
         Ok(action) => MaybeApplyPatchVerified::Body(action),
@@ -171,7 +171,7 @@ async fn try_verify_apply_patch_args(
     args: ApplyPatchArgs,
     cwd: &PathUri,
     fs: &dyn ExecutorFileSystem,
-    sandbox: Option<&genex_exec_server::FileSystemSandboxContext>,
+    sandbox: Option<&ruxex_exec_server::FileSystemSandboxContext>,
 ) -> Result<ApplyPatchAction, ApplyPatchError> {
     let ApplyPatchArgs {
         patch,
@@ -398,7 +398,7 @@ mod tests {
     use super::*;
     use crate::unified_diff_from_chunks;
     use assert_matches::assert_matches;
-    use genex_exec_server::LOCAL_FS;
+    use ruxex_exec_server::LOCAL_FS;
     use pretty_assertions::assert_eq;
     use std::fs;
     use std::path::PathBuf;

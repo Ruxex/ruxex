@@ -1,6 +1,6 @@
 //! Covers the saved Daybreak preference independently of transcript history.
 
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -23,7 +23,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     let thread_id = ThreadId::from_string(&uuid.to_string())?;
     let rollout_path = write_session_file(home.path(), "2025-01-03T14-20-00", uuid)?;
     let original_rollout = std::fs::read(&rollout_path)?;
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone()).await?;
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone()).await?;
     let store = LocalThreadStore::new(config.clone(), Some(runtime.clone()));
     for daybreak_enabled in [true, false] {
         let updated = store
@@ -45,7 +45,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
         .expect("saved metadata");
     stale_metadata.daybreak_enabled = Some(true);
     runtime.upsert_thread(&stale_metadata).await?;
-    genex_rollout::state_db::reconcile_rollout(
+    ruxex_rollout::state_db::reconcile_rollout(
         Some(runtime.as_ref()),
         &rollout_path,
         /*builder*/ None,
@@ -56,7 +56,7 @@ async fn daybreak_preference_survives_reconciliation_and_cold_reads()
     drop(store);
     drop(runtime);
 
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone()).await?;
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone()).await?;
     let store = LocalThreadStore::new(config, Some(runtime));
     for include_history in [false, true] {
         let thread = store

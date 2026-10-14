@@ -1,6 +1,6 @@
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_sandboxing::SandboxExecRequest;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_sandboxing::SandboxExecRequest;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io;
 
 use crate::fs_helper::FsHelperOpenParams;

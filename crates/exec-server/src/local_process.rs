@@ -9,20 +9,20 @@ use std::time::Duration;
 
 use crate::process_telemetry::ProcessTelemetry;
 use crate::process_telemetry::ProcessTelemetryEvent;
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_network_proxy::NetworkPolicyAuditEvent;
-use genex_network_proxy::NetworkPolicyAuditObserver;
-use genex_network_proxy::NetworkProtocol;
-use genex_network_proxy::NetworkProxyHandle;
-use genex_protocol::config_types::EnvironmentVariablePattern;
-use genex_protocol::config_types::ShellEnvironmentPolicy;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
-use genex_protocol::shell_environment;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::is_likely_sandbox_denied;
-use genex_utils_pty::ExecCommandSession;
-use genex_utils_pty::ProcessSignal as PtyProcessSignal;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_network_proxy::NetworkPolicyAuditEvent;
+use ruxex_network_proxy::NetworkPolicyAuditObserver;
+use ruxex_network_proxy::NetworkProtocol;
+use ruxex_network_proxy::NetworkProxyHandle;
+use ruxex_protocol::config_types::EnvironmentVariablePattern;
+use ruxex_protocol::config_types::ShellEnvironmentPolicy;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::shell_environment;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::is_likely_sandbox_denied;
+use ruxex_utils_pty::ExecCommandSession;
+use ruxex_utils_pty::ProcessSignal as PtyProcessSignal;
 use opentelemetry::trace::SpanContext;
 use opentelemetry::trace::TraceContextExt;
 use tokio::sync::Mutex;
@@ -411,7 +411,7 @@ impl LocalProcess {
             );
         }
 
-        let spawned_result = genex_sandboxing::spawn_process(genex_sandboxing::SpawnRequest {
+        let spawned_result = ruxex_sandboxing::spawn_process(ruxex_sandboxing::SpawnRequest {
             command: &prepared.command,
             cwd: prepared.cwd.as_path(),
             env: &prepared.env,
@@ -1027,9 +1027,9 @@ fn watch_exit(
     telemetry: ProcessTelemetry,
 ) -> impl std::future::Future<Output = ()> + Send {
     // Set the copied OTEL parent before entering; never retain the RPC tracing span.
-    let process_span = tracing::info_span!(parent: None, "genex.exec_server.process");
+    let process_span = tracing::info_span!(parent: None, "ruxex.exec_server.process");
     if let Some(launch_context) = &telemetry.launch_context {
-        genex_otel::set_parent_from_context(
+        ruxex_otel::set_parent_from_context(
             &process_span,
             opentelemetry::Context::new().with_remote_span_context(launch_context.clone()),
         );
@@ -1214,18 +1214,18 @@ fn notification_sender(inner: &Inner) -> Option<RpcNotificationSender> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_exec_server_protocol::JSONRPCMessage;
-    use genex_exec_server_protocol::JSONRPCResponse;
-    use genex_exec_server_protocol::RequestId;
-    use genex_network_proxy::NetworkProxy;
-    use genex_network_proxy::NetworkProxyConfig;
-    use genex_network_proxy::NetworkProxyState;
-    use genex_network_proxy::RemoteNetworkProxyConfig;
-    use genex_network_proxy::RemoteNetworkProxyLaunchConfig;
-    use genex_otel::MetricsConfig;
-    use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-    use genex_utils_path_uri::PathUri;
-    use genex_utils_pty::ProcessDriver;
+    use ruxex_exec_server_protocol::JSONRPCMessage;
+    use ruxex_exec_server_protocol::JSONRPCResponse;
+    use ruxex_exec_server_protocol::RequestId;
+    use ruxex_network_proxy::NetworkProxy;
+    use ruxex_network_proxy::NetworkProxyConfig;
+    use ruxex_network_proxy::NetworkProxyState;
+    use ruxex_network_proxy::RemoteNetworkProxyConfig;
+    use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+    use ruxex_otel::MetricsConfig;
+    use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
+    use ruxex_utils_path_uri::PathUri;
+    use ruxex_utils_pty::ProcessDriver;
     use opentelemetry_sdk::metrics::InMemoryMetricExporter;
     use opentelemetry_sdk::metrics::data::AggregatedMetrics;
     use opentelemetry_sdk::metrics::data::MetricData;
@@ -1358,13 +1358,13 @@ mod tests {
 
     fn telemetry_backend() -> (
         LocalProcess,
-        genex_otel::MetricsClient,
+        ruxex_otel::MetricsClient,
         InMemoryMetricExporter,
     ) {
         let exporter = InMemoryMetricExporter::default();
-        let metrics = genex_otel::MetricsClient::new(MetricsConfig::in_memory(
+        let metrics = ruxex_otel::MetricsClient::new(MetricsConfig::in_memory(
             "test",
-            "genex-exec-server",
+            "ruxex-exec-server",
             env!("CARGO_PKG_VERSION"),
             exporter.clone(),
         ))
@@ -1384,7 +1384,7 @@ mod tests {
     }
 
     fn assert_finished_process_result(
-        metrics: genex_otel::MetricsClient,
+        metrics: ruxex_otel::MetricsClient,
         exporter: &InMemoryMetricExporter,
         expected: &str,
     ) {
@@ -2002,7 +2002,7 @@ mod tests {
         let (_stderr_tx, stderr_rx) = tokio::sync::broadcast::channel(1);
         let (_exit_tx, exit_rx) = oneshot::channel();
 
-        genex_utils_pty::spawn_from_driver(ProcessDriver {
+        ruxex_utils_pty::spawn_from_driver(ProcessDriver {
             writer_tx,
             stdout_rx,
             stderr_rx: Some(stderr_rx),

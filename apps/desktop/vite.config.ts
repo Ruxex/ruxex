@@ -16,7 +16,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@genex/protocol": protocolRoot,
+      "@ruxex/protocol": protocolRoot,
     },
   },
   server: {

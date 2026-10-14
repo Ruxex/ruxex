@@ -7,7 +7,7 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
-    /// API key provided by the caller and stored by Genex.
+    /// API key provided by the caller and stored by Ruxex.
     ApiKey,
     /// Provider backend auth supplied as request headers.
     #[serde(rename = "headers")]

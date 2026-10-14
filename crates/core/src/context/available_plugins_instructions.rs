@@ -1,8 +1,8 @@
-use genex_protocol::protocol::PLUGINS_INSTRUCTIONS_CLOSE_TAG;
-use genex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
+use ruxex_protocol::protocol::PLUGINS_INSTRUCTIONS_CLOSE_TAG;
+use ruxex_protocol::protocol::PLUGINS_INSTRUCTIONS_OPEN_TAG;
 
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct AvailablePluginsInstructions;

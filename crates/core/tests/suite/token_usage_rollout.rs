@@ -1,9 +1,9 @@
 //! Verifies observed Responses API usage is durably recorded in rollout history.
 
 use anyhow::Result;
-use genex_history::RolloutItem;
-use genex_protocol::SessionId;
-use genex_protocol::protocol::TokenUsageRecord;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::protocol::TokenUsageRecord;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed_with_tokens;
 use core_test_support::responses::ev_function_call;
@@ -12,7 +12,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -20,7 +20,7 @@ fn token_usage_records(path: &std::path::Path) -> Vec<TokenUsageRecord> {
     std::fs::read_to_string(path)
         .expect("read rollout")
         .lines()
-        .filter_map(|line| genex_rollout::parse_rollout_line(line).ok())
+        .filter_map(|line| ruxex_rollout::parse_rollout_line(line).ok())
         .filter_map(|line| match line.item {
             RolloutItem::TokenUsageRecord(record) => Some(record),
             _ => None,
@@ -71,20 +71,20 @@ async fn observed_response_usage_accumulates_per_turn_and_thread() -> Result<()>
         ],
     )
     .await;
-    let test = test_genex().build_with_auto_env(&server).await?;
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let test = test_ruxex().build_with_auto_env(&server).await?;
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     let home = test.home.clone();
 
     test.submit_turn("first").await?;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
-    let resumed = test_genex()
+    let resumed = test_ruxex()
         .resume(&server, home, rollout_path.clone())
         .await?;
     for prompt in ["second", "third"] {
         resumed.submit_turn(prompt).await?;
     }
-    resumed.genex.shutdown_and_wait().await?;
+    resumed.ruxex.shutdown_and_wait().await?;
 
     let records = token_usage_records(&rollout_path);
     assert_eq!(records.len(), 3);

@@ -9,12 +9,12 @@ use crate::sqlite_metrics;
 use anyhow::Context;
 use chrono::DateTime;
 use chrono::Utc;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-pub use genex_state::LogEntry;
-use genex_state::SqliteConfig;
-use genex_state::ThreadMetadataBuilder;
-use genex_utils_path::normalize_for_path_comparison;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+pub use ruxex_state::LogEntry;
+use ruxex_state::SqliteConfig;
+use ruxex_state::ThreadMetadataBuilder;
+use ruxex_utils_path::normalize_for_path_comparison;
 use serde_json::Value;
 use std::path::Path;
 use std::path::PathBuf;
@@ -25,7 +25,7 @@ use tracing::info;
 use tracing::warn;
 
 /// Core-facing handle to the SQLite-backed state runtime.
-pub type StateDbHandle = Arc<genex_state::StateRuntime>;
+pub type StateDbHandle = Arc<ruxex_state::StateRuntime>;
 
 #[cfg(not(test))]
 const STARTUP_BACKFILL_POLL_INTERVAL: Duration = Duration::from_secs(1);
@@ -43,7 +43,7 @@ const STARTUP_BACKFILL_WAIT_TIMEOUT: Duration = Duration::from_secs(2);
 /// initialized handle.
 pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    match try_init_with_roots(config.genex_home, config.sqlite).await {
+    match try_init_with_roots(config.ruxex_home, config.sqlite).await {
         Ok(runtime) => Some(runtime),
         Err(err) => {
             emit_startup_warning(&format!("failed to initialize state runtime: {err:#}"));
@@ -58,31 +58,31 @@ pub async fn init(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
 /// tracing or UI setup has completed.
 pub async fn try_init(config: &impl RolloutConfigView) -> anyhow::Result<StateDbHandle> {
     let config = RolloutConfig::from_view(config);
-    try_init_with_roots(config.genex_home, config.sqlite).await
+    try_init_with_roots(config.ruxex_home, config.sqlite).await
 }
 
 async fn try_init_with_roots(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     sqlite: SqliteConfig,
 ) -> anyhow::Result<StateDbHandle> {
-    try_init_with_roots_inner(genex_home, sqlite, /*backfill_lease_seconds*/ None).await
+    try_init_with_roots_inner(ruxex_home, sqlite, /*backfill_lease_seconds*/ None).await
 }
 
 #[cfg(test)]
 async fn try_init_with_roots_and_backfill_lease(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     sqlite: SqliteConfig,
     backfill_lease_seconds: i64,
 ) -> anyhow::Result<StateDbHandle> {
-    try_init_with_roots_inner(genex_home, sqlite, Some(backfill_lease_seconds)).await
+    try_init_with_roots_inner(ruxex_home, sqlite, Some(backfill_lease_seconds)).await
 }
 
 async fn try_init_with_roots_inner(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     sqlite: SqliteConfig,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<StateDbHandle> {
-    let runtime = genex_state::StateRuntime::init(sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(sqlite.clone())
         .await
         .with_context(|| {
             format!(
@@ -93,11 +93,11 @@ async fn try_init_with_roots_inner(
     let backfill_gate_started = Instant::now();
     let backfill_gate_result = wait_for_backfill_gate(
         runtime.as_ref(),
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         backfill_lease_seconds,
     )
     .await;
-    genex_state::record_backfill_gate(
+    ruxex_state::record_backfill_gate(
         /*telemetry*/ None,
         backfill_gate_started.elapsed(),
         &backfill_gate_result,
@@ -110,8 +110,8 @@ async fn try_init_with_roots_inner(
 }
 
 async fn wait_for_backfill_gate(
-    runtime: &genex_state::StateRuntime,
-    genex_home: &Path,
+    runtime: &ruxex_state::StateRuntime,
+    ruxex_home: &Path,
     backfill_lease_seconds: Option<i64>,
 ) -> anyhow::Result<()> {
     let wait_started = Instant::now();
@@ -120,32 +120,32 @@ async fn wait_for_backfill_gate(
         let backfill_state = runtime.get_backfill_state().await.map_err(|err| {
             anyhow::anyhow!(
                 "failed to read backfill state at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             )
         })?;
-        if backfill_state.status == genex_state::BackfillStatus::Complete {
+        if backfill_state.status == ruxex_state::BackfillStatus::Complete {
             return Ok(());
         }
 
         if let Some(backfill_lease_seconds) = backfill_lease_seconds {
-            metadata::backfill_sessions_with_lease(runtime, genex_home, backfill_lease_seconds)
+            metadata::backfill_sessions_with_lease(runtime, ruxex_home, backfill_lease_seconds)
                 .await;
         } else {
-            metadata::backfill_sessions(runtime, genex_home).await;
+            metadata::backfill_sessions(runtime, ruxex_home).await;
         }
         let backfill_state = runtime.get_backfill_state().await.map_err(|err| {
             anyhow::anyhow!(
                 "failed to read backfill state at {} after startup backfill: {err}",
-                genex_home.display()
+                ruxex_home.display()
             )
         })?;
-        if backfill_state.status == genex_state::BackfillStatus::Complete {
+        if backfill_state.status == ruxex_state::BackfillStatus::Complete {
             return Ok(());
         }
         if wait_started.elapsed() >= STARTUP_BACKFILL_WAIT_TIMEOUT {
             return Err(anyhow::anyhow!(
                 "timed out waiting for state db backfill at {} after {:?} (status: {})",
-                genex_home.display(),
+                ruxex_home.display(),
                 STARTUP_BACKFILL_WAIT_TIMEOUT,
                 backfill_state.status.as_str()
             ));
@@ -154,7 +154,7 @@ async fn wait_for_backfill_gate(
         let message = format!(
             "state db backfill is {} at {}; waiting up to {:?} before retrying startup initialization",
             backfill_state.status.as_str(),
-            genex_home.display(),
+            ruxex_home.display(),
             STARTUP_BACKFILL_WAIT_TIMEOUT,
         );
         if reported_wait {
@@ -184,17 +184,17 @@ fn emit_startup_warning(message: &str) {
 pub async fn get_state_db(config: &impl RolloutConfigView) -> Option<StateDbHandle> {
     let state_path = config.sqlite_config().state_db_path();
     if !tokio::fs::try_exists(&state_path).await.unwrap_or(false) {
-        genex_state::record_fallback(
+        ruxex_state::record_fallback(
             "get_state_db",
             "db_unavailable",
             /*telemetry_override*/ None,
         );
         return None;
     }
-    let runtime = match genex_state::StateRuntime::init(config.sqlite_config().clone()).await {
+    let runtime = match ruxex_state::StateRuntime::init(config.sqlite_config().clone()).await {
         Ok(runtime) => runtime,
         Err(_) => {
-            genex_state::record_fallback(
+            ruxex_state::record_fallback(
                 "get_state_db",
                 "db_error",
                 /*telemetry_override*/ None,
@@ -207,25 +207,25 @@ pub async fn get_state_db(config: &impl RolloutConfigView) -> Option<StateDbHand
 
 /// Build a SQLite telemetry recorder backed by an OTEL metrics client.
 pub fn sqlite_telemetry_recorder(
-    metrics: genex_otel::MetricsClient,
+    metrics: ruxex_otel::MetricsClient,
     originator: &str,
-) -> genex_state::DbTelemetryHandle {
+) -> ruxex_state::DbTelemetryHandle {
     sqlite_metrics::recorder(metrics, originator)
 }
 
 async fn require_backfill_complete(
     runtime: StateDbHandle,
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> Option<StateDbHandle> {
     match runtime.get_backfill_state().await {
-        Ok(state) if state.status == genex_state::BackfillStatus::Complete => Some(runtime),
+        Ok(state) if state.status == ruxex_state::BackfillStatus::Complete => Some(runtime),
         Ok(state) => {
             warn!(
                 "state db backfill not complete at {} (status: {})",
-                genex_home.display(),
+                ruxex_home.display(),
                 state.status.as_str()
             );
-            genex_state::record_fallback(
+            ruxex_state::record_fallback(
                 "get_state_db",
                 "backfill_incomplete",
                 /*telemetry_override*/ None,
@@ -235,9 +235,9 @@ async fn require_backfill_complete(
         Err(err) => {
             warn!(
                 "failed to read backfill state at {}: {err}",
-                genex_home.display()
+                ruxex_home.display()
             );
-            genex_state::record_fallback(
+            ruxex_state::record_fallback(
                 "get_state_db",
                 "db_error",
                 /*telemetry_override*/ None,
@@ -247,12 +247,12 @@ async fn require_backfill_complete(
     }
 }
 
-fn cursor_to_anchor(cursor: Option<&Cursor>) -> Option<genex_state::Anchor> {
+fn cursor_to_anchor(cursor: Option<&Cursor>) -> Option<ruxex_state::Anchor> {
     let cursor = cursor?;
     let millis = cursor.timestamp().unix_timestamp_nanos() / 1_000_000;
     let millis = i64::try_from(millis).ok()?;
     let ts = chrono::DateTime::<Utc>::from_timestamp_millis(millis)?;
-    Some(genex_state::Anchor {
+    Some(ruxex_state::Anchor {
         ts,
         id: cursor.thread_id(),
     })
@@ -265,8 +265,8 @@ pub fn normalize_cwd_for_state_db(cwd: &Path) -> PathBuf {
 /// List thread ids from SQLite for parity checks without rollout scanning.
 #[allow(clippy::too_many_arguments)]
 pub async fn list_thread_ids_db(
-    context: Option<&genex_state::StateRuntime>,
-    sqlite: &genex_state::SqliteConfig,
+    context: Option<&ruxex_state::StateRuntime>,
+    sqlite: &ruxex_state::SqliteConfig,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -298,9 +298,9 @@ pub async fn list_thread_ids_db(
             page_size,
             anchor.as_ref(),
             match sort_key {
-                ThreadSortKey::CreatedAt => genex_state::SortKey::CreatedAt,
-                ThreadSortKey::UpdatedAt => genex_state::SortKey::UpdatedAt,
-                ThreadSortKey::RecencyAt => genex_state::SortKey::RecencyAt,
+                ThreadSortKey::CreatedAt => ruxex_state::SortKey::CreatedAt,
+                ThreadSortKey::UpdatedAt => ruxex_state::SortKey::UpdatedAt,
+                ThreadSortKey::RecencyAt => ruxex_state::SortKey::RecencyAt,
             },
             allowed_sources.as_slice(),
             archived_only,
@@ -318,20 +318,20 @@ pub async fn list_thread_ids_db(
 /// List thread metadata from SQLite without rollout directory traversal.
 #[allow(clippy::too_many_arguments)]
 pub async fn list_threads_db(
-    context: Option<&genex_state::StateRuntime>,
-    sqlite: &genex_state::SqliteConfig,
+    context: Option<&ruxex_state::StateRuntime>,
+    sqlite: &ruxex_state::SqliteConfig,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
     sort_direction: SortDirection,
     allowed_sources: &[SessionSource],
     cwd_filters: Option<&[PathBuf]>,
-    relation_filter: Option<genex_state::ThreadRelationFilter>,
+    relation_filter: Option<ruxex_state::ThreadRelationFilter>,
     archived: bool,
     section: Option<Option<&str>>,
     project_id: Option<Option<&str>>,
     search_term: Option<&str>,
-) -> Option<genex_state::ThreadsPage> {
+) -> Option<ruxex_state::ThreadsPage> {
     let ctx = context?;
     if ctx.sqlite() != sqlite {
         warn!(
@@ -358,17 +358,17 @@ pub async fn list_threads_db(
             .collect::<Vec<_>>()
     });
     let state_sort_key = match sort_key {
-        ThreadSortKey::CreatedAt => genex_state::SortKey::CreatedAt,
-        ThreadSortKey::UpdatedAt => genex_state::SortKey::UpdatedAt,
-        ThreadSortKey::RecencyAt => genex_state::SortKey::RecencyAt,
+        ThreadSortKey::CreatedAt => ruxex_state::SortKey::CreatedAt,
+        ThreadSortKey::UpdatedAt => ruxex_state::SortKey::UpdatedAt,
+        ThreadSortKey::RecencyAt => ruxex_state::SortKey::RecencyAt,
     };
     let state_sort_direction = match sort_direction {
-        SortDirection::Asc => genex_state::SortDirection::Asc,
-        SortDirection::Desc => genex_state::SortDirection::Desc,
+        SortDirection::Asc => ruxex_state::SortDirection::Asc,
+        SortDirection::Desc => ruxex_state::SortDirection::Desc,
     };
 
     if let Some(relation_filter) = relation_filter {
-        let filters = genex_state::ThreadFilterOptions {
+        let filters = ruxex_state::ThreadFilterOptions {
             archived_only: archived,
             section,
             allowed_sources: allowed_sources.as_slice(),
@@ -395,7 +395,7 @@ pub async fn list_threads_db(
     let mut next_anchor = None;
     let mut num_scanned_rows = 0usize;
     while items.len() < page_size {
-        let filters = genex_state::ThreadFilterOptions {
+        let filters = ruxex_state::ThreadFilterOptions {
             archived_only: archived,
             section,
             allowed_sources: allowed_sources.as_slice(),
@@ -438,7 +438,7 @@ pub async fn list_threads_db(
         }
         anchor = next_anchor.clone();
     }
-    Some(genex_state::ThreadsPage {
+    Some(ruxex_state::ThreadsPage {
         items,
         parent_thread_ids: Default::default(),
         next_anchor,
@@ -448,7 +448,7 @@ pub async fn list_threads_db(
 
 /// Look up the rollout path for a thread id using SQLite.
 pub async fn find_rollout_path_by_id(
-    context: Option<&genex_state::StateRuntime>,
+    context: Option<&ruxex_state::StateRuntime>,
     thread_id: ThreadId,
     archived_only: Option<bool>,
     stage: &str,
@@ -464,7 +464,7 @@ pub async fn find_rollout_path_by_id(
 
 /// Reconcile rollout items into SQLite, falling back to scanning the rollout file.
 pub async fn reconcile_rollout(
-    context: Option<&genex_state::StateRuntime>,
+    context: Option<&ruxex_state::StateRuntime>,
     rollout_path: &Path,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
@@ -531,7 +531,7 @@ pub async fn reconcile_rollout(
 
 /// Repair a thread's rollout path after filesystem fallback succeeds.
 pub async fn read_repair_rollout_path(
-    context: Option<&genex_state::StateRuntime>,
+    context: Option<&ruxex_state::StateRuntime>,
     thread_id: Option<ThreadId>,
     archived_only: Option<bool>,
     rollout_path: &Path,
@@ -597,7 +597,7 @@ pub async fn read_repair_rollout_path(
 /// Apply rollout items incrementally to SQLite.
 #[allow(clippy::too_many_arguments)]
 pub async fn apply_rollout_items(
-    context: Option<&genex_state::StateRuntime>,
+    context: Option<&ruxex_state::StateRuntime>,
     rollout_path: &Path,
     builder: Option<&ThreadMetadataBuilder>,
     items: &[RolloutItem],
@@ -635,7 +635,7 @@ pub async fn apply_rollout_items(
 }
 
 pub async fn touch_thread_updated_at(
-    context: Option<&genex_state::StateRuntime>,
+    context: Option<&ruxex_state::StateRuntime>,
     thread_id: Option<ThreadId>,
     updated_at: DateTime<Utc>,
     stage: &str,

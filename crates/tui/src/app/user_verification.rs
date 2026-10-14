@@ -3,13 +3,13 @@
 //! Attempt IDs are UI-local generations: cancellation, resolution, or reconnect removes the
 //! pending generation, so a late RPC response cannot approve a newly surfaced request.
 
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::UserVerificationProof;
-use genex_app_server_protocol::UserVerificationVerifyResponse;
-use genex_app_server_protocol::WarningNotification;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::UserVerificationProof;
+use ruxex_app_server_protocol::UserVerificationVerifyResponse;
+use ruxex_app_server_protocol::WarningNotification;
+use ruxex_protocol::ThreadId;
 use uuid::Uuid;
 
 use super::App;

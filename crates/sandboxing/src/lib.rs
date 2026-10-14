@@ -40,39 +40,39 @@ pub use violation::record_filesystem_sandbox_violation;
 pub use violation::record_network_sandbox_violation;
 pub use violation::record_sandbox_violation;
 
-use genex_protocol::error::GenexErr;
+use ruxex_protocol::error::RuxexErr;
 
 #[cfg(not(target_os = "linux"))]
 pub fn system_bwrap_warning(
-    _permission_profile: &genex_protocol::models::PermissionProfile,
+    _permission_profile: &ruxex_protocol::models::PermissionProfile,
     _sandbox_policy_cwd: &std::path::Path,
 ) -> Option<String> {
     None
 }
 
-impl From<SandboxTransformError> for GenexErr {
+impl From<SandboxTransformError> for RuxexErr {
     fn from(err: SandboxTransformError) -> Self {
         match err {
             error @ SandboxTransformError::InvalidCommandCwd { .. }
             | error @ SandboxTransformError::InvalidSandboxPolicyCwd { .. } => {
-                GenexErr::InvalidRequest(error.to_string())
+                RuxexErr::InvalidRequest(error.to_string())
             }
             SandboxTransformError::MissingLinuxSandboxExecutable => {
-                GenexErr::LandlockSandboxExecutableNotProvided
+                RuxexErr::LandlockSandboxExecutableNotProvided
             }
             SandboxTransformError::EnvironmentNetworkProxy(message) => {
-                GenexErr::UnsupportedOperation(message)
+                RuxexErr::UnsupportedOperation(message)
             }
             #[cfg(target_os = "macos")]
             SandboxTransformError::SeatbeltPreparation(message) => {
-                GenexErr::UnsupportedOperation(message)
+                RuxexErr::UnsupportedOperation(message)
             }
             #[cfg(target_os = "linux")]
             SandboxTransformError::Wsl1UnsupportedForBubblewrap => {
-                GenexErr::UnsupportedOperation(crate::bwrap::WSL1_BWRAP_WARNING.to_string())
+                RuxexErr::UnsupportedOperation(crate::bwrap::WSL1_BWRAP_WARNING.to_string())
             }
             #[cfg(not(target_os = "macos"))]
-            SandboxTransformError::SeatbeltUnavailable => GenexErr::UnsupportedOperation(
+            SandboxTransformError::SeatbeltUnavailable => RuxexErr::UnsupportedOperation(
                 "seatbelt sandbox is only available on macOS".to_string(),
             ),
         }

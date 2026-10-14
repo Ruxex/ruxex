@@ -1,7 +1,7 @@
 use super::*;
 use crate::context::world_state::WorldState;
-use genex_config::RequirementSource;
-use genex_protocol::models::ResponseItem;
+use ruxex_config::RequirementSource;
+use ruxex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 #[test]

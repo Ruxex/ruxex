@@ -11,13 +11,13 @@ use crate::goal_display::goal_status_label;
 use crate::goal_display::goal_usage_summary;
 use crate::goal_files;
 use crate::text_formatting::truncate_text;
-use genex_app_server_protocol::ThreadGoal;
-use genex_app_server_protocol::ThreadGoalStatus;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::ThreadGoal;
+use ruxex_app_server_protocol::ThreadGoalStatus;
+use ruxex_protocol::ThreadId;
 
 const EPHEMERAL_THREAD_GOAL_ERROR_MESSAGE: &str = concat!(
     "Goals need a saved session. This session is temporary.\n",
-    "Run `genex` to start a saved session, or `genex resume` / `/resume` to reopen one.",
+    "Run `ruxex` to start a saved session, or `ruxex resume` / `/resume` to reopen one.",
 );
 
 impl App {
@@ -114,8 +114,8 @@ impl App {
             return;
         };
 
-        let genex_home = app_server.genex_home_path(&self.config.genex_home);
-        match goal_files::objective_text_for_edit(app_server, genex_home.as_ref(), &goal.objective)
+        let ruxex_home = app_server.ruxex_home_path(&self.config.ruxex_home);
+        match goal_files::objective_text_for_edit(app_server, ruxex_home.as_ref(), &goal.objective)
             .await
         {
             Ok(objective) => goal.objective = objective,
@@ -136,7 +136,7 @@ impl App {
         draft: goal_files::GoalDraft,
         mode: ThreadGoalSetMode,
     ) {
-        let genex_home = app_server.genex_home_path(&self.config.genex_home);
+        let ruxex_home = app_server.ruxex_home_path(&self.config.ruxex_home);
         let mode = if matches!(mode, ThreadGoalSetMode::ConfirmIfExists) {
             let result = app_server.thread_goal_get(thread_id).await;
             if self.current_displayed_thread_id() != Some(thread_id) {
@@ -164,7 +164,7 @@ impl App {
 
         let (objective, output_dir) = match goal_files::materialize_goal_draft(
             app_server,
-            genex_home.as_ref(),
+            ruxex_home.as_ref(),
             draft,
         )
         .await

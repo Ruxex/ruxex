@@ -1,13 +1,13 @@
 use crate::config::Config;
-use genex_config::types::OtelExporterKind as Kind;
-use genex_config::types::OtelHttpProtocol as Protocol;
-use genex_features::Feature;
-use genex_login::default_client::originator;
-use genex_otel::OtelExporter;
-use genex_otel::OtelHttpProtocol;
-use genex_otel::OtelProvider;
-use genex_otel::OtelSettings;
-use genex_otel::OtelTlsConfig as OtelTlsSettings;
+use ruxex_config::types::OtelExporterKind as Kind;
+use ruxex_config::types::OtelHttpProtocol as Protocol;
+use ruxex_features::Feature;
+use ruxex_login::default_client::originator;
+use ruxex_otel::OtelExporter;
+use ruxex_otel::OtelHttpProtocol;
+use ruxex_otel::OtelProvider;
+use ruxex_otel::OtelSettings;
+use ruxex_otel::OtelTlsConfig as OtelTlsSettings;
 use std::error::Error;
 
 /// Build an OpenTelemetry provider from the app Config.
@@ -79,7 +79,7 @@ pub fn build_provider(
     OtelProvider::try_new(&OtelSettings {
         service_name: service_name.to_string(),
         service_version: service_version.to_string(),
-        genex_home: config.genex_home.to_path_buf(),
+        ruxex_home: config.ruxex_home.to_path_buf(),
         environment: config.otel.environment.to_string(),
         exporter,
         trace_exporter,
@@ -94,13 +94,13 @@ pub fn record_process_start(otel: Option<&OtelProvider>, originator: &str) {
     let Some(metrics) = otel.and_then(OtelProvider::metrics) else {
         return;
     };
-    let _ = genex_otel::record_process_start_once(metrics, originator);
+    let _ = ruxex_otel::record_process_start_once(metrics, originator);
 }
 
 pub fn install_sqlite_telemetry(otel: Option<&OtelProvider>, originator: &str) {
     let Some(metrics) = otel.and_then(OtelProvider::metrics) else {
         return;
     };
-    let telemetry = genex_rollout::sqlite_telemetry_recorder(metrics.clone(), originator);
-    let _ = genex_state::install_process_db_telemetry(telemetry);
+    let telemetry = ruxex_rollout::sqlite_telemetry_recorder(metrics.clone(), originator);
+    let _ = ruxex_state::install_process_db_telemetry(telemetry);
 }

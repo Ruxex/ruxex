@@ -1,12 +1,12 @@
 use super::ContextualUserFragment;
 use super::world_state::PreviousSectionState;
 use super::world_state::WorldStateSection;
-use genex_protocol::AgentPath;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
-use genex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_CLOSE_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_GUIDANCE_OPEN_TAG;
+use ruxex_protocol::protocol::CONTEXT_WINDOW_OPEN_TAG;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

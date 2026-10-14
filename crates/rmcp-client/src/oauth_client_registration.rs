@@ -112,7 +112,7 @@ pub(crate) async fn start_authorization(
     credential_manager.set_metadata(metadata);
     let mut request = AuthorizationRequest::new(redirect_uri.clone())
         .with_scopes(scopes.iter().copied())
-        .with_client_name("Genex");
+        .with_client_name("Ruxex");
     if let Some(client_metadata_url) = client_metadata_url {
         // CIMD is an active IETF Internet-Draft: this HTTPS client identifier resolves
         // to its self-referential JSON metadata document.

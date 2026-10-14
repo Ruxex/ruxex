@@ -11,8 +11,8 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::TerminalInfo;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::TerminalInfo;
 use ratatui::layout::Size;
 use tokio::sync::broadcast;
 
@@ -62,7 +62,7 @@ impl SizeMonitor {
         }));
         let shared = state.clone();
         let worker = thread::Builder::new()
-            .name("genex-terminal-size".into())
+            .name("ruxex-terminal-size".into())
             .spawn(move || {
                 loop {
                     thread::park_timeout(CHECK_INTERVAL);

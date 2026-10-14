@@ -1,17 +1,17 @@
 use anyhow::Result;
 use core_test_support::test_path_buf;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GitInfo;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TokenCountEvent;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TokenUsageInfo;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::GitInfo;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TokenCountEvent;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TokenUsageInfo;
 use serde_json::json;
 use std::fs;
 use std::fs::FileTimes;
@@ -19,11 +19,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-pub fn rollout_path(genex_home: &Path, filename_ts: &str, thread_id: &str) -> PathBuf {
+pub fn rollout_path(ruxex_home: &Path, filename_ts: &str, thread_id: &str) -> PathBuf {
     let year = &filename_ts[0..4];
     let month = &filename_ts[5..7];
     let day = &filename_ts[8..10];
-    genex_home
+    ruxex_home
         .join("sessions")
         .join(year)
         .join(month)
@@ -31,7 +31,7 @@ pub fn rollout_path(genex_home: &Path, filename_ts: &str, thread_id: &str) -> Pa
         .join(format!("rollout-{filename_ts}-{thread_id}.jsonl"))
 }
 
-/// Create a minimal rollout file under `GENEX_HOME/sessions/YYYY/MM/DD/`.
+/// Create a minimal rollout file under `RUXEX_HOME/sessions/YYYY/MM/DD/`.
 ///
 /// - `filename_ts` is the filename timestamp component in `YYYY-MM-DDThh-mm-ss` format.
 /// - `meta_rfc3339` is the envelope timestamp used in JSON lines.
@@ -39,14 +39,14 @@ pub fn rollout_path(genex_home: &Path, filename_ts: &str, thread_id: &str) -> Pa
 ///
 /// Returns the generated conversation/session UUID as a string.
 pub fn create_fake_rollout(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     create_fake_rollout_with_source(
-        genex_home,
+        ruxex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -57,14 +57,14 @@ pub fn create_fake_rollout(
 
 /// Creates a minimal paginated rollout with ordinalized JSONL records.
 pub fn create_fake_paginated_rollout(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
     git_info: Option<GitInfo>,
 ) -> Result<String> {
-    let thread_id = create_fake_rollout(genex_home, filename_ts, meta_rfc3339, preview, git_info)?;
-    let path = rollout_path(genex_home, filename_ts, &thread_id);
+    let thread_id = create_fake_rollout(ruxex_home, filename_ts, meta_rfc3339, preview, git_info)?;
+    let path = rollout_path(ruxex_home, filename_ts, &thread_id);
     let mut lines = fs::read_to_string(path.as_path())?
         .lines()
         .map(serde_json::from_str::<serde_json::Value>)
@@ -89,13 +89,13 @@ pub fn create_fake_paginated_rollout(
 /// non-zero and asymmetric so assertions catch swapped total/last fields and
 /// dropped cached or reasoning counters.
 pub fn create_fake_rollout_with_token_usage(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
 ) -> Result<String> {
     let thread_id = create_fake_rollout(
-        genex_home,
+        ruxex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -110,7 +110,7 @@ pub fn create_fake_rollout_with_token_usage(
                 output_tokens: 30,
                 reasoning_output_tokens: 10,
                 total_tokens: 150,
-                genex_rollout_budget_units: None,
+                ruxex_rollout_budget_units: None,
             },
             last_token_usage: TokenUsage {
                 input_tokens: 70,
@@ -119,13 +119,13 @@ pub fn create_fake_rollout_with_token_usage(
                 output_tokens: 20,
                 reasoning_output_tokens: 5,
                 total_tokens: 90,
-                genex_rollout_budget_units: None,
+                ruxex_rollout_budget_units: None,
             },
             model_context_window: Some(200_000),
         }),
         rate_limits: None,
     }))?;
-    let file_path = rollout_path(genex_home, filename_ts, &thread_id);
+    let file_path = rollout_path(ruxex_home, filename_ts, &thread_id);
     let line = json!({
         "timestamp": meta_rfc3339,
         "type": "event_msg",
@@ -141,7 +141,7 @@ pub fn create_fake_rollout_with_token_usage(
 
 /// Create a minimal rollout file with an explicit session source.
 pub fn create_fake_rollout_with_source(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -149,7 +149,7 @@ pub fn create_fake_rollout_with_source(
     source: SessionSource,
 ) -> Result<String> {
     create_fake_rollout_with_session_and_thread_source(
-        genex_home,
+        ruxex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -162,7 +162,7 @@ pub fn create_fake_rollout_with_source(
 /// Create a minimal rollout file with explicit session and thread sources.
 #[allow(clippy::too_many_arguments)]
 pub fn create_fake_rollout_with_session_and_thread_source(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -171,7 +171,7 @@ pub fn create_fake_rollout_with_session_and_thread_source(
     thread_source: Option<ThreadSource>,
 ) -> Result<String> {
     create_fake_rollout_with_source_and_parent_thread_id(
-        genex_home,
+        ruxex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -186,7 +186,7 @@ pub fn create_fake_rollout_with_session_and_thread_source(
 /// Create a minimal rollout file with an explicit root session and control parent.
 #[allow(clippy::too_many_arguments)]
 pub fn create_fake_parented_rollout_with_source(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -196,7 +196,7 @@ pub fn create_fake_parented_rollout_with_source(
     parent_thread_id: ThreadId,
 ) -> Result<String> {
     create_fake_rollout_with_source_and_parent_thread_id(
-        genex_home,
+        ruxex_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -210,7 +210,7 @@ pub fn create_fake_parented_rollout_with_source(
 
 #[allow(clippy::too_many_arguments)]
 fn create_fake_rollout_with_source_and_parent_thread_id(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -225,7 +225,7 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
     let conversation_id = ThreadId::from_string(&uuid_str)?;
     let session_id = session_id.unwrap_or_else(|| conversation_id.into());
 
-    let file_path = rollout_path(genex_home, filename_ts, &uuid_str);
+    let file_path = rollout_path(ruxex_home, filename_ts, &uuid_str);
     let dir = file_path
         .parent()
         .ok_or_else(|| anyhow::anyhow!("missing rollout parent directory"))?;
@@ -241,7 +241,7 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
         timestamp: meta_rfc3339.to_string(),
         cwd: test_path_buf("/"),
         runtime_workspace_roots: None,
-        originator: "genex".to_string(),
+        originator: "ruxex".to_string(),
         cli_version: "0.0.0".to_string(),
         source,
         thread_source,
@@ -302,7 +302,7 @@ fn create_fake_rollout_with_source_and_parent_thread_id(
 }
 
 pub fn create_fake_rollout_with_text_elements(
-    genex_home: &Path,
+    ruxex_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -317,7 +317,7 @@ pub fn create_fake_rollout_with_text_elements(
     let year = &filename_ts[0..4];
     let month = &filename_ts[5..7];
     let day = &filename_ts[8..10];
-    let dir = genex_home.join("sessions").join(year).join(month).join(day);
+    let dir = ruxex_home.join("sessions").join(year).join(month).join(day);
     fs::create_dir_all(&dir)?;
 
     let file_path = dir.join(format!("rollout-{filename_ts}-{uuid}.jsonl"));
@@ -332,7 +332,7 @@ pub fn create_fake_rollout_with_text_elements(
         timestamp: meta_rfc3339.to_string(),
         cwd: test_path_buf("/"),
         runtime_workspace_roots: None,
-        originator: "genex".to_string(),
+        originator: "ruxex".to_string(),
         cli_version: "0.0.0".to_string(),
         source: SessionSource::Cli,
         thread_source: None,

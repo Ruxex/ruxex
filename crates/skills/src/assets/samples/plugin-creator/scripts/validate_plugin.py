@@ -31,7 +31,7 @@ HEX_COLOR_RE = re.compile(r"^#[0-9A-F]{6}$", re.IGNORECASE)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a local Genex plugin.")
+    parser = argparse.ArgumentParser(description="Validate a local Ruxex plugin.")
     parser.add_argument("plugin_path", help="Path to the plugin root directory")
     return parser.parse_args()
 
@@ -50,7 +50,7 @@ def main() -> None:
 
 def validate_plugin(plugin_root: Path) -> list[str]:
     errors: list[str] = []
-    manifest_path = plugin_root / ".genex-plugin" / "plugin.json"
+    manifest_path = plugin_root / ".ruxex-plugin" / "plugin.json"
     manifest = load_json_object(manifest_path, errors)
     if manifest is None:
         return errors
@@ -62,18 +62,18 @@ def validate_plugin(plugin_root: Path) -> list[str]:
 
 def load_json_object(path: Path, errors: list[str]) -> dict[str, Any] | None:
     if not path.is_file():
-        errors.append("missing `.genex-plugin/plugin.json`")
+        errors.append("missing `.ruxex-plugin/plugin.json`")
         return None
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError:
-        errors.append("unable to read `.genex-plugin/plugin.json`")
+        errors.append("unable to read `.ruxex-plugin/plugin.json`")
         return None
     except json.JSONDecodeError:
-        errors.append("`.genex-plugin/plugin.json` must be valid JSON")
+        errors.append("`.ruxex-plugin/plugin.json` must be valid JSON")
         return None
     if not isinstance(payload, dict):
-        errors.append("`.genex-plugin/plugin.json` must contain a JSON object")
+        errors.append("`.ruxex-plugin/plugin.json` must contain a JSON object")
         return None
     return payload
 
@@ -473,7 +473,7 @@ def validate_skill_manifest(skill_root: Path, errors: list[str]) -> None:
         errors.append(
             f"skill `{skill_root.name}` frontmatter field `disable-model-invocation` must be false"
         )
-    agent_yaml_path = skill_root / "agents" / "genex.yaml"
+    agent_yaml_path = skill_root / "agents" / "ruxex.yaml"
     if agent_yaml_path.is_file():
         validate_skill_agent_manifest(
             plugin_root=skill_root.parent.parent,

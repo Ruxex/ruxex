@@ -1,9 +1,9 @@
 //! Checks cancellation ownership and the lifetime of proofs waiting for outbound capacity.
 
 use super::*;
-use genex_app_server_protocol::UserVerificationDeleteResponse;
-use genex_app_server_protocol::UserVerificationProof;
-use genex_app_server_protocol::UserVerificationVerifyResponse;
+use ruxex_app_server_protocol::UserVerificationDeleteResponse;
+use ruxex_app_server_protocol::UserVerificationProof;
+use ruxex_app_server_protocol::UserVerificationVerifyResponse;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]

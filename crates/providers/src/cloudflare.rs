@@ -1,30 +1,30 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_api::ModelsClient;
-use genex_api::Provider;
-use genex_api::ReqwestTransport;
-use genex_api::SharedAuthProvider;
-use genex_api::StandardChatCompletionApi;
-use genex_api::map_api_error;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_login::default_client::create_client_for_route_async;
-use genex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
-use genex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_model_provider_info::ProviderAuthField;
-use genex_models_manager::manager::ModelCatalogSnapshot;
-use genex_models_manager::model_info::model_info_template_from_slug;
-use genex_protocol::account::ProviderAccount;
-use genex_protocol::account::ProviderAuthStatus;
-use genex_protocol::error::EnvVarError;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as CoreResult;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelInfo;
+use ruxex_api::ModelsClient;
+use ruxex_api::Provider;
+use ruxex_api::ReqwestTransport;
+use ruxex_api::SharedAuthProvider;
+use ruxex_api::StandardChatCompletionApi;
+use ruxex_api::map_api_error;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_login::default_client::create_client_for_route_async;
+use ruxex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
+use ruxex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider_info::ProviderAuthField;
+use ruxex_models_manager::manager::ModelCatalogSnapshot;
+use ruxex_models_manager::model_info::model_info_template_from_slug;
+use ruxex_protocol::account::ProviderAccount;
+use ruxex_protocol::account::ProviderAuthStatus;
+use ruxex_protocol::error::EnvVarError;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
 use http::HeaderMap;
 use serde_json::Value;
 use tokio::time::timeout;
@@ -34,13 +34,13 @@ use crate::provider::ProviderAccountResult;
 use crate::provider::ProviderAccountState;
 use crate::provider::ProviderApi;
 use crate::provider::ProviderRuntime;
-use genex_model_provider::ModelProviderFactory;
-use genex_model_provider::ProviderInit;
-use genex_model_provider::ProviderDescriptor;
-use genex_model_provider::cached_provider_auth;
-use genex_model_provider::provider_auth;
-use genex_model_provider::provider_models_identity;
-use genex_model_provider::resolve_provider_auth;
+use ruxex_model_provider::ModelProviderFactory;
+use ruxex_model_provider::ProviderInit;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::cached_provider_auth;
+use ruxex_model_provider::provider_auth;
+use ruxex_model_provider::provider_models_identity;
+use ruxex_model_provider::resolve_provider_auth;
 
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 const CLOUDFLARE_MODELS_TIMEOUT: Duration = Duration::from_secs(5);
@@ -77,7 +77,7 @@ impl CloudflareModelProvider {
         info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
         http_client_factory: HttpClientFactory,
-    ) -> genex_model_provider::SharedModelProvider {
+    ) -> ruxex_model_provider::SharedModelProvider {
         Arc::new(Self::new(
             provider_id,
             info,
@@ -133,7 +133,7 @@ impl CloudflareModelProvider {
         let auth = self.auth().await;
         let provider_info = self.models_info()?;
         let api_provider =
-            provider_info.to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))?;
+            provider_info.to_api_provider(auth.as_ref().map(RuxexAuth::auth_mode))?;
         let api_auth = resolve_provider_auth(auth.as_ref(), &provider_info)?;
         let mut models = Vec::new();
         let mut etag = None;
@@ -158,7 +158,7 @@ impl CloudflareModelProvider {
                     .map_err(map_api_error)
             })
             .await
-            .map_err(|_| GenexErr::RequestTimeout)??;
+            .map_err(|_| RuxexErr::RequestTimeout)??;
 
             let decoded = decode_cloudflare_models(&body, page)?;
             models.extend(decoded.models);
@@ -176,7 +176,7 @@ impl ModelProviderFactory for CloudflareModelProvider {
     fn provider_descriptor() -> ProviderDescriptor {
         ProviderDescriptor::new(
             CLOUDFLARE_PROVIDER_ID,
-            genex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION,
+            ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION,
         )
     }
 
@@ -197,7 +197,7 @@ pub fn create_cloudflare_provider(
     info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
-) -> genex_model_provider::SharedModelProvider {
+) -> ruxex_model_provider::SharedModelProvider {
     CloudflareModelProvider::create_cloudflare_provider(
         provider_id,
         info,
@@ -237,7 +237,7 @@ impl ProviderRuntime for CloudflareModelProvider {
     ) -> ModelProviderFuture<'_, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async move {
             let identity = self.model_identity().ok_or_else(|| {
-                GenexErr::InvalidRequest("Cloudflare provider identity is unavailable".to_string())
+                RuxexErr::InvalidRequest("Cloudflare provider identity is unavailable".to_string())
             })?;
             let (models, etag) = self.fetch_models(http_client_factory).await?;
             Ok(ModelCatalogSnapshot {
@@ -256,7 +256,7 @@ impl ProviderRuntime for CloudflareModelProvider {
         self.provider_id.as_deref()
     }
 
-    fn auth(&self) -> ModelProviderFuture<'_, Option<GenexAuth>> {
+    fn auth(&self) -> ModelProviderFuture<'_, Option<RuxexAuth>> {
         Box::pin(
             async move { provider_auth(self.credential_manager.as_ref(), None, &self.info).await },
         )
@@ -291,7 +291,7 @@ impl ProviderRuntime for CloudflareModelProvider {
         Box::pin(async move {
             let auth = self.auth().await;
             self.effective_info(self.chat_base_url()?)
-                .to_api_provider(auth.as_ref().map(GenexAuth::auth_mode))
+                .to_api_provider(auth.as_ref().map(RuxexAuth::auth_mode))
         })
     }
 
@@ -323,7 +323,7 @@ fn cloudflare_account_id_from_env() -> CoreResult<String> {
         .ok()
         .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| {
-            GenexErr::EnvVar(EnvVarError {
+            RuxexErr::EnvVar(EnvVarError {
                 var: CLOUDFLARE_ACCOUNT_ID_ENV_VAR.to_string(),
                 instructions: Some(
                     "Set CLOUDFLARE_ACCOUNT_ID to the account that owns Workers AI.".to_string(),
@@ -341,7 +341,7 @@ struct DecodedCloudflareModels {
 fn decode_cloudflare_models(body: &[u8], page: usize) -> CoreResult<DecodedCloudflareModels> {
     let payload: Value = serde_json::from_slice(body)?;
     if payload.get("success").and_then(Value::as_bool) == Some(false) {
-        return Err(GenexErr::InvalidRequest(
+        return Err(RuxexErr::InvalidRequest(
             "Cloudflare model search failed".to_string(),
         ));
     }
@@ -350,7 +350,7 @@ fn decode_cloudflare_models(body: &[u8], page: usize) -> CoreResult<DecodedCloud
         .get("result")
         .and_then(Value::as_array)
         .ok_or_else(|| {
-            GenexErr::InvalidRequest("Cloudflare model search returned no result array".to_string())
+            RuxexErr::InvalidRequest("Cloudflare model search returned no result array".to_string())
         })?;
 
     let models = result
@@ -380,7 +380,7 @@ fn decode_cloudflare_models(body: &[u8], page: usize) -> CoreResult<DecodedCloud
 mod tests {
     use super::*;
 
-    use genex_http_client::OutboundProxyPolicy;
+    use ruxex_http_client::OutboundProxyPolicy;
 
     #[test]
     fn cloudflare_model_search_response_is_converted_to_provider_models() {
@@ -426,12 +426,12 @@ mod tests {
         );
 
         assert_eq!(
-            genex_model_provider::ModelProvider::descriptor(&provider).provider_kind,
+            ruxex_model_provider::ModelProvider::descriptor(&provider).provider_kind,
             "cloudflare"
         );
         assert_eq!(
-            genex_model_provider::ModelProvider::request_format(&provider),
-            genex_model_provider::ProviderRequestFormat::Chat
+            ruxex_model_provider::ModelProvider::request_format(&provider),
+            ruxex_model_provider::ProviderRequestFormat::Chat
         );
     }
 }

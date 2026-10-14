@@ -193,7 +193,7 @@ async fn wait_for_python_repl_ready_via_probe(
     newline: &str,
 ) -> anyhow::Result<Vec<u8>> {
     let mut collected = Vec::new();
-    let marker = "__genex_pty_ready__";
+    let marker = "__ruxex_pty_ready__";
     let deadline = tokio::time::Instant::now() + tokio::time::Duration::from_millis(timeout_ms);
     let probe_window = tokio::time::Duration::from_millis(250);
 
@@ -321,7 +321,7 @@ async fn pty_python_repl_emits_output_and_exits() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let ready_marker = "__genex_pty_ready__";
+    let ready_marker = "__ruxex_pty_ready__";
     let args = vec![
         "-i".to_string(),
         "-q".to_string(),
@@ -797,7 +797,7 @@ fn assert_pty_shutdown_with_detached_child(
         .enable_all()
         .build()?;
     let (session, child_pid) = runtime.block_on(async {
-        let marker = "__genex_detached_pid:";
+        let marker = "__ruxex_detached_pid:";
         // The detached child retains the slave descriptors but outlives the
         // original process group. Its alarm bounds a regressed runtime drop.
         let script = format!(
@@ -810,7 +810,7 @@ if os.fork() == 0:
     tty.setraw(0)
     print('{marker}' + str(os.getpid()), flush=True)
     select.select([0], [], [])
-    print('__genex_input_ready__', flush=True)
+    print('__ruxex_input_ready__', flush=True)
     time.sleep(10)
     os._exit(0)
 time.sleep(10)
@@ -836,7 +836,7 @@ time.sleep(10)
         // exceeds terminal capacity, so the second chunk must remain queued.
         wait_for_output_contains(
             &mut output_rx,
-            "__genex_input_ready__",
+            "__ruxex_input_ready__",
             /*timeout_ms*/ 2_000,
         )
         .await?;
@@ -1103,7 +1103,7 @@ fn pty_terminate_reaps_child_when_waiter_is_queued() -> anyhow::Result<()> {
     blocker_started_rx.recv_timeout(std::time::Duration::from_secs(2))?;
 
     let pid_file = std::env::temp_dir().join(format!(
-        "genex-pty-reap-{}-{}",
+        "ruxex-pty-reap-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
@@ -1112,11 +1112,11 @@ fn pty_terminate_reaps_child_when_waiter_is_queued() -> anyhow::Result<()> {
     runtime.block_on(async {
         let mut env_map: HashMap<String, String> = std::env::vars().collect();
         env_map.insert(
-            "GENEX_PTY_TEST_PID_FILE".to_string(),
+            "RUXEX_PTY_TEST_PID_FILE".to_string(),
             pid_file.display().to_string(),
         );
         let (program, args) =
-            shell_command("printf '%s' \"$$\" > \"$GENEX_PTY_TEST_PID_FILE\"; sleep 60");
+            shell_command("printf '%s' \"$$\" > \"$RUXEX_PTY_TEST_PID_FILE\"; sleep 60");
         let spawned = spawn_pty_process(
             &program,
             &args,
@@ -1178,7 +1178,7 @@ fn pty_terminate_reaps_child_when_waiter_is_queued() -> anyhow::Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn pty_terminate_kills_background_children_in_same_process_group() -> anyhow::Result<()> {
     let env_map: HashMap<String, String> = std::env::vars().collect();
-    let marker = "__genex_bg_pid:";
+    let marker = "__ruxex_bg_pid:";
     let script = format!("sleep 1000 & bg=$!; echo {marker}$bg; wait");
     let (program, args) = shell_command(&script);
     let spawned = spawn_pty_process(
@@ -1324,7 +1324,7 @@ async fn pty_preserving_inherited_fds_keeps_python_repl_running() -> anyhow::Res
         newline,
     )
     .await?;
-    let marker = "__genex_preserved_py_pid:";
+    let marker = "__ruxex_preserved_py_pid:";
     writer
         .send(format!("import os; print('{marker}' + str(os.getpid())){newline}").into_bytes())
         .await?;

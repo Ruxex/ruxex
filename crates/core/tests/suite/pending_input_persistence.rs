@@ -6,34 +6,34 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnInputSubmission;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::AppendThreadItemsParams;
-use genex_thread_store::ArchiveThreadParams;
-use genex_thread_store::CreateThreadParams;
-use genex_thread_store::DeleteThreadParams;
-use genex_thread_store::InMemoryThreadStore;
-use genex_thread_store::ListThreadsParams;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_thread_store::PersistContext;
-use genex_thread_store::ReadThreadByRolloutPathParams;
-use genex_thread_store::ReadThreadParams;
-use genex_thread_store::ResumeThreadParams;
-use genex_thread_store::StoredThread;
-use genex_thread_store::StoredThreadHistory;
-use genex_thread_store::ThreadPage;
-use genex_thread_store::ThreadStore;
-use genex_thread_store::ThreadStoreFuture;
-use genex_thread_store::UpdateThreadMetadataParams;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnInputSubmission;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::AppendThreadItemsParams;
+use ruxex_thread_store::ArchiveThreadParams;
+use ruxex_thread_store::CreateThreadParams;
+use ruxex_thread_store::DeleteThreadParams;
+use ruxex_thread_store::InMemoryThreadStore;
+use ruxex_thread_store::ListThreadsParams;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_thread_store::PersistContext;
+use ruxex_thread_store::ReadThreadByRolloutPathParams;
+use ruxex_thread_store::ReadThreadParams;
+use ruxex_thread_store::ResumeThreadParams;
+use ruxex_thread_store::StoredThread;
+use ruxex_thread_store::StoredThreadHistory;
+use ruxex_thread_store::ThreadPage;
+use ruxex_thread_store::ThreadStore;
+use ruxex_thread_store::ThreadStoreFuture;
+use ruxex_thread_store::UpdateThreadMetadataParams;
 use core_test_support::responses;
 use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -166,14 +166,14 @@ async fn steered_input_checkpoint_controls_next_request(
     });
     let base_url = format!("{}/v1", server.uri());
     let config_server = responses::start_mock_server().await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_thread_store(store.clone())
         .with_history_mode(ThreadHistoryMode::Paginated)
         .with_config(move |config| config.model_provider.base_url = Some(base_url))
         .build_with_auto_env(&config_server)
         .await?;
     let first = test
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first prompt".to_string(),
             text_elements: Vec::new(),
@@ -182,7 +182,7 @@ async fn steered_input_checkpoint_controls_next_request(
     let TurnInputSubmission::Started { turn_id } = first else {
         panic!("first input should start a turn");
     };
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::AgentMessageContentDelta(_))
     })
     .await;
@@ -196,13 +196,13 @@ async fn steered_input_checkpoint_controls_next_request(
             TurnInputRequest::new(TurnInput::ResponseItem(serde_json::from_value(json!({
                 "type": "function_call_output",
                 "name": "send_message_to_thread",
-                "namespace": "genex_app",
+                "namespace": "ruxex_app",
                 "output": "steered input",
             }))?))
         }
     };
     assert_eq!(
-        test.genex.start_or_steer_turn(input).await?,
+        test.ruxex.start_or_steer_turn(input).await?,
         TurnInputSubmission::Steered { turn_id }
     );
     // Steering still waits for the existing inference stream to finish.
@@ -242,11 +242,11 @@ async fn steered_input_checkpoint_controls_next_request(
     second_completed
         .send(())
         .expect("finish follow-up inference");
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
     server.shutdown().await;
     Ok(())
 }

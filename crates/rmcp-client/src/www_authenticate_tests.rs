@@ -1,4 +1,4 @@
-use genex_exec_server::HttpHeader;
+use ruxex_exec_server::HttpHeader;
 use pretty_assertions::assert_eq;
 
 use super::BearerInsufficientScope;

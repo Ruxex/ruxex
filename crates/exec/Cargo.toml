@@ -1,16 +1,16 @@
 [package]
-name = "genex-exec"
+name = "ruxex-exec"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 autotests = false
 
 [[bin]]
-name = "genex-exec"
+name = "ruxex-exec"
 path = "src/main.rs"
 
 [lib]
-name = "genex_exec"
+name = "ruxex_exec"
 path = "src/lib.rs"
 doctest = false
 
@@ -24,25 +24,25 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-genex-arg0 = { workspace = true }
-genex-app-server-client = { workspace = true }
-genex-app-server-protocol = { workspace = true }
-genex-config = { workspace = true }
-genex-core = { workspace = true }
-genex-features = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-history = { workspace = true }
-genex-login = { workspace = true }
-genex-model-provider = { workspace = true }
-genex-model-provider-info = { workspace = true }
-genex-otel = { workspace = true }
-genex-protocol = { workspace = true }
-genex-rollout = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-cli = { workspace = true }
-genex-utils-path-uri = { workspace = true }
-genex-utils-sandbox-summary = { workspace = true }
-genex-worktree = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-app-server-client = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-cli = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-sandbox-summary = { workspace = true }
+ruxex-worktree = { workspace = true }
 owo-colors = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -66,8 +66,8 @@ uuid = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }
-genex-apply-patch = { workspace = true }
-genex-utils-cargo-bin = { workspace = true }
+ruxex-apply-patch = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
 core_test_support = { workspace = true }
 libc = { workspace = true }
 opentelemetry = { workspace = true }

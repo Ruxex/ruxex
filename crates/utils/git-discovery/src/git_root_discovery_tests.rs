@@ -2,7 +2,7 @@
 //! fresh discovery after repository changes. Blocked probes must not delay runtime shutdown.
 
 use super::GitRootDiscovery;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use std::sync::Mutex;

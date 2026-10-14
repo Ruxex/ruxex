@@ -21,7 +21,7 @@ export function HomePage() {
             <p className="mt-2 text-base-content/70">
               {appServer.isError
                 ? String(appServer.error)
-                : "The Tauri bridge connects this window to the shared Genex app-server daemon."}
+                : "The Tauri bridge connects this window to the shared Ruxex app-server daemon."}
             </p>
           </div>
           <div className="card-actions justify-end">

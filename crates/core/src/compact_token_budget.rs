@@ -10,10 +10,10 @@ use crate::responses_metadata::CompactionTrigger;
 use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::items::ContextCompactionItem;
-use genex_protocol::items::TurnItem;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::items::ContextCompactionItem;
+use ruxex_protocol::items::TurnItem;
 use tokio_util::sync::CancellationToken;
 
 /// Runs token-budget manual compaction as a normal compaction lifecycle.
@@ -24,7 +24,7 @@ use tokio_util::sync::CancellationToken;
 pub(crate) async fn run_manual_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     sess.emit_turn_started(&turn_context).await;
 
     // Manual compaction runs outside run_turn, so it captures its own current step.
@@ -44,7 +44,7 @@ pub(crate) async fn run_inline_auto_compact_task(
     sess: Arc<Session>,
     step_context: Arc<StepContext>,
     initial_context_injection: InitialContextInjection,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let world_state = match initial_context_injection {
         InitialContextInjection::BeforeLastUserMessage { world_state, .. } => world_state,
         InitialContextInjection::DoNotInject => {
@@ -59,12 +59,12 @@ async fn run_compact_task_inner(
     step_context: &Arc<StepContext>,
     world_state: Arc<WorldState>,
     trigger: CompactionTrigger,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let turn_context = &step_context.turn;
     let pre_compact_outcome = run_pre_compact_hooks(sess, turn_context, trigger).await;
     match pre_compact_outcome {
         PreCompactHookOutcome::Continue => {}
-        PreCompactHookOutcome::Stopped => return Err(GenexErr::TurnAborted),
+        PreCompactHookOutcome::Stopped => return Err(RuxexErr::TurnAborted),
     }
 
     let compaction_item = TurnItem::ContextCompaction(ContextCompactionItem::new());
@@ -77,7 +77,7 @@ async fn run_compact_task_inner(
 
     let post_compact_outcome = run_post_compact_hooks(sess, turn_context, trigger).await;
     if let PostCompactHookOutcome::Stopped = post_compact_outcome {
-        return Err(GenexErr::TurnAborted);
+        return Err(RuxexErr::TurnAborted);
     }
 
     Ok(())

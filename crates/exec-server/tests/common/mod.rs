@@ -7,40 +7,40 @@ use std::process::Stdio;
 use std::time::Duration;
 
 use ctor::ctor;
-use genex_exec_server::ExecServerRuntimePaths;
-use genex_exec_server::ExecServerTelemetry;
-use genex_exec_server::GENEX_ARG0_EXEC_HELPER_ARG1;
-use genex_exec_server::GENEX_FS_HELPER_ARG1;
-use genex_exec_server::RequestDispatchMode;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_sandboxing::landlock::GENEX_LINUX_SANDBOX_ARG0;
-use genex_test_binary_support::TestBinaryDispatchGuard;
-use genex_test_binary_support::TestBinaryDispatchMode;
-use genex_test_binary_support::configure_test_binary_dispatch;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_exec_server::ExecServerTelemetry;
+use ruxex_exec_server::RUXEX_ARG0_EXEC_HELPER_ARG1;
+use ruxex_exec_server::RUXEX_FS_HELPER_ARG1;
+use ruxex_exec_server::RequestDispatchMode;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_sandboxing::landlock::RUXEX_LINUX_SANDBOX_ARG0;
+use ruxex_test_binary_support::TestBinaryDispatchGuard;
+use ruxex_test_binary_support::TestBinaryDispatchMode;
+use ruxex_test_binary_support::configure_test_binary_dispatch;
 
 pub(crate) mod exec_server;
 
 pub(crate) const TEST_BUILD_COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
 pub(crate) const DELAYED_OUTPUT_AFTER_EXIT_PARENT_ARG: &str =
-    "--genex-test-delayed-output-after-exit-parent";
+    "--ruxex-test-delayed-output-after-exit-parent";
 pub(crate) const SYSTEM_PROXY_REQUEST_URL_ENV: &str =
-    "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_REQUEST_URL";
-pub(crate) const SYSTEM_PROXY_URL_ENV: &str = "GENEX_EXEC_SERVER_TEST_SYSTEM_PROXY_URL";
+    "RUXEX_EXEC_SERVER_TEST_SYSTEM_PROXY_REQUEST_URL";
+pub(crate) const SYSTEM_PROXY_URL_ENV: &str = "RUXEX_EXEC_SERVER_TEST_SYSTEM_PROXY_URL";
 
-const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--genex-test-delayed-output-after-exit-child";
+const DELAYED_OUTPUT_AFTER_EXIT_CHILD_ARG: &str = "--ruxex-test-delayed-output-after-exit-child";
 
 #[ctor]
 pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
-    let guard = configure_test_binary_dispatch("genex-exec-server-tests", |exe_name, argv1| {
-        if argv1 == Some(GENEX_ARG0_EXEC_HELPER_ARG1) {
+    let guard = configure_test_binary_dispatch("ruxex-exec-server-tests", |exe_name, argv1| {
+        if argv1 == Some(RUXEX_ARG0_EXEC_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if argv1 == Some(GENEX_FS_HELPER_ARG1) {
+        if argv1 == Some(RUXEX_FS_HELPER_ARG1) {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
-        if exe_name == GENEX_LINUX_SANDBOX_ARG0 {
+        if exe_name == RUXEX_LINUX_SANDBOX_ARG0 {
             return TestBinaryDispatchMode::DispatchArg0Only;
         }
         TestBinaryDispatchMode::InstallAliases
@@ -52,15 +52,15 @@ pub static TEST_BINARY_DISPATCH_GUARD: Option<TestBinaryDispatchGuard> = {
 
 pub(crate) fn current_test_binary_helper_paths() -> anyhow::Result<(PathBuf, Option<PathBuf>)> {
     let current_exe = env::current_exe()?;
-    let genex_linux_sandbox_exe = if cfg!(target_os = "linux") {
+    let ruxex_linux_sandbox_exe = if cfg!(target_os = "linux") {
         TEST_BINARY_DISPATCH_GUARD
             .as_ref()
-            .and_then(|guard| guard.paths().genex_linux_sandbox_exe.clone())
+            .and_then(|guard| guard.paths().ruxex_linux_sandbox_exe.clone())
             .or_else(|| Some(current_exe.clone()))
     } else {
         None
     };
-    Ok((current_exe, genex_linux_sandbox_exe))
+    Ok((current_exe, ruxex_linux_sandbox_exe))
 }
 
 fn maybe_run_delayed_output_after_exit_from_test_binary() {
@@ -149,7 +149,7 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
         return;
     }
     // Initialize in the executor child, just as the real CLI does at startup.
-    genex_build_info::BuildInfo::initialize(TEST_BUILD_COMMIT);
+    ruxex_build_info::BuildInfo::initialize(TEST_BUILD_COMMIT);
 
     let Some(flag) = args.next() else {
         eprintln!("expected --listen");
@@ -211,7 +211,7 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
         env::var(SYSTEM_PROXY_URL_ENV),
     ) {
         (Ok(request_url), Ok(proxy_url)) => {
-            genex_http_client::cache_system_proxy_route_for_test(&request_url, proxy_url);
+            ruxex_http_client::cache_system_proxy_route_for_test(&request_url, proxy_url);
             HttpClientFactory::new(OutboundProxyPolicy::RespectSystemProxy)
         }
         (Err(env::VarError::NotPresent), Err(env::VarError::NotPresent)) => {
@@ -225,21 +225,21 @@ fn maybe_run_exec_server_from_test_binary(guard: Option<&TestBinaryDispatchGuard
     let exit_code = match runtime.block_on(async {
         #[cfg(target_os = "macos")]
         let runtime_paths = {
-            let home = genex_utils_home_dir::find_genex_home()?;
-            let config = genex_config::loader::load_config_layers_state(
-                &genex_exec_server::LocalFileSystem::unsandboxed(),
+            let home = ruxex_utils_home_dir::find_ruxex_home()?;
+            let config = ruxex_config::loader::load_config_layers_state(
+                &ruxex_exec_server::LocalFileSystem::unsandboxed(),
                 home.as_path(),
                 /*cwd*/ None,
                 &[],
-                genex_config::LoaderOverrides::default(),
-                &genex_config::NoopThreadConfigLoader,
+                ruxex_config::LoaderOverrides::default(),
+                &ruxex_config::NoopThreadConfigLoader,
             )
             .await?;
-            runtime_paths.with_allowed_symlinked_genex_home(
-                genex_config::allowed_symlinked_genex_home(&config, &home),
+            runtime_paths.with_allowed_symlinked_ruxex_home(
+                ruxex_config::allowed_symlinked_ruxex_home(&config, &home),
             )
         };
-        genex_exec_server::run_main_with_telemetry(
+        ruxex_exec_server::run_main_with_telemetry(
             &listen_url,
             runtime_paths,
             ExecServerTelemetry::default(),
@@ -264,7 +264,7 @@ fn linux_sandbox_exe(
     #[cfg(target_os = "linux")]
     {
         guard
-            .and_then(|guard| guard.paths().genex_linux_sandbox_exe.clone())
+            .and_then(|guard| guard.paths().ruxex_linux_sandbox_exe.clone())
             .or_else(|| Some(current_exe.to_path_buf()))
     }
     #[cfg(not(target_os = "linux"))]

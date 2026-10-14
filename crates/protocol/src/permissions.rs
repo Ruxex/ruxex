@@ -4,11 +4,11 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_absolute_path::canonicalize_preserving_symlinks;
-use genex_utils_path_uri::LegacyAppPathString;
-use genex_utils_path_uri::PathConvention;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::canonicalize_preserving_symlinks;
+use ruxex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::PathConvention;
+use ruxex_utils_path_uri::PathUri;
 use globset::Candidate;
 use globset::GlobBuilder;
 use globset::GlobMatcher;
@@ -31,14 +31,14 @@ pub use deny_read_validator::DenyReadViolation;
 
 const PROTECTED_METADATA_GIT_PATH_NAME: &str = ".git";
 const PROTECTED_METADATA_AGENTS_PATH_NAME: &str = ".agents";
-const PROTECTED_METADATA_GENEX_PATH_NAME: &str = ".genex";
+const PROTECTED_METADATA_RUXEX_PATH_NAME: &str = ".ruxex";
 const PROTECTED_METADATA_AWS_PATH_NAME: &str = ".aws";
 
 /// Top-level workspace metadata paths that stay protected under writable roots.
 pub const PROTECTED_METADATA_PATH_NAMES: &[&str] = &[
     PROTECTED_METADATA_GIT_PATH_NAME,
     PROTECTED_METADATA_AGENTS_PATH_NAME,
-    PROTECTED_METADATA_GENEX_PATH_NAME,
+    PROTECTED_METADATA_RUXEX_PATH_NAME,
     PROTECTED_METADATA_AWS_PATH_NAME,
 ];
 
@@ -583,7 +583,7 @@ impl TryFrom<FileSystemSandboxPolicy> for RawFileSystemSandboxPolicy {
     }
 }
 
-const PROJECT_ROOTS_GLOB_PATTERN_PREFIX: &str = "genex-project-roots://";
+const PROJECT_ROOTS_GLOB_PATTERN_PREFIX: &str = "ruxex-project-roots://";
 
 pub fn project_roots_glob_pattern(subpath: &Path) -> String {
     format!("{PROJECT_ROOTS_GLOB_PATTERN_PREFIX}{}", subpath.display())
@@ -834,12 +834,12 @@ impl FileSystemSandboxPolicy {
 
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".git");
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".agents");
-        append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".genex");
+        append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".ruxex");
         append_default_read_only_project_root_subpath_if_no_explicit_rule(&mut entries, ".aws");
         for writable_root in writable_roots {
             for protected_path in default_read_only_subpaths_for_writable_root(
                 writable_root,
-                /*protect_missing_dot_genex*/ false,
+                /*protect_missing_dot_ruxex*/ false,
             ) {
                 append_default_read_only_path_if_no_explicit_rule(&mut entries, protected_path);
             }
@@ -860,7 +860,7 @@ impl FileSystemSandboxPolicy {
         if let SandboxPolicy::WorkspaceWrite { writable_roots, .. } = sandbox_policy {
             if let Ok(cwd_root) = AbsolutePathBuf::from_absolute_path(cwd) {
                 for protected_path in default_read_only_subpaths_for_writable_root(
-                    &cwd_root, /*protect_missing_dot_genex*/ true,
+                    &cwd_root, /*protect_missing_dot_ruxex*/ true,
                 ) {
                     append_default_read_only_path_if_no_explicit_rule(
                         &mut file_system_policy.entries,
@@ -871,7 +871,7 @@ impl FileSystemSandboxPolicy {
             for writable_root in writable_roots {
                 for protected_path in default_read_only_subpaths_for_writable_root(
                     writable_root,
-                    /*protect_missing_dot_genex*/ false,
+                    /*protect_missing_dot_ruxex*/ false,
                 ) {
                     append_default_read_only_path_if_no_explicit_rule(
                         &mut file_system_policy.entries,
@@ -1365,7 +1365,7 @@ impl FileSystemSandboxPolicy {
             }
 
             for protected_path in default_read_only_subpaths_for_writable_root(
-                path, /*protect_missing_dot_genex*/ false,
+                path, /*protect_missing_dot_ruxex*/ false,
             ) {
                 append_default_read_only_path_if_no_explicit_rule(
                     &mut self.entries,
@@ -1540,9 +1540,9 @@ impl FileSystemSandboxPolicy {
                 .collect();
             let protected_metadata_names =
                 protected_metadata_names_for_writable_root(self, &root, &raw_writable_roots, cwd);
-            let protect_missing_dot_genex = effective_cwd.as_ref() == Some(&root);
+            let protect_missing_dot_ruxex = effective_cwd.as_ref() == Some(&root);
             let mut read_only_subpaths: Vec<AbsolutePathBuf> =
-                default_read_only_subpaths_for_writable_root(&root, protect_missing_dot_genex)
+                default_read_only_subpaths_for_writable_root(&root, protect_missing_dot_ruxex)
                     .into_iter()
                     .filter(|path| !has_explicit_resolved_path_entry(&resolved_entries, path))
                     .collect();
@@ -1551,8 +1551,8 @@ impl FileSystemSandboxPolicy {
             // as separate WritableRoot values and are checked independently.
             // Preserve symlink path components that live under the writable root
             // so downstream sandboxes can still mask the symlink inode itself.
-            // Example: if `<root>/.genex -> <root>/decoy`, bwrap must still see
-            // `<root>/.genex`, not only the resolved `<root>/decoy`.
+            // Example: if `<root>/.ruxex -> <root>/decoy`, bwrap must still see
+            // `<root>/.ruxex`, not only the resolved `<root>/decoy`.
             read_only_subpaths.extend(
                 prepared_entries
                     .iter()
@@ -1608,7 +1608,7 @@ impl FileSystemSandboxPolicy {
                 protected_metadata_names,
                 root,
                 // Preserve literal in-root protected paths like `.git` and
-                // `.genex` so downstream sandboxes can still detect and mask
+                // `.ruxex` so downstream sandboxes can still detect and mask
                 // the symlink itself instead of only its resolved target.
                 read_only_subpaths: dedup_absolute_paths(
                     read_only_subpaths,
@@ -2203,7 +2203,7 @@ fn normalize_policy_path_alias(path: PathUri) -> PathUri {
 
 pub(crate) fn default_read_only_subpaths_for_writable_root(
     writable_root: &AbsolutePathBuf,
-    protect_missing_dot_genex: bool,
+    protect_missing_dot_ruxex: bool,
 ) -> Vec<AbsolutePathBuf> {
     let mut subpaths: Vec<AbsolutePathBuf> = Vec::new();
     let top_level_git = writable_root.join(PROTECTED_METADATA_GIT_PATH_NAME);
@@ -2228,13 +2228,13 @@ pub(crate) fn default_read_only_subpaths_for_writable_root(
         subpaths.push(top_level_agents);
     }
 
-    // Keep top-level project metadata under .genex read-only to the agent by
+    // Keep top-level project metadata under .ruxex read-only to the agent by
     // default. For the workspace root itself, protect it even before the
     // directory exists so first-time creation still goes through the
     // protected-path approval flow.
-    let top_level_genex = writable_root.join(PROTECTED_METADATA_GENEX_PATH_NAME);
-    if protect_missing_dot_genex || top_level_genex.as_path().is_dir() {
-        subpaths.push(top_level_genex);
+    let top_level_ruxex = writable_root.join(PROTECTED_METADATA_RUXEX_PATH_NAME);
+    if protect_missing_dot_ruxex || top_level_ruxex.as_path().is_dir() {
+        subpaths.push(top_level_ruxex);
     }
 
     // AWS profiles can select credential helpers that the application executes.
@@ -2307,7 +2307,7 @@ fn legacy_runtime_file_system_policy_for_cwd(
 
     if let Ok(cwd_root) = AbsolutePathBuf::from_absolute_path(cwd) {
         for protected_path in default_read_only_subpaths_for_writable_root(
-            &cwd_root, /*protect_missing_dot_genex*/ true,
+            &cwd_root, /*protect_missing_dot_ruxex*/ true,
         ) {
             append_default_read_only_path_if_no_explicit_rule(&mut entries, protected_path);
         }
@@ -2315,7 +2315,7 @@ fn legacy_runtime_file_system_policy_for_cwd(
     for writable_root in writable_roots {
         for protected_path in default_read_only_subpaths_for_writable_root(
             writable_root,
-            /*protect_missing_dot_genex*/ false,
+            /*protect_missing_dot_ruxex*/ false,
         ) {
             append_default_read_only_path_if_no_explicit_rule(&mut entries, protected_path);
         }
@@ -2495,7 +2495,7 @@ mod tests {
     use tempfile::TempDir;
 
     #[cfg(unix)]
-    const SYMLINKED_TMPDIR_TEST_ENV: &str = "GENEX_PROTOCOL_TEST_SYMLINKED_TMPDIR";
+    const SYMLINKED_TMPDIR_TEST_ENV: &str = "RUXEX_PROTOCOL_TEST_SYMLINKED_TMPDIR";
 
     #[cfg(unix)]
     fn symlink_dir(original: &Path, link: &Path) -> std::io::Result<()> {
@@ -2805,7 +2805,7 @@ mod tests {
             FileSystemSandboxEntry::new(cwd.clone().into(), FileSystemAccessMode::Write),
             FileSystemSandboxEntry::new(path("file:///").into(), FileSystemAccessMode::Deny),
             FileSystemSandboxEntry::new(
-                path("file:///workspace/.genex").into(),
+                path("file:///workspace/.ruxex").into(),
                 FileSystemAccessMode::Read,
             ),
             unreadable_glob_entry("/workspace/**/*.env".to_string()),
@@ -2827,10 +2827,10 @@ mod tests {
                 &prepared,
             ));
         }
-        assert!(!policy.can_write_path(&path("file:///workspace/.genex/config"), &context));
+        assert!(!policy.can_write_path(&path("file:///workspace/.ruxex/config"), &context));
         assert_eq!(
-            policy.metadata_write_denial(&path("file:///workspace/.genex/config"), &context),
-            Some(".genex"),
+            policy.metadata_write_denial(&path("file:///workspace/.ruxex/config"), &context),
+            Some(".ruxex"),
         );
     }
 
@@ -3007,13 +3007,13 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn writable_roots_proactively_protect_missing_dot_genex() {
+    fn writable_roots_proactively_protect_missing_dot_ruxex() {
         let cwd = TempDir::new().expect("tempdir");
         let expected_root = AbsolutePathBuf::from_absolute_path(
             cwd.path().canonicalize().expect("canonicalize cwd"),
         )
         .expect("absolute canonical root");
-        let expected_dot_genex = expected_root.join(".genex");
+        let expected_dot_ruxex = expected_root.join(".ruxex");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry {
             path: FileSystemPath::Special {
@@ -3029,7 +3029,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_dot_genex)
+                .contains(&expected_dot_ruxex)
         );
     }
 
@@ -3185,7 +3185,7 @@ mod tests {
                 ),
                 FileSystemSandboxEntry::skip_missing_path(
                     FileSystemPath::Special {
-                        value: FileSystemSpecialPath::project_roots(Some(".genex".into())),
+                        value: FileSystemSpecialPath::project_roots(Some(".ruxex".into())),
                     },
                     FileSystemAccessMode::Read,
                 ),
@@ -3222,13 +3222,13 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn writable_roots_skip_default_dot_genex_when_explicit_user_rule_exists() {
+    fn writable_roots_skip_default_dot_ruxex_when_explicit_user_rule_exists() {
         let cwd = TempDir::new().expect("tempdir");
         let expected_root = AbsolutePathBuf::from_absolute_path(
             cwd.path().canonicalize().expect("canonicalize cwd"),
         )
         .expect("absolute canonical root");
-        let explicit_dot_genex = expected_root.join(".genex");
+        let explicit_dot_ruxex = expected_root.join(".ruxex");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -3240,7 +3240,7 @@ mod tests {
             },
             FileSystemSandboxEntry {
                 path: FileSystemPath::Path {
-                    path: explicit_dot_genex.clone().into(),
+                    path: explicit_dot_ruxex.clone().into(),
                 },
                 access: FileSystemAccessMode::Write,
                 missing_path_behavior: None,
@@ -3255,17 +3255,17 @@ mod tests {
         assert!(
             !workspace_root
                 .protected_metadata_names
-                .contains(&".genex".to_string()),
-            "explicit .genex rule should remove the metadata-name protection"
+                .contains(&".ruxex".to_string()),
+            "explicit .ruxex rule should remove the metadata-name protection"
         );
         assert!(
             !workspace_root
                 .read_only_subpaths
-                .contains(&explicit_dot_genex),
-            "explicit .genex rule should win over the default protected carveout"
+                .contains(&explicit_dot_ruxex),
+            "explicit .ruxex rule should win over the default protected carveout"
         );
         assert!(policy.can_write_local_path_with_cwd(
-            explicit_dot_genex.join("config.toml").as_path(),
+            explicit_dot_ruxex.join("config.toml").as_path(),
             cwd.path()
         ));
     }
@@ -3275,7 +3275,7 @@ mod tests {
         let cwd = TempDir::new().expect("tempdir");
         let dot_git_config = cwd.path().join(".git").join("config");
         let dot_agents_config = cwd.path().join(".agents").join("config");
-        let dot_genex_config = cwd.path().join(".genex").join("config.toml");
+        let dot_ruxex_config = cwd.path().join(".ruxex").join("config.toml");
         let dot_aws_config = cwd.path().join(".aws").join("config");
         let root = AbsolutePathBuf::from_absolute_path(cwd.path()).expect("absolute cwd");
         let file_system_policy =
@@ -3287,7 +3287,7 @@ mod tests {
 
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_git_config, cwd.path()));
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_agents_config, cwd.path()));
-        assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_genex_config, cwd.path()));
+        assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_ruxex_config, cwd.path()));
         assert!(!file_system_policy.can_write_local_path_with_cwd(&dot_aws_config, cwd.path()));
 
         let writable_roots = file_system_policy.get_writable_roots_with_cwd(cwd.path());
@@ -3297,13 +3297,13 @@ mod tests {
             vec![
                 ".git".to_string(),
                 ".agents".to_string(),
-                ".genex".to_string(),
+                ".ruxex".to_string(),
                 ".aws".to_string(),
             ]
         );
         assert!(!writable_roots[0].is_path_writable(&dot_git_config));
         assert!(!writable_roots[0].is_path_writable(&dot_agents_config));
-        assert!(!writable_roots[0].is_path_writable(&dot_genex_config));
+        assert!(!writable_roots[0].is_path_writable(&dot_ruxex_config));
         assert!(!writable_roots[0].is_path_writable(&dot_aws_config));
     }
 
@@ -3353,7 +3353,7 @@ mod tests {
         expected_entries.extend(
             default_read_only_subpaths_for_writable_root(
                 &expected_root,
-                /*protect_missing_dot_genex*/ true,
+                /*protect_missing_dot_ruxex*/ true,
             )
             .into_iter()
             .map(|path| {
@@ -3379,7 +3379,7 @@ mod tests {
         );
         assert!(
             !file_system_policy
-                .can_write_local_path_with_cwd(Path::new(".genex/config.toml"), relative_cwd,)
+                .can_write_local_path_with_cwd(Path::new(".ruxex/config.toml"), relative_cwd,)
         );
         assert!(!file_system_policy.can_write_local_path_with_cwd(
             Path::new(".agents/skills/example/SKILL.md"),
@@ -3394,10 +3394,10 @@ mod tests {
         let real_root = cwd.path().join("real");
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
-        let genex_dir = real_root.join(".genex");
+        let ruxex_dir = real_root.join(".ruxex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&genex_dir).expect("create .genex");
+        fs::create_dir_all(&ruxex_dir).expect("create .ruxex");
         symlink_dir(&real_root, &link_root).expect("create symlinked root");
 
         let link_root =
@@ -3405,7 +3405,7 @@ mod tests {
         let link_blocked = link_root.join("blocked");
         let expected_root = link_root.clone();
         let expected_blocked = link_blocked.clone();
-        let expected_genex = link_root.join(".genex");
+        let expected_ruxex = link_root.join(".ruxex");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -3436,7 +3436,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_genex)
+                .contains(&expected_ruxex)
         );
     }
 
@@ -3448,11 +3448,11 @@ mod tests {
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
         let agents_dir = real_root.join(".agents");
-        let genex_dir = real_root.join(".genex");
+        let ruxex_dir = real_root.join(".ruxex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
         fs::create_dir_all(&agents_dir).expect("create .agents");
-        fs::create_dir_all(&genex_dir).expect("create .genex");
+        fs::create_dir_all(&ruxex_dir).expect("create .ruxex");
         symlink_dir(&real_root, &link_root).expect("create symlinked cwd");
 
         let link_blocked =
@@ -3461,7 +3461,7 @@ mod tests {
             AbsolutePathBuf::from_absolute_path(&link_root).expect("absolute symlinked root");
         let expected_blocked = link_blocked.clone();
         let expected_agents = expected_root.join(".agents");
-        let expected_genex = expected_root.join(".genex");
+        let expected_ruxex = expected_root.join(".ruxex");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -3510,7 +3510,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_genex)
+                .contains(&expected_ruxex)
         );
     }
 
@@ -3519,19 +3519,19 @@ mod tests {
     fn writable_roots_preserve_symlinked_protected_subpaths() {
         let cwd = TempDir::new().expect("tempdir");
         let root = cwd.path().join("root");
-        let decoy = root.join("decoy-genex");
-        let dot_genex = root.join(".genex");
+        let decoy = root.join("decoy-ruxex");
+        let dot_ruxex = root.join(".ruxex");
         fs::create_dir_all(&decoy).expect("create decoy");
-        symlink_dir(&decoy, &dot_genex).expect("create .genex symlink");
+        symlink_dir(&decoy, &dot_ruxex).expect("create .ruxex symlink");
 
         let root = AbsolutePathBuf::from_absolute_path(&root).expect("absolute root");
-        let expected_dot_genex = AbsolutePathBuf::from_absolute_path(
+        let expected_dot_ruxex = AbsolutePathBuf::from_absolute_path(
             root.as_path()
                 .canonicalize()
                 .expect("canonicalize root")
-                .join(".genex"),
+                .join(".ruxex"),
         )
-        .expect("absolute .genex symlink");
+        .expect("absolute .ruxex symlink");
         let unexpected_decoy =
             AbsolutePathBuf::from_absolute_path(decoy.canonicalize().expect("canonicalize decoy"))
                 .expect("absolute canonical decoy");
@@ -3546,7 +3546,7 @@ mod tests {
         assert_eq!(writable_roots.len(), 1);
         assert_eq!(
             writable_roots[0].read_only_subpaths,
-            vec![expected_dot_genex]
+            vec![expected_dot_ruxex]
         );
         assert!(
             !writable_roots[0]
@@ -3712,10 +3712,10 @@ mod tests {
         let real_tmpdir = cwd.path().join("real-tmpdir");
         let link_tmpdir = cwd.path().join("link-tmpdir");
         let blocked = real_tmpdir.join("blocked");
-        let genex_dir = real_tmpdir.join(".genex");
+        let ruxex_dir = real_tmpdir.join(".ruxex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&genex_dir).expect("create .genex");
+        fs::create_dir_all(&ruxex_dir).expect("create .ruxex");
         symlink_dir(&real_tmpdir, &link_tmpdir).expect("create symlinked tmpdir");
 
         let link_blocked =
@@ -3723,7 +3723,7 @@ mod tests {
         let expected_root =
             AbsolutePathBuf::from_absolute_path(&link_tmpdir).expect("absolute symlinked tmpdir");
         let expected_blocked = link_blocked.clone();
-        let expected_genex = expected_root.join(".genex");
+        let expected_ruxex = expected_root.join(".ruxex");
 
         unsafe {
             std::env::set_var("TMPDIR", &link_tmpdir);
@@ -3760,7 +3760,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_genex)
+                .contains(&expected_ruxex)
         );
     }
 

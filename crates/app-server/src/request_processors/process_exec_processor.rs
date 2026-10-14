@@ -5,32 +5,32 @@ use std::time::Duration;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use genex_app_server_protocol::ClientResponsePayload;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::ProcessExitedNotification;
-use genex_app_server_protocol::ProcessKillParams;
-use genex_app_server_protocol::ProcessKillResponse;
-use genex_app_server_protocol::ProcessOutputDeltaNotification;
-use genex_app_server_protocol::ProcessOutputStream;
-use genex_app_server_protocol::ProcessResizePtyParams;
-use genex_app_server_protocol::ProcessResizePtyResponse;
-use genex_app_server_protocol::ProcessSpawnParams;
-use genex_app_server_protocol::ProcessSpawnResponse;
-use genex_app_server_protocol::ProcessTerminalSize;
-use genex_app_server_protocol::ProcessWriteStdinParams;
-use genex_app_server_protocol::ProcessWriteStdinResponse;
-use genex_app_server_protocol::ServerNotification;
-use genex_core::exec::ExecExpiration;
-use genex_core::exec::ExecExpirationOutcome;
-use genex_core::exec::IO_DRAIN_TIMEOUT_MS;
-use genex_exec_server::EnvironmentManager;
-use genex_protocol::exec_output::bytes_to_string_smart;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
-use genex_utils_pty::ProcessHandle;
-use genex_utils_pty::SpawnedProcess;
-use genex_utils_pty::TerminalSize;
+use ruxex_app_server_protocol::ClientResponsePayload;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::ProcessExitedNotification;
+use ruxex_app_server_protocol::ProcessKillParams;
+use ruxex_app_server_protocol::ProcessKillResponse;
+use ruxex_app_server_protocol::ProcessOutputDeltaNotification;
+use ruxex_app_server_protocol::ProcessOutputStream;
+use ruxex_app_server_protocol::ProcessResizePtyParams;
+use ruxex_app_server_protocol::ProcessResizePtyResponse;
+use ruxex_app_server_protocol::ProcessSpawnParams;
+use ruxex_app_server_protocol::ProcessSpawnResponse;
+use ruxex_app_server_protocol::ProcessTerminalSize;
+use ruxex_app_server_protocol::ProcessWriteStdinParams;
+use ruxex_app_server_protocol::ProcessWriteStdinResponse;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_core::exec::ExecExpiration;
+use ruxex_core::exec::ExecExpirationOutcome;
+use ruxex_core::exec::IO_DRAIN_TIMEOUT_MS;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_protocol::exec_output::bytes_to_string_smart;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use ruxex_utils_pty::ProcessHandle;
+use ruxex_utils_pty::SpawnedProcess;
+use ruxex_utils_pty::TerminalSize;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -307,7 +307,7 @@ impl ProcessExecManager {
         }
 
         let spawned = if tty {
-            genex_utils_pty::spawn_pty_process(
+            ruxex_utils_pty::spawn_pty_process(
                 program,
                 args,
                 cwd.as_path(),
@@ -318,10 +318,10 @@ impl ProcessExecManager {
             )
             .await
         } else if stream_stdin {
-            genex_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0, &[])
+            ruxex_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0, &[])
                 .await
         } else {
-            genex_utils_pty::spawn_pipe_process_no_stdin(
+            ruxex_utils_pty::spawn_pipe_process_no_stdin(
                 program,
                 args,
                 cwd.as_path(),

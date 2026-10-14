@@ -4,11 +4,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Instant;
 
-use genex_exec_server_protocol::JSONRPCError;
-use genex_exec_server_protocol::JSONRPCNotification;
-use genex_exec_server_protocol::JSONRPCRequest;
-use genex_exec_server_protocol::JSONRPCResponse;
-use genex_exec_server_protocol::RequestId;
+use ruxex_exec_server_protocol::JSONRPCError;
+use ruxex_exec_server_protocol::JSONRPCNotification;
+use ruxex_exec_server_protocol::JSONRPCRequest;
+use ruxex_exec_server_protocol::JSONRPCResponse;
+use ruxex_exec_server_protocol::RequestId;
 use tokio::sync::Semaphore;
 use tokio::sync::mpsc;
 use tokio::sync::watch;

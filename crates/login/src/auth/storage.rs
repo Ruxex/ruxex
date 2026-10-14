@@ -20,16 +20,16 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tracing::warn;
 
-use genex_config::types::AuthCredentialsStoreMode;
-pub use genex_config::types::AuthKeyringBackendKind;
-use genex_keyring_store::DefaultKeyringStore;
-use genex_keyring_store::KeyringStore;
-use genex_protocol::auth::AuthMode;
-use genex_secrets::LocalSecretsNamespace;
-use genex_secrets::SecretName;
-use genex_secrets::SecretScope;
-use genex_secrets::SecretsBackendKind;
-use genex_secrets::SecretsManager;
+use ruxex_config::types::AuthCredentialsStoreMode;
+pub use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_keyring_store::DefaultKeyringStore;
+use ruxex_keyring_store::KeyringStore;
+use ruxex_protocol::auth::AuthMode;
+use ruxex_secrets::LocalSecretsNamespace;
+use ruxex_secrets::SecretName;
+use ruxex_secrets::SecretScope;
+use ruxex_secrets::SecretsBackendKind;
+use ruxex_secrets::SecretsManager;
 use once_cell::sync::Lazy;
 
 /// A provider-scoped credential payload persisted in `auth.json`.
@@ -166,9 +166,9 @@ impl ProviderAuth {
     }
 }
 
-/// Expected structure for `$GENEX_HOME/auth.json`.
+/// Expected structure for `$RUXEX_HOME/auth.json`.
 ///
-/// A Genex runtime has exactly one mounted model provider, so credentials are
+/// A Ruxex runtime has exactly one mounted model provider, so credentials are
 /// stored as one provider-neutral auth payload. Provider identity belongs to
 /// the mounted runtime, not to the credentials file.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -264,12 +264,12 @@ fn parse_auth_mode(value: Option<String>) -> (Option<AuthMode>, bool, Option<Str
     }
 }
 
-pub(super) fn get_auth_file(genex_home: &Path) -> PathBuf {
-    genex_home.join("auth.json")
+pub(super) fn get_auth_file(ruxex_home: &Path) -> PathBuf {
+    ruxex_home.join("auth.json")
 }
 
-pub(super) fn delete_file_if_exists(genex_home: &Path) -> std::io::Result<bool> {
-    let auth_file = get_auth_file(genex_home);
+pub(super) fn delete_file_if_exists(ruxex_home: &Path) -> std::io::Result<bool> {
+    let auth_file = get_auth_file(ruxex_home);
     match std::fs::remove_file(&auth_file) {
         Ok(()) => Ok(true),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
@@ -285,15 +285,15 @@ pub(super) trait AuthStorageBackend: Debug + Send + Sync {
 
 #[derive(Clone, Debug)]
 pub(super) struct FileAuthStorage {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
 }
 
 impl FileAuthStorage {
-    pub(super) fn new(genex_home: PathBuf) -> Self {
-        Self { genex_home }
+    pub(super) fn new(ruxex_home: PathBuf) -> Self {
+        Self { ruxex_home }
     }
 
-    /// Attempt to read and parse the `auth.json` file in the given `GENEX_HOME` directory.
+    /// Attempt to read and parse the `auth.json` file in the given `RUXEX_HOME` directory.
     /// Returns the full AuthDotJson structure.
     pub(super) fn try_read_auth_json(&self, auth_file: &Path) -> std::io::Result<AuthDotJson> {
         let mut file = File::open(auth_file)?;
@@ -307,7 +307,7 @@ impl FileAuthStorage {
 
 impl AuthStorageBackend for FileAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJson>> {
-        let auth_file = get_auth_file(&self.genex_home);
+        let auth_file = get_auth_file(&self.ruxex_home);
         let auth_dot_json = match self.try_read_auth_json(&auth_file) {
             Ok(auth) => auth,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -317,7 +317,7 @@ impl AuthStorageBackend for FileAuthStorage {
     }
 
     fn save(&self, auth_dot_json: &AuthDotJson) -> std::io::Result<()> {
-        let auth_file = get_auth_file(&self.genex_home);
+        let auth_file = get_auth_file(&self.ruxex_home);
 
         if let Some(parent) = auth_file.parent() {
             std::fs::create_dir_all(parent)?;
@@ -336,22 +336,22 @@ impl AuthStorageBackend for FileAuthStorage {
     }
 
     fn delete(&self) -> std::io::Result<bool> {
-        delete_file_if_exists(&self.genex_home)
+        delete_file_if_exists(&self.ruxex_home)
     }
 }
 
-static GENEX_AUTH_SECRET_NAME: Lazy<SecretName> =
-    Lazy::new(|| match SecretName::new("GENEX_AUTH") {
+static RUXEX_AUTH_SECRET_NAME: Lazy<SecretName> =
+    Lazy::new(|| match SecretName::new("RUXEX_AUTH") {
         Ok(name) => name,
-        Err(err) => unreachable!("GENEX_AUTH should be a valid secret name: {err}"),
+        Err(err) => unreachable!("RUXEX_AUTH should be a valid secret name: {err}"),
     });
-const KEYRING_SERVICE: &str = "Genex Auth";
+const KEYRING_SERVICE: &str = "Ruxex Auth";
 
-// turns genex_home path into a stable, short key string
-fn compute_store_key(genex_home: &Path) -> std::io::Result<String> {
-    let canonical = genex_home
+// turns ruxex_home path into a stable, short key string
+fn compute_store_key(ruxex_home: &Path) -> std::io::Result<String> {
+    let canonical = ruxex_home
         .canonicalize()
-        .unwrap_or_else(|_| genex_home.to_path_buf());
+        .unwrap_or_else(|_| ruxex_home.to_path_buf());
     let path_str = canonical.to_string_lossy();
     let mut hasher = Sha256::new();
     hasher.update(path_str.as_bytes());
@@ -363,14 +363,14 @@ fn compute_store_key(genex_home: &Path) -> std::io::Result<String> {
 
 #[derive(Clone, Debug)]
 struct DirectKeyringAuthStorage {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     keyring_store: Arc<dyn KeyringStore>,
 }
 
 impl DirectKeyringAuthStorage {
-    fn new(genex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
+    fn new(ruxex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
         Self {
-            genex_home,
+            ruxex_home,
             keyring_store,
         }
     }
@@ -407,37 +407,37 @@ impl DirectKeyringAuthStorage {
 
 impl AuthStorageBackend for DirectKeyringAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJson>> {
-        let key = compute_store_key(&self.genex_home)?;
+        let key = compute_store_key(&self.ruxex_home)?;
         self.load_from_keyring(&key)
     }
 
     fn save(&self, auth: &AuthDotJson) -> std::io::Result<()> {
-        let key = compute_store_key(&self.genex_home)?;
+        let key = compute_store_key(&self.ruxex_home)?;
         // Simpler error mapping per style: prefer method reference over closure
         let serialized = serde_json::to_string(auth).map_err(std::io::Error::other)?;
         self.save_to_keyring(&key, &serialized)?;
-        if let Err(err) = delete_file_if_exists(&self.genex_home) {
+        if let Err(err) = delete_file_if_exists(&self.ruxex_home) {
             warn!("failed to remove CLI auth fallback file: {err}");
         }
         Ok(())
     }
 
     fn delete(&self) -> std::io::Result<bool> {
-        let key = compute_store_key(&self.genex_home)?;
+        let key = compute_store_key(&self.ruxex_home)?;
         let keyring_removed = self
             .keyring_store
             .delete(KEYRING_SERVICE, &key)
             .map_err(|err| {
                 std::io::Error::other(format!("failed to delete auth from keyring: {err}"))
             })?;
-        let file_removed = delete_file_if_exists(&self.genex_home)?;
+        let file_removed = delete_file_if_exists(&self.ruxex_home)?;
         Ok(keyring_removed || file_removed)
     }
 }
 
 #[derive(Clone)]
 struct SecretsKeyringAuthStorage {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     direct_storage: DirectKeyringAuthStorage,
     secrets_manager: SecretsManager,
 }
@@ -445,23 +445,23 @@ struct SecretsKeyringAuthStorage {
 impl Debug for SecretsKeyringAuthStorage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SecretsKeyringAuthStorage")
-            .field("genex_home", &self.genex_home)
+            .field("ruxex_home", &self.ruxex_home)
             .finish_non_exhaustive()
     }
 }
 
 impl SecretsKeyringAuthStorage {
-    fn new(genex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
+    fn new(ruxex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
         let direct_storage =
-            DirectKeyringAuthStorage::new(genex_home.clone(), Arc::clone(&keyring_store));
+            DirectKeyringAuthStorage::new(ruxex_home.clone(), Arc::clone(&keyring_store));
         let secrets_manager = SecretsManager::new_with_keyring_store_and_namespace(
-            genex_home.clone(),
+            ruxex_home.clone(),
             SecretsBackendKind::Local,
             keyring_store,
-            LocalSecretsNamespace::GenexAuth,
+            LocalSecretsNamespace::RuxexAuth,
         );
         Self {
-            genex_home,
+            ruxex_home,
             direct_storage,
             secrets_manager,
         }
@@ -472,7 +472,7 @@ impl AuthStorageBackend for SecretsKeyringAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJson>> {
         match self
             .secrets_manager
-            .get(&SecretScope::Global, &GENEX_AUTH_SECRET_NAME)
+            .get(&SecretScope::Global, &RUXEX_AUTH_SECRET_NAME)
             .map_err(|err| {
                 std::io::Error::other(format!(
                     "failed to load CLI auth from encrypted auth storage: {err}"
@@ -490,14 +490,14 @@ impl AuthStorageBackend for SecretsKeyringAuthStorage {
     fn save(&self, auth: &AuthDotJson) -> std::io::Result<()> {
         let serialized = serde_json::to_string(auth).map_err(std::io::Error::other)?;
         self.secrets_manager
-            .set(&SecretScope::Global, &GENEX_AUTH_SECRET_NAME, &serialized)
+            .set(&SecretScope::Global, &RUXEX_AUTH_SECRET_NAME, &serialized)
             .map_err(|err| {
                 let message =
                     format!("failed to write stored credentials to encrypted auth storage: {err}");
                 warn!("{message}");
                 std::io::Error::other(message)
             })?;
-        if let Err(err) = delete_file_if_exists(&self.genex_home) {
+        if let Err(err) = delete_file_if_exists(&self.ruxex_home) {
             warn!("failed to remove CLI auth fallback file: {err}");
         }
         Ok(())
@@ -506,13 +506,13 @@ impl AuthStorageBackend for SecretsKeyringAuthStorage {
     fn delete(&self) -> std::io::Result<bool> {
         let keyring_removed = self
             .secrets_manager
-            .delete(&SecretScope::Global, &GENEX_AUTH_SECRET_NAME)
+            .delete(&SecretScope::Global, &RUXEX_AUTH_SECRET_NAME)
             .map_err(|err| {
                 std::io::Error::other(format!(
                     "failed to delete auth from encrypted auth storage: {err}"
                 ))
             })?;
-        let file_removed = delete_file_if_exists(&self.genex_home)?;
+        let file_removed = delete_file_if_exists(&self.ruxex_home)?;
         let direct_removed = self.direct_storage.delete()?;
         Ok(keyring_removed || file_removed || direct_removed)
     }
@@ -526,17 +526,17 @@ struct AutoAuthStorage {
 
 impl AutoAuthStorage {
     fn new(
-        genex_home: PathBuf,
+        ruxex_home: PathBuf,
         keyring_store: Arc<dyn KeyringStore>,
         keyring_backend_kind: AuthKeyringBackendKind,
     ) -> Self {
         Self {
             keyring_storage: create_keyring_auth_storage(
-                genex_home.clone(),
+                ruxex_home.clone(),
                 keyring_store,
                 keyring_backend_kind,
             ),
-            file_storage: Arc::new(FileAuthStorage::new(genex_home)),
+            file_storage: Arc::new(FileAuthStorage::new(ruxex_home)),
         }
     }
 }
@@ -569,25 +569,25 @@ impl AuthStorageBackend for AutoAuthStorage {
     }
 }
 
-// A global in-memory store for mapping genex_home -> AuthDotJson.
+// A global in-memory store for mapping ruxex_home -> AuthDotJson.
 static EPHEMERAL_AUTH_STORE: Lazy<Mutex<HashMap<String, AuthDotJson>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Clone, Debug)]
 struct EphemeralAuthStorage {
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
 }
 
 impl EphemeralAuthStorage {
-    fn new(genex_home: PathBuf) -> Self {
-        Self { genex_home }
+    fn new(ruxex_home: PathBuf) -> Self {
+        Self { ruxex_home }
     }
 
     fn with_store<F, T>(&self, action: F) -> std::io::Result<T>
     where
         F: FnOnce(&mut HashMap<String, AuthDotJson>, String) -> std::io::Result<T>,
     {
-        let key = compute_store_key(&self.genex_home)?;
+        let key = compute_store_key(&self.ruxex_home)?;
         let mut store = EPHEMERAL_AUTH_STORE
             .lock()
             .map_err(|_| std::io::Error::other("failed to lock ephemeral auth storage"))?;
@@ -613,45 +613,45 @@ impl AuthStorageBackend for EphemeralAuthStorage {
 }
 
 pub(super) fn create_auth_storage(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     mode: AuthCredentialsStoreMode,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> Arc<dyn AuthStorageBackend> {
     let keyring_store: Arc<dyn KeyringStore> = Arc::new(DefaultKeyringStore);
-    create_auth_storage_with_store(genex_home, mode, keyring_store, keyring_backend_kind)
+    create_auth_storage_with_store(ruxex_home, mode, keyring_store, keyring_backend_kind)
 }
 
 fn create_auth_storage_with_store(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     mode: AuthCredentialsStoreMode,
     keyring_store: Arc<dyn KeyringStore>,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> Arc<dyn AuthStorageBackend> {
     match mode {
-        AuthCredentialsStoreMode::File => Arc::new(FileAuthStorage::new(genex_home)),
+        AuthCredentialsStoreMode::File => Arc::new(FileAuthStorage::new(ruxex_home)),
         AuthCredentialsStoreMode::Keyring => {
-            create_keyring_auth_storage(genex_home, keyring_store, keyring_backend_kind)
+            create_keyring_auth_storage(ruxex_home, keyring_store, keyring_backend_kind)
         }
         AuthCredentialsStoreMode::Auto => Arc::new(AutoAuthStorage::new(
-            genex_home,
+            ruxex_home,
             keyring_store,
             keyring_backend_kind,
         )),
-        AuthCredentialsStoreMode::Ephemeral => Arc::new(EphemeralAuthStorage::new(genex_home)),
+        AuthCredentialsStoreMode::Ephemeral => Arc::new(EphemeralAuthStorage::new(ruxex_home)),
     }
 }
 
 fn create_keyring_auth_storage(
-    genex_home: PathBuf,
+    ruxex_home: PathBuf,
     keyring_store: Arc<dyn KeyringStore>,
     keyring_backend_kind: AuthKeyringBackendKind,
 ) -> Arc<dyn AuthStorageBackend> {
     match keyring_backend_kind {
         AuthKeyringBackendKind::Direct => {
-            Arc::new(DirectKeyringAuthStorage::new(genex_home, keyring_store))
+            Arc::new(DirectKeyringAuthStorage::new(ruxex_home, keyring_store))
         }
         AuthKeyringBackendKind::Secrets => {
-            Arc::new(SecretsKeyringAuthStorage::new(genex_home, keyring_store))
+            Arc::new(SecretsKeyringAuthStorage::new(ruxex_home, keyring_store))
         }
     }
 }

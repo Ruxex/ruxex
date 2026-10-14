@@ -41,7 +41,7 @@ async fn discovery_preserves_config_scope_and_bounds_server_requests() {
             Vec::new()
         };
         let config = ConfigBuilder::default()
-            .genex_home(home.path().to_path_buf())
+            .ruxex_home(home.path().to_path_buf())
             .cli_overrides(overrides)
             .build()
             .await

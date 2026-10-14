@@ -1,7 +1,7 @@
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::DEFAULT_IMAGE_DETAIL;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::ImageDetail;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::DEFAULT_IMAGE_DETAIL;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::ImageDetail;
 
 pub fn can_request_original_image_detail(model_info: &ModelInfo) -> bool {
     model_info.supports_image_detail_original

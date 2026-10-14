@@ -14,9 +14,9 @@ use crate::compose_requirements;
 use crate::config_requirements::ConfigRequirementsWithSources;
 use crate::state::ConfigLoadOptions;
 use crate::state::LoaderOverrides;
-use genex_file_system::ExecutorFileSystem;
+use ruxex_file_system::ExecutorFileSystem;
 #[cfg(target_os = "macos")]
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::io;
 use std::path::Path;
 
@@ -25,7 +25,7 @@ use std::path::Path;
 /// requirements are loaded as separate sources.
 pub async fn load_managed_requirements_state(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     options: impl Into<ConfigLoadOptions>,
 ) -> io::Result<ConfigRequirementsToml> {
     let ConfigLoadOptions {
@@ -37,7 +37,7 @@ pub async fn load_managed_requirements_state(
     }
 
     let (requirements, _, _) =
-        load_requirements_from_sources(fs, genex_home, &overrides, strict_config).await?;
+        load_requirements_from_sources(fs, ruxex_home, &overrides, strict_config).await?;
     let _: ConfigRequirements = requirements.clone().try_into()?;
     Ok(requirements.into_toml())
 }
@@ -47,7 +47,7 @@ pub async fn load_managed_requirements_state(
 /// stack and its ignored-field diagnostics.
 pub(super) async fn load_requirements_from_sources(
     fs: &dyn ExecutorFileSystem,
-    genex_home: &Path,
+    ruxex_home: &Path,
     overrides: &LoaderOverrides,
     strict_config: bool,
 ) -> io::Result<(
@@ -61,7 +61,7 @@ pub(super) async fn load_requirements_from_sources(
     if !overrides.ignore_managed_requirements {
         #[cfg(target_os = "macos")]
         {
-            let base_dir = AbsolutePathBuf::from_absolute_path(genex_home)?;
+            let base_dir = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
             managed_preferences_requirements_layer = macos::load_managed_admin_requirements_layer(
                 overrides
                     .macos_managed_config_requirements_base64
@@ -82,7 +82,7 @@ pub(super) async fn load_requirements_from_sources(
     }
 
     let loaded_config_layers =
-        layer_io::load_config_layers_internal(fs, genex_home, overrides.clone(), strict_config)
+        layer_io::load_config_layers_internal(fs, ruxex_home, overrides.clone(), strict_config)
             .await?;
     if !overrides.ignore_managed_requirements {
         requirements_layers.extend(system_requirements_layer);

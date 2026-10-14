@@ -1,21 +1,21 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use genex_git_utils::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadSource;
-use genex_utils_string::to_ascii_json_string;
+use ruxex_git_utils::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_utils_string::to_ascii_json_string;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
 use serde::Serialize;
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::client::X_GENEX_INSTALLATION_ID_HEADER;
-use crate::client::X_GENEX_PARENT_THREAD_ID_HEADER;
-use crate::client::X_GENEX_TURN_METADATA_HEADER;
-use crate::client::X_GENEX_WINDOW_ID_HEADER;
+use crate::client::X_RUXEX_INSTALLATION_ID_HEADER;
+use crate::client::X_RUXEX_PARENT_THREAD_ID_HEADER;
+use crate::client::X_RUXEX_TURN_METADATA_HEADER;
+use crate::client::X_RUXEX_WINDOW_ID_HEADER;
 
 pub(crate) const INSTALLATION_ID_KEY: &str = "installation_id";
 pub(crate) const SESSION_ID_KEY: &str = "session_id";
@@ -50,7 +50,7 @@ pub(crate) const WORKSPACES_KEY: &str = "workspaces";
 // when submitting a turn, but they must not override fields owned by core.
 const RESERVED_METADATA_KEYS: &[&str] = &[
     INSTALLATION_ID_KEY,
-    X_GENEX_INSTALLATION_ID_HEADER,
+    X_RUXEX_INSTALLATION_ID_HEADER,
     SESSION_ID_KEY,
     THREAD_ID_KEY,
     AGENT_NAME_KEY,
@@ -58,9 +58,9 @@ const RESERVED_METADATA_KEYS: &[&str] = &[
     WINDOW_ID_KEY,
     WINDOW_NUMBER_KEY,
     CONTEXT_WINDOW_ID_KEY,
-    X_GENEX_WINDOW_ID_HEADER,
-    X_GENEX_TURN_METADATA_HEADER,
-    X_GENEX_PARENT_THREAD_ID_HEADER,
+    X_RUXEX_WINDOW_ID_HEADER,
+    X_RUXEX_TURN_METADATA_HEADER,
+    X_RUXEX_PARENT_THREAD_ID_HEADER,
     REQUEST_KIND_KEY,
     COMPACTION_KEY,
     LEGACY_CODE_MODE_TOOL_NAMES_KEY,
@@ -198,18 +198,18 @@ impl CompactionTurnMetadata {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum GenexResponsesRequestKind {
+pub(crate) enum RuxexResponsesRequestKind {
     Turn,
     Prewarm,
     Compaction(CompactionTurnMetadata),
 }
 
-impl GenexResponsesRequestKind {
+impl RuxexResponsesRequestKind {
     fn metadata(self) -> (&'static str, Option<CompactionTurnMetadata>) {
         match self {
-            GenexResponsesRequestKind::Turn => ("turn", None),
-            GenexResponsesRequestKind::Prewarm => ("prewarm", None),
-            GenexResponsesRequestKind::Compaction(metadata) => ("compaction", Some(metadata)),
+            RuxexResponsesRequestKind::Turn => ("turn", None),
+            RuxexResponsesRequestKind::Prewarm => ("prewarm", None),
+            RuxexResponsesRequestKind::Compaction(metadata) => ("compaction", Some(metadata)),
         }
     }
 
@@ -256,14 +256,14 @@ pub(crate) enum TurnToolSource {
     Mcp { server_name: String },
 }
 
-/// Caller-owned snapshot of Genex metadata sent to ResponsesAPI.
+/// Caller-owned snapshot of Ruxex metadata sent to ResponsesAPI.
 ///
-/// The full Genex turn metadata blob is transported canonically as
-/// `client_metadata["x-genex-turn-metadata"]`. Flat `client_metadata` keys and direct HTTP/ws
+/// The full Ruxex turn metadata blob is transported canonically as
+/// `client_metadata["x-ruxex-turn-metadata"]`. Flat `client_metadata` keys and direct HTTP/ws
 /// headers are generated compatibility projections of this snapshot, not separate sources of
 /// truth.
 #[derive(Clone, Debug)]
-pub struct GenexResponsesMetadata {
+pub struct RuxexResponsesMetadata {
     pub(crate) installation_id: String,
     pub(crate) session_id: String,
     pub(crate) thread_id: String,
@@ -273,7 +273,7 @@ pub struct GenexResponsesMetadata {
     pub(crate) window_id: String,
     pub(crate) window_number: Option<u64>,
     pub(crate) context_window_id: Option<Uuid>,
-    pub(crate) request_kind: Option<GenexResponsesRequestKind>,
+    pub(crate) request_kind: Option<RuxexResponsesRequestKind>,
     pub(crate) forked_from_thread_id: Option<ThreadId>,
     pub(crate) forked_from_ordinal_exclusive: Option<u64>,
     pub(crate) parent_thread_id: Option<ThreadId>,
@@ -292,7 +292,7 @@ pub struct GenexResponsesMetadata {
     pub(crate) extra: BTreeMap<String, String>,
 }
 
-impl GenexResponsesMetadata {
+impl RuxexResponsesMetadata {
     pub(crate) fn new(
         installation_id: String,
         session_id: String,
@@ -344,19 +344,19 @@ impl GenexResponsesMetadata {
     pub(crate) fn client_metadata(&self) -> HashMap<String, String> {
         let mut client_metadata = HashMap::from([
             (
-                X_GENEX_INSTALLATION_ID_HEADER.to_string(),
+                X_RUXEX_INSTALLATION_ID_HEADER.to_string(),
                 self.installation_id.clone(),
             ),
             (SESSION_ID_KEY.to_string(), self.session_id.clone()),
             (THREAD_ID_KEY.to_string(), self.thread_id.clone()),
-            (X_GENEX_WINDOW_ID_HEADER.to_string(), self.window_id.clone()),
+            (X_RUXEX_WINDOW_ID_HEADER.to_string(), self.window_id.clone()),
         ]);
         if let Some(turn_id) = &self.turn_id {
             client_metadata.insert(TURN_ID_KEY.to_string(), turn_id.clone());
         }
         if let Some(parent_thread_id) = self.parent_thread_id {
             client_metadata.insert(
-                X_GENEX_PARENT_THREAD_ID_HEADER.to_string(),
+                X_RUXEX_PARENT_THREAD_ID_HEADER.to_string(),
                 parent_thread_id.to_string(),
             );
         }
@@ -369,49 +369,49 @@ impl GenexResponsesMetadata {
         if self.has_turn_metadata()
             && let Some(turn_metadata_json) = self.turn_metadata_json()
         {
-            client_metadata.insert(X_GENEX_TURN_METADATA_HEADER.to_string(), turn_metadata_json);
+            client_metadata.insert(X_RUXEX_TURN_METADATA_HEADER.to_string(), turn_metadata_json);
         }
         client_metadata
     }
 
     pub(crate) fn compatibility_headers(&self) -> ApiHeaderMap {
         let mut headers = ApiHeaderMap::new();
-        insert_header(&mut headers, X_GENEX_WINDOW_ID_HEADER, &self.window_id);
-        // Direct x-genex-turn-metadata is compatibility output. Keep the unbounded tool inventory
+        insert_header(&mut headers, X_RUXEX_WINDOW_ID_HEADER, &self.window_id);
+        // Direct x-ruxex-turn-metadata is compatibility output. Keep the unbounded tool inventory
         // in client_metadata only so HTTP and WebSocket compatibility headers remain bounded.
         if self.has_turn_metadata()
-            && let Ok(turn_metadata_json) = to_ascii_json_string(&GenexTurnMetadataPayload {
+            && let Ok(turn_metadata_json) = to_ascii_json_string(&RuxexTurnMetadataPayload {
                 tool_namespaces_info: None,
                 ..self.turn_metadata_payload()
             })
         {
             insert_header(
                 &mut headers,
-                X_GENEX_TURN_METADATA_HEADER,
+                X_RUXEX_TURN_METADATA_HEADER,
                 &turn_metadata_json,
             );
         }
         if let Some(parent_thread_id) = self.parent_thread_id {
             insert_header(
                 &mut headers,
-                X_GENEX_PARENT_THREAD_ID_HEADER,
+                X_RUXEX_PARENT_THREAD_ID_HEADER,
                 &parent_thread_id.to_string(),
             );
         }
         headers
     }
 
-    fn turn_metadata_payload(&self) -> GenexTurnMetadataPayload<'_> {
+    fn turn_metadata_payload(&self) -> RuxexTurnMetadataPayload<'_> {
         let request_kind = self.request_kind;
         let (request_kind_value, compaction) = request_kind.map_or((None, None), |request_kind| {
             let (request_kind, compaction) = request_kind.metadata();
             (Some(request_kind), compaction)
         });
         let has_thread_identity =
-            request_kind.is_none_or(GenexResponsesRequestKind::has_thread_identity);
+            request_kind.is_none_or(RuxexResponsesRequestKind::has_thread_identity);
         let has_request_identity =
-            request_kind.is_some_and(GenexResponsesRequestKind::has_thread_identity);
-        GenexTurnMetadataPayload {
+            request_kind.is_some_and(RuxexResponsesRequestKind::has_thread_identity);
+        RuxexTurnMetadataPayload {
             installation_id: has_request_identity.then_some(self.installation_id.as_str()),
             session_id: has_thread_identity.then_some(self.session_id.as_str()),
             thread_id: has_thread_identity.then_some(self.thread_id.as_str()),
@@ -441,9 +441,9 @@ impl GenexResponsesMetadata {
             turn_started_at_unix_ms: self.turn_started_at_unix_ms,
             history_ingest_requested: self.history_ingest_requested,
             compaction,
-            // Extra metadata enriches the Genex turn metadata blob, not literal top-level
+            // Extra metadata enriches the Ruxex turn metadata blob, not literal top-level
             // Responses client_metadata. Product metadata is validated while loading config;
-            // app-server metadata has reserved Genex-owned keys filtered when it enters turn state.
+            // app-server metadata has reserved Ruxex-owned keys filtered when it enters turn state.
             extra: &self.extra,
         }
     }
@@ -514,7 +514,7 @@ fn non_empty_workspaces(
 }
 
 #[derive(Serialize)]
-struct GenexTurnMetadataPayload<'a> {
+struct RuxexTurnMetadataPayload<'a> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     installation_id: Option<&'a str>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

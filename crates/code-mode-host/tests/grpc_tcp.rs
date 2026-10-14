@@ -7,8 +7,8 @@ use anyhow::Result;
 use axum::http::Request;
 use axum::http::StatusCode;
 use axum::http::Version;
-use genex_code_mode_protocol::grpc;
-use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
+use ruxex_code_mode_protocol::grpc;
+use ruxex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
 use pretty_assertions::assert_eq;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncReadExt;
@@ -119,7 +119,7 @@ async fn http1_response(endpoint: &str, request: &[u8]) -> Result<String> {
 
 #[tokio::test]
 async fn tcp_listener_opens_a_grpc_session() -> Result<()> {
-    let mut host = Command::new(genex_utils_cargo_bin::cargo_bin("genex-code-mode-host")?)
+    let mut host = Command::new(ruxex_utils_cargo_bin::cargo_bin("ruxex-code-mode-host")?)
         .args(["--listen", "grpc://127.0.0.1:0"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

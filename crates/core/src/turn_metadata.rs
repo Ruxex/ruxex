@@ -13,8 +13,8 @@ use tokio::sync::watch;
 use tokio_util::task::AbortOnDropHandle;
 
 use crate::responses_metadata::AGENT_NAME_KEY;
-use crate::responses_metadata::GenexResponsesMetadata;
-use crate::responses_metadata::GenexResponsesRequestKind;
+use crate::responses_metadata::RuxexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesRequestKind;
 use crate::responses_metadata::PARENT_TURN_ID_KEY;
 use crate::responses_metadata::ROOT_TURN_ID_KEY;
 use crate::responses_metadata::TurnMetadataWorkspace;
@@ -22,22 +22,22 @@ use crate::responses_metadata::filter_extra_metadata;
 use crate::responses_metadata::subagent_metadata_kind;
 use crate::sandbox_tags::SandboxTags;
 use crate::session::step_settings::ResolvedStepSettings;
-use genex_git_utils::SanitizedGitUrl;
-use genex_git_utils::get_git_remote_urls_assume_git_repo;
-use genex_git_utils::get_has_changes_in_repo;
-use genex_git_utils::get_head_commit_hash;
-use genex_protocol::AgentPath;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadSource;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_git_discovery::GitRootDiscovery;
+use ruxex_git_utils::SanitizedGitUrl;
+use ruxex_git_utils::get_git_remote_urls_assume_git_repo;
+use ruxex_git_utils::get_has_changes_in_repo;
+use ruxex_git_utils::get_head_commit_hash;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_git_discovery::GitRootDiscovery;
 
 const MODEL_KEY: &str = "model";
-const GENEX_VERSION_KEY: &str = "genex_version";
+const RUXEX_VERSION_KEY: &str = "ruxex_version";
 const REASONING_EFFORT_KEY: &str = "reasoning_effort";
 const USER_INPUT_REQUESTED_DURING_TURN_KEY: &str = "user_input_requested_during_turn";
 const WORKSPACE_KIND_KEY: &str = "workspace_kind";
@@ -58,7 +58,7 @@ impl<'a> ExecutionMetadata<'a> {
         }
     }
 
-    pub(crate) fn apply_to(&self, metadata: &mut GenexResponsesMetadata) {
+    pub(crate) fn apply_to(&self, metadata: &mut RuxexResponsesMetadata) {
         metadata.node_repl_disabled = Some(self.node_repl_disabled);
         metadata
             .extra
@@ -192,7 +192,7 @@ impl TurnMetadataState {
         metadata.remove(PARENT_TURN_ID_KEY);
         metadata.remove(ROOT_TURN_ID_KEY);
         metadata.insert(
-            GENEX_VERSION_KEY.to_string(),
+            RUXEX_VERSION_KEY.to_string(),
             Value::String(env!("CARGO_PKG_VERSION").to_string()),
         );
         if self
@@ -213,9 +213,9 @@ impl TurnMetadataState {
         &self,
         installation_id: String,
         window_id: String,
-        request_kind: GenexResponsesRequestKind,
-    ) -> GenexResponsesMetadata {
-        GenexResponsesMetadata {
+        request_kind: RuxexResponsesRequestKind,
+    ) -> RuxexResponsesMetadata {
+        RuxexResponsesMetadata {
             installation_id,
             window_id,
             request_kind: Some(request_kind),
@@ -299,7 +299,7 @@ impl TurnMetadataState {
             .cloned()
     }
 
-    fn responses_metadata_template(&self) -> GenexResponsesMetadata {
+    fn responses_metadata_template(&self) -> RuxexResponsesMetadata {
         let mut metadata = self.mcp_metadata_template();
         if metadata.parent_thread_id.is_some() {
             metadata.forked_from_thread_id = None;
@@ -313,7 +313,7 @@ impl TurnMetadataState {
         metadata
     }
 
-    fn mcp_metadata_template(&self) -> GenexResponsesMetadata {
+    fn mcp_metadata_template(&self) -> RuxexResponsesMetadata {
         let mut extra = self
             .responsesapi_client_metadata
             .read()
@@ -327,7 +327,7 @@ impl TurnMetadataState {
         {
             extra.remove(key);
         }
-        let mut metadata = GenexResponsesMetadata {
+        let mut metadata = RuxexResponsesMetadata {
             turn_id: Some(self.turn_id.clone()),
             agent_name: Some(self.agent_name.clone()),
             forked_from_thread_id: self.forked_from_thread_id,
@@ -342,7 +342,7 @@ impl TurnMetadataState {
             tool_namespaces_info: None,
             turn_started_at_unix_ms: self.current_turn_started_at_unix_ms(),
             extra,
-            ..GenexResponsesMetadata::new(
+            ..RuxexResponsesMetadata::new(
                 String::new(),
                 self.session_id.clone(),
                 self.thread_id.clone(),

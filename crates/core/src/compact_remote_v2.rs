@@ -22,7 +22,7 @@ use crate::responses_metadata::CompactionPhase;
 use crate::responses_metadata::CompactionReason;
 use crate::responses_metadata::CompactionTrigger;
 use crate::responses_metadata::CompactionTurnMetadata;
-use crate::responses_metadata::GenexResponsesMetadata;
+use crate::responses_metadata::RuxexResponsesMetadata;
 use crate::responses_retry::ResponsesStreamRequest;
 use crate::responses_retry::ResponsesStreamRetryState;
 use crate::responses_retry::handle_retryable_response_stream_error;
@@ -31,28 +31,28 @@ use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::session::turn_context::TurnContext;
 use futures::StreamExt;
-use genex_context_fragments::set_annotated_content;
-use genex_context_fragments::to_annotated_content;
-use genex_features::Feature;
-use genex_history::GenexHarnessMetadata;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::items::ContextCompactionItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::AgentMessageInputContent;
-use genex_protocol::models::ContentItem;
+use ruxex_context_fragments::set_annotated_content;
+use ruxex_context_fragments::to_annotated_content;
+use ruxex_features::Feature;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::items::ContextCompactionItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::AgentMessageInputContent;
+use ruxex_protocol::models::ContentItem;
 #[cfg(test)]
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TruncationPolicy;
-use genex_rollout_trace::CompactionCheckpointTracePayload;
-use genex_rollout_trace::InferenceTraceContext;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TruncationPolicy;
+use ruxex_rollout_trace::CompactionCheckpointTracePayload;
+use ruxex_rollout_trace::InferenceTraceContext;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::truncate_text;
 use tokio_util::sync::CancellationToken;
 
 #[path = "compact_remote_v2_attempt.rs"]
@@ -83,7 +83,7 @@ pub(crate) async fn run_inline_remote_auto_compact_task(
     initial_context_injection: InitialContextInjection,
     reason: CompactionReason,
     phase: CompactionPhase,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let compaction_metadata = CompactionTurnMetadata::new(
         CompactionTrigger::Auto,
         reason,
@@ -104,7 +104,7 @@ pub(crate) async fn run_inline_remote_auto_compact_task(
 pub(crate) async fn run_remote_compact_task(
     sess: Arc<Session>,
     turn_context: Arc<TurnContext>,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     // Standalone compaction is its own request boundary, so it captures a fresh step.
     let step_context = sess
         .capture_step_context(Arc::clone(&turn_context), &CancellationToken::new())
@@ -135,7 +135,7 @@ async fn run_remote_compact_task_inner(
     client_session: Option<&mut ModelClientSession>,
     initial_context_injection: InitialContextInjection,
     compaction_metadata: CompactionTurnMetadata,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let turn_context = &step_context.turn;
     let trigger = compaction_metadata.trigger();
     let _reason = compaction_metadata.reason();
@@ -145,7 +145,7 @@ async fn run_remote_compact_task_inner(
     match pre_compact_outcome {
         PreCompactHookOutcome::Continue => {}
         PreCompactHookOutcome::Stopped => {
-            let error = GenexErr::TurnAborted;
+            let error = RuxexErr::TurnAborted;
             return Err(error);
         }
     }
@@ -161,12 +161,12 @@ async fn run_remote_compact_task_inner(
     if result.is_ok() {
         let post_compact_outcome = run_post_compact_hooks(sess, turn_context, trigger).await;
         if let PostCompactHookOutcome::Stopped = post_compact_outcome {
-            return Err(GenexErr::TurnAborted);
+            return Err(RuxexErr::TurnAborted);
         }
     }
     match result {
         Ok(()) => Ok(()),
-        Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => Err(err),
+        Err(err) if matches!(err.details(), RuxexErrorDetails::TurnAborted) => Err(err),
         Err(err) => {
             // Pre-turn failures are reported by run_turn after preserving the incoming prompt.
             if !matches!(phase, CompactionPhase::PreTurn) {
@@ -187,7 +187,7 @@ async fn run_remote_compact_task_inner_impl(
     mut client_session: Option<&mut ModelClientSession>,
     initial_context_injection: InitialContextInjection,
     compaction_metadata: CompactionTurnMetadata,
-) -> GenexResult<()> {
+) -> RuxexResult<()> {
     let turn_context = &step_context.turn;
     let context_compaction_item = ContextCompactionItem::new();
     let compaction_id = context_compaction_item.id.clone();
@@ -324,8 +324,8 @@ async fn run_remote_compaction_request_v2(
     step_context: &StepContext,
     client_session: &mut ModelClientSession,
     prompt: &Prompt,
-    responses_metadata: &GenexResponsesMetadata,
-) -> GenexResult<RemoteCompactionV2Output> {
+    responses_metadata: &RuxexResponsesMetadata,
+) -> RuxexResult<RemoteCompactionV2Output> {
     let turn_context = &step_context.turn;
     let max_retries = turn_context
         .provider
@@ -377,7 +377,7 @@ async fn collect_compaction_output(
     sess: &Session,
     turn_context: &TurnContext,
     mut stream: ResponseStream,
-) -> GenexResult<RemoteCompactionV2Output> {
+) -> RuxexResult<RemoteCompactionV2Output> {
     let mut output_item_count = 0usize;
     let mut compaction_count = 0usize;
     let mut compaction_output = None;
@@ -416,13 +416,13 @@ async fn collect_compaction_output(
     }
 
     let Some(response_id) = completed_response_id else {
-        return Err(GenexErr::Stream(
+        return Err(RuxexErr::Stream(
             "remote compaction v2 stream closed before response.completed".to_string(),
         ));
     };
 
     if compaction_count != 1 {
-        return Err(GenexErr::Fatal(format!(
+        return Err(RuxexErr::Fatal(format!(
             "remote compaction v2 expected exactly one compaction output item, got {compaction_count} from {output_item_count} output items"
         )));
     }
@@ -439,7 +439,7 @@ async fn collect_compaction_output(
 
 fn build_v2_compacted_history(
     prompt_input: Vec<ResponseItem>,
-    prompt_input_metadata: Vec<Option<GenexHarnessMetadata>>,
+    prompt_input_metadata: Vec<Option<RuxexHarnessMetadata>>,
     compaction_output: ResponseItem,
     retain_client_developer_messages: bool,
     image_budget: RetainedImageBudget,
@@ -739,7 +739,7 @@ mod tests {
     fn client_developer(value: &str) -> ResponseItemEnvelope {
         ResponseItemEnvelope {
             item: message("developer", vec![text(value)]),
-            metadata: Some(GenexHarnessMetadata {
+            metadata: Some(RuxexHarnessMetadata {
                 client_authored: true,
                 ..Default::default()
             }),
@@ -757,7 +757,7 @@ mod tests {
         assert!(!is_client_authored_developer_message(
             &ResponseItemEnvelope {
                 item: message("user", vec![text("input")]),
-                metadata: Some(GenexHarnessMetadata {
+                metadata: Some(RuxexHarnessMetadata {
                     client_authored: true,
                     ..Default::default()
                 }),

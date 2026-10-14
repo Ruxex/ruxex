@@ -8,9 +8,9 @@
 
 use std::collections::BTreeSet;
 
-use genex_app_server_protocol::McpServerStartupFailureReason;
-use genex_app_server_protocol::McpServerStartupState;
-use genex_app_server_protocol::McpServerStatusUpdatedNotification;
+use ruxex_app_server_protocol::McpServerStartupFailureReason;
+use ruxex_app_server_protocol::McpServerStartupState;
+use ruxex_app_server_protocol::McpServerStatusUpdatedNotification;
 
 use super::ChatWidget;
 

@@ -4,16 +4,16 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::ExecutorStdioServerLauncher;
-use genex_rmcp_client::LocalStdioServerLauncher;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
-use genex_rmcp_client::StdioServerLauncher;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::ExecutorStdioServerLauncher;
+use ruxex_rmcp_client::LocalStdioServerLauncher;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
+use ruxex_rmcp_client::StdioServerLauncher;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
 use rmcp::model::InitializeRequestParams;
@@ -40,7 +40,7 @@ enum OversizedHttpResponse {
 fn initialize_params() -> InitializeRequestParams {
     InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("genex-message-limit-test", "0.0.0-test"),
+        Implementation::new("ruxex-message-limit-test", "0.0.0-test"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18)
 }
@@ -231,7 +231,7 @@ async fn legacy_http_keeps_existing_large_json_response_behavior() -> anyhow::Re
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn modern_local_and_executor_stdio_reject_oversized_lines() -> anyhow::Result<()> {
-    let server = genex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
+    let server = ruxex_utils_cargo_bin::cargo_bin("test_mcp_2026_stdio_server")?;
 
     for (modern, executor) in [(false, false), (false, true), (true, false), (true, true)] {
         let mode = if modern {
@@ -241,7 +241,7 @@ async fn modern_local_and_executor_stdio_reject_oversized_lines() -> anyhow::Res
         };
         let env = modern.then(|| {
             HashMap::from([(
-                OsString::from("GENEX_MCP_PROTOCOL_VERSION"),
+                OsString::from("RUXEX_MCP_PROTOCOL_VERSION"),
                 OsString::from("2026-07-28"),
             )])
         });

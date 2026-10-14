@@ -50,9 +50,9 @@ pub use schema_fixtures::write_schema_fixtures;
 pub use schema_fixtures::write_schema_fixtures_with_options;
 
 #[cfg(not(test))]
-pub(crate) use genex_app_server_protocol_noop_macros::JsonSchema;
+pub(crate) use ruxex_app_server_protocol_noop_macros::JsonSchema;
 #[cfg(not(test))]
-pub(crate) use genex_app_server_protocol_noop_macros::TS;
+pub(crate) use ruxex_app_server_protocol_noop_macros::TS;
 #[cfg(test)]
 pub(crate) use schemars::JsonSchema;
 #[cfg(test)]

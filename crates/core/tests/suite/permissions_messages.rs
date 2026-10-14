@@ -6,24 +6,24 @@ use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_config::ConfigLayerStack;
-use genex_core::ForkSnapshot;
-use genex_core::TurnInputRequest;
-use genex_core::config::Constrained;
-use genex_models_manager::model_info::model_info_from_slug;
-use genex_protocol::model_types::ApprovalMessages;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::model_types::ModelMessages;
-use genex_protocol::model_types::PermissionMessages;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_config::ConfigLayerStack;
+use ruxex_core::ForkSnapshot;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Constrained;
+use ruxex_models_manager::model_info::model_info_from_slug;
+use ruxex_protocol::model_types::ApprovalMessages;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelMessages;
+use ruxex_protocol::model_types::PermissionMessages;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashSet;
 use tempfile::TempDir;
@@ -40,7 +40,7 @@ fn model_with_approval_messages(
     slug: &str,
     on_request: &str,
     on_request_auto_review: &str,
-) -> genex_protocol::model_types::ModelInfo {
+) -> ruxex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         approvals: Some(ApprovalMessages {
@@ -57,7 +57,7 @@ fn model_with_approval_messages(
 fn model_with_permission_messages(
     slug: &str,
     permissions: PermissionMessages,
-) -> genex_protocol::model_types::ModelInfo {
+) -> ruxex_protocol::model_types::ModelInfo {
     let mut model = model_info_from_slug(slug);
     model.model_messages = Some(ModelMessages {
         permissions: Some(permissions),
@@ -67,16 +67,16 @@ fn model_with_permission_messages(
 }
 
 async fn submit_text_turn(
-    test: &core_test_support::test_genex::TestGenex,
+    test: &core_test_support::test_ruxex::TestRuxex,
     text: &str,
 ) -> Result<()> {
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
     Ok(())
 }
 
@@ -97,7 +97,7 @@ async fn catalog_approval_message_is_sent_in_initial_permissions() -> Result<()>
         "catalog user approval instructions",
         "catalog auto-review approval instructions",
     );
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.base_instructions = Some(override_instructions.to_string());
@@ -139,7 +139,7 @@ async fn model_change_appends_new_catalog_approval_message() -> Result<()> {
     let second_slug = "catalog-approvals-model-b";
     let first = model_with_approval_messages(first_slug, "model A approvals", "model A auto");
     let second = model_with_approval_messages(second_slug, "model B approvals", "model B auto");
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(first_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
@@ -151,7 +151,7 @@ async fn model_change_appends_new_catalog_approval_message() -> Result<()> {
     submit_text_turn(&test, "first").await?;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(second_slug.to_string()),
             ..Default::default()
@@ -210,7 +210,7 @@ async fn catalog_non_on_request_approval_messages_are_sent_in_initial_permission
             approvals: Some(approvals),
             ..Default::default()
         });
-        let mut builder = test_genex()
+        let mut builder = test_ruxex()
             .with_model(model_slug)
             .with_config(move |config| {
                 config.permissions.approval_policy = Constrained::allow_any(approval_policy);
@@ -263,7 +263,7 @@ async fn catalog_permission_message_is_sent_initially_and_after_model_change() -
             read_only: Some("model B permissions: {{ network_access }}".to_string()),
         },
     );
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(first_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
@@ -279,7 +279,7 @@ async fn catalog_permission_message_is_sent_initially_and_after_model_change() -
     submit_text_turn(&test, "first").await?;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(second_slug.to_string()),
             ..Default::default()
@@ -328,7 +328,7 @@ async fn empty_catalog_permission_message_preserves_approval_instructions() -> R
             read_only: Some(String::new()),
         },
     );
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model(model_slug)
         .with_config(move |config| {
             config.permissions.approval_policy = Constrained::allow_any(AskForApproval::Never);
@@ -363,18 +363,18 @@ async fn permissions_message_sent_once_on_start() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     assert_eq!(permissions_texts(&req.single_request()).len(), 1);
 
@@ -397,21 +397,21 @@ async fn permissions_message_added_on_override_change() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             ..Default::default()
@@ -419,13 +419,13 @@ async fn permissions_message_added_on_override_change() -> Result<()> {
     )
     .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions_1 = permissions_texts(&req1.single_request());
     let permissions_2 = permissions_texts(&req2.single_request());
@@ -454,26 +454,26 @@ async fn permissions_message_not_added_when_no_change() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions_1 = permissions_texts(&req1.single_request());
     let permissions_2 = permissions_texts(&req2.single_request());
@@ -501,22 +501,22 @@ async fn permissions_message_omitted_when_disabled() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.include_permissions_instructions = false;
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             ..Default::default()
@@ -524,13 +524,13 @@ async fn permissions_message_omitted_when_disabled() -> Result<()> {
     )
     .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     assert_eq!(
         permissions_texts(&req1.single_request()),
@@ -565,22 +565,22 @@ async fn resume_replays_permissions_messages() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let initial = builder.build(&server).await?;
 
     initial
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&initial.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&initial.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &initial.genex,
+        &initial.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             ..Default::default()
@@ -589,23 +589,23 @@ async fn resume_replays_permissions_messages() -> Result<()> {
     .await?;
 
     initial
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&initial.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&initial.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let resumed = builder.restart(&server, &initial).await?;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after resume".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&resumed.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions = permissions_texts(&req3.single_request());
     assert_eq!(permissions.len(), 3);
@@ -641,7 +641,7 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let initial = builder.build(&server).await?;
@@ -652,16 +652,16 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
         .expect("rollout path");
 
     initial
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 1".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&initial.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&initial.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     core_test_support::submit_thread_settings(
-        &initial.genex,
+        &initial.ruxex,
         ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             ..Default::default()
@@ -670,13 +670,13 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
     .await?;
 
     initial
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello 2".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&initial.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&initial.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions_base = permissions_texts(&req2.single_request());
     assert_eq!(permissions_base.len(), 2);
@@ -686,13 +686,13 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
     });
     let resumed = builder.restart(&server, &initial).await?;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "after resume".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&resumed.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions_resume = permissions_texts(&req3.single_request());
     assert_eq!(permissions_resume.len(), permissions_base.len() + 1);
@@ -708,7 +708,7 @@ async fn resume_and_fork_append_permissions_messages() -> Result<()> {
         .thread_manager
         .fork_thread(
             ForkSnapshot::Interrupted,
-            genex_core::StartThreadOptions::new(fork_config.clone()),
+            ruxex_core::StartThreadOptions::new(fork_config.clone()),
             rollout_path,
         )
         .await?;
@@ -755,7 +755,7 @@ async fn permissions_message_includes_writable_roots() -> Result<()> {
         /*exclude_slash_tmp*/ true,
     );
 
-    let mut builder = test_genex().with_config(move |config| {
+    let mut builder = test_ruxex().with_config(move |config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
         config
             .permissions
@@ -768,13 +768,13 @@ async fn permissions_message_includes_writable_roots() -> Result<()> {
     });
     let test = builder.build(&server).await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "hello".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let permissions = permissions_texts(&req.single_request());
     assert_eq!(permissions.len(), 1);

@@ -3,7 +3,7 @@
 //! This module owns the generic permission pickers and confirmation surfaces;
 
 use super::*;
-use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use ruxex_protocol::model_types::MODEL_SPECIALTY_CYBER;
 
 impl ChatWidget {
     /// Open the permissions popup.
@@ -96,7 +96,7 @@ impl ChatWidget {
         label: String,
     ) -> Vec<SelectionAction> {
         vec![Box::new(move |tx| {
-            tx.send(AppEvent::GenexOp(AppCommand::override_turn_context(
+            tx.send(AppEvent::RuxexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 Some(approval),
                 Some(permission_profile.clone()),
@@ -226,7 +226,7 @@ impl ChatWidget {
             vec![
                 Line::default(),
                 Line::from(
-                    "When Genex runs with full access, it can edit any file on your computer and run commands with network, without your approval.",
+                    "When Ruxex runs with full access, it can edit any file on your computer and run commands with network, without your approval.",
                 ),
                 Line::default(),
                 Line::from(vec![
@@ -237,7 +237,7 @@ impl ChatWidget {
             ]
         } else {
             vec![Line::from(vec![
-                "When Genex runs with full access, it can edit any file on your computer and run commands with network, without your approval. "
+                "When Ruxex runs with full access, it can edit any file on your computer and run commands with network, without your approval. "
                     .into(),
                 "Exercise caution when enabling full access. This significantly increases the risk of data loss, leaks, or unexpected behavior."
                     .red(),

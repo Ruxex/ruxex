@@ -9,7 +9,7 @@ use crate::DbTelemetry;
 use crate::runtime::RuntimeDbInitError;
 use crate::telemetry;
 use crate::telemetry::DbKind;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use log::LevelFilter;
 use sqlx::ConnectOptions;
 use sqlx::Error;
@@ -41,8 +41,8 @@ struct RuntimeDbSpec {
 }
 
 impl RuntimeDbSpec {
-    fn path(self, genex_home: &Path) -> PathBuf {
-        genex_home.join(self.filename)
+    fn path(self, ruxex_home: &Path) -> PathBuf {
+        ruxex_home.join(self.filename)
     }
 }
 
@@ -94,7 +94,7 @@ pub struct RuntimeDbPath {
     pub path: PathBuf,
 }
 
-/// Resolved configuration shared by all Genex SQLite connections.
+/// Resolved configuration shared by all Ruxex SQLite connections.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SqliteConfig {
     sqlite_home: AbsolutePathBuf,
@@ -237,7 +237,7 @@ impl SqliteConfig {
         Ok(pool)
     }
 
-    /// Open a writable Genex SQLite database, creating it if necessary.
+    /// Open a writable Ruxex SQLite database, creating it if necessary.
     pub async fn open_read_write_pool(&self, path: &Path) -> Result<SqlitePool, Error> {
         let options = SqliteConnectOptions::new()
             .filename(path)
@@ -253,7 +253,7 @@ impl SqliteConfig {
             .await
     }
 
-    /// Open an existing Genex SQLite database without creating or modifying it.
+    /// Open an existing Ruxex SQLite database without creating or modifying it.
     pub async fn open_read_only_pool(
         &self,
         path: &Path,

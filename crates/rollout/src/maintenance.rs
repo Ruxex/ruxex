@@ -1,7 +1,7 @@
 //! Coordinates maintenance jobs that replace local rollout files.
 //!
 //! Rollout compression publishes by renaming a replacement over an existing rollout path. It must
-//! not race with another replacement for one Genex home, so it uses this process-scoped,
+//! not race with another replacement for one Ruxex home, so it uses this process-scoped,
 //! nonblocking file lock.
 //!
 //! This is separate from per-thread writer locks, which protect live rollout appenders. It is also
@@ -20,11 +20,11 @@ pub struct RolloutMaintenanceGuard {
     _file: File,
 }
 
-/// Try to exclude rollout replacement operations for one Genex home.
+/// Try to exclude rollout replacement operations for one Ruxex home.
 pub fn try_acquire_rollout_maintenance_lock(
-    genex_home: &Path,
+    ruxex_home: &Path,
 ) -> io::Result<Option<RolloutMaintenanceGuard>> {
-    let directory = genex_home.join(".tmp");
+    let directory = ruxex_home.join(".tmp");
     fs::create_dir_all(&directory)?;
     let file = OpenOptions::new()
         .read(true)

@@ -3,17 +3,17 @@ use std::path::PathBuf;
 
 use crate::JsonSchema;
 use crate::TS;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::ForcedLoginMethod;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::ForcedLoginMethod;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -59,8 +59,8 @@ pub struct InitializeCapabilities {
 #[serde(rename_all = "camelCase")]
 pub struct InitializeResponse {
     pub user_agent: String,
-    /// Absolute path to the server's $GENEX_HOME directory.
-    pub genex_home: AbsolutePathBuf,
+    /// Absolute path to the server's $RUXEX_HOME directory.
+    pub ruxex_home: AbsolutePathBuf,
     /// Platform family for the running app-server target, for example
     /// `"unix"`.
     pub platform_family: String,
@@ -102,8 +102,8 @@ mod tests {
     #[test]
     fn app_server_identity_round_trips_with_a_diagnostic_build_version() {
         let response = InitializeResponse {
-            user_agent: "genex-app-server/1.0".to_string(),
-            genex_home: AbsolutePathBuf::from_absolute_path("/server/.genex")
+            user_agent: "ruxex-app-server/1.0".to_string(),
+            ruxex_home: AbsolutePathBuf::from_absolute_path("/server/.ruxex")
                 .expect("absolute path"),
             platform_family: "unix".to_string(),
             platform_os: "linux".to_string(),

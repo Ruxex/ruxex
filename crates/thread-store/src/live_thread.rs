@@ -2,12 +2,12 @@ use std::future::Future;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutPersistenceTelemetry;
-use genex_rollout::measure_and_filter_rollout_items;
-use genex_rollout::persisted_rollout_items;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutPersistenceTelemetry;
+use ruxex_rollout::measure_and_filter_rollout_items;
+use ruxex_rollout::persisted_rollout_items;
 use tokio::sync::Mutex;
 use tracing::warn;
 

@@ -3,13 +3,13 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use futures::FutureExt;
-use genex_config::types::AuthKeyringBackendKind;
-use genex_config::types::OAuthCredentialsStoreMode;
-use genex_exec_server::Environment;
-use genex_rmcp_client::ElicitationAction;
-use genex_rmcp_client::ElicitationResponse;
-use genex_rmcp_client::McpProtocolMode;
-use genex_rmcp_client::RmcpClient;
+use ruxex_config::types::AuthKeyringBackendKind;
+use ruxex_config::types::OAuthCredentialsStoreMode;
+use ruxex_exec_server::Environment;
+use ruxex_rmcp_client::ElicitationAction;
+use ruxex_rmcp_client::ElicitationResponse;
+use ruxex_rmcp_client::McpProtocolMode;
+use ruxex_rmcp_client::RmcpClient;
 use pretty_assertions::assert_eq;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::Implementation;
@@ -43,7 +43,7 @@ async fn initialize_modern_client(server: &MockServer) -> anyhow::Result<RmcpCli
 
     let params = InitializeRequestParams::new(
         ClientCapabilities::default(),
-        Implementation::new("genex-sse-discovery-test", "0.0.0"),
+        Implementation::new("ruxex-sse-discovery-test", "0.0.0"),
     )
     .with_protocol_version(ProtocolVersion::V_2025_06_18);
 

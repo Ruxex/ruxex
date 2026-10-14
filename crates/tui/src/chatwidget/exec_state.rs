@@ -1,7 +1,7 @@
 //! Unified exec bookkeeping state and helpers for `ChatWidget`.
 
-use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use genex_protocol::parse_command::ParsedCommand;
+use ruxex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use ruxex_protocol::parse_command::ParsedCommand;
 
 use crate::exec_command::split_command_string;
 
@@ -70,14 +70,14 @@ pub(super) fn is_standard_tool_call(parsed_cmd: &[ParsedCommand]) -> bool {
 
 pub(super) fn command_execution_command_and_parsed(
     command: &str,
-    command_actions: &[genex_app_server_protocol::CommandAction],
+    command_actions: &[ruxex_app_server_protocol::CommandAction],
 ) -> (Vec<String>, Vec<ParsedCommand>) {
     (
         split_command_string(command),
         command_actions
             .iter()
             .cloned()
-            .map(genex_app_server_protocol::CommandAction::into_core)
+            .map(ruxex_app_server_protocol::CommandAction::into_core)
             .collect(),
     )
 }

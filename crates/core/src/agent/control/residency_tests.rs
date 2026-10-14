@@ -3,19 +3,19 @@ use crate::ThreadManager;
 use crate::agent::AgentControl;
 use crate::config::Config;
 use crate::config::test_config;
-use crate::genex_thread::GenexThread;
+use crate::ruxex_thread::RuxexThread;
 use crate::thread_manager::ThreadManagerState;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 
@@ -25,13 +25,13 @@ async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
     let _ = config.features.enable(Feature::MultiAgentV2);
     config.multi_agent_v2.max_concurrent_threads_per_session = 2;
     let temp_home = tempfile::tempdir().expect("create temp home");
-    config.genex_home = temp_home.path().to_path_buf().try_into().unwrap();
+    config.ruxex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
-        GenexAuth::from_api_key("dummy"),
+        RuxexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.genex_home.to_path_buf(),
-        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
+        config.ruxex_home.to_path_buf(),
+        Arc::new(ruxex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager
         .start_thread(StartThreadOptions::new(config.clone()))
@@ -55,7 +55,7 @@ async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
         .expect("second resident slot should evict the first idle agent");
     match manager.get_thread(first.thread_id).await {
         Err(err) => match err.details() {
-            GenexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
+            RuxexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
             _ => panic!("expected evicted thread to be missing, got {err:?}"),
         },
         Ok(_) => panic!("expected evicted thread to be missing"),
@@ -73,13 +73,13 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
     let _ = config.features.enable(Feature::MultiAgentV2);
     config.multi_agent_v2.max_concurrent_threads_per_session = 2;
     let temp_home = tempfile::tempdir().expect("create temp home");
-    config.genex_home = temp_home.path().to_path_buf().try_into().unwrap();
+    config.ruxex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
-        GenexAuth::from_api_key("dummy"),
+        RuxexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.genex_home.to_path_buf(),
-        Arc::new(genex_exec_server::EnvironmentManager::default_for_tests()),
+        config.ruxex_home.to_path_buf(),
+        Arc::new(ruxex_exec_server::EnvironmentManager::default_for_tests()),
     );
     let root = manager
         .start_thread(StartThreadOptions::new(config.clone()))
@@ -103,7 +103,7 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
         .expect("second resident slot should evict the first interrupted idle agent");
     match manager.get_thread(first.thread_id).await {
         Err(err) => match err.details() {
-            GenexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
+            RuxexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
             _ => panic!("expected evicted thread to be missing, got {err:?}"),
         },
         Ok(_) => panic!("expected evicted thread to be missing"),
@@ -118,7 +118,7 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
         .await
         .expect_err("evicted interrupted agent should stay lost");
     match err.details() {
-        GenexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
+        RuxexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
         _ => panic!("expected ThreadNotFound, got {err:?}"),
     }
 
@@ -126,7 +126,7 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
     assert!(manager.get_thread(second.thread_id).await.is_ok());
     match manager.get_thread(first.thread_id).await {
         Err(err) => match err.details() {
-            GenexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
+            RuxexErrorDetails::ThreadNotFound(thread_id) => assert_eq!(*thread_id, first.thread_id),
             _ => panic!("expected evicted thread to be missing, got {err:?}"),
         },
         Ok(_) => panic!("expected evicted thread to be missing"),
@@ -158,7 +158,7 @@ async fn spawn_v2_subagent(
         .expect("spawn v2 subagent")
 }
 
-async fn mark_thread_completed(thread: &GenexThread) {
+async fn mark_thread_completed(thread: &RuxexThread) {
     let turn = thread.session.new_default_turn().await;
     thread
         .session
@@ -178,7 +178,7 @@ async fn mark_thread_completed(thread: &GenexThread) {
     clear_active_turn(thread).await;
 }
 
-async fn mark_thread_interrupted(thread: &GenexThread) {
+async fn mark_thread_interrupted(thread: &RuxexThread) {
     let turn = thread.session.new_default_turn().await;
     thread
         .session
@@ -196,7 +196,7 @@ async fn mark_thread_interrupted(thread: &GenexThread) {
     clear_active_turn(thread).await;
 }
 
-async fn clear_active_turn(thread: &GenexThread) {
+async fn clear_active_turn(thread: &RuxexThread) {
     // The fixture has no task runner to clear the turn after the terminal event.
     *thread.session.active_turn.lock().await = None;
 }

@@ -1,9 +1,9 @@
-use genex_app_server_protocol::DynamicToolCallOutputContentItem;
-use genex_app_server_protocol::DynamicToolCallResponse;
-use genex_core::GenexThread;
-use genex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-use genex_protocol::dynamic_tools::DynamicToolResponse as CoreDynamicToolResponse;
-use genex_protocol::protocol::Op;
+use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
+use ruxex_app_server_protocol::DynamicToolCallResponse;
+use ruxex_core::RuxexThread;
+use ruxex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+use ruxex_protocol::dynamic_tools::DynamicToolResponse as CoreDynamicToolResponse;
+use ruxex_protocol::protocol::Op;
 use std::sync::Arc;
 use tokio::sync::oneshot;
 use tracing::error;
@@ -18,7 +18,7 @@ const INVALID_AUDIO_URL_ERROR: &str = "audio URLs must use an inline data URL";
 pub(crate) async fn on_call_response(
     call_id: String,
     receiver: oneshot::Receiver<ClientRequestResult>,
-    conversation: Arc<GenexThread>,
+    conversation: Arc<RuxexThread>,
 ) {
     let response = receiver.await;
     let (response, _error) = match response {

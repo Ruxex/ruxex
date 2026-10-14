@@ -1,15 +1,15 @@
-use genex_config::types::PluginMcpServerConfig;
-use genex_core::config::Config;
-use genex_core_plugins::ExecutorPluginProvider;
-use genex_core_plugins::loader::apply_configured_plugin_mcp_server_policies;
-use genex_core_plugins::loader::configured_plugin_mcp_server_policies;
-use genex_exec_server::EnvironmentManager;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::McpServerContribution;
-use genex_extension_api::McpServerContributionContext;
-use genex_extension_api::McpServerContributor;
-use genex_features::Feature;
-use genex_protocol::capabilities::SelectedCapabilityRoot;
+use ruxex_config::types::PluginMcpServerConfig;
+use ruxex_core::config::Config;
+use ruxex_core_plugins::ExecutorPluginProvider;
+use ruxex_core_plugins::loader::apply_configured_plugin_mcp_server_policies;
+use ruxex_core_plugins::loader::configured_plugin_mcp_server_policies;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::McpServerContribution;
+use ruxex_extension_api::McpServerContributionContext;
+use ruxex_extension_api::McpServerContributor;
+use ruxex_features::Feature;
+use ruxex_protocol::capabilities::SelectedCapabilityRoot;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -27,7 +27,7 @@ mod provider;
 struct SelectedPluginMetadata {
     plugin_id: String,
     plugin_display_name: String,
-    servers: Vec<(String, genex_config::McpServerConfig)>,
+    servers: Vec<(String, ruxex_config::McpServerConfig)>,
 }
 
 #[derive(Default)]

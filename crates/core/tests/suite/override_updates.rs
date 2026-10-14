@@ -1,16 +1,16 @@
 use anyhow::Result;
-use genex_core::config::Constrained;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
+use ruxex_core::config::Constrained;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
 use core_test_support::TempDirExt;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::local_selections;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::local_selections;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use tempfile::TempDir;
 
@@ -31,24 +31,24 @@ async fn thread_settings_update_without_user_turn_does_not_record_permissions_up
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut builder = test_genex().with_config(|config| {
+    let mut builder = test_ruxex().with_config(|config| {
         config.permissions.approval_policy = Constrained::allow_any(AskForApproval::OnRequest);
     });
     let test = builder.build(&server).await?;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
-        genex_protocol::protocol::ThreadSettingsOverrides {
+        &test.ruxex,
+        ruxex_protocol::protocol::ThreadSettingsOverrides {
             approval_policy: Some(AskForApproval::Never),
             ..Default::default()
         },
     )
     .await?;
 
-    test.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    test.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     assert!(
         !rollout_path.exists(),
         "did not expect a rollout before a new user turn"
@@ -63,22 +63,22 @@ async fn thread_settings_update_without_user_turn_does_not_record_environment_up
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_genex().build(&server).await?;
+    let test = test_ruxex().build(&server).await?;
     let new_cwd = TempDir::new()?;
 
     core_test_support::submit_thread_settings(
-        &test.genex,
-        genex_protocol::protocol::ThreadSettingsOverrides {
+        &test.ruxex,
+        ruxex_protocol::protocol::ThreadSettingsOverrides {
             environments: Some(local_selections(new_cwd.abs())),
             ..Default::default()
         },
     )
     .await?;
 
-    test.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    test.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     assert!(
         !rollout_path.exists(),
         "did not expect a rollout before a new user turn"
@@ -93,23 +93,23 @@ async fn thread_settings_update_without_user_turn_does_not_record_collaboration_
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = test_genex().build(&server).await?;
+    let test = test_ruxex().build(&server).await?;
     let collab_text = "override collaboration instructions";
     let collaboration_mode = collab_mode_with_instructions(Some(collab_text));
 
     core_test_support::submit_thread_settings(
-        &test.genex,
-        genex_protocol::protocol::ThreadSettingsOverrides {
+        &test.ruxex,
+        ruxex_protocol::protocol::ThreadSettingsOverrides {
             collaboration_mode: Some(collaboration_mode),
             ..Default::default()
         },
     )
     .await?;
 
-    test.genex.submit(Op::Shutdown).await?;
-    wait_for_event(&test.genex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
+    test.ruxex.submit(Op::Shutdown).await?;
+    wait_for_event(&test.ruxex, |ev| matches!(ev, EventMsg::ShutdownComplete)).await;
 
-    let rollout_path = test.genex.rollout_path().expect("rollout path");
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
     assert!(
         !rollout_path.exists(),
         "did not expect a rollout before a new user turn"

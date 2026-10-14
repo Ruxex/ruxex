@@ -4,13 +4,13 @@ use crate::app::Turn;
 use crate::app::TurnStatus;
 use crate::test_support::PathBufExt;
 use crate::test_support::test_path_buf;
-use genex_app_server_protocol::AgentMessageDeltaNotification;
-use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use genex_app_server_protocol::RequestId as AppServerRequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::TurnItemsView;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_protocol::ThreadId;
+use ruxex_app_server_protocol::AgentMessageDeltaNotification;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use ruxex_app_server_protocol::RequestId as AppServerRequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::TurnItemsView;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 
 fn turn_started_notification(thread_id: ThreadId, turn_id: &str) -> ServerNotification {

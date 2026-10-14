@@ -1,11 +1,11 @@
-use genex_api::SearchInput;
-use genex_core::parse_turn_item;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::plaintext_agent_message_content;
-use genex_tools::retain_tail_from_last_n_user_messages;
-use genex_tools::truncate_assistant_output_text_to_token_budget;
+use ruxex_api::SearchInput;
+use ruxex_core::parse_turn_item;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::plaintext_agent_message_content;
+use ruxex_tools::retain_tail_from_last_n_user_messages;
+use ruxex_tools::truncate_assistant_output_text_to_token_budget;
 
 const ASSISTANT_CONTEXT_TOKEN_LIMIT: usize = 1_000;
 const ASSISTANT_ROLE: &str = "assistant";
@@ -81,11 +81,11 @@ fn push_visible_message(messages: &mut Vec<ResponseItem>, item: &ResponseItem) {
 
 #[cfg(test)]
 mod tests {
-    use genex_api::SearchInput;
-    use genex_protocol::ResponseItemId;
-    use genex_protocol::models::ContentItem;
-    use genex_protocol::models::ImageReference;
-    use genex_protocol::models::ResponseItem;
+    use ruxex_api::SearchInput;
+    use ruxex_protocol::ResponseItemId;
+    use ruxex_protocol::models::ContentItem;
+    use ruxex_protocol::models::ImageReference;
+    use ruxex_protocol::models::ResponseItem;
     use pretty_assertions::assert_eq;
 
     use super::ASSISTANT_ROLE;

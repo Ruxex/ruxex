@@ -28,7 +28,7 @@ impl ComposerDraft {
     fn vim_history_bytes(&self) -> usize {
         let mut bytes = self.text.len()
             + self.text_elements.len()
-                * std::mem::size_of::<genex_protocol::user_input::TextElement>();
+                * std::mem::size_of::<ruxex_protocol::user_input::TextElement>();
         for path in &self.local_image_paths {
             bytes += path.as_os_str().len();
         }

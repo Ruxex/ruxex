@@ -1,10 +1,10 @@
 use super::AppServerSession;
 use color_eyre::eyre::Result;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadParams;
-use genex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
-use genex_app_server_protocol::ModelProviderReadParams;
-use genex_app_server_protocol::ModelProviderReadResponse;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadParams;
+use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
+use ruxex_app_server_protocol::ModelProviderReadParams;
+use ruxex_app_server_protocol::ModelProviderReadResponse;
 
 impl AppServerSession {
     pub(crate) async fn model_provider_read(&mut self) -> Result<ModelProviderReadResponse> {

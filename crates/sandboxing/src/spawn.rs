@@ -3,8 +3,8 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use genex_utils_pty::SpawnedProcess;
-use genex_utils_pty::TerminalSize;
+use ruxex_utils_pty::SpawnedProcess;
+use ruxex_utils_pty::TerminalSize;
 
 use crate::terminal_queries::respond_to_terminal_queries;
 
@@ -35,7 +35,7 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
         .split_first()
         .context("missing program for process spawn")?;
     let spawned = if tty {
-        genex_utils_pty::pty::spawn_process(
+        ruxex_utils_pty::pty::spawn_process(
             program,
             args,
             request.cwd,
@@ -46,7 +46,7 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
         )
         .await
     } else if request.stdin_open {
-        genex_utils_pty::pipe::spawn_process(
+        ruxex_utils_pty::pipe::spawn_process(
             program,
             args,
             request.cwd,
@@ -56,7 +56,7 @@ pub async fn spawn_process(request: SpawnRequest<'_>) -> Result<SpawnedProcess> 
         )
         .await
     } else {
-        genex_utils_pty::pipe::spawn_process_no_stdin(
+        ruxex_utils_pty::pipe::spawn_process_no_stdin(
             program,
             args,
             request.cwd,

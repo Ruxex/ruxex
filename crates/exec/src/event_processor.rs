@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use genex_app_server_protocol::ServerNotification;
-use genex_core::config::Config;
-use genex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_core::config::Config;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GenexStatus {
+pub enum RuxexStatus {
     Running,
     InitiateShutdown,
 }
@@ -20,10 +20,10 @@ pub(crate) trait EventProcessor {
     );
 
     /// Handle a single typed app-server notification emitted by the agent.
-    fn process_server_notification(&mut self, notification: ServerNotification) -> GenexStatus;
+    fn process_server_notification(&mut self, notification: ServerNotification) -> RuxexStatus;
 
     /// Handle a local exec warning that is not represented as an app-server notification.
-    fn process_warning(&mut self, message: String) -> GenexStatus;
+    fn process_warning(&mut self, message: String) -> RuxexStatus;
 
     fn print_final_output(&mut self) {}
 }

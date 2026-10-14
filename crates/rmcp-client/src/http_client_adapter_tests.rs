@@ -1,6 +1,6 @@
 use std::io::ErrorKind;
 
-use genex_exec_server::HttpRedirectPolicy;
+use ruxex_exec_server::HttpRedirectPolicy;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::header::AUTHORIZATION;

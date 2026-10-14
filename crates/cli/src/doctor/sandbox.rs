@@ -1,8 +1,8 @@
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::RequirementSource;
-use genex_core::config::Config;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::RequirementSource;
+use ruxex_core::config::Config;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
 
 use super::CheckStatus;
 use super::DoctorCheck;
@@ -58,7 +58,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
 
     let mut status = CheckStatus::Ok;
     let mut summary = "sandbox configuration is readable".to_string();
-    if let Some(helper) = arg0_paths.genex_linux_sandbox_exe.as_deref()
+    if let Some(helper) = arg0_paths.ruxex_linux_sandbox_exe.as_deref()
         && !helper.exists()
     {
         status = CheckStatus::Warning;
@@ -68,7 +68,7 @@ pub(super) fn sandbox_check(config: &Config, arg0_paths: &Arg0DispatchPaths) -> 
     push_path_detail(
         &mut details,
         "Linux sandbox helper",
-        arg0_paths.genex_linux_sandbox_exe.as_deref(),
+        arg0_paths.ruxex_linux_sandbox_exe.as_deref(),
     );
     DoctorCheck::new("sandbox.helpers", "sandbox", status, summary).details(details)
 }

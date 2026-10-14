@@ -1,19 +1,19 @@
 use crate::config::Config;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use genex_extension_api::SkillInvocationInput;
-use genex_extension_api::SkillInvocationKind;
-use genex_otel::sanitize_metric_tag_value;
-use genex_protocol::protocol::SkillScope;
-use genex_skills::SkillMetadata;
-use genex_skills_extension::HostSkillsLoadInput;
-use genex_skills_extension::InjectedHostSkillPrompts;
-use genex_skills_extension::SkillInvocationLocation;
-use genex_skills_extension::detect_implicit_skill_invocation;
-use genex_skills_extension::record_plugin_turn_usage;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_plugins::PluginSkillRoot;
+use ruxex_extension_api::SkillInvocationInput;
+use ruxex_extension_api::SkillInvocationKind;
+use ruxex_otel::sanitize_metric_tag_value;
+use ruxex_protocol::protocol::SkillScope;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills_extension::HostSkillsLoadInput;
+use ruxex_skills_extension::InjectedHostSkillPrompts;
+use ruxex_skills_extension::SkillInvocationLocation;
+use ruxex_skills_extension::detect_implicit_skill_invocation;
+use ruxex_skills_extension::record_plugin_turn_usage;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_plugins::PluginSkillRoot;
 use std::collections::HashSet;
 use tokio::sync::Mutex;
 
@@ -57,7 +57,7 @@ pub(crate) async fn emit_explicit_skill_invocations(
             "error"
         };
         turn_context.session_telemetry.counter(
-            "genex.skill.injected",
+            "ruxex.skill.injected",
             /*inc*/ 1,
             &[
                 ("status", status),
@@ -162,7 +162,7 @@ pub(crate) async fn maybe_emit_implicit_skill_invocation(
     }
 
     turn_context.session_telemetry.counter(
-        "genex.skill.injected",
+        "ruxex.skill.injected",
         /*inc*/ 1,
         &[
             ("status", "ok"),

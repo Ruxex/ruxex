@@ -57,7 +57,7 @@ unsafe extern "C" fn fault_injected_mprotect(
         } == 0
             && unsafe { std::ffi::CStr::from_ptr(thread_name.as_ptr()) }
                 .to_bytes()
-                .starts_with(b"genex-otel-shut");
+                .starts_with(b"ruxex-otel-shut");
 
         if named_shutdown_worker {
             GUARD_PAGE_INJECTION_OBSERVED.store(/*val*/ true, Ordering::Relaxed);
@@ -210,7 +210,7 @@ fn bounded_shutdown_survives_worker_guard_page_failure() {
         .expect("current time follows Unix epoch")
         .as_nanos();
     let temporary_directory = std::env::temp_dir().join(format!(
-        "genex-otel-guard-page-{}-{unique_suffix}",
+        "ruxex-otel-guard-page-{}-{unique_suffix}",
         std::process::id()
     ));
     std::fs::create_dir(&temporary_directory).expect("create fault injector directory");
@@ -223,8 +223,8 @@ fn bounded_shutdown_survives_worker_guard_page_failure() {
         .arg("--ignored")
         .arg("--nocapture")
         .arg("--test-threads=1")
-        .env("GENEX_OTEL_GUARD_PAGE_FAILURE_CHILD", "1")
-        .env("GENEX_OTEL_GUARD_PAGE_FAILURE_OBSERVED", &observed_path);
+        .env("RUXEX_OTEL_GUARD_PAGE_FAILURE_CHILD", "1")
+        .env("RUXEX_OTEL_GUARD_PAGE_FAILURE_OBSERVED", &observed_path);
 
     let output = subprocess
         .output()
@@ -254,7 +254,7 @@ fn bounded_shutdown_survives_worker_guard_page_failure() {
 // `--exact --ignored`, isolating fatal native-thread initialization failures.
 #[ignore]
 fn bounded_shutdown_survives_worker_guard_page_failure_child() {
-    if std::env::var_os("GENEX_OTEL_GUARD_PAGE_FAILURE_CHILD").is_none() {
+    if std::env::var_os("RUXEX_OTEL_GUARD_PAGE_FAILURE_CHILD").is_none() {
         return;
     }
 
@@ -344,7 +344,7 @@ fn bounded_shutdown_survives_worker_guard_page_failure_child() {
         assert_eq!(unsafe { libc::munmap(mapped_page, page_size) }, 0);
     }
 
-    let observed_path = std::env::var_os("GENEX_OTEL_GUARD_PAGE_FAILURE_OBSERVED")
+    let observed_path = std::env::var_os("RUXEX_OTEL_GUARD_PAGE_FAILURE_OBSERVED")
         .expect("guard-page fault observation path");
     std::fs::write(observed_path, "observed").expect("record guard-page fault injection");
 

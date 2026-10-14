@@ -1,14 +1,14 @@
-# genex-app-server-client
+# ruxex-app-server-client
 
 Shared in-process app-server client used by conversational CLI surfaces:
 
-- `genex-exec`
-- `genex-tui`
+- `ruxex-exec`
+- `ruxex-tui`
 
 ## Purpose
 
 This crate centralizes startup and lifecycle management for an in-process
-`genex-app-server` runtime, so CLI clients do not need to duplicate:
+`ruxex-app-server` runtime, so CLI clients do not need to duplicate:
 
 - app-server bootstrap and initialize handshake
 - in-memory request/event transport wiring

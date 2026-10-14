@@ -25,15 +25,15 @@ use crate::tools::sandboxing::ToolRuntime;
 use crate::tools::sandboxing::default_exec_approval_requirement;
 use crate::tools::sandboxing::sandbox_override_for_first_attempt;
 use crate::tools::sandboxing::unsandboxed_execution_allowed;
-use genex_otel::ToolDecisionSource;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::ReviewDecision;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::policy_transforms::effective_network_sandbox_policy;
+use ruxex_otel::ToolDecisionSource;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::policy_transforms::effective_network_sandbox_policy;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -137,11 +137,11 @@ impl ToolOrchestrator {
         let environment = tool.turn_environment(req);
         let sandbox_manager = SandboxManager::new();
         #[cfg(target_os = "macos")]
-        let sandbox_manager = sandbox_manager.with_allowed_symlinked_genex_home(
+        let sandbox_manager = sandbox_manager.with_allowed_symlinked_ruxex_home(
             environment
                 .environment
                 .local_runtime_paths()
-                .and_then(|paths| paths.allowed_symlinked_genex_home.clone()),
+                .and_then(|paths| paths.allowed_symlinked_ruxex_home.clone()),
         );
         let sandbox_config = environment.config();
         let owner_network_policy = sandbox_config.network_policy.is_some();
@@ -259,7 +259,7 @@ impl ToolOrchestrator {
             .sandbox_cwd(req)
             .cloned()
             .unwrap_or_else(|| environment.cwd().clone());
-        let genex_sandbox_exe = turn_ctx.config.genex_linux_sandbox_exe.as_ref();
+        let ruxex_sandbox_exe = turn_ctx.config.ruxex_linux_sandbox_exe.as_ref();
         let initial_attempt = SandboxAttempt {
             sandbox: initial_sandbox,
             sandbox_requested,
@@ -269,7 +269,7 @@ impl ToolOrchestrator {
             manager: &sandbox_manager,
             sandbox_cwd: &sandbox_policy_cwd,
             workspace_roots,
-            sandbox_exe: genex_sandbox_exe,
+            sandbox_exe: ruxex_sandbox_exe,
             use_legacy_landlock: sandbox_config.use_legacy_landlock,
             network_denial_cancellation_token: None,
             network_proxy: None,
@@ -287,13 +287,13 @@ impl ToolOrchestrator {
                     deferred_network_approval: first_deferred_network_approval,
                 })
             }
-            Err(ToolError::Genex(err)) => {
-                let GenexErrorDetails::Sandbox(SandboxErr::Denied {
+            Err(ToolError::Ruxex(err)) => {
+                let RuxexErrorDetails::Sandbox(SandboxErr::Denied {
                     output,
                     network_policy_decision,
                 }) = err.details()
                 else {
-                    let err = ToolError::Genex(err);
+                    let err = ToolError::Ruxex(err);
                     if let Some(outcome) = sandbox_outcome_from_tool_error(&err) {
                         otel.sandbox_outcome(
                             &otel_tn,
@@ -320,7 +320,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Genex(err));
+                    return Err(ToolError::Ruxex(err));
                 }
                 if !tool.escalate_on_failure() {
                     otel.sandbox_outcome(
@@ -330,7 +330,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Genex(err));
+                    return Err(ToolError::Ruxex(err));
                 }
                 // Under `Never` or `OnRequest`, do not retry without sandbox;
                 // surface a concise sandbox denial that preserves the
@@ -354,7 +354,7 @@ impl ToolOrchestrator {
                             initial_duration,
                             /*escalated_duration*/ None,
                         );
-                        return Err(ToolError::Genex(err));
+                        return Err(ToolError::Ruxex(err));
                     }
                 }
                 if !unsandboxed_allowed && network_approval_context.is_none() {
@@ -365,7 +365,7 @@ impl ToolOrchestrator {
                         initial_duration,
                         /*escalated_duration*/ None,
                     );
-                    return Err(ToolError::Genex(err));
+                    return Err(ToolError::Ruxex(err));
                 }
                 let retry_reason =
                     if let Some(network_approval_context) = network_approval_context.as_ref() {
@@ -426,7 +426,7 @@ impl ToolOrchestrator {
                 let retry_sandbox_exe = if unsandboxed_allowed {
                     None
                 } else {
-                    genex_sandbox_exe
+                    ruxex_sandbox_exe
                 };
                 let retry_attempt = SandboxAttempt {
                     sandbox: retry_sandbox,
@@ -496,10 +496,10 @@ impl ToolOrchestrator {
 
 fn sandbox_outcome_from_tool_error(err: &ToolError) -> Option<&'static str> {
     match err {
-        ToolError::Genex(err) => match err.details() {
-            GenexErrorDetails::Sandbox(SandboxErr::Denied { .. }) => Some("denied"),
-            GenexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => Some("timed_out"),
-            GenexErrorDetails::Sandbox(SandboxErr::Signal(_)) => Some("signal"),
+        ToolError::Ruxex(err) => match err.details() {
+            RuxexErrorDetails::Sandbox(SandboxErr::Denied { .. }) => Some("denied"),
+            RuxexErrorDetails::Sandbox(SandboxErr::Timeout { .. }) => Some("timed_out"),
+            RuxexErrorDetails::Sandbox(SandboxErr::Signal(_)) => Some("signal"),
             _ => None,
         },
         ToolError::Rejected(_) => None,

@@ -3,8 +3,8 @@ use std::io;
 use std::io::stdout;
 
 use crossterm::Command;
-use genex_terminal_detection::Multiplexer;
-use genex_terminal_detection::terminal_info;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::terminal_info;
 use ratatui::crossterm::execute;
 
 #[derive(Debug)]

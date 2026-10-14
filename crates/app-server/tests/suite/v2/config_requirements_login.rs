@@ -2,11 +2,11 @@
 
 use anyhow::Result;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::Account;
-use genex_app_server_protocol::GetAccountParams;
-use genex_app_server_protocol::GetAccountResponse;
-use genex_app_server_protocol::RequestId;
-use genex_protocol::config_types::ForcedLoginMethod;
+use ruxex_app_server_protocol::Account;
+use ruxex_app_server_protocol::GetAccountParams;
+use ruxex_app_server_protocol::GetAccountResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_protocol::config_types::ForcedLoginMethod;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -28,7 +28,7 @@ async fn start_server(
         std::fs::write(home.path().join("requirements.toml"), requirements)?;
     }
     let server = TestAppServer::builder()
-        .with_genex_home(home.path())
+        .with_ruxex_home(home.path())
         .build_initialized_with_timeout(READ_TIMEOUT)
         .await?;
     Ok((home, server))

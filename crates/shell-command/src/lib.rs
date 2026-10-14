@@ -1,4 +1,4 @@
-//! Command parsing and safety utilities shared across Genex crates.
+//! Command parsing and safety utilities shared across Ruxex crates.
 
 pub mod shell_detect;
 pub mod shell_snapshot;

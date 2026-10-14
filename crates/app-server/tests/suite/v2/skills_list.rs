@@ -6,34 +6,34 @@ use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::write_api_key_auth;
-use genex_app_server_protocol::ConfigBatchWriteParams;
-use genex_app_server_protocol::ConfigEdit;
-use genex_app_server_protocol::ConfigReadParams;
-use genex_app_server_protocol::ConfigReadResponse;
-use genex_app_server_protocol::ConfigRequirementsReadResponse;
-use genex_app_server_protocol::ConfigWriteResponse;
-use genex_app_server_protocol::MergeStrategy;
-use genex_app_server_protocol::PermissionProfileListParams;
-use genex_app_server_protocol::PermissionProfileListResponse;
-use genex_app_server_protocol::PluginListParams;
-use genex_app_server_protocol::PluginListResponse;
-use genex_app_server_protocol::SkillScope;
-use genex_app_server_protocol::SkillsChangedNotification;
-use genex_app_server_protocol::SkillsExtraRootsSetParams;
-use genex_app_server_protocol::SkillsExtraRootsSetResponse;
-use genex_app_server_protocol::SkillsListParams;
-use genex_app_server_protocol::SkillsListResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_config::types::AuthCredentialsStoreMode;
-use genex_core::config::set_project_trust_level;
-use genex_core_plugins::store::PluginStore;
-use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
-use genex_exec_server::CreateDirectoryOptions;
-use genex_plugin::PluginId;
-use genex_protocol::config_types::TrustLevel;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_app_server_protocol::ConfigBatchWriteParams;
+use ruxex_app_server_protocol::ConfigEdit;
+use ruxex_app_server_protocol::ConfigReadParams;
+use ruxex_app_server_protocol::ConfigReadResponse;
+use ruxex_app_server_protocol::ConfigRequirementsReadResponse;
+use ruxex_app_server_protocol::ConfigWriteResponse;
+use ruxex_app_server_protocol::MergeStrategy;
+use ruxex_app_server_protocol::PermissionProfileListParams;
+use ruxex_app_server_protocol::PermissionProfileListResponse;
+use ruxex_app_server_protocol::PluginListParams;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::SkillScope;
+use ruxex_app_server_protocol::SkillsChangedNotification;
+use ruxex_app_server_protocol::SkillsExtraRootsSetParams;
+use ruxex_app_server_protocol::SkillsExtraRootsSetResponse;
+use ruxex_app_server_protocol::SkillsListParams;
+use ruxex_app_server_protocol::SkillsListResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_core_plugins::store::PluginStore;
+use ruxex_exec_server::RUXEX_EXEC_SERVER_URL_ENV_VAR;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_plugin::PluginId;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::skip_if_remote;
 use core_test_support::skip_if_wine_exec;
 use pretty_assertions::assert_eq;
@@ -71,11 +71,11 @@ async fn expect_skills_changed_notification(
 }
 
 fn write_plugins_enabled_config_with_base_url(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     base_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        genex_home.join("config.toml"),
+        ruxex_home.join("config.toml"),
         format!(
             r#"managed_auth_base_url = "{base_url}"
 
@@ -87,12 +87,12 @@ plugins = true
 }
 
 fn write_cached_remote_plugin_with_skill(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
 ) -> Result<std::path::PathBuf> {
-    let plugin_root = genex_home.join("plugins/cache/test-remote/linear/local");
-    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
+    let plugin_root = ruxex_home.join("plugins/cache/test-remote/linear/local");
+    std::fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
     std::fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"linear"}"#,
     )?;
 
@@ -107,15 +107,15 @@ fn write_cached_remote_plugin_with_skill(
 }
 
 fn write_cached_local_curated_plugin_with_skill(
-    genex_home: &std::path::Path,
+    ruxex_home: &std::path::Path,
     marketplace_name: &str,
 ) -> Result<()> {
-    let plugin_root = genex_home.join(format!(
+    let plugin_root = ruxex_home.join(format!(
         "plugins/cache/{marketplace_name}/google-calendar/local"
     ));
-    std::fs::create_dir_all(plugin_root.join(".genex-plugin"))?;
+    std::fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
     std::fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{"name":"google-calendar"}"#,
     )?;
 
@@ -130,10 +130,10 @@ fn write_cached_local_curated_plugin_with_skill(
 
 #[tokio::test]
 async fn skills_list_disabled_bundled_skills_preserves_shared_system_skill_cache() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let mut enabled_mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -163,7 +163,7 @@ async fn skills_list_disabled_bundled_skills_preserves_shared_system_skill_cache
     );
 
     let mut disabled_mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .with_args(&["-c", "skills.bundled.enabled=false"])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
@@ -219,22 +219,22 @@ async fn skills_list_disabled_bundled_skills_preserves_shared_system_skill_cache
 
 #[tokio::test]
 async fn skills_list_uses_each_cwds_bundled_skills_configuration() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let disabled_cwd = TempDir::new()?;
     let enabled_cwd = TempDir::new()?;
 
     for (cwd, enabled) in [(disabled_cwd.path(), false), (enabled_cwd.path(), true)] {
         std::fs::create_dir_all(cwd.join(".git"))?;
-        std::fs::create_dir_all(cwd.join(".genex"))?;
+        std::fs::create_dir_all(cwd.join(".ruxex"))?;
         std::fs::write(
-            cwd.join(".genex/config.toml"),
+            cwd.join(".ruxex/config.toml"),
             format!("[skills.bundled]\nenabled = {enabled}\n"),
         )?;
-        set_project_trust_level(genex_home.path(), cwd, TrustLevel::Trusted)?;
+        set_project_trust_level(ruxex_home.path(), cwd, TrustLevel::Trusted)?;
     }
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -271,9 +271,9 @@ async fn skills_list_uses_each_cwds_bundled_skills_configuration() -> Result<()>
 
 #[tokio::test]
 async fn skills_list_runtime_enable_refreshes_shared_system_skill_cache() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    let stale_skill_path = genex_home
+    let stale_skill_path = ruxex_home
         .path()
         .join("skills/.system/stale-system-skill/SKILL.md");
     std::fs::create_dir_all(
@@ -286,12 +286,12 @@ async fn skills_list_runtime_enable_refreshes_shared_system_skill_cache() -> Res
         "---\nname: stale-system-skill\ndescription: stale system skill\n---\n\n# Body\n",
     )?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         "[skills.bundled]\nenabled = false\n",
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -363,17 +363,17 @@ async fn skills_list_runtime_enable_refreshes_shared_system_skill_cache() -> Res
 
 #[tokio::test]
 async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let server = MockServer::start().await;
     let expected_skill_path =
-        std::fs::canonicalize(write_cached_remote_plugin_with_skill(genex_home.path())?)?;
+        std::fs::canonicalize(write_cached_remote_plugin_with_skill(ruxex_home.path())?)?;
     write_plugins_enabled_config_with_base_url(
-        genex_home.path(),
+        ruxex_home.path(),
         &format!("{}/backend-api/", server.uri()),
     )?;
     write_api_key_auth(
-        genex_home.path(),
+        ruxex_home.path(),
         ApiKeyAuthFixture::new("test-token")
             .account_id("account-123")
             .user_id("user-123")
@@ -449,7 +449,7 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
             .await;
     }
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -548,10 +548,10 @@ async fn skills_list_loads_remote_installed_plugin_skills_from_cache() -> Result
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_reads_complete_alongside_skills_list_request() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_managed_config()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -603,10 +603,10 @@ async fn config_reads_complete_alongside_skills_list_request() -> Result<()> {
 
 #[tokio::test]
 async fn skills_list_skips_cwd_roots_when_environment_disabled() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
-    write_skill(&genex_home, "home-skill")?;
-    let repo_skill_dir = cwd.path().join(".genex/skills/repo-skill");
+    write_skill(&ruxex_home, "home-skill")?;
+    let repo_skill_dir = cwd.path().join(".ruxex/skills/repo-skill");
     std::fs::create_dir_all(&repo_skill_dir)?;
     std::fs::write(
         repo_skill_dir.join("SKILL.md"),
@@ -614,9 +614,9 @@ async fn skills_list_skips_cwd_roots_when_environment_disabled() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
-        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(RUXEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -649,12 +649,12 @@ async fn skills_list_skips_cwd_roots_when_environment_disabled() -> Result<()> {
 
 #[tokio::test]
 async fn skills_list_accepts_relative_cwds() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let relative_cwd = std::path::PathBuf::from("relative-cwd");
-    std::fs::create_dir_all(genex_home.path().join(&relative_cwd))?;
+    std::fs::create_dir_all(ruxex_home.path().join(&relative_cwd))?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -682,14 +682,14 @@ async fn skills_list_preserves_requested_cwd_order(home_plugins_enabled: bool) -
         Ok(()),
         "skills/list currently requires host-native cwd paths for workspace config"
     );
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let first_cwd = TempDir::new()?;
     let second_cwd = TempDir::new()?;
     let third_cwd = TempDir::new()?;
-    write_skill(&genex_home, "shared-skill")?;
-    write_cached_local_curated_plugin_with_skill(genex_home.path(), "provider-api-curated")?;
+    write_skill(&ruxex_home, "shared-skill")?;
+    write_cached_local_curated_plugin_with_skill(ruxex_home.path(), "provider-api-curated")?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         format!(
             r#"[features]
 plugins = {home_plugins_enabled}
@@ -706,18 +706,18 @@ enabled = false
         (third_cwd.path(), true, false),
     ] {
         std::fs::create_dir_all(cwd.join(".git"))?;
-        std::fs::create_dir_all(cwd.join(".genex"))?;
+        std::fs::create_dir_all(cwd.join(".ruxex"))?;
         std::fs::write(
-            cwd.join(".genex/config.toml"),
+            cwd.join(".ruxex/config.toml"),
             format!(
                 "[features]\nplugins = {plugins_enabled}\n[plugins.\"google-calendar@provider-api-curated\"]\nenabled = {plugin_enabled}\n"
             ),
         )?;
-        set_project_trust_level(genex_home.path(), cwd, TrustLevel::Trusted)?;
+        set_project_trust_level(ruxex_home.path(), cwd, TrustLevel::Trusted)?;
     }
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -811,17 +811,17 @@ async fn skills_list_refreshes_externally_updated_plugin_versions() -> Result<()
         Ok(()),
         "skills/list currently requires host-native cwd paths for workspace config"
     );
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let source = TempDir::new()?;
-    std::fs::create_dir_all(source.path().join(".genex-plugin"))?;
+    std::fs::create_dir_all(source.path().join(".ruxex-plugin"))?;
     std::fs::create_dir_all(source.path().join("skills"))?;
     std::fs::write(
-        source.path().join(".genex-plugin/plugin.json"),
+        source.path().join(".ruxex-plugin/plugin.json"),
         r#"{"name":"sample"}"#,
     )?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -830,9 +830,9 @@ enabled = true
 "#,
     )?;
     let plugin_id = PluginId::parse("sample@test")?;
-    let store = PluginStore::new(genex_home.path().to_path_buf());
+    let store = PluginStore::new(ruxex_home.path().to_path_buf());
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let file_system = mcp.auto_env()?.environment().get_filesystem();
@@ -900,12 +900,12 @@ async fn skills_list_force_reload_refreshes_cached_plugin_roots() -> Result<()> 
         Ok(()),
         "skills/list currently requires host-native cwd paths for workspace config"
     );
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let first_cwd = TempDir::new()?;
     let second_cwd = TempDir::new()?;
-    write_cached_local_curated_plugin_with_skill(genex_home.path(), "provider-api-curated")?;
+    write_cached_local_curated_plugin_with_skill(ruxex_home.path(), "provider-api-curated")?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -915,7 +915,7 @@ enabled = true
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
 
@@ -940,11 +940,11 @@ enabled = true
         (second_cwd.path(), false, "google-calendar:refreshed-skill"),
     ] {
         if force_reload {
-            let plugin_root = genex_home
+            let plugin_root = ruxex_home
                 .path()
                 .join("plugins/cache/provider-api-curated/google-calendar/local");
             std::fs::write(
-                plugin_root.join(".genex-plugin/plugin.json"),
+                plugin_root.join(".ruxex-plugin/plugin.json"),
                 r#"{"name":"google-calendar","skills":"./replacement-skills"}"#,
             )?;
             let skill_dir = plugin_root.join("replacement-skills/refreshed-skill");
@@ -979,11 +979,11 @@ enabled = true
 #[tokio::test]
 async fn skills_list_uses_cached_result_after_session_default_writes_until_force_reload()
 -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1005,7 +1005,7 @@ async fn skills_list_uses_cached_result_after_session_default_writes_until_force
             .all(|skill| skill.name != "late-extra-skill")
     );
 
-    let skill_dir = cwd.path().join(".genex/skills/late-extra-skill");
+    let skill_dir = cwd.path().join(".ruxex/skills/late-extra-skill");
     std::fs::create_dir_all(&skill_dir)?;
     std::fs::write(
         skill_dir.join("SKILL.md"),
@@ -1084,7 +1084,7 @@ async fn skills_list_uses_cached_result_after_session_default_writes_until_force
 
 #[tokio::test]
 async fn skills_extra_roots_set_updates_process_runtime_roots() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     let extra_skills_root = extra_root.path().join("skills");
@@ -1096,7 +1096,7 @@ async fn skills_extra_roots_set_updates_process_runtime_roots() -> Result<()> {
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1181,7 +1181,7 @@ async fn skills_extra_roots_set_updates_process_runtime_roots() -> Result<()> {
 
     drop(mcp);
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
@@ -1213,19 +1213,19 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
     );
 
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
-        .write(genex_home.path())?;
-    write_skill(&genex_home, "demo")?;
+        .write(ruxex_home.path())?;
+    write_skill(&ruxex_home, "demo")?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;
     let initial_skills_request_id = mcp
         .send_skills_list_request(SkillsListParams {
-            cwds: vec![genex_home.path().to_path_buf()],
+            cwds: vec![ruxex_home.path().to_path_buf()],
             force_reload: true,
         })
         .await?;
@@ -1274,7 +1274,7 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
     let _: ThreadStartResponse =
         timeout(DEFAULT_TIMEOUT, mcp.read_response(thread_start_request_id)).await??;
 
-    let skill_path = genex_home
+    let skill_path = ruxex_home
         .path()
         .join("skills")
         .join("demo")
@@ -1287,7 +1287,7 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
     expect_skills_changed_notification(&mut mcp, WATCHER_TIMEOUT).await?;
     let updated_skills_request_id = mcp
         .send_skills_list_request(SkillsListParams {
-            cwds: vec![genex_home.path().to_path_buf()],
+            cwds: vec![ruxex_home.path().to_path_buf()],
             force_reload: false,
         })
         .await?;

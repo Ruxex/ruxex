@@ -1,7 +1,7 @@
 use crate::context::ContextualUserFragment;
-use genex_context_fragments::RenderedFragment;
-use genex_protocol::models::InternalChatMessageMetadataPassthrough;
-use genex_protocol::models::ResponseItem;
+use ruxex_context_fragments::RenderedFragment;
+use ruxex_protocol::models::InternalChatMessageMetadataPassthrough;
+use ruxex_protocol::models::ResponseItem;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum MessageGroup {

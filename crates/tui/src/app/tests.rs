@@ -62,7 +62,7 @@ async fn drain_managed_worktree_start(app: &mut App, server: &mut AppServerSessi
         app.start_managed_worktree(server, mode, name).await;
     }
 }
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 
 use crate::chatwidget::ChatWidgetInit;
 use crate::chatwidget::create_initial_user_message;
@@ -88,79 +88,79 @@ use crate::diff_model::FileChange;
 use crate::legacy_core::config::ConfigBuilder;
 use crate::legacy_core::config::ConfigOverrides;
 use crate::legacy_core::config::PermissionProfileSnapshot;
-use genex_app_server_client::AppServerPath;
-use genex_app_server_protocol::AdditionalFileSystemPermissions;
-use genex_app_server_protocol::AdditionalNetworkPermissions;
-use genex_app_server_protocol::AdditionalPermissionProfile;
-use genex_app_server_protocol::AgentMessageDeltaNotification;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use genex_app_server_protocol::FileChangeRequestApprovalParams;
-use genex_app_server_protocol::FileUpdateChange;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::McpServerElicitationRequest;
-use genex_app_server_protocol::McpServerElicitationRequestParams;
-use genex_app_server_protocol::McpServerStartupState;
-use genex_app_server_protocol::McpServerStatusUpdatedNotification;
-use genex_app_server_protocol::NetworkApprovalContext as AppServerNetworkApprovalContext;
-use genex_app_server_protocol::NetworkApprovalProtocol as AppServerNetworkApprovalProtocol;
-use genex_app_server_protocol::NetworkPolicyAmendment as AppServerNetworkPolicyAmendment;
-use genex_app_server_protocol::NetworkPolicyRuleAction as AppServerNetworkPolicyRuleAction;
-use genex_app_server_protocol::NonSteerableTurnKind as AppServerNonSteerableTurnKind;
-use genex_app_server_protocol::PatchChangeKind;
-use genex_app_server_protocol::PermissionsRequestApprovalParams;
-use genex_app_server_protocol::RequestId as AppServerRequestId;
-use genex_app_server_protocol::ServerNotification;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::Thread;
-use genex_app_server_protocol::ThreadArchivedNotification;
-use genex_app_server_protocol::ThreadAttachmentOperation;
-use genex_app_server_protocol::ThreadAttachmentUpdatedNotification;
-use genex_app_server_protocol::ThreadClosedNotification;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadSettings;
-use genex_app_server_protocol::ThreadSettingsUpdatedNotification;
-use genex_app_server_protocol::ThreadStartedNotification;
-use genex_app_server_protocol::ThreadTokenUsage;
-use genex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
-use genex_app_server_protocol::TokenUsageBreakdown;
-use genex_app_server_protocol::ToolRequestUserInputParams;
-use genex_app_server_protocol::Turn;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnError as AppServerTurnError;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput;
-use genex_app_server_protocol::UserInput as AppServerUserInput;
-use genex_app_server_protocol::WarningNotification;
-use genex_history::RolloutItem;
-use genex_models_manager::test_support::construct_model_info_offline_for_tests;
-use genex_models_manager::test_support::get_model_offline_for_tests;
-use genex_otel::SessionTelemetry;
-use genex_protocol::ThreadId;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::CollaborationModeMask;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::NetworkPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionSource as RolloutSessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_protocol::user_input::TextElement;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_app_server_client::AppServerPath;
+use ruxex_app_server_protocol::AdditionalFileSystemPermissions;
+use ruxex_app_server_protocol::AdditionalNetworkPermissions;
+use ruxex_app_server_protocol::AdditionalPermissionProfile;
+use ruxex_app_server_protocol::AgentMessageDeltaNotification;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalParams;
+use ruxex_app_server_protocol::FileChangeRequestApprovalParams;
+use ruxex_app_server_protocol::FileUpdateChange;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::McpServerElicitationRequest;
+use ruxex_app_server_protocol::McpServerElicitationRequestParams;
+use ruxex_app_server_protocol::McpServerStartupState;
+use ruxex_app_server_protocol::McpServerStatusUpdatedNotification;
+use ruxex_app_server_protocol::NetworkApprovalContext as AppServerNetworkApprovalContext;
+use ruxex_app_server_protocol::NetworkApprovalProtocol as AppServerNetworkApprovalProtocol;
+use ruxex_app_server_protocol::NetworkPolicyAmendment as AppServerNetworkPolicyAmendment;
+use ruxex_app_server_protocol::NetworkPolicyRuleAction as AppServerNetworkPolicyRuleAction;
+use ruxex_app_server_protocol::NonSteerableTurnKind as AppServerNonSteerableTurnKind;
+use ruxex_app_server_protocol::PatchChangeKind;
+use ruxex_app_server_protocol::PermissionsRequestApprovalParams;
+use ruxex_app_server_protocol::RequestId as AppServerRequestId;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::Thread;
+use ruxex_app_server_protocol::ThreadArchivedNotification;
+use ruxex_app_server_protocol::ThreadAttachmentOperation;
+use ruxex_app_server_protocol::ThreadAttachmentUpdatedNotification;
+use ruxex_app_server_protocol::ThreadClosedNotification;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSettings;
+use ruxex_app_server_protocol::ThreadSettingsUpdatedNotification;
+use ruxex_app_server_protocol::ThreadStartedNotification;
+use ruxex_app_server_protocol::ThreadTokenUsage;
+use ruxex_app_server_protocol::ThreadTokenUsageUpdatedNotification;
+use ruxex_app_server_protocol::TokenUsageBreakdown;
+use ruxex_app_server_protocol::ToolRequestUserInputParams;
+use ruxex_app_server_protocol::Turn;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnError as AppServerTurnError;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::UserInput as AppServerUserInput;
+use ruxex_app_server_protocol::WarningNotification;
+use ruxex_history::RolloutItem;
+use ruxex_models_manager::test_support::construct_model_info_offline_for_tests;
+use ruxex_models_manager::test_support::get_model_offline_for_tests;
+use ruxex_otel::SessionTelemetry;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::CollaborationModeMask;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::NetworkPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MAX_THREAD_GOAL_OBJECTIVE_CHARS;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionSource as RolloutSessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_protocol::user_input::TextElement;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use crossterm::event::KeyModifiers;
 use pretty_assertions::assert_eq;
 use ratatui::buffer::Buffer;
@@ -236,7 +236,7 @@ async fn next_thread_settings_updated(
         .await
         .expect("app-server should emit an event")
         .expect("app-server event stream should remain open");
-        if let genex_app_server_client::AppServerEvent::ServerNotification(notification) = event
+        if let ruxex_app_server_client::AppServerEvent::ServerNotification(notification) = event
             && let ServerNotification::ThreadSettingsUpdated(notification) = *notification
             && notification.thread_id == thread_id.to_string()
         {
@@ -265,7 +265,7 @@ async fn handle_mcp_inventory_result_respects_origin_thread() {
             tools: HashMap::new(),
             resources: Vec::new(),
             resource_templates: Vec::new(),
-            auth_status: genex_app_server_protocol::McpAuthStatus::Unsupported,
+            auth_status: ruxex_app_server_protocol::McpAuthStatus::Unsupported,
         }]),
         McpServerStatusDetail::ToolsAndAuthOnly,
         /*thread_id*/ None,
@@ -316,9 +316,9 @@ async fn enqueue_primary_thread_session_replays_buffered_approval_after_attach()
     .await?;
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::ServerRequestResolved(
-                genex_app_server_protocol::ServerRequestResolvedNotification {
+                ruxex_app_server_protocol::ServerRequestResolvedNotification {
                     thread_id: ThreadId::new().to_string(),
                     request_id: AppServerRequestId::Integer(1),
                 },
@@ -476,7 +476,7 @@ fn set_test_initial_prompt(app: &mut App, initial_prompt: String) {
         ),
         enhanced_keys_supported: false,
         has_managed_account: false,
-        has_genex_backend_auth: false,
+        has_ruxex_backend_auth: false,
         model_catalog: app.model_catalog.clone(),
         is_first_run: false,
         status_account_display: None,
@@ -530,7 +530,7 @@ async fn enqueue_primary_thread_session_replays_turns_before_initial_prompt_subm
                 assert_eq!(op_thread_id, thread_id);
                 submitted_items = Some(items);
             }
-            AppEvent::GenexOp(Op::UserTurn { items, .. }) => {
+            AppEvent::RuxexOp(Op::UserTurn { items, .. }) => {
                 assert!(
                     saw_optimistic_prompt,
                     "expected optimistic prompt before turn submission"
@@ -606,13 +606,13 @@ async fn history_lookup_response_is_routed_to_requesting_thread() -> Result<()> 
     let thread_id = ThreadId::new();
 
     let local_home = tempfile::tempdir()?;
-    app.local_settings.genex_home = AbsolutePathBuf::from_absolute_path(local_home.path())?;
-    let history_config = genex_message_history::HistoryConfig::new(
-        app.local_settings.genex_home.clone(),
+    app.local_settings.ruxex_home = AbsolutePathBuf::from_absolute_path(local_home.path())?;
+    let history_config = ruxex_message_history::HistoryConfig::new(
+        app.local_settings.ruxex_home.clone(),
         &app.local_settings.history,
     );
-    genex_message_history::append_entry("local prompt", thread_id, &history_config).await?;
-    let (log_id, _) = genex_message_history::history_metadata(&history_config).await;
+    ruxex_message_history::append_entry("local prompt", thread_id, &history_config).await?;
+    let (log_id, _) = ruxex_message_history::history_metadata(&history_config).await;
 
     app.lookup_message_history_entry(thread_id, /*offset*/ 0, log_id)
         .await?;
@@ -639,7 +639,7 @@ async fn history_lookup_response_is_routed_to_requesting_thread() -> Result<()> 
         }
     );
 
-    let cursor = genex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
+    let cursor = ruxex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
     app.lookup_message_history_batch(thread_id, cursor, log_id)
         .await?;
     let app_event = tokio::time::timeout(Duration::from_secs(1), app_event_rx.recv())
@@ -828,7 +828,7 @@ async fn active_history_batch_is_delivered_without_replay_buffering() -> Result<
         .insert(thread_id, ThreadEventChannel::new(/*capacity*/ 4));
     app.set_thread_active(thread_id, /*active*/ true).await;
 
-    let cursor = genex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
+    let cursor = ruxex_message_history::HistoryBatchCursor::new(/*end_offset*/ 1);
     let event = HistoryLookupResponse::Batch {
         cursor,
         log_id: 1,
@@ -836,7 +836,7 @@ async fn active_history_batch_is_delivered_without_replay_buffering() -> Result<
             offset: 1,
             entry: Some("history entry".to_string()),
         }],
-        next_older_cursor: Some(genex_message_history::HistoryBatchCursor::new(
+        next_older_cursor: Some(ruxex_message_history::HistoryBatchCursor::new(
             /*end_offset*/ 0,
         )),
     };
@@ -1628,8 +1628,8 @@ async fn collab_receiver_notification_caches_thread_without_app_server_read() {
             started_at_ms: 0,
             item: ThreadItem::CollabAgentToolCall {
                 id: "wait-1".to_string(),
-                tool: genex_app_server_protocol::CollabAgentTool::Wait,
-                status: genex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
+                tool: ruxex_app_server_protocol::CollabAgentTool::Wait,
+                status: ruxex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
                 sender_thread_id: ThreadId::new().to_string(),
                 receiver_thread_ids: vec![receiver_thread_id.to_string()],
                 prompt: None,
@@ -1659,14 +1659,14 @@ async fn collab_receiver_notification_does_not_cache_not_found_thread() {
         ThreadId::from_string("00000000-0000-0000-0000-000000000124").expect("valid thread id");
 
     app.handle_thread_event_now(ThreadBufferedEvent::Notification(Box::new(
-        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(ruxex_app_server_protocol::ItemCompletedNotification {
             thread_id: ThreadId::new().to_string(),
             turn_id: "turn-1".to_string(),
             completed_at_ms: 0,
             item: ThreadItem::CollabAgentToolCall {
                 id: "send-1".to_string(),
-                tool: genex_app_server_protocol::CollabAgentTool::SendInput,
-                status: genex_app_server_protocol::CollabAgentToolCallStatus::Failed,
+                tool: ruxex_app_server_protocol::CollabAgentTool::SendInput,
+                status: ruxex_app_server_protocol::CollabAgentToolCallStatus::Failed,
                 sender_thread_id: ThreadId::new().to_string(),
                 receiver_thread_ids: vec![receiver_thread_id.to_string()],
                 prompt: Some("hello".to_string()),
@@ -1674,8 +1674,8 @@ async fn collab_receiver_notification_does_not_cache_not_found_thread() {
                 reasoning_effort: None,
                 agents_states: HashMap::from([(
                     receiver_thread_id.to_string(),
-                    genex_app_server_protocol::CollabAgentState {
-                        status: genex_app_server_protocol::CollabAgentStatus::NotFound,
+                    ruxex_app_server_protocol::CollabAgentState {
+                        status: ruxex_app_server_protocol::CollabAgentStatus::NotFound,
                         message: None,
                     },
                 )]),
@@ -1944,7 +1944,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         let root_thread_id = ThreadId::new();
         let rollout_dir = app
             .config
-            .genex_home
+            .ruxex_home
             .join("sessions")
             .join("2026")
             .join("01")
@@ -1955,7 +1955,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
             id: root_thread_id,
             timestamp: "2026-01-01T00:00:00Z".to_string(),
             cwd: app.config.cwd.to_path_buf(),
-            originator: "genex-tui-test".to_string(),
+            originator: "ruxex-tui-test".to_string(),
             cli_version: "0.0.0".to_string(),
             source: RolloutSessionSource::Cli,
             multi_agent_version: Some(MultiAgentVersion::V2),
@@ -1985,7 +1985,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
                 parent_thread_id: Some(root_thread_id),
                 timestamp: timestamp.clone(),
                 cwd: app.config.cwd.to_path_buf(),
-                originator: "genex-tui-test".to_string(),
+                originator: "ruxex-tui-test".to_string(),
                 cli_version: "0.0.0".to_string(),
                 source: RolloutSessionSource::SubAgent(SubAgentSource::ThreadSpawn {
                     parent_thread_id: root_thread_id,
@@ -2074,7 +2074,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
             .handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         assert!(
             std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::RuxexOp(Op::UserTurn { .. })))
         );
 
         app.select_agent_thread(&mut tui, &mut app_server, child_thread_ids[1])
@@ -2089,7 +2089,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         assert_eq!(app.chat_widget.composer_text_with_pending(), draft);
         assert!(
             !std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::RuxexOp(Op::UserTurn { .. })))
         );
 
         let resumed = Box::pin(app_server.resume_thread(
@@ -2117,7 +2117,7 @@ fn selected_and_resumed_threads_use_server_capability_for_v1_and_v2_children() -
         assert_eq!(app.chat_widget.composer_text_with_pending(), draft);
         assert!(
             !std::iter::from_fn(|| app_event_rx.try_recv().ok())
-                .any(|event| matches!(event, AppEvent::GenexOp(Op::UserTurn { .. })))
+                .any(|event| matches!(event, AppEvent::RuxexOp(Op::UserTurn { .. })))
         );
         Ok(())
     }))
@@ -2263,7 +2263,7 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     let config = app.chat_widget.config_ref().clone();
     let parent_thread_id = ThreadId::from_string(
         &app_test_support::create_fake_rollout(
-            config.genex_home.as_path(),
+            config.ruxex_home.as_path(),
             "2025-01-05T12-00-00",
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -2316,7 +2316,7 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
         .await
         .expect("app-server should emit an event")
         .expect("app-server event stream should remain open");
-        if let genex_app_server_client::AppServerEvent::ServerNotification(notification) = event
+        if let ruxex_app_server_client::AppServerEvent::ServerNotification(notification) = event
             && let ServerNotification::ThreadStarted(notification) = notification.as_ref()
             && notification.thread.id == side_thread_id.to_string()
         {
@@ -2383,11 +2383,11 @@ async fn resume_rejects_selected_config_profile_permission_definitions() -> Resu
         &selected,
         "default_permissions = \":workspace\"\n[permissions.unused]\nextends = \":read-only\"\n",
     )?;
-    let mut loader = genex_config::LoaderOverrides::without_managed_config_for_tests();
+    let mut loader = ruxex_config::LoaderOverrides::without_managed_config_for_tests();
     loader.user_config_path = Some(selected.abs());
     loader.user_config_profile = Some("work".parse()?);
     let config = ConfigBuilder::default()
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .loader_overrides(loader)
         .build()
         .await?;
@@ -2402,8 +2402,8 @@ async fn resume_rejects_selected_config_profile_permission_definitions() -> Resu
 #[tokio::test]
 async fn apply_permission_profile_selection_preserves_loader_overrides() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    let selected_config = genex_home.path().join("work.config.toml");
+    let ruxex_home = tempdir()?;
+    let selected_config = ruxex_home.path().join("work.config.toml");
     std::fs::write(
         &selected_config,
         r#"
@@ -2413,7 +2413,7 @@ default_permissions = "locked-down"
 ":minimal" = "read"
 "#,
     )?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
     app.loader_overrides.user_config_path = Some(selected_config.abs());
     app.harness_overrides.sandbox_mode = Some(SandboxMode::WorkspaceWrite);
     app.harness_overrides.permission_profile = Some(PermissionProfile::workspace_write());
@@ -2450,8 +2450,8 @@ default_permissions = "locked-down"
         Some(RuntimePermissionProfileOverride::from_config(&app.config))
     );
     let op = match app_event_rx.try_recv() {
-        Ok(AppEvent::GenexOp(op)) => op,
-        other => panic!("expected GenexOp event, got {other:?}"),
+        Ok(AppEvent::RuxexOp(op)) => op,
+        other => panic!("expected RuxexOp event, got {other:?}"),
     };
     assert_eq!(
         op,
@@ -2485,8 +2485,8 @@ default_permissions = "locked-down"
 #[tokio::test]
 async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
     let auto_review = auto_review_mode();
     let mut app_server = start_config_write_test_app_server(&app).await?;
 
@@ -2572,7 +2572,7 @@ async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<
         .join("\n");
     assert!(rendered.contains("Permissions updated to Approve for me"));
 
-    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert!(config.contains("guardian_approval = true"));
     assert!(config.contains("approvals_reviewer = \"auto_review\""));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2585,9 +2585,9 @@ async fn update_feature_flags_enabling_guardian_selects_auto_review() -> Result<
 async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restores_default()
 -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    let config_toml_path = genex_home.path().join("config.toml").abs();
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    let config_toml_path = ruxex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"guardian_subagent\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2665,7 +2665,7 @@ async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restor
         .join("\n");
     assert!(rendered.contains("Permissions updated to Ask for approval"));
 
-    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert!(!config.contains("guardian_approval = true"));
     assert!(!config.contains("approvals_reviewer ="));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2678,10 +2678,10 @@ async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restor
 async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review_policy()
 -> Result<()> {
     let (mut app, _app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
     let auto_review = auto_review_mode();
-    let config_toml_path = genex_home.path().join("config.toml").abs();
+    let config_toml_path = ruxex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"user\"\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2733,7 +2733,7 @@ async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review
         })
     );
 
-    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert!(config.contains("approvals_reviewer = \"auto_review\""));
     assert!(config.contains("guardian_approval = true"));
     assert!(config.contains("approval_policy = \"on-request\""));
@@ -2746,9 +2746,9 @@ async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review
 async fn update_feature_flags_disabling_guardian_clears_manual_review_policy_without_history()
 -> Result<()> {
     let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-    let genex_home = tempdir()?;
-    app.config.genex_home = genex_home.path().to_path_buf().abs();
-    let config_toml_path = genex_home.path().join("config.toml").abs();
+    let ruxex_home = tempdir()?;
+    app.config.ruxex_home = ruxex_home.path().to_path_buf().abs();
+    let config_toml_path = ruxex_home.path().join("config.toml").abs();
     let config_toml = "approvals_reviewer = \"user\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
     std::fs::write(config_toml_path.as_path(), config_toml)?;
     let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -2795,7 +2795,7 @@ async fn update_feature_flags_disabling_guardian_clears_manual_review_policy_wit
         "manual review should not emit a permissions history update when the effective state stays default"
     );
 
-    let config = std::fs::read_to_string(genex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
     assert!(!config.contains("guardian_approval = true"));
     assert!(!config.contains("approvals_reviewer ="));
     app_server.shutdown().await?;
@@ -3075,7 +3075,7 @@ async fn side_defers_subagent_approval_overlay_until_side_exits() -> Result<()> 
         quiet_thread_id,
         ServerRequest::DynamicToolCall {
             request_id: AppServerRequestId::Integer(99),
-            params: genex_app_server_protocol::DynamicToolCallParams {
+            params: ruxex_app_server_protocol::DynamicToolCallParams {
                 thread_id: quiet_thread_id.to_string(),
                 turn_id: "turn-quiet".to_string(),
                 call_id: "call-quiet".to_string(),
@@ -3172,15 +3172,15 @@ async fn inactive_thread_exec_approval_preserves_context() {
     assert_eq!(
         approval.available_decisions,
         vec![
-            genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
-            genex_app_server_protocol::CommandExecutionApprovalDecision::AcceptForSession,
-            genex_app_server_protocol::CommandExecutionApprovalDecision::ApplyNetworkPolicyAmendment {
+            ruxex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+            ruxex_app_server_protocol::CommandExecutionApprovalDecision::AcceptForSession,
+            ruxex_app_server_protocol::CommandExecutionApprovalDecision::ApplyNetworkPolicyAmendment {
                 network_policy_amendment: AppServerNetworkPolicyAmendment {
                     host: "example.com".to_string(),
                     action: AppServerNetworkPolicyRuleAction::Allow,
                 },
             },
-            genex_app_server_protocol::CommandExecutionApprovalDecision::Cancel,
+            ruxex_app_server_protocol::CommandExecutionApprovalDecision::Cancel,
         ]
     );
 }
@@ -3237,7 +3237,7 @@ async fn inactive_thread_file_change_approval_recovers_buffered_changes() {
                     kind: PatchChangeKind::Add,
                     diff: "hello\n".to_string(),
                 }],
-                status: genex_app_server_protocol::PatchApplyStatus::InProgress,
+                status: ruxex_app_server_protocol::PatchApplyStatus::InProgress,
             },
         }),
     )
@@ -3308,7 +3308,7 @@ async fn active_thread_file_change_approval_recovers_buffered_changes() {
                     kind: PatchChangeKind::Add,
                     diff: "hello\n".to_string(),
                 }],
-                status: genex_app_server_protocol::PatchApplyStatus::InProgress,
+                status: ruxex_app_server_protocol::PatchApplyStatus::InProgress,
             },
         }),
     )
@@ -3342,7 +3342,7 @@ async fn active_thread_file_change_approval_recovers_buffered_changes() {
     assert!(!app.chat_widget.has_active_view());
     assert!(app.startup_pending_protected_request);
     app.chat_widget.handle_server_notification(
-        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(ruxex_app_server_protocol::ItemCompletedNotification {
             thread_id: thread_id.to_string(),
             turn_id: "turn-active-approval".to_string(),
             completed_at_ms: 0,
@@ -3378,7 +3378,7 @@ async fn inactive_thread_permissions_approval_preserves_file_system_permissions(
             started_at_ms: 0,
             cwd: test_absolute_path("/tmp").into(),
             reason: Some("Need access to .git".to_string()),
-            permissions: genex_app_server_protocol::RequestPermissionProfile {
+            permissions: ruxex_app_server_protocol::RequestPermissionProfile {
                 network: Some(AdditionalNetworkPermissions {
                     enabled: Some(true),
                 }),
@@ -3487,7 +3487,7 @@ async fn inactive_thread_invalid_url_elicitation_is_declined() {
             op: Op::ResolveElicitation {
                 server_name,
                 request_id: AppServerRequestId::Integer(10),
-                decision: genex_app_server_protocol::McpServerElicitationAction::Decline,
+                decision: ruxex_app_server_protocol::McpServerElicitationAction::Decline,
                 content: None,
                 meta: None,
             },
@@ -3592,7 +3592,7 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
         ServerNotification::ThreadStarted(ThreadStartedNotification {
             thread: Thread {
                 originator: None,
-                environments: Some(vec![genex_app_server_protocol::ThreadEnvironment {
+                environments: Some(vec![ruxex_app_server_protocol::ThreadEnvironment {
                     environment_id: "remote".to_string(),
                     cwd: test_path_buf("/tmp/agent").abs().into(),
                     runtime_workspace_roots: Vec::new(),
@@ -3614,11 +3614,11 @@ async fn inactive_thread_started_notification_initializes_replay_session() -> Re
                 created_at: 1,
                 updated_at: 2,
                 recency_at: Some(2),
-                status: genex_app_server_protocol::ThreadStatus::Idle,
+                status: ruxex_app_server_protocol::ThreadStatus::Idle,
                 path: Some(rollout_path.clone()),
                 cwd: test_path_buf("/tmp/agent").abs(),
                 cli_version: "0.0.0".to_string(),
-                source: genex_app_server_protocol::SessionSource::Unknown,
+                source: ruxex_app_server_protocol::SessionSource::Unknown,
                 can_accept_direct_input: None,
                 thread_source: None,
                 agent_nickname: Some("Robie".to_string()),
@@ -3717,11 +3717,11 @@ async fn inactive_thread_started_notification_preserves_primary_model_when_path_
                 created_at: 1,
                 updated_at: 2,
                 recency_at: Some(2),
-                status: genex_app_server_protocol::ThreadStatus::Idle,
+                status: ruxex_app_server_protocol::ThreadStatus::Idle,
                 path: None,
                 cwd: test_path_buf("/tmp/agent").abs(),
                 cli_version: "0.0.0".to_string(),
-                source: genex_app_server_protocol::SessionSource::Unknown,
+                source: ruxex_app_server_protocol::SessionSource::Unknown,
                 can_accept_direct_input: None,
                 thread_source: None,
                 agent_nickname: Some("Robie".to_string()),
@@ -4047,7 +4047,7 @@ async fn primary_thread_ignores_child_mcp_startup_notifications() {
 
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                 thread_id: Some(child_thread_id.to_string()),
                 name: "sentry".to_string(),
@@ -4125,7 +4125,7 @@ async fn app_scoped_mcp_startup_notifications_do_not_render_in_active_thread() {
 
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+        ruxex_app_server_client::AppServerEvent::ServerNotification(Box::new(
             ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                 thread_id: None,
                 name: "sentry".to_string(),
@@ -4191,7 +4191,7 @@ async fn active_side_thread_renders_live_mcp_startup_notifications() {
     ] {
         app.handle_app_server_event(
             &app_server,
-            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            ruxex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::McpServerStatusUpdated(McpServerStatusUpdatedNotification {
                     thread_id: Some(side_thread_id.to_string()),
                     name: "sentry".to_string(),
@@ -4403,7 +4403,7 @@ async fn background_side_cleanup_removes_local_state_and_ignores_late_events() -
 
     app.handle_app_server_event(
         &app_server,
-        genex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
+        ruxex_app_server_client::AppServerEvent::ServerRequest(Box::new(exec_approval_request(
             side_thread_id,
             "turn-1",
             "item-1",
@@ -4418,7 +4418,7 @@ async fn background_side_cleanup_removes_local_state_and_ignores_late_events() -
             Op::ExecApproval {
                 id: "approval-1".to_string(),
                 turn_id: None,
-                decision: genex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
+                decision: ruxex_app_server_protocol::CommandExecutionApprovalDecision::Accept,
             },
         )
         .expect("approval resolution should serialize");
@@ -4459,7 +4459,7 @@ async fn active_non_primary_shutdown_target_returns_none_for_non_shutdown_event(
 
     assert_eq!(
         app.active_non_primary_shutdown_target(&ServerNotification::SkillsChanged(
-            genex_app_server_protocol::SkillsChangedNotification {},
+            ruxex_app_server_protocol::SkillsChangedNotification {},
         )),
         None
     );
@@ -4884,12 +4884,12 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
     let response = app_server.thread_goal_get(thread_id).await?;
     let goal = response.goal.expect("goal should be set");
     let saved_objective = goal.objective.clone();
-    let genex_home = app_server
-        .genex_home_path(&app.chat_widget.config_ref().genex_home)
-        .expect("genex home");
-    assert!(goal_files::objective_file_path(&goal.objective, Some(&genex_home)).is_some());
+    let ruxex_home = app_server
+        .ruxex_home_path(&app.chat_widget.config_ref().ruxex_home)
+        .expect("ruxex home");
+    assert!(goal_files::objective_file_path(&goal.objective, Some(&ruxex_home)).is_some());
     assert_eq!(
-        goal_files::objective_text_for_edit(&mut app_server, Some(&genex_home), &goal.objective)
+        goal_files::objective_text_for_edit(&mut app_server, Some(&ruxex_home), &goal.objective)
             .await
             .expect("managed goal file should be readable"),
         objective
@@ -4902,18 +4902,18 @@ async fn set_thread_goal_draft_materializes_long_objective_and_confirms_before_p
     let suffix = "attachments/00000000-0000-4000-8000-000000000000/goal-objective.md";
     for path in [
         format!("/tmp/{suffix}"),
-        format!("{genex_home}/../other/{suffix}"),
-        format!("{genex_home}/other/{suffix}"),
+        format!("{ruxex_home}/../other/{suffix}"),
+        format!("{ruxex_home}/other/{suffix}"),
     ] {
-        assert!(!is_managed(&genex_home, &path));
+        assert!(!is_managed(&ruxex_home, &path));
     }
     assert!(!is_managed(
-        &AppServerPath::from_app_server("/tmp/genex\\home"),
-        &format!("/tmp/genex/home/{suffix}")
+        &AppServerPath::from_app_server("/tmp/ruxex\\home"),
+        &format!("/tmp/ruxex/home/{suffix}")
     ));
-    let unix_path = AppServerPath::from_app_server("/tmp/genex\\").join("a");
-    assert_eq!(unix_path.as_str(), "/tmp/genex\\/a");
-    let attachments_dir = app.chat_widget.config_ref().genex_home.join("attachments");
+    let unix_path = AppServerPath::from_app_server("/tmp/ruxex\\").join("a");
+    assert_eq!(unix_path.as_str(), "/tmp/ruxex\\/a");
+    let attachments_dir = app.chat_widget.config_ref().ruxex_home.join("attachments");
     let attachment_count = std::fs::read_dir(&attachments_dir)?.count();
     let placeholder = "[Pasted Content 5 chars]";
     let paste_draft = crate::goal_files::GoalDraft {
@@ -5202,7 +5202,7 @@ async fn copy_picker_opening_preserves_terminal_scrollback_without_reflow() {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let response = "Existing response\n\n```rust\nkeep_scrollback();\n```";
     app.chat_widget.handle_server_notification(
-        ServerNotification::ItemCompleted(genex_app_server_protocol::ItemCompletedNotification {
+        ServerNotification::ItemCompleted(ruxex_app_server_protocol::ItemCompletedNotification {
             thread_id: String::new(),
             turn_id: "turn-1".to_string(),
             completed_at_ms: 0,
@@ -5399,7 +5399,7 @@ async fn resizing_empty_transcript_schedules_settled_size_recheck() {
 fn test_turn(turn_id: &str, status: TurnStatus, items: Vec<ThreadItem>) -> Turn {
     Turn {
         id: turn_id.to_string(),
-        items_view: genex_app_server_protocol::TurnItemsView::Full,
+        items_view: ruxex_app_server_protocol::TurnItemsView::Full,
         items,
         status,
         error: None,
@@ -5582,7 +5582,7 @@ fn active_turn_not_steerable_turn_error_extracts_structured_server_error() {
     let turn_error = AppServerTurnError {
         misalignment: None,
         message: "cannot steer a review turn".to_string(),
-        genex_error_info: Some(AppServerGenexErrorInfo::ActiveTurnNotSteerable {
+        ruxex_error_info: Some(AppServerRuxexErrorInfo::ActiveTurnNotSteerable {
             turn_kind: AppServerNonSteerableTurnKind::Review,
         }),
         additional_details: None,
@@ -5826,15 +5826,15 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
 async fn remote_exec_resume_current_cwd_is_rejected() -> Result<()> {
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     std::fs::write(
-        app.config.genex_home.join("config.toml"),
+        app.config.ruxex_home.join("config.toml"),
         "[tui]\nresume_cwd = \"current\"\n",
     )?;
     app.environment_manager = Arc::new(
         EnvironmentManager::create_for_tests(
             Some("ws://127.0.0.1:8765".to_string()),
-            Some(genex_exec_server::ExecServerRuntimePaths::new(
+            Some(ruxex_exec_server::ExecServerRuntimePaths::new(
                 std::env::current_exe()?,
-                /*genex_linux_sandbox_exe*/ None,
+                /*ruxex_linux_sandbox_exe*/ None,
             )?),
         )
         .await,
@@ -5885,7 +5885,7 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
     };
     let filename_timestamp = "2025-01-05T12-00-00";
     let thread_id = app_test_support::create_fake_rollout(
-        app.config.genex_home.as_path(),
+        app.config.ruxex_home.as_path(),
         filename_timestamp,
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -5893,7 +5893,7 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
     )
     .expect("materialized rollout should be created");
     let rollout_path = app_test_support::rollout_path(
-        app.config.genex_home.as_path(),
+        app.config.ruxex_home.as_path(),
         filename_timestamp,
         &thread_id,
     );
@@ -5952,14 +5952,14 @@ async fn remote_resume_keeps_server_only_cwd_out_of_local_config() -> Result<()>
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
     let temp_dir = tempdir()?;
-    let genex_home = temp_dir.path().join("genex-home");
+    let ruxex_home = temp_dir.path().join("ruxex-home");
     let launch_cwd = temp_dir.path().join("launch");
     let active_cwd = temp_dir.path().join("active");
     let session_cwd = temp_dir.path().join("session");
     let explicit_cwd = temp_dir.path().join("explicit");
     let runtime_cwd = temp_dir.path().join("runtime");
     for directory in [
-        &genex_home,
+        &ruxex_home,
         &launch_cwd,
         &active_cwd,
         &session_cwd,
@@ -5983,7 +5983,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
         ("session", true, false, true, "runtime"),
     ] {
         std::fs::write(
-            genex_home.join("config.toml"),
+            ruxex_home.join("config.toml"),
             format!("[tui]\nresume_cwd = \"{configured_mode}\"\n"),
         )?;
         for cwd in [
@@ -5994,14 +5994,14 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             &runtime_cwd,
         ] {
             crate::legacy_core::config::set_project_trust_level(
-                &genex_home,
+                &ruxex_home,
                 cwd,
-                genex_protocol::config_types::TrustLevel::Trusted,
+                ruxex_protocol::config_types::TrustLevel::Trusted,
             )
             .map_err(std::io::Error::other)?;
         }
         let config = ConfigBuilder::default()
-            .genex_home(genex_home.clone())
+            .ruxex_home(ruxex_home.clone())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .harness_overrides(ConfigOverrides {
                 cwd: Some(active_cwd.clone()),
@@ -6011,7 +6011,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             .await?;
         let filename_timestamp = "2025-01-05T12-00-00";
         let thread_id = app_test_support::create_fake_rollout(
-            &genex_home,
+            &ruxex_home,
             filename_timestamp,
             "2025-01-05T12:00:00Z",
             "Saved user message",
@@ -6019,7 +6019,7 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
         )
         .expect("materialized rollout should be created");
         let rollout_path =
-            app_test_support::rollout_path(&genex_home, filename_timestamp, &thread_id);
+            app_test_support::rollout_path(&ruxex_home, filename_timestamp, &thread_id);
         let mut rollout_lines = std::fs::read_to_string(&rollout_path)?
             .lines()
             .map(serde_json::from_str::<serde_json::Value>)
@@ -6041,9 +6041,9 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
             Arc::new(
                 EnvironmentManager::create_for_tests(
                     Some("ws://127.0.0.1:8765".to_string()),
-                    Some(genex_exec_server::ExecServerRuntimePaths::new(
+                    Some(ruxex_exec_server::ExecServerRuntimePaths::new(
                         std::env::current_exe()?,
-                        /*genex_linux_sandbox_exe*/ None,
+                        /*ruxex_linux_sandbox_exe*/ None,
                     )?),
                 )
                 .await,
@@ -6117,24 +6117,24 @@ async fn in_app_resume_uses_configured_or_explicit_cwd() -> Result<()> {
 #[tokio::test]
 async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Result<()> {
     let temp_dir = tempdir()?;
-    let genex_home = temp_dir.path().join("genex-home");
+    let ruxex_home = temp_dir.path().join("ruxex-home");
     let launch_cwd = temp_dir.path().join("launch");
     let active_cwd = temp_dir.path().join("active");
     let first_session_cwd = temp_dir.path().join("first-session");
     let second_session_cwd = temp_dir.path().join("second-session");
-    std::fs::create_dir_all(&genex_home)?;
+    std::fs::create_dir_all(&ruxex_home)?;
     std::fs::create_dir_all(&launch_cwd)?;
     std::fs::create_dir_all(&active_cwd)?;
     std::fs::create_dir_all(&first_session_cwd)?;
     std::fs::create_dir_all(&second_session_cwd)?;
     crate::legacy_core::config::set_project_trust_level(
-        &genex_home,
+        &ruxex_home,
         &launch_cwd,
-        genex_protocol::config_types::TrustLevel::Trusted,
+        ruxex_protocol::config_types::TrustLevel::Trusted,
     )
     .map_err(std::io::Error::other)?;
     let config = ConfigBuilder::default()
-        .genex_home(genex_home.clone())
+        .ruxex_home(ruxex_home.clone())
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
         .harness_overrides(ConfigOverrides {
             cwd: Some(active_cwd.clone()),
@@ -6149,7 +6149,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         &launch_cwd,
     ));
     crate::legacy_core::config::edit::ConfigEditsBuilder::for_config(&config)
-        .set_resume_cwd(genex_config::types::ResumeCwdMode::Current)
+        .set_resume_cwd(ruxex_config::types::ResumeCwdMode::Current)
         .apply()
         .await
         .map_err(std::io::Error::other)?;
@@ -6168,7 +6168,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         ),
     ] {
         let thread_id = app_test_support::create_fake_rollout(
-            &genex_home,
+            &ruxex_home,
             filename_timestamp,
             metadata_timestamp,
             "Saved user message",
@@ -6176,7 +6176,7 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
         )
         .expect("materialized rollout should be created");
         let rollout_path =
-            app_test_support::rollout_path(&genex_home, filename_timestamp, &thread_id);
+            app_test_support::rollout_path(&ruxex_home, filename_timestamp, &thread_id);
         let mut rollout_lines = std::fs::read_to_string(&rollout_path)?
             .lines()
             .map(serde_json::from_str::<serde_json::Value>)
@@ -6238,16 +6238,16 @@ async fn remembered_current_cwd_stays_at_launch_across_in_app_resumes() -> Resul
 
 #[tokio::test]
 async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Result<()> {
-    use genex_protocol::items::TurnItem;
-    use genex_protocol::items::UserMessageItem;
-    use genex_protocol::models::ImageReference;
-    use genex_protocol::protocol::ItemCompletedEvent;
-    use genex_protocol::user_input::UserInput;
+    use ruxex_protocol::items::TurnItem;
+    use ruxex_protocol::items::UserMessageItem;
+    use ruxex_protocol::models::ImageReference;
+    use ruxex_protocol::protocol::ItemCompletedEvent;
+    use ruxex_protocol::user_input::UserInput;
     let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
     let config = app.chat_widget.config_ref().clone();
     let filename_ts = "2025-01-05T12-00-00";
     let source_thread_id = app_test_support::create_fake_paginated_rollout(
-        config.genex_home.as_path(),
+        config.ruxex_home.as_path(),
         filename_ts,
         "2025-01-05T12:00:00Z",
         "unused preview",
@@ -6255,7 +6255,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
     )
     .expect("materialized rollout should be created");
     let source_path =
-        app_test_support::rollout_path(config.genex_home.as_path(), filename_ts, &source_thread_id);
+        app_test_support::rollout_path(config.ruxex_home.as_path(), filename_ts, &source_thread_id);
     let session_meta = std::fs::read_to_string(&source_path)?
         .lines()
         .next()
@@ -6326,7 +6326,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
                 time_to_first_token_ms: None,
             })),
         ] {
-            genex_rollout::append_rollout_item_to_path(&source_path, &item).await?;
+            ruxex_rollout::append_rollout_item_to_path(&source_path, &item).await?;
         }
     }
 
@@ -6363,7 +6363,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         ));
         for item in selected_turn.items {
             store.push_notification(ServerNotification::ItemCompleted(
-                genex_app_server_protocol::ItemCompletedNotification {
+                ruxex_app_server_protocol::ItemCompletedNotification {
                     thread_id: source_thread_id.to_string(),
                     turn_id: selected_turn.id.clone(),
                     completed_at_ms: 0,
@@ -6389,7 +6389,7 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place() -> Res
         .thread_goal_set(
             source_thread_id,
             Some("Keep this goal".into()),
-            Some(genex_app_server_protocol::ThreadGoalStatus::Paused),
+            Some(ruxex_app_server_protocol::ThreadGoalStatus::Paused),
             /*token_budget*/ None,
         )
         .await?
@@ -6572,7 +6572,7 @@ async fn replay_thread_snapshot_replays_turn_history_in_order() {
             turns: vec![
                 Turn {
                     id: "turn-1".to_string(),
-                    items_view: genex_app_server_protocol::TurnItemsView::Full,
+                    items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                     items: vec![ThreadItem::UserMessage {
                         id: "user-1".to_string(),
                         client_id: None,
@@ -6589,7 +6589,7 @@ async fn replay_thread_snapshot_replays_turn_history_in_order() {
                 },
                 Turn {
                     id: "turn-2".to_string(),
-                    items_view: genex_app_server_protocol::TurnItemsView::Full,
+                    items_view: ruxex_app_server_protocol::TurnItemsView::Full,
                     items: vec![
                         ThreadItem::UserMessage {
                             id: "user-2".to_string(),
@@ -6664,7 +6664,7 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
         initial_user_message: None,
         enhanced_keys_supported: app.enhanced_keys_supported,
         has_managed_account: app.chat_widget.has_managed_account(),
-        has_genex_backend_auth: app.chat_widget.has_genex_backend_auth(),
+        has_ruxex_backend_auth: app.chat_widget.has_ruxex_backend_auth(),
         model_catalog: app.model_catalog.clone(),
         is_first_run: false,
         status_account_display: app.chat_widget.status_account_display().cloned(),
@@ -6684,15 +6684,15 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
             turns: Vec::new(),
             events: vec![ThreadBufferedEvent::Notification(Box::new(
                 ServerNotification::ItemStarted(
-                    genex_app_server_protocol::ItemStartedNotification {
+                    ruxex_app_server_protocol::ItemStartedNotification {
                         thread_id: "thread-1".to_string(),
                         turn_id: "turn-1".to_string(),
                         started_at_ms: 0,
                         item: ThreadItem::CollabAgentToolCall {
                             id: "wait-1".to_string(),
-                            tool: genex_app_server_protocol::CollabAgentTool::Wait,
+                            tool: ruxex_app_server_protocol::CollabAgentTool::Wait,
                             status:
-                                genex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
+                                ruxex_app_server_protocol::CollabAgentToolCallStatus::InProgress,
                             sender_thread_id: ThreadId::new().to_string(),
                             receiver_thread_ids: vec![receiver_thread_id.to_string()],
                             prompt: None,
@@ -6958,7 +6958,7 @@ async fn override_turn_context_sends_thread_settings_update() {
             Some(ApprovalsReviewer::AutoReview),
             /*permission_profile*/ None,
             Some(ActivePermissionProfile::new(
-                genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
+                ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE,
             )),
             Some("legacy-model".to_string()),
             Some(Some(ReasoningEffortConfig::High)),
@@ -7013,7 +7013,7 @@ async fn override_turn_context_sends_thread_settings_update() {
 
         app.handle_app_server_event(
             &app_server,
-            genex_app_server_client::AppServerEvent::ServerNotification(Box::new(
+            ruxex_app_server_client::AppServerEvent::ServerNotification(Box::new(
                 ServerNotification::ThreadSettingsUpdated(notification),
             )),
         )
@@ -7049,7 +7049,7 @@ async fn override_turn_context_sends_thread_settings_update() {
                 .as_ref()
                 .expect("active profile")
                 .id,
-            genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
+            ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
         );
     })
     .await;
@@ -7142,7 +7142,7 @@ async fn selecting_cyber_model_defaults_active_thread_to_auto_review() {
                 .as_ref()
                 .expect("active permission profile")
                 .id,
-            genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
+            ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE
         );
         app.enqueue_thread_notification(
             thread_id,
@@ -7172,7 +7172,7 @@ async fn changing_cyber_model_reasoning_preserves_selected_permissions() {
 
         assert!(
             app.apply_permission_profile_selection(PermissionProfileSelection {
-                profile_id: genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
+                profile_id: ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
                     .to_string(),
                 approval_policy: Some(AskForApproval::OnRequest),
                 approvals_reviewer: Some(ApprovalsReviewer::User),
@@ -7265,7 +7265,7 @@ async fn changing_cyber_model_reasoning_preserves_selected_permissions() {
                     .active_permission_profile
                     .expect("active permission profile")
                     .id,
-                genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
+                ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY
             );
             assert_eq!(
                 settings.collaboration_mode.mode,
@@ -7300,11 +7300,11 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
 
     assert_eq!(
         params.approval_policy,
-        Some(genex_app_server_protocol::AskForApproval::OnRequest)
+        Some(ruxex_app_server_protocol::AskForApproval::OnRequest)
     );
     assert_eq!(
         params.approvals_reviewer,
-        Some(genex_app_server_protocol::ApprovalsReviewer::User)
+        Some(ruxex_app_server_protocol::ApprovalsReviewer::User)
     );
 }
 
@@ -7312,19 +7312,19 @@ async fn selecting_cyber_model_falls_back_to_user_when_auto_review_is_unavailabl
 async fn selecting_cyber_model_respects_auto_review_requirements() {
     Box::pin(async {
         let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
-        let requirements_toml = genex_config::ConfigRequirementsToml {
+        let requirements_toml = ruxex_config::ConfigRequirementsToml {
             allowed_approval_policies: Some(vec![AskForApproval::UnlessTrusted.to_core()]),
             ..Default::default()
         };
-        let mut requirements_with_sources = genex_config::ConfigRequirementsWithSources::default();
+        let mut requirements_with_sources = ruxex_config::ConfigRequirementsWithSources::default();
         requirements_with_sources.merge_unset_fields(
-            genex_config::RequirementSource::Unknown,
+            ruxex_config::RequirementSource::Unknown,
             requirements_toml.clone(),
         );
-        let requirements = genex_config::ConfigRequirements::try_from(requirements_with_sources)
+        let requirements = ruxex_config::ConfigRequirements::try_from(requirements_with_sources)
             .expect("reviewer requirements");
         app.config.config_layer_stack =
-            genex_config::ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)
+            ruxex_config::ConfigLayerStack::new(Vec::new(), requirements, requirements_toml)
                 .expect("auto-review requirements stack");
         app.config
             .permissions
@@ -7481,12 +7481,12 @@ async fn inactive_thread_settings_notification_updates_cached_collaboration_mode
             disabled_plugin_ids: Vec::new(),
             cwd: test_absolute_path("/tmp/thread-settings"),
             approval_policy: AskForApproval::OnRequest,
-            approvals_reviewer: genex_app_server_protocol::ApprovalsReviewer::AutoReview,
-            sandbox_policy: genex_app_server_protocol::SandboxPolicy::ReadOnly {
+            approvals_reviewer: ruxex_app_server_protocol::ApprovalsReviewer::AutoReview,
+            sandbox_policy: ruxex_app_server_protocol::SandboxPolicy::ReadOnly {
                 network_access: false,
             },
             active_permission_profile: Some(
-                genex_app_server_protocol::ActivePermissionProfile::read_only(),
+                ruxex_app_server_protocol::ActivePermissionProfile::read_only(),
             ),
             model: "model-plan".to_string(),
             service_tier: None,
@@ -7598,7 +7598,7 @@ async fn clear_only_ui_reset_preserves_chat_session_state() {
 async fn clear_only_ui_reset_allows_active_skill_warning_to_render_again() {
     let mut app = make_test_app().await;
     let error = SkillErrorInfo {
-        path: test_path_buf("/tmp/project/.genex/skills/abc/SKILL.md"),
+        path: test_path_buf("/tmp/project/.ruxex/skills/abc/SKILL.md"),
         message: "invalid description".to_string(),
     };
 

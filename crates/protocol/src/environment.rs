@@ -6,9 +6,9 @@ use crate::mcp_policy::EnvironmentMcpPolicy;
 use crate::models::PermissionProfile;
 use crate::models::PermissionProfileSnapshot;
 use crate::protocol::AskForApproval;
-use genex_execpolicy::RequirementsExecPolicy;
-use genex_network_proxy::EnvironmentNetworkPolicy;
-use genex_utils_path_uri::PathUri;
+use ruxex_execpolicy::RequirementsExecPolicy;
+use ruxex_network_proxy::EnvironmentNetworkPolicy;
+use ruxex_utils_path_uri::PathUri;
 
 /// Configuration supplied for a thread's selected environment.
 #[allow(clippy::large_enum_variant)]

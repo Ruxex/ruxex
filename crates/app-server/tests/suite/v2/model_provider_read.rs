@@ -10,14 +10,14 @@ const DEFAULT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
 #[tokio::test]
 async fn reads_the_mounted_provider_and_auth_state() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new("http://127.0.0.1:1/v1")
         .with_model_provider("provider_a")
         .with_provider_name("Provider A")
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized_with_timeout(DEFAULT_TIMEOUT)
         .await?;

@@ -1,5 +1,5 @@
 use super::ConfiguredGitMarketplace;
-use genex_config::types::MarketplaceSourceType;
+use ruxex_config::types::MarketplaceSourceType;
 use serde::Deserialize;
 use serde::Serialize;
 use std::path::Path;
@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::warn;
 
-const MARKETPLACE_INSTALL_METADATA_FILE: &str = ".genex-marketplace-install.json";
+const MARKETPLACE_INSTALL_METADATA_FILE: &str = ".ruxex-marketplace-install.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

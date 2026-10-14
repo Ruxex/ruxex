@@ -14,13 +14,13 @@ use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_utils_home_dir::find_genex_home;
+use ruxex_utils_home_dir::find_ruxex_home;
 
 const OAUTH_LOCK_DIR: &str = "mcp-oauth-locks";
 const STORE_LOCK_ACQUIRE_TIMEOUT: Duration = Duration::from_secs(60);
 const STORE_LOCK_RETRY_SLEEP: Duration = Duration::from_millis(50);
 // Tests listen for this event so they prove a contender reached the real WouldBlock branch.
-const LOCK_CONTENTION_EVENT_TARGET: &str = "genex_rmcp_client::oauth::store_lock::contention";
+const LOCK_CONTENTION_EVENT_TARGET: &str = "ruxex_rmcp_client::oauth::store_lock::contention";
 
 #[derive(Clone, Copy, Debug)]
 pub(super) enum OAuthStore {
@@ -84,22 +84,22 @@ impl OAuthStoreLock {
         mode: OAuthStoreLockMode,
     ) -> Result<Self, OAuthStoreLockFailure> {
         // This lock intentionally follows the existing local File/Secrets credential-store
-        // authority. Those stores are GENEX_HOME-backed today: if GENEX_HOME is unset they use
-        // the default home (`~/.genex`), and if an embedder has no local home/filesystem authority
+        // authority. Those stores are RUXEX_HOME-backed today: if RUXEX_HOME is unset they use
+        // the default home (`~/.ruxex`), and if an embedder has no local home/filesystem authority
         // those stores already cannot operate. A future provider-backed credential store should
         // provide its own matching lock authority instead of using this local path.
-        let genex_home = find_genex_home()
-            .map_err(|source| OAuthStoreLockFailure::GenexHome { store, source })?;
-        Self::acquire_in_with_mode(&genex_home, store, acquire_timeout, mode)
+        let ruxex_home = find_ruxex_home()
+            .map_err(|source| OAuthStoreLockFailure::RuxexHome { store, source })?;
+        Self::acquire_in_with_mode(&ruxex_home, store, acquire_timeout, mode)
     }
 
     fn acquire_in_with_mode(
-        genex_home: &Path,
+        ruxex_home: &Path,
         store: OAuthStore,
         acquire_timeout: Duration,
         mode: OAuthStoreLockMode,
     ) -> Result<Self, OAuthStoreLockFailure> {
-        let path = oauth_store_lock_path(genex_home, store);
+        let path = oauth_store_lock_path(ruxex_home, store);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|source| OAuthStoreLockFailure::CreateDir {
                 store,
@@ -165,8 +165,8 @@ impl OAuthStoreLock {
 /// newer credential in File while a stale Secrets entry remains preferred.
 #[derive(Debug, thiserror::Error)]
 pub(super) enum OAuthStoreLockFailure {
-    #[error("failed to resolve GENEX_HOME for MCP OAuth {store} aggregate-store lock")]
-    GenexHome {
+    #[error("failed to resolve RUXEX_HOME for MCP OAuth {store} aggregate-store lock")]
+    RuxexHome {
         store: OAuthStore,
         #[source]
         source: io::Error,
@@ -203,8 +203,8 @@ pub(super) enum OAuthStoreLockFailure {
     },
 }
 
-fn oauth_store_lock_path(genex_home: &Path, store: OAuthStore) -> PathBuf {
-    genex_home.join(OAUTH_LOCK_DIR).join(store.lock_filename())
+fn oauth_store_lock_path(ruxex_home: &Path, store: OAuthStore) -> PathBuf {
+    ruxex_home.join(OAUTH_LOCK_DIR).join(store.lock_filename())
 }
 
 #[cfg(test)]

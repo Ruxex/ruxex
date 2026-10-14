@@ -1,6 +1,6 @@
 use crate::approvals::NetworkApprovalProtocol;
-use genex_network_proxy::NetworkDecisionSource;
-use genex_network_proxy::NetworkPolicyDecision;
+use ruxex_network_proxy::NetworkDecisionSource;
+use ruxex_network_proxy::NetworkPolicyDecision;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]

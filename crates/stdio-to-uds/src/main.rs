@@ -6,7 +6,7 @@ use std::process;
 async fn main() -> anyhow::Result<()> {
     let mut args = env::args_os().skip(1);
     let Some(socket_path) = args.next() else {
-        eprintln!("Usage: genex-stdio-to-uds <socket-path>");
+        eprintln!("Usage: ruxex-stdio-to-uds <socket-path>");
         process::exit(1);
     };
 
@@ -16,5 +16,5 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let socket_path = PathBuf::from(socket_path);
-    genex_stdio_to_uds::run(&socket_path).await
+    ruxex_stdio_to_uds::run(&socket_path).await
 }

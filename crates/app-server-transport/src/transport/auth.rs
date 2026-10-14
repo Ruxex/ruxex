@@ -5,7 +5,7 @@ use axum::http::header::AUTHORIZATION;
 use clap::Args;
 use clap::ValueEnum;
 use constant_time_eq::constant_time_eq_32;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::DecodingKey;
 use jsonwebtoken::Validation;

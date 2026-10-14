@@ -1,27 +1,27 @@
 use std::sync::Arc;
 
-use genex_api::AllowedCaller;
-use genex_api::ApproximateLocation;
-use genex_api::ExternalWebAccess;
-use genex_api::ExternalWebAccessMode;
-use genex_api::LocationType;
-use genex_api::SearchContextSize;
-use genex_api::SearchFilters;
-use genex_api::SearchSettings;
-use genex_core::config::Config;
-use genex_extension_api::ConfigContributor;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::ThreadLifecycleContributor;
-use genex_extension_api::ThreadOriginator;
-use genex_extension_api::ThreadStartInput;
-use genex_extension_api::ToolContributor;
+use ruxex_api::AllowedCaller;
+use ruxex_api::ApproximateLocation;
+use ruxex_api::ExternalWebAccess;
+use ruxex_api::ExternalWebAccessMode;
+use ruxex_api::LocationType;
+use ruxex_api::SearchContextSize;
+use ruxex_api::SearchFilters;
+use ruxex_api::SearchSettings;
+use ruxex_core::config::Config;
+use ruxex_extension_api::ConfigContributor;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::ThreadLifecycleContributor;
+use ruxex_extension_api::ThreadOriginator;
+use ruxex_extension_api::ThreadStartInput;
+use ruxex_extension_api::ToolContributor;
 #[cfg(test)]
-use genex_login::CredentialManager;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::config_types::WebSearchContextSize;
-use genex_protocol::config_types::WebSearchMode;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::config_types::WebSearchContextSize;
+use ruxex_protocol::config_types::WebSearchMode;
 
 use crate::tool::WebSearchTool;
 
@@ -133,7 +133,7 @@ impl ToolContributor for WebSearchExtension {
         session_store: &ExtensionData,
         thread_store: &ExtensionData,
     ) -> Vec<
-        Arc<dyn for<'call> genex_extension_api::ToolExecutor<genex_extension_api::ToolCall<'call>>>,
+        Arc<dyn for<'call> ruxex_extension_api::ToolExecutor<ruxex_extension_api::ToolCall<'call>>>,
     > {
         let Some(config) = thread_store.get::<WebSearchExtensionConfig>() else {
             return Vec::new();
@@ -162,12 +162,12 @@ pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: Shared
 
 #[cfg(test)]
 mod tests {
-    use genex_extension_api::ExtensionData;
-    use genex_extension_api::ExtensionRegistryBuilder;
-    use genex_extension_api::ToolName;
-    use genex_login::GenexAuth;
-    use genex_model_provider_info::ModelProviderInfo;
-    use genex_providers::create_model_provider;
+    use ruxex_extension_api::ExtensionData;
+    use ruxex_extension_api::ExtensionRegistryBuilder;
+    use ruxex_extension_api::ToolName;
+    use ruxex_login::RuxexAuth;
+    use ruxex_model_provider_info::ModelProviderInfo;
+    use ruxex_providers::create_model_provider;
     use pretty_assertions::assert_eq;
 
     use super::Config;
@@ -178,9 +178,9 @@ mod tests {
     use super::standalone_web_search_available;
     use crate::tool::RUN_TOOL_NAME;
     use crate::tool::WEB_NAMESPACE;
-    use genex_api::ExternalWebAccess;
-    use genex_api::ExternalWebAccessMode;
-    use genex_protocol::config_types::WebSearchMode;
+    use ruxex_api::ExternalWebAccess;
+    use ruxex_api::ExternalWebAccessMode;
+    use ruxex_protocol::config_types::WebSearchMode;
     use std::sync::Arc;
 
     #[test]
@@ -206,7 +206,7 @@ mod tests {
     fn installed_extension_contributes_web_run_when_enabled() {
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         let credential_manager =
-            CredentialManager::from_auth_for_testing(GenexAuth::from_api_key("dummy"));
+            CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key("dummy"));
         let provider = create_model_provider(
             ModelProviderInfo {
                 supports_standalone_web_search: true,

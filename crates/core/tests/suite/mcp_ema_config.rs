@@ -3,17 +3,17 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use genex_config::LoaderOverrides;
-use genex_config::McpServerAuth;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::set_project_trust_level;
-use genex_login::GenexAuth;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::protocol::EventMsg;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::McpServerAuth;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::protocol::EventMsg;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -65,27 +65,27 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
             "[mcp_servers.enterprise]\nurl = {resource:?}\nauth = \"ema_auth\"\n[mcp_servers.enterprise.oauth]\nclient_id = \"mcp-client\"\n"
         ));
     }
-    let fixture = test_genex()
+    let fixture = test_ruxex()
         .with_home(home)
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_cloud_config_bundle(CloudConfigBundleFixture::loader_with_enterprise_config(
             managed_config,
         ))
         .build_with_auto_env(&responses_server)
         .await?;
-    let (runtime_config, _) = fixture.genex.current_mcp_config_and_runtime_context().await;
+    let (runtime_config, _) = fixture.ruxex.current_mcp_config_and_runtime_context().await;
     let expected_enabled = match scenario {
         ActivationScenario::FeatureDisabled | ActivationScenario::MissingIdp => Some(false),
         ActivationScenario::PluginSelfOptIn => None,
         ActivationScenario::OperatorEnabled => Some(true),
     };
     assert_eq!(
-        genex_mcp::configured_mcp_servers(&runtime_config)
+        ruxex_mcp::configured_mcp_servers(&runtime_config)
             .get("enterprise")
             .map(|server| server.enabled),
         expected_enabled,
     );
-    let startup = wait_for_event_match(&fixture.genex, |event| match event {
+    let startup = wait_for_event_match(&fixture.ruxex, |event| match event {
         EventMsg::McpStartupComplete(summary) => Some(summary.clone()),
         _ => None,
     })
@@ -109,7 +109,7 @@ async fn enterprise_activation_respects_managed_config_and_plugin_ownership(
         ),
         (Vec::<String>::new(), expected_failed, Vec::<String>::new()),
     );
-    fixture.genex.shutdown_and_wait().await?;
+    fixture.ruxex.shutdown_and_wait().await?;
     assert!(
         server
             .received_requests()
@@ -126,7 +126,7 @@ async fn trusted_project_cannot_downgrade_enterprise_auth(project_auth: &str) ->
     let home = tempdir()?;
     let workspace = tempdir()?;
     std::fs::create_dir_all(workspace.path().join(".git"))?;
-    std::fs::create_dir_all(workspace.path().join(".genex"))?;
+    std::fs::create_dir_all(workspace.path().join(".ruxex"))?;
     set_project_trust_level(home.path(), workspace.path(), TrustLevel::Trusted)?;
     let managed_config = r#"
 [features]
@@ -144,7 +144,7 @@ client_id = "mcp-client"
 "#;
     let builder = ConfigBuilder::default()
         .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
-        .genex_home(home.path().to_path_buf())
+        .ruxex_home(home.path().to_path_buf())
         .fallback_cwd(Some(workspace.path().to_path_buf()))
         .cloud_config_bundle(
             CloudConfigBundleFixture::enterprise_config(managed_config.to_string())
@@ -158,7 +158,7 @@ client_id = "mcp-client"
         McpServerAuth::EmaAuth,
     );
     std::fs::write(
-        workspace.path().join(".genex/config.toml"),
+        workspace.path().join(".ruxex/config.toml"),
         format!("[mcp_servers.enterprise]\nauth = {project_auth:?}\n"),
     )?;
     let error = builder

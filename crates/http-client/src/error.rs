@@ -1,4 +1,4 @@
-//! Errors returned by the shared Genex HTTP transport.
+//! Errors returned by the shared Ruxex HTTP transport.
 
 use crate::client::HttpError;
 use http::HeaderMap;

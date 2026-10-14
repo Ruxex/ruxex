@@ -5,32 +5,32 @@ use std::sync::Mutex as StdMutex;
 use std::sync::Weak;
 use std::time::Duration;
 
-use genex_core::GenexThread;
-use genex_core::StartIfIdleSubmission;
-use genex_core::ThreadManager;
-use genex_core::TurnInput;
-use genex_core::TurnInputRequest;
-use genex_core::TurnStartOptions;
-use genex_extension_api::ExtensionEventSink;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ThreadIdleCause;
-use genex_extension_api::ThreadIdleInput;
-use genex_extension_api::ThreadLifecycleContributor;
-use genex_extension_api::ThreadResumeInput;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::models::snapshot_local_user_input;
-use genex_protocol::protocol::AgentStatus;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadQueueChangedEvent;
-use genex_protocol::protocol::W3cTraceContext;
-use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::MAX_QUEUE_ITEMS;
-use genex_thread_store::QueueStore;
-use genex_thread_store::QueuedUserSubmissionRecord;
-use genex_thread_store::ThreadStoreError;
+use ruxex_core::RuxexThread;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::ThreadManager;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::TurnStartOptions;
+use ruxex_extension_api::ExtensionEventSink;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ThreadIdleCause;
+use ruxex_extension_api::ThreadIdleInput;
+use ruxex_extension_api::ThreadLifecycleContributor;
+use ruxex_extension_api::ThreadResumeInput;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::models::snapshot_local_user_input;
+use ruxex_protocol::protocol::AgentStatus;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadQueueChangedEvent;
+use ruxex_protocol::protocol::W3cTraceContext;
+use ruxex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::MAX_QUEUE_ITEMS;
+use ruxex_thread_store::QueueStore;
+use ruxex_thread_store::QueuedUserSubmissionRecord;
+use ruxex_thread_store::ThreadStoreError;
 use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio::sync::OwnedMutexGuard;
@@ -53,7 +53,7 @@ pub enum QueueServiceError {
     #[error("local queued attachment is invalid: {0}")]
     InvalidAttachment(#[from] std::io::Error),
     #[error("Core failed to submit queued user message: {0}")]
-    CoreSubmissionError(#[from] GenexErr),
+    CoreSubmissionError(#[from] RuxexErr),
     #[error("only user input can be added to the user-message queue")]
     InvalidInput,
     #[error(
@@ -367,7 +367,7 @@ impl QueuedItemService {
     /// Starts the selected queued message only when its thread is idle.
     pub async fn start(
         &self,
-        thread: &GenexThread,
+        thread: &RuxexThread,
         queued_item_id: Option<String>,
         trace: Option<W3cTraceContext>,
     ) -> Result<StartIfIdleSubmission, QueueServiceError> {

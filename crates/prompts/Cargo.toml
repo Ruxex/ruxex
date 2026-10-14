@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-prompts"
+name = "ruxex-prompts"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_prompts"
+name = "ruxex_prompts"
 path = "src/lib.rs"
 
 [lints]
@@ -14,13 +14,13 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-genex-collaboration-mode-templates = { workspace = true }
-genex-context-fragments = { workspace = true }
-genex-execpolicy = { workspace = true }
-genex-git-utils = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-template = { workspace = true }
+ruxex-collaboration-mode-templates = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-template = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]

@@ -1,9 +1,9 @@
 use std::io;
 
-use genex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
-use genex_code_mode_protocol::host::MAX_FRAME_BYTES;
-use genex_http_client::ClientRouteClass;
-use genex_http_client::HttpClientFactory;
+use ruxex_code_mode_protocol::grpc::code_mode_host_client::CodeModeHostClient;
+use ruxex_code_mode_protocol::host::MAX_FRAME_BYTES;
+use ruxex_http_client::ClientRouteClass;
+use ruxex_http_client::HttpClientFactory;
 use http_body_util::BodyExt;
 use tonic::body::Body;
 use tonic::codegen::http::Request;

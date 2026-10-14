@@ -22,8 +22,8 @@ use crate::telemetry::DbKind;
 use crate::telemetry::DbTelemetry;
 use chrono::DateTime;
 use chrono::Utc;
-use genex_history::RolloutItem;
-use genex_protocol::ThreadId;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::ThreadId;
 use serde_json::Value;
 use sqlx::QueryBuilder;
 use sqlx::Row;
@@ -369,8 +369,8 @@ mod tests {
     use crate::DB_INIT_METRIC;
     use crate::DbTelemetry;
     use crate::migrations::STATE_MIGRATOR;
-    use genex_protocol::ThreadId;
-    use genex_utils_absolute_path::test_support::PathExt;
+    use ruxex_protocol::ThreadId;
+    use ruxex_utils_absolute_path::test_support::PathExt;
     use pretty_assertions::assert_eq;
     use sqlx::SqlitePool;
     use sqlx::migrate::MigrateError;
@@ -444,11 +444,11 @@ mod tests {
 
     #[tokio::test]
     async fn sqlite_integrity_check_can_be_interrupted_and_retried() {
-        let genex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&genex_home)
+        let ruxex_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&ruxex_home)
             .await
-            .expect("create genex home");
-        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
+            .expect("create ruxex home");
+        let sqlite = crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs());
         let path = sqlite.state_db_path();
         let pool = sqlite
             .open_read_write_pool(&path)
@@ -526,16 +526,16 @@ mod tests {
                 "row 1 missing from index sample_value".to_string()
             ]),
         );
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn open_state_sqlite_tolerates_newer_applied_migrations() {
-        let genex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&genex_home)
+        let ruxex_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&ruxex_home)
             .await
-            .expect("create genex home");
-        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
+            .expect("create ruxex home");
+        let sqlite = crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs());
         let state_path = sqlite.state_db_path();
         let pool = sqlite
             .open_read_write_pool(&state_path)
@@ -573,16 +573,16 @@ mod tests {
             .expect("runtime migrator should tolerate newer applied migrations");
         tolerant_pool.close().await;
 
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn init_records_successful_sqlite_init_phases_to_explicit_telemetry() {
-        let genex_home = unique_temp_dir();
+        let ruxex_home = unique_temp_dir();
         let telemetry = TestTelemetry::default();
 
         let runtime = StateRuntime::init_with_telemetry_for_tests(
-            crate::SqliteConfig::new_for_testing(genex_home.as_path().abs()),
+            crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs()),
             &telemetry,
         )
         .await
@@ -613,13 +613,13 @@ mod tests {
         assert_eq!(phases, expected);
 
         runtime.close().await;
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 
     #[tokio::test]
     async fn init_restores_independent_thread_timestamp_maxima() {
-        let genex_home = unique_temp_dir();
-        let sqlite = crate::SqliteConfig::new_for_testing(genex_home.as_path().abs());
+        let ruxex_home = unique_temp_dir();
+        let sqlite = crate::SqliteConfig::new_for_testing(ruxex_home.as_path().abs());
         let runtime = StateRuntime::init(sqlite.clone())
             .await
             .expect("state runtime should initialize");
@@ -631,9 +631,9 @@ mod tests {
             let thread_id = ThreadId::from_string(thread_id).expect("valid thread id");
             runtime
                 .upsert_thread(&test_thread_metadata(
-                    &genex_home,
+                    &ruxex_home,
                     thread_id,
-                    genex_home.clone(),
+                    ruxex_home.clone(),
                 ))
                 .await
                 .expect("thread should be stored");
@@ -661,6 +661,6 @@ mod tests {
         );
 
         runtime.close().await;
-        let _ = tokio::fs::remove_dir_all(genex_home).await;
+        let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
 }

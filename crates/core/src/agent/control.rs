@@ -13,7 +13,7 @@ use crate::config::Config;
 use crate::config::RolloutBudgetConfig;
 use crate::context::SubagentNotification;
 use crate::environment_selection::TurnEnvironmentSnapshot;
-use crate::genex_thread::ThreadConfigSnapshot;
+use crate::ruxex_thread::ThreadConfigSnapshot;
 use crate::rollout_budget::RolloutBudget;
 use crate::session::multi_agents::ResolvedMultiAgentV2UsageHints;
 use crate::session_prefix::format_inter_agent_completion_message;
@@ -25,37 +25,37 @@ use crate::thread_manager::default_thread_id_generator;
 use crate::thread_rollout_truncation::truncate_rollout_to_last_n_fork_turns;
 use crate::turn_timing::now_unix_timestamp_ms;
 use arc_swap::ArcSwapOption;
-use genex_history::InitialHistory;
-use genex_history::ResumedHistory;
-use genex_history::RolloutItem;
-use genex_protocol::AgentPath;
-use genex_protocol::SessionId;
-use genex_protocol::ThreadId;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::items::SubAgentActivityItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HasLegacyEvent;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::ItemStartedEvent;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::ThreadSource;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::turn_input::CyberAccessProgram;
-use genex_protocol::user_input::UserInput;
-use genex_thread_store::LoadThreadHistoryParams;
-use genex_thread_store::ReadThreadParams;
+use ruxex_history::InitialHistory;
+use ruxex_history::ResumedHistory;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::AgentPath;
+use ruxex_protocol::SessionId;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::items::SubAgentActivityItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HasLegacyEvent;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::ItemStartedEvent;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSource;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::turn_input::CyberAccessProgram;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_thread_store::LoadThreadHistoryParams;
+use ruxex_thread_store::ReadThreadParams;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -131,7 +131,7 @@ pub(crate) struct AgentControl {
     session_id: SessionId,
     /// Weak handle back to the global thread registry/state.
     /// This is `Weak` to avoid reference cycles and shadow persistence of the form
-    /// `ThreadManagerState -> GenexThread -> Session -> SessionServices -> ThreadManagerState`.
+    /// `ThreadManagerState -> RuxexThread -> Session -> SessionServices -> ThreadManagerState`.
     manager: Weak<ThreadManagerState>,
     /// Captured at construction so delegates retain their manager's allocation policy.
     thread_id_generator: ThreadIdGenerator,
@@ -201,7 +201,7 @@ impl AgentControl {
         agent_id: ThreadId,
         input: Vec<UserInput>,
         start_options: TurnStartOptions,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         let state = self.upgrade()?;
         let thread = state.get_thread(agent_id).await?;
         let result = match thread
@@ -216,7 +216,7 @@ impl AgentControl {
                 // unique without adding a submission receipt back to Core.
                 Ok(Uuid::now_v7().to_string())
             }
-            Ok(TurnInputSubmission::NotSubmitted { reason }) => Err(GenexErr::InvalidRequest(
+            Ok(TurnInputSubmission::NotSubmitted { reason }) => Err(RuxexErr::InvalidRequest(
                 format!("turn input was not submitted: {reason:?}"),
             )),
             Err(err) => Err(err),
@@ -231,7 +231,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         agent_communication_context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         let state = self.upgrade()?;
         if communication.trigger_turn {
             let thread = state.get_thread(agent_id).await?;
@@ -253,7 +253,7 @@ impl AgentControl {
         thread_id: ThreadId,
         turn_id: String,
         item: SubAgentActivityItem,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         let state = self.upgrade()?;
         let thread = state.get_thread(thread_id).await?;
         let started_at_ms = now_unix_timestamp_ms();
@@ -304,7 +304,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         self.submit_inter_agent_communication(
             agent_id,
             state,
@@ -322,7 +322,7 @@ impl AgentControl {
         communication: InterAgentCommunication,
         context: AgentCommunicationContext,
         start_options: TurnStartOptions,
-    ) -> GenexResult<String> {
+    ) -> RuxexResult<String> {
         let communication_for_log =
             crate::agent_communication::logging_enabled().then(|| communication.clone());
         let (parent_turn_id, root_turn_id) = if communication.trigger_turn {
@@ -364,7 +364,7 @@ impl AgentControl {
     }
 
     /// Interrupt the current task for an existing agent thread.
-    pub(crate) async fn interrupt_agent(&self, agent_id: ThreadId) -> GenexResult<String> {
+    pub(crate) async fn interrupt_agent(&self, agent_id: ThreadId) -> RuxexResult<String> {
         let state = self.upgrade()?;
         self.handle_thread_request_result(
             agent_id,
@@ -385,11 +385,11 @@ impl AgentControl {
         &self,
         agent_id: ThreadId,
         state: &Arc<ThreadManagerState>,
-        result: GenexResult<String>,
-    ) -> GenexResult<String> {
+        result: RuxexResult<String>,
+    ) -> RuxexResult<String> {
         if result
             .as_ref()
-            .is_err_and(|err| matches!(err.details(), GenexErrorDetails::InternalAgentDied))
+            .is_err_and(|err| matches!(err.details(), RuxexErrorDetails::InternalAgentDied))
         {
             let _ = state.remove_thread(&agent_id).await;
             self.forget_v2_residency(agent_id);
@@ -424,16 +424,16 @@ impl AgentControl {
         self.state.agent_metadata_for_thread(agent_id)
     }
 
-    pub(crate) fn ensure_agent_known(&self, agent_id: ThreadId) -> GenexResult<AgentMetadata> {
+    pub(crate) fn ensure_agent_known(&self, agent_id: ThreadId) -> RuxexResult<AgentMetadata> {
         self.state
             .agent_metadata_for_thread(agent_id)
-            .ok_or_else(|| GenexErr::ThreadNotFound(agent_id))
+            .ok_or_else(|| RuxexErr::ThreadNotFound(agent_id))
     }
 
     pub(crate) async fn list_live_agent_subtree_thread_ids(
         &self,
         agent_id: ThreadId,
-    ) -> GenexResult<Vec<ThreadId>> {
+    ) -> RuxexResult<Vec<ThreadId>> {
         let mut thread_ids = vec![agent_id];
         thread_ids.extend(self.live_thread_spawn_descendants(agent_id).await?);
         Ok(thread_ids)
@@ -457,17 +457,17 @@ impl AgentControl {
         _current_thread_id: ThreadId,
         current_session_source: &SessionSource,
         agent_reference: &str,
-    ) -> GenexResult<ThreadId> {
+    ) -> RuxexResult<ThreadId> {
         let current_agent_path = current_session_source
             .get_agent_path()
             .unwrap_or_else(AgentPath::root);
         let agent_path = current_agent_path
             .resolve(agent_reference)
-            .map_err(GenexErr::UnsupportedOperation)?;
+            .map_err(RuxexErr::UnsupportedOperation)?;
         if let Some(thread_id) = self.state.agent_id_for_path(&agent_path) {
             return Ok(thread_id);
         }
-        Err(GenexErr::UnsupportedOperation(format!(
+        Err(RuxexErr::UnsupportedOperation(format!(
             "live agent path `{}` not found",
             agent_path.as_str()
         )))
@@ -477,7 +477,7 @@ impl AgentControl {
     pub(crate) async fn subscribe_status(
         &self,
         agent_id: ThreadId,
-    ) -> GenexResult<watch::Receiver<AgentStatus>> {
+    ) -> RuxexResult<watch::Receiver<AgentStatus>> {
         let state = self.upgrade()?;
         let thread = state.get_thread(agent_id).await?;
         Ok(thread.subscribe_status())
@@ -556,7 +556,7 @@ impl AgentControl {
         &self,
         current_session_source: &SessionSource,
         path_prefix: Option<&str>,
-    ) -> GenexResult<Vec<ListedAgent>> {
+    ) -> RuxexResult<Vec<ListedAgent>> {
         let state = self.upgrade()?;
         let resolved_prefix = path_prefix
             .map(|prefix| {
@@ -564,7 +564,7 @@ impl AgentControl {
                     .get_agent_path()
                     .unwrap_or_else(AgentPath::root)
                     .resolve(prefix)
-                    .map_err(GenexErr::UnsupportedOperation)
+                    .map_err(RuxexErr::UnsupportedOperation)
             })
             .transpose()?;
 
@@ -727,7 +727,7 @@ impl AgentControl {
         agent_path: Option<AgentPath>,
         agent_role: Option<String>,
         preferred_agent_nickname: Option<String>,
-    ) -> GenexResult<AgentMetadata> {
+    ) -> RuxexResult<AgentMetadata> {
         if let Some(agent_path) = agent_path.as_ref() {
             reservation.reserve_agent_path(agent_path)?;
         }
@@ -755,7 +755,7 @@ impl AgentControl {
         agent_path: Option<AgentPath>,
         agent_role: Option<String>,
         preferred_agent_nickname: Option<String>,
-    ) -> GenexResult<(SessionSource, AgentMetadata)> {
+    ) -> RuxexResult<(SessionSource, AgentMetadata)> {
         if depth == 1 {
             self.state.register_root_thread(parent_thread_id);
         }
@@ -776,10 +776,10 @@ impl AgentControl {
         Ok((session_source, agent_metadata))
     }
 
-    fn upgrade(&self) -> GenexResult<Arc<ThreadManagerState>> {
+    fn upgrade(&self) -> RuxexResult<Arc<ThreadManagerState>> {
         self.manager
             .upgrade()
-            .ok_or_else(|| GenexErr::UnsupportedOperation("thread manager dropped".to_string()))
+            .ok_or_else(|| RuxexErr::UnsupportedOperation("thread manager dropped".to_string()))
     }
 
     async fn inherited_environments_for_source(
@@ -830,7 +830,7 @@ impl AgentControl {
     async fn open_thread_spawn_children(
         &self,
         parent_thread_id: ThreadId,
-    ) -> GenexResult<Vec<(ThreadId, AgentMetadata)>> {
+    ) -> RuxexResult<Vec<(ThreadId, AgentMetadata)>> {
         let mut children_by_parent = self.live_thread_spawn_children().await?;
         Ok(children_by_parent
             .remove(&parent_thread_id)
@@ -839,7 +839,7 @@ impl AgentControl {
 
     async fn live_thread_spawn_children(
         &self,
-    ) -> GenexResult<HashMap<ThreadId, Vec<(ThreadId, AgentMetadata)>>> {
+    ) -> RuxexResult<HashMap<ThreadId, Vec<(ThreadId, AgentMetadata)>>> {
         let state = self.upgrade()?;
         let mut children_by_parent = HashMap::<ThreadId, Vec<(ThreadId, AgentMetadata)>>::new();
 
@@ -874,7 +874,7 @@ impl AgentControl {
 
     async fn persist_thread_spawn_edge_for_source(
         &self,
-        child_thread: &crate::GenexThread,
+        child_thread: &crate::RuxexThread,
         child_thread_id: ThreadId,
         session_source: Option<&SessionSource>,
     ) {
@@ -895,7 +895,7 @@ impl AgentControl {
             .upsert_thread_spawn_edge(
                 parent_thread_id,
                 child_thread_id,
-                genex_agent_graph_store::ThreadSpawnEdgeStatus::Open,
+                ruxex_agent_graph_store::ThreadSpawnEdgeStatus::Open,
             )
             .await
         {
@@ -906,7 +906,7 @@ impl AgentControl {
     async fn live_thread_spawn_descendants(
         &self,
         root_thread_id: ThreadId,
-    ) -> GenexResult<Vec<ThreadId>> {
+    ) -> RuxexResult<Vec<ThreadId>> {
         let mut children_by_parent = self.live_thread_spawn_children().await?;
         let mut descendants = Vec::new();
         let mut stack = children_by_parent

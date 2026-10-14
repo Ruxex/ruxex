@@ -2,13 +2,13 @@ use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
 use pretty_assertions::assert_eq;
@@ -29,11 +29,11 @@ async fn turn_start_accepts_output_schema_v2() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -93,7 +93,7 @@ async fn turn_start_accepts_output_schema_v2() -> Result<()> {
     assert_eq!(
         format,
         &serde_json::json!({
-            "name": "genex_output_schema",
+            "name": "ruxex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": output_schema,
@@ -115,11 +115,11 @@ async fn turn_start_output_schema_is_per_turn_v2() -> Result<()> {
     ]);
     let response_mock1 = responses::mount_sse_once(&server, body1).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -174,7 +174,7 @@ async fn turn_start_output_schema_is_per_turn_v2() -> Result<()> {
     assert_eq!(
         payload1.pointer("/text/format"),
         Some(&serde_json::json!({
-            "name": "genex_output_schema",
+            "name": "ruxex_output_schema",
             "type": "json_schema",
             "strict": true,
             "schema": output_schema,

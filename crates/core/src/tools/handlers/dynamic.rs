@@ -9,21 +9,21 @@ use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::CoreToolRuntime;
 use crate::tools::registry::ToolExecutor;
 use crate::tools::registry::ToolExposure;
-use genex_protocol::dynamic_tools::DynamicToolFunctionSpec;
-use genex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
-use genex_protocol::dynamic_tools::DynamicToolResponse;
-use genex_protocol::items::DynamicToolCallItem;
-use genex_protocol::items::DynamicToolCallStatus;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::ToolName;
-use genex_tools::ToolSearchInfo;
-use genex_tools::ToolSearchSourceInfo;
-use genex_tools::ToolSpec;
-use genex_tools::default_namespace_description;
-use genex_tools::dynamic_tool_to_responses_api_tool;
+use ruxex_protocol::dynamic_tools::DynamicToolFunctionSpec;
+use ruxex_protocol::dynamic_tools::DynamicToolNamespaceSpec;
+use ruxex_protocol::dynamic_tools::DynamicToolResponse;
+use ruxex_protocol::items::DynamicToolCallItem;
+use ruxex_protocol::items::DynamicToolCallStatus;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSearchInfo;
+use ruxex_tools::ToolSearchSourceInfo;
+use ruxex_tools::ToolSpec;
+use ruxex_tools::default_namespace_description;
+use ruxex_tools::dynamic_tool_to_responses_api_tool;
 use serde_json::Value;
 use std::time::Instant;
 use tokio::sync::oneshot;
@@ -100,12 +100,12 @@ impl ToolExecutor<ToolInvocation> for DynamicToolHandler {
             self.spec(),
             Some(ToolSearchSourceInfo {
                 name: "Dynamic tools".to_string(),
-                description: Some("Tools provided by the current Genex thread.".to_string()),
+                description: Some("Tools provided by the current Ruxex thread.".to_string()),
             }),
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

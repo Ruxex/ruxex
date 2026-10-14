@@ -1,22 +1,22 @@
 use anyhow::Result;
-use genex_core::StartThreadOptions;
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageDelivery;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::AsyncUserInputQuestion;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::model_types::ReasoningEffortPreset;
-use genex_protocol::model_types::ToolMessage;
-use genex_protocol::model_types::ToolMessages;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::SubAgentSource;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::StartThreadOptions;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageDelivery;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::AsyncUserInputQuestion;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffortPreset;
+use ruxex_protocol::model_types::ToolMessage;
+use ruxex_protocol::model_types::ToolMessages;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::SubAgentSource;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call_with_namespace;
@@ -26,7 +26,7 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -50,7 +50,7 @@ async fn persistent_async_message_guidance_follows_tool_availability(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model
@@ -147,7 +147,7 @@ async fn freeform_async_message_requires_root_and_catalog_or_feature_opt_in(
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools =
@@ -234,7 +234,7 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools = vec!["request_user_input_async".to_string()];
@@ -262,19 +262,19 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
         })
         .build_with_auto_env(&server)
         .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Keep me updated.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(test.genex.as_ref(), |event| match event {
+    let started = wait_for_event_match(test.ruxex.as_ref(), |event| match event {
         EventMsg::ItemStarted(event) if event.item.id() == CALL_ID => Some(event.item.clone()),
         _ => None,
     })
     .await;
-    let completed = wait_for_event_match(test.genex.as_ref(), |event| match event {
+    let completed = wait_for_event_match(test.ruxex.as_ref(), |event| match event {
         EventMsg::ItemCompleted(event) if event.item.id() == CALL_ID => Some(event.item.clone()),
         _ => None,
     })
@@ -290,7 +290,7 @@ async fn freeform_async_message_emits_an_item_without_ending_the_turn(
     }))?;
     assert_eq!(serde_json::to_value(started)?, expected);
     assert_eq!(serde_json::to_value(completed)?, expected);
-    wait_for_event(test.genex.as_ref(), |event| {
+    wait_for_event(test.ruxex.as_ref(), |event| {
         let item = match event {
             EventMsg::ItemStarted(event) => Some(&event.item),
             EventMsg::ItemCompleted(event) => Some(&event.item),
@@ -401,7 +401,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
             "Ask the user one or more questions during ongoing work. Use this tool only to request missing information, preferences, constraints, clarification, or approval. The tool returns immediately without ending the turn or waiting for a reply; any reply arrives asynchronously as a new user message. Keep questions concise, self-contained, and easy to understand, using a level of detail appropriate to the user and task. The UI always allows a free-text answer, including when suggested options are provided. A preselected option is not submitted automatically.",
         )
         .to_string();
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", move |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model.experimental_supported_tools.retain(|tool| {
@@ -419,14 +419,14 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         .build_with_auto_env(&server)
         .await?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Keep me updated.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    let started = wait_for_event_match(test.genex.as_ref(), |event| {
+    let started = wait_for_event_match(test.ruxex.as_ref(), |event| {
         let EventMsg::ItemStarted(event) = event else {
             return None;
         };
@@ -452,7 +452,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         })?
     );
 
-    let completed = wait_for_event_match(test.genex.as_ref(), |event| {
+    let completed = wait_for_event_match(test.ruxex.as_ref(), |event| {
         let EventMsg::ItemCompleted(event) = event else {
             return None;
         };
@@ -470,7 +470,7 @@ async fn request_user_input_async_emits_item_and_does_not_end_the_turn(
         serde_json::to_value(started)?
     );
 
-    wait_for_event(test.genex.as_ref(), |event| {
+    wait_for_event(test.ruxex.as_ref(), |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -546,7 +546,7 @@ async fn invalid_async_questions_do_not_emit_an_item(
         ],
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model-2", |model| {
             model.tool_mode = Some(ToolMode::CodeModeOnly);
             model
@@ -555,13 +555,13 @@ async fn invalid_async_questions_do_not_emit_an_item(
         })
         .build_with_auto_env(&server)
         .await?;
-    test.genex
+    test.ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "Get clarification.".to_string(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(test.genex.as_ref(), |event| {
+    wait_for_event(test.ruxex.as_ref(), |event| {
         let item = match event {
             EventMsg::ItemStarted(event) => Some(&event.item),
             EventMsg::ItemCompleted(event) => Some(&event.item),

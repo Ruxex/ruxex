@@ -3,19 +3,19 @@ use crate::config::PermissionProfileSnapshot;
 use crate::environment_selection::EnvironmentConfigOrigin;
 use crate::tools::sandboxing::SandboxAttempt;
 use core_test_support::PathBufExt;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::models::FileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::EnvironmentConfig;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
-use genex_sandboxing::policy_transforms::effective_network_sandbox_policy;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::models::FileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::EnvironmentConfig;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
+use ruxex_sandboxing::policy_transforms::effective_network_sandbox_policy;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 fn test_turn_environment(environment_id: &str) -> crate::session::turn_context::TurnEnvironment {
@@ -39,7 +39,7 @@ fn test_turn_environment(environment_id: &str) -> crate::session::turn_context::
             }),
         },
         EnvironmentConfigOrigin::Thread,
-        std::sync::Arc::new(genex_exec_server::Environment::default_for_tests()),
+        std::sync::Arc::new(ruxex_exec_server::Environment::default_for_tests()),
         /*shell*/ None,
     )
 }
@@ -76,7 +76,7 @@ async fn approval_action_preserves_patch_path_uris() {
     let expected_cwd = action.cwd.clone();
     let expected_patch = action.patch.clone();
     let request = ApplyPatchRequest {
-        turn_environment: test_turn_environment(genex_exec_server::LOCAL_ENVIRONMENT_ID),
+        turn_environment: test_turn_environment(ruxex_exec_server::LOCAL_ENVIRONMENT_ID),
         action,
         file_paths: vec![path.clone()],
         changes: Arc::new(HashMap::new()),
@@ -94,7 +94,7 @@ async fn approval_action_preserves_patch_path_uris() {
         approval_action,
         ApprovalAction::ApplyPatch {
             id: "call-1".to_string(),
-            environment_id: genex_exec_server::LOCAL_ENVIRONMENT_ID.to_string(),
+            environment_id: ruxex_exec_server::LOCAL_ENVIRONMENT_ID.to_string(),
             cwd: expected_cwd,
             files: vec![path],
             patch: expected_patch,
@@ -113,7 +113,7 @@ async fn permission_request_payload_uses_apply_patch_hook_name_and_aliases() {
         ApplyPatchAction::new_add_for_test(&PathUri::from_abs_path(&path), "hello".to_string());
     let expected_patch = action.patch.clone();
     let req = ApplyPatchRequest {
-        turn_environment: test_turn_environment(genex_exec_server::LOCAL_ENVIRONMENT_ID),
+        turn_environment: test_turn_environment(ruxex_exec_server::LOCAL_ENVIRONMENT_ID),
         action,
         file_paths: vec![PathUri::from_abs_path(&path)],
         changes: Arc::new(HashMap::new()),
@@ -182,7 +182,7 @@ async fn sandbox_cwd_uses_patch_action_cwd() {
         .join("apply-patch-runtime-sandbox-cwd.txt")
         .abs();
     let req = ApplyPatchRequest {
-        turn_environment: test_turn_environment(genex_exec_server::LOCAL_ENVIRONMENT_ID),
+        turn_environment: test_turn_environment(ruxex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(
             &PathUri::from_abs_path(&path),
             "hello".to_string(),
@@ -213,7 +213,7 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
         )),
     };
     let req = ApplyPatchRequest {
-        turn_environment: test_turn_environment(genex_exec_server::LOCAL_ENVIRONMENT_ID),
+        turn_environment: test_turn_environment(ruxex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(
             &PathUri::from_abs_path(&path),
             "hello".to_string(),
@@ -263,7 +263,7 @@ async fn file_system_sandbox_context_preserves_executor_workspace_permissions() 
     assert_eq!(sandbox.permissions, expected_permissions);
     assert_eq!(
         sandbox.cwd,
-        genex_utils_path_uri::PathUri::from_abs_path(&path)
+        ruxex_utils_path_uri::PathUri::from_abs_path(&path)
     );
     assert_eq!(sandbox.use_legacy_landlock, true);
 }
@@ -274,7 +274,7 @@ async fn file_system_sandbox_context_respects_sandbox_request() {
         .join("apply-patch-runtime-none.txt")
         .abs();
     let mut req = ApplyPatchRequest {
-        turn_environment: test_turn_environment(genex_exec_server::LOCAL_ENVIRONMENT_ID),
+        turn_environment: test_turn_environment(ruxex_exec_server::LOCAL_ENVIRONMENT_ID),
         action: ApplyPatchAction::new_add_for_test(
             &PathUri::from_abs_path(&path),
             "hello".to_string(),

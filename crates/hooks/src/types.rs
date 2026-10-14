@@ -4,8 +4,8 @@ use chrono::DateTime;
 use chrono::SecondsFormat;
 use chrono::Utc;
 use futures::future::BoxFuture;
-use genex_protocol::ThreadId;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Serialize;
 use serde::Serializer;
 
@@ -100,9 +100,9 @@ pub enum HookEvent {
 mod tests {
     use chrono::TimeZone;
     use chrono::Utc;
-    use genex_protocol::ThreadId;
-    use genex_utils_absolute_path::test_support::PathBufExt;
-    use genex_utils_absolute_path::test_support::test_path_buf;
+    use ruxex_protocol::ThreadId;
+    use ruxex_utils_absolute_path::test_support::PathBufExt;
+    use ruxex_utils_absolute_path::test_support::test_path_buf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

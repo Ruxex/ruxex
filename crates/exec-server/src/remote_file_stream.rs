@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io;
 use uuid::Uuid;
 

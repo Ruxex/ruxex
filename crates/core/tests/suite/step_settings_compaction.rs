@@ -1,7 +1,7 @@
 //! Compaction checkpoints retain the summary captured after a mid-turn settings update.
 
 use super::*;
-use genex_history::RolloutItem;
+use ruxex_history::RolloutItem;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use test_case::test_case;
@@ -43,7 +43,7 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
     bodies.push(sse_completed("done"));
     let responses = mount_sse_sequence(&server, bodies).await;
     let test = step_settings_test()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config.model_auto_compact_token_limit = Some(200_000);
             config
@@ -58,10 +58,10 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         })
         .build_with_auto_env(&server)
         .await?;
-    let pause = start_paused_turn(&test.genex).await?;
+    let pause = start_paused_turn(&test.ruxex).await?;
     assert_eq!(
         submit_turn_settings(
-            &test.genex,
+            &test.ruxex,
             &pause.turn_id,
             TurnSettingsUpdate {
                 summary: Some(ReasoningSummary::Detailed),
@@ -71,12 +71,12 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         .await?,
         TurnSettingsUpdateOutcome::Applied
     );
-    answer_paused_turn(&test.genex, &pause.turn_id).await?;
-    wait_for_event(&test.genex, |event| {
+    answer_paused_turn(&test.ruxex, &pause.turn_id).await?;
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
-    test.genex.shutdown_and_wait().await?;
+    test.ruxex.shutdown_and_wait().await?;
 
     let requests = responses.requests();
     assert_eq!(
@@ -90,7 +90,7 @@ async fn compaction_preserves_updated_summary(mode: CompactionMode) -> Result<()
         std::fs::read_to_string(test.session_configured.rollout_path.expect("rollout path"))?;
     let items = rollout
         .lines()
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<std::result::Result<Vec<_>, _>>()?;
     let checkpoint = items
         .iter()

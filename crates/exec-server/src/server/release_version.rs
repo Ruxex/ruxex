@@ -1,6 +1,6 @@
 //! Include the startup-cached package release version in executor metadata.
 
-use genex_build_info::BuildInfo;
+use ruxex_build_info::BuildInfo;
 
 use crate::protocol::EnvironmentInfo;
 

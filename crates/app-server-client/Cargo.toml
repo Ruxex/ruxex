@@ -1,11 +1,11 @@
 [package]
-name = "genex-app-server-client"
+name = "ruxex-app-server-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "genex_app_server_client"
+name = "ruxex_app_server_client"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,16 +13,16 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-app-server = { workspace = true }
-genex-app-server-protocol = { workspace = true }
-genex-arg0 = { workspace = true }
-genex-config = { workspace = true }
-genex-core = { workspace = true }
-genex-exec-server = { workspace = true }
-genex-protocol = { workspace = true }
-genex-uds = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-rustls-provider = { workspace = true }
+ruxex-app-server = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-rustls-provider = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

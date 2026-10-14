@@ -6,38 +6,38 @@ use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
 use clap::ArgGroup;
-use genex_config::types::AppToolApproval;
-use genex_config::types::McpServerConfig;
-use genex_config::types::McpServerOAuthConfig;
-use genex_config::types::McpServerTransportConfig;
-use genex_core::McpManager;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::LoaderOverrides;
-use genex_core::config::edit::ConfigEditsBuilder;
-use genex_core::config::find_genex_home;
-use genex_core::config::load_global_mcp_servers;
-use genex_core::plugins_manager_for_config;
-use genex_exec_server::EnvironmentManager;
-use genex_exec_server::HttpClient;
-use genex_exec_server::RouteAwareHttpClient;
-use genex_mcp::McpOAuthLoginSupport;
-use genex_mcp::McpRuntimeContext;
-use genex_mcp::apply_http_headers_helper;
-use genex_mcp::compute_auth_statuses;
-use genex_mcp::discover_supported_scopes;
-use genex_mcp::oauth_login_support;
-use genex_mcp::resolve_oauth_callback;
-use genex_mcp::resolve_oauth_scopes;
-use genex_protocol::protocol::McpAuthStatus;
-use genex_rmcp_client::McpOAuthCallbackMode;
-use genex_rmcp_client::McpOAuthClientRegistration;
-use genex_rmcp_client::OAuthDiscoveryTimeout;
-use genex_rmcp_client::StreamableHttpRedirectMode;
-use genex_rmcp_client::delete_oauth_tokens;
-use genex_rmcp_client::resolve_mcp_oauth_callback_url;
-use genex_utils_cli::CliConfigOverrides;
-use genex_utils_cli::format_env_display;
+use ruxex_config::types::AppToolApproval;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::McpServerOAuthConfig;
+use ruxex_config::types::McpServerTransportConfig;
+use ruxex_core::McpManager;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::LoaderOverrides;
+use ruxex_core::config::edit::ConfigEditsBuilder;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_core::config::load_global_mcp_servers;
+use ruxex_core::plugins_manager_for_config;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::HttpClient;
+use ruxex_exec_server::RouteAwareHttpClient;
+use ruxex_mcp::McpOAuthLoginSupport;
+use ruxex_mcp::McpRuntimeContext;
+use ruxex_mcp::apply_http_headers_helper;
+use ruxex_mcp::compute_auth_statuses;
+use ruxex_mcp::discover_supported_scopes;
+use ruxex_mcp::oauth_login_support;
+use ruxex_mcp::resolve_oauth_callback;
+use ruxex_mcp::resolve_oauth_scopes;
+use ruxex_protocol::protocol::McpAuthStatus;
+use ruxex_rmcp_client::McpOAuthCallbackMode;
+use ruxex_rmcp_client::McpOAuthClientRegistration;
+use ruxex_rmcp_client::OAuthDiscoveryTimeout;
+use ruxex_rmcp_client::StreamableHttpRedirectMode;
+use ruxex_rmcp_client::delete_oauth_tokens;
+use ruxex_rmcp_client::resolve_mcp_oauth_callback_url;
+use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_cli::format_env_display;
 
 use crate::cloud_config;
 use crate::mcp_login::McpLoginMode;
@@ -46,7 +46,7 @@ use crate::mcp_login::perform_oauth_login_retry_without_scopes;
 /// Subcommands:
 /// - `list`   — list configured servers (with `--json`)
 /// - `get`    — show a single server (with `--json`)
-/// - `add`    — add a server launcher entry to `~/.genex/config.toml`
+/// - `add`    — add a server launcher entry to `~/.ruxex/config.toml`
 /// - `remove` — delete a server entry
 /// - `login`  — authenticate with MCP server using OAuth
 /// - `logout` — remove OAuth credentials for MCP server
@@ -87,7 +87,7 @@ pub struct GetArgs {
 }
 
 #[derive(Debug, clap::Parser)]
-#[command(override_usage = "genex mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
+#[command(override_usage = "ruxex mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
 pub struct AddArgs {
     /// Name for the MCP server configuration.
     pub name: String,
@@ -290,7 +290,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
 
     validate_server_name(&name)?;
 
-    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
+    let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
 
     let (transport, oauth_client_id, client_registration, oauth_resource) = match transport_args {
         AddMcpTransportArgs {
@@ -387,7 +387,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
     let new_entry = McpServerConfig {
         auth: Default::default(),
         transport: transport.clone(),
-        environment_id: genex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+        environment_id: ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
         enabled: true,
         required: false,
         supports_parallel_tool_calls: false,
@@ -411,17 +411,17 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
         tools: HashMap::new(),
     };
 
-    let mut servers = load_global_mcp_servers(&genex_home)
+    let mut servers = load_global_mcp_servers(&ruxex_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", genex_home.display()))?;
+        .with_context(|| format!("failed to load MCP servers from {}", ruxex_home.display()))?;
     let credential_name = new_entry.oauth_credential_name(&name);
     servers.insert(name.clone(), new_entry);
 
-    ConfigEditsBuilder::new(&genex_home)
+    ConfigEditsBuilder::new(&ruxex_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await
-        .with_context(|| format!("failed to write MCP servers to {}", genex_home.display()))?;
+        .with_context(|| format!("failed to write MCP servers to {}", ruxex_home.display()))?;
 
     println!("Added global MCP server '{name}'.");
     if let Some(callback_url) = &callback_url {
@@ -459,7 +459,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
         }
         McpOAuthLoginSupport::Unsupported => {}
         McpOAuthLoginSupport::Unknown(_) => println!(
-            "MCP server may or may not require login. Run `genex mcp login {name}` to login."
+            "MCP server may or may not require login. Run `ruxex mcp login {name}` to login."
         ),
     }
 
@@ -475,19 +475,19 @@ async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveAr
 
     validate_server_name(&name)?;
 
-    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
-    let mut servers = load_global_mcp_servers(&genex_home)
+    let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
+    let mut servers = load_global_mcp_servers(&ruxex_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", genex_home.display()))?;
+        .with_context(|| format!("failed to load MCP servers from {}", ruxex_home.display()))?;
 
     let removed = servers.remove(&name).is_some();
 
     if removed {
-        ConfigEditsBuilder::new(&genex_home)
+        ConfigEditsBuilder::new(&ruxex_home)
             .replace_mcp_servers(&servers)
             .apply()
             .await
-            .with_context(|| format!("failed to write MCP servers to {}", genex_home.display()))?;
+            .with_context(|| format!("failed to write MCP servers to {}", ruxex_home.display()))?;
     }
 
     if removed {
@@ -502,7 +502,7 @@ async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveAr
 async fn load_mcp_manager(config: &Config) -> Result<McpManager> {
     let plugins_manager = Arc::new(plugins_manager_for_config(
         config,
-        genex_credential_broker::UnsupportedCredentialBroker::shared(),
+        ruxex_credential_broker::UnsupportedCredentialBroker::shared(),
     ));
     Ok(McpManager::new(plugins_manager))
 }
@@ -525,7 +525,7 @@ async fn run_login(config: &Config, login_args: LoginArgs) -> Result<()> {
         bail!("No MCP server named '{name}' found.");
     };
 
-    if matches!(server.auth, genex_config::types::McpServerAuth::EmaAuth) {
+    if matches!(server.auth, ruxex_config::types::McpServerAuth::EmaAuth) {
         bail!(
             "Enterprise MCP authorization is managed by the trusted enterprise IdP configuration; `mcp login` cannot change it."
         );
@@ -711,7 +711,7 @@ async fn run_list(config: &Config, list_args: ListArgs) -> Result<()> {
     }
 
     if entries.is_empty() {
-        println!("No MCP servers configured yet. Try `genex mcp add my-tool -- my-command`.");
+        println!("No MCP servers configured yet. Try `ruxex mcp add my-tool -- my-command`.");
         return Ok(());
     }
 
@@ -1051,7 +1051,7 @@ async fn run_get(config: &Config, get_args: GetArgs) -> Result<()> {
         };
         println!("  default_tools_approval_mode: {approval_mode}");
     }
-    println!("  remove: genex mcp remove {}", get_args.name);
+    println!("  remove: ruxex mcp remove {}", get_args.name);
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-//! Transcript/history cells for the Genex TUI.
+//! Transcript/history cells for the Ruxex TUI.
 //!
 //! A `HistoryCell` is the unit of display in the conversation UI, representing both committed
 //! transcript entries and, transiently, an in-flight active cell that can mutate in place while
@@ -44,41 +44,41 @@ use crate::text_formatting::format_and_truncate_tool_result;
 use crate::text_formatting::truncate_text;
 use crate::tooltips;
 use crate::ui_consts::LIVE_PREFIX_COLS;
-use crate::version::GENEX_CLI_VERSION;
+use crate::version::RUXEX_CLI_VERSION;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_line;
 use crate::wrapping::adaptive_wrap_lines;
-use genex_app_server_protocol::AskForApproval;
-use genex_app_server_protocol::McpAuthStatus;
-use genex_app_server_protocol::McpServerStatus;
-use genex_app_server_protocol::McpServerStatusDetail;
-use genex_app_server_protocol::ToolRequestUserInputAnswer;
-use genex_app_server_protocol::ToolRequestUserInputQuestion;
-use genex_app_server_protocol::WebSearchAction;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_app_server_protocol::McpAuthStatus;
+use ruxex_app_server_protocol::McpServerStatus;
+use ruxex_app_server_protocol::McpServerStatusDetail;
+use ruxex_app_server_protocol::ToolRequestUserInputAnswer;
+use ruxex_app_server_protocol::ToolRequestUserInputQuestion;
+use ruxex_app_server_protocol::WebSearchAction;
 #[cfg(test)]
-use genex_config::types::McpServerTransportConfig;
+use ruxex_config::types::McpServerTransportConfig;
 #[cfg(test)]
-use genex_mcp::qualified_mcp_tool_name_prefix;
-use genex_otel::RuntimeMetricsSummary;
-use genex_protocol::account::PlanType;
-use genex_protocol::approvals::ExecPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_mcp::qualified_mcp_tool_name_prefix;
+use ruxex_otel::RuntimeMetricsSummary;
+use ruxex_protocol::account::PlanType;
+use ruxex_protocol::approvals::ExecPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
 #[cfg(test)]
-use genex_protocol::mcp::Resource;
+use ruxex_protocol::mcp::Resource;
 #[cfg(test)]
-use genex_protocol::mcp::ResourceTemplate;
-use genex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::models::local_image_label_text;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::plan_tool::PlanItemArg;
-use genex_protocol::plan_tool::StepStatus;
-use genex_protocol::plan_tool::UpdatePlanArgs;
-use genex_protocol::user_input::TextElement;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::mcp::ResourceTemplate;
+use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::local_image_label_text;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::plan_tool::PlanItemArg;
+use ruxex_protocol::plan_tool::StepStatus;
+use ruxex_protocol::plan_tool::UpdatePlanArgs;
+use ruxex_protocol::user_input::TextElement;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
-use genex_utils_cli::format_env_display;
+use ruxex_utils_cli::format_env_display;
 use ratatui::prelude::*;
 use ratatui::style::Color;
 use ratatui::style::Modifier;

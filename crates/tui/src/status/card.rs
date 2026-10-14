@@ -7,20 +7,20 @@ use crate::legacy_core::config::Config;
 use crate::line_truncation::line_width;
 use crate::token_usage::TokenUsage;
 use crate::token_usage::TokenUsageInfo;
-use crate::version::GENEX_CLI_VERSION;
+use crate::version::RUXEX_CLI_VERSION;
 use chrono::DateTime;
 use chrono::Local;
-use genex_app_server_protocol::AskForApproval;
-use genex_protocol::ThreadId;
-use genex_protocol::account::PlanType;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ActivePermissionProfile;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::models::PermissionProfile;
-use genex_utils_path_uri::PathUri;
-use genex_utils_sandbox_summary::summarize_permission_profile;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::PlanType;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ActivePermissionProfile;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_sandbox_summary::summarize_permission_profile;
 use ratatui::prelude::*;
 use ratatui::style::Stylize;
 use std::collections::BTreeSet;
@@ -113,7 +113,7 @@ impl StatusHistoryHandle {
 
     pub(crate) fn set_thread_usage(
         &self,
-        estimate: Option<genex_app_server_protocol::ThreadUsage>,
+        estimate: Option<ruxex_app_server_protocol::ThreadUsage>,
     ) {
         self.card.thread_usage.set_estimate(estimate);
     }
@@ -748,7 +748,7 @@ impl StatusHistoryCell {
             Span::from(format!("{}>_ ", FieldFormatter::INDENT)).dim(),
             Span::from(format!("provider {}", self.provider_display_name)).bold(),
             Span::from(" ").dim(),
-            Span::from(format!("(v{GENEX_CLI_VERSION})")).dim(),
+            Span::from(format!("(v{RUXEX_CLI_VERSION})")).dim(),
         ]));
 
         let available_inner_width = usize::from(width.saturating_sub(4));

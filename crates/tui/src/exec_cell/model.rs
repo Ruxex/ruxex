@@ -10,8 +10,8 @@ use std::time::Duration;
 use std::time::Instant;
 
 use super::live_output::LiveCommandOutput;
-use genex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
-use genex_protocol::parse_command::ParsedCommand;
+use ruxex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
+use ruxex_protocol::parse_command::ParsedCommand;
 use itertools::Either;
 
 #[derive(Debug, Default)]

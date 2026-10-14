@@ -1,13 +1,13 @@
 use crate::state::ActiveTurn;
 use crate::state::MailboxDeliveryPhase;
 use crate::state::TurnState;
-use genex_diagnostics::Gauge;
-use genex_diagnostics::GaugeGuard;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::InterAgentCommunication;
-use genex_protocol::turn_input::TurnStartOptions;
-use genex_protocol::user_input::UserInput;
+use ruxex_diagnostics::Gauge;
+use ruxex_diagnostics::GaugeGuard;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::InterAgentCommunication;
+use ruxex_protocol::turn_input::TurnStartOptions;
+use ruxex_protocol::user_input::UserInput;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::VecDeque;
@@ -364,9 +364,9 @@ impl TurnInputQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_history::GenexHarnessMetadata;
-    use genex_protocol::AgentPath;
-    use genex_protocol::user_input::UserInput;
+    use ruxex_history::RuxexHarnessMetadata;
+    use ruxex_protocol::AgentPath;
+    use ruxex_protocol::user_input::UserInput;
     use pretty_assertions::assert_eq;
 
     #[test_case::test_case("ResponseItem", TurnInput::ResponseItem)]
@@ -384,7 +384,7 @@ mod tests {
 
         let annotated = wrap(ResponseItemEnvelope {
             item: ResponseItem::Other,
-            metadata: Some(GenexHarnessMetadata {
+            metadata: Some(RuxexHarnessMetadata {
                 client_authored: true,
                 ..Default::default()
             }),
@@ -612,7 +612,7 @@ mod tests {
 
     #[tokio::test]
     async fn input_queue_uses_latest_followup_choice_and_ignores_queue_only_mail() {
-        use genex_protocol::turn_input::CyberAccessProgram;
+        use ruxex_protocol::turn_input::CyberAccessProgram;
 
         for latest in [Some(CyberAccessProgram::Standard), None] {
             let input_queue = InputQueue::new();

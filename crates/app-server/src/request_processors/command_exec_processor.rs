@@ -1,6 +1,6 @@
 use super::*;
-use genex_core::exec_env::inject_apply_patch_env;
-use genex_protocol::shell_environment::is_non_inheritable_env_var;
+use ruxex_core::exec_env::inject_apply_patch_env;
+use ruxex_protocol::shell_environment::is_non_inheritable_env_var;
 
 #[derive(Clone)]
 pub(crate) struct CommandExecRequestProcessor {
@@ -257,7 +257,7 @@ impl CommandExecRequestProcessor {
             Some(spec) => match spec
                 .start_proxy(
                     &network_proxy_permission_profile,
-                    genex_network_proxy::ManagedProxyRouting::DedicatedListeners,
+                    ruxex_network_proxy::ManagedProxyRouting::DedicatedListeners,
                     /*policy_decider*/ None,
                     /*blocked_request_observer*/ None,
                     managed_network_requirements_enabled,
@@ -282,14 +282,14 @@ impl CommandExecRequestProcessor {
             env,
             network: started_network_proxy
                 .as_ref()
-                .map(genex_core::config::StartedNetworkProxy::proxy),
+                .map(ruxex_core::config::StartedNetworkProxy::proxy),
             network_environment_id: None,
             sandbox_permissions: SandboxPermissions::UseDefault,
             justification: None,
             arg0: None,
         };
 
-        let genex_linux_sandbox_exe = self.arg0_paths.genex_linux_sandbox_exe.clone();
+        let ruxex_linux_sandbox_exe = self.arg0_paths.ruxex_linux_sandbox_exe.clone();
         let outgoing = self.outgoing.clone();
         let request_for_task = request.clone();
         let started_network_proxy_for_task = started_network_proxy;
@@ -300,12 +300,12 @@ impl CommandExecRequestProcessor {
             None => None,
         };
 
-        let exec_request = genex_core::exec::build_exec_request(
+        let exec_request = ruxex_core::exec::build_exec_request(
             exec_params,
             &effective_permission_profile,
             &sandbox_cwd,
-            &genex_linux_sandbox_exe,
-            &self.arg0_paths.genex_self_exe,
+            &ruxex_linux_sandbox_exe,
+            &self.arg0_paths.ruxex_self_exe,
             use_legacy_landlock,
         )
         .map_err(|err| internal_error(format!("exec failed: {err}")))?;

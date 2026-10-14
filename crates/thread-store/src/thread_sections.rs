@@ -12,7 +12,7 @@ pub struct ListThreadSectionsParams {
 pub struct CreateThreadSectionParams {
     /// User-facing section name.
     pub name: String,
-    pub appearance: Option<genex_state::ThreadSectionAppearance>,
+    pub appearance: Option<ruxex_state::ThreadSectionAppearance>,
 }
 
 /// Parameters for renaming a thread section.
@@ -22,7 +22,7 @@ pub struct RenameThreadSectionParams {
     pub section_id: String,
     /// Replacement user-facing section name.
     pub name: String,
-    pub appearance: Option<Option<genex_state::ThreadSectionAppearance>>,
+    pub appearance: Option<Option<ruxex_state::ThreadSectionAppearance>>,
 }
 
 /// Parameters for deleting a thread section.
@@ -39,7 +39,7 @@ pub struct StoredThreadSection {
     pub id: String,
     /// User-facing section name.
     pub name: String,
-    pub appearance: Option<genex_state::ThreadSectionAppearance>,
+    pub appearance: Option<ruxex_state::ThreadSectionAppearance>,
 }
 
 /// A cursor-paginated page of independently persisted thread sections.

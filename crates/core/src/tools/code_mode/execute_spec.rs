@@ -1,14 +1,14 @@
-use genex_code_mode::ImageDetailVisibility;
-use genex_code_mode::ToolDefinition as CodeModeToolDefinition;
-use genex_tools::FreeformTool;
-use genex_tools::FreeformToolFormat;
-use genex_tools::ToolSpec;
+use ruxex_code_mode::ImageDetailVisibility;
+use ruxex_code_mode::ToolDefinition as CodeModeToolDefinition;
+use ruxex_tools::FreeformTool;
+use ruxex_tools::FreeformToolFormat;
+use ruxex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub(crate) fn create_code_mode_tool(
     enabled_tools: &[CodeModeToolDefinition],
     deferred_tools: &[CodeModeToolDefinition],
-    namespace_descriptions: &BTreeMap<String, genex_code_mode::ToolNamespaceDescription>,
+    namespace_descriptions: &BTreeMap<String, ruxex_code_mode::ToolNamespaceDescription>,
     default_exec_yield_time_ms: u64,
     code_mode_only: bool,
     image_detail_visibility: ImageDetailVisibility,
@@ -24,8 +24,8 @@ SOURCE: /[\s\S]+/
 "#;
 
     ToolSpec::Freeform(FreeformTool {
-        name: genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
-        description: genex_code_mode::build_exec_tool_description(
+        name: ruxex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+        description: ruxex_code_mode::build_exec_tool_description(
             enabled_tools,
             deferred_tools,
             namespace_descriptions,
@@ -45,16 +45,16 @@ SOURCE: /[\s\S]+/
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_tools::ToolName;
+    use ruxex_tools::ToolName;
     use pretty_assertions::assert_eq;
 
     #[test]
     fn create_code_mode_tool_matches_expected_spec() {
-        let enabled_tools = vec![genex_code_mode::ToolDefinition {
+        let enabled_tools = vec![ruxex_code_mode::ToolDefinition {
             name: "update_plan".to_string(),
             tool_name: ToolName::plain("update_plan"),
             description: "Update the plan".to_string(),
-            kind: genex_code_mode::CodeModeToolKind::Function,
+            kind: ruxex_code_mode::CodeModeToolKind::Function,
             input_schema: None,
             output_schema: None,
         }];
@@ -64,17 +64,17 @@ mod tests {
                 &enabled_tools,
                 &[],
                 &BTreeMap::new(),
-                genex_code_mode::DEFAULT_EXEC_YIELD_TIME_MS,
+                ruxex_code_mode::DEFAULT_EXEC_YIELD_TIME_MS,
                 /*code_mode_only*/ true,
                 ImageDetailVisibility::Visible,
             ),
             ToolSpec::Freeform(FreeformTool {
-                name: genex_code_mode::PUBLIC_TOOL_NAME.to_string(),
-                description: genex_code_mode::build_exec_tool_description(
+                name: ruxex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+                description: ruxex_code_mode::build_exec_tool_description(
                     &enabled_tools,
                     &[],
                     &BTreeMap::new(),
-                    genex_code_mode::DEFAULT_EXEC_YIELD_TIME_MS,
+                    ruxex_code_mode::DEFAULT_EXEC_YIELD_TIME_MS,
                     /*code_mode_only*/ true,
                     ImageDetailVisibility::Visible,
                 ),

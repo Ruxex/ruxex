@@ -21,29 +21,29 @@ use crate::sandboxing::SandboxPermissions;
 use crate::spawn::SpawnChildRequest;
 use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
-use genex_network_proxy::NetworkProxy;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result;
-use genex_protocol::error::SandboxErr;
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_protocol::exec_output::StreamOutput;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::Event;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ExecCommandOutputDeltaEvent;
-use genex_protocol::protocol::ExecOutputStream;
-use genex_sandboxing::SandboxCommand;
-use genex_sandboxing::SandboxManager;
-use genex_sandboxing::SandboxTransformRequest;
-use genex_sandboxing::SandboxType;
-use genex_sandboxing::SandboxablePreference;
-pub(crate) use genex_sandboxing::is_likely_sandbox_denied;
-use genex_sandboxing::record_filesystem_sandbox_violation;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
-use genex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
-use genex_utils_pty::process_group::kill_child_process_group;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::error::SandboxErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::exec_output::StreamOutput;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ExecCommandOutputDeltaEvent;
+use ruxex_protocol::protocol::ExecOutputStream;
+use ruxex_sandboxing::SandboxCommand;
+use ruxex_sandboxing::SandboxManager;
+use ruxex_sandboxing::SandboxTransformRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_sandboxing::SandboxablePreference;
+pub(crate) use ruxex_sandboxing::is_likely_sandbox_denied;
+use ruxex_sandboxing::record_filesystem_sandbox_violation;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use ruxex_utils_pty::process_group::kill_child_process_group;
 
 pub const DEFAULT_EXEC_COMMAND_TIMEOUT_MS: u64 = 10_000;
 
@@ -120,9 +120,9 @@ fn select_process_exec_tool_sandbox_type(
 fn network_proxy_environment_error(
     network_environment_id: Option<&str>,
     err: impl std::fmt::Display,
-) -> GenexErr {
+) -> RuxexErr {
     let environment_id = network_environment_id.unwrap_or("default");
-    GenexErr::Io(io::Error::other(format!(
+    RuxexErr::Io(io::Error::other(format!(
         "failed to prepare network proxy for environment `{environment_id}`: {err}"
     )))
 }
@@ -269,8 +269,8 @@ pub async fn process_exec_tool_call(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    genex_linux_sandbox_exe: &Option<PathBuf>,
-    genex_self_exe: &Option<PathBuf>,
+    ruxex_linux_sandbox_exe: &Option<PathBuf>,
+    ruxex_self_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
     stdout_stream: Option<StdoutStream>,
 ) -> Result<ExecToolCallOutput> {
@@ -278,8 +278,8 @@ pub async fn process_exec_tool_call(
         params,
         permission_profile,
         sandbox_cwd,
-        genex_linux_sandbox_exe,
-        genex_self_exe,
+        ruxex_linux_sandbox_exe,
+        ruxex_self_exe,
         use_legacy_landlock,
     )?;
 
@@ -293,8 +293,8 @@ pub fn build_exec_request(
     params: ExecParams,
     permission_profile: &PermissionProfile,
     sandbox_cwd: &AbsolutePathBuf,
-    genex_linux_sandbox_exe: &Option<PathBuf>,
-    _genex_self_exe: &Option<PathBuf>,
+    ruxex_linux_sandbox_exe: &Option<PathBuf>,
+    _ruxex_self_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let ExecParams {
@@ -326,7 +326,7 @@ pub fn build_exec_request(
             })?;
     }
     let (program, args) = command.split_first().ok_or_else(|| {
-        GenexErr::Io(io::Error::new(
+        RuxexErr::Io(io::Error::new(
             io::ErrorKind::InvalidInput,
             "command args are empty",
         ))
@@ -356,10 +356,10 @@ pub fn build_exec_request(
             environment_id: network_environment_id.as_deref(),
             network: network.as_ref(),
             sandbox_policy_cwd: &sandbox_policy_cwd_uri,
-            sandbox_exe: genex_linux_sandbox_exe.as_deref(),
+            sandbox_exe: ruxex_linux_sandbox_exe.as_deref(),
             use_legacy_landlock,
         })
-        .map_err(GenexErr::from)?;
+        .map_err(RuxexErr::from)?;
     ExecRequest::from_sandbox_exec_request(request, options)
 }
 
@@ -391,7 +391,7 @@ pub(crate) async fn execute_exec_request(
     // TODO(anp): Keep PathUri through the local process launch boundary.
     let cwd = cwd
         .to_abs_path()
-        .map_err(|err| GenexErr::InvalidRequest(format!("invalid exec cwd: {err}")))?;
+        .map_err(|err| RuxexErr::InvalidRequest(format!("invalid exec cwd: {err}")))?;
     let params = ExecParams {
         command,
         cwd,
@@ -432,7 +432,7 @@ async fn get_raw_output_result(
 }
 
 fn finalize_exec_result(
-    raw_output_result: std::result::Result<RawExecToolCallOutput, GenexErr>,
+    raw_output_result: std::result::Result<RawExecToolCallOutput, RuxexErr>,
     sandbox_type: SandboxType,
     duration: Duration,
     capture_policy: ExecCapturePolicy,
@@ -448,7 +448,7 @@ fn finalize_exec_result(
                     if signal == TIMEOUT_CODE {
                         timed_out = true;
                     } else {
-                        return Err(GenexErr::Sandbox(SandboxErr::Signal(signal)));
+                        return Err(RuxexErr::Sandbox(SandboxErr::Signal(signal)));
                     }
                 }
             }
@@ -471,7 +471,7 @@ fn finalize_exec_result(
             };
 
             if timed_out {
-                return Err(GenexErr::Sandbox(SandboxErr::Timeout {
+                return Err(RuxexErr::Sandbox(SandboxErr::Timeout {
                     output: Box::new(exec_output),
                 }));
             }
@@ -480,7 +480,7 @@ fn finalize_exec_result(
                 if capture_policy != ExecCapturePolicy::SensitiveFullBuffer {
                     record_filesystem_sandbox_violation(sandbox_type, &exec_output);
                 }
-                return Err(GenexErr::Sandbox(SandboxErr::Denied {
+                return Err(RuxexErr::Sandbox(SandboxErr::Denied {
                     output: Box::new(exec_output),
                     network_policy_decision: None,
                 }));
@@ -564,7 +564,7 @@ fn aggregate_output(
 /// output consumption begins.
 ///
 /// `network_sandbox_policy` is used to determine whether
-/// GENEX_SANDBOX_NETWORK_DISABLED=1 is added to the environment of the spawned
+/// RUXEX_SANDBOX_NETWORK_DISABLED=1 is added to the environment of the spawned
 /// process.
 ///
 /// Note this command does not apply any sandboxing logic. The caller is
@@ -599,7 +599,7 @@ async fn exec(
     }
 
     let (program, args) = command.split_first().ok_or_else(|| {
-        GenexErr::Io(io::Error::new(
+        RuxexErr::Io(io::Error::new(
             io::ErrorKind::InvalidInput,
             "command args are empty",
         ))
@@ -638,12 +638,12 @@ async fn consume_output(
     // we treat it as an exceptional I/O error
 
     let stdout_reader = child.stdout.take().ok_or_else(|| {
-        GenexErr::Io(io::Error::other(
+        RuxexErr::Io(io::Error::other(
             "stdout pipe was unexpectedly not available",
         ))
     })?;
     let stderr_reader = child.stderr.take().ok_or_else(|| {
-        GenexErr::Io(io::Error::other(
+        RuxexErr::Io(io::Error::other(
             "stderr pipe was unexpectedly not available",
         ))
     })?;
@@ -693,7 +693,7 @@ async fn consume_output(
                     // remaining members of the original process group.
                     let process_group_id = child.id();
                     let should_escalate = if let Some(process_group_id) = process_group_id {
-                        genex_utils_pty::process_group::terminate_process_group(process_group_id)?
+                        ruxex_utils_pty::process_group::terminate_process_group(process_group_id)?
                     } else {
                         false
                     };
@@ -708,7 +708,7 @@ async fn consume_output(
                             if should_escalate
                                 && let Some(process_group_id) = process_group_id
                             {
-                                genex_utils_pty::process_group::kill_process_group(
+                                ruxex_utils_pty::process_group::kill_process_group(
                                     process_group_id,
                                 )?;
                             }
@@ -799,7 +799,7 @@ async fn consume_output(
             Some(Ok(output)) => output,
             failure => {
                 let cleanup = process_group_id
-                    .map_or(Ok(()), genex_utils_pty::process_group::kill_process_group);
+                    .map_or(Ok(()), ruxex_utils_pty::process_group::kill_process_group);
                 stdout_handle.abort();
                 stderr_handle.abort();
                 if !stdout_done {

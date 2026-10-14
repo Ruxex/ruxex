@@ -1,6 +1,6 @@
-use genex_file_system::FileSystemSandboxContext;
-use genex_file_system::WireFileSystemSandboxContext;
-use genex_utils_path_uri::PathUri;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_file_system::WireFileSystemSandboxContext;
+use ruxex_utils_path_uri::PathUri;
 use opentelemetry::trace::TraceContextExt;
 use std::sync::Arc;
 
@@ -81,7 +81,7 @@ pub(crate) fn build_router() -> RpcRouter<ExecServerHandler> {
         |handler: Arc<ExecServerHandler>, params: WireExecParams, trace| async move {
             let launch_context = trace
                 .as_ref()
-                .and_then(genex_otel::context_from_w3c_trace_context)
+                .and_then(ruxex_otel::context_from_w3c_trace_context)
                 .map(|context| context.span().span_context().clone());
             handler.exec(params.into(), launch_context).await
         },

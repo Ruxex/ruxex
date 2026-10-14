@@ -1,17 +1,17 @@
 ---
 name: skill-creator
-description: Create or update a Genex skill with appropriately scoped instructions and any needed supporting resources.
+description: Create or update a Ruxex skill with appropriately scoped instructions and any needed supporting resources.
 metadata:
   short-description: Create or update a skill
 ---
 
 # Skill Creator
 
-Create skills that give Genex useful, non-obvious guidance without constraining unrelated work.
+Create skills that give Ruxex useful, non-obvious guidance without constraining unrelated work.
 
 ## Core Principles
 
-**Assume Genex is already capable.** Include only information that changes its decisions or improves its work. Remove generic advice, repeated instructions, speculative edge cases, and examples that do not materially clarify the task.
+**Assume Ruxex is already capable.** Include only information that changes its decisions or improves its work. Remove generic advice, repeated instructions, speculative edge cases, and examples that do not materially clarify the task.
 
 **Preserve user intent and scope.** A skill should support the requested task, not replace the user's chosen product, expand the assignment, modify unrelated configuration, or imply permission for additional external actions. Do not turn a particular example, past failure, or personal preference into a universal requirement.
 
@@ -37,7 +37,7 @@ skill-name/
 |   |-- YAML frontmatter     Required name and description
 |   `-- Markdown body        Instructions loaded when the skill is used
 |-- agents/                  Optional UI metadata and invocation policy
-|   `-- genex.yaml
+|   `-- ruxex.yaml
 |-- scripts/                 Optional executable helpers
 |-- references/              Optional documentation loaded as needed
 `-- assets/                  Optional files used in generated output
@@ -89,7 +89,7 @@ Use `assets/` for files that belong in generated output rather than in the model
 
 ### UI Metadata and Invocation Policy
 
-`agents/genex.yaml` can provide UI-facing metadata such as `display_name`, `short_description`, and `default_prompt`, along with invocation policy. When creating or updating those settings, read [references/genex_yaml.md](references/genex_yaml.md) and keep the values consistent with the skill.
+`agents/ruxex.yaml` can provide UI-facing metadata such as `display_name`, `short_description`, and `default_prompt`, along with invocation policy. When creating or updating those settings, read [references/ruxex_yaml.md](references/ruxex_yaml.md) and keep the values consistent with the skill.
 
 Automatic skill selection is allowed by default. Change that default only when the user explicitly requests an explicit-only skill:
 
@@ -98,12 +98,12 @@ policy:
   allow_implicit_invocation: false
 ```
 
-This keeps the skill available when explicitly invoked as `$skill-name` without adding it to the model context automatically. Preserve unrelated existing UI, policy, and dependency fields when updating `agents/genex.yaml`.
+This keeps the skill available when explicitly invoked as `$skill-name` without adding it to the model context automatically. Preserve unrelated existing UI, policy, and dependency fields when updating `agents/ruxex.yaml`.
 
 The initializer creates this file automatically. For new or interface-only metadata, generate it with:
 
 ```bash
-scripts/generate_genex_yaml.py <path/to/skill-folder> --interface key=value
+scripts/generate_ruxex_yaml.py <path/to/skill-folder> --interface key=value
 ```
 
 The generator replaces the entire file. If an existing file contains `policy` or `dependencies`, update only the intended fields in place instead of regenerating it.
@@ -148,7 +148,7 @@ These examples illustrate options, not a required structure. Choose the organiza
 
 Adapt the work to the request. Creating a complex new skill may involve understanding realistic use cases, choosing supporting resources, initializing files, writing instructions, and validating the result. A narrow update to an existing skill may require only a focused edit and validation.
 
-Ask clarifying questions only when the missing information matters and cannot be reasonably inferred. Respect a user-specified location; otherwise create discoverable skills in `$GENEX_HOME/skills`, or `~/.genex/skills` when `GENEX_HOME` is unset.
+Ask clarifying questions only when the missing information matters and cannot be reasonably inferred. Respect a user-specified location; otherwise create discoverable skills in `$RUXEX_HOME/skills`, or `~/.ruxex/skills` when `RUXEX_HOME` is unset.
 
 Keep automatic skill selection enabled unless the user explicitly requests an explicit-only skill. When the intended invocation mode is genuinely unclear and matters to the requested workflow, ask whether the user wants normal automatic discovery or explicit-only invocation; otherwise preserve the default. Do not infer explicit-only invocation from sensitive operations or required approvals: keep the skill discoverable and require authorization immediately before the actual mutation. Preserve an existing skill's invocation policy unless the user asks to change it.
 
@@ -178,13 +178,13 @@ scripts/init_skill.py <skill-name> --path <output-directory> [--resources script
 For example:
 
 ```bash
-scripts/init_skill.py my-skill --path "${GENEX_HOME:-$HOME/.genex}/skills"
-scripts/init_skill.py my-skill --path "${GENEX_HOME:-$HOME/.genex}/skills" --resources references
+scripts/init_skill.py my-skill --path "${RUXEX_HOME:-$HOME/.ruxex}/skills"
+scripts/init_skill.py my-skill --path "${RUXEX_HOME:-$HOME/.ruxex}/skills" --resources references
 ```
 
 Request only the resource directories the skill needs. Use `--examples` only when concrete placeholders would help, and replace or remove them before finishing. Do not initialize an existing skill again.
 
-The initializer creates the skill directory, a concise `SKILL.md` starter, and `agents/genex.yaml`. It creates resource directories and example files only when requested. Pass generated UI values as `--interface key=value` when needed.
+The initializer creates the skill directory, a concise `SKILL.md` starter, and `agents/ruxex.yaml`. It creates resource directories and example files only when requested. Pass generated UI values as `--interface key=value` when needed.
 
 ### Write the Instructions
 
@@ -198,7 +198,7 @@ description: Create or edit Word documents when formatting, tracked changes, or 
 
 Put detailed workflows, tool choices, examples, and operating modes in the body or relevant references rather than listing them all in the description. Preserve supported optional frontmatter, such as existing `metadata`, when appropriate.
 
-Write only the instructions needed for another Genex instance to perform the task well. State the desired outcome, non-obvious context, real constraints, and relevant references or tools. Preserve the user's explicit choices and existing authorization boundaries. Avoid prescribing a fixed structure, process, or number of steps when the task does not require one.
+Write only the instructions needed for another Ruxex instance to perform the task well. State the desired outcome, non-obvious context, real constraints, and relevant references or tools. Preserve the user's explicit choices and existing authorization boundaries. Avoid prescribing a fixed structure, process, or number of steps when the task does not require one.
 
 ### Validate and Iterate
 

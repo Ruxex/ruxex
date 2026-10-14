@@ -4,7 +4,7 @@ use crate::context::ContextWindowGuidance;
 use crate::context::ContextualUserFragment;
 use crate::context::world_state::WorldState;
 use crate::context::world_state::WorldStateSnapshot;
-use genex_protocol::models::ResponseItem;
+use ruxex_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use test_case::test_case;

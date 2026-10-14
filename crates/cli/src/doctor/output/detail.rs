@@ -231,7 +231,7 @@ fn install_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<
         expected: None,
     });
 
-    let path_entries = numbered_values(parsed, "PATH genex #");
+    let path_entries = numbered_values(parsed, "PATH ruxex #");
     if !path_entries.is_empty() {
         let total = path_entries.len();
         let shown = if options.show_all {
@@ -270,9 +270,9 @@ fn install_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<
             "managed by pnpm",
             "managed by Vite+",
             "managed package root",
-            "PATH genex entries",
+            "PATH ruxex entries",
         ],
-        &["PATH genex #"],
+        &["PATH ruxex #"],
     );
     out
 }
@@ -403,7 +403,7 @@ fn config_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<H
         &mut out,
         parsed,
         &[
-            "GENEX_HOME",
+            "RUXEX_HOME",
             "cwd",
             "model",
             "model provider",
@@ -425,7 +425,7 @@ fn config_details(parsed: &[ParsedDetail], options: HumanOutputOptions) -> Vec<H
 
 fn state_details(parsed: &[ParsedDetail]) -> Vec<HumanDetail> {
     let mut out = Vec::new();
-    push_row_if_present(&mut out, parsed, "GENEX_HOME", "GENEX_HOME");
+    push_row_if_present(&mut out, parsed, "RUXEX_HOME", "RUXEX_HOME");
     push_row_if_present(&mut out, parsed, "log dir", "log dir");
     push_row_if_present(&mut out, parsed, "sqlite home", "sqlite home");
     push_database_row(&mut out, parsed, "state DB");
@@ -449,7 +449,7 @@ fn state_details(parsed: &[ParsedDetail]) -> Vec<HumanDetail> {
         &mut out,
         parsed,
         &[
-            "GENEX_HOME",
+            "RUXEX_HOME",
             "log dir",
             "sqlite home",
             "state DB",
@@ -747,7 +747,7 @@ fn value<'a>(parsed: &'a [ParsedDetail], label: &str) -> Option<&'a str> {
 
 fn display_label(label: &str) -> String {
     match label {
-        "genex-linux-sandbox helper" => "linux helper",
+        "ruxex-linux-sandbox helper" => "linux helper",
         "optional reachability failed" => "optional reachability",
         other => other,
     }

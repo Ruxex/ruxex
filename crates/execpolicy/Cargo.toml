@@ -1,17 +1,17 @@
 [package]
-name = "genex-execpolicy"
+name = "ruxex-execpolicy"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Genex exec policy: prefix-based Starlark rules for command decisions."
+description = "Ruxex exec policy: prefix-based Starlark rules for command decisions."
 
 [lib]
-name = "genex_execpolicy"
+name = "ruxex_execpolicy"
 path = "src/lib.rs"
 doctest = false
 
 [[bin]]
-name = "genex-execpolicy"
+name = "ruxex-execpolicy"
 path = "src/main.rs"
 
 [lints]
@@ -20,7 +20,7 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 multimap = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

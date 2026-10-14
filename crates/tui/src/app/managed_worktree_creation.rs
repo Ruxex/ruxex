@@ -7,8 +7,8 @@ use super::*;
 use crate::app_event::ManagedWorktreeCreated;
 use crate::app_event::ManagedWorktreeTransition;
 use crate::history_cell::McpInventoryLoadingCell as LoadingCell;
-use genex_app_server_protocol::ThreadBackgroundTerminalsListParams;
-use genex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsListParams;
+use ruxex_app_server_protocol::ThreadBackgroundTerminalsListResponse as ListResponse;
 
 pub(super) fn background_terminals_blocker(
     result: Result<ListResponse, TypedRequestError>,
@@ -25,7 +25,7 @@ pub(super) fn background_terminals_blocker(
                             || source.message.contains("unknown method"))) =>
         {
             Some(
-                "The local Genex service cannot check background terminals. Restart Genex and try again.",
+                "The local Ruxex service cannot check background terminals. Restart Ruxex and try again.",
             )
         }
         _ => Some("Active background terminals block /cd."),
@@ -41,7 +41,7 @@ impl App {
     ) {
         if !self.config.features.enabled(Feature::Worktrees) {
             self.chat_widget.add_error_message(
-                "Enable worktrees in your Genex configuration to create a worktree.".to_string(),
+                "Enable worktrees in your Ruxex configuration to create a worktree.".to_string(),
             );
         } else if self.config.active_project.is_untrusted() {
             self.chat_widget.add_error_message(
@@ -160,17 +160,17 @@ impl App {
                     "Cannot create a worktree from an explicitly untrusted source."
                 );
                 let host = crate::legacy_core::config::load_config_toml_with_layer_stack(
-                    &self.config.genex_home,
+                    &self.config.ruxex_home,
                     /*cwd*/ None,
                     Vec::new(),
-                    genex_config::ConfigLoadOptions::default(),
+                    ruxex_config::ConfigLoadOptions::default(),
                 )
                 .await?;
-                let settings = genex_worktree::WorktreeSettings::for_cli(
-                    &self.config.genex_home,
+                let settings = ruxex_worktree::WorktreeSettings::for_cli(
+                    &self.config.ruxex_home,
                     host.config_toml.desktop.as_ref(),
                 )?;
-                let manager = genex_worktree::WorktreeManager::new(settings);
+                let manager = ruxex_worktree::WorktreeManager::new(settings);
                 anyhow::Ok(manager)
             }
             .await;
@@ -183,7 +183,7 @@ impl App {
                         let create_cwd = source_cwd.to_path_buf();
                         let result = tokio::task::spawn_blocking(move || {
                             manager
-                                .create(&genex_worktree::CreateWorktree {
+                                .create(&ruxex_worktree::CreateWorktree {
                                     source_cwd: create_cwd,
                                     base: None,
                                 })
@@ -254,7 +254,7 @@ impl App {
             Ok(_) => {
                 return self.retained_worktree_error(
                     &checkout,
-                    "The new worktree is not trusted; run Genex there.",
+                    "The new worktree is not trusted; run Ruxex there.",
                 );
             }
             Err(error) => {
@@ -277,7 +277,7 @@ impl App {
 
     fn retained_worktree_error(
         &mut self,
-        checkout: &genex_worktree::ManagedWorktree,
+        checkout: &ruxex_worktree::ManagedWorktree,
         reason: impl std::fmt::Display,
     ) {
         self.working_directory_error(format!(

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 
 use super::SkillInterfaceAssetPolicy;

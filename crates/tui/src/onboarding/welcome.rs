@@ -34,7 +34,7 @@ impl WidgetRef for &WelcomeWidget {
         let lines = vec![Line::from(vec![
             "  ".into(),
             "Welcome to ".into(),
-            "Genex".bold(),
+            "Ruxex".bold(),
             ", provider's command-line coding agent".into(),
         ])];
 

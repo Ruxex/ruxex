@@ -1,5 +1,5 @@
 [package]
-name = "genex-file-system"
+name = "ruxex-file-system"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,9 +9,9 @@ workspace = true
 
 [dependencies]
 bytes = { workspace = true }
-genex-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 

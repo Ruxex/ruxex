@@ -1,4 +1,4 @@
-//! Types used to define loaded and effective Genex configuration values.
+//! Types used to define loaded and effective Ruxex configuration values.
 
 // Note this file should generally be restricted to simple struct/enum
 // definitions that do not contain business logic.
@@ -15,11 +15,11 @@ pub use crate::mcp_types::McpServerToolConfig;
 pub use crate::mcp_types::McpServerTransportConfig;
 pub use crate::mcp_types::RawMcpServerConfig;
 pub use crate::shell_environment_policy::ShellEnvironmentPolicyToml;
-pub use genex_protocol::config_types::AltScreenMode;
-pub use genex_protocol::config_types::ModeKind;
-pub use genex_protocol::config_types::ServiceTier;
-pub use genex_protocol::config_types::WebSearchMode;
-use genex_utils_absolute_path::AbsolutePathBuf;
+pub use ruxex_protocol::config_types::AltScreenMode;
+pub use ruxex_protocol::config_types::ModeKind;
+pub use ruxex_protocol::config_types::ServiceTier;
+pub use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
@@ -78,7 +78,7 @@ impl fmt::Display for SessionPickerViewMode {
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ResumeCwdMode {
-    /// Use the directory where Genex was launched.
+    /// Use the directory where Ruxex was launched.
     Current,
     /// Use the latest working directory recorded in the selected session.
     Session,
@@ -93,33 +93,33 @@ impl ResumeCwdMode {
     }
 }
 
-/// Determine where Genex should store CLI auth credentials.
+/// Determine where Ruxex should store CLI auth credentials.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthCredentialsStoreMode {
     #[default]
-    /// Persist credentials in GENEX_HOME/auth.json.
+    /// Persist credentials in RUXEX_HOME/auth.json.
     File,
     /// Persist credentials in the keyring. Fail if unavailable.
     Keyring,
-    /// Use keyring when available; otherwise, fall back to a file in GENEX_HOME.
+    /// Use keyring when available; otherwise, fall back to a file in RUXEX_HOME.
     Auto,
     /// Store credentials in memory only for the current process.
     Ephemeral,
 }
 
-/// Determine where Genex should store and read MCP credentials.
+/// Determine where Ruxex should store and read MCP credentials.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum OAuthCredentialsStoreMode {
     /// Prefer `Keyring` and use `File` when keyring storage is unavailable.
     /// Once an MCP client loads credentials from one store, that client keeps the resolved store
     /// for its lifetime so refreshes cannot switch to a possibly stale credential source.
-    /// Credentials stored in the keyring will only be readable by Genex unless the user explicitly grants access via OS-level keyring access.
+    /// Credentials stored in the keyring will only be readable by Ruxex unless the user explicitly grants access via OS-level keyring access.
     #[default]
     Auto,
-    /// GENEX_HOME/.credentials.json
-    /// This file will be readable to Genex and other applications running as the same user.
+    /// RUXEX_HOME/.credentials.json
+    /// This file will be readable to Ruxex and other applications running as the same user.
     File,
     /// Keyring when available, otherwise fail.
     Keyring,
@@ -160,7 +160,7 @@ pub enum UriBasedFileOpener {
     None,
 }
 
-/// Settings that govern if and what will be written to `~/.genex/history.jsonl`.
+/// Settings that govern if and what will be written to `~/.ruxex/history.jsonl`.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
 #[serde(default)]
 #[schemars(deny_unknown_fields)]
@@ -189,7 +189,7 @@ pub enum HistoryPersistence {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct MetricsConfigToml {
-    /// When `false`, disables metrics across Genex product surfaces in this profile.
+    /// When `false`, disables metrics across Ruxex product surfaces in this profile.
     pub enabled: Option<bool>,
 }
 
@@ -242,7 +242,7 @@ pub enum OtelExporterKind {
 pub struct OtelConfigToml {
     /// Byte limit for tool-result log output; independent of model-visible output.
     #[serde(default)]
-    pub tool_result: genex_protocol::config_types::ToolResultLogConfig,
+    pub tool_result: ruxex_protocol::config_types::ToolResultLogConfig,
     /// Log user prompt in traces
     pub log_user_prompt: Option<bool>,
 
@@ -268,7 +268,7 @@ pub struct OtelConfigToml {
 /// Effective OTEL settings after defaults are applied.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OtelConfig {
-    pub tool_result: genex_protocol::config_types::ToolResultLogConfig,
+    pub tool_result: ruxex_protocol::config_types::ToolResultLogConfig,
     pub log_user_prompt: bool,
     pub environment: String,
     pub exporter: OtelExporterKind,
@@ -371,7 +371,7 @@ pub struct ModelAvailabilityNuxConfig {
     pub shown_count: HashMap<String, u32>,
 }
 
-/// Fallback resize-reflow row cap when Genex cannot identify a terminal-specific scrollback size.
+/// Fallback resize-reflow row cap when Ruxex cannot identify a terminal-specific scrollback size.
 pub const DEFAULT_TERMINAL_RESIZE_REFLOW_FALLBACK_MAX_ROWS: usize = 1_000;
 
 /// Collection of settings that are specific to the TUI.
@@ -461,7 +461,7 @@ pub struct Tui {
     /// Syntax highlighting theme name (kebab-case).
     ///
     /// When set, overrides automatic light/dark theme detection.
-    /// Use `/theme` in the TUI or see `$GENEX_HOME/themes` for custom themes.
+    /// Use `/theme` in the TUI or see `$RUXEX_HOME/themes` for custom themes.
     #[serde(default)]
     pub theme: Option<String>,
 
@@ -486,7 +486,7 @@ pub struct Tui {
     pub model_availability_nux: ModelAvailabilityNuxConfig,
 
     /// Trim terminal resize-reflow replay to the most recent rendered terminal rows when the
-    /// transcript exceeds this cap. Omit to use Genex's terminal-specific default. Set to `0` to
+    /// transcript exceeds this cap. Omit to use Ruxex's terminal-specific default. Set to `0` to
     /// keep all rendered rows.
     #[serde(default)]
     #[schemars(range(min = 0))]
@@ -498,7 +498,7 @@ const fn default_true() -> bool {
 }
 
 /// Settings for notices we display to users via the tui and app-server clients
-/// (primarily the Genex IDE extension). NOTE: these are different from
+/// (primarily the Ruxex IDE extension). NOTE: these are different from
 /// notifications - notices are warnings, NUX screens, acknowledgements, etc.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
 #[schemars(deny_unknown_fields)]
@@ -554,7 +554,7 @@ pub struct PluginConfig {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct PluginMcpServerConfig {
-    /// When `false`, Genex skips initializing this plugin MCP server.
+    /// When `false`, Ruxex skips initializing this plugin MCP server.
     #[serde(default = "default_enabled")]
     pub enabled: bool,
 
@@ -637,10 +637,10 @@ impl PluginMcpServerEmaAuthConfig {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
 #[schemars(deny_unknown_fields)]
 pub struct MarketplaceConfig {
-    /// Last time Genex successfully added or refreshed this marketplace.
+    /// Last time Ruxex successfully added or refreshed this marketplace.
     #[serde(default)]
     pub last_updated: Option<String>,
-    /// Git revision Genex last successfully activated for this marketplace.
+    /// Git revision Ruxex last successfully activated for this marketplace.
     #[serde(default)]
     pub last_revision: Option<String>,
     /// Source kind used to install this marketplace.

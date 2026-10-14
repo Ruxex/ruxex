@@ -1,17 +1,17 @@
 use super::shared::v2_enum_from_core;
 use crate::JsonSchema;
 use crate::TS;
-use genex_protocol::protocol::HookEventName as CoreHookEventName;
-use genex_protocol::protocol::HookExecutionMode as CoreHookExecutionMode;
-use genex_protocol::protocol::HookHandlerType as CoreHookHandlerType;
-use genex_protocol::protocol::HookOutputEntry as CoreHookOutputEntry;
-use genex_protocol::protocol::HookOutputEntryKind as CoreHookOutputEntryKind;
-use genex_protocol::protocol::HookRunStatus as CoreHookRunStatus;
-use genex_protocol::protocol::HookRunSummary as CoreHookRunSummary;
-use genex_protocol::protocol::HookScope as CoreHookScope;
-use genex_protocol::protocol::HookSource as CoreHookSource;
-use genex_protocol::protocol::HookTrustStatus as CoreHookTrustStatus;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::protocol::HookEventName as CoreHookEventName;
+use ruxex_protocol::protocol::HookExecutionMode as CoreHookExecutionMode;
+use ruxex_protocol::protocol::HookHandlerType as CoreHookHandlerType;
+use ruxex_protocol::protocol::HookOutputEntry as CoreHookOutputEntry;
+use ruxex_protocol::protocol::HookOutputEntryKind as CoreHookOutputEntryKind;
+use ruxex_protocol::protocol::HookRunStatus as CoreHookRunStatus;
+use ruxex_protocol::protocol::HookRunSummary as CoreHookRunSummary;
+use ruxex_protocol::protocol::HookScope as CoreHookScope;
+use ruxex_protocol::protocol::HookSource as CoreHookSource;
+use ruxex_protocol::protocol::HookTrustStatus as CoreHookTrustStatus;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 

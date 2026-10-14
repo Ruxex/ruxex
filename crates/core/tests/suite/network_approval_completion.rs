@@ -9,14 +9,14 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::items::CommandExecutionStatus;
-use genex_protocol::items::TurnItem;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::items::CommandExecutionStatus;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::managed_network_requirements_loader;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -27,8 +27,8 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::startup::STARTUP_TIMEOUT;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -153,7 +153,7 @@ async fn completed_remote_process_withdraws_pending_network_review() -> Result<(
             }
         }
     });
-    let test = test_genex()
+    let test = test_ruxex()
         .with_exec_server_url(exec_server_url)
         .with_cloud_config_bundle(managed_network_requirements_loader())
         .with_pre_build_hook(|home| {
@@ -181,7 +181,7 @@ allow_local_binding = true
         test.session_configured.permission_profile.clone(),
         test.config.cwd.as_path(),
     );
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "build the site".into(),
@@ -198,7 +198,7 @@ allow_local_binding = true
         .await?;
     let completed = timeout(Duration::from_secs(/*secs*/ 15), async {
         loop {
-            match test.genex.next_event().await?.msg {
+            match test.ruxex.next_event().await?.msg {
                 EventMsg::ItemCompleted(event) => {
                     if let TurnItem::CommandExecution(item) = event.item {
                         return Ok::<_, anyhow::Error>(item);

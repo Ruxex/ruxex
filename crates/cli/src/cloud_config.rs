@@ -1,13 +1,13 @@
 use anyhow::Context;
 use anyhow::Result;
-use genex_app_server::runtime::mount_provider_home_for_config;
-use genex_core::config::Config;
-use genex_core::config::ConfigBuilder;
-use genex_core::config::ConfigOverrides;
-use genex_core::config::LoaderOverrides;
-use genex_core::config::find_genex_home;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cli::CliConfigOverrides;
+use ruxex_app_server::runtime::mount_provider_home_for_config;
+use ruxex_core::config::Config;
+use ruxex_core::config::ConfigBuilder;
+use ruxex_core::config::ConfigOverrides;
+use ruxex_core::config::LoaderOverrides;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
 
 pub(crate) async fn load_config(
     config_overrides: &CliConfigOverrides,
@@ -39,14 +39,14 @@ pub(crate) async fn config_builder(
     let cli_overrides = config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
-    let genex_home = find_genex_home().context("failed to resolve GENEX_HOME")?;
+    let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
     let cwd = match harness_overrides.cwd.as_deref() {
         Some(cwd) => AbsolutePathBuf::relative_to_current_dir(cwd),
         None => AbsolutePathBuf::current_dir(),
     }
     .context("failed to resolve current directory")?;
     Ok(ConfigBuilder::default()
-        .genex_home(genex_home.to_path_buf())
+        .ruxex_home(ruxex_home.to_path_buf())
         .cli_overrides(cli_overrides)
         .loader_overrides(loader_overrides)
         .harness_overrides(harness_overrides)

@@ -7,11 +7,11 @@ use crate::responses_metadata::TurnToolNamespacesInfo;
 use crate::responses_metadata::TurnToolSource;
 use crate::tools::registry::ToolExposure;
 use crate::tools::registry::ToolRegistry;
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::TOOL_SEARCH_TOOL_NAME;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::TOOL_SEARCH_TOOL_NAME;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 
 const TOOL_SEARCH_FUNCTION_NAME: &str = "tool_search_tool";
 

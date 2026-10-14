@@ -4,24 +4,24 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use std::sync::Arc;
 
-use genex_exec_server::FileSystemSandboxContext;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionMetrics;
-use genex_extension_api::FunctionCallError;
-use genex_extension_api::JsonToolOutput;
-use genex_extension_api::ResponsesApiTool;
-use genex_extension_api::SelectedPluginSnapshot;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolExecutor;
-use genex_extension_api::ToolName;
-use genex_extension_api::ToolOutput;
-use genex_extension_api::ToolSpec;
-use genex_extension_api::parse_tool_input_schema;
-use genex_mcp::McpResourceClient;
-use genex_otel::sanitize_metric_tag_value;
-use genex_tools::ResponsesApiNamespace;
-use genex_tools::ResponsesApiNamespaceTool;
-use genex_tools::default_namespace_description;
+use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_extension_api::FunctionCallError;
+use ruxex_extension_api::JsonToolOutput;
+use ruxex_extension_api::ResponsesApiTool;
+use ruxex_extension_api::SelectedPluginSnapshot;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_extension_api::ToolName;
+use ruxex_extension_api::ToolOutput;
+use ruxex_extension_api::ToolSpec;
+use ruxex_extension_api::parse_tool_input_schema;
+use ruxex_mcp::McpResourceClient;
+use ruxex_otel::sanitize_metric_tag_value;
+use ruxex_tools::ResponsesApiNamespace;
+use ruxex_tools::ResponsesApiNamespaceTool;
+use ruxex_tools::default_namespace_description;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -136,7 +136,7 @@ impl SkillMetrics {
                 .unwrap_or("unknown");
             let invoke_type = if implicit { "implicit" } else { "explicit" };
             metrics.counter(
-                "genex.skill.injected",
+                "ruxex.skill.injected",
                 /*inc*/ 1,
                 &[
                     ("status", "ok"),

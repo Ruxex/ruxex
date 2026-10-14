@@ -2,7 +2,7 @@
 //!
 //! Each test sets up a mocked SSE conversation and drives the conversation through
 //! a specific sequence of operations. After every operation we capture the
-//! request payload that Genex would send to the model and assert that the
+//! request payload that Ruxex would send to the model and assert that the
 //! model-visible history matches the expected sequence of messages.
 
 use super::compact::COMPACT_WARNING_MESSAGE;
@@ -18,24 +18,24 @@ use core_test_support::responses::ev_completed;
 use core_test_support::responses::mount_sse_once_match;
 use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
-use genex_core::GenexThread;
-use genex_core::ThreadManager;
-use genex_core::TurnInputRequest;
-use genex_core::compact::SUMMARIZATION_PROMPT;
-use genex_core::config::Config;
-use genex_core::spawn::GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_history::GenexHarnessMetadata;
-use genex_history::RolloutItem;
-use genex_protocol::mcp::ClientMcpExtensions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::WarningEvent;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::RuxexThread;
+use ruxex_core::ThreadManager;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::compact::SUMMARIZATION_PROMPT;
+use ruxex_core::config::Config;
+use ruxex_core::spawn::RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_history::RuxexHarnessMetadata;
+use ruxex_history::RolloutItem;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -48,7 +48,7 @@ const AFTER_SECOND_RESUME: &str = "AFTER_SECOND_RESUME";
 const CHECKPOINT_METADATA_KEY: &str = "replacement_history_metadata";
 
 fn network_disabled() -> bool {
-    std::env::var(GENEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok()
+    std::env::var(RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok()
 }
 
 fn body_contains_text(body: &str, text: &str) -> bool {
@@ -85,7 +85,7 @@ fn seed_first_checkpoint_harness_metadata(path: &Path, retained_text: &str) -> R
     let mut lines = std::fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?;
     let replacement_history = lines
         .iter_mut()
@@ -99,7 +99,7 @@ fn seed_first_checkpoint_harness_metadata(path: &Path, retained_text: &str) -> R
         .find(|envelope| response_message_contains_text(&envelope.item, retained_text))
         .context("retained user message missing from first compacted checkpoint")?;
     for envelope in replacement_history {
-        envelope.metadata = Some(GenexHarnessMetadata::default());
+        envelope.metadata = Some(RuxexHarnessMetadata::default());
     }
 
     let rewritten = lines
@@ -118,7 +118,7 @@ fn assert_latest_checkpoint_retains_harness_metadata(
     let replacement_history = std::fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())
-        .map(genex_rollout::parse_rollout_line)
+        .map(ruxex_rollout::parse_rollout_line)
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .rev()
@@ -614,12 +614,12 @@ async fn mount_second_compact_sequence(server: &MockServer) -> ResponseMock {
 async fn start_test_conversation(
     server: &MockServer,
     model: Option<&str>,
-) -> (Arc<TempDir>, Config, Arc<ThreadManager>, Arc<GenexThread>) {
+) -> (Arc<TempDir>, Config, Arc<ThreadManager>, Arc<RuxexThread>) {
     let base_url = format!("{}/v1", server.uri());
     let model = model.map(str::to_string);
     let mut extensions = ExtensionRegistryBuilder::new();
     extensions.thread_lifecycle_contributor(Arc::new(ThreadIdle));
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(move |config| {
             config.update_plan_enabled = true;
@@ -633,10 +633,10 @@ async fn start_test_conversation(
     let test = Box::pin(builder.build(server))
         .await
         .expect("create conversation");
-    (test.home, test.config, test.thread_manager, test.genex)
+    (test.home, test.config, test.thread_manager, test.ruxex)
 }
 
-async fn user_turn(conversation: &Arc<GenexThread>, text: &str) {
+async fn user_turn(conversation: &Arc<RuxexThread>, text: &str) {
     conversation
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: text.into(),
@@ -648,7 +648,7 @@ async fn user_turn(conversation: &Arc<GenexThread>, text: &str) {
     ThreadIdle::wait(conversation).await;
 }
 
-async fn compact_conversation(conversation: &Arc<GenexThread>) {
+async fn compact_conversation(conversation: &Arc<RuxexThread>) {
     conversation
         .submit(Op::Compact)
         .await
@@ -668,11 +668,11 @@ async fn compact_conversation(conversation: &Arc<GenexThread>) {
     ThreadIdle::wait(conversation).await;
 }
 
-fn fetch_conversation_path(conversation: &Arc<GenexThread>) -> std::path::PathBuf {
+fn fetch_conversation_path(conversation: &Arc<RuxexThread>) -> std::path::PathBuf {
     conversation.rollout_path().expect("rollout path")
 }
 
-async fn shutdown_conversation(conversation: &Arc<GenexThread>) {
+async fn shutdown_conversation(conversation: &Arc<RuxexThread>) {
     conversation
         .shutdown_and_wait()
         .await
@@ -683,7 +683,7 @@ async fn resume_conversation(
     manager: &ThreadManager,
     config: &Config,
     path: std::path::PathBuf,
-) -> Arc<GenexThread> {
+) -> Arc<RuxexThread> {
     Box::pin(manager.resume_thread_from_rollout(
         config.clone(),
         path,
@@ -701,10 +701,10 @@ async fn fork_thread(
     config: &Config,
     path: std::path::PathBuf,
     nth_user_message: usize,
-) -> Arc<GenexThread> {
+) -> Arc<RuxexThread> {
     Box::pin(manager.fork_thread(
         nth_user_message,
-        genex_core::StartThreadOptions::new(config.clone()),
+        ruxex_core::StartThreadOptions::new(config.clone()),
         path,
     ))
     .await

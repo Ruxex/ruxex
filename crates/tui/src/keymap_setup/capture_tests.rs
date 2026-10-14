@@ -14,7 +14,7 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::TuiKeymap;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::mpsc::unbounded_channel;

@@ -1,15 +1,15 @@
 use std::fs;
 
-use genex_exec_server::CapabilityRootDiscoverRequest;
-use genex_exec_server::CapabilityRootsDiscoverParams;
-use genex_exec_server::LOCAL_FS;
-use genex_exec_server::discover_capability_roots;
-use genex_protocol::protocol::Product;
-use genex_skills::EnvironmentSkillMetadata;
-use genex_skills::SkillDependencies;
-use genex_skills::SkillPolicy;
-use genex_skills::SkillToolDependency;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server::CapabilityRootDiscoverRequest;
+use ruxex_exec_server::CapabilityRootsDiscoverParams;
+use ruxex_exec_server::LOCAL_FS;
+use ruxex_exec_server::discover_capability_roots;
+use ruxex_protocol::protocol::Product;
+use ruxex_skills::EnvironmentSkillMetadata;
+use ruxex_skills::SkillDependencies;
+use ruxex_skills::SkillPolicy;
+use ruxex_skills::SkillToolDependency;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 
@@ -20,10 +20,10 @@ use super::load_environment_skills_from_root;
 async fn direct_environment_loader_preserves_plugin_dependencies_and_product_policy() {
     let root = tempdir().expect("tempdir");
     let skill_dir = root.path().join("skills/deploy");
-    fs::create_dir_all(root.path().join(".genex-plugin")).expect("manifest dir");
+    fs::create_dir_all(root.path().join(".ruxex-plugin")).expect("manifest dir");
     fs::create_dir_all(skill_dir.join("agents")).expect("metadata dir");
     fs::write(
-        root.path().join(".genex-plugin/plugin.json"),
+        root.path().join(".ruxex-plugin/plugin.json"),
         r#"{"name":"demo-plugin"}"#,
     )
     .expect("manifest");
@@ -33,7 +33,7 @@ async fn direct_environment_loader_preserves_plugin_dependencies_and_product_pol
     )
     .expect("skill");
     fs::write(
-        skill_dir.join("agents/genex.yaml"),
+        skill_dir.join("agents/ruxex.yaml"),
         r#"
 dependencies:
   tools:
@@ -86,10 +86,10 @@ policy:
 #[tokio::test]
 async fn executor_bundle_parser_matches_direct_environment_loader() {
     let root = tempdir().expect("tempdir");
-    let plugin_manifest = root.path().join(".genex-plugin/plugin.json");
+    let plugin_manifest = root.path().join(".ruxex-plugin/plugin.json");
     let nested_manifest = root.path().join("nested/.claude-plugin/plugin.json");
     let deploy_skill = root.path().join("skills/deploy/SKILL.md");
-    let deploy_metadata = root.path().join("skills/deploy/agents/genex.yaml");
+    let deploy_metadata = root.path().join("skills/deploy/agents/ruxex.yaml");
     let audit_skill = root.path().join("nested/skills/audit/SKILL.md");
     for (path, contents) in [
         (&plugin_manifest, r#"{"name":"demo"}"#),
@@ -161,7 +161,7 @@ async fn executor_bundle_parser_matches_direct_environment_loader() {
 async fn executor_bundle_preserves_parent_namespace_and_manifest_precedence() {
     let plugin = tempdir().expect("tempdir");
     for (relative_path, name) in [
-        (".genex-plugin/plugin.json", "genex-name"),
+        (".ruxex-plugin/plugin.json", "ruxex-name"),
         (".claude-plugin/plugin.json", "claude-name"),
         (".cursor-plugin/plugin.json", "cursor-name"),
     ] {
@@ -208,7 +208,7 @@ async fn executor_bundle_preserves_parent_namespace_and_manifest_precedence() {
         discovery.namespace_manifests[0]
             .path
             .to_string()
-            .ends_with("/.genex-plugin/plugin.json")
+            .ends_with("/.ruxex-plugin/plugin.json")
     );
     assert_eq!(bundled.warnings, existing.warnings);
     assert_eq!(
@@ -219,5 +219,5 @@ async fn executor_bundle_preserves_parent_namespace_and_manifest_precedence() {
             .collect::<Vec<_>>(),
         existing.skills
     );
-    assert_eq!(bundled.skills[0].metadata.name, "genex-name:search");
+    assert_eq!(bundled.skills[0].metadata.name, "ruxex-name:search");
 }

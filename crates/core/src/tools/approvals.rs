@@ -12,26 +12,26 @@ use crate::tools::runtimes::unified_exec::UnifiedExecApprovalKey;
 use crate::tools::sandboxing::PermissionRequestPayload;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::with_cached_approval;
-use genex_config::types::AppToolApproval;
-use genex_hooks::PermissionRequestDecision;
-use genex_otel::ToolDecisionSource;
-use genex_protocol::approvals::ExecApprovalKind;
-use genex_protocol::approvals::ExecPolicyAmendment;
+use ruxex_config::types::AppToolApproval;
+use ruxex_hooks::PermissionRequestDecision;
+use ruxex_otel::ToolDecisionSource;
+use ruxex_protocol::approvals::ExecApprovalKind;
+use ruxex_protocol::approvals::ExecPolicyAmendment;
 #[cfg(unix)]
-use genex_protocol::approvals::NetworkApprovalContext;
-use genex_protocol::approvals::NetworkApprovalProtocol;
-use genex_protocol::error::GenexErr;
-use genex_protocol::items::ModelInvocationContext;
-use genex_protocol::model_types::ModelInfo;
-use genex_protocol::models::AdditionalPermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::FileChange;
-use genex_protocol::protocol::NetworkPolicyRuleAction;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::request_permissions::RequestPermissionProfile;
-use genex_tools::ToolName;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::approvals::NetworkApprovalContext;
+use ruxex_protocol::approvals::NetworkApprovalProtocol;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::items::ModelInvocationContext;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::models::AdditionalPermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::FileChange;
+use ruxex_protocol::protocol::NetworkPolicyRuleAction;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::request_permissions::RequestPermissionProfile;
+use ruxex_tools::ToolName;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -245,7 +245,7 @@ impl ApprovalAction {
             },
             #[cfg(unix)]
             Self::Execve { command, .. } => PermissionRequestPayload::bash(
-                genex_shell_command::parse_command::shlex_join(command),
+                ruxex_shell_command::parse_command::shlex_join(command),
                 /*description*/ None,
             ),
             Self::ApplyPatch { patch, .. } => PermissionRequestPayload {
@@ -362,7 +362,7 @@ impl ApprovalResolution {
             ReviewDecision::TimedOut => Err(ToolError::Rejected(
                 "approval request timed out".to_string(),
             )),
-            ReviewDecision::Abort => Err(ToolError::Genex(GenexErr::TurnAborted)),
+            ReviewDecision::Abort => Err(ToolError::Ruxex(RuxexErr::TurnAborted)),
             decision => Ok(decision),
         }
     }
@@ -466,7 +466,7 @@ impl Session {
                     .turn_environments()
                     .find(|environment| environment.selection.environment_id == *environment_id)
                     .and_then(|environment| environment.config().exec_policy.as_ref())
-                    .map(genex_execpolicy::RequirementsExecPolicy::fingerprint);
+                    .map(ruxex_execpolicy::RequirementsExecPolicy::fingerprint);
                 let cache_keys = action
                     .cache_keys()
                     .into_iter()

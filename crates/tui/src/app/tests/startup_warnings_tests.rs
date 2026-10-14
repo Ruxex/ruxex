@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::history_cell::StartupWarningsCell;
-use genex_app_server_protocol::McpServerStartupFailureReason;
+use ruxex_app_server_protocol::McpServerStartupFailureReason;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::UnboundedReceiver;
 

@@ -5,15 +5,15 @@ mod accounting;
 
 use accounting::BudgetLimitedGoalDisposition;
 use accounting::GoalAccountingState;
-use genex_extension_api::ToolCallOutcome;
-use genex_extension_api::ToolName;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::protocol::TokenUsage;
-use genex_state::ThreadGoalStatus;
+use ruxex_extension_api::ToolCallOutcome;
+use ruxex_extension_api::ToolName;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_state::ThreadGoalStatus;
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -262,6 +262,6 @@ fn token_usage(
         output_tokens,
         reasoning_output_tokens,
         total_tokens,
-        genex_rollout_budget_units: None,
+        ruxex_rollout_budget_units: None,
     }
 }

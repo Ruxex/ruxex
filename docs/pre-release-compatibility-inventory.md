@@ -17,8 +17,8 @@ The working repository is now operated as follows:
 
 | Ref or remote | Commit | Role | Decision |
 |---|---|---|---|
-| `origin/develop` (`Ruxex/ruxex`) | `2372998c4182` | Current public working branch | `retain` as the temporary integration branch until publication review completes |
-| local `develop` | `2372998c4182` | Current work branch | `retain` while the publication tasks are executed |
+| `origin/develop` (`Ruxex/ruxex`) | `5dbb3c3f2645` | Current public working branch | `retain` as the temporary integration branch until publication review completes |
+| local `develop` | `5dbb3c3f2645` | Current work branch | `retain` while the publication tasks are executed |
 | `origin/main` (`Ruxex/ruxex`) | `0071ec8184cb` | Existing public baseline | `retain` until the reviewed candidate is promoted |
 | local `main` | `0071ec8184cb` | Historical local baseline | `retain`; do not rewrite |
 | `upstream` (`edge-m/codex-fork`) | fetched refs through `0071ec8184cb` | Historical source and upstream comparison remote | `retain` under the `upstream` name; do not use it as the publication destination |
@@ -42,6 +42,23 @@ The listed development directories and unused scripts must remain available duri
 They are deleted only after the last functional verification and immediately before commits are
 consolidated. Each removal must still be reviewed in the public-tree diff. The full Git history
 remains preserved.
+
+## Ruxex repository-owned namespace migration (2026-10-14)
+
+The first publication identity wave migrated repository-owned `Genex`/`genex`
+package, crate, module, path, data-root, environment-variable, schema, fixture,
+snapshot, and active script identifiers to `Ruxex`/`ruxex`. Producers and
+consumers were updated together across the workspace, and checked-in generated
+artifacts were regenerated. Historical planning documents remain unchanged for
+now because the development documentation tree is a final cleanup target.
+
+| Surface | Producer / consumer audit | Decision | Verification |
+|---|---|---|---|
+| Workspace package and crate names, Rust imports/modules, active paths, schemas, fixtures, snapshots, desktop package metadata, and data-root identifiers | Cargo manifests, Rust/TypeScript/Python producers, generated schema consumers, runtime home/marker code, desktop staging, and tests were migrated together. No repository-owned old `genex` match remains outside explicitly retained development/legal/external files. | `migrate-in-place` completed | `cargo metadata --no-deps`; repository-owned name audit; `just generate`; `just check --tests`; `just check`; `git diff --check` |
+| README and public identity text | The README now identifies Ruxex as an independent derivative work under the Ruxex organization and does not present it as an upstream Codex product. | `migrate-in-place` completed | README link/path and exact old-name audit |
+| Original license and upstream attribution | `LICENSE` remains the original Apache license and copyright notice. The new `NOTICE` records the derivative relationship and says that applicable original, trademark, and third-party notices remain in force. | `retain` original legal text; `migrate-in-place` Ruxex notice | Legal review still required before publication |
+| Remaining Codex/OpenAI/third-party names | Remaining matches were not changed by this identity wave when they may be external wire fields, endpoint/auth contracts, upstream/third-party identifiers, historical attribution, or separately audited fork provenance. OpenAI-derived fork URLs and package attribution are a separate Task 3 audit. | `retain` pending the relevant producer/consumer or legal audit | Separate fork/dependency audit required |
+| Exact Ruxex trademark/package clearance | Repository and public-name checks are preliminary and do not constitute legal clearance or registry/package availability. | `retain` as an open legal/release gate | Trademark and package publication review pending |
 
 ## Single-provider boundary follow-up (2026-10-09)
 

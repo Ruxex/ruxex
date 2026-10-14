@@ -20,12 +20,12 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_config::types::KeybindingsSpec;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::KeybindingsSpec;
+use ruxex_config::types::TuiKeymap;
 use std::time::Duration;
 use tokio::time::Instant;
 
-const FIRST_DISPATCH_FUNCTION_KEY: u8 = genex_config::types::MAX_FUNCTION_KEY + 1;
+const FIRST_DISPATCH_FUNCTION_KEY: u8 = ruxex_config::types::MAX_FUNCTION_KEY + 1;
 const LAST_DISPATCH_FUNCTION_KEY: u8 = u8::MAX;
 const LIST_RESERVED_BINDINGS: &[(&str, KeyBinding)] = &[
     ("cancel", ctrl(KeyCode::Char('c'))),

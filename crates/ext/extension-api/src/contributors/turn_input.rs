@@ -1,5 +1,5 @@
-use genex_protocol::user_input::UserInput;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_path_uri::PathUri;
 use std::marker::PhantomData;
 
 /// Host-owned turn environment summary visible to turn-input contributors.

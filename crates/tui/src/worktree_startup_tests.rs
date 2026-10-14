@@ -38,18 +38,18 @@ async fn latest_directory_uses_turn_context_and_preserves_fallback() -> anyhow::
 async fn refreshed_bundle_rechecks_source_during_config_reload() -> anyhow::Result<()> {
     let dir = tempfile::tempdir()?;
     let source = dir.path().join("source");
-    let nested = source.join(".genex");
+    let nested = source.join(".ruxex");
     let destination = dir.path().join("checkout");
     for path in [&nested, &destination] {
         std::fs::create_dir_all(path)?;
     }
     let mut loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     loader_overrides.ignore_user_config = true;
-    let manager = genex_worktree::WorktreeManager::new(genex_worktree::WorktreeSettings::for_cli(
+    let manager = ruxex_worktree::WorktreeManager::new(ruxex_worktree::WorktreeSettings::for_cli(
         dir.path(),
         /*desktop*/ None,
     )?);
-    let checkout = genex_worktree::ManagedWorktree {
+    let checkout = ruxex_worktree::ManagedWorktree {
         root: destination.clone(),
         cwd: destination.clone(),
         source_root: source,
@@ -81,10 +81,10 @@ async fn refreshed_bundle_rechecks_source_during_config_reload() -> anyhow::Resu
     )
     .await?;
     let refreshed =
-        genex_config::test_support::CloudConfigBundleFixture::loader_with_enterprise_config(
+        ruxex_config::test_support::CloudConfigBundleFixture::loader_with_enterprise_config(
             format!(
                 "[projects.{}]\ntrust_level = \"untrusted\"\n",
-                serde_json::to_string(&genex_config::loader::project_trust_key(&nested))?
+                serde_json::to_string(&ruxex_config::loader::project_trust_key(&nested))?
             ),
         );
     let err = crate::load_config_with_worktree_source_policy(

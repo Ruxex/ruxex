@@ -2,29 +2,29 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use genex_config::test_support::CloudConfigBundleFixture;
-use genex_core::TurnInputRequest;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::user_input::UserInput;
-use genex_utils_path_uri::PathUri;
+use ruxex_config::test_support::CloudConfigBundleFixture;
+use ruxex_core::TurnInputRequest;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::managed_network_requirements_loader;
 use core_test_support::responses::ev_apply_patch_custom_tool_call;
 use core_test_support::responses::ev_assistant_message;
@@ -36,8 +36,8 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::startup::STARTUP_TIMEOUT;
 use core_test_support::startup::expect_startup;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
@@ -643,7 +643,7 @@ async fn exec_command_consumes_pushed_remote_process_events(
     .await;
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
     let exec_server = tokio::spawn(serve_exec_with_pushed_events(listener, scenario));
-    let mut builder = test_genex().with_exec_server_url(exec_server_url);
+    let mut builder = test_ruxex().with_exec_server_url(exec_server_url);
     if managed_network_configured {
         let cloud_config_bundle = match managed_network {
             ManagedNetworkScenario::Enabled {
@@ -734,7 +734,7 @@ timeout = 900
     };
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(turn_permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run a one-shot remote command".into(),
@@ -746,7 +746,7 @@ timeout = 900
                     TurnEnvironmentSelections::new(
                         test.config.cwd.clone(),
                         vec![TurnEnvironmentSelection {
-                            environment_id: genex_exec_server::REMOTE_ENVIRONMENT_ID.to_string(),
+                            environment_id: ruxex_exec_server::REMOTE_ENVIRONMENT_ID.to_string(),
                             cwd: cwd.clone(),
                             workspace_roots: vec![
                                 cwd,
@@ -788,7 +788,7 @@ timeout = 900
     let mut saw_patch_denial_approval = false;
     if !managed_network_enabled {
         loop {
-            let event = timeout(Duration::from_secs(5), test.genex.next_event())
+            let event = timeout(Duration::from_secs(5), test.ruxex.next_event())
                 .await
                 .context("turn should complete")??
                 .msg;
@@ -804,7 +804,7 @@ timeout = 900
                     ) =>
                 {
                     saw_patch_denial_approval = true;
-                    test.genex
+                    test.ruxex
                         .submit(Op::PatchApproval {
                             id: approval.call_id,
                             decision: if matches!(

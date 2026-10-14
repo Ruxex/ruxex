@@ -1,7 +1,7 @@
 //! Protect connection credentials in diagnostics without changing signaling data.
 
 use super::AppCommand;
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

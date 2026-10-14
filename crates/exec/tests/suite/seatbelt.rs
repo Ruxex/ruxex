@@ -1,12 +1,12 @@
 use super::sandbox::spawn_command_under_sandbox;
-use genex_core::spawn::StdioPolicy;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_core::spawn::StdioPolicy;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::fs;
@@ -16,21 +16,21 @@ use std::time::Duration;
 use tempfile::TempDir;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<()> {
+async fn ruxex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<()> {
     use core_test_support::responses;
-    use core_test_support::test_genex_exec::test_genex_exec;
+    use core_test_support::test_ruxex_exec::test_ruxex_exec;
     use serde_json::json;
 
     core_test_support::skip_if_sandbox!(Ok(()));
     for (home_env, root_alias, enabled, ignore_user_config) in [
         ("user-home", Some("user-home"), true, false),
-        ("home-link/../.genex", Some(".genex"), false, false),
-        ("home-link/../.genex", None, true, false),
+        ("home-link/../.ruxex", Some(".ruxex"), false, false),
+        ("home-link/../.ruxex", None, true, false),
         ("user-home", Some("user-home"), true, true),
     ] {
-        let test = test_genex_exec();
-        let home = test.home_path().join(".genex");
-        let project_home = test.cwd_path().join(".genex");
+        let test = test_ruxex_exec();
+        let home = test.home_path().join(".ruxex");
+        let project_home = test.cwd_path().join(".ruxex");
         let child = test.home_path().join("child");
         for directory in [&home, &project_home, &child] {
             fs::create_dir(directory)?;
@@ -39,12 +39,12 @@ async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
         symlink(&child, test.cwd_path().join("home-link"))?;
         fs::write(
             home.join("config.toml"),
-            format!("allow_symlinked_genex_home = {enabled}\n"),
+            format!("allow_symlinked_ruxex_home = {enabled}\n"),
         )?;
         // The checkout must not enable the opt-out, even when `..` follows a symlink.
         fs::write(
             project_home.join("config.toml"),
-            "allow_symlinked_genex_home = true\n",
+            "allow_symlinked_ruxex_home = true\n",
         )?;
         let target = TempDir::new()?;
         for root in [&home, &project_home] {
@@ -80,15 +80,15 @@ async fn genex_home_symlink_opt_out_uses_loaded_user_config() -> anyhow::Result<
         .await;
         let mut command = test.cmd_with_server(&server);
         command
-            .env_remove("GENEX_API_KEY")
+            .env_remove("RUXEX_API_KEY")
             .env_remove("PROVIDER_API_KEY")
-            .env_remove("GENEX_ACCESS_TOKEN")
-            .env("GENEX_HOME", home_env)
+            .env_remove("RUXEX_ACCESS_TOKEN")
+            .env("RUXEX_HOME", home_env)
             .args(["--skip-git-repo-check", "--sandbox", "workspace-write", "--add-dir"])
             .arg(&visualizations)
             .args(["-c", "approvals_reviewer=\"user\"", "-c", "features.shell_snapshot_v2=false"])
             // Session overrides cannot authorize the host's exception either.
-            .args(["-c", "allow_symlinked_genex_home=true"])
+            .args(["-c", "allow_symlinked_ruxex_home=true"])
             .args(["-c", "model_provider.id=\"test\"", "-c"])
             .arg(format!(
                 "model_provider={{name=\"test\",base_url={:?},wire_api=\"responses\",supports_websockets=false}}",

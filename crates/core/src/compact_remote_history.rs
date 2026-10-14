@@ -5,13 +5,13 @@ use crate::context::ImageResizeNotice;
 use crate::context_manager::ContextManager;
 use crate::context_manager::estimate_item_token_count;
 use crate::session::turn_context::TurnContext;
-use genex_history::ResponseItemEnvelope;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseItem;
-use genex_utils_output_truncation::approx_token_count;
+use ruxex_history::ResponseItemEnvelope;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_utils_output_truncation::approx_token_count;
 
 const CONTEXT_WINDOW_TRUNCATED_OUTPUT_MESSAGE: &str =
     "Output exceeded the available model context and was truncated";

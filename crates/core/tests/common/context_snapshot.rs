@@ -119,7 +119,7 @@ fn capture_request(number: usize, entry: &SnapshotEntry<'_>) -> CapturedRequest 
     let (kind, input, settings) = match entry.source {
         SnapshotSource::Captured(request) => {
             let kind = request
-                .header("x-genex-turn-metadata")
+                .header("x-ruxex-turn-metadata")
                 .and_then(|header| serde_json::from_str::<Value>(&header).ok())
                 .and_then(|metadata| metadata["request_kind"].as_str().map(str::to_owned))
                 .unwrap_or_else(|| "request".to_string());

@@ -1,5 +1,5 @@
-use genex_protocol::exec_output::ExecToolCallOutput;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_utils_path_uri::PathUri;
 use std::num::NonZeroUsize;
 use thiserror::Error;
 

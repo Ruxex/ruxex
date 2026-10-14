@@ -1,9 +1,9 @@
-use genex_login::AuthHeaders;
-use genex_login::CredentialManager;
-use genex_login::GenexAuth;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_providers::create_model_provider;
-use genex_utils_output_truncation::TruncationPolicy;
+use ruxex_login::AuthHeaders;
+use ruxex_login::CredentialManager;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::create_model_provider;
+use ruxex_utils_output_truncation::TruncationPolicy;
 use http::HeaderMap;
 use http::HeaderValue;
 use pretty_assertions::assert_eq;
@@ -19,10 +19,10 @@ use super::ENCRYPTED_TOOL_ARGUMENTS_HEADER;
 use super::HistoryNotesBackend;
 
 #[tokio::test]
-async fn routes_through_genex_backend_and_injects_trusted_session_agent_context() {
+async fn routes_through_ruxex_backend_and_injects_trusted_session_agent_context() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/backend-api/genex/alpha/notes/v2/read_file"))
+        .and(path("/backend-api/ruxex/alpha/notes/v2/read_file"))
         .and(header("x-provider-actor-authorization", "actor-biscuit"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "encrypted_output": "enc_payload"
@@ -35,10 +35,10 @@ async fn routes_through_genex_backend_and_injects_trusted_session_agent_context(
         HeaderValue::from_static("actor-biscuit"),
     );
     let credential_manager =
-        CredentialManager::from_auth_for_testing(GenexAuth::Headers(AuthHeaders::new(headers)));
+        CredentialManager::from_auth_for_testing(RuxexAuth::Headers(AuthHeaders::new(headers)));
     let provider = create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
-            "{}/backend-api/genex",
+            "{}/backend-api/ruxex",
             server.uri()
         ))),
         Some(credential_manager),
@@ -106,7 +106,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     ];
     for (route, _) in &cases {
         Mock::given(method("POST"))
-            .and(path(format!("/backend-api/genex/alpha/{route}")))
+            .and(path(format!("/backend-api/ruxex/alpha/{route}")))
             .and(header(ENCRYPTED_TOOL_ARGUMENTS_HEADER, "true"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
             .expect(1)
@@ -114,12 +114,12 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
             .await;
     }
 
-    let credential_manager = CredentialManager::from_auth_for_testing(GenexAuth::Headers(
+    let credential_manager = CredentialManager::from_auth_for_testing(RuxexAuth::Headers(
         AuthHeaders::new(HeaderMap::new()),
     ));
     let backend = HistoryNotesBackend::new(create_model_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
-            "{}/backend-api/genex",
+            "{}/backend-api/ruxex",
             server.uri()
         ))),
         Some(credential_manager),

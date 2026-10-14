@@ -6,12 +6,12 @@ use crate::cache::ModelsCacheEntry;
 use crate::cache::ModelsCacheError;
 use crate::cache::ModelsCacheFuture;
 use chrono::Utc;
-use genex_http_client::HttpClientFactory;
-use genex_http_client::OutboundProxyPolicy;
-use genex_protocol::error::GenexErr;
-use genex_protocol::model_types::ModelAccessPrograms;
-use genex_protocol::model_types::ModelCatalog;
-use genex_protocol::turn_input::CyberAccessProgram;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::model_types::ModelAccessPrograms;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::turn_input::CyberAccessProgram;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::VecDeque;
@@ -262,20 +262,20 @@ impl ModelCatalogSource for TestModelCatalogSource {
 }
 
 fn provider_manager_for_tests(
-    genex_home: std::path::PathBuf,
+    ruxex_home: std::path::PathBuf,
     catalog_source: Arc<dyn ModelCatalogSource>,
 ) -> RemoteModelsManager {
-    let manager = RemoteModelsManager::new(genex_home, catalog_source);
+    let manager = RemoteModelsManager::new(ruxex_home, catalog_source);
     manager.set_api_key_model_discovery_enabled(true);
     manager
 }
 
-async fn mutate_file_cache_for_test<F>(genex_home: &std::path::Path, f: F)
+async fn mutate_file_cache_for_test<F>(ruxex_home: &std::path::Path, f: F)
 where
     F: FnOnce(&mut ModelsCacheEntry),
 {
     let client_version = crate::client_version_to_whole();
-    let cache = FileModelsCache::new(genex_home.join(MODEL_CACHE_FILE), DEFAULT_MODEL_CACHE_TTL);
+    let cache = FileModelsCache::new(ruxex_home.join(MODEL_CACHE_FILE), DEFAULT_MODEL_CACHE_TTL);
     let mut entry = cache
         .load(&client_version)
         .await
@@ -315,7 +315,7 @@ impl ModelCatalogSource for FailingModelCatalogSource {
         _http_client_factory: HttpClientFactory,
     ) -> ModelCatalogFuture<'a, CoreResult<ModelCatalogSnapshot>> {
         Box::pin(async {
-            Err(GenexErr::InvalidRequest(
+            Err(RuxexErr::InvalidRequest(
                 "model catalog request failed".to_string(),
             ))
         })
@@ -454,9 +454,9 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
 
 #[tokio::test]
 async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = TestModelCatalogSource::new(Vec::new());
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
     let requested_model = Some("unsupported".to_string());
 
     let model = manager
@@ -598,9 +598,9 @@ async fn refresh_available_models_sorts_by_priority() {
         remote_model("priority-low", "Low", /*priority*/ 1),
         remote_model("priority-high", "High", /*priority*/ 0),
     ];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = TestModelCatalogSource::new(vec![remote_models.clone()]);
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     let available = manager
         .list_models(
@@ -635,7 +635,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         "API Auth Visible",
         /*priority*/ 0,
     )];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = Arc::new(TestModelCatalogSource {
         has_command_auth: true,
         uses_managed_auth: false,
@@ -645,7 +645,7 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
     manager
         .refresh_available_models(
             RefreshStrategy::OnlineIfUncached,
@@ -661,9 +661,9 @@ async fn refresh_available_models_uses_only_dynamic_models_for_custom_api_auth()
 #[tokio::test]
 async fn refresh_available_models_uses_cache_when_fresh() {
     let remote_models = vec![remote_model("cached", "Cached", /*priority*/ 5)];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = TestModelCatalogSource::new(vec![remote_models.clone()]);
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -692,7 +692,7 @@ async fn refresh_available_models_uses_cache_when_fresh() {
 
 #[tokio::test]
 async fn online_refresh_updates_access_programs_with_unchanged_etag() {
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let granted_model = ModelInfo {
         available_access_programs: Some(ModelAccessPrograms {
             cyber: vec![
@@ -716,7 +716,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         fetch_count: AtomicUsize::new(0),
         observed_proxy_policy: Mutex::new(None),
     });
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     // Caller-specific access can change without changing the catalog ETag.
     for model in [granted_model, revoked_model] {
@@ -737,7 +737,7 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
         // A new manager must read the latest access metadata from the disk cache.
         let cache_endpoint = TestModelCatalogSource::new(Vec::new());
         let cache_manager =
-            provider_manager_for_tests(genex_home.path().to_path_buf(), cache_endpoint.clone());
+            provider_manager_for_tests(ruxex_home.path().to_path_buf(), cache_endpoint.clone());
         assert_eq!(
             cache_manager
                 .list_models(
@@ -759,11 +759,11 @@ async fn online_refresh_updates_access_programs_with_unchanged_etag() {
 #[tokio::test]
 async fn refresh_available_models_refetches_when_cache_stale() {
     let initial_models = vec![remote_model("stale", "Stale", /*priority*/ 1)];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("fresh", "Fresh", /*priority*/ 9)];
     let endpoint =
         TestModelCatalogSource::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -774,7 +774,7 @@ async fn refresh_available_models_refetches_when_cache_stale() {
         .expect("initial refresh succeeds");
 
     // Rewrite cache with an old timestamp so it is treated as stale.
-    mutate_file_cache_for_test(genex_home.path(), |cache| {
+    mutate_file_cache_for_test(ruxex_home.path(), |cache| {
         cache.fetched_at = Utc::now() - chrono::Duration::hours(1);
     })
     .await;
@@ -797,11 +797,11 @@ async fn refresh_available_models_refetches_when_cache_stale() {
 #[tokio::test]
 async fn refresh_available_models_refetches_when_version_mismatch() {
     let initial_models = vec![remote_model("old", "Old", /*priority*/ 1)];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let updated_models = vec![remote_model("new", "New", /*priority*/ 2)];
     let endpoint =
         TestModelCatalogSource::new(vec![initial_models.clone(), updated_models.clone()]);
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(
@@ -811,7 +811,7 @@ async fn refresh_available_models_refetches_when_version_mismatch() {
         .await
         .expect("initial refresh succeeds");
 
-    mutate_file_cache_for_test(genex_home.path(), |cache| {
+    mutate_file_cache_for_test(ruxex_home.path(), |cache| {
         let client_version = crate::client_version_to_whole();
         cache.client_version = Some(format!("{client_version}-mismatch"));
     })
@@ -839,7 +839,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
         "Remote Old",
         /*priority*/ 1,
     )];
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let refreshed_models = vec![remote_model(
         "remote-new",
         "Remote New",
@@ -848,7 +848,7 @@ async fn refresh_available_models_drops_removed_remote_models() {
     let endpoint = TestModelCatalogSource::new(vec![initial_models, refreshed_models]);
     let manager = RemoteModelsManager::new_with_cache(
         Arc::new(FileModelsCache::new(
-            genex_home.path().join(MODEL_CACHE_FILE),
+            ruxex_home.path().join(MODEL_CACHE_FILE),
             Duration::ZERO,
         )),
         endpoint.clone(),
@@ -892,13 +892,13 @@ async fn refresh_available_models_drops_removed_remote_models() {
 #[tokio::test]
 async fn refresh_available_models_skips_network_without_auth() {
     let dynamic_slug = "dynamic-model-only-for-test-noauth";
-    let genex_home = tempdir().expect("temp dir");
+    let ruxex_home = tempdir().expect("temp dir");
     let endpoint = TestModelCatalogSource::without_refresh(vec![vec![remote_model(
         dynamic_slug,
         "No Auth",
         /*priority*/ 1,
     )]]);
-    let manager = provider_manager_for_tests(genex_home.path().to_path_buf(), endpoint.clone());
+    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
 
     manager
         .refresh_available_models(RefreshStrategy::Online, &DEFAULT_HTTP_CLIENT_FACTORY)

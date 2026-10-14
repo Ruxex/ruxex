@@ -4,10 +4,10 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 
-use genex_exec_server::HttpClient;
-use genex_exec_server::HttpHeader;
-use genex_exec_server::HttpRedirectPolicy;
-use genex_exec_server::HttpRequestParams;
+use ruxex_exec_server::HttpClient;
+use ruxex_exec_server::HttpHeader;
+use ruxex_exec_server::HttpRedirectPolicy;
+use ruxex_exec_server::HttpRequestParams;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::Method;

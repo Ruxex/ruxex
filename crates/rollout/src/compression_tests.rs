@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use std::fs;
 use std::fs::FileTimes;
 #[cfg(unix)]
@@ -6,13 +6,13 @@ use std::os::unix::fs::PermissionsExt;
 use std::time::Duration;
 use std::time::SystemTime;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::SessionMeta;
-use genex_protocol::protocol::SessionMetaLine;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::UserMessageEvent;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::SessionMeta;
+use ruxex_protocol::protocol::SessionMetaLine;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::UserMessageEvent;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -394,8 +394,8 @@ async fn worker_skips_unreadable_metadata_without_blocking_other_compression() -
 async fn resume_materializes_compressed_rollout_path() -> anyhow::Result<()> {
     let home = TempDir::new()?;
     let config = RolloutConfig {
-        genex_home: home.path().to_path_buf(),
-        sqlite: genex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        ruxex_home: home.path().to_path_buf(),
+        sqlite: ruxex_state::SqliteConfig::new_for_testing(home.path().abs()),
         cwd: home.path().to_path_buf(),
     };
     let uuid = Uuid::from_u128(3);
@@ -690,7 +690,7 @@ fn write_rollout(path: &std::path::Path, thread_id: ThreadId, message: &str) -> 
             base_instructions: None,
             dynamic_tools: None,
             selected_capability_roots: Vec::new(),
-            history_mode: genex_protocol::protocol::ThreadHistoryMode::Paginated,
+            history_mode: ruxex_protocol::protocol::ThreadHistoryMode::Paginated,
             history_base: None,
             subagent_history_start_ordinal: None,
             multi_agent_version: None,

@@ -2,9 +2,9 @@ use super::super::PreviousSectionState;
 use super::super::test_support::render_section_cases;
 use super::*;
 use anyhow::Result;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -383,8 +383,8 @@ fn failure_context_is_escaped_incremental_and_cleared_on_recovery() -> Result<()
 
 #[test]
 fn failure_context_limits_total_detail_bytes_at_utf8_boundaries() {
-    use genex_protocol::protocol::EnvironmentConfigState;
-    use genex_protocol::protocol::TurnEnvironmentSelection;
+    use ruxex_protocol::protocol::EnvironmentConfigState;
+    use ruxex_protocol::protocol::TurnEnvironmentSelection;
     let snapshot = TurnEnvironmentSnapshot {
         environments: (0..4)
             .map(|index| TurnEnvironmentState::Failed {

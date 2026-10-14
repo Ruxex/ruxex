@@ -1,17 +1,17 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_core::config::Constrained;
-use genex_core::sandboxing::SandboxPermissions;
-use genex_protocol::config_types::ApprovalsReviewer;
-use genex_protocol::model_types::MODEL_SPECIALTY_CYBER;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::SandboxPolicy;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_core::config::Constrained;
+use ruxex_core::sandboxing::SandboxPermissions;
+use ruxex_protocol::config_types::ApprovalsReviewer;
+use ruxex_protocol::model_types::MODEL_SPECIALTY_CYBER;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -24,8 +24,8 @@ use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_sandbox;
 use core_test_support::skip_if_wine_exec;
 use core_test_support::submit_thread_settings;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -47,7 +47,7 @@ enum ShellBackend {
 }
 
 fn configure_saved_prefix_and_guardian(config: &mut Config) {
-    let policy_path = config.genex_home.join("rules/default.rules");
+    let policy_path = config.ruxex_home.join("rules/default.rules");
     fs::create_dir_all(policy_path.parent().expect("rules directory"))
         .expect("create rules directory");
     fs::write(
@@ -90,9 +90,9 @@ fn guardian_allow_response(response_id: &str) -> String {
     ])
 }
 
-async fn submit_model_turn(test: &TestGenex, model: &str, prompt: &str) -> Result<()> {
+async fn submit_model_turn(test: &TestRuxex, model: &str, prompt: &str) -> Result<()> {
     submit_thread_settings(
-        &test.genex,
+        &test.ruxex,
         ThreadSettingsOverrides {
             model: Some(model.to_string()),
             approval_policy: Some(AskForApproval::OnRequest),
@@ -117,7 +117,7 @@ async fn saved_prefix_only_bypasses_guardian_for_general_models(
 
     let server = start_mock_server().await;
     let builder = match shell_backend {
-        ShellBackend::Standard => test_genex(),
+        ShellBackend::Standard => test_ruxex(),
     };
     let mut builder = builder
         .with_model_info_override("legacy-model", move |model| {
@@ -180,7 +180,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
     skip_if_wine_exec!(Ok(()), "command approval requires host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model_info_override("legacy-model", |model| {
             model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         })
@@ -189,7 +189,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
             config.approvals_reviewer = ApprovalsReviewer::User;
         });
     let test = builder.build_with_auto_env(&server).await?;
-    let policy_path = test.genex_home_path().join("rules/default.rules");
+    let policy_path = test.ruxex_home_path().join("rules/default.rules");
     let initial_policy = fs::read_to_string(&policy_path)?;
     let responses = mount_sse_sequence(
         &server,
@@ -200,7 +200,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
     )
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run a command with one-time approval".to_string(),
@@ -214,7 +214,7 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
         )
         .await?;
 
-    let EventMsg::ExecApprovalRequest(approval) = wait_for_event(&test.genex, |event| {
+    let EventMsg::ExecApprovalRequest(approval) = wait_for_event(&test.ruxex, |event| {
         matches!(
             event,
             EventMsg::ExecApprovalRequest(_) | EventMsg::TurnComplete(_)
@@ -229,14 +229,14 @@ async fn cyber_model_user_approval_never_offers_a_reusable_prefix() -> Result<()
         approval.effective_available_decisions(),
         vec![ReviewDecision::Approved, ReviewDecision::Abort],
     );
-    test.genex
+    test.ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: None,
             decision: ReviewDecision::Approved,
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -259,7 +259,7 @@ async fn switching_models_suppresses_and_restores_saved_prefix_approvals() -> Re
     skip_if_wine_exec!(Ok(()), "Guardian command reviews require host-native paths");
 
     let server = start_mock_server().await;
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_model_info_override("legacy-model", |model| {
             model.model_specialty = Some(MODEL_SPECIALTY_CYBER.to_string());
         })

@@ -5,7 +5,7 @@ use crate::inline_visualization::InlineVisualizationContext;
 use crate::markdown::render_streaming_markdown_agent_with_links_and_cwd;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::visible_lines;
-use genex_protocol::ThreadId;
+use ruxex_protocol::ThreadId;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::path::PathBuf;
@@ -187,7 +187,7 @@ fn inline_visualizations_use_canonical_full_render() {
     let mut source = String::new();
     let mut render = StreamingRender::new();
 
-    for chunk in ["Before.\n\n", "::genex-inline-vis{file=\"missing.html\"}\n"] {
+    for chunk in ["Before.\n\n", "::ruxex-inline-vis{file=\"missing.html\"}\n"] {
         source.push_str(chunk);
         render.append(
             &source,
@@ -237,7 +237,7 @@ fn inline_visualization_directive_survives_raw_to_rich_render_mode_switch() {
     append(
         &mut render,
         &mut source,
-        "::genex-inline-vis{file=\"missing.html\"}\n",
+        "::ruxex-inline-vis{file=\"missing.html\"}\n",
         width,
         &cwd,
         HistoryRenderMode::Raw,

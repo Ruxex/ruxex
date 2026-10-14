@@ -7,8 +7,8 @@ use std::sync::atomic::Ordering;
 
 #[derive(Clone)]
 pub(crate) struct ManagedTuiWorktree {
-    manager: genex_worktree::WorktreeManager,
-    checkout: genex_worktree::ManagedWorktree,
+    manager: ruxex_worktree::WorktreeManager,
+    checkout: ruxex_worktree::ManagedWorktree,
     recovery: Arc<StartupRecovery>,
 }
 
@@ -94,11 +94,11 @@ impl ManagedTuiWorktree {
 async fn latest_thread_cwd(path: Option<PathBuf>, fallback: PathBuf) -> PathBuf {
     let Some(path) = path else { return fallback };
     tokio::task::spawn_blocking(move || {
-        let reader = genex_rollout::open_rollout_seekable_reader(&path).ok()?;
-        let mut scanner = genex_rollout::ReverseJsonlScanner::new(reader).ok()?;
+        let reader = ruxex_rollout::open_rollout_seekable_reader(&path).ok()?;
+        let mut scanner = ruxex_rollout::ReverseJsonlScanner::new(reader).ok()?;
         while let Some(outcome) = scanner.scan_next_rollout_line().ok()? {
-            if let genex_rollout::ScanOutcome::Parsed(genex_rollout::RolloutLine {
-                item: genex_rollout::RolloutItem::TurnContext(item),
+            if let ruxex_rollout::ScanOutcome::Parsed(ruxex_rollout::RolloutLine {
+                item: ruxex_rollout::RolloutItem::TurnContext(item),
                 ..
             }) = outcome
             {
@@ -126,7 +126,7 @@ pub(super) async fn prepare(
 ) -> color_eyre::Result<(Config, ManagedTuiWorktree)> {
     if let Some(id_or_name) = cli.fork_session_id.as_deref() {
         let prepared = if should_load_configured_environments(&loader_overrides, target) {
-            EnvironmentManager::prepare_from_genex_home(&source.genex_home).await
+            EnvironmentManager::prepare_from_ruxex_home(&source.ruxex_home).await
         } else {
             EnvironmentManager::prepare_from_env().await
         }
@@ -136,8 +136,8 @@ pub(super) async fn prepare(
         }
         let environment = prepared.build(
             Some(ExecServerRuntimePaths::from_optional_paths(
-                arg0_paths.genex_self_exe.clone(),
-                arg0_paths.genex_linux_sandbox_exe.clone(),
+                arg0_paths.ruxex_self_exe.clone(),
+                arg0_paths.ruxex_linux_sandbox_exe.clone(),
             )?),
             source.http_client_factory(),
         )?;
@@ -178,7 +178,7 @@ pub(super) async fn prepare(
             let cwd = latest_thread_cwd(thread.path, thread.cwd.into_path_buf()).await;
             let cwd = AbsolutePathBuf::from_absolute_path(cwd)?;
             load_bootstrap_config_or_exit(
-                &source.genex_home,
+                &source.ruxex_home,
                 Some(&cwd),
                 cli_overrides.clone(),
                 loader_overrides.clone(),
@@ -195,7 +195,7 @@ pub(super) async fn prepare(
             .await;
         }
     }
-    if !source.features.enabled(genex_features::Feature::Worktrees) {
+    if !source.features.enabled(ruxex_features::Feature::Worktrees) {
         color_eyre::eyre::bail!(
             "`--worktree` requires the worktrees feature; enable it with `--enable worktrees`"
         );
@@ -212,22 +212,22 @@ pub(super) async fn prepare(
         }
     }
     let host = load_bootstrap_config_or_exit(
-        &source.genex_home,
+        &source.ruxex_home,
         /*cwd*/ None,
         Vec::new(),
         LoaderOverrides::default(),
         strict_config,
     )
     .await;
-    let manager = genex_worktree::WorktreeManager::new(
-        genex_worktree::WorktreeSettings::for_cli(
-            &source.genex_home,
+    let manager = ruxex_worktree::WorktreeManager::new(
+        ruxex_worktree::WorktreeSettings::for_cli(
+            &source.ruxex_home,
             host.config_toml.desktop.as_ref(),
         )
         .map_err(std::io::Error::other)?,
     );
     let checkout = manager
-        .create(&genex_worktree::CreateWorktree {
+        .create(&ruxex_worktree::CreateWorktree {
             source_cwd: source.cwd.to_path_buf(),
             base: None,
         })
@@ -243,10 +243,10 @@ pub(super) async fn prepare(
     };
     let destination = AbsolutePathBuf::from_absolute_path(managed.checkout.cwd.clone())?;
     load_config_toml_with_layer_stack(
-        &source.genex_home,
+        &source.ruxex_home,
         Some(&destination),
         cli_overrides.clone(),
-        genex_config::ConfigLoadOptions {
+        ruxex_config::ConfigLoadOptions {
             loader_overrides: loader_overrides.clone(),
             strict_config,
         },

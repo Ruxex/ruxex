@@ -1,10 +1,10 @@
 use super::AgentControl;
-use crate::genex_thread::GenexThread;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::SessionSource;
+use crate::ruxex_thread::RuxexThread;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::SessionSource;
 use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::atomic::AtomicUsize;
@@ -29,8 +29,8 @@ impl Drop for AgentExecutionGuard {
 impl AgentControl {
     pub(crate) async fn ensure_execution_capacity_for_turn_start(
         &self,
-        thread: &GenexThread,
-    ) -> GenexResult<()> {
+        thread: &RuxexThread,
+    ) -> RuxexResult<()> {
         if thread.session.active_turn.lock().await.is_some() {
             return Ok(());
         }
@@ -45,7 +45,7 @@ impl AgentControl {
         &self,
         multi_agent_version: MultiAgentVersion,
         session_source: &SessionSource,
-    ) -> GenexResult<()> {
+    ) -> RuxexResult<()> {
         if !is_execution_limited(multi_agent_version, session_source) {
             return Ok(());
         }
@@ -53,7 +53,7 @@ impl AgentControl {
         if self.agent_execution_limiter.has_capacity() {
             Ok(())
         } else {
-            Err(GenexErr::new(GenexErrorDetails::AgentLimitReached {
+            Err(RuxexErr::new(RuxexErrorDetails::AgentLimitReached {
                 max_threads,
             }))
         }

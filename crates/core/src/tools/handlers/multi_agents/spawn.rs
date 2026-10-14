@@ -10,7 +10,7 @@ use crate::agent::next_thread_spawn_depth;
 use crate::agent::role::DEFAULT_ROLE_NAME;
 use crate::tools::handlers::multi_agents_spec::SpawnAgentToolOptions;
 use crate::tools::handlers::multi_agents_spec::create_spawn_agent_tool_v1;
-use genex_tools::ToolSpec;
+use ruxex_tools::ToolSpec;
 
 #[derive(Default)]
 pub(crate) struct Handler {
@@ -39,7 +39,7 @@ impl ToolExecutor<ToolInvocation> for Handler {
         )
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {
@@ -203,7 +203,7 @@ async fn handle_spawn_agent(
     let new_thread_id = result?.thread_id;
     let role_tag = role_name.unwrap_or(DEFAULT_ROLE_NAME);
     turn.session_telemetry.counter(
-        "genex.multi_agent.spawn",
+        "ruxex.multi_agent.spawn",
         /*inc*/ 1,
         &[("role", role_tag), ("version", "v1")],
     );

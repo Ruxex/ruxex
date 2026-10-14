@@ -46,13 +46,13 @@ pub(crate) fn server_version_notice(client: &str, server: Option<&str>) -> Optio
     let server = server?;
     crate::update_versions::is_official_server_older(client, server).then(|| {
         format!(
-            "A background Genex service is running v{server}, older than your Genex CLI v{client}."
+            "A background Ruxex service is running v{server}, older than your Ruxex CLI v{client}."
         )
     })
 }
 
 pub(crate) fn server_version_notice_for_tui(
-    settings: &genex_config::types::Tui,
+    settings: &ruxex_config::types::Tui,
     client: &str,
     server: Option<&str>,
 ) -> Option<String> {
@@ -135,7 +135,7 @@ pub(crate) fn server_version_notice_key(
 }
 
 pub(crate) fn pending_server_version_notice(
-    settings: &genex_config::types::Tui,
+    settings: &ruxex_config::types::Tui,
     target: &AppServerTarget,
     server_home: Option<&str>,
     client: &str,

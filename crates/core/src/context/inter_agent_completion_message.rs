@@ -1,7 +1,7 @@
-use genex_protocol::AgentPath;
+use ruxex_protocol::AgentPath;
 
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct InterAgentCompletionMessage {

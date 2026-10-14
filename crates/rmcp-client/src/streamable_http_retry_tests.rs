@@ -1,6 +1,6 @@
 use std::any::TypeId;
 
-use genex_exec_server::ExecServerError;
+use ruxex_exec_server::ExecServerError;
 use pretty_assertions::assert_eq;
 use rmcp::transport::DynamicTransportError;
 use rmcp::transport::streamable_http_client::AuthRequiredError;

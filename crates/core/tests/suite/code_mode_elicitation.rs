@@ -3,21 +3,21 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ReviewDecision;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::request_permissions::PermissionGrantScope;
-use genex_protocol::request_permissions::RequestPermissionsResponse;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ReviewDecision;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::request_permissions::PermissionGrantScope;
+use ruxex_protocol::request_permissions::RequestPermissionsResponse;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ev_assistant_message;
@@ -27,9 +27,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::skip_if_wine_exec;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use core_test_support::wait_for_event_with_timeout;
@@ -40,7 +40,7 @@ const TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
 
 struct CodeModeElicitationHarness {
     _server: MockServer,
-    test: TestGenex,
+    test: TestRuxex,
     follow_up: ResponseMock,
     turn_id: String,
 }
@@ -53,7 +53,7 @@ impl CodeModeElicitationHarness {
     ) -> Result<Self> {
         let server = responses::start_mock_server().await;
         let mut builder =
-            test_genex()
+            test_ruxex()
                 .with_model("test-model")
                 .with_config(move |config| {
                     let _ = config.features.enable(Feature::CodeMode);
@@ -80,7 +80,7 @@ impl CodeModeElicitationHarness {
 
     async fn finish(self) {
         wait_for_event_with_timeout(
-            &self.test.genex,
+            &self.test.ruxex,
             |event| match event {
                 EventMsg::TurnComplete(event) => event.turn_id == self.turn_id,
                 _ => false,
@@ -112,10 +112,10 @@ async fn mount_code_mode_responses(server: &MockServer, code: &str) -> ResponseM
     .await
 }
 
-async fn submit_turn(test: &TestGenex, permission_profile: PermissionProfile) -> Result<String> {
+async fn submit_turn(test: &TestRuxex, permission_profile: PermissionProfile) -> Result<String> {
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(permission_profile, test.config.cwd.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "run a code-mode tool that needs user input".into(),
@@ -138,7 +138,7 @@ async fn submit_turn(test: &TestGenex, permission_profile: PermissionProfile) ->
         )
         .await?;
 
-    Ok(wait_for_event_match(&test.genex, |event| match event {
+    Ok(wait_for_event_match(&test.ruxex, |event| match event {
         EventMsg::TurnStarted(event) => Some(event.turn_id.clone()),
         _ => None,
     })
@@ -165,7 +165,7 @@ await tools.exec_command({
         |_| {},
     )
     .await?;
-    let approval = wait_for_event_match(&harness.test.genex, |event| match event {
+    let approval = wait_for_event_match(&harness.test.ruxex, |event| match event {
         EventMsg::ExecApprovalRequest(approval) => Some(approval.clone()),
         _ => None,
     })
@@ -174,7 +174,7 @@ await tools.exec_command({
     harness.assert_result_held().await;
     harness
         .test
-        .genex
+        .ruxex
         .submit(Op::ExecApproval {
             id: approval.effective_approval_id(),
             turn_id: Some(harness.turn_id.clone()),
@@ -196,7 +196,7 @@ await tools.apply_patch("*** Begin Patch\n*** Add File: code_mode_patch_approval
         |_| {},
     )
     .await?;
-    let approval = wait_for_event_match(&harness.test.genex, |event| match event {
+    let approval = wait_for_event_match(&harness.test.ruxex, |event| match event {
         EventMsg::ApplyPatchApprovalRequest(approval) => Some(approval.clone()),
         _ => None,
     })
@@ -205,7 +205,7 @@ await tools.apply_patch("*** Begin Patch\n*** Add File: code_mode_patch_approval
     harness.assert_result_held().await;
     harness
         .test
-        .genex
+        .ruxex
         .submit(Op::PatchApproval {
             id: approval.call_id,
             decision: ReviewDecision::Approved,
@@ -235,7 +235,7 @@ await tools.request_permissions({
         },
     )
     .await?;
-    let request = wait_for_event(&harness.test.genex, |event| {
+    let request = wait_for_event(&harness.test.ruxex, |event| {
         matches!(
             event,
             EventMsg::RequestPermissions(_) | EventMsg::TurnComplete(_) | EventMsg::Error(_)
@@ -249,7 +249,7 @@ await tools.request_permissions({
     harness.assert_result_held().await;
     harness
         .test
-        .genex
+        .ruxex
         .submit(Op::RequestPermissionsResponse {
             id: request.call_id,
             response: RequestPermissionsResponse {

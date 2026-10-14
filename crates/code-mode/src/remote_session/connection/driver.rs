@@ -4,11 +4,11 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use genex_code_mode_protocol::CellId;
-use genex_code_mode_protocol::CodeModeSessionDelegate;
-use genex_code_mode_protocol::host::EncodedFrame;
-use genex_code_mode_protocol::host::HostToClient;
-use genex_code_mode_protocol::host::RequestId;
+use ruxex_code_mode_protocol::CellId;
+use ruxex_code_mode_protocol::CodeModeSessionDelegate;
+use ruxex_code_mode_protocol::host::EncodedFrame;
+use ruxex_code_mode_protocol::host::HostToClient;
+use ruxex_code_mode_protocol::host::RequestId;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 

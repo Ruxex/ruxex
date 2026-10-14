@@ -1,8 +1,8 @@
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::ResponseItem;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::truncate_text;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::truncate_text;
 
 /// Retains items from the earliest of the last `user_message_count` user
 /// messages through the latest user message.
@@ -72,10 +72,10 @@ pub fn truncate_assistant_output_text_to_token_budget(
 
 #[cfg(test)]
 mod tests {
-    use genex_protocol::models::ContentItem;
-    use genex_protocol::models::ResponseItem;
-    use genex_utils_output_truncation::TruncationPolicy;
-    use genex_utils_output_truncation::truncate_text;
+    use ruxex_protocol::models::ContentItem;
+    use ruxex_protocol::models::ResponseItem;
+    use ruxex_utils_output_truncation::TruncationPolicy;
+    use ruxex_utils_output_truncation::truncate_text;
     use pretty_assertions::assert_eq;
 
     use super::retain_tail_from_last_n_user_messages;

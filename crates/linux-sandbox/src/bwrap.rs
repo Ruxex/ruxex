@@ -3,7 +3,7 @@
 //! This module mirrors the semantics used by the macOS Seatbelt sandbox:
 //! - the filesystem is read-only by default,
 //! - explicit writable roots are layered on top, and
-//! - sensitive subpaths such as `.git`, `.agents`, `.genex`, and `.aws` remain
+//! - sensitive subpaths such as `.git`, `.agents`, `.ruxex`, and `.aws` remain
 //!   read-only even when their parent root is writable.
 //!
 //! Restricted execution also hides WSLg's duplicate distro root so it cannot
@@ -29,15 +29,15 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use crate::linux_run_main::synthetic_mount_registry_root;
-use genex_protocol::error::GenexErr;
-use genex_protocol::error::Result;
-use genex_protocol::permissions::is_protected_metadata_name;
-use genex_protocol::protocol::FileSystemAccessMode;
-use genex_protocol::protocol::FileSystemPath;
-use genex_protocol::protocol::FileSystemSandboxPolicy;
-use genex_protocol::protocol::FileSystemSpecialPath;
-use genex_protocol::protocol::WritableRoot;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::error::Result;
+use ruxex_protocol::permissions::is_protected_metadata_name;
+use ruxex_protocol::protocol::FileSystemAccessMode;
+use ruxex_protocol::protocol::FileSystemPath;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_protocol::protocol::FileSystemSpecialPath;
+use ruxex_protocol::protocol::WritableRoot;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use globset::GlobBuilder;
 use globset::GlobSet;
 use globset::GlobSetBuilder;
@@ -422,7 +422,7 @@ fn create_filesystem_args(
     cwd: &Path,
     options: BwrapOptions,
 ) -> Result<BwrapArgs> {
-    let daemon_directory = genex_uds::prepare_shared_daemon_socket_directory()?;
+    let daemon_directory = ruxex_uds::prepare_shared_daemon_socket_directory()?;
     crate::daemon_mounts::reject_daemon_mount_aliases(
         &daemon_directory,
         options
@@ -465,7 +465,7 @@ fn create_filesystem_args(
                 };
                 // Automatic repo-metadata read masks are skipped here so the
                 // metadata handling below can apply the root-scoped
-                // protection consistently for `.git`, `.agents`, `.genex`, and `.aws`.
+                // protection consistently for `.git`, `.agents`, `.ruxex`, and `.aws`.
                 // User-authored `read` rules for other subpaths and `none`
                 // rules should keep their normal bwrap behavior, which can mask
                 // the first missing component to prevent creation under writable
@@ -473,7 +473,7 @@ fn create_filesystem_args(
                 let project_subpath = Path::new(subpath);
                 if project_subpath != Path::new(".git")
                     && project_subpath != Path::new(".agents")
-                    && project_subpath != Path::new(".genex")
+                    && project_subpath != Path::new(".ruxex")
                     && project_subpath != Path::new(".aws")
                 {
                     return None;
@@ -785,7 +785,7 @@ fn append_daemon_socket_mask(
 ) -> Result<()> {
     let source = fs::canonicalize(mount_root)?;
     if source.starts_with(daemon_directory) {
-        return Err(GenexErr::Fatal(
+        return Err(RuxexErr::Fatal(
             "app-server socket directory cannot be a sandbox mount root".to_string(),
         ));
     }
@@ -818,7 +818,7 @@ fn expand_unreadable_globs_with_ripgrep(
     let mut patterns_by_search_root: BTreeMap<AbsolutePathBuf, Vec<String>> = BTreeMap::new();
     for pattern in patterns {
         let Some((search_root, glob)) = split_pattern_for_ripgrep(pattern, cwd) else {
-            return Err(GenexErr::Fatal(format!(
+            return Err(RuxexErr::Fatal(format!(
                 "unreadable glob `{pattern}` cannot be safely expanded; use a pattern with a non-root directory prefix"
             )));
         };
@@ -841,7 +841,7 @@ fn expand_unreadable_globs_with_ripgrep(
             }
             expanded_paths.insert(path);
             if expanded_paths.len() > MAX_UNREADABLE_GLOB_MATCHES {
-                return Err(GenexErr::Fatal(format!(
+                return Err(RuxexErr::Fatal(format!(
                     "unreadable glob expansion for {} matched more than {MAX_UNREADABLE_GLOB_MATCHES} paths",
                     search_root.display()
                 )));
@@ -960,7 +960,7 @@ fn ripgrep_files(
         }
 
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(GenexErr::Fatal(format!(
+        return Err(RuxexErr::Fatal(format!(
             "ripgrep unreadable glob scan failed for {}: {stderr}",
             search_root.display()
         )));
@@ -995,7 +995,7 @@ fn glob_files(
             .allow_unclosed_class(true)
             .build()
             .map_err(|err| {
-                GenexErr::Fatal(format!(
+                RuxexErr::Fatal(format!(
                     "unreadable glob pattern is invalid for {}: {err}",
                     search_root.display()
                 ))
@@ -1003,7 +1003,7 @@ fn glob_files(
         builder.add(glob);
     }
     let glob_set = builder.build().map_err(|err| {
-        GenexErr::Fatal(format!(
+        RuxexErr::Fatal(format!(
             "unreadable glob matcher failed for {}: {err}",
             search_root.display()
         ))
@@ -1139,7 +1139,7 @@ fn append_read_only_subpath_args(
          * only protect a startup-time snapshot; the sandboxed process could
          * replace the writable symlink before it reads through the logical path.
          */
-        return Err(GenexErr::Fatal(format!(
+        return Err(RuxexErr::Fatal(format!(
             "cannot enforce sandbox read-only path {} because it crosses writable symlink {}",
             subpath.display(),
             symlink.display()
@@ -1179,7 +1179,7 @@ fn append_read_only_subpath_args(
         append_daemon_socket_mask(
             &mut bwrap_args.args,
             subpath,
-            &genex_uds::shared_daemon_socket_directory()?,
+            &ruxex_uds::shared_daemon_socket_directory()?,
         )?;
     }
     Ok(())
@@ -1265,7 +1265,7 @@ fn append_unreadable_root_args(
          * protect the old target while the logical path could later point
          * somewhere else.
          */
-        return Err(GenexErr::Fatal(format!(
+        return Err(RuxexErr::Fatal(format!(
             "cannot enforce sandbox deny-read path {} because it crosses writable symlink {}",
             unreadable_root.display(),
             symlink.display()
@@ -1446,12 +1446,12 @@ mod wslg_tests;
 mod tests {
     use super::*;
 
-    use genex_protocol::protocol::FileSystemAccessMode;
-    use genex_protocol::protocol::FileSystemPath;
-    use genex_protocol::protocol::FileSystemSandboxEntry;
-    use genex_protocol::protocol::FileSystemSandboxPolicy;
-    use genex_protocol::protocol::FileSystemSpecialPath;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_protocol::protocol::FileSystemAccessMode;
+    use ruxex_protocol::protocol::FileSystemPath;
+    use ruxex_protocol::protocol::FileSystemSandboxEntry;
+    use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+    use ruxex_protocol::protocol::FileSystemSpecialPath;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
@@ -1839,7 +1839,7 @@ mod tests {
         assert_empty_file_bound_without_perms(&args.args, &blocked);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".git"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".ruxex"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(args.preserved_files.len(), 1);
         assert_eq!(
@@ -1848,7 +1848,7 @@ mod tests {
                 blocked.clone(),
                 workspace.join(".git"),
                 workspace.join(".agents"),
-                workspace.join(".genex"),
+                workspace.join(".ruxex"),
                 workspace.join(".aws"),
             ]
         );
@@ -1880,14 +1880,14 @@ mod tests {
 
         assert_empty_file_bound_without_perms(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".ruxex"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
             vec![
                 dot_git.clone(),
                 workspace.join(".agents"),
-                workspace.join(".genex"),
+                workspace.join(".ruxex"),
                 workspace.join(".aws"),
             ]
         );
@@ -1927,12 +1927,12 @@ mod tests {
             .expect("filesystem args");
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".ruxex"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
             vec![
-                workspace.join(".genex"),
+                workspace.join(".ruxex"),
                 dot_git,
                 workspace.join(".agents"),
                 workspace.join(".aws"),
@@ -1970,12 +1970,12 @@ mod tests {
             .expect("filesystem args");
         assert_empty_directory_mounted_read_only(&args.args, &dot_git);
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".agents"));
-        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".genex"));
+        assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".ruxex"));
         assert_empty_directory_mounted_read_only(&args.args, &workspace.join(".aws"));
         assert_eq!(
             synthetic_mount_target_paths(&args),
             vec![
-                workspace.join(".genex"),
+                workspace.join(".ruxex"),
                 dot_git,
                 workspace.join(".agents"),
                 workspace.join(".aws"),
@@ -2054,7 +2054,7 @@ mod tests {
             },
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
-                    value: FileSystemSpecialPath::project_roots(Some(".genex".into())),
+                    value: FileSystemSpecialPath::project_roots(Some(".ruxex".into())),
                 },
                 access: FileSystemAccessMode::Read,
                 missing_path_behavior: None,
@@ -2065,16 +2065,16 @@ mod tests {
             .expect("filesystem args");
         let dot_git = path_to_string(&temp_dir.path().join(".git"));
         let dot_agents = path_to_string(&temp_dir.path().join(".agents"));
-        let dot_genex = path_to_string(&temp_dir.path().join(".genex"));
+        let dot_ruxex = path_to_string(&temp_dir.path().join(".ruxex"));
 
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_git));
         assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_agents));
-        assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_genex));
+        assert_empty_directory_mounted_read_only(&args.args, Path::new(&dot_ruxex));
         assert!(args.preserved_files.is_empty());
         let synthetic_targets = synthetic_mount_target_paths(&args);
         assert!(synthetic_targets.contains(&PathBuf::from(&dot_git)));
         assert!(synthetic_targets.contains(&PathBuf::from(&dot_agents)));
-        assert!(synthetic_targets.contains(&PathBuf::from(&dot_genex)));
+        assert!(synthetic_targets.contains(&PathBuf::from(&dot_ruxex)));
         assert_eq!(
             protected_create_target_paths(&args),
             Vec::<PathBuf>::new(),
@@ -2141,16 +2141,16 @@ mod tests {
             vec![
                 PathBuf::from("/.git"),
                 PathBuf::from("/.agents"),
-                PathBuf::from("/.genex"),
+                PathBuf::from("/.ruxex"),
                 PathBuf::from("/.aws"),
                 PathBuf::from("/dev/.git"),
                 PathBuf::from("/dev/.agents"),
-                PathBuf::from("/dev/.genex"),
+                PathBuf::from("/dev/.ruxex"),
                 PathBuf::from("/dev/.aws"),
             ]
         );
         let daemon_directory =
-            path_to_string(&genex_uds::shared_daemon_socket_directory().unwrap());
+            path_to_string(&ruxex_uds::shared_daemon_socket_directory().unwrap());
         assert_eq!(
             args.args,
             vec![
@@ -2195,9 +2195,9 @@ mod tests {
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
-                "/.genex".to_string(),
+                "/.ruxex".to_string(),
                 "--remount-ro".to_string(),
-                "/.genex".to_string(),
+                "/.ruxex".to_string(),
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
@@ -2229,9 +2229,9 @@ mod tests {
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
-                "/dev/.genex".to_string(),
+                "/dev/.ruxex".to_string(),
                 "--remount-ro".to_string(),
-                "/dev/.genex".to_string(),
+                "/dev/.ruxex".to_string(),
                 "--perms".to_string(),
                 "555".to_string(),
                 "--tmpfs".to_string(),
@@ -2266,7 +2266,7 @@ mod tests {
             .position(|window| window == ["--ro-bind", "/tmp", "/tmp"])
             .expect("read-only tmp bind");
         let daemon_directory =
-            path_to_string(&genex_uds::shared_daemon_socket_directory().unwrap());
+            path_to_string(&ruxex_uds::shared_daemon_socket_directory().unwrap());
         assert_eq!(
             &args.args[tmp_bind + 3..tmp_bind + 9],
             [

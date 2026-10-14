@@ -9,8 +9,8 @@ use std::time::Duration;
 use std::time::Instant;
 
 use futures::future::BoxFuture;
-use genex_diagnostics::Gauge;
-use genex_extension_api::ThreadIdleCause;
+use ruxex_diagnostics::Gauge;
+use ruxex_extension_api::ThreadIdleCause;
 use tokio::select;
 use tokio::sync::Mutex;
 use tokio::sync::Notify;
@@ -26,7 +26,7 @@ use tracing::warn;
 
 use crate::config::Config;
 use crate::context::ContextualUserFragment;
-use crate::genex_thread::BackgroundTerminalInfo;
+use crate::ruxex_thread::BackgroundTerminalInfo;
 use crate::hook_runtime::run_turn_interrupt_hooks;
 use crate::session::TurnInput;
 use crate::session::session::Session;
@@ -37,26 +37,26 @@ use crate::state::ActiveTurn;
 use crate::state::RunningTask;
 use crate::state::TaskKind;
 use crate::state::TurnState;
-use genex_context_fragments::RenderedFragment;
-use genex_otel::SessionTelemetry;
-use genex_otel::TURN_E2E_DURATION_METRIC;
-use genex_otel::TURN_NETWORK_PROXY_METRIC;
-use genex_otel::TURN_TOOL_CALL_METRIC;
-use genex_otel::TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::MultiAgentVersion;
-use genex_protocol::protocol::TokenUsage;
-use genex_protocol::protocol::TurnAbortReason;
-use genex_protocol::protocol::TurnAbortedEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::WarningEvent;
-use genex_thread_store::PersistContext;
+use ruxex_context_fragments::RenderedFragment;
+use ruxex_otel::SessionTelemetry;
+use ruxex_otel::TURN_E2E_DURATION_METRIC;
+use ruxex_otel::TURN_NETWORK_PROXY_METRIC;
+use ruxex_otel::TURN_TOOL_CALL_METRIC;
+use ruxex_otel::TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::MultiAgentVersion;
+use ruxex_protocol::protocol::TokenUsage;
+use ruxex_protocol::protocol::TurnAbortReason;
+use ruxex_protocol::protocol::TurnAbortedEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::WarningEvent;
+use ruxex_thread_store::PersistContext;
 
 pub(crate) use compact::CompactTask;
-use genex_features::Feature;
-use genex_protocol::error::GenexErrorDetails;
-use genex_protocol::error::Result as GenexResult;
+use ruxex_features::Feature;
+use ruxex_protocol::error::RuxexErrorDetails;
+use ruxex_protocol::error::Result as RuxexResult;
 pub(crate) use regular::RegularTask;
 pub(crate) use review::ReviewTask;
 pub(crate) use user_shell::UserShellCommandMode;
@@ -64,10 +64,10 @@ pub(crate) use user_shell::UserShellCommandTask;
 pub(crate) use user_shell::execute_user_shell_command;
 
 pub(crate) const GRACEFULL_INTERRUPTION_TIMEOUT_MS: u64 = 100;
-const TASK_COMPACT_METRIC: &str = "genex.task.compact";
+const TASK_COMPACT_METRIC: &str = "ruxex.task.compact";
 static ACTIVE_TURNS: Gauge = Gauge::new("core.turns.active");
 
-pub(crate) type SessionTaskResult = GenexResult<Option<String>>;
+pub(crate) type SessionTaskResult = RuxexResult<Option<String>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum InterruptedTurnHistoryMarker {
@@ -146,7 +146,7 @@ fn bool_tag(value: bool) -> &'static str {
 
 /// Async task that drives a [`Session`] turn.
 ///
-/// Implementations encapsulate a specific Genex workflow (regular chat,
+/// Implementations encapsulate a specific Ruxex workflow (regular chat,
 /// reviews, ghost snapshots, etc.). Each task instance is owned by a
 /// [`Session`] and executed on a background Tokio task. The trait is
 /// intentionally small: implementers identify themselves via
@@ -168,7 +168,7 @@ pub(crate) trait SessionTask: Send + Sync + 'static {
     /// abort; implementers should watch for it and terminate quickly once it
     /// fires. Returning [`Some`] yields a final message that
     /// [`Session::on_task_finished`] will emit to the client. Returning
-    /// [`GenexErr::TurnAborted`] completes the task through the aborted-turn
+    /// [`RuxexErr::TurnAborted`] completes the task through the aborted-turn
     /// lifecycle instead.
     fn run(
         self: Arc<Self>,
@@ -323,14 +323,14 @@ impl Session {
             thread.id = %self.thread_id,
             turn.id = %turn_context.sub_id,
             model = %turn_context.model_info().slug,
-            genex.turn.reasoning_effort = %reasoning_effort,
-            genex.turn.token_usage.input_tokens = field::Empty,
-            genex.turn.token_usage.cached_input_tokens = field::Empty,
-            genex.turn.token_usage.cache_write_input_tokens = field::Empty,
-            genex.turn.token_usage.non_cached_input_tokens = field::Empty,
-            genex.turn.token_usage.output_tokens = field::Empty,
-            genex.turn.token_usage.reasoning_output_tokens = field::Empty,
-            genex.turn.token_usage.total_tokens = field::Empty,
+            ruxex.turn.reasoning_effort = %reasoning_effort,
+            ruxex.turn.token_usage.input_tokens = field::Empty,
+            ruxex.turn.token_usage.cached_input_tokens = field::Empty,
+            ruxex.turn.token_usage.cache_write_input_tokens = field::Empty,
+            ruxex.turn.token_usage.non_cached_input_tokens = field::Empty,
+            ruxex.turn.token_usage.output_tokens = field::Empty,
+            ruxex.turn.token_usage.reasoning_output_tokens = field::Empty,
+            ruxex.turn.token_usage.total_tokens = field::Empty,
         );
         let handle = tokio::spawn(
             async move {
@@ -351,7 +351,7 @@ impl Session {
                         ctx_for_finish.as_ref(),
                         EventMsg::Warning(WarningEvent {
                             message: format!(
-                                "Failed to save the conversation transcript; Genex will continue retrying. Error: {err}"
+                                "Failed to save the conversation transcript; Ruxex will continue retrying. Error: {err}"
                             ),
                         }),
                     )
@@ -388,7 +388,7 @@ impl Session {
     pub(crate) fn has_outstanding_durable_sleep(&self) -> bool {
         self.services
             .thread_extension_data
-            .get::<genex_extension_items::sleep::SleepItem>()
+            .get::<ruxex_extension_items::sleep::SleepItem>()
             .is_some()
     }
 
@@ -570,14 +570,14 @@ impl Session {
     ) {
         let (last_agent_message, abort_reason) = match task_result {
             Ok(last_agent_message) => (last_agent_message, None),
-            Err(err) if matches!(err.details(), GenexErrorDetails::TurnAborted) => {
+            Err(err) if matches!(err.details(), RuxexErrorDetails::TurnAborted) => {
                 (None, Some(TurnAbortReason::Interrupted))
             }
             Err(err) => {
                 warn!(%err, "session task returned an unexpected error");
                 self.emit_turn_error_lifecycle(
                     turn_context.as_ref(),
-                    err.to_genex_protocol_error(),
+                    err.to_ruxex_protocol_error(),
                 )
                 .await;
                 self.send_event(
@@ -668,35 +668,35 @@ impl Session {
                 total_tokens: (total_token_usage.total_tokens
                     - token_usage_at_turn_start.total_tokens)
                     .max(0),
-                genex_rollout_budget_units: None,
+                ruxex_rollout_budget_units: None,
             };
             let current_span = Span::current();
             current_span.record(
-                "genex.turn.token_usage.input_tokens",
+                "ruxex.turn.token_usage.input_tokens",
                 turn_token_usage.input_tokens,
             );
             current_span.record(
-                "genex.turn.token_usage.cached_input_tokens",
+                "ruxex.turn.token_usage.cached_input_tokens",
                 turn_token_usage.cached_input(),
             );
             current_span.record(
-                "genex.turn.token_usage.cache_write_input_tokens",
+                "ruxex.turn.token_usage.cache_write_input_tokens",
                 turn_token_usage.cache_write_input_tokens,
             );
             current_span.record(
-                "genex.turn.token_usage.non_cached_input_tokens",
+                "ruxex.turn.token_usage.non_cached_input_tokens",
                 turn_token_usage.non_cached_input(),
             );
             current_span.record(
-                "genex.turn.token_usage.output_tokens",
+                "ruxex.turn.token_usage.output_tokens",
                 turn_token_usage.output_tokens,
             );
             current_span.record(
-                "genex.turn.token_usage.reasoning_output_tokens",
+                "ruxex.turn.token_usage.reasoning_output_tokens",
                 turn_token_usage.reasoning_output_tokens,
             );
             current_span.record(
-                "genex.turn.token_usage.total_tokens",
+                "ruxex.turn.token_usage.total_tokens",
                 turn_token_usage.total_tokens,
             );
             token_usage_by_model.emit(turn_telemetry);

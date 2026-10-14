@@ -2,7 +2,7 @@
 
 use crate::AppServerTarget;
 use crate::connect_remote_app_server;
-use genex_app_server_client::AppServerClient;
+use ruxex_app_server_client::AppServerClient;
 
 pub(crate) async fn connect(target: &AppServerTarget) -> color_eyre::Result<AppServerClient> {
     match target {

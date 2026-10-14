@@ -3,9 +3,9 @@
 use super::*;
 use crate::chatwidget::tests::helpers::normalize_snapshot_paths;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
 use pretty_assertions::assert_eq;
 
 fn delta(thread: &str, turn: &str, item: &str) -> ServerNotification {
@@ -80,13 +80,13 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
     let voice_request = ThreadItem::UserMessage {
         id: "user".into(),
         client_id: None,
-        content: vec![genex_app_server_protocol::UserInput::Text {
+        content: vec![ruxex_app_server_protocol::UserInput::Text {
             text: "<realtime_delegation><input>question</input></realtime_delegation>".into(),
             text_elements: Vec::new(),
         }],
     };
     store.push_notification(ServerNotification::ItemStarted(
-        genex_app_server_protocol::ItemStartedNotification {
+        ruxex_app_server_protocol::ItemStartedNotification {
             thread_id: "thread".into(),
             turn_id: "voice-turn".into(),
             started_at_ms: 0,
@@ -113,7 +113,7 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
     assert_eq!(store.snapshot().delegated_turns, vec!["voice-turn"]);
     for notification in [
         ServerNotification::ReasoningSummaryPartAdded(
-            genex_app_server_protocol::ReasoningSummaryPartAddedNotification {
+            ruxex_app_server_protocol::ReasoningSummaryPartAddedNotification {
                 thread_id: "thread".into(),
                 turn_id: "voice-turn".into(),
                 item_id: "reasoning".into(),
@@ -121,7 +121,7 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
             },
         ),
         ServerNotification::ReasoningSummaryTextDelta(
-            genex_app_server_protocol::ReasoningSummaryTextDeltaNotification {
+            ruxex_app_server_protocol::ReasoningSummaryTextDeltaNotification {
                 thread_id: "thread".into(),
                 turn_id: "voice-turn".into(),
                 item_id: "reasoning".into(),
@@ -130,7 +130,7 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
             },
         ),
         ServerNotification::ReasoningTextDelta(
-            genex_app_server_protocol::ReasoningTextDeltaNotification {
+            ruxex_app_server_protocol::ReasoningTextDeltaNotification {
                 thread_id: "thread".into(),
                 turn_id: "voice-turn".into(),
                 item_id: "reasoning".into(),
@@ -157,7 +157,7 @@ fn evicted_voice_delegation_marker_still_suppresses_private_replay() {
     resumed.set_turns(vec![Turn {
         id: "voice-turn".into(),
         items: vec![voice_request],
-        items_view: genex_app_server_protocol::TurnItemsView::Summary,
+        items_view: ruxex_app_server_protocol::TurnItemsView::Summary,
         status: TurnStatus::InProgress,
         error: None,
         started_at: None,
@@ -190,7 +190,7 @@ fn saved_voice_turn_suppresses_reasoning_without_hiding_typed_reasoning() {
     let voice_request = ThreadItem::UserMessage {
         id: "voice-request".into(),
         client_id: None,
-        content: vec![genex_app_server_protocol::UserInput::Text {
+        content: vec![ruxex_app_server_protocol::UserInput::Text {
             text: "<realtime_delegation><input>question</input></realtime_delegation>".into(),
             text_elements: Vec::new(),
         }],
@@ -198,7 +198,7 @@ fn saved_voice_turn_suppresses_reasoning_without_hiding_typed_reasoning() {
     let turn = |id: &str, items| Turn {
         id: id.into(),
         items,
-        items_view: genex_app_server_protocol::TurnItemsView::Full,
+        items_view: ruxex_app_server_protocol::TurnItemsView::Full,
         status: TurnStatus::Completed,
         error: None,
         started_at: None,
@@ -224,14 +224,14 @@ fn snapshot_keeps_typed_output_before_voice_handoff_in_the_same_turn() {
     let commentary = |id: &str, text: &str| ThreadItem::AgentMessage {
         id: id.into(),
         text: text.into(),
-        phase: Some(genex_protocol::models::MessagePhase::Commentary),
+        phase: Some(ruxex_protocol::models::MessagePhase::Commentary),
         questions: None,
         delivery: None,
     };
     let marker = ThreadItem::UserMessage {
         id: "voice".into(),
         client_id: None,
-        content: vec![genex_app_server_protocol::UserInput::Text {
+        content: vec![ruxex_app_server_protocol::UserInput::Text {
             text: "<realtime_delegation><input>question</input></realtime_delegation>".into(),
             text_elements: Vec::new(),
         }],
@@ -242,7 +242,7 @@ fn snapshot_keeps_typed_output_before_voice_handoff_in_the_same_turn() {
     store.set_turns(vec![Turn {
         id: "shared".into(),
         items: vec![typed.clone(), marker.clone(), private.clone()],
-        items_view: genex_app_server_protocol::TurnItemsView::Full,
+        items_view: ruxex_app_server_protocol::TurnItemsView::Full,
         status: TurnStatus::InProgress,
         error: None,
         started_at: None,
@@ -280,21 +280,21 @@ fn snapshot_keeps_typed_item_completed_after_voice_handoff() {
     let typed = ThreadItem::AgentMessage {
         id: "typed".into(),
         text: "Typed commentary completed late".into(),
-        phase: Some(genex_protocol::models::MessagePhase::Commentary),
+        phase: Some(ruxex_protocol::models::MessagePhase::Commentary),
         questions: None,
         delivery: None,
     };
     let private = ThreadItem::AgentMessage {
         id: "private".into(),
         text: "Voice-private commentary".into(),
-        phase: Some(genex_protocol::models::MessagePhase::Commentary),
+        phase: Some(ruxex_protocol::models::MessagePhase::Commentary),
         questions: None,
         delivery: None,
     };
     let marker = ThreadItem::UserMessage {
         id: "voice".into(),
         client_id: None,
-        content: vec![genex_app_server_protocol::UserInput::Text {
+        content: vec![ruxex_app_server_protocol::UserInput::Text {
             text: "<realtime_delegation><input>question</input></realtime_delegation>".into(),
             text_elements: Vec::new(),
         }],
@@ -302,7 +302,7 @@ fn snapshot_keeps_typed_item_completed_after_voice_handoff() {
     let mut store = ThreadEventStore::new(/*capacity*/ 8);
     for item in [typed.clone(), marker, private.clone()] {
         store.push_notification(ServerNotification::ItemStarted(
-            genex_app_server_protocol::ItemStartedNotification {
+            ruxex_app_server_protocol::ItemStartedNotification {
                 thread_id: "thread".into(),
                 turn_id: "shared".into(),
                 started_at_ms: 0,
@@ -340,14 +340,14 @@ async fn evicted_voice_marker_survives_widget_snapshot_for_late_reasoning() {
     let thread_id = ThreadId::new();
     let mut store = ThreadEventStore::new(/*capacity*/ 1);
     store.push_notification(ServerNotification::ItemStarted(
-        genex_app_server_protocol::ItemStartedNotification {
+        ruxex_app_server_protocol::ItemStartedNotification {
             thread_id: thread_id.to_string(),
             turn_id: "voice-turn".into(),
             started_at_ms: 0,
             item: ThreadItem::UserMessage {
                 id: "user".into(),
                 client_id: None,
-                content: vec![genex_app_server_protocol::UserInput::Text {
+                content: vec![ruxex_app_server_protocol::UserInput::Text {
                     text: "<realtime_delegation><input>question</input></realtime_delegation>"
                         .into(),
                     text_elements: Vec::new(),
@@ -369,7 +369,7 @@ async fn evicted_voice_marker_survives_widget_snapshot_for_late_reasoning() {
     app.replay_thread_snapshot(snapshot, /*resume_restored_queue*/ false);
     app.chat_widget.handle_server_notification(
         ServerNotification::ReasoningSummaryTextDelta(
-            genex_app_server_protocol::ReasoningSummaryTextDeltaNotification {
+            ruxex_app_server_protocol::ReasoningSummaryTextDeltaNotification {
                 thread_id: thread_id.to_string(),
                 turn_id: "voice-turn".into(),
                 item_id: "late-reasoning".into(),
@@ -429,9 +429,9 @@ fn buffered_replay_preserves_text_before_interactive_requests() {
     let mut store = ThreadEventStore::new(/*capacity*/ 16);
     store.push_notification(delta("thread", "turn", "answer"));
     store.push_request(
-        genex_app_server_protocol::ServerRequest::ToolRequestUserInput {
-            request_id: genex_app_server_protocol::RequestId::Integer(1),
-            params: genex_app_server_protocol::ToolRequestUserInputParams {
+        ruxex_app_server_protocol::ServerRequest::ToolRequestUserInput {
+            request_id: ruxex_app_server_protocol::RequestId::Integer(1),
+            params: ruxex_app_server_protocol::ToolRequestUserInputParams {
                 thread_id: "thread".into(),
                 turn_id: "turn".into(),
                 item_id: "tool".into(),
@@ -454,7 +454,7 @@ async fn misalignment_replay_blocks_when_turn_start_was_evicted() {
     let error = AppServerTurnError {
         misalignment: None,
         message: "Chat stopped".into(),
-        genex_error_info: Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation),
+        ruxex_error_info: Some(AppServerRuxexErrorInfo::MisalignmentPolicyViolation),
         additional_details: None,
     };
     let previous_turn = test_turn("old-turn", TurnStatus::Completed, Vec::new());
@@ -465,7 +465,7 @@ async fn misalignment_replay_blocks_when_turn_start_was_evicted() {
     for (stored_turn, notification) in [
         (
             previous_turn.clone(),
-            ServerNotification::Error(genex_app_server_protocol::ErrorNotification {
+            ServerNotification::Error(ruxex_app_server_protocol::ErrorNotification {
                 thread_id: thread_id.to_string(),
                 turn_id: "new-turn".into(),
                 error: error.clone(),
@@ -482,11 +482,11 @@ async fn misalignment_replay_blocks_when_turn_start_was_evicted() {
         // A settings-operation error has a submission ID, not evidence of a new turn.
         (
             failed_turn,
-            ServerNotification::Error(genex_app_server_protocol::ErrorNotification {
+            ServerNotification::Error(ruxex_app_server_protocol::ErrorNotification {
                 thread_id: thread_id.to_string(),
                 turn_id: "settings-update".into(),
                 error: AppServerTurnError {
-                    genex_error_info: Some(AppServerGenexErrorInfo::BadRequest),
+                    ruxex_error_info: Some(AppServerRuxexErrorInfo::BadRequest),
                     ..error
                 },
                 will_retry: false,

@@ -25,14 +25,14 @@ fn file_citation_paths_preserve_markdown_significant_characters() {
         "/tmp/report%20final.xlsx",
         "/tmp/report?final.xlsx",
     ] {
-        let markdown = format!(":genex-file-citation{{path=\"{path}\"}}");
+        let markdown = format!(":ruxex-file-citation{{path=\"{path}\"}}");
         assert_eq!(rendered_text(&markdown, /*cwd*/ None), path);
     }
 }
 
 #[test]
 fn file_citations_inside_code_existing_links_and_html_remain_literal() {
-    let citation = r#":genex-file-citation{path="/tmp/report.xlsx" purpose="output"}"#;
+    let citation = r#":ruxex-file-citation{path="/tmp/report.xlsx" purpose="output"}"#;
 
     for markdown in [
         format!("`{citation}`"),
@@ -59,19 +59,19 @@ fn file_citations_inside_code_existing_links_and_html_remain_literal() {
 fn file_citations_accept_unquoted_paths_and_trailing_windows_separators() {
     for (citation, expected) in [
         (
-            r#":genex-file-citation{path="C:\Users\me\.genex\report.xlsx"}"#,
-            "C:/Users/me/.genex/report.xlsx",
+            r#":ruxex-file-citation{path="C:\Users\me\.ruxex\report.xlsx"}"#,
+            "C:/Users/me/.ruxex/report.xlsx",
         ),
         (
-            ":genex-file-citation{path=/tmp/a*b*.txt purpose=output}",
+            ":ruxex-file-citation{path=/tmp/a*b*.txt purpose=output}",
             "/tmp/a*b*.txt",
         ),
         (
-            r#":genex-file-citation{path="C:\repo\" purpose="output" sheet="Q1=Actual"}"#,
+            r#":ruxex-file-citation{path="C:\repo\" purpose="output" sheet="Q1=Actual"}"#,
             "C:/repo/",
         ),
         (
-            r#":genex-file-citation{path="/tmp/a\"b" label="team's \"report\""}"#,
+            r#":ruxex-file-citation{path="/tmp/a\"b" label="team's \"report\""}"#,
             "/tmp/a\"b",
         ),
     ] {
@@ -84,17 +84,17 @@ fn multiple_file_citations_render_without_interpreting_encoded_source() {
     let cwd = std::env::temp_dir();
     let second = cwd.join("second.xlsx");
     let markdown = format!(
-        r#"&#58;genex-file-citation{{path="ignored.xlsx"}} :genex-file-citation{{artifact_kind="workbook" path="reports/final%20report.xlsx" purpose="output" sheet="Dashboard" range="A1:D8"}} and ::genex-file-citation{{path="{}"}}"#,
+        r#"&#58;ruxex-file-citation{{path="ignored.xlsx"}} :ruxex-file-citation{{artifact_kind="workbook" path="reports/final%20report.xlsx" purpose="output" sheet="Dashboard" range="A1:D8"}} and ::ruxex-file-citation{{path="{}"}}"#,
         second.display(),
     );
 
     assert_eq!(
         rendered_text(&markdown, Some(&cwd)),
-        r#":genex-file-citation{path="ignored.xlsx"} reports/final%20report.xlsx and second.xlsx"#,
+        r#":ruxex-file-citation{path="ignored.xlsx"} reports/final%20report.xlsx and second.xlsx"#,
     );
 
     // A work budget must not become a fixed count limit on legitimate citations.
-    let many = [":genex-file-citation{path=/tmp/report.xlsx}"; 512].join(" ");
+    let many = [":ruxex-file-citation{path=/tmp/report.xlsx}"; 512].join(" ");
     assert_eq!(
         rendered_text(&many, /*cwd*/ None),
         ["/tmp/report.xlsx"; 512].join(" "),
@@ -105,7 +105,7 @@ fn multiple_file_citations_render_without_interpreting_encoded_source() {
 fn file_citations_preserve_adjacent_entities_and_escaped_punctuation() {
     assert_eq!(
         rendered_text(
-            r"$\alpha$:genex-file-citation{path=/tmp/$x$/report.md}$\beta$",
+            r"$\alpha$:ruxex-file-citation{path=/tmp/$x$/report.md}$\beta$",
             /*cwd*/ None
         ),
         "α/tmp/$x$/report.mdβ",
@@ -113,11 +113,11 @@ fn file_citations_preserve_adjacent_entities_and_escaped_punctuation() {
     let cwd = std::env::temp_dir();
     for (markdown, expected) in [
         (
-            r#"Préface &amp;:genex-file-citation{path="first&amp;.txt"}&#x1F642;:genex-file-citation{path="second.txt"}&lt;fin&gt;"#,
+            r#"Préface &amp;:ruxex-file-citation{path="first&amp;.txt"}&#x1F642;:ruxex-file-citation{path="second.txt"}&lt;fin&gt;"#,
             "Préface &first&amp;.txt🙂second.txt<fin>",
         ),
         (
-            r#"\[:genex-file-citation{path="first.txt"}\]\*:genex-file-citation{path="second.txt"}\!"#,
+            r#"\[:ruxex-file-citation{path="first.txt"}\]\*:ruxex-file-citation{path="second.txt"}\!"#,
             "[first.txt]*second.txt!",
         ),
     ] {
@@ -127,7 +127,7 @@ fn file_citations_preserve_adjacent_entities_and_escaped_punctuation() {
 
 #[test]
 fn generic_markdown_keeps_assistant_directives_literal() {
-    let citation = r#":genex-file-citation{path="/tmp/report.xlsx"}"#;
+    let citation = r#":ruxex-file-citation{path="/tmp/report.xlsx"}"#;
 
     assert_eq!(
         render_markdown_lines_with_width_and_cwd(citation, /*width*/ None, /*cwd*/ None)

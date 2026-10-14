@@ -1,9 +1,9 @@
-use genex_code_mode_protocol::NoopCodeModeSessionDelegate;
-use genex_code_mode_runtime::ExecuteRequest;
-use genex_code_mode_runtime::InProcessCodeModeSession;
-use genex_code_mode_runtime::RuntimeResponse;
-use genex_code_mode_runtime::V8JitMode;
-use genex_code_mode_runtime::initialize_v8;
+use ruxex_code_mode_protocol::NoopCodeModeSessionDelegate;
+use ruxex_code_mode_runtime::ExecuteRequest;
+use ruxex_code_mode_runtime::InProcessCodeModeSession;
+use ruxex_code_mode_runtime::RuntimeResponse;
+use ruxex_code_mode_runtime::V8JitMode;
+use ruxex_code_mode_runtime::initialize_v8;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 

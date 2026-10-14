@@ -7,8 +7,8 @@ use std::task::Context;
 use std::task::Poll;
 use std::task::Waker;
 
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionRegistryBuilder;
 use shared_state_extension::recorded_style_contributions;
 use shared_state_extension::recorded_usage_contributions;
 
@@ -68,10 +68,10 @@ fn main() {
 }
 
 async fn contribute_prompt(
-    registry: &genex_extension_api::ExtensionRegistry<()>,
+    registry: &ruxex_extension_api::ExtensionRegistry<()>,
     session_store: &ExtensionData,
     thread_store: &ExtensionData,
-) -> Vec<genex_extension_api::PromptFragment> {
+) -> Vec<ruxex_extension_api::PromptFragment> {
     let mut fragments = Vec::new();
     for contributor in registry.context_contributors() {
         fragments.extend(

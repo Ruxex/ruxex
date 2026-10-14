@@ -1,7 +1,7 @@
 //! Trusted permission state keeps local and remote profile roots as executor path URIs.
 
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::models::ActivePermissionProfile;
 use crate::models::PermissionProfile;

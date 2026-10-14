@@ -1,19 +1,19 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-build-info"
+name = "ruxex-build-info"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_build_info"
+name = "ruxex_build_info"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-install-context = { workspace = true }
+ruxex-install-context = { workspace = true }
 semver = { workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 sha2 = { workspace = true }

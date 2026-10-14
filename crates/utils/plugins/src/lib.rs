@@ -1,11 +1,11 @@
-//! Plugin path resolution and plaintext mention sigils shared across Genex crates.
+//! Plugin path resolution and plaintext mention sigils shared across Ruxex crates.
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 pub mod mention_syntax;
 pub mod plugin_namespace;
 
-pub use genex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
+pub use ruxex_exec_server_protocol::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
 pub use plugin_namespace::AGENT_PLUGIN_MANIFEST_RELATIVE_PATH;
 pub use plugin_namespace::AGENT_PLUGIN_SCHEMA_PREFIX;
 pub use plugin_namespace::AGENT_PLUGIN_SCHEMA_URI;
@@ -39,7 +39,7 @@ pub struct PluginSkillRoot {
 }
 
 /// Directory containing private plugin metadata.
-const PLUGIN_METADATA_DIR: &str = ".genex-plugin";
+const PLUGIN_METADATA_DIR: &str = ".ruxex-plugin";
 /// Directory containing commands converted into skills during plugin installation.
 const MIGRATED_COMMAND_SKILLS_DIR: &str = "migrated-command-skills";
 

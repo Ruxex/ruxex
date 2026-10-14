@@ -1,8 +1,8 @@
-use genex_tools::JsonSchema;
-use genex_tools::JsonToolOutput;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolName;
-use genex_tools::ToolSpec;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::JsonToolOutput;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolName;
+use ruxex_tools::ToolSpec;
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -104,7 +104,7 @@ impl ToolExecutor<ToolInvocation> for WaitForEnvironmentHandler {
         })
     }
 
-    fn handle<'a>(&'a self, invocation: ToolInvocation) -> genex_tools::ToolExecutorFuture<'a>
+    fn handle<'a>(&'a self, invocation: ToolInvocation) -> ruxex_tools::ToolExecutorFuture<'a>
     where
         ToolInvocation: 'a,
     {

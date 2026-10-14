@@ -1,11 +1,11 @@
-use genex_protocol::models::WebSearchAction;
+use ruxex_protocol::models::WebSearchAction;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use ts_rs::TS;
 
-/// Top-level JSONL events emitted by genex exec
+/// Top-level JSONL events emitted by ruxex exec
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(tag = "type")]
 pub enum ThreadEvent {

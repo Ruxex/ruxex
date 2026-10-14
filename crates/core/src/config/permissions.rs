@@ -3,37 +3,37 @@ use std::collections::HashSet;
 use std::io;
 use std::path::Path;
 
-use genex_config::ConfigPathContext;
-use genex_config::permissions_toml::FilesystemPermissionToml;
-use genex_config::permissions_toml::FilesystemPermissionsToml;
-use genex_config::permissions_toml::NetworkDomainPermissionToml;
-use genex_config::permissions_toml::NetworkDomainPermissionsToml;
-use genex_config::permissions_toml::NetworkToml;
-use genex_config::permissions_toml::NetworkUnixSocketPermissionToml;
-use genex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
-use genex_config::permissions_toml::PermissionProfileToml;
-use genex_config::permissions_toml::PermissionsToml;
-use genex_config::permissions_toml::WorkspaceRootsToml;
-use genex_features::NetworkProxyConfigToml;
-use genex_features::NetworkProxyDomainPermissionToml;
-use genex_features::NetworkProxyModeToml;
-use genex_features::NetworkProxyUnixSocketPermissionToml;
-use genex_network_proxy::NetworkMode;
-use genex_network_proxy::NetworkProxyConfig;
+use ruxex_config::ConfigPathContext;
+use ruxex_config::permissions_toml::FilesystemPermissionToml;
+use ruxex_config::permissions_toml::FilesystemPermissionsToml;
+use ruxex_config::permissions_toml::NetworkDomainPermissionToml;
+use ruxex_config::permissions_toml::NetworkDomainPermissionsToml;
+use ruxex_config::permissions_toml::NetworkToml;
+use ruxex_config::permissions_toml::NetworkUnixSocketPermissionToml;
+use ruxex_config::permissions_toml::NetworkUnixSocketPermissionsToml;
+use ruxex_config::permissions_toml::PermissionProfileToml;
+use ruxex_config::permissions_toml::PermissionsToml;
+use ruxex_config::permissions_toml::WorkspaceRootsToml;
+use ruxex_features::NetworkProxyConfigToml;
+use ruxex_features::NetworkProxyDomainPermissionToml;
+use ruxex_features::NetworkProxyModeToml;
+use ruxex_features::NetworkProxyUnixSocketPermissionToml;
+use ruxex_network_proxy::NetworkMode;
+use ruxex_network_proxy::NetworkProxyConfig;
 #[cfg(test)]
-use genex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use genex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::permissions::project_roots_glob_pattern;
-use genex_utils_path_uri::PathUri;
+use ruxex_network_proxy::NetworkUnixSocketPermission as ProxyNetworkUnixSocketPermission;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_DANGER_FULL_ACCESS;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
+use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_WORKSPACE;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::permissions::project_roots_glob_pattern;
+use ruxex_utils_path_uri::PathUri;
 
 use super::ProjectConfig;
 use super::permission_path;
@@ -797,7 +797,7 @@ fn remove_trailing_glob_suffix(path: &str) -> &str {
 }
 
 // WARNING: keep this parser forward-compatible.
-// Adding a new `:special_path` must not make older Genex versions reject the
+// Adding a new `:special_path` must not make older Ruxex versions reject the
 // config. Unknown values intentionally round-trip through
 // `FileSystemSpecialPath::Unknown` so they can be surfaced as warnings and
 // ignored, rather than aborting config load.
@@ -825,7 +825,7 @@ fn push_warning(startup_warnings: &mut Vec<String>, message: String) {
 
 fn missing_filesystem_entries_warning(profile_name: &str) -> String {
     format!(
-        "Permissions profile `{profile_name}` does not define any recognized filesystem entries for this version of Genex. Filesystem access will remain restricted. Upgrade Genex if this profile expects filesystem permissions."
+        "Permissions profile `{profile_name}` does not define any recognized filesystem entries for this version of Ruxex. Filesystem access will remain restricted. Upgrade Ruxex if this profile expects filesystem permissions."
     )
 }
 
@@ -840,10 +840,10 @@ fn maybe_push_unknown_special_path_warning(
         startup_warnings,
         match subpath.as_deref() {
             Some(subpath) => format!(
-                "Configured filesystem path `{path}` with nested entry `{subpath}` is not recognized by this version of Genex and will be ignored. Upgrade Genex if this path is required."
+                "Configured filesystem path `{path}` with nested entry `{subpath}` is not recognized by this version of Ruxex and will be ignored. Upgrade Ruxex if this path is required."
             ),
             None => format!(
-                "Configured filesystem path `{path}` is not recognized by this version of Genex and will be ignored. Upgrade Genex if this path is required."
+                "Configured filesystem path `{path}` is not recognized by this version of Ruxex and will be ignored. Upgrade Ruxex if this path is required."
             ),
         },
     );

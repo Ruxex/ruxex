@@ -1,6 +1,6 @@
-use genex_tools::JsonSchema;
-use genex_tools::ResponsesApiTool;
-use genex_tools::ToolSpec;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::ResponsesApiTool;
+use ruxex_tools::ToolSpec;
 use std::collections::BTreeMap;
 
 pub(crate) fn create_wait_tool() -> ToolSpec {
@@ -30,11 +30,11 @@ pub(crate) fn create_wait_tool() -> ToolSpec {
     ]);
 
     ToolSpec::Function(ResponsesApiTool {
-        name: genex_code_mode::WAIT_TOOL_NAME.to_string(),
+        name: ruxex_code_mode::WAIT_TOOL_NAME.to_string(),
         description: format!(
             "Waits on a yielded `{}` cell and returns new output or completion.\n{}",
-            genex_code_mode::PUBLIC_TOOL_NAME,
-            genex_code_mode::build_wait_tool_description().trim()
+            ruxex_code_mode::PUBLIC_TOOL_NAME,
+            ruxex_code_mode::build_wait_tool_description().trim()
         ),
         strict: false,
         parameters: JsonSchema::object(
@@ -57,11 +57,11 @@ mod tests {
         assert_eq!(
             create_wait_tool(),
             ToolSpec::Function(ResponsesApiTool {
-                name: genex_code_mode::WAIT_TOOL_NAME.to_string(),
+                name: ruxex_code_mode::WAIT_TOOL_NAME.to_string(),
                 description: format!(
                     "Waits on a yielded `{}` cell and returns new output or completion.\n{}",
-                    genex_code_mode::PUBLIC_TOOL_NAME,
-                    genex_code_mode::build_wait_tool_description().trim()
+                    ruxex_code_mode::PUBLIC_TOOL_NAME,
+                    ruxex_code_mode::build_wait_tool_description().trim()
                 ),
                 strict: false,
                 defer_loading: None,

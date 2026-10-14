@@ -1,5 +1,5 @@
 use super::ContextualUserFragment;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ContentItemKind;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct BaseInstructionsFragment(pub(crate) String);

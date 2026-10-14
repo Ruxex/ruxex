@@ -1,9 +1,9 @@
 use super::*;
-use genex_protocol::models::ContentItemKind;
-use genex_protocol::models::ImageReference;
-use genex_protocol::models::InternalChatMessageMetadataPassthrough;
-use genex_protocol::models::image_close_tag_text;
-use genex_protocol::models::local_image_open_tag_text_with_path;
+use ruxex_protocol::models::ContentItemKind;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::models::InternalChatMessageMetadataPassthrough;
+use ruxex_protocol::models::image_close_tag_text;
+use ruxex_protocol::models::local_image_open_tag_text_with_path;
 use pretty_assertions::assert_eq;
 
 fn message(content: Vec<ContentItem>) -> ResponseItem {
@@ -30,7 +30,7 @@ fn file_image() -> ContentItem {
         image: ImageReference::File {
             file_id: "file_123".to_string(),
         },
-        detail: Some(genex_protocol::models::ImageDetail::Original),
+        detail: Some(ruxex_protocol::models::ImageDetail::Original),
     }
 }
 
@@ -159,7 +159,7 @@ fn image_treatment_preserves_client_developer_boundary_behavior() {
     *role = "developer".to_string();
     let source = ResponseItemEnvelope {
         item,
-        metadata: Some(GenexHarnessMetadata {
+        metadata: Some(RuxexHarnessMetadata {
             client_authored: true,
             ..Default::default()
         }),

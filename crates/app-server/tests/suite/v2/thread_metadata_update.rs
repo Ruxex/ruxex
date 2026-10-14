@@ -5,40 +5,40 @@ use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
-use genex_app_server_protocol::GitInfo;
-use genex_app_server_protocol::JSONRPCError;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadListParams;
-use genex_app_server_protocol::ThreadListResponse;
-use genex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use genex_app_server_protocol::ThreadMetadataUpdateParams;
-use genex_app_server_protocol::ThreadMetadataUpdateResponse;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadSection;
-use genex_app_server_protocol::ThreadSectionListParams;
-use genex_app_server_protocol::ThreadSectionListResponse;
-use genex_app_server_protocol::ThreadSectionMoveParams;
-use genex_app_server_protocol::ThreadSectionMoveResponse;
-use genex_app_server_protocol::ThreadSortKey;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_core::ARCHIVED_SESSIONS_SUBDIR;
-use genex_git_utils::GitSha;
-use genex_protocol::SanitizedGitUrl;
-use genex_protocol::ThreadId;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::GitInfo as RolloutGitInfo;
-use genex_rollout::state_db::reconcile_rollout;
-use genex_state::PINNED_THREAD_SECTION_ID;
-use genex_state::PINNED_THREAD_SECTION_NAME;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::GitInfo;
+use ruxex_app_server_protocol::JSONRPCError;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadListParams;
+use ruxex_app_server_protocol::ThreadListResponse;
+use ruxex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateParams;
+use ruxex_app_server_protocol::ThreadMetadataUpdateResponse;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadSection;
+use ruxex_app_server_protocol::ThreadSectionListParams;
+use ruxex_app_server_protocol::ThreadSectionListResponse;
+use ruxex_app_server_protocol::ThreadSectionMoveParams;
+use ruxex_app_server_protocol::ThreadSectionMoveResponse;
+use ruxex_app_server_protocol::ThreadSortKey;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_core::ARCHIVED_SESSIONS_SUBDIR;
+use ruxex_git_utils::GitSha;
+use ruxex_protocol::SanitizedGitUrl;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::GitInfo as RolloutGitInfo;
+use ruxex_rollout::state_db::reconcile_rollout;
+use ruxex_state::PINNED_THREAD_SECTION_ID;
+use ruxex_state::PINNED_THREAD_SECTION_NAME;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -54,10 +54,10 @@ const INVALID_REQUEST_ERROR_CODE: i64 = -32600;
 #[tokio::test]
 async fn thread_section_move_pins_before_first_turn() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -142,9 +142,9 @@ async fn thread_section_move_pins_before_first_turn() -> Result<()> {
 #[tokio::test]
 async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let state_db = init_state_db(ruxex_home.path()).await?;
 
     let mut thread_ids = Vec::new();
     for (filename_timestamp, timestamp, preview) in [
@@ -161,14 +161,14 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
         ),
     ] {
         let thread_id = create_fake_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             filename_timestamp,
             timestamp,
             preview,
         )?;
         reconcile_rollout(
             Some(&state_db),
-            rollout_path(genex_home.path(), filename_timestamp, &thread_id).as_path(),
+            rollout_path(ruxex_home.path(), filename_timestamp, &thread_id).as_path(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -181,7 +181,7 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
     };
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -247,7 +247,7 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
             .expect("pinned thread should remain persisted");
         assert_eq!(
             thread.section,
-            Some(genex_state::ThreadSection {
+            Some(ruxex_state::ThreadSection {
                 id: pinned_section.id.clone(),
                 name: pinned_section.name.clone(),
                 appearance: None,
@@ -376,9 +376,9 @@ async fn thread_section_move_pins_and_unpins_with_filtered_recency_pagination() 
 async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_restarts() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let state_db = init_state_db(ruxex_home.path()).await?;
 
     let mut thread_ids = Vec::new();
     for (filename_timestamp, timestamp, preview) in [
@@ -399,14 +399,14 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
         ),
     ] {
         let thread_id = create_fake_rollout(
-            genex_home.path(),
+            ruxex_home.path(),
             filename_timestamp,
             timestamp,
             preview,
         )?;
         reconcile_rollout(
             Some(&state_db),
-            rollout_path(genex_home.path(), filename_timestamp, &thread_id).as_path(),
+            rollout_path(ruxex_home.path(), filename_timestamp, &thread_id).as_path(),
             /*builder*/ None,
             &[],
             /*archived_only*/ None,
@@ -419,7 +419,7 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
     };
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 
@@ -520,7 +520,7 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
 
     drop(mcp);
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
     let request_id = mcp.send_thread_list_request(list_params).await?;
@@ -550,11 +550,11 @@ async fn thread_sections_preserve_server_owned_manual_order_across_moves_and_res
 #[tokio::test]
 async fn thread_metadata_update_patches_git_branch_and_returns_updated_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -651,12 +651,12 @@ async fn thread_metadata_update_patches_git_branch_and_returns_updated_thread() 
 #[tokio::test]
 async fn thread_metadata_update_sanitizes_git_origin_before_persisting() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let state_db = init_state_db(ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -735,11 +735,11 @@ async fn thread_metadata_update_sanitizes_git_origin_before_persisting() -> Resu
 #[tokio::test]
 async fn thread_metadata_update_rejects_empty_git_info_patch() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -786,11 +786,11 @@ async fn thread_metadata_update_rejects_empty_git_info_patch() -> Result<()> {
 #[tokio::test]
 async fn thread_metadata_update_rejects_ephemeral_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build()
         .await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
@@ -864,20 +864,20 @@ async fn thread_metadata_update_rejects_ephemeral_thread() -> Result<()> {
 #[tokio::test]
 async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let _state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let _state_db = init_state_db(ruxex_home.path()).await?;
 
     let preview = "Stored thread preview";
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
     )?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -921,19 +921,19 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -
 #[tokio::test]
 async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let state_db = init_state_db(ruxex_home.path()).await?;
 
     let preview = "Loaded thread preview";
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
     )?;
     let thread_uuid = ThreadId::from_string(&thread_id)?;
-    let rollout_path = rollout_path(genex_home.path(), "2025-01-06T08-30-00", &thread_id);
+    let rollout_path = rollout_path(ruxex_home.path(), "2025-01-06T08-30-00", &thread_id);
     reconcile_rollout(
         Some(&state_db),
         rollout_path.as_path(),
@@ -944,7 +944,7 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
     .await;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1009,21 +1009,21 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
 #[tokio::test]
 async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
-    let _state_db = init_state_db(genex_home.path()).await?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
+    let _state_db = init_state_db(ruxex_home.path()).await?;
 
     let preview = "Archived thread preview";
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
     )?;
 
-    let archived_dir = genex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
+    let archived_dir = ruxex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
     fs::create_dir_all(&archived_dir)?;
-    let archived_source = rollout_path(genex_home.path(), "2025-01-06T08-30-00", &thread_id);
+    let archived_source = rollout_path(ruxex_home.path(), "2025-01-06T08-30-00", &thread_id);
     let archived_dest = archived_dir.join(
         archived_source
             .file_name()
@@ -1032,7 +1032,7 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
     fs::rename(&archived_source, &archived_dest)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1076,19 +1076,19 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
 #[tokio::test]
 async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let genex_home = TempDir::new()?;
-    mock_responses_config(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    mock_responses_config(&server.uri()).write(ruxex_home.path())?;
 
     let thread_id = create_fake_rollout(
-        genex_home.path(),
+        ruxex_home.path(),
         "2025-01-07T09-15-00",
         "2025-01-07T09:15:00Z",
         "Thread preview",
     )?;
-    let _state_db = init_state_db(genex_home.path()).await?;
+    let _state_db = init_state_db(ruxex_home.path()).await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -1135,9 +1135,9 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
     Ok(())
 }
 
-async fn init_state_db(genex_home: &Path) -> Result<Arc<StateRuntime>> {
+async fn init_state_db(ruxex_home: &Path) -> Result<Arc<StateRuntime>> {
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.abs()),
     )
     .await?;
     state_db

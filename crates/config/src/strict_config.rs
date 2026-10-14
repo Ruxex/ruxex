@@ -14,8 +14,8 @@ use crate::diagnostics::span_for_toml_key_path;
 use crate::diagnostics::text_range_from_span;
 use crate::format_config_layer_source;
 use crate::requirements_layers::strip_cloud_auth_requirements;
-use genex_features::is_known_feature_key;
-use genex_utils_absolute_path::AbsolutePathBufGuard;
+use ruxex_features::is_known_feature_key;
+use ruxex_utils_absolute_path::AbsolutePathBufGuard;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeSet;
 use std::fmt::Write;
@@ -261,7 +261,7 @@ pub(crate) fn ignored_config_warning(
     let count = fields.len();
     let setting = if count == 1 { "setting" } else { "settings" };
     let mut warning = format!(
-        "Genex is ignoring {count} unrecognized configuration {setting}. Check for typos or deprecated settings."
+        "Ruxex is ignoring {count} unrecognized configuration {setting}. Check for typos or deprecated settings."
     );
     for (source, path) in fields.iter().take(3) {
         let source = bounded_label(source);

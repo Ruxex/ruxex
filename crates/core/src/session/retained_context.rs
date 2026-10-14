@@ -1,7 +1,7 @@
 //! Orders retained inputs and records host-verified facts at the context checkpoint boundary.
 
-use genex_history::RetainedContextEvent;
-use genex_history::RolloutItem;
+use ruxex_history::RetainedContextEvent;
+use ruxex_history::RolloutItem;
 
 use super::Session;
 use super::thread_settings;

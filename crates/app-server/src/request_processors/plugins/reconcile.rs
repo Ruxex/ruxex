@@ -1,7 +1,7 @@
 use super::*;
 use crate::request_serialization::RequestSerializationQueues;
-use genex_app_server_protocol::PluginReconcileParams;
-use genex_app_server_protocol::PluginReconcileResponse;
+use ruxex_app_server_protocol::PluginReconcileParams;
+use ruxex_app_server_protocol::PluginReconcileResponse;
 
 impl PluginRequestProcessor {
     #[tracing::instrument(level = "debug", skip_all, fields(reason = ?params.reason))]

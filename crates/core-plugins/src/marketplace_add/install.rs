@@ -113,7 +113,7 @@ pub(super) fn marketplace_staging_root(install_root: &Path) -> PathBuf {
 fn run_git(args: &[&str], cwd: Option<&Path>) -> Result<(), MarketplaceAddError> {
     let mut command = Command::new("git");
     command
-        .args(["-c", genex_git_utils::SAFE_BARE_REPOSITORY_CONFIG])
+        .args(["-c", ruxex_git_utils::SAFE_BARE_REPOSITORY_CONFIG])
         .args(args);
     command.env("GIT_TERMINAL_PROMPT", "0");
     if let Some(cwd) = cwd {

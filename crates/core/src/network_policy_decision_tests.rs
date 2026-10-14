@@ -1,8 +1,8 @@
 use super::*;
-use genex_network_proxy::BlockedRequest;
-use genex_network_proxy::NetworkDecisionSource;
-use genex_protocol::approvals::NetworkPolicyAmendment;
-use genex_protocol::approvals::NetworkPolicyRuleAction;
+use ruxex_network_proxy::BlockedRequest;
+use ruxex_network_proxy::NetworkDecisionSource;
+use ruxex_protocol::approvals::NetworkPolicyAmendment;
+use ruxex_protocol::approvals::NetworkPolicyRuleAction;
 use pretty_assertions::assert_eq;
 
 #[test]

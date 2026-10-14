@@ -9,14 +9,14 @@ use color_eyre::Report;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 use color_eyre::eyre::eyre;
-use genex_app_server_client::TypedRequestError;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::ThreadQueueAddParams;
-use genex_app_server_protocol::ThreadQueueAddResponse;
-use genex_app_server_protocol::UserInput;
-use genex_app_server_protocol::experimental_required_message;
-use genex_protocol::ThreadId;
-use genex_utils_home_dir::find_genex_home;
+use ruxex_app_server_client::TypedRequestError;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::ThreadQueueAddParams;
+use ruxex_app_server_protocol::ThreadQueueAddResponse;
+use ruxex_app_server_protocol::UserInput;
+use ruxex_app_server_protocol::experimental_required_message;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_home_dir::find_ruxex_home;
 use std::path::Path;
 use uuid::Uuid;
 
@@ -31,16 +31,16 @@ pub async fn run_session_queue_command(
 ) -> Result<String> {
     if options.cli.no_daemon && options.explicit_remote_endpoint.is_none() {
         return Err(eyre!(
-            "--no-daemon cannot be used with genex queue. Queuing must discover the shared server to avoid writing through a separate server."
+            "--no-daemon cannot be used with ruxex queue. Queuing must discover the shared server to avoid writing through a separate server."
         ));
     }
-    let genex_home = find_genex_home().wrap_err("failed to find Genex home")?;
+    let ruxex_home = find_ruxex_home().wrap_err("failed to find Ruxex home")?;
     let explicit_remote = options.explicit_remote_endpoint.is_some();
     let mut app_server =
-        start_app_server_for_session_command(options, genex_home.to_path_buf()).await?;
+        start_app_server_for_session_command(options, ruxex_home.to_path_buf()).await?;
     if !explicit_remote
         && app_server.uses_embedded_app_server()
-        && super::maybe_probe_default_daemon_socket(genex_home.as_path())
+        && super::maybe_probe_default_daemon_socket(ruxex_home.as_path())
             .await
             .is_some()
     {
@@ -53,7 +53,7 @@ pub async fn run_session_queue_command(
 
     let (thread_id, response) = match run_session_queue_action_with_app_server(
         &mut app_server,
-        genex_home.as_path(),
+        ruxex_home.as_path(),
         &target,
         &message,
         &client_message_id,
@@ -83,7 +83,7 @@ pub async fn run_session_queue_command(
 
 pub(super) async fn run_session_queue_action_with_app_server(
     app_server: &mut AppServerSession,
-    genex_home: &Path,
+    ruxex_home: &Path,
     target: &str,
     message: &str,
     client_message_id: &str,
@@ -93,7 +93,7 @@ pub(super) async fn run_session_queue_action_with_app_server(
     } else {
         let thread = lookup(
             app_server,
-            genex_home,
+            ruxex_home,
             target,
             &[SessionCollection::Active],
             &[

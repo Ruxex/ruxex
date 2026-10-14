@@ -36,10 +36,10 @@ pub(crate) use picker::build_keymap_picker_params_with_filter;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_config::types::KeybindingSpec;
-use genex_config::types::KeybindingsSpec;
-use genex_config::types::MAX_FUNCTION_KEY;
-use genex_config::types::TuiKeymap;
+use ruxex_config::types::KeybindingSpec;
+use ruxex_config::types::KeybindingsSpec;
+use ruxex_config::types::MAX_FUNCTION_KEY;
+use ruxex_config::types::TuiKeymap;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 
@@ -787,7 +787,7 @@ mod tests {
             frame_requester: FrameRequester::test_dummy(),
             has_input_focus: true,
             enhanced_keys_supported: false,
-            placeholder_text: "Ask Genex to do anything".to_string(),
+            placeholder_text: "Ask Ruxex to do anything".to_string(),
             disable_paste_burst: false,
             animations_enabled: false,
             skills: Some(Vec::new()),

@@ -3,7 +3,7 @@
 use super::approval_overlay::ApplyPatchApprovalRequest;
 use crate::diff_model::FileChange;
 use crate::render::renderable::Renderable;
-use genex_utils_path_uri::LegacyAppPathString;
+use ruxex_utils_path_uri::LegacyAppPathString;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;

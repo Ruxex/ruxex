@@ -1,8 +1,8 @@
 use crate::config_toml::ConfigToml;
 use crate::types::RawMcpServerConfig;
-use genex_features::FEATURES;
-use genex_features::legacy_feature_keys;
-use genex_protocol::protocol::GranularApprovalConfig;
+use ruxex_features::FEATURES;
+use ruxex_features::legacy_feature_keys;
+use ruxex_protocol::protocol::GranularApprovalConfig;
 use schemars::JsonSchema;
 use schemars::r#gen::SchemaGenerator;
 use schemars::r#gen::SchemaSettings;
@@ -17,7 +17,7 @@ use serde_json::Value;
 use std::path::Path;
 
 /// Determines the conditions under which the user is consulted to approve
-/// running the command proposed by Genex.
+/// running the command proposed by Ruxex.
 #[allow(dead_code)]
 #[derive(JsonSchema)]
 #[schemars(rename = "AskForApproval")]
@@ -47,86 +47,86 @@ pub fn features_schema(schema_gen: &mut SchemaGenerator) -> Schema {
 
     let mut validation = ObjectValidation::default();
     for feature in FEATURES {
-        if feature.id == genex_features::Feature::Artifact {
+        if feature.id == ruxex_features::Feature::Artifact {
             continue;
         }
-        if feature.id == genex_features::Feature::CodeMode {
+        if feature.id == ruxex_features::Feature::CodeMode {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::CodeModeConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::CodeModeConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::CodeModeHost {
+        if feature.id == ruxex_features::Feature::CodeModeHost {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::CodeModeHostConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::CodeModeHostConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::NonPrefixedMcpToolNames {
+        if feature.id == ruxex_features::Feature::NonPrefixedMcpToolNames {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::NonPrefixedMcpToolNamesConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::NonPrefixedMcpToolNamesConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::TokenBudget {
+        if feature.id == ruxex_features::Feature::TokenBudget {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::TokenBudgetConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::TokenBudgetConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::ContextManagement {
+        if feature.id == ruxex_features::Feature::ContextManagement {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::ContextManagementConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::ContextManagementConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::RolloutBudget {
+        if feature.id == ruxex_features::Feature::RolloutBudget {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::RolloutBudgetConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::RolloutBudgetConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::CurrentTimeReminder {
+        if feature.id == ruxex_features::Feature::CurrentTimeReminder {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::CurrentTimeReminderConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::CurrentTimeReminderConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::SleepTool {
+        if feature.id == ruxex_features::Feature::SleepTool {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::SleepToolConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::SleepToolConfigToml,
                 >>(),
             );
             continue;
         }
-        if feature.id == genex_features::Feature::NetworkProxy {
+        if feature.id == ruxex_features::Feature::NetworkProxy {
             validation.properties.insert(
                 feature.key.to_string(),
-                schema_gen.subschema_for::<genex_features::FeatureToml<
-                    genex_features::NetworkProxyConfigToml,
+                schema_gen.subschema_for::<ruxex_features::FeatureToml<
+                    ruxex_features::NetworkProxyConfigToml,
                 >>(),
             );
             continue;
@@ -142,7 +142,7 @@ pub fn features_schema(schema_gen: &mut SchemaGenerator) -> Schema {
     }
     validation.properties.insert(
         "tool_registry".to_string(),
-        schema_gen.subschema_for::<genex_features::ToolRegistryConfigToml>(),
+        schema_gen.subschema_for::<ruxex_features::ToolRegistryConfigToml>(),
     );
     validation.additional_properties = Some(Box::new(Schema::Bool(false)));
     object.object = Some(Box::new(validation));

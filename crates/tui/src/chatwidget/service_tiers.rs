@@ -5,7 +5,7 @@ use crate::app_command::AppCommand;
 use crate::app_event::AppEvent;
 use crate::bottom_pane::slash_commands::ServiceTierCommand;
 use crate::service_tier_resolution;
-use genex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
 
 impl ChatWidget {
     pub(crate) fn set_service_tier(&mut self, service_tier: Option<String>) {
@@ -72,7 +72,7 @@ impl ChatWidget {
     fn set_service_tier_selection(&mut self, service_tier: Option<String>) {
         self.set_service_tier(service_tier.clone());
         self.app_event_tx
-            .send(AppEvent::GenexOp(AppCommand::override_turn_context(
+            .send(AppEvent::RuxexOp(AppCommand::override_turn_context(
                 /*cwd*/ None,
                 /*approval_policy*/ None,
                 /*permission_profile*/ None,

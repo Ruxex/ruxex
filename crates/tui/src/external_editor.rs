@@ -6,7 +6,7 @@ use std::process::Stdio;
 
 use color_eyre::eyre::Report;
 use color_eyre::eyre::Result;
-use genex_protocol::permissions::FileSystemSandboxPolicy;
+use ruxex_protocol::permissions::FileSystemSandboxPolicy;
 use tempfile::Builder;
 use thiserror::Error;
 use tokio::process::Command;
@@ -121,7 +121,7 @@ pub(super) fn editor_directory(
 pub(crate) async fn run_editor(
     seed: &str,
     editor_cmd: &[String],
-    genex_home: &Path,
+    ruxex_home: &Path,
     file_system_policy: &FileSystemSandboxPolicy,
     cwd: &Path,
 ) -> Result<String> {
@@ -129,15 +129,15 @@ pub(crate) async fn run_editor(
         return Err(Report::msg("editor command is empty"));
     }
 
-    let default_genex_home = dirs::home_dir().map(|home| home.join(".genex"));
+    let default_ruxex_home = dirs::home_dir().map(|home| home.join(".ruxex"));
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    let project_genex_home = cwd.join(".genex");
-    let mut candidate_homes = vec![genex_home];
-    if let Some(default_genex_home) = default_genex_home.as_deref() {
-        candidate_homes.push(default_genex_home);
+    let project_ruxex_home = cwd.join(".ruxex");
+    let mut candidate_homes = vec![ruxex_home];
+    if let Some(default_ruxex_home) = default_ruxex_home.as_deref() {
+        candidate_homes.push(default_ruxex_home);
     }
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    candidate_homes.push(&project_genex_home);
+    candidate_homes.push(&project_ruxex_home);
     let editor_directory = editor_directory(&candidate_homes, file_system_policy, cwd)?;
     let temp_path = Builder::new()
         .suffix(".md")

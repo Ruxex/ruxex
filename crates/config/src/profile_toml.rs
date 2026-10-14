@@ -1,4 +1,4 @@
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -6,13 +6,13 @@ use serde::Serialize;
 use crate::config_toml::ToolsToml;
 use crate::types::MetricsConfigToml;
 use crate::types::SessionPickerViewMode;
-use genex_features::FeaturesToml;
-use genex_protocol::config_types::ReasoningSummary;
-use genex_protocol::config_types::SandboxMode;
-use genex_protocol::config_types::Verbosity;
-use genex_protocol::config_types::WebSearchMode;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::protocol::AskForApproval;
+use ruxex_features::FeaturesToml;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
 
 /// Collection of common configuration options that a user can define as a unit
 /// in `config.toml`.

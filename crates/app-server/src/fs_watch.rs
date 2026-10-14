@@ -1,18 +1,18 @@
 use crate::error_code::invalid_request;
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingMessageSender;
-use genex_app_server_protocol::FsChangedNotification;
-use genex_app_server_protocol::FsUnwatchParams;
-use genex_app_server_protocol::FsUnwatchResponse;
-use genex_app_server_protocol::FsWatchParams;
-use genex_app_server_protocol::FsWatchResponse;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::ServerNotification;
-use genex_file_watcher::DebouncedWatchReceiver;
-use genex_file_watcher::FileWatcher;
-use genex_file_watcher::FileWatcherSubscriber;
-use genex_file_watcher::WatchPath;
-use genex_file_watcher::WatchRegistration;
+use ruxex_app_server_protocol::FsChangedNotification;
+use ruxex_app_server_protocol::FsUnwatchParams;
+use ruxex_app_server_protocol::FsUnwatchResponse;
+use ruxex_app_server_protocol::FsWatchParams;
+use ruxex_app_server_protocol::FsWatchResponse;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::ServerNotification;
+use ruxex_file_watcher::DebouncedWatchReceiver;
+use ruxex_file_watcher::FileWatcher;
+use ruxex_file_watcher::FileWatcherSubscriber;
+use ruxex_file_watcher::WatchPath;
+use ruxex_file_watcher::WatchRegistration;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::hash::Hash;
@@ -175,7 +175,7 @@ impl FsWatchManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_utils_absolute_path::AbsolutePathBuf;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::collections::HashSet;
     use std::path::PathBuf;

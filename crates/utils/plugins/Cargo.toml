@@ -2,22 +2,22 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-utils-plugins"
+name = "ruxex-utils-plugins"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_utils_plugins"
+name = "ruxex_utils_plugins"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-genex-exec-server = { workspace = true }
-genex-exec-server-protocol = { workspace = true }
-genex-utils-absolute-path = { workspace = true }
-genex-utils-path-uri = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-exec-server-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 

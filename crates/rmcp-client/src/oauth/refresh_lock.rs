@@ -7,7 +7,7 @@
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
-use genex_utils_home_dir::find_genex_home;
+use ruxex_utils_home_dir::find_ruxex_home;
 use sha2::Digest;
 use sha2::Sha256;
 use std::fs;
@@ -23,7 +23,7 @@ const REFRESH_LOCK_ACQUIRE_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 60);
 const REFRESH_LOCK_RETRY_SLEEP: Duration = Duration::from_millis(/*millis*/ 50);
 // Keep this internal target stable so diagnostics and cross-process tests can distinguish actual
 // WouldBlock contention from a contender that merely started late and observed persisted tokens.
-const LOCK_CONTENTION_EVENT_TARGET: &str = "genex_rmcp_client::oauth::refresh_lock::contention";
+const LOCK_CONTENTION_EVENT_TARGET: &str = "ruxex_rmcp_client::oauth::refresh_lock::contention";
 
 pub(crate) struct RefreshCredentialLock {
     _file: File,
@@ -32,23 +32,23 @@ pub(crate) struct RefreshCredentialLock {
 impl RefreshCredentialLock {
     pub(crate) async fn acquire_for_server(server_name: &str, url: &str) -> Result<Self> {
         let store_key = super::compute_store_key(server_name, url)?;
-        let genex_home = find_genex_home()?;
-        Self::acquire_in(&genex_home, &store_key, REFRESH_LOCK_ACQUIRE_TIMEOUT)
+        let ruxex_home = find_ruxex_home()?;
+        Self::acquire_in(&ruxex_home, &store_key, REFRESH_LOCK_ACQUIRE_TIMEOUT)
             .await
             .with_context(|| format!("failed to acquire OAuth credential lock for {server_name}"))
     }
 
     async fn acquire_in(
-        genex_home: &Path,
+        ruxex_home: &Path,
         store_key: &str,
         acquire_timeout: Duration,
     ) -> Result<Self> {
-        // Scope coordination to GENEX_HOME alongside File and Secrets state. Direct keyring
+        // Scope coordination to RUXEX_HOME alongside File and Secrets state. Direct keyring
         // coordination across homes needs a separate cross-platform rendezvous.
         // TODO(stevenlee): define that rendezvous before expanding this lock's scope.
         let mut hasher = Sha256::new();
         hasher.update(store_key.as_bytes());
-        let path = genex_home
+        let path = ruxex_home
             .join(REFRESH_LOCK_DIR)
             .join(format!("{:x}.lock", hasher.finalize()));
         if let Some(parent) = path.parent() {

@@ -1,8 +1,8 @@
 use super::PluginManifest;
 use super::PluginManifestMcpServers;
 use super::load_plugin_manifest;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_plugins::AGENT_PLUGIN_SCHEMA_URI;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_plugins::AGENT_PLUGIN_SCHEMA_URI;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -200,16 +200,16 @@ fn legacy_agent_plugin_overlay_keeps_portable_components_fixed() {
   "version": "portable-version",
   "description": "Portable description""#,
     );
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create overlay dir");
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("create overlay dir");
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
+        plugin_root.join(".ruxex-plugin/plugin.json"),
         r#"{
   "name": "different-name",
   "version": "9.9.9",
-  "description": "Genex description",
+  "description": "Ruxex description",
   "skills": [],
   "mcpServers": null,
-  "interface": {"displayName": "Genex Demo"}
+  "interface": {"displayName": "Ruxex Demo"}
 }"#,
     )
     .expect("write overlay");
@@ -240,7 +240,7 @@ fn legacy_agent_plugin_overlay_keeps_portable_components_fixed() {
         manifest
             .interface
             .and_then(|interface| interface.display_name),
-        Some("Genex Demo".to_string())
+        Some("Ruxex Demo".to_string())
     );
 }
 
@@ -253,14 +253,14 @@ fn inline_provider_extension_precedes_legacy_overlay() {
         r#",
   "extensions": {
     "com.codex": {
-      "interface": {"displayName": "Inline Genex"}
+      "interface": {"displayName": "Inline Ruxex"}
     }
   }"#,
     );
-    fs::create_dir_all(plugin_root.join(".genex-plugin")).expect("create overlay dir");
+    fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("create overlay dir");
     fs::write(
-        plugin_root.join(".genex-plugin/plugin.json"),
-        r#"{"interface":{"displayName":"Legacy Genex"}}"#,
+        plugin_root.join(".ruxex-plugin/plugin.json"),
+        r#"{"interface":{"displayName":"Legacy Ruxex"}}"#,
     )
     .expect("write overlay");
 
@@ -270,6 +270,6 @@ fn inline_provider_extension_precedes_legacy_overlay() {
         manifest
             .interface
             .and_then(|interface| interface.display_name),
-        Some("Inline Genex".to_string())
+        Some("Inline Ruxex".to_string())
     );
 }

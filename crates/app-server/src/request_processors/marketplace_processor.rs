@@ -54,7 +54,7 @@ impl MarketplaceRequestProcessor {
     ) -> Result<MarketplaceRemoveResponse, JSONRPCErrorError> {
         let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
         remove_marketplace(
-            config.genex_home.to_path_buf(),
+            config.ruxex_home.to_path_buf(),
             config.config_layer_stack,
             CoreMarketplaceRemoveRequest {
                 marketplace_name: params.marketplace_name,
@@ -119,8 +119,8 @@ impl MarketplaceRequestProcessor {
         params: MarketplaceAddParams,
     ) -> Result<MarketplaceAddResponse, JSONRPCErrorError> {
         let config = self.load_latest_config(/*fallback_cwd*/ None).await?;
-        add_marketplace_to_genex_home(
-            self.config.genex_home.to_path_buf(),
+        add_marketplace_to_ruxex_home(
+            self.config.ruxex_home.to_path_buf(),
             config.config_layer_stack.requirements().clone(),
             MarketplaceAddRequest {
                 source: params.source,

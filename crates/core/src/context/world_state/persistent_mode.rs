@@ -5,8 +5,8 @@ use super::PreviousSectionState;
 use super::WorldStateHash;
 use super::WorldStateSection;
 use crate::context::ContextualUserFragment;
-use genex_protocol::model_types::ReasoningEffort;
-use genex_protocol::models::ContentItemKind;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::models::ContentItemKind;
 use serde::Deserialize;
 use serde::Serialize;
 

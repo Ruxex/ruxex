@@ -4,7 +4,7 @@
 //! overflow retain the original code block; diagrams never emit terminal control sequences.
 
 use crate::render::highlight::foreground_style_for_scopes_with_theme;
-use genex_mermaid::Role;
+use ruxex_mermaid::Role;
 use ratatui::style::Style;
 use ratatui::text::Line;
 use ratatui::text::Span;
@@ -37,7 +37,7 @@ pub(super) fn render(
     width: Option<usize>,
     theme: &Theme,
 ) -> Option<Vec<Line<'static>>> {
-    let diagram = genex_mermaid::render_spans(source, width.unwrap_or(120)).ok()?;
+    let diagram = ruxex_mermaid::render_spans(source, width.unwrap_or(120)).ok()?;
     let node = foreground_style_for_scopes_with_theme(
         theme,
         &["entity.name.type", "support.type", "variable"],

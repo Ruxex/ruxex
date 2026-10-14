@@ -1,11 +1,11 @@
 use super::*;
-use genex_features::Feature;
-use genex_features::Features;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::request_user_input::RequestUserInputQuestion;
-use genex_protocol::request_user_input::RequestUserInputQuestionOption;
-use genex_tools::JsonSchema;
-use genex_tools::request_user_input_available_modes;
+use ruxex_features::Feature;
+use ruxex_features::Features;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::request_user_input::RequestUserInputQuestion;
+use ruxex_protocol::request_user_input::RequestUserInputQuestionOption;
+use ruxex_tools::JsonSchema;
+use ruxex_tools::request_user_input_available_modes;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 

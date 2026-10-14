@@ -5,7 +5,7 @@ use tracing_subscriber::prelude::*;
 
 const DEFAULT_ANALYTICS_ENABLED: bool = false;
 const DEFAULT_LOG_FILTER: &str = "error,opentelemetry_sdk=off,opentelemetry_otlp=off";
-const OTEL_SERVICE_NAME: &str = "genex-exec-server";
+const OTEL_SERVICE_NAME: &str = "ruxex-exec-server";
 
 pub(crate) enum ParentLifetime {
     Independent,
@@ -18,13 +18,13 @@ pub(crate) enum ShutdownBehavior {
 }
 
 pub(crate) fn init(
-    config: Option<&genex_core::config::Config>,
-) -> (impl Send + Sync, genex_exec_server::ExecServerTelemetry) {
+    config: Option<&ruxex_core::config::Config>,
+) -> (impl Send + Sync, ruxex_exec_server::ExecServerTelemetry) {
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_writer(std::io::stderr)
         .with_filter(stderr_env_filter());
     let otel = match config {
-        Some(config) => genex_core::otel_init::build_provider(
+        Some(config) => ruxex_core::otel_init::build_provider(
             config,
             env!("CARGO_PKG_VERSION"),
             Some(OTEL_SERVICE_NAME),
@@ -37,14 +37,14 @@ pub(crate) fn init(
         None => None,
     };
     let provider = otel.as_ref();
-    genex_core::otel_init::record_process_start(provider, OTEL_SERVICE_NAME);
+    ruxex_core::otel_init::record_process_start(provider, OTEL_SERVICE_NAME);
 
     let otel_logger_layer = provider.and_then(|otel| otel.logger_layer());
     let otel_tracing_layer = provider.and_then(|otel| otel.tracing_layer());
     let telemetry = provider
         .and_then(|otel| otel.metrics())
         .cloned()
-        .map(genex_exec_server::ExecServerTelemetry::new)
+        .map(ruxex_exec_server::ExecServerTelemetry::new)
         .unwrap_or_default();
     let _ = tracing_subscriber::registry()
         .with(fmt_layer)

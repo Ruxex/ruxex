@@ -5,39 +5,39 @@ use app_test_support::create_escalated_command_execution_sse_response;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::format_with_current_shell_display;
-use genex_app_server::INVALID_PARAMS_ERROR_CODE;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CommandExecutionApprovalDecision;
-use genex_app_server_protocol::CommandExecutionOutputDeltaNotification;
-use genex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use genex_app_server_protocol::CommandExecutionSource;
-use genex_app_server_protocol::CommandExecutionStatus;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SortDirection;
-use genex_app_server_protocol::ThreadForkParams;
-use genex_app_server_protocol::ThreadForkResponse;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadReadParams;
-use genex_app_server_protocol::ThreadReadResponse;
-use genex_app_server_protocol::ThreadShellCommandParams;
-use genex_app_server_protocol::ThreadShellCommandResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::ThreadStatus;
-use genex_app_server_protocol::ThreadTurnsListParams;
-use genex_app_server_protocol::ThreadTurnsListResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_core::shell::default_user_shell;
-use genex_exec_server::GENEX_EXEC_SERVER_URL_ENV_VAR;
+use ruxex_app_server::INVALID_PARAMS_ERROR_CODE;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CommandExecutionApprovalDecision;
+use ruxex_app_server_protocol::CommandExecutionOutputDeltaNotification;
+use ruxex_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use ruxex_app_server_protocol::CommandExecutionSource;
+use ruxex_app_server_protocol::CommandExecutionStatus;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SortDirection;
+use ruxex_app_server_protocol::ThreadForkParams;
+use ruxex_app_server_protocol::ThreadForkResponse;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadReadParams;
+use ruxex_app_server_protocol::ThreadReadResponse;
+use ruxex_app_server_protocol::ThreadShellCommandParams;
+use ruxex_app_server_protocol::ThreadShellCommandResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadStatus;
+use ruxex_app_server_protocol::ThreadTurnsListParams;
+use ruxex_app_server_protocol::ThreadTurnsListResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_core::shell::default_user_shell;
+use ruxex_exec_server::RUXEX_EXEC_SERVER_URL_ENV_VAR;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -49,16 +49,16 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 async fn thread_shell_command_history_responses_exclude_persisted_command_executions() -> Result<()>
 {
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
     let server = create_mock_responses_server_sequence(vec![]).await;
-    MockResponsesConfig::new(&server.uri()).write(&genex_home)?;
+    MockResponsesConfig::new(&server.uri()).write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.as_path())
+        .with_ruxex_home(ruxex_home.as_path())
         // thread/shellCommand intentionally executes on the app-server host.
         .without_auto_env()
         .build_initialized()
@@ -171,16 +171,16 @@ async fn thread_shell_command_history_responses_exclude_persisted_command_execut
 #[tokio::test]
 async fn thread_shell_command_returns_error_when_local_environment_is_disabled() -> Result<()> {
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
     let server = create_mock_responses_server_sequence(vec![]).await;
-    MockResponsesConfig::new(&server.uri()).write(&genex_home)?;
+    MockResponsesConfig::new(&server.uri()).write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.as_path())
+        .with_ruxex_home(ruxex_home.as_path())
         // This test intentionally exercises thread/shellCommand without a local host environment.
         .without_auto_env()
-        .with_env_overrides(&[(GENEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
+        .with_env_overrides(&[(RUXEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
         .build_initialized()
         .await?;
     let ThreadStartResponse { thread, .. } = mcp
@@ -216,8 +216,8 @@ async fn thread_shell_command_timeout_preserves_active_turn() -> Result<()> {
 
 async fn check_thread_shell_command_in_active_turn(timeout_ms: Option<i64>) -> Result<()> {
     let tmp = TempDir::new()?;
-    let genex_home = tmp.path().join("genex_home");
-    std::fs::create_dir(&genex_home)?;
+    let ruxex_home = tmp.path().join("ruxex_home");
+    std::fs::create_dir(&ruxex_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -237,10 +237,10 @@ async fn check_thread_shell_command_in_active_turn(timeout_ms: Option<i64>) -> R
     let server = create_mock_responses_server_sequence(responses).await;
     MockResponsesConfig::new(&server.uri())
         .with_approval_policy("on-request")
-        .write(&genex_home)?;
+        .write(&ruxex_home)?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.as_path())
+        .with_ruxex_home(ruxex_home.as_path())
         // thread/shellCommand intentionally joins the app-server's host-local active turn.
         .without_auto_env()
         .build_initialized()
@@ -401,11 +401,11 @@ async fn check_thread_shell_command_in_active_turn(timeout_ms: Option<i64>) -> R
 
 #[tokio::test]
 async fn thread_shell_command_honors_optional_timeout() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let server = create_mock_responses_server_sequence(vec![]).await;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         // thread/shellCommand always executes on the app-server host.
         .without_auto_env()
         .build_initialized()
@@ -478,11 +478,11 @@ async fn thread_shell_command_honors_optional_timeout() -> Result<()> {
 
 #[tokio::test]
 async fn thread_shell_command_rejects_invalid_timeouts_before_execution() -> Result<()> {
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let server = create_mock_responses_server_sequence(vec![]).await;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build_initialized()
         .await?;

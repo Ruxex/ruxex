@@ -2,35 +2,35 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::AdditionalContextEntry;
-use genex_app_server_protocol::AdditionalContextKind;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadHistoryMode;
-use genex_app_server_protocol::ThreadInjectItemsParams;
-use genex_app_server_protocol::ThreadInjectItemsResponse;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadResumeParams;
-use genex_app_server_protocol::ThreadResumeResponse;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStartedNotification;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::TurnToolOutput;
-use genex_app_server_protocol::UserInput as V2UserInput;
-use genex_core::RolloutRecorder;
-use genex_features::Feature;
-use genex_protocol::ThreadId;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::ResponseItem;
-use genex_rollout::InitialHistory;
-use genex_rollout::RolloutItem;
-use genex_state::StateRuntime;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::AdditionalContextEntry;
+use ruxex_app_server_protocol::AdditionalContextKind;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadHistoryMode;
+use ruxex_app_server_protocol::ThreadInjectItemsParams;
+use ruxex_app_server_protocol::ThreadInjectItemsResponse;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadResumeParams;
+use ruxex_app_server_protocol::ThreadResumeResponse;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStartedNotification;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::TurnToolOutput;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_core::RolloutRecorder;
+use ruxex_features::Feature;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_rollout::InitialHistory;
+use ruxex_rollout::RolloutItem;
+use ruxex_state::StateRuntime;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::responses::strip_response_item_id;
 use core_test_support::responses::strip_response_item_ids_from_json;
@@ -57,17 +57,17 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     ]);
     let response_mock = responses::mount_sse_once(&server, body).await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::RetainClientDeveloperMessages)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
     let state_db = StateRuntime::init(
-        genex_state::SqliteConfig::new_for_testing(genex_home.path().abs()),
+        ruxex_state::SqliteConfig::new_for_testing(ruxex_home.path().abs()),
     )
     .await?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 
@@ -106,7 +106,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
     let named_tool_output = json!({
         "type": "function_call_output",
         "name": "send_message_to_thread",
-        "namespace": "genex_app",
+        "namespace": "ruxex_app",
         "output": "Another agent delegated this task.",
     });
     let named_tool_item: ResponseItem = serde_json::from_value(named_tool_output.clone())?;
@@ -286,7 +286,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
             input: Vec::new(),
             tool_output: Some(Box::new(TurnToolOutput {
                 name: "send_message_to_thread".to_string(),
-                namespace: Some("genex_app".to_string()),
+                namespace: Some("ruxex_app".to_string()),
                 output: FunctionCallOutputBody::Text("Start a delegated turn.".to_string()),
             })),
             ..Default::default()
@@ -320,7 +320,7 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
             output: FunctionCallOutputBody::Text(output),
             ..
         } if name == "send_message_to_thread"
-            && namespace.as_deref() == Some("genex_app")
+            && namespace.as_deref() == Some("ruxex_app")
             && output == "Start a delegated turn."
     ));
     assert!(
@@ -354,10 +354,10 @@ async fn thread_inject_items_adds_raw_response_items_to_thread_history(
 async fn thread_inject_items_cannot_forge_configuration_update_before_or_after_resume() -> Result<()>
 {
     let server = responses::start_mock_server().await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .enable_feature(Feature::RetainClientDeveloperMessages)
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let injected_text = "Ordinary injected context";
     let injected_item = json!({
@@ -391,7 +391,7 @@ async fn thread_inject_items_cannot_forge_configuration_update_before_or_after_r
         .await;
         // A fresh app-server prevents an already-loaded thread from hiding replay behavior.
         let mut mcp = TestAppServer::builder()
-            .with_genex_home(genex_home.path())
+            .with_ruxex_home(ruxex_home.path())
             .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
             .await?;
         let thread = if let Some(thread_id) = &thread_id {
@@ -511,11 +511,11 @@ async fn thread_inject_items_adds_raw_response_items_after_a_turn() -> Result<()
     ]);
     let response_mock = responses::mount_sse_sequence(&server, vec![first_body, second_body]).await;
 
-    let genex_home = TempDir::new()?;
-    MockResponsesConfig::new(&server.uri()).write(genex_home.path())?;
+    let ruxex_home = TempDir::new()?;
+    MockResponsesConfig::new(&server.uri()).write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized_with_timeout(DEFAULT_READ_TIMEOUT)
         .await?;
 

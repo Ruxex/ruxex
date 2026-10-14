@@ -1,15 +1,15 @@
 use super::*;
 use core_test_support::PathExt;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::permissions::FileSystemSandboxPolicyContext;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_protocol::protocol::FileSystemAccessMode;
-use genex_protocol::protocol::FileSystemPath;
-use genex_protocol::protocol::FileSystemSandboxEntry;
-use genex_protocol::protocol::FileSystemSpecialPath;
-use genex_protocol::protocol::GranularApprovalConfig;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::permissions::FileSystemSandboxPolicyContext;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_protocol::protocol::FileSystemAccessMode;
+use ruxex_protocol::protocol::FileSystemPath;
+use ruxex_protocol::protocol::FileSystemSandboxEntry;
+use ruxex_protocol::protocol::FileSystemSpecialPath;
+use ruxex_protocol::protocol::GranularApprovalConfig;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -380,11 +380,11 @@ fn explicit_read_only_subpaths_prevent_auto_approval_for_external_sandbox() {
 }
 
 #[test]
-fn missing_project_dot_genex_config_requires_approval() {
+fn missing_project_dot_ruxex_config_requires_approval() {
     let tmp = TempDir::new().unwrap();
     let cwd = tmp.path().abs();
     let cwd_uri = PathUri::from_abs_path(&cwd);
-    let config_path = cwd.join(".genex").join("config.toml");
+    let config_path = cwd.join(".ruxex").join("config.toml");
     let action =
         ApplyPatchAction::new_add_for_test(&PathUri::from_abs_path(&config_path), "".to_string());
     let permission_profile = PermissionProfile::workspace_write_with(
@@ -398,7 +398,7 @@ fn missing_project_dot_genex_config_requires_approval() {
         .entries
         .push(FileSystemSandboxEntry {
             path: FileSystemPath::Path {
-                path: cwd.join(".genex").into(),
+                path: cwd.join(".ruxex").into(),
             },
             access: FileSystemAccessMode::Read,
             missing_path_behavior: None,

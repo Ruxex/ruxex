@@ -218,7 +218,7 @@
 //! machine and treats the key stream as normal typing. When toggling from enabled → disabled, the
 //! composer flushes/clears any in-flight burst state so it cannot leak into subsequent input.
 //!
-//! For the detailed burst state machine, see `genex-rs/tui/src/bottom_pane/paste_burst.rs`.
+//! For the detailed burst state machine, see `ruxex-rs/tui/src/bottom_pane/paste_burst.rs`.
 //!
 //! # PasteBurst Integration Points
 //!
@@ -252,7 +252,7 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
-use genex_message_history::HistoryBatchCursor;
+use ruxex_message_history::HistoryBatchCursor;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -269,7 +269,7 @@ use ratatui::widgets::StatefulWidgetRef;
 use ratatui::widgets::Widget;
 use ratatui::widgets::WidgetRef;
 
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::model_types::ReasoningEffort;
 
 use super::chat_composer_history::ChatComposerHistory;
 use super::chat_composer_history::HistoryEntry;
@@ -331,10 +331,10 @@ use crate::render::RectExt;
 use crate::render::renderable::Renderable;
 use crate::slash_command::SlashCommand;
 use crate::style::user_message_style;
-use genex_protocol::ThreadId;
-use genex_protocol::user_input::ByteRange;
-use genex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use genex_protocol::user_input::TextElement;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::user_input::ByteRange;
+use ruxex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use ruxex_protocol::user_input::TextElement;
 
 mod agents_navigation;
 mod attachment_state;
@@ -376,10 +376,10 @@ use crate::skills_helpers::skill_display_name;
 use crate::tui::FrameRequester;
 use crate::ui_consts::LIVE_PREFIX_COLS;
 #[cfg(test)]
-use genex_app_server_protocol::SkillInterface;
-use genex_app_server_protocol::SkillMetadata;
-use genex_file_search::FileMatch;
-use genex_plugin::PluginCapabilitySummary;
+use ruxex_app_server_protocol::SkillInterface;
+use ruxex_app_server_protocol::SkillMetadata;
+use ruxex_file_search::FileMatch;
+use ruxex_plugin::PluginCapabilitySummary;
 use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::collections::HashSet;

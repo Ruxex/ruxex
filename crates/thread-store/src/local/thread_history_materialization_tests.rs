@@ -4,33 +4,33 @@ use std::path::Path;
 use std::time::Duration;
 
 use chrono::Utc;
-use genex_app_server_protocol::ThreadItem;
-use genex_protocol::ThreadId;
-use genex_protocol::items::AgentMessageContent;
-use genex_protocol::items::AgentMessageItem;
-use genex_protocol::items::TurnItem;
-use genex_protocol::items::UserMessageItem;
-use genex_protocol::models::BaseInstructions;
-use genex_protocol::models::ContentItem;
-use genex_protocol::models::MessagePhase;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::HistoryPosition;
-use genex_protocol::protocol::ItemCompletedEvent;
-use genex_protocol::protocol::RateLimitSnapshot;
-use genex_protocol::protocol::RateLimitWindow;
-use genex_protocol::protocol::SessionSource;
-use genex_protocol::protocol::ThreadHistoryMode;
-use genex_protocol::protocol::TokenCountEvent;
-use genex_protocol::protocol::TurnCompleteEvent;
-use genex_protocol::protocol::TurnStartedEvent;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_rollout::RolloutConfig;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutLine;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::RolloutRecorderParams;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::items::AgentMessageContent;
+use ruxex_protocol::items::AgentMessageItem;
+use ruxex_protocol::items::TurnItem;
+use ruxex_protocol::items::UserMessageItem;
+use ruxex_protocol::models::BaseInstructions;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::MessagePhase;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::HistoryPosition;
+use ruxex_protocol::protocol::ItemCompletedEvent;
+use ruxex_protocol::protocol::RateLimitSnapshot;
+use ruxex_protocol::protocol::RateLimitWindow;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::TokenCountEvent;
+use ruxex_protocol::protocol::TurnCompleteEvent;
+use ruxex_protocol::protocol::TurnStartedEvent;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_rollout::RolloutConfig;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutLine;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::RolloutRecorderParams;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -93,19 +93,19 @@ async fn paginated_history_without_state_db_does_not_initialize_sqlite() {
     }
 }
 
-/// Separate Genex and SQLite homes must work together across startup backfill,
+/// Separate Ruxex and SQLite homes must work together across startup backfill,
 /// thread listing, and projection-backed paginated history reads.
 #[tokio::test]
 async fn split_homes_support_backfill_listing_and_paginated_history() {
     let root = TempDir::new().expect("temp dir");
-    let genex_home = root.path().join("genex");
+    let ruxex_home = root.path().join("ruxex");
     let sqlite_home = root.path().join("sqlite");
     let thread_id = ThreadId::new();
-    let sqlite = genex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
+    let sqlite = ruxex_state::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
     let rollout_config = RolloutConfig {
-        genex_home: genex_home.clone(),
+        ruxex_home: ruxex_home.clone(),
         sqlite: sqlite.clone(),
-        cwd: genex_home.clone(),
+        cwd: ruxex_home.clone(),
     };
     let recorder = RolloutRecorder::new(
         &rollout_config,
@@ -137,9 +137,9 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
     let rollout_path = recorder.rollout_path().to_path_buf();
     recorder.shutdown().await.expect("close paginated rollout");
 
-    let runtime = genex_rollout::state_db::try_init(&rollout_config)
+    let runtime = ruxex_rollout::state_db::try_init(&rollout_config)
         .await
-        .expect("backfill state from Genex home");
+        .expect("backfill state from Ruxex home");
     assert!(
         runtime
             .get_thread(thread_id)
@@ -191,7 +191,7 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
             history: None,
             include_archived: false,
             metadata: ThreadPersistenceMetadata {
-                cwd: Some(genex_home.clone()),
+                cwd: Some(ruxex_home.clone()),
             },
         })
         .await
@@ -272,8 +272,8 @@ async fn split_homes_support_backfill_listing_and_paginated_history() {
         );
         let filename = sqlite_path.file_name().expect("SQLite database filename");
         assert!(
-            !genex_home.join(filename).exists(),
-            "SQLite database should not be created under Genex home"
+            !ruxex_home.join(filename).exists(),
+            "SQLite database should not be created under Ruxex home"
         );
     }
 }
@@ -330,7 +330,7 @@ async fn paginated_live_append_materializes_turn_items_and_state() {
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 1);
     let (_, turn_end_byte_offset) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 4);
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -512,7 +512,7 @@ async fn referenced_paginated_rollout_projects_inherited_ordinal_range() {
         );
     }
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -659,7 +659,7 @@ async fn active_turn_stores_only_its_start_position() {
         .expect("rollout path");
     let (turn_start_byte_offset, _) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 1);
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -883,7 +883,7 @@ async fn paginated_fork_reads_compressed_shared_lineage_without_materializing() 
         .expect_err("external shared source cannot be referenced by rollout id");
     assert!(matches!(
         error,
-        crate::ThreadStoreError::InvalidRequest { message } if message.contains("must be in Genex home")
+        crate::ThreadStoreError::InvalidRequest { message } if message.contains("must be in Ruxex home")
     ));
     store
         .shutdown_thread(source_thread_id)
@@ -1110,7 +1110,7 @@ async fn subagent_prefix_advances_projection_without_materializing_history() {
         .expect("rollout path");
     let (child_start_byte_offset, _) =
         rollout_line_byte_offsets(rollout_path.as_path(), /*ordinal*/ 6);
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1162,7 +1162,7 @@ async fn unexpected_duplicate_item_completion_does_not_poison_projection() {
         })
         .await
         .expect("append completed item");
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1249,7 +1249,7 @@ async fn terminal_turn_does_not_change_after_later_records() {
         .await
         .expect("append later records");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1308,10 +1308,10 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
     let home = TempDir::new().expect("temp dir");
     let config = test_config(home.path());
     let thread_id = ThreadId::default();
-    let runtime = genex_state::StateRuntime::init(config.sqlite.clone())
+    let runtime = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("state runtime");
-    let mut builder = genex_state::ThreadMetadataBuilder::new(
+    let mut builder = ruxex_state::ThreadMetadataBuilder::new(
         thread_id,
         home.path().join("missing-rollout.jsonl"),
         Utc::now(),
@@ -1357,7 +1357,7 @@ async fn summary_items_use_final_answers_and_ignore_commentary() {
         .await
         .expect("append items before turn lifecycle");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1465,7 +1465,7 @@ async fn paginated_projection_accepts_float_rate_limits_and_later_final_answers(
         .await
         .expect("append projected turn start");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1600,7 +1600,7 @@ async fn next_write_catches_up_unprojected_durable_suffix() {
         .await
         .expect("persist session metadata");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1687,7 +1687,7 @@ async fn synchronized_catch_up_does_not_replay_old_rows() {
         .await
         .expect("append turn start");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1727,7 +1727,7 @@ async fn catch_up_preserves_trailing_partial_line_boundaries() {
         .await
         .expect("persist session metadata");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -1813,8 +1813,8 @@ async fn catch_up_skips_invalid_complete_suffixes_and_projects_later_history() {
             .await
             .expect("persist session metadata");
 
-        let pool = genex_state::open_thread_history_db(
-            &genex_state::SqliteConfig::new_for_testing(home.path().abs()),
+        let pool = ruxex_state::open_thread_history_db(
+            &ruxex_state::SqliteConfig::new_for_testing(home.path().abs()),
         )
         .await
         .expect("open thread history db");
@@ -1863,7 +1863,7 @@ async fn jsonl_failure_does_not_create_projection_database() {
         .expect_err("JSONL append should fail");
 
     assert!(
-        !genex_state::SqliteConfig::new_for_testing(home.path().abs())
+        !ruxex_state::SqliteConfig::new_for_testing(home.path().abs())
             .thread_history_db_path()
             .exists()
     );
@@ -1938,7 +1938,7 @@ async fn blank_and_rejected_rollout_lines_advance_projection() {
         .await
         .expect("persist session metadata");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2023,7 +2023,7 @@ async fn unknown_rollout_lines_leave_ordinals_pending_for_valid_retries() {
         .await
         .expect("persist session metadata");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2116,7 +2116,7 @@ async fn event_timestamps_allow_invalid_rollout_timestamps() {
         .await
         .expect("project records with event timestamps");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2164,7 +2164,7 @@ async fn malformed_rollout_lines_skip_inferred_ordinal_gaps() {
         .await
         .expect("skip malformed gap and project later history");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2207,7 +2207,7 @@ async fn shutdown_materializes_items_queued_without_a_flush() {
         .await
         .expect("shutdown live thread");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2261,7 +2261,7 @@ async fn delete_waits_for_in_flight_projection_before_removing_rows() {
         .expect("finish in-flight append");
     delete.await.expect("join delete").expect("delete thread");
 
-    let pool = genex_state::open_thread_history_db(&genex_state::SqliteConfig::new_for_testing(
+    let pool = ruxex_state::open_thread_history_db(&ruxex_state::SqliteConfig::new_for_testing(
         home.path().abs(),
     ))
     .await
@@ -2283,9 +2283,9 @@ SELECT
     assert_eq!(counts, (0, 0, 0));
 }
 
-async fn projection_store(genex_home: &Path) -> LocalThreadStore {
-    let config = test_config(genex_home);
-    let state_db = genex_state::StateRuntime::init(config.sqlite.clone())
+async fn projection_store(ruxex_home: &Path) -> LocalThreadStore {
+    let config = test_config(ruxex_home);
+    let state_db = ruxex_state::StateRuntime::init(config.sqlite.clone())
         .await
         .expect("initialize state database for paginated history");
     LocalThreadStore::new(config, Some(state_db))
@@ -2424,7 +2424,7 @@ fn rollout_line_byte_offsets(path: &std::path::Path, ordinal: u64) -> (i64, i64)
     let mut start_byte_offset = 0;
     for line in bytes.split_inclusive(|byte| *byte == b'\n') {
         let end_byte_offset = start_byte_offset + line.len();
-        if genex_rollout::parse_rollout_line_bytes(line)
+        if ruxex_rollout::parse_rollout_line_bytes(line)
             .ok()
             .and_then(|line| line.ordinal)
             == Some(ordinal)

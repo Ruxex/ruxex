@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 use crate::get_git_repo_root;
 

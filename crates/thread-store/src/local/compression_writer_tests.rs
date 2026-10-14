@@ -7,12 +7,12 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
 
-use genex_protocol::ThreadId;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::UserMessageEvent;
-use genex_rollout::RolloutItem;
-use genex_rollout::RolloutRecorder;
-use genex_rollout::WriterLockCoordinator;
+use ruxex_protocol::ThreadId;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::UserMessageEvent;
+use ruxex_rollout::RolloutItem;
+use ruxex_rollout::RolloutRecorder;
+use ruxex_rollout::WriterLockCoordinator;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -75,14 +75,14 @@ async fn compress(home: &Path) -> TestResult<()> {
     if marker.exists() {
         fs::remove_file(&marker)?;
     }
-    genex_rollout::spawn_rollout_compression_worker(
+    ruxex_rollout::spawn_rollout_compression_worker(
         home.to_path_buf(),
-        genex_rollout::RolloutCompressionTrigger::Startup,
+        ruxex_rollout::RolloutCompressionTrigger::Startup,
     );
     // The marker proves startup; the maintenance lock proves every blocking job finished.
     wait_until(|| {
         marker.exists()
-            && genex_rollout::try_acquire_rollout_maintenance_lock(home)
+            && ruxex_rollout::try_acquire_rollout_maintenance_lock(home)
                 .unwrap()
                 .is_some()
     })

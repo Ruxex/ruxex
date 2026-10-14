@@ -1,35 +1,35 @@
-use core_test_support::test_genex::local_selections;
+use core_test_support::test_ruxex::local_selections;
 use std::fs;
 use std::sync::Arc;
 use std::sync::Mutex;
 
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::Config;
-use genex_exec_server::LOCAL_ENVIRONMENT_ID;
-use genex_extension_api::ContextualUserFragment;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionMetrics;
-use genex_extension_api::ExtensionRegistry;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::TurnInputContext;
-use genex_extension_api::TurnInputContributor;
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EnvironmentConfigState;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::protocol::TurnEnvironmentSelection;
-use genex_protocol::protocol::TurnEnvironmentSelections;
-use genex_protocol::user_input::UserInput;
-use genex_skills_extension::SkillsExtensionConfig;
-use genex_skills_extension::install;
-use genex_utils_path_uri::PathUri;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_exec_server::LOCAL_ENVIRONMENT_ID;
+use ruxex_extension_api::ContextualUserFragment;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionMetrics;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::TurnInputContext;
+use ruxex_extension_api::TurnInputContributor;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::install;
+use ruxex_utils_path_uri::PathUri;
 use core_test_support::PathBufExt;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
@@ -43,8 +43,8 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -165,7 +165,7 @@ async fn turn_input_contributors_receive_foreign_environment_cwds() -> Result<()
     extensions.turn_input_contributor(Arc::new(RecordingTurnInputContributor(Arc::clone(
         &recorded_environments,
     ))));
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_extensions(Arc::new(extensions.build()))
         .with_config(|config| config.project_doc_max_bytes = 0);
     let test = builder.build_with_auto_env(&server).await?;
@@ -214,10 +214,10 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
         ]),
     )
     .await;
-    let test = test_genex().build(&server).await?;
+    let test = test_ruxex().build(&server).await?;
     let foreign_root = PathUri::parse("file:///C:/workspace")?;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "inspect the workspace".into(),
@@ -238,7 +238,7 @@ async fn model_visible_environment_context_preserves_foreign_workspace_roots() -
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -283,7 +283,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_extensions(skills_extensions())
         .with_model("legacy-model")
         .with_config(|config| {
@@ -297,7 +297,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
     let (first_sandbox_policy, first_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), first_turn_cwd.as_path());
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn".into(),
@@ -320,7 +320,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -329,7 +329,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
         PermissionProfile::read_only(),
         preturn_context_diff_cwd.as_path(),
     );
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn with context updates".into(),
@@ -352,7 +352,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -395,7 +395,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
     )
     .await;
 
-    let mut builder = test_genex()
+    let mut builder = test_ruxex()
         .with_config(|config| config.update_plan_enabled = true)
         .with_extensions(skills_extensions())
         .with_model("legacy-model");
@@ -417,7 +417,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
     let (first_sandbox_policy, first_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd_one.as_path());
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "first turn in agents_one".into(),
@@ -440,14 +440,14 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
 
     let (second_sandbox_policy, second_permission_profile) =
         turn_permission_fields(PermissionProfile::read_only(), cwd_two.as_path());
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "second turn in agents_two".into(),
@@ -470,7 +470,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
             }),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -506,14 +506,14 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut initial_builder = test_genex()
+    let mut initial_builder = test_ruxex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
             config.model = Some("example-model".to_string());
         });
     let initial = initial_builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -524,13 +524,13 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         ]),
     )
     .await;
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "seed resume history".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_request = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -543,7 +543,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
     )
     .await;
 
-    let mut resume_builder = test_genex()
+    let mut resume_builder = test_ruxex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -558,7 +558,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
         resume_override_cwd.as_path(),
     );
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "resume and change model".into(),
@@ -581,7 +581,7 @@ async fn snapshot_model_visible_layout_resume_with_model_change() -> Result<()> 
             }),
         )
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -612,14 +612,14 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let mut initial_builder = test_genex()
+    let mut initial_builder = test_ruxex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
             config.model = Some("example-model-2".to_string());
         });
     let initial = initial_builder.build(&server).await?;
-    let genex = Arc::clone(&initial.genex);
+    let ruxex = Arc::clone(&initial.ruxex);
 
     let initial_mock = mount_sse_once(
         &server,
@@ -630,13 +630,13 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
         ]),
     )
     .await;
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "seed resume history".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
     let initial_request = initial_mock.single_request();
 
     let resumed_mock = mount_sse_once(
@@ -649,7 +649,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     )
     .await;
 
-    let mut resume_builder = test_genex()
+    let mut resume_builder = test_ruxex()
         .with_extensions(skills_extensions())
         .with_config(|config| {
             config.update_plan_enabled = true;
@@ -660,7 +660,7 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     fs::create_dir_all(&resume_override_cwd)?;
     let resume_override_cwd = resume_override_cwd.abs();
     core_test_support::submit_thread_settings(
-        &resumed.genex,
+        &resumed.ruxex,
         ThreadSettingsOverrides {
             environments: Some(local_selections(resume_override_cwd)),
             model: Some("example-model-2".to_string()),
@@ -669,13 +669,13 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
     )
     .await?;
     resumed
-        .genex
+        .ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "first resumed turn after model override".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
-    wait_for_event(&resumed.genex, |event| {
+    wait_for_event(&resumed.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;

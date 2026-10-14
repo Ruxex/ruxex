@@ -1,21 +1,21 @@
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
-use genex_app_server_protocol::ClientRequest;
-use genex_app_server_protocol::CurrentTimeReadResponse;
-use genex_app_server_protocol::ItemCompletedNotification;
-use genex_app_server_protocol::ItemStartedNotification;
-use genex_app_server_protocol::JSONRPCErrorError;
-use genex_app_server_protocol::ServerRequest;
-use genex_app_server_protocol::SleepItem;
-use genex_app_server_protocol::ThreadItem;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnCompletedNotification;
-use genex_app_server_protocol::TurnStartParams;
-use genex_app_server_protocol::TurnStartResponse;
-use genex_app_server_protocol::TurnStatus;
-use genex_app_server_protocol::UserInput as V2UserInput;
+use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CurrentTimeReadResponse;
+use ruxex_app_server_protocol::ItemCompletedNotification;
+use ruxex_app_server_protocol::ItemStartedNotification;
+use ruxex_app_server_protocol::JSONRPCErrorError;
+use ruxex_app_server_protocol::ServerRequest;
+use ruxex_app_server_protocol::SleepItem;
+use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnCompletedNotification;
+use ruxex_app_server_protocol::TurnStartParams;
+use ruxex_app_server_protocol::TurnStartResponse;
+use ruxex_app_server_protocol::TurnStatus;
+use ruxex_app_server_protocol::UserInput as V2UserInput;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -68,15 +68,15 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
             .collect(),
     )
     .await;
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config(&format!("managed_auth_base_url = \"{}\"", server.uri()))
         .with_provider_config("supports_websockets = false")
         .with_extra_config("[features.current_time_reminder]\nenabled = true\nsleep_tool = true")
-        .write(genex_home.path())?;
-    mount_analytics_capture(&server, genex_home.path()).await?;
+        .write(ruxex_home.path())?;
+    mount_analytics_capture(&server, ruxex_home.path()).await?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .with_env_overrides(&[("PROVIDER_API_KEY", None)])
         .without_managed_config()
         .build_initialized()
@@ -107,7 +107,7 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
         )
         .await?;
     let turn_event = wait_for_matching_analytics_event(&server, DEFAULT_READ_TIMEOUT, |event| {
-        event["event_type"] == "genex_turn_event" && event["event_params"]["turn_id"] == turn.id
+        event["event_type"] == "ruxex_turn_event" && event["event_params"]["turn_id"] == turn.id
     })
     .await?;
     timeout(DEFAULT_READ_TIMEOUT, app_server.shutdown_gracefully()).await??;
@@ -115,7 +115,7 @@ async fn clock_tools_emit_control_tool_analytics() -> Result<()> {
     let events = captured_analytics_events(&server).await;
     let mut control_events = events
         .iter()
-        .filter(|event| event["event_type"] == "genex_control_tool_call_event")
+        .filter(|event| event["event_type"] == "ruxex_control_tool_call_event")
         .collect::<Vec<_>>();
     control_events.sort_by_key(|event| event["event_params"]["item_id"].as_str());
     assert_eq!(
@@ -196,7 +196,7 @@ async fn external_sleep_polls_current_time_and_emits_items(
     )
     .await;
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     MockResponsesConfig::new(&server.uri())
         .with_root_config("include_environment_context = false")
         .with_extra_config(&format!(
@@ -208,10 +208,10 @@ sleep_tool = true
 clock_source = "external"
 "#,
         ))
-        .write(genex_home.path())?;
+        .write(ruxex_home.path())?;
 
     let mut mcp = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .build_initialized()
         .await?;
 

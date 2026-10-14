@@ -5,23 +5,23 @@ use crate::session::turn_context::TurnContext;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::unified_exec::format_output_omission_marker;
 use crate::unified_exec::resolve_max_tokens;
-use genex_protocol::ResponseItemId;
-use genex_protocol::mcp::CallToolResult;
-use genex_protocol::models::FunctionCallOutputBody;
-use genex_protocol::models::FunctionCallOutputContentItem;
-use genex_protocol::models::FunctionCallOutputPayload;
-use genex_protocol::models::ResponseInputItem;
-use genex_protocol::models::ResponseItem;
-use genex_protocol::models::function_call_output_content_items_to_text;
-use genex_tools::LoadableToolSpec;
-use genex_tools::ToolName;
-use genex_utils_audio::estimate_audio_token_count;
-use genex_utils_output_truncation::TruncationPolicy;
-use genex_utils_output_truncation::approx_token_count;
-use genex_utils_output_truncation::formatted_truncate_text;
-use genex_utils_output_truncation::truncate_function_output_payload;
-use genex_utils_output_truncation::truncate_text;
-use genex_utils_output_truncation::with_serialization_allowance;
+use ruxex_protocol::ResponseItemId;
+use ruxex_protocol::mcp::CallToolResult;
+use ruxex_protocol::models::FunctionCallOutputBody;
+use ruxex_protocol::models::FunctionCallOutputContentItem;
+use ruxex_protocol::models::FunctionCallOutputPayload;
+use ruxex_protocol::models::ResponseInputItem;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::models::function_call_output_content_items_to_text;
+use ruxex_tools::LoadableToolSpec;
+use ruxex_tools::ToolName;
+use ruxex_utils_audio::estimate_audio_token_count;
+use ruxex_utils_output_truncation::TruncationPolicy;
+use ruxex_utils_output_truncation::approx_token_count;
+use ruxex_utils_output_truncation::formatted_truncate_text;
+use ruxex_utils_output_truncation::truncate_function_output_payload;
+use ruxex_utils_output_truncation::truncate_text;
+use ruxex_utils_output_truncation::with_serialization_allowance;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::num::NonZeroUsize;
@@ -30,8 +30,8 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 
-pub use genex_tools::ToolOutput;
-pub use genex_tools::ToolPayload;
+pub use ruxex_tools::ToolOutput;
+pub use ruxex_tools::ToolPayload;
 
 pub(crate) fn boxed_tool_output<T>(output: T) -> Box<dyn ToolOutput>
 where
@@ -50,7 +50,7 @@ pub enum ToolCallSource {
         /// Runtime cell that issued the nested tool request.
         cell_id: String,
         /// Code-mode's per-cell tool invocation id. This is useful for
-        /// debugging the JS/runtime bridge, but it is not the Genex tool call id
+        /// debugging the JS/runtime bridge, but it is not the Ruxex tool call id
         /// because the runtime id only needs to be unique within one cell.
         runtime_tool_call_id: String,
     },
@@ -87,7 +87,7 @@ impl ToolInvocation {
                 .session
                 .services
                 .code_mode_service
-                .cell_originating_call(&genex_code_mode::CellId::new(cell_id.clone()));
+                .cell_originating_call(&ruxex_code_mode::CellId::new(cell_id.clone()));
         }
 
         let item_id = self

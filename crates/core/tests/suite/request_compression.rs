@@ -1,22 +1,22 @@
 #![cfg(not(target_os = "windows"))]
 
-use genex_core::TurnInputRequest;
-use genex_features::Feature;
-use genex_login::GenexAuth;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_features::Feature;
+use ruxex_login::RuxexAuth;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn request_body_is_zstd_compressed_for_genex_backend_when_enabled() -> anyhow::Result<()> {
+async fn request_body_is_zstd_compressed_for_ruxex_backend_when_enabled() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
@@ -26,9 +26,9 @@ async fn request_body_is_zstd_compressed_for_genex_backend_when_enabled() -> any
     )
     .await;
 
-    let base_url = format!("{}/backend-api/genex/v1", server.uri());
-    let mut builder = test_genex()
-        .with_auth(GenexAuth::from_api_key("test-api-key"))
+    let base_url = format!("{}/backend-api/ruxex/v1", server.uri());
+    let mut builder = test_ruxex()
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_config(move |config| {
             config
                 .features
@@ -36,9 +36,9 @@ async fn request_body_is_zstd_compressed_for_genex_backend_when_enabled() -> any
                 .expect("test config should allow feature update");
             config.model_provider.base_url = Some(base_url);
         });
-    let genex = builder.build(&server).await?.genex;
+    let ruxex = builder.build(&server).await?.ruxex;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "compress me".into(),
             text_elements: Vec::new(),
@@ -46,7 +46,7 @@ async fn request_body_is_zstd_compressed_for_genex_backend_when_enabled() -> any
         .await?;
 
     // Wait until the task completes so the request definitely hit the server.
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = request_log.single_request();
     assert_eq!(request.header("content-encoding").as_deref(), Some("zstd"));
@@ -72,24 +72,24 @@ async fn request_body_is_not_compressed_for_api_key_auth_even_when_enabled() -> 
     )
     .await;
 
-    let base_url = format!("{}/backend-api/genex/v1", server.uri());
-    let mut builder = test_genex().with_config(move |config| {
+    let base_url = format!("{}/backend-api/ruxex/v1", server.uri());
+    let mut builder = test_ruxex().with_config(move |config| {
         config
             .features
             .enable(Feature::EnableRequestCompression)
             .expect("test config should allow feature update");
         config.model_provider.base_url = Some(base_url);
     });
-    let genex = builder.build(&server).await?.genex;
+    let ruxex = builder.build(&server).await?.ruxex;
 
-    genex
+    ruxex
         .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
             text: "do not compress".into(),
             text_elements: Vec::new(),
         }]))
         .await?;
 
-    wait_for_event(&genex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 
     let request = request_log.single_request();
     assert!(

@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use genex_protocol::parse_command::ParsedCommand;
-use genex_shell_command::parse_command::parse_command_impl;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_path_uri::PathUri;
+use ruxex_protocol::parse_command::ParsedCommand;
+use ruxex_shell_command::parse_command::parse_command_impl;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 
 use crate::SkillMetadata;
 

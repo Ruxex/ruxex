@@ -1,4 +1,4 @@
-use genex_api::AuthProvider;
+use ruxex_api::AuthProvider;
 use http::HeaderMap;
 use http::HeaderValue;
 
@@ -42,8 +42,8 @@ mod tests {
         };
 
         assert_eq!(
-            genex_api::auth_header_telemetry(&auth),
-            genex_api::AuthHeaderTelemetry {
+            ruxex_api::auth_header_telemetry(&auth),
+            ruxex_api::AuthHeaderTelemetry {
                 attached: true,
                 name: Some("authorization"),
             }

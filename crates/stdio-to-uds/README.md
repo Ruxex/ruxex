@@ -1,4 +1,4 @@
-# genex-stdio-to-uds
+# ruxex-stdio-to-uds
 
 Traditionally, there are two transport mechanisms for an MCP server: stdio and HTTP.
 
@@ -10,7 +10,7 @@ This crate helps enable a third, which is UNIX domain socket, because it has the
 To that end, this crate provides an adapter between a UDS and stdio. The idea is that someone could start an MCP server that communicates over `/tmp/mcp.sock`. Then the user could specify this on the fly like so:
 
 ```
-genex --config mcp_servers.example={command="genex-stdio-to-uds",args=["/tmp/mcp.sock"]}
+ruxex --config mcp_servers.example={command="ruxex-stdio-to-uds",args=["/tmp/mcp.sock"]}
 ```
 
-The adapter uses `genex-uds` for its cross-platform asynchronous UDS implementation.
+The adapter uses `ruxex-uds` for its cross-platform asynchronous UDS implementation.

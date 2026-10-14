@@ -1,26 +1,26 @@
 use anyhow::Result;
-use genex_core::TurnInputRequest;
-use genex_core::config::CurrentTimeReminderConfig;
-use genex_core::config::RolloutBudgetConfig;
-use genex_core::config::TokenBudgetConfig;
-use genex_features::Feature;
-use genex_protocol::models::ImageReference;
-use genex_protocol::model_types::InputModality;
-use genex_protocol::protocol::AdditionalContextEntry;
-use genex_protocol::protocol::AdditionalContextKind;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::GuardianAssessmentAction;
-use genex_protocol::protocol::GuardianAssessmentEvent;
-use genex_protocol::protocol::GuardianAssessmentStatus;
-use genex_protocol::protocol::Op;
-use genex_protocol::user_input::UserInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::CurrentTimeReminderConfig;
+use ruxex_core::config::RolloutBudgetConfig;
+use ruxex_core::config::TokenBudgetConfig;
+use ruxex_features::Feature;
+use ruxex_protocol::models::ImageReference;
+use ruxex_protocol::model_types::InputModality;
+use ruxex_protocol::protocol::AdditionalContextEntry;
+use ruxex_protocol::protocol::AdditionalContextKind;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::GuardianAssessmentAction;
+use ruxex_protocol::protocol::GuardianAssessmentEvent;
+use ruxex_protocol::protocol::GuardianAssessmentStatus;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::test_genex;
+use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::wait_for_event;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
@@ -35,7 +35,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_model_info_override("example-model", |model_info| {
             model_info.input_modalities.push(InputModality::Audio);
         })
@@ -73,7 +73,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
         .build_with_auto_env(&server)
         .await?;
 
-    test.genex
+    test.ruxex
         .submit(Op::ApproveGuardianDeniedAction {
             event: GuardianAssessmentEvent {
                 review_reason: None,
@@ -100,12 +100,12 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
             },
         })
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::RawResponseItem(_))
     })
     .await;
 
-    test.genex
+    test.ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![
                 UserInput::Text {
@@ -140,7 +140,7 @@ async fn first_request_item_types_roles_and_content_annotations() -> Result<()> 
             ])),
         )
         .await?;
-    wait_for_event(&test.genex, |event| {
+    wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnComplete(_))
     })
     .await;
@@ -232,7 +232,7 @@ async fn content_item_kinds_are_omitted_when_feature_disabled() -> Result<()> {
         sse(vec![ev_response_created("resp-1"), ev_completed("resp-1")]),
     )
     .await;
-    let test = test_genex()
+    let test = test_ruxex()
         .with_config(|config| {
             config.developer_instructions = Some("Keep other metadata intact.".into());
             config

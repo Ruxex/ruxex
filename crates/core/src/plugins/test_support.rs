@@ -11,7 +11,7 @@ pub(crate) fn write_file(path: &Path, contents: &str) {
 pub(crate) fn write_curated_plugin(root: &Path, plugin_name: &str) {
     let plugin_root = root.join("plugins").join(plugin_name);
     write_file(
-        &plugin_root.join(".genex-plugin/plugin.json"),
+        &plugin_root.join(".ruxex-plugin/plugin.json"),
         &format!(
             r#"{{
   "name": "{plugin_name}",
@@ -78,19 +78,19 @@ pub(crate) fn write_test_api_curated_marketplace(root: &Path, plugin_names: &[&s
     }
 }
 
-pub(crate) fn write_plugins_feature_config(genex_home: &Path) {
+pub(crate) fn write_plugins_feature_config(ruxex_home: &Path) {
     write_file(
-        &genex_home.join(CONFIG_TOML_FILE),
+        &ruxex_home.join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 "#,
     );
 }
 
-pub(crate) async fn load_plugins_config(genex_home: &Path) -> crate::config::Config {
+pub(crate) async fn load_plugins_config(ruxex_home: &Path) -> crate::config::Config {
     ConfigBuilder::default()
-        .genex_home(genex_home.to_path_buf())
-        .fallback_cwd(Some(genex_home.to_path_buf()))
+        .ruxex_home(ruxex_home.to_path_buf())
+        .fallback_cwd(Some(ruxex_home.to_path_buf()))
         .build()
         .await
         .expect("config should load")

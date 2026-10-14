@@ -5,7 +5,7 @@ use std::num::NonZeroUsize;
 
 use crate::ConfigLayerSource;
 use crate::ConfigLayerStack;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;

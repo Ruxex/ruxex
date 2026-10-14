@@ -1,6 +1,6 @@
 //! Cancels device ceremonies when cached authentication changes.
 
-use genex_model_provider::SharedModelProvider;
+use ruxex_model_provider::SharedModelProvider;
 
 use super::*;
 

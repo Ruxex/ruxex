@@ -63,8 +63,8 @@ def build_plugin_json(
         "skills": "./skills/",
         "interface": {
             "displayName": display_name,
-            "shortDescription": f"Use {display_name} in Genex.",
-            "longDescription": f"{display_name} adds a local Genex plugin scaffold.",
+            "shortDescription": f"Use {display_name} in Ruxex.",
+            "longDescription": f"{display_name} adds a local Ruxex plugin scaffold.",
             "developerName": "Local developer",
             "category": DEFAULT_CATEGORY,
             "capabilities": [],
@@ -313,7 +313,7 @@ def main() -> None:
     plugin_root = Path(args.path).expanduser().resolve() / plugin_name
     plugin_root.mkdir(parents=True, exist_ok=True)
 
-    plugin_json_path = plugin_root / ".genex-plugin" / "plugin.json"
+    plugin_json_path = plugin_root / ".ruxex-plugin" / "plugin.json"
     write_json(
         plugin_json_path,
         build_plugin_json(

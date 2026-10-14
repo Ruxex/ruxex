@@ -1,22 +1,22 @@
 use std::sync::Arc;
 
-use genex_core::config::Config;
-use genex_extension_api::ConfigContributor;
-use genex_extension_api::ContentItemKind;
-use genex_extension_api::ContextContributor;
-use genex_extension_api::ExtensionData;
-use genex_extension_api::ExtensionFuture;
-use genex_extension_api::ExtensionRegistryBuilder;
-use genex_extension_api::PromptFragment;
-use genex_extension_api::PromptSlot;
-use genex_extension_api::ThreadLifecycleContributor;
-use genex_extension_api::ThreadStartInput;
-use genex_extension_api::ToolCall;
-use genex_extension_api::ToolContributor;
-use genex_extension_api::ToolExecutor;
-use genex_model_provider::SharedModelProvider;
-use genex_protocol::AgentPath;
-use genex_utils_output_truncation::TruncationPolicy;
+use ruxex_core::config::Config;
+use ruxex_extension_api::ConfigContributor;
+use ruxex_extension_api::ContentItemKind;
+use ruxex_extension_api::ContextContributor;
+use ruxex_extension_api::ExtensionData;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::PromptFragment;
+use ruxex_extension_api::PromptSlot;
+use ruxex_extension_api::ThreadLifecycleContributor;
+use ruxex_extension_api::ThreadStartInput;
+use ruxex_extension_api::ToolCall;
+use ruxex_extension_api::ToolContributor;
+use ruxex_extension_api::ToolExecutor;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_protocol::AgentPath;
+use ruxex_utils_output_truncation::TruncationPolicy;
 use serde_json::json;
 
 use crate::backend::HistoryNotesBackend;
@@ -158,7 +158,7 @@ impl ToolContributor for HistoryNotesExtension {
     }
 }
 
-/// Installs the standalone history and notes tools backed by the Genex backend.
+/// Installs the standalone history and notes tools backed by the Ruxex backend.
 pub fn install(registry: &mut ExtensionRegistryBuilder<Config>, provider: SharedModelProvider) {
     let extension = Arc::new(HistoryNotesExtension { provider });
     registry.thread_lifecycle_contributor(extension.clone());

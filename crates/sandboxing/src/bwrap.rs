@@ -1,7 +1,7 @@
 use crate::policy_transforms::should_require_platform_sandbox;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::FileSystemSandboxPolicy;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::FileSystemSandboxPolicy;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::ffi::CString;
 use std::io::ErrorKind;
 use std::io::Read;
@@ -19,16 +19,16 @@ use std::time::Instant;
 
 const SYSTEM_BWRAP_PROGRAM: &str = "bwrap";
 const MISSING_BWRAP_WARNING: &str = concat!(
-    "Genex could not find bubblewrap on PATH. ",
+    "Ruxex could not find bubblewrap on PATH. ",
     "Install bubblewrap with your OS package manager. ",
     "See the sandbox prerequisites: ",
     "https://developers.provider.com/codex/concepts/sandboxing#prerequisites. ",
-    "Genex will use the bundled bubblewrap in the meantime.",
+    "Ruxex will use the bundled bubblewrap in the meantime.",
 );
 const USER_NAMESPACE_WARNING: &str =
-    "Genex's Linux sandbox uses bubblewrap and needs access to create user namespaces.";
+    "Ruxex's Linux sandbox uses bubblewrap and needs access to create user namespaces.";
 pub(crate) const WSL1_BWRAP_WARNING: &str = concat!(
-    "Genex's Linux sandbox uses bubblewrap, which is not supported on WSL1 ",
+    "Ruxex's Linux sandbox uses bubblewrap, which is not supported on WSL1 ",
     "because WSL1 cannot create the required user namespaces. ",
     "Use WSL2 for sandboxed shell commands."
 );

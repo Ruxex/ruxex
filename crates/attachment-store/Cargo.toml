@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-attachment-store"
+name = "ruxex-attachment-store"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "genex_attachment_store"
+name = "ruxex_attachment_store"
 path = "src/lib.rs"
 
 [lints]

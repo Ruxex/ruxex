@@ -1,20 +1,20 @@
 use std::collections::BTreeMap;
 
-use genex_config::Constrained;
-use genex_config::ConstrainedWithSource;
-use genex_config::ConstraintError;
-use genex_config::ConstraintResult;
-use genex_config::FeatureRequirementsToml;
-use genex_config::RequirementSource;
-use genex_config::Sourced;
+use ruxex_config::Constrained;
+use ruxex_config::ConstrainedWithSource;
+use ruxex_config::ConstraintError;
+use ruxex_config::ConstraintResult;
+use ruxex_config::FeatureRequirementsToml;
+use ruxex_config::RequirementSource;
+use ruxex_config::Sourced;
 
-use genex_config::config_toml::ConfigToml;
-use genex_features::Feature;
-use genex_features::FeatureConfigSource;
-use genex_features::FeatureOverrides;
-use genex_features::Features;
-use genex_features::canonical_feature_for_key;
-use genex_features::feature_for_key;
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_features::Feature;
+use ruxex_features::FeatureConfigSource;
+use ruxex_features::FeatureOverrides;
+use ruxex_features::Features;
+use ruxex_features::canonical_feature_for_key;
+use ruxex_features::feature_for_key;
 
 /// Wrapper around [`Features`] which enforces constraints defined in
 /// `FeatureRequirementsToml` and provides normalization to ensure constraints
@@ -326,9 +326,9 @@ pub(crate) fn validate_feature_requirements_in_config_toml(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use genex_config::RequirementSource;
-    use genex_config::Sourced;
-    use genex_features::FeaturesToml;
+    use ruxex_config::RequirementSource;
+    use ruxex_config::Sourced;
+    use ruxex_features::FeaturesToml;
     use std::collections::BTreeMap;
 
     #[test]

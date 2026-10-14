@@ -3,13 +3,13 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::TestAppServer;
 use app_test_support::to_response;
-use genex_app_server_protocol::EnvironmentAddResponse;
-use genex_app_server_protocol::EnvironmentConnectionNotification;
-use genex_app_server_protocol::JSONRPCResponse;
-use genex_app_server_protocol::RequestId;
-use genex_app_server_protocol::ThreadStartParams;
-use genex_app_server_protocol::ThreadStartResponse;
-use genex_app_server_protocol::TurnEnvironmentParams;
+use ruxex_app_server_protocol::EnvironmentAddResponse;
+use ruxex_app_server_protocol::EnvironmentConnectionNotification;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_app_server_protocol::ThreadStartParams;
+use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::TurnEnvironmentParams;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -34,9 +34,9 @@ async fn environment_add_applies_connect_timeout() -> Result<()> {
         anyhow::ensure!(!request.is_empty(), "expected a WebSocket handshake");
         Ok::<_, anyhow::Error>(())
     });
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -68,13 +68,13 @@ async fn selected_environment_emits_connection_lifecycle_notifications() -> Resu
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let exec_server_url = format!("ws://{}", listener.local_addr()?);
 
-    let genex_home = TempDir::new()?;
+    let ruxex_home = TempDir::new()?;
     std::fs::write(
-        genex_home.path().join("config.toml"),
+        ruxex_home.path().join("config.toml"),
         "[features]\ndeferred_executor = true\n",
     )?;
     let mut app_server = TestAppServer::builder()
-        .with_genex_home(genex_home.path())
+        .with_ruxex_home(ruxex_home.path())
         .without_auto_env()
         .build()
         .await?;
@@ -98,7 +98,7 @@ async fn selected_environment_emits_connection_lifecycle_notifications() -> Resu
 
     let environment = TurnEnvironmentParams {
         environment_id: "remote-a".to_string(),
-        cwd: genex_utils_absolute_path::AbsolutePathBuf::try_from(genex_home.path().to_path_buf())?
+        cwd: ruxex_utils_absolute_path::AbsolutePathBuf::try_from(ruxex_home.path().to_path_buf())?
             .into(),
         runtime_workspace_roots: None,
     };

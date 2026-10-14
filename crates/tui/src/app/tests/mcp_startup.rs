@@ -2,7 +2,7 @@ use super::*;
 use pretty_assertions::assert_eq;
 
 fn configure_mcp_servers(app: &mut App) {
-    let config: genex_config::types::McpServerConfig =
+    let config: ruxex_config::types::McpServerConfig =
         toml::from_str::<toml::Value>("command = 'true'")
             .expect("test MCP config should parse")
             .try_into()

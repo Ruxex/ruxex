@@ -2,15 +2,15 @@ use super::StateRuntime;
 use crate::runtime::test_support::test_thread_metadata;
 use crate::runtime::test_support::unique_temp_dir;
 use anyhow::Result;
-use genex_protocol::ThreadId;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]
 async fn deleting_custom_section_preserves_threads_and_clears_section_ordering() -> Result<()> {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await?;
     let deleted_section = runtime
@@ -36,9 +36,9 @@ async fn deleting_custom_section_preserves_threads_and_clears_section_ordering()
     ] {
         runtime
             .upsert_thread(&test_thread_metadata(
-                &genex_home,
+                &ruxex_home,
                 thread_id,
-                genex_home.clone(),
+                ruxex_home.clone(),
             ))
             .await?;
         runtime
@@ -78,9 +78,9 @@ async fn deleting_custom_section_preserves_threads_and_clears_section_ordering()
 #[tokio::test]
 async fn concurrent_section_deletion_and_membership_moves_preserve_thread_invariants() -> Result<()>
 {
-    let genex_home = unique_temp_dir();
+    let ruxex_home = unique_temp_dir();
     let runtime = StateRuntime::init(crate::SqliteConfig::new_for_testing(
-        genex_home.as_path().abs(),
+        ruxex_home.as_path().abs(),
     ))
     .await?;
     let section = runtime
@@ -89,9 +89,9 @@ async fn concurrent_section_deletion_and_membership_moves_preserve_thread_invari
     let thread_id = ThreadId::new();
     runtime
         .upsert_thread(&test_thread_metadata(
-            &genex_home,
+            &ruxex_home,
             thread_id,
-            genex_home.clone(),
+            ruxex_home.clone(),
         ))
         .await?;
 

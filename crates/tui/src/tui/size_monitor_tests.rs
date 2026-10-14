@@ -8,7 +8,7 @@ use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
-use genex_terminal_detection::TerminalName;
+use ruxex_terminal_detection::TerminalName;
 use pretty_assertions::assert_eq;
 use ratatui::layout::Position;
 use ratatui::layout::Rect;

@@ -3,17 +3,17 @@ use crate::app::safety_buffering::SafetyBufferedRetry;
 use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::chatwidget::UserMessage;
 use crate::chatwidget::tests::helpers::normalize_completion_timestamps;
-use genex_app_server_client::AppServerEvent;
-use genex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
-use genex_model_provider_info::ModelProviderInfo;
-use genex_protocol::models::ManagedFileSystemPermissions;
-use genex_protocol::model_types::ToolMode;
-use genex_protocol::permissions::FileSystemAccessMode;
-use genex_protocol::permissions::FileSystemPath;
-use genex_protocol::permissions::FileSystemSandboxEntry;
-use genex_protocol::permissions::FileSystemSpecialPath;
-use genex_protocol::permissions::NetworkSandboxPolicy;
-use genex_utils_absolute_path::test_support::PathExt;
+use ruxex_app_server_client::AppServerEvent;
+use ruxex_app_server_protocol::ModelSafetyBufferingUpdatedNotification;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_protocol::models::ManagedFileSystemPermissions;
+use ruxex_protocol::model_types::ToolMode;
+use ruxex_protocol::permissions::FileSystemAccessMode;
+use ruxex_protocol::permissions::FileSystemPath;
+use ruxex_protocol::permissions::FileSystemSandboxEntry;
+use ruxex_protocol::permissions::FileSystemSpecialPath;
+use ruxex_protocol::permissions::NetworkSandboxPolicy;
+use ruxex_utils_absolute_path::test_support::PathExt;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -82,7 +82,7 @@ fn next_user_turn_event(
     app_event_rx: &mut tokio::sync::mpsc::UnboundedReceiver<AppEvent>,
 ) -> AppCommand {
     while let Ok(event) = app_event_rx.try_recv() {
-        if let AppEvent::GenexOp(turn @ AppCommand::UserTurn { .. }) = event {
+        if let AppEvent::RuxexOp(turn @ AppCommand::UserTurn { .. }) = event {
             return turn;
         }
     }

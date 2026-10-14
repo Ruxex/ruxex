@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use anyhow::Context;
 use clap::Parser;
-use genex_otel::OtelExporter;
-use genex_otel::OtelHttpProtocol;
-use genex_otel::OtelProvider;
-use genex_otel::OtelSettings;
-use genex_otel_trace_websocket::TraceWebSocket;
+use ruxex_otel::OtelExporter;
+use ruxex_otel::OtelHttpProtocol;
+use ruxex_otel::OtelProvider;
+use ruxex_otel::OtelSettings;
+use ruxex_otel_trace_websocket::TraceWebSocket;
 use tracing_subscriber::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -22,7 +22,7 @@ struct Cli {
     #[arg(
         long,
         value_name = "URL",
-        default_value = genex_code_mode_host::DEFAULT_LISTEN_URL
+        default_value = ruxex_code_mode_host::DEFAULT_LISTEN_URL
     )]
     listen: String,
 
@@ -63,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
     if let Some(trace_transport) = trace_transport.as_ref() {
         let listen_addr = trace_transport.listen_addr();
-        tracing::info!("genex-code-mode-host OTEL trace websocket listening on ws://{listen_addr}");
+        tracing::info!("ruxex-code-mode-host OTEL trace websocket listening on ws://{listen_addr}");
     }
     tracing::info_span!(
         "code_mode_host.startup",
@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .in_scope(|| {});
 
-    let main_transport = genex_code_mode_host::run_main(&cli.listen);
+    let main_transport = ruxex_code_mode_host::run_main(&cli.listen);
     let result = match trace_transport.as_mut() {
         Some(trace_transport) => tokio::select! {
             result = main_transport => result,
@@ -91,9 +91,9 @@ async fn main() -> anyhow::Result<()> {
 fn build_trace_provider(endpoint: &str) -> anyhow::Result<OtelProvider> {
     OtelProvider::try_new(&OtelSettings {
         environment: "code-mode-host".to_string(),
-        service_name: "genex-code-mode-host".to_string(),
+        service_name: "ruxex-code-mode-host".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        genex_home: PathBuf::from("/tmp"),
+        ruxex_home: PathBuf::from("/tmp"),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: endpoint.to_string(),

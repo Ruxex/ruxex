@@ -22,9 +22,9 @@ pub use cli_main::run_with_provider;
 
 use clap::Args;
 use clap::Parser;
-use genex_utils_absolute_path::AbsolutePathBuf;
-use genex_utils_cli::CliConfigOverrides;
-use genex_utils_cli::ProfileV2Name;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_cli::ProfileV2Name;
 use std::path::PathBuf;
 
 pub use debug_sandbox::run_command_under_landlock;
@@ -34,23 +34,23 @@ pub use login::run_login_status;
 pub use login::run_logout;
 
 use anyhow::Result;
-use genex_app_server::AppServerExit;
-use genex_app_server::AppServerRuntimeOptions;
-use genex_app_server::AppServerTransport;
-use genex_app_server::AppServerWebsocketAuthSettings;
-use genex_app_server::ModelProviderFactory;
-use genex_app_server::app_server_control_socket_path;
-use genex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
-use genex_app_server_daemon::LifecycleOutput as AppServerLifecycleOutput;
-use genex_app_server_daemon::run_with_host_executable;
-use genex_arg0::Arg0DispatchPaths;
-use genex_config::LoaderOverrides;
-use genex_protocol::protocol::SessionSource;
+use ruxex_app_server::AppServerExit;
+use ruxex_app_server::AppServerRuntimeOptions;
+use ruxex_app_server::AppServerTransport;
+use ruxex_app_server::AppServerWebsocketAuthSettings;
+use ruxex_app_server::ModelProviderFactory;
+use ruxex_app_server::app_server_control_socket_path;
+use ruxex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
+use ruxex_app_server_daemon::LifecycleOutput as AppServerLifecycleOutput;
+use ruxex_app_server_daemon::run_with_host_executable;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_protocol::protocol::SessionSource;
 use std::ffi::OsString;
 
 /// Hidden argument used by a provider-owned host when it re-enters itself as
 /// the AppServer daemon process.
-pub use genex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
+pub use ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
 /// Starts the current host executable as its provider-owned AppServer daemon.
 pub async fn start_host_app_server_daemon() -> Result<AppServerLifecycleOutput> {
@@ -80,9 +80,9 @@ pub async fn run_host_app_server_daemon<P: ModelProviderFactory>(
     loader_overrides: LoaderOverrides,
     strict_config: bool,
 ) -> Result<AppServerExit> {
-    let genex_home = genex_core::config::find_genex_home()?;
-    let socket_path = app_server_control_socket_path(&genex_home)?;
-    let exit = genex_app_server::run_main_with_transport_options_and_provider::<P>(
+    let ruxex_home = ruxex_core::config::find_ruxex_home()?;
+    let socket_path = app_server_control_socket_path(&ruxex_home)?;
+    let exit = ruxex_app_server::run_main_with_transport_options_and_provider::<P>(
         arg0_paths,
         cli_config_overrides,
         loader_overrides,
@@ -102,7 +102,7 @@ pub async fn run_host_app_server_daemon<P: ModelProviderFactory>(
 
 #[derive(Debug, Default, Args)]
 pub struct SandboxStateArgs {
-    /// JSON value from `genex/sandbox-state-meta` to apply directly.
+    /// JSON value from `ruxex/sandbox-state-meta` to apply directly.
     #[arg(
         long = "sandbox-state-json",
         value_name = "JSON",
@@ -139,7 +139,7 @@ pub struct SeatbeltCommand {
     )]
     pub permissions_profile: Option<String>,
 
-    /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
+    /// Layer $RUXEX_HOME/<name>.config.toml on top of the base user config.
     #[arg(long = "profile", short = 'p')]
     pub config_profile: Option<ProfileV2Name>,
 
@@ -195,7 +195,7 @@ pub struct LandlockCommand {
     )]
     pub permissions_profile: Option<String>,
 
-    /// Layer $GENEX_HOME/<name>.config.toml on top of the base user config.
+    /// Layer $RUXEX_HOME/<name>.config.toml on top of the base user config.
     #[arg(long = "profile", short = 'p')]
     pub config_profile: Option<ProfileV2Name>,
 

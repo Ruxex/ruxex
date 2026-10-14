@@ -1,21 +1,21 @@
 #![allow(clippy::unwrap_used)]
 
-use genex_core::TurnInputRequest;
-use core_test_support::test_genex::local_selections;
+use ruxex_core::TurnInputRequest;
+use core_test_support::test_ruxex::local_selections;
 use std::collections::HashMap;
 
-use genex_features::Feature;
-use genex_protocol::config_types::CollaborationMode;
-use genex_protocol::config_types::ModeKind;
-use genex_protocol::config_types::Settings;
-use genex_protocol::models::PermissionProfile;
-use genex_protocol::protocol::AskForApproval;
-use genex_protocol::protocol::EventMsg;
-use genex_protocol::protocol::Op;
-use genex_protocol::protocol::ThreadSettingsOverrides;
-use genex_protocol::request_user_input::RequestUserInputAnswer;
-use genex_protocol::request_user_input::RequestUserInputResponse;
-use genex_protocol::user_input::UserInput;
+use ruxex_features::Feature;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::Op;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::request_user_input::RequestUserInputAnswer;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_protocol::user_input::UserInput;
 use core_test_support::TempDirExt;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
@@ -27,9 +27,9 @@ use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
-use core_test_support::test_genex::TestGenex;
-use core_test_support::test_genex::test_genex;
-use core_test_support::test_genex::turn_permission_fields;
+use core_test_support::test_ruxex::TestRuxex;
+use core_test_support::test_ruxex::test_ruxex;
+use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
 use pretty_assertions::assert_eq;
@@ -78,9 +78,9 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
 
     let server = start_mock_server().await;
 
-    let builder = test_genex();
-    let TestGenex {
-        genex,
+    let builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -131,7 +131,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -155,7 +155,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
         )
         .await?;
 
-    let request = wait_for_event_match(&genex, |event| match event {
+    let request = wait_for_event_match(&ruxex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
@@ -167,7 +167,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
     assert!(
         timeout(Duration::from_millis(200), async {
             loop {
-                let event = genex
+                let event = ruxex
                     .next_event()
                     .await
                     .expect("event stream should stay open");
@@ -189,15 +189,15 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
         },
     );
     let response = RequestUserInputResponse { answers };
-    genex
+    ruxex
         .submit(Op::UserInputAnswer {
             id: request.turn_id.clone(),
             response,
         })
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TokenCount(_))).await;
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TokenCount(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let output_text = call_output(&req, call_id);
@@ -216,7 +216,7 @@ async fn request_user_input_round_trip_for_mode(mode: ModeKind) -> anyhow::Resul
 
 fn ev_rate_limits() -> Value {
     json!({
-        "type": "genex.rate_limits",
+        "type": "ruxex.rate_limits",
         "plan_type": "plus",
         "rate_limits": {
             "allowed": true,
@@ -239,12 +239,12 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let TestGenex {
-        genex,
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
-    } = test_genex().build(&server).await?;
+    } = test_ruxex().build(&server).await?;
 
     let call_id = "user-input-interrupt";
     let request_args = json!({
@@ -272,7 +272,7 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
 
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -296,15 +296,15 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
         )
         .await?;
 
-    let request = wait_for_event_match(&genex, |event| match event {
+    let request = wait_for_event_match(&ruxex, |event| match event {
         EventMsg::RequestUserInput(request) => Some(request.clone()),
         _ => None,
     })
     .await;
 
-    genex.submit(Op::Interrupt).await?;
+    ruxex.submit(Op::Interrupt).await?;
 
-    let token_count = wait_for_event_match(&genex, |event| match event {
+    let token_count = wait_for_event_match(&ruxex, |event| match event {
         EventMsg::TokenCount(token_count) => Some(token_count.clone()),
         _ => None,
     })
@@ -315,7 +315,7 @@ async fn request_user_input_interrupt_emits_deferred_token_count() -> anyhow::Re
             .map(|info| info.total_token_usage.total_tokens),
         Some(77)
     );
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnAborted(_))).await;
 
     assert_eq!(request.call_id, call_id);
     Ok(())
@@ -329,9 +329,9 @@ where
 
     let server = start_mock_server().await;
 
-    let mut builder = test_genex();
-    let TestGenex {
-        genex,
+    let mut builder = test_ruxex();
+    let TestRuxex {
+        ruxex,
         cwd,
         session_configured,
         ..
@@ -373,7 +373,7 @@ where
     let (sandbox_policy, permission_profile) =
         turn_permission_fields(PermissionProfile::Disabled, cwd.path());
 
-    genex
+    ruxex
         .start_or_steer_turn(
             TurnInputRequest::user_input(vec![UserInput::Text {
                 text: "please confirm".into(),
@@ -390,7 +390,7 @@ where
         )
         .await?;
 
-    wait_for_event(&genex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
+    wait_for_event(&ruxex, |event| matches!(event, EventMsg::TurnComplete(_))).await;
 
     let req = second_mock.single_request();
     let (output, success) = call_output_content_and_success(&req, &call_id);

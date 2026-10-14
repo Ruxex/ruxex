@@ -1,14 +1,14 @@
 use super::session_lifecycle_requests::recorded_params;
 use super::session_lifecycle_requests::start_recording_app_server;
 use super::*;
-use genex_app_server_protocol::MisalignmentErrorDetails;
-use genex_app_server_protocol::MisalignmentSteer;
+use ruxex_app_server_protocol::MisalignmentErrorDetails;
+use ruxex_app_server_protocol::MisalignmentSteer;
 use pretty_assertions::assert_eq;
 
 fn policy_error() -> AppServerTurnError {
     AppServerTurnError {
         message: "Chat paused".into(),
-        genex_error_info: Some(AppServerGenexErrorInfo::MisalignmentPolicyViolation),
+        ruxex_error_info: Some(AppServerRuxexErrorInfo::MisalignmentPolicyViolation),
         additional_details: None,
         misalignment: Some(MisalignmentErrorDetails {
             error_type: None,
@@ -27,7 +27,7 @@ fn error_notification(
     turn_id: &str,
     error: AppServerTurnError,
 ) -> ServerNotification {
-    ServerNotification::Error(genex_app_server_protocol::ErrorNotification {
+    ServerNotification::Error(ruxex_app_server_protocol::ErrorNotification {
         thread_id: thread_id.to_string(),
         turn_id: turn_id.into(),
         error,

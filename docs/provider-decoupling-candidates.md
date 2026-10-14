@@ -22,6 +22,19 @@ third-party identifiers, legal notices, upstream attribution, or security behavi
 that cross those boundaries remain separate candidates and must receive a `remove`, `retain`,
 or `migrate-in-place` decision before implementation.
 
+## Ruxex identity-wave follow-ups (2026-10-14)
+
+The repository-owned namespace migration is complete for the active workspace
+surface. The following items remain intentionally separate from that mechanical
+rename:
+
+| Candidate | Producer / consumer audit required | Initial decision |
+|---|---|---|
+| OpenAI-derived fork URLs and package attribution | Trace each forked dependency, patch source, Cargo source, license/NOTICE entry, and active consumer before changing its origin or attribution. | `migrate-in-place` or `retain` per dependency; Task 3 |
+| OpenAI endpoint URLs, request/response fields, auth variables/headers, and model identifiers | Confirm each occurrence is part of the external LLM contract rather than repository branding. | `retain` |
+| Remaining Codex names in protocol, legal, historical, upstream, and third-party contexts | Classify the producer/consumer and legal provenance before any rename. | `retain` or `migrate-in-place` per finding |
+| Ruxex trademark and package-name clearance | Check relevant trademark registries and package registries with legal review; repository search alone is insufficient. | `retain` as an open publication gate |
+
 ## 単一Provider runtimeの最終境界監査 (2026-10-09)
 
 ### 固定CLIバイナリのホスト移行監査 (2026-10-13)

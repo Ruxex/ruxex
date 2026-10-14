@@ -1,15 +1,15 @@
 use crate::path_utils::resolve_symlink_write_paths;
 use crate::path_utils::write_atomically;
 use anyhow::Context;
-use genex_config::CONFIG_TOML_FILE;
-use genex_config::is_structured_feature_path;
-use genex_config::types::McpServerConfig;
-use genex_config::types::ResumeCwdMode;
-use genex_config::types::SessionPickerViewMode;
-use genex_features::FEATURES;
-use genex_protocol::config_types::ServiceTier;
-use genex_protocol::config_types::TrustLevel;
-use genex_protocol::model_types::ReasoningEffort;
+use ruxex_config::CONFIG_TOML_FILE;
+use ruxex_config::is_structured_feature_path;
+use ruxex_config::types::McpServerConfig;
+use ruxex_config::types::ResumeCwdMode;
+use ruxex_config::types::SessionPickerViewMode;
+use ruxex_features::FEATURES;
+use ruxex_protocol::config_types::ServiceTier;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::model_types::ReasoningEffort;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::Path;
@@ -676,8 +676,8 @@ fn write_skill_config_selector(table: &mut TomlTable, selector: &SkillConfigSele
 }
 
 /// Persist edits using a blocking strategy.
-pub fn apply_blocking(genex_home: &Path, edits: &[ConfigEdit]) -> anyhow::Result<()> {
-    let config_path = genex_home.join(CONFIG_TOML_FILE);
+pub fn apply_blocking(ruxex_home: &Path, edits: &[ConfigEdit]) -> anyhow::Result<()> {
+    let config_path = ruxex_home.join(CONFIG_TOML_FILE);
     apply_blocking_to_resolved_file(&config_path, edits)
 }
 
@@ -734,16 +734,16 @@ pub struct ConfigEditsBuilder {
 }
 
 impl ConfigEditsBuilder {
-    pub fn new(genex_home: &Path) -> Self {
-        Self::for_config_path(&genex_home.join(CONFIG_TOML_FILE))
+    pub fn new(ruxex_home: &Path) -> Self {
+        Self::for_config_path(&ruxex_home.join(CONFIG_TOML_FILE))
     }
 
     pub fn for_config(config: &crate::config::Config) -> Self {
         let config_path = config
             .config_layer_stack
             .get_user_config_file()
-            .map(genex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
-            .unwrap_or_else(|| config.genex_home.join(CONFIG_TOML_FILE).to_path_buf());
+            .map(ruxex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
+            .unwrap_or_else(|| config.ruxex_home.join(CONFIG_TOML_FILE).to_path_buf());
         Self::for_config_path(&config_path)
     }
 

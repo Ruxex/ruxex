@@ -47,7 +47,7 @@ impl Notification {
             }
             Notification::EditApprovalRequested { cwd, changes } => {
                 format!(
-                    "Genex wants to edit {}",
+                    "Ruxex wants to edit {}",
                     if changes.len() == 1 {
                         #[allow(clippy::unwrap_used)]
                         display_path_for(changes.first().unwrap(), cwd)
@@ -109,7 +109,7 @@ impl Notification {
     }
 
     pub(super) fn user_input_request_summary(
-        questions: &[genex_app_server_protocol::ToolRequestUserInputQuestion],
+        questions: &[ruxex_app_server_protocol::ToolRequestUserInputQuestion],
     ) -> Option<String> {
         let first_question = questions.first()?;
         let summary = if first_question.header.trim().is_empty() {

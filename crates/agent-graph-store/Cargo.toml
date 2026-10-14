@@ -1,11 +1,11 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "genex-agent-graph-store"
+name = "ruxex-agent-graph-store"
 version.workspace = true
 
 [lib]
-name = "genex_agent_graph_store"
+name = "ruxex_agent_graph_store"
 path = "src/lib.rs"
 doctest = false
 
@@ -13,13 +13,13 @@ doctest = false
 workspace = true
 
 [dependencies]
-genex-protocol = { workspace = true }
-genex-state = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-state = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-genex-utils-absolute-path = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

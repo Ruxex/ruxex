@@ -1,4 +1,4 @@
-//! Captures how this Genex process was launched.
+//! Captures how this Ruxex process was launched.
 //!
 //! Runtime diagnostics answer provenance questions that are hard to infer from
 //! user reports: which binary is running, which install channel it resembles,
@@ -7,8 +7,8 @@
 
 use std::env;
 
-use genex_install_context::InstallContext;
-use genex_install_context::InstallMethod;
+use ruxex_install_context::InstallContext;
+use ruxex_install_context::InstallMethod;
 
 use super::CheckStatus;
 use super::DoctorCheck;
@@ -16,7 +16,7 @@ use super::describe_install_context;
 use super::doctor_install_context;
 use super::push_path_detail;
 
-/// Builds the process provenance row for the current Genex executable.
+/// Builds the process provenance row for the current Ruxex executable.
 ///
 /// This check is informational and should not fail on its own; inconsistent
 /// install state is reported by the installation check instead.
@@ -99,7 +99,7 @@ pub(super) fn search_check() -> DoctorCheck {
     };
     let mut check = DoctorCheck::new("runtime.search", "search", status, summary).details(details);
     if status != CheckStatus::Ok {
-        check = check.remediation("Install ripgrep or repair the bundled Genex package.");
+        check = check.remediation("Install ripgrep or repair the bundled Ruxex package.");
     }
     check
 }
@@ -139,7 +139,7 @@ fn search_provider(context: &InstallContext) -> &'static str {
 }
 
 fn build_commit() -> &'static str {
-    option_env!("GENEX_BUILD_COMMIT")
+    option_env!("RUXEX_BUILD_COMMIT")
         .or(option_env!("GIT_COMMIT"))
         .unwrap_or("unknown")
 }

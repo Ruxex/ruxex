@@ -9,7 +9,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use anyhow::ensure;
-use genex_utils_home_dir::find_genex_home;
+use ruxex_utils_home_dir::find_ruxex_home;
 use oauth2::CsrfToken;
 use sha2::Digest;
 use sha2::Sha256;
@@ -31,7 +31,7 @@ impl EnterpriseOAuthGenerationFile {
     ) -> Result<Self> {
         let key = super::compute_store_key(credential_name, issuer)?;
         let name = format!("{:x}.enterprise-generation", Sha256::digest(key.as_bytes()));
-        let path = find_genex_home()?.join("mcp-oauth-locks").join(name);
+        let path = find_ruxex_home()?.join("mcp-oauth-locks").join(name);
         let mut options = OpenOptions::new();
         options.read(true).write(true).create(true).truncate(false);
         #[cfg(unix)]

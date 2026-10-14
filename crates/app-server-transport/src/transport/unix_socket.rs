@@ -9,9 +9,9 @@ use super::TransportEvent;
 use crate::transport::websocket::run_websocket_connection;
 use futures::SinkExt;
 use futures::StreamExt;
-use genex_uds::UnixListener;
-use genex_uds::UnixStream;
-use genex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_uds::UnixListener;
+use ruxex_uds::UnixStream;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
@@ -64,7 +64,7 @@ pub async fn start_control_socket_acceptor(
                 ));
             }
         }
-        genex_uds::prepare_shared_daemon_socket_directory()?;
+        ruxex_uds::prepare_shared_daemon_socket_directory()?;
         let physical_path = protected_socket_path(socket_path.as_path())?;
         let lock = acquire_app_server_startup_lock(AbsolutePathBuf::from_absolute_path_checked(
             physical_path.with_extension("lock"),
@@ -224,7 +224,7 @@ async fn prepare_control_socket_path(socket_path: &Path) -> IoResult<()> {
         return Ok(());
     }
 
-    if !genex_uds::is_stale_socket_path(socket_path).await? {
+    if !ruxex_uds::is_stale_socket_path(socket_path).await? {
         return Err(std::io::Error::new(
             ErrorKind::AlreadyExists,
             format!(
@@ -250,7 +250,7 @@ fn protected_socket_path(rendezvous_path: &Path) -> IoResult<std::path::PathBuf>
     })?;
     let path = std::fs::canonicalize(parent)?.join(name);
     let hash = Sha256::digest(path.as_os_str().as_bytes());
-    Ok(genex_uds::shared_daemon_socket_directory()?.join(format!("{hash:x}")))
+    Ok(ruxex_uds::shared_daemon_socket_directory()?.join(format!("{hash:x}")))
 }
 
 pub struct AppServerStartupLock {
@@ -261,7 +261,7 @@ pub async fn acquire_app_server_startup_lock(
     startup_lock_path: AbsolutePathBuf,
 ) -> IoResult<AppServerStartupLock> {
     if let Some(parent) = startup_lock_path.as_path().parent() {
-        genex_uds::prepare_private_socket_directory(parent).await?;
+        ruxex_uds::prepare_private_socket_directory(parent).await?;
     }
     tokio::task::spawn_blocking(move || {
         let file = OpenOptions::new()

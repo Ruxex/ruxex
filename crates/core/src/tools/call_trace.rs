@@ -2,9 +2,9 @@
 //! These events contain call identifiers and names, never arguments or output.
 //! Code-mode calls reach the broker before the dispatching turn is known.
 
-use genex_protocol::DEFAULT_FUNCTION_NAMESPACE;
-use genex_protocol::ThreadId;
-use genex_tools::ToolName;
+use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
+use ruxex_protocol::ThreadId;
+use ruxex_tools::ToolName;
 
 #[derive(Clone, Copy)]
 pub(crate) enum Source {
@@ -43,10 +43,10 @@ pub(crate) fn received(
         } => (None, Source::CodeMode, cell_id, runtime_tool_call_id),
     };
     tracing::event!(
-        name: "genex.tool_call_received",
-        target: "genex_otel.trace_safe",
+        name: "ruxex.tool_call_received",
+        target: "ruxex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "genex.tool_call_received",
+        event.name = "ruxex.tool_call_received",
         conversation.id = %thread_id,
         turn_id,
         call_id,
@@ -66,10 +66,10 @@ pub(crate) fn result_ready(
     source: Source,
 ) {
     tracing::event!(
-        name: "genex.tool_result_ready",
-        target: "genex_otel.trace_safe",
+        name: "ruxex.tool_result_ready",
+        target: "ruxex_otel.trace_safe",
         tracing::Level::INFO,
-        event.name = "genex.tool_result_ready",
+        event.name = "ruxex.tool_result_ready",
         conversation.id = %thread_id,
         turn_id,
         call_id,

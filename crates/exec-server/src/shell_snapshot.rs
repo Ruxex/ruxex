@@ -4,17 +4,17 @@ use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
-use genex_exec_server_protocol::JSONRPCErrorError;
-use genex_network_proxy::PROXY_ACTIVE_ENV_KEY;
-use genex_network_proxy::strip_managed_proxy_env;
-use genex_protocol::config_types::ShellEnvironmentPolicyInherit;
-use genex_protocol::shell_environment;
-use genex_shell_command::shell_detect::ShellType;
-use genex_shell_command::shell_snapshot::CapturedSnapshot;
-use genex_shell_command::shell_snapshot::SnapshotCaptureOptions;
-use genex_shell_command::shell_snapshot::SnapshotStartup;
-use genex_shell_command::shell_snapshot::snapshot_capture_script;
-use genex_utils_path_uri::PathUri;
+use ruxex_exec_server_protocol::JSONRPCErrorError;
+use ruxex_network_proxy::PROXY_ACTIVE_ENV_KEY;
+use ruxex_network_proxy::strip_managed_proxy_env;
+use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
+use ruxex_protocol::shell_environment;
+use ruxex_shell_command::shell_detect::ShellType;
+use ruxex_shell_command::shell_snapshot::CapturedSnapshot;
+use ruxex_shell_command::shell_snapshot::SnapshotCaptureOptions;
+use ruxex_shell_command::shell_snapshot::SnapshotStartup;
+use ruxex_shell_command::shell_snapshot::snapshot_capture_script;
+use ruxex_utils_path_uri::PathUri;
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;
 use tokio::sync::Mutex;
@@ -226,7 +226,7 @@ impl ShellSnapshotCache {
                 end -= 1;
             }
             let (chunk, remaining) = state.split_at(end);
-            let name = format!("__GENEX_SHELL_SNAPSHOT_STATE_{}", state_variables.len());
+            let name = format!("__RUXEX_SHELL_SNAPSHOT_STATE_{}", state_variables.len());
             prepared.env.insert(name.clone(), chunk.to_string());
             state_variables.push(name);
             state = remaining;
