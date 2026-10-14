@@ -1,5 +1,11 @@
 # フォーク元追加コミット監査（2026-10-07）
 
+> Historical snapshot only. The active Ruxex synchronization source and
+> commit-by-commit decision process are defined in
+> [`upstream-synchronization-policy-2026-10-14.md`](upstream-synchronization-policy-2026-10-14.md).
+> The active remote is `upstream` (`edge-m/codex-fork`), not the OpenAI
+> repository used for this historical snapshot.
+
 ## 基準点と取得結果
 
 - 本リポジトリ: `main` の先端 `fadce565ccbc977b62dc875815e850e947820e42`

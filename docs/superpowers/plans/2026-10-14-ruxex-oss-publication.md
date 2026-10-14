@@ -123,15 +123,19 @@ verified yet.
 ### Task 6: Finalize upstream synchronization policy
 
 **Files:**
-- Modify: `docs/upstream-commit-audit-2026-10-07.md` or create the dated successor ledger
-- Modify: `docs/upstream-commits-after-fork-2026-10-07.md`
+- Create: `docs/upstream-synchronization-policy-2026-10-14.md`
+- Modify: `docs/upstream-commit-audit-2026-10-07.md` and retain the historical commit list
 - Create: a small review checklist or script only if it reduces repeated commit-audit errors
 
-- [ ] Define the upstream remote/ref and the synchronization cadence.
-- [ ] For every candidate upstream commit, record commit ID, subject, decision (`import`, `skip`, or `partial`), reason, affected Ruxex boundary, and verification result.
-- [ ] Review commits in dependency order where later commits depend on earlier changes.
-- [ ] Keep provider-specific, hosted, licensing, and security-sensitive changes as explicit audit entries rather than silently importing them.
+- [x] Define the upstream remote/ref and the synchronization cadence.
+- [x] Define the per-commit ledger fields and record the initial zero-candidate checkpoint; future candidates must record commit ID, subject, decision (`import`, `skip`, or `partial`), reason, affected Ruxex boundary, and verification result.
+- [x] Require review in dependency order where later commits depend on earlier changes.
+- [x] Keep provider-specific, hosted, licensing, and security-sensitive changes as explicit audit entries rather than silently importing them.
 - [ ] Verify each accepted batch with the repository check policy and push the audit together with the code it explains.
+
+Implementation note (2026-10-14): `upstream/main` is currently identical to the
+shared `main` checkpoint, so this cycle has no upstream code to import. The
+active policy is recorded separately from the historical OpenAI-based audit.
 
 ### Task 7: Prepare the public tree and publication candidate
 
