@@ -194,6 +194,7 @@ async fn managed_project_discovery_uses_managed_project_trust() -> anyhow::Resul
 #[cfg(target_os = "macos")]
 #[tokio::test]
 async fn managed_project_discovery_preserves_remapped_provider_bindings() -> anyhow::Result<()> {
+    use crate::merge_toml_values;
     use base64::Engine;
     use base64::prelude::BASE64_STANDARD;
 
