@@ -58,6 +58,10 @@ yarn-error.log*
 # patches
 apply_patch/
 
+# local planning state; the active publication plan and audit records kept in
+# docs/ are intentionally tracked, while .superpowers/ remains local only
+.superpowers/
+
 # coverage
 coverage/
 
@@ -90,3 +94,9 @@ __pycache__/
 /target/
 /target-*/
 apps/desktop/src-tauri/gen/
+
+# local audit and generated inspection output
+/docs/inspection/
+/hawk.json
+/codex-cli.json
+/chatgpt-openai-line-counts*.tsv

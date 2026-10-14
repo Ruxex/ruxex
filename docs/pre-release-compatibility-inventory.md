@@ -29,8 +29,8 @@ The public-tree allowlist for the Ruxex publication candidate is:
 |---|---|---|
 | Rust source, workspace manifests, lockfile, toolchain file, active build scripts, active `just` recipes, required examples, and checked-in schemas consumed by a runtime or client | Cargo, host examples, AppServer/protocol consumers, build scripts, and users need these to build or embed Ruxex | `retain`, subject to the naming and dependency audits |
 | `README.md`, root-level setup/config/authentication/install/sandbox/contribution/security text, and required release metadata | Users need these to build, configure, embed, secure, and contribute to Ruxex | `retain` after repository-owned names and links are migrated |
-| `LICENSE`, `SECURITY.md`, `docs/CLA`, `docs/license`, third-party license files, notices, attribution, and upstream provenance records required for redistribution | Legal obligations and third-party/upstream provenance are external or historical boundaries | `retain`; OpenAI/Codex references may remain where legally or historically required |
-| `docs/**` including plans, specifications, inspection maps, architecture notes, compatibility inventories, provider audits, upstream ledgers, and generated analysis reports | These are development and maintainer records; no public runtime or library consumer should require the repository documentation tree | `remove` from the final public tree as the last pre-consolidation cleanup; preserve Git history and extract required legal/provenance/user text first |
+| `LICENSE`, `SECURITY.md`, third-party license files, notices, attribution, and upstream provenance records required for redistribution | Legal obligations and third-party/upstream provenance are external or historical boundaries; the inherited `docs/CLA`, `docs/license`, and provider fund page are not applicable Ruxex policies | `retain` applicable root/legal records; `remove` obsolete provider-specific legal/support pages |
+| Active Ruxex publication plan, compatibility inventory, provider-candidate queue, and upstream synchronization/audit ledgers under `docs/` | The user explicitly requires the current plan and commit-level audit records to remain available during and after cleanup; they are not runtime inputs | `retain` the six explicitly listed active records; remove other plans, specs, inspection maps, architecture notes, and generated analysis reports |
 | `.codex/**`, `.vscode/**`, and `.superpowers/**` | Repository-local agent, editor, and planning tooling; consumers are development environments only | `remove` from the final public tree as the last pre-consolidation cleanup; retain neither as a runtime dependency |
 | `target/**`, `.build-cache/**`, local V8 caches, temporary reports, machine-local paths, and untracked generated output | No active producer or consumer requires these in a source distribution | `remove` from the publication candidate; never commit them |
 | checked-in generated protocol/config artifacts with an active producer and consumer | AppServer clients, protocol users, or build verification may require the generated output | `retain` and regenerate/inspect through `just generate` |
@@ -40,8 +40,26 @@ The public-tree allowlist for the Ruxex publication candidate is:
 This baseline is a publication-boundary decision, not permission to delete files immediately.
 The listed development directories and unused scripts must remain available during implementation.
 They are deleted only after the last functional verification and immediately before commits are
-consolidated. Each removal must still be reviewed in the public-tree diff. The full Git history
-remains preserved.
+consolidated. The active plan and audit records are explicit exceptions requested by the project
+owner; `.superpowers/` progress remains local and ignored. Each removal must still be reviewed in
+the public-tree diff. The full Git history remains preserved.
+
+## Final cleanup execution allowlist (2026-10-14)
+
+The final cleanup was reviewed against the allowlist before deletion. The
+current publication plan and audit ledgers are retained at the paths listed
+below; the local SDD progress file is ignored and remains in the workspace.
+
+| Exact path or class | Producer / consumer audit | Decision |
+|---|---|---|
+| `docs/superpowers/plans/2026-10-14-ruxex-oss-publication.md` | Current publication work consumes this plan and the owner explicitly requires it to remain available | `retain` |
+| `docs/pre-release-compatibility-inventory.md`, `docs/provider-decoupling-candidates.md`, `docs/upstream-synchronization-policy-2026-10-14.md`, and the two dated upstream history files | Current cleanup and future commit-level synchronization consume these audit records | `retain` |
+| Other tracked `docs/**` content, including old plans, specs, inspection output, architecture notes, provider documentation, obsolete legal/support pages, and generated analysis | No public runtime, build, security, or active publication workflow consumes these files; required root contribution/security/license text has already been extracted | `remove` |
+| `.codex/**`, `.vscode/**`, and tracked `.superpowers/**` | Agent/editor configuration and historical progress files are local development inputs only; the current SDD ledger is already ignored | `remove` tracked content; retain only ignored current local state |
+| `scripts/asciicheck.py`, `scripts/check_blob_size.py`, `scripts/count-provider-chatgpt.sh`, `scripts/debug-codex.sh`, `scripts/mock_responses_websocket_server.py`, `scripts/readme_toc.py`, and `scripts/test-remote-env.sh` | No active recipe, CI job, supported test, or release workflow consumes these scripts; several target obsolete upstream/editor/remote surfaces | `remove` |
+| `scripts/download-rusty-v8.sh`, `scripts/setup-gstreamer.sh`, `scripts/gstreamer-linker.sh`, `scripts/just-shell.py`, `scripts/format.py`, schema/dependency generators, MCP conformance scripts, and the Ruxex name audit | Active `just` recipes, build setup, conformance checks, generated artifacts, or release audits consume these scripts | `retain` |
+| `.github/codex-cli-splash.png` and its blob-size allowlist entry | No active Ruxex README, UI, build, or release consumer references the inherited splash asset | `remove` |
+| Root `hawk.json`, `codex-cli.json`, and `chatgpt-openai-line-counts*.tsv` reports | These are generated or historical audit outputs with no build, runtime, CI, or public documentation consumer; the active `just hawk` recipe can regenerate `hawk.json` when needed | `remove` and ignore as local generated output |
 
 ## Ruxex repository-owned namespace migration (2026-10-14)
 

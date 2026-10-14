@@ -14,14 +14,14 @@
 
 - Work directly on local `develop`; do not create a worktree.
 - Preserve the complete existing Git history; do not rewrite history or force-push.
-- Remove the development-only `.codex`, `docs`, `.vscode`, `.superpowers`, and unused `scripts` content as the final filesystem cleanup before commits are consolidated; extract any legally or operationally required text into retained root files first.
+- Remove the development-only `.codex`, `.vscode`, `.superpowers`, and unused `scripts` content as the final filesystem cleanup before commits are consolidated. Remove `docs/` except for this active publication plan and the current compatibility/upstream audit ledgers; extract any legally or operationally required text into retained root files first.
 - Preserve OpenAI endpoint URLs, request/response fields, authentication headers/variables, and model identifiers when they are external contracts.
 - Keep third-party, upstream, historical, and legal attribution identifiers where required; remove repository-owned OpenAI branding and assumptions only after producer/consumer auditing.
 - Run `just check`, `just check --tests` after Rust changes, and `just generate` when generated artifacts may be affected, using the repository's memory-limited systemd scope.
 
 ## Review Focus
 
-- Public HEAD contains no internal design material, credentials, private endpoints, or generated build cache.
+- Public HEAD contains no internal design material, credentials, private endpoints, or generated build cache, except for the explicitly retained publication plan and audit ledgers needed to continue this release work.
 - Rename coverage distinguishes repository-owned `genex`/Codex identifiers from external contracts, third-party packages, historical records, and legal notices.
 - Every OpenAI-derived dependency and fork retains the attribution and license obligations needed for redistribution.
 - A clean consumer can build `rusty_v8` through supported official artifacts on Linux and macOS without receiving a Genex/Ruxex binary.
@@ -144,10 +144,10 @@ active policy is recorded separately from the historical OpenAI-based audit.
 - Modify: `README.md`, `CHANGELOG.md`, package metadata, and release documentation
 - Modify: generated schemas and checked-in artifacts only when their producers require it
 
-- [ ] Before removing development materials, extract the minimum required API/setup/legal/provenance text into retained root files such as `README.md`, `LICENSE`, `NOTICE`, `SECURITY.md`, or `CONTRIBUTING.md`.
-- [ ] As the final filesystem cleanup before commit consolidation, remove `.codex/`, `docs/`, `.vscode/`, `.superpowers/`, and scripts classified as unused; keep only scripts required by build, verification, artifact resolution, or release operations.
-- [ ] Do not delete those development materials during earlier implementation tasks; they remain available for audits and verification until this step.
-- [ ] Remove caches, local paths, private organization references, stale screenshots, and unused build scaffolding.
+- [x] Before removing development materials, extract the minimum required API/setup/legal/provenance text into retained root files such as `README.md`, `LICENSE`, `NOTICE`, `SECURITY.md`, or `CONTRIBUTING.md`.
+- [x] As the final filesystem cleanup before commit consolidation, remove `.codex/`, `.vscode/`, `.superpowers/`, and scripts classified as unused. Remove `docs/` except for the active publication plan and compatibility/upstream audit ledgers; keep only scripts required by build, verification, artifact resolution, or release operations.
+- [x] Do not delete those development materials during earlier implementation tasks; they remain available for audits and verification until this step.
+- [x] Remove caches, local paths, private organization references, stale screenshots, and unused build scaffolding.
 - [ ] Verify that examples, README commands, crate names, data-root names, and CI URLs all describe Ruxex consistently.
 - [ ] Run the complete repository verification gate: `just check`, `just check --tests`, `just generate`, `git diff --check`, and the Linux/macOS CI matrix.
 - [ ] Review the complete staged diff and a clean checkout of the candidate commit.

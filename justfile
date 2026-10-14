@@ -30,13 +30,6 @@ desktop: before-desktop
 hawk:
     {{ justfile_directory() }}/scripts/setup-gstreamer.sh -- {{ justfile_directory() }}/scripts/download-rusty-v8.sh -- cargo hawk check --output-format json > {{ justfile_directory() }}/hawk.json
 
-# Start `ruxex exec-server` and run ruxex-tui.
-[no-cd]
-[positional-arguments]
-[unix]
-tui-with-exec-server *args:
-    {{ justfile_directory() }}/scripts/run_tui_with_exec_server.sh "$@"
-
 # Run the CLI version of the file-search crate.
 file-search *args:
     cargo run --bin ruxex-file-search -- {args}

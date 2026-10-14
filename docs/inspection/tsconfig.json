@@ -1,7 +1,0 @@
-{
-  "extends": "@docusaurus/tsconfig",
-  "compilerOptions": {
-    "types": ["node"]
-  },
-  "include": ["**/*.ts", "**/*.tsx"]
-}
