@@ -85,7 +85,7 @@ jobs:
 
   test-archive:
     name: test archive (${{ matrix.os }})
-    runs-on: ${{ matrix.os == 'macos' && 'macos-15-xlarge' || 'ubuntu-24.04' }}
+    runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
     env:
       CARGO_INCREMENTAL: 0
     strategy:
@@ -161,7 +161,7 @@ jobs:
       - build
       - test-archive
     if: ${{ always() && needs.build.result == 'success' }}
-    runs-on: ${{ matrix.os == 'macos' && 'macos-15-xlarge' || 'ubuntu-24.04' }}
+    runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
