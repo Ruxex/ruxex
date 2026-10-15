@@ -33,6 +33,13 @@ filter = 'test(rmcp_client) | test(humanlike_typing_1000_chars_appears_live_no_p
 slow-timeout = { period = "1m", terminate-after = 4 }
 
 [[profile.default.overrides]]
+# This credential-brokered shell snapshot starts a local proxy and launches
+# several shell captures; CI runner contention can make it exceed the default
+# timeout even though the test completes normally.
+filter = 'package(ruxex-core) & test(snapshot_discovers_and_redacts_shell_initialized_credentials)'
+slow-timeout = { period = "1m", terminate-after = 2 }
+
+[[profile.default.overrides]]
 # This end-to-end case launches several CLI subprocesses and checks cloud policy.
 filter = 'package(ruxex-exec) & test(worktree_start_and_fork_use_host_pool_and_preserve_legacy_resume)'
 slow-timeout = { period = "30s", terminate-after = 4 }

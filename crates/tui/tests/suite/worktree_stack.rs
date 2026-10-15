@@ -54,10 +54,7 @@ async fn picker_side_worktree_fork_and_cd_run_on_the_production_stack() -> Resul
     write_test_config(ruxex_home.path(), &root)?;
     let server = responses::start_mock_server().await;
     let config_path = ruxex_home.path().join("config.toml");
-    let config = fs::read_to_string(&config_path)?.replace(
-        "model_provider.id = \"provider\"",
-        "model_provider.id = \"test\"",
-    );
+    let config = fs::read_to_string(&config_path)?;
     let config = config.replace(
         "base_url = \"http://127.0.0.1:1/v1\"",
         &format!("base_url = \"{}/v1\"", server.uri()),

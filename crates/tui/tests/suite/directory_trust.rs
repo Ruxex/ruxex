@@ -74,6 +74,27 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                             "account/read" => {
                                 json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "authenticated"})
                             }
+                            "modelProvider/read" => json!({
+                                "id": "cloudflare",
+                                "name": "cloudflare",
+                                "authStatus": "authenticated",
+                                "authFields": [{"id": "api_key", "label": "API key", "secret": true}]
+                            }),
+                            "modelProvider/capabilities/read" => json!({
+                                "modelListing": true,
+                                "apiKeyModelDiscovery": false,
+                                "commandAuth": false,
+                                "streaming": true,
+                                "websocket": false,
+                                "usage": false,
+                                "interactiveLogin": false,
+                                "namespaceTools": true,
+                                "webSearch": true,
+                                "standaloneWebSearch": false,
+                                "externalWebAccess": true,
+                                "historyNotes": true,
+                                "remoteCompaction": "v2"
+                            }),
                             "config/read" => {
                                 if request
                                     .params
@@ -100,7 +121,29 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                                 }], "warnings": [], "errors": []})]
                             } else { vec![] }}),
                             "configRequirements/read" => json!({"requirements": null}),
-                            "model/list" => json!({"data": [], "nextCursor": null}),
+                            "model/list" => json!({
+                                "data": [{
+                                    "id": "provider-model-d",
+                                    "model": "provider-model-d",
+                                    "upgrade": null,
+                                    "upgradeInfo": null,
+                                    "availabilityNux": null,
+                                    "displayName": "Provider model",
+                                    "description": "Test provider model",
+                                    "modelSpecialty": null,
+                                    "hidden": false,
+                                    "supportedReasoningEfforts": [{"reasoningEffort": "medium", "description": "Medium"}],
+                                    "defaultReasoningEffort": "medium",
+                                    "inputModalities": ["text"],
+                                    "multiAgentVersion": null,
+                                    "additionalSpeedTiers": [],
+                                    "serviceTiers": [],
+                                    "defaultServiceTier": null,
+                                    "availableAccessPrograms": null,
+                                    "isDefault": true
+                                }],
+                                "nextCursor": null
+                            }),
                             "thread/list" => {
                                 json!({"data": vec![thread.clone(), launch_thread.clone()], "nextCursor": null})
                             }

@@ -15,7 +15,10 @@ use anyhow::Result;
 use anyhow::bail;
 use anyhow::ensure;
 use pretty_assertions::assert_eq;
+use ruxex_login::RuxexAuth;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::test_support::test_models_response;
 use tempfile::TempDir;
 use uuid::Uuid;
 
@@ -199,7 +202,35 @@ impl PtyRuxex {
         let stdout = slave.try_clone().context("clone pseudo-terminal stdout")?;
 
         let ruxex = ruxex_utils_cargo_bin::cargo_bin("ruxex-provider-host-example")?;
+        let config: toml::Value = toml::from_str(&std::fs::read_to_string(
+            ruxex_home.path().join("config.toml"),
+        )?)?;
+        let provider_info_value = serde_json::to_value(
+            config
+                .get("model_provider")
+                .context("focus-test config is missing model_provider")?,
+        )?;
+        let provider_info: ModelProviderInfo = serde_json::from_value(provider_info_value)?;
+        let provider_info_json = serde_json::to_string(&provider_info)?;
+        let auth = RuxexAuth::from_api_key("focus-palette-test");
+        let mut models_cache = ruxex_model_provider::test_support::models_cache_entry(
+            &provider_info,
+            Some(&auth),
+            test_models_response()?.models,
+        );
+        models_cache.identity = ruxex_model_provider::provider_models_identity::identity(
+            provider_info.id.as_deref(),
+            &provider_info,
+            Some(&auth),
+        )
+        .ok();
+        std::fs::write(
+            ruxex_home.path().join("models_cache.json"),
+            serde_json::to_vec(&models_cache)?,
+        )?;
         let child = Command::new(ruxex)
+            .arg("--model")
+            .arg("provider-model-d")
             .args(extra_args)
             .arg("--no-alt-screen")
             .arg("-C")
@@ -207,6 +238,7 @@ impl PtyRuxex {
             .env("TERM", "xterm-256color")
             .env("PROVIDER_API_KEY", "focus-palette-test")
             .env("RUXEX_HOME", ruxex_home.path())
+            .env("RUXEX_TEST_PROVIDER_INFO", provider_info_json)
             .stdin(stdin)
             .stdout(stdout)
             .stderr(slave)
@@ -233,7 +265,7 @@ impl PtyRuxex {
             self.read_output(Duration::from_millis(/*millis*/ 50))?;
             self.answer_startup_queries()?;
 
-            if self.palette_answered && self.screen_contains("provider Ruxex") {
+            if self.palette_answered && self.screen_contains("provider Provider") {
                 return Ok(());
             }
 
@@ -354,7 +386,10 @@ impl PtyRuxex {
                 return Ok(());
             }
             if let Some(status) = self.child.try_wait()? {
-                bail!("Ruxex exited while waiting for {text:?} ({status})");
+                bail!(
+                    "Ruxex exited while waiting for {text:?} ({status}); screen:\n{}",
+                    self.screen_contents()
+                );
             }
         }
         bail!("missing {text:?}; screen:\n{}", self.screen_contents())
@@ -386,7 +421,7 @@ pub(super) fn write_test_config(ruxex_home: &Path, repo_root: &Path) -> Result<(
     let config = format!(
         "model = \"provider-model-d\"\ncli_auth_credentials_store = \"file\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
-         [model_provider]\nid = \"provider\"\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
+         [model_provider]\nid = \"cloudflare\"\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
     );
     std::fs::write(ruxex_home.join("config.toml"), config)

@@ -11396,7 +11396,10 @@ dependencies = [
  "ruxex-app-server",
  "ruxex-arg0",
  "ruxex-cli",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
  "ruxex-providers",
+ "serde_json",
 ]
 
 [[package]]

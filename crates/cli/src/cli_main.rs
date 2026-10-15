@@ -44,9 +44,7 @@ static ALLOCATOR: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 use crate::cloud_config;
 use crate::doctor::DoctorCommand;
 use crate::exec_server_telemetry;
-use crate::marketplace_cmd;
 use crate::mcp_cmd::McpCli;
-use crate::mcp_login;
 use crate::plugin_cmd;
 use crate::plugin_cmd::PluginCli;
 use crate::plugin_cmd::PluginSubcommand;
@@ -802,6 +800,14 @@ pub async fn run_with_provider<P: ModelProviderFactory>(
         )),
     )
     .await
+}
+
+/// Runs the complete Ruxex CLI with a provider runtime factory supplied by the embedding host.
+pub async fn run_with_provider_factory(
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ruxex_tui::ProviderRuntimeFactory,
+) -> anyhow::Result<()> {
+    run_cli(arg0_paths, Some(provider_factory)).await
 }
 
 async fn run_cli(

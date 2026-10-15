@@ -213,6 +213,7 @@ pub(crate) fn new_status_output_with_rate_limits(
     .0
 }
 
+#[cfg(test)]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn new_status_output_with_rate_limits_handle(
     config: &Config,

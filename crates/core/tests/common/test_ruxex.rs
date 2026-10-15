@@ -23,7 +23,6 @@ pub use ruxex_core::TurnInputRequest;
 use ruxex_core::config::Config;
 use ruxex_core::resolve_installation_id;
 use ruxex_core::shell::Shell;
-use ruxex_core::shell::get_shell_by_model_provided_path;
 use ruxex_core::thread_store_from_config;
 use ruxex_exec_server::CreateDirectoryOptions;
 use ruxex_exec_server::ExecutorFileSystem;
@@ -68,13 +67,11 @@ use tempfile::TempDir;
 use wiremock::MockServer;
 
 use crate::TempDirExt;
-use crate::TestEnvironment;
 use crate::load_default_config_for_test;
 use crate::responses::WebSocketTestServer;
 use crate::responses::output_value_to_text;
 use crate::responses::start_mock_server;
 use crate::streaming_sse::StreamingSseServer;
-use crate::test_environment;
 use crate::wait_for_event;
 use crate::wait_for_event_match;
 use crate::wait_for_event_with_timeout;
@@ -607,7 +604,7 @@ impl TestRuxexBuilder {
         cwd: Arc<TempDir>,
         home: Arc<TempDir>,
         resume_from: Option<PathBuf>,
-        mut test_env: TestEnv,
+        test_env: TestEnv,
         environment_manager: Arc<ruxex_exec_server::EnvironmentManager>,
     ) -> anyhow::Result<TestRuxex> {
         let auth = self.auth.clone();

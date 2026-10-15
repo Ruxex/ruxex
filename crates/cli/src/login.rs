@@ -134,6 +134,7 @@ async fn load_config_or_exit(cli_config_overrides: CliConfigOverrides) -> Config
     }
 }
 
+#[cfg(test)]
 fn safe_format_key(key: &str) -> String {
     if key.len() <= 13 {
         return "***".to_string();

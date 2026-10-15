@@ -9,6 +9,7 @@ use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_login::CredentialManager;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelProviderFactory;
+#[cfg(test)]
 use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
 use ruxex_model_provider::ProviderDescriptor;
 use ruxex_model_provider::ProviderHomeError;

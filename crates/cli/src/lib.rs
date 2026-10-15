@@ -19,6 +19,9 @@ pub(crate) use cli_main::SessionArchiveConfigOverrides;
 pub(crate) use cli_main::finalize_session_archive_interactive;
 pub(crate) use cli_main::resolve_remote_endpoint;
 pub use cli_main::run_with_provider;
+pub use cli_main::run_with_provider_factory;
+
+pub type ProviderRuntimeFactory = ruxex_tui::ProviderRuntimeFactory;
 
 use clap::Args;
 use clap::Parser;
@@ -95,6 +98,35 @@ pub async fn run_host_app_server_daemon<P: ModelProviderFactory>(
             managed_daemon: true,
             ..Default::default()
         },
+    )
+    .await?;
+    Ok(exit)
+}
+
+/// Runs the provider-owned AppServer daemon with a runtime factory supplied by the host.
+pub async fn run_host_app_server_daemon_with_provider_factory(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    provider_factory: ruxex_tui::ProviderRuntimeFactory,
+) -> Result<AppServerExit> {
+    let ruxex_home = ruxex_core::config::find_ruxex_home()?;
+    let socket_path = app_server_control_socket_path(&ruxex_home)?;
+    let exit = ruxex_app_server::run_main_with_transport_options_and_provider_factory(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        /*default_metrics_enabled*/ false,
+        AppServerTransport::UnixSocket { socket_path },
+        SessionSource::Cli,
+        AppServerWebsocketAuthSettings::default(),
+        AppServerRuntimeOptions {
+            managed_daemon: true,
+            ..Default::default()
+        },
+        provider_factory,
     )
     .await?;
     Ok(exit)

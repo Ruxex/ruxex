@@ -13,4 +13,7 @@ anyhow = { workspace = true }
 ruxex-arg0 = { workspace = true }
 ruxex-app-server = { workspace = true }
 ruxex-cli = { workspace = true }
+ruxex-model-provider = { workspace = true }
 ruxex-providers = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+serde_json = { workspace = true }

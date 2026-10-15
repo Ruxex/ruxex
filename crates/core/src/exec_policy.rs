@@ -713,7 +713,7 @@ fn dangerous_command_match_for_heuristics(
 }
 
 /// If a command is not matched by any execpolicy rule, derive a [`Decision`].
-#[cfg(any(test, unix))]
+#[cfg(test)]
 pub(crate) fn render_decision_for_unmatched_command(
     command: &[String],
     context: UnmatchedCommandContext<'_>,
@@ -802,6 +802,7 @@ fn render_decision_for_unmatched_command_for_platform(
     }
 }
 
+#[cfg(test)]
 fn profile_has_managed_filesystem_restrictions(permission_profile: &PermissionProfile) -> bool {
     let file_system_sandbox_policy = permission_profile.file_system_sandbox_policy();
     matches!(permission_profile, PermissionProfile::Managed { .. })
