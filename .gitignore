@@ -98,6 +98,7 @@ apps/desktop/src-tauri/gen/
 
 # local audit and generated inspection output
 /docs/inspection/
+/ignore/
 /hawk.json
 /codex-cli.json
 /chatgpt-openai-line-counts*.tsv

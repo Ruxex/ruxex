@@ -1350,14 +1350,13 @@ INSERT INTO threads (
     created_at,
     updated_at,
     source,
-    model_provider,
     cwd,
     title,
     sandbox_policy,
     approval_mode,
     archived,
     archived_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 "#,
             )
             .bind(id)
@@ -1365,7 +1364,6 @@ INSERT INTO threads (
             .bind(1_i64)
             .bind(1_i64)
             .bind("cli")
-            .bind("test-provider")
             .bind(self.ruxex_home.path().display().to_string())
             .bind("test title")
             .bind("read-only")

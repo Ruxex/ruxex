@@ -83,6 +83,37 @@ jobs:
       - name: Build workspace
         run: just build --workspace
 
+      - name: Inspect disk after workspace build
+        if: always()
+        run: |
+          set -euo pipefail
+          {
+            echo "Disk after workspace build:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-build-${{ matrix.os }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1
+
   test-archive:
     name: test archive (${{ matrix.os }}, ${{ matrix.group }})
     runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
@@ -180,6 +211,7 @@ jobs:
               --package ruxex-code-mode-host
           - group: app-2
             filter: >-
+              package(ruxex-provider-host-example) |
               package(ruxex-agent-extension) |
               package(ruxex-code-mode) |
               package(ruxex-code-mode-protocol) |
@@ -200,6 +232,7 @@ jobs:
               package(ruxex-tui) |
               package(ruxex-web-search-extension)
             package_args: >-
+              --package ruxex-provider-host-example
               --package ruxex-agent-extension
               --package ruxex-code-mode
               --package ruxex-code-mode-protocol
@@ -394,15 +427,39 @@ jobs:
       - name: Inspect disk after archive build
         if: always()
         run: |
-          df -h .
-          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
-            if [ -e "$path" ]; then
-              du -sh "$path"
+          set -euo pipefail
+          archive="$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
+          {
+            echo "Disk after archive build:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+            if [ -f "$archive" ]; then
+              echo "Archive:"
+              du -sh "$archive"
             fi
-          done
-          if [ -d "$RUNNER_TEMP/ruxex-nextest" ]; then
-            du -sh "$RUNNER_TEMP/ruxex-nextest"/* 2>/dev/null || true
-          fi
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-archive-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Upload nextest archive
         uses: actions/upload-artifact@v4.6.2
@@ -466,12 +523,25 @@ jobs:
 
       - name: Inspect disk before test group
         run: |
-          df -h .
-          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
-            if [ -e "$path" ]; then
-              du -sh "$path"
-            fi
-          done
+          set -euo pipefail
+          {
+            echo "Disk before test group:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2.62.49
@@ -485,7 +555,62 @@ jobs:
           name: ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}
           path: ${{ runner.temp }}/ruxex-nextest
 
+      - name: Inspect disk after test archive download
+        if: always()
+        run: |
+          set -euo pipefail
+          {
+            echo "Disk after test archive download:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee -a "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
       - name: Run test group
         run: |
           just test-archive-run \
             "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
+
+      - name: Inspect disk after test group
+        if: always()
+        run: |
+          set -euo pipefail
+          {
+            echo "Disk after test group:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee -a "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-test-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1

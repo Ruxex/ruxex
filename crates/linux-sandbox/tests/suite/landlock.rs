@@ -43,6 +43,12 @@ const NETWORK_TIMEOUT_MS: u64 = 10_000;
 const NETWORK_TIMEOUT_MS: u64 = 10_000;
 
 const BWRAP_UNAVAILABLE_ERR: &str = "bubblewrap is unavailable: no system bwrap was found";
+const BWRAP_PERMISSION_ERR_SNIPPETS: &[&str] = &[
+    "loopback: Failed RTM_NEWADDR",
+    "loopback: Failed RTM_NEWLINK",
+    "setting up uid map: Permission denied",
+    "No permissions to create a new namespace",
+];
 
 fn create_env_from_core_vars() -> HashMap<String, String> {
     let policy = ShellEnvironmentPolicy::default();
@@ -201,6 +207,9 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
 
 fn is_bwrap_unavailable_output(output: &ruxex_protocol::exec_output::ExecToolCallOutput) -> bool {
     output.stderr.text.contains(BWRAP_UNAVAILABLE_ERR)
+        || BWRAP_PERMISSION_ERR_SNIPPETS
+            .iter()
+            .any(|snippet| output.stderr.text.contains(snippet))
         || (output
             .stderr
             .text

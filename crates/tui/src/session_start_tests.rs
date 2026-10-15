@@ -40,6 +40,7 @@ async fn archived_session_requires_confirmation_before_resume_or_fork() -> Resul
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .build()
             .await?;
+        ruxex_app_server_client::mount_provider_home_for_config(&config)?;
         let timestamp = "2025-01-05T12-00-00";
         let id = create_fake_paginated_rollout(
             ruxex_home.path(),

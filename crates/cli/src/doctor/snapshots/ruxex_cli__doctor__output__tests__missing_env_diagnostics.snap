@@ -1,5 +1,6 @@
 ---
-source: cli/src/doctor/output.rs
+source: crates/cli/src/doctor/output.rs
+assertion_line: 1669
 expression: "render_human_report(&report, detailed_all_no_color_unicode_options())"
 ---
 Ruxex Doctor v0.0.0

@@ -95,6 +95,21 @@ pub fn resolve_provider_auth(
     auth: Option<&RuxexAuth>,
     provider: &ModelProviderInfo,
 ) -> ruxex_protocol::error::Result<SharedAuthProvider> {
+    // An explicitly configured provider owns its credentials. Do not let the
+    // runtime's ambient auth leak to a different endpoint. A provider with no
+    // configured credential remains unauthenticated until its own login flow
+    // supplies one.
+    if provider.base_url.is_some() {
+        if provider.auth.is_some() {
+            if let Some(auth) = auth {
+                return Ok(auth_provider_from_auth(auth));
+            }
+        } else if let Some(auth) = bearer_auth_for_provider(provider)? {
+            return Ok(Arc::new(auth));
+        }
+        return Ok(unauthenticated_auth_provider());
+    }
+
     // Explicitly selected/stored credentials take precedence over provider
     // environment configuration. This lets the login flow work even when an
     // env-backed provider does not have its env var set.

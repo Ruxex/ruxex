@@ -1,6 +1,6 @@
 ---
 source: crates/cli/src/doctor/output.rs
-assertion_line: 1403
+assertion_line: 1294
 expression: "render_human_report(&report, detailed_no_color_unicode_options())"
 ---
 Ruxex Doctor v0.0.0
@@ -62,7 +62,7 @@ Background Server
   ✓ app-server   background server is not running
 
 ─────────────────────────────────────────────────────────────
-15 ok · 4 notes · 2 warn · 1 fail failed
+14 ok · 3 notes · 2 warn · 1 fail failed
 
 --summary compact output           --all expand truncated lists
 --json redacted report

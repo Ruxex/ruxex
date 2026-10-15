@@ -161,7 +161,6 @@ fn from_sources_ignores_removed_terminal_resize_reflow_feature_key() {
     );
 
     assert_eq!(features, Features::with_defaults());
-    assert_eq!(features.enabled(Feature::TerminalResizeReflow), true);
 }
 
 #[test]
@@ -265,7 +264,6 @@ fn from_sources_ignores_removed_item_ids_feature_key() {
     );
 
     assert_eq!(features, Features::with_defaults());
-    assert_eq!(features.enabled(Feature::ItemIds), true);
 }
 
 #[test]

@@ -997,6 +997,9 @@ async fn run_main_with_transport_options_and_optional_runtime(
             state_db: state_db.clone(),
             config_warnings,
             session_source,
+            auth_changes: credential_manager
+                .as_ref()
+                .map(|manager| manager.auth_change_receiver()),
             user_verification: Arc::new(crate::user_verification::Service::new(runtime.provider())),
             runtime,
             installation_id,

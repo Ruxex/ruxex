@@ -1,5 +1,7 @@
 use std::fmt;
 use std::sync::Arc;
+#[cfg(target_os = "linux")]
+use std::sync::OnceLock;
 
 use anyhow::Result;
 use ruxex_exec_server::ExecServerRuntimePaths;
@@ -52,6 +54,26 @@ pub(crate) async fn create_file_system_context(
                 _helper_paths: Some(helper_paths),
             })
         }
+    }
+}
+
+pub(crate) fn sandbox_unavailable() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        static WARNING: OnceLock<Option<String>> = OnceLock::new();
+        return WARNING
+            .get_or_init(|| {
+                ruxex_sandboxing::system_bwrap_warning(
+                    &PermissionProfile::read_only(),
+                    &std::env::current_dir().expect("test cwd should exist"),
+                )
+            })
+            .is_some();
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
     }
 }
 

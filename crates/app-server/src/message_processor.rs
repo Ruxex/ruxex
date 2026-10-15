@@ -232,6 +232,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
     pub(crate) runtime: AppServerRuntime,
+    pub(crate) auth_changes: Option<watch::Receiver<u64>>,
     pub(crate) user_verification: Arc<crate::user_verification::Service>,
     pub(crate) installation_id: String,
     pub(crate) code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>>,
@@ -254,6 +255,7 @@ impl MessageProcessor {
             config_warnings,
             session_source,
             runtime,
+            auth_changes,
             user_verification,
             installation_id,
             code_mode_session_provider,
@@ -261,7 +263,7 @@ impl MessageProcessor {
         } = args;
         let provider = runtime.provider();
         let thread_state_manager = ThreadStateManager::new();
-        outgoing.watch_user_verification_auth(provider.clone());
+        outgoing.watch_user_verification_auth(provider.clone(), auth_changes);
         // The thread store is intentionally process-scoped. Config reloads can
         // affect per-thread behavior, but they must not move newly started,
         // resumed, or forked threads to a different persistence backend/root.

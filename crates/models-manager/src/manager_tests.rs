@@ -186,6 +186,18 @@ impl TestModelCatalogSource {
         Arc::new(Self {
             has_command_auth: false,
             uses_managed_auth: false,
+            has_api_key_auth: false,
+            responses: Mutex::new(responses.into()),
+            etag: None,
+            fetch_count: AtomicUsize::new(0),
+            observed_proxy_policy: Mutex::new(None),
+        })
+    }
+
+    fn with_api_key_auth(responses: Vec<Vec<ModelInfo>>) -> Arc<Self> {
+        Arc::new(Self {
+            has_command_auth: false,
+            uses_managed_auth: false,
             has_api_key_auth: true,
             responses: Mutex::new(responses.into()),
             etag: None,

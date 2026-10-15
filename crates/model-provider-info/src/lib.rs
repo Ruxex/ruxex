@@ -353,6 +353,7 @@ impl ModelProviderInfo {
 
     pub fn create_cloudflare_provider() -> ModelProviderInfo {
         ModelProviderInfo {
+            id: Some(CLOUDFLARE_PROVIDER_ID.to_string()),
             name: CLOUDFLARE_PROVIDER_NAME.to_string(),
             env_key: Some(CLOUDFLARE_API_TOKEN_ENV_VAR.to_string()),
             env_key_instructions: Some(

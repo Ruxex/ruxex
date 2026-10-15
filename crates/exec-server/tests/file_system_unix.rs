@@ -47,6 +47,7 @@ use tokio::time::timeout;
 use crate::support::FileSystemImplementation;
 use crate::support::create_file_system_context;
 use crate::support::read_only_sandbox;
+use crate::support::sandbox_unavailable;
 use crate::support::workspace_write_sandbox;
 
 fn assert_sandbox_denied(error: &std::io::Error) {
@@ -155,7 +156,11 @@ async fn file_system_operations_can_reject_symlinks_in_any_path_component(
     #[cfg(target_os = "linux")]
     let strict_sandbox = workspace_write_sandbox(tmp_path);
     #[cfg(target_os = "linux")]
-    let sandboxes = [None, Some(&strict_sandbox)];
+    let sandboxes: Vec<Option<&FileSystemSandboxContext>> = if sandbox_unavailable() {
+        vec![None]
+    } else {
+        vec![None, Some(&strict_sandbox)]
+    };
     #[cfg(not(target_os = "linux"))]
     let sandboxes: [Option<&FileSystemSandboxContext>; 1] = [None];
 
@@ -495,6 +500,9 @@ async fn file_system_no_follow_recursive_mkdir_handles_concurrent_creators(
 async fn file_system_sandboxed_canonicalize_resolves_directory_symlink(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     shared::assert_sandboxed_canonicalize_resolves_directory_alias(
         implementation,
         create_directory_symlink,
@@ -805,6 +813,9 @@ async fn file_system_walk_prunes_hidden_directories_without_claiming_visible_ali
 async fn file_system_sandboxed_write_rejects_unwritable_path(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -835,6 +846,9 @@ async fn file_system_sandboxed_write_rejects_unwritable_path(
 async fn file_system_sandboxed_write_allows_explicit_alias_roots(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let Some(alias_root) = alias_root_candidate()? else {
         return Ok(());
     };
@@ -867,6 +881,9 @@ async fn file_system_sandboxed_write_allows_explicit_alias_roots(
 async fn file_system_sandboxed_read_rejects_symlink_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -911,6 +928,9 @@ async fn file_system_sandboxed_read_rejects_symlink_escape(
 async fn file_system_sandboxed_read_rejects_symlink_parent_dotdot_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -948,6 +968,9 @@ async fn file_system_sandboxed_read_rejects_symlink_parent_dotdot_escape(
 async fn file_system_sandboxed_write_rejects_symlink_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -983,6 +1006,9 @@ async fn file_system_sandboxed_write_rejects_symlink_escape(
 async fn file_system_sandboxed_write_preserves_existing_hard_link(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1032,6 +1058,9 @@ async fn file_system_sandboxed_write_preserves_existing_hard_link(
 async fn file_system_create_directory_rejects_symlink_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1069,6 +1098,9 @@ async fn file_system_create_directory_rejects_symlink_escape(
 async fn file_system_read_directory_rejects_symlink_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1102,6 +1134,9 @@ async fn file_system_read_directory_rejects_symlink_escape(
 async fn file_system_copy_rejects_symlink_escape_destination(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1138,6 +1173,9 @@ async fn file_system_copy_rejects_symlink_escape_destination(
 async fn file_system_remove_removes_symlink_not_target(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1177,6 +1215,9 @@ async fn file_system_remove_removes_symlink_not_target(
 async fn file_system_copy_preserves_symlink_source(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1214,6 +1255,9 @@ async fn file_system_copy_preserves_symlink_source(
 async fn file_system_remove_rejects_symlink_escape(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1254,6 +1298,9 @@ async fn file_system_remove_rejects_symlink_escape(
 async fn file_system_copy_rejects_symlink_escape_source(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 

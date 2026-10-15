@@ -462,8 +462,8 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     })?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.ruxex_home).await?;
-    let runtime = match args.runtime {
-        Some(runtime) => runtime,
+    let (runtime, credential_manager) = match args.runtime {
+        Some(runtime) => (runtime, None),
         None => {
             let credential_manager = CredentialManager::shared_from_config(
                 args.config.as_ref(),
@@ -476,7 +476,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                 Arc::clone(&credential_manager),
                 args.config.http_client_factory(),
             );
-            runtime
+            (runtime, Some(credential_manager))
         }
     };
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
@@ -530,6 +530,9 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
                 state_db: args.state_db,
                 config_warnings: args.config_warnings,
                 session_source: args.session_source,
+                auth_changes: credential_manager
+                    .as_ref()
+                    .map(|manager| manager.auth_change_receiver()),
                 user_verification: Arc::new(crate::user_verification::Service::new(
                     runtime.provider(),
                 )),
@@ -858,7 +861,7 @@ mod tests {
     use std::path::Path;
     use tempfile::TempDir;
 
-    async fn build_test_config(ruxex_home: &Path) -> Config {
+    async fn load_test_config(ruxex_home: &Path) -> Config {
         match ConfigBuilder::default()
             .ruxex_home(ruxex_home.to_path_buf())
             .build()
@@ -872,6 +875,12 @@ mod tests {
             .await
             .expect("default config should load"),
         }
+    }
+
+    async fn build_test_config(ruxex_home: &Path) -> Config {
+        let config = load_test_config(ruxex_home).await;
+        mount_provider_home_for_config(&config).expect("test provider home should mount");
+        config
     }
 
     async fn start_test_client_with_capacity(
@@ -970,10 +979,7 @@ mod tests {
     #[tokio::test]
     async fn injected_provider_remains_authoritative_during_initialize() {
         let ruxex_home = TempDir::new().expect("temp dir");
-        let config = Arc::new(build_test_config(ruxex_home.path()).await);
-        let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
-            .await
-            .expect("state db should initialize for in-process test");
+        let config = Arc::new(load_test_config(ruxex_home.path()).await);
         let injected_provider = ModelProviderInfo {
             id: Some("injected-provider".to_string()),
             ..ModelProviderInfo::default()
@@ -983,6 +989,11 @@ mod tests {
             AppServerRuntimeBuilder::descriptor_for(&injected_provider)
         );
         let runtime = AppServerRuntimeBuilder::from_provider_info(injected_provider, None).build();
+        mount_provider_home_for_runtime(&config, &runtime)
+            .expect("injected provider home should mount");
+        let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
+            .await
+            .expect("state db should initialize for in-process test");
 
         let client = InProcessAppServerBuilder::new(InProcessStartArgs {
             arg0_paths: Arg0DispatchPaths::default(),

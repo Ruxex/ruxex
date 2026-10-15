@@ -1245,7 +1245,7 @@ Background Server
   ✓ app-server   background server is not running
 
 {}
-12 ok · 2 notes · 1 warn · 1 fail failed
+11 ok · 2 notes · 1 warn · 1 fail failed
 
 --summary compact output           --all expand truncated lists
 --json redacted report
@@ -1331,7 +1331,7 @@ Background Server
   ✓ app-server   background server is not running
 
 {}
-12 ok · 2 notes · 1 warn · 1 fail failed
+11 ok · 2 notes · 1 warn · 1 fail failed
 
 Run ruxex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
@@ -1405,7 +1405,7 @@ Background Server
   [ok] app-server   background server is not running
 
 {}
-12 ok | 2 notes | 1 warn | 1 fail failed
+11 ok | 2 notes | 1 warn | 1 fail failed
 
 Run ruxex doctor without --summary for detailed diagnostics.
 --all expand truncated lists       --json redacted report
@@ -1529,7 +1529,7 @@ Run ruxex doctor without --summary for detailed diagnostics.
         assert!(rendered.contains("⚠ sandbox"));
         assert!(rendered.contains("⚠ mcp"));
         assert!(rendered.contains("○ app-server   not running (ephemeral mode)"));
-        assert!(rendered.contains("5 ok · 1 idle · 4 notes · 1 warn · 0 fail degraded"));
+        assert!(rendered.contains("4 ok · 1 idle · 3 notes · 1 warn · 0 fail degraded"));
     }
 
     #[test]

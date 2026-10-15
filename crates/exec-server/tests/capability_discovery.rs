@@ -45,6 +45,23 @@ use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
 
+#[cfg(target_os = "linux")]
+fn sandbox_unavailable() -> bool {
+    ruxex_sandboxing::system_bwrap_warning(
+        &PermissionProfile::read_only(),
+        &std::env::current_dir().expect("test cwd should exist"),
+    )
+    .is_some_and(|warning| {
+        eprintln!("skipping Linux sandbox capability test: {warning}");
+        true
+    })
+}
+
+#[cfg(not(target_os = "linux"))]
+fn sandbox_unavailable() -> bool {
+    false
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn discovers_a_complete_capability_bundle_in_one_request() -> anyhow::Result<()> {
     let root = tempfile::tempdir()?;
@@ -376,6 +393,9 @@ async fn executor_legacy_filesystem_rejects_missing_cwd_for_dynamic_permissions(
 #[cfg(unix)]
 #[tokio::test]
 async fn executor_legacy_filesystem_accepts_cwd_for_dynamic_permissions() -> anyhow::Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let workspace = tempfile::tempdir()?;
     write_file(&workspace.path().join("allowed.txt"), "allowed")?;
     write_file(&workspace.path().join("secret.txt"), "secret")?;
@@ -470,6 +490,9 @@ async fn executor_legacy_filesystem_accepts_cwd_for_dynamic_permissions() -> any
 #[tokio::test]
 async fn executor_legacy_nested_policy_context_cwd_uses_available_fallbacks() -> anyhow::Result<()>
 {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let workspace = tempfile::tempdir()?;
     write_file(&workspace.path().join("allowed.txt"), "allowed")?;
     write_file(&workspace.path().join("secret.txt"), "secret")?;
@@ -607,6 +630,9 @@ async fn executor_legacy_nested_policy_context_cwd_uses_available_fallbacks() ->
 #[cfg(unix)]
 #[tokio::test]
 async fn executor_legacy_exec_uses_process_cwd_for_relative_denials() -> anyhow::Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let workspace = tempfile::tempdir()?;
     std::fs::write(workspace.path().join("allowed.txt"), b"allowed")?;
     std::fs::write(workspace.path().join("secret.txt"), b"secret")?;
@@ -705,6 +731,9 @@ async fn executor_legacy_exec_uses_process_cwd_for_relative_denials() -> anyhow:
 #[tokio::test]
 async fn executor_legacy_filesystem_cwd_keeps_absolute_read_allow_and_deny_rules()
 -> anyhow::Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let workspace = tempfile::tempdir()?;
     let allowed = workspace.path().join("allowed");
     let denied = workspace.path().join("denied");
@@ -876,6 +905,9 @@ async fn executor_legacy_filesystem_cwd_keeps_absolute_read_allow_and_deny_rules
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_discovery_batches_roots_without_combining_different_permissions()
 -> anyhow::Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let workspace = tempfile::tempdir()?;
     let first_root = workspace.path().join("first");
     let second_root = workspace.path().join("second");
@@ -1072,6 +1104,9 @@ async fn sandboxed_discovery_batches_roots_without_combining_different_permissio
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_discovery_follows_only_permitted_external_symlinks() -> anyhow::Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let root = tempfile::tempdir()?;
     let external = tempfile::tempdir()?;
     write_file(

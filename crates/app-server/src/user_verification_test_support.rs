@@ -11,6 +11,7 @@ use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
+use crate::runtime::mount_provider_home_for_config;
 use crate::transport::AppServerTransport;
 use anyhow::Result;
 use app_test_support::ApiKeyAuthFixture;
@@ -27,6 +28,7 @@ use ruxex_exec_server::EnvironmentManager;
 use ruxex_login::AuthHeaders;
 use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_providers::create_model_provider;
 use serde_json::json;
@@ -120,12 +122,17 @@ pub(super) struct Harness {
 impl Harness {
     pub(super) async fn new(origin: ConnectionOrigin, supported: fn() -> bool) -> Result<Self> {
         let home = tempfile::tempdir()?;
-        let config = Arc::new(
-            ConfigBuilder::default()
-                .ruxex_home(home.path().into())
-                .build()
-                .await?,
-        );
+        let mut config = ConfigBuilder::default()
+            .ruxex_home(home.path().into())
+            .build()
+            .await?;
+        // These lifecycle tests inject a provider-neutral header identity. The default
+        // Cloudflare fixture expects an API-key account-id credential instead, so use the
+        // generic configured provider contract that preserves the injected identity.
+        config.model_provider = ModelProviderInfo::create_responses_provider(None);
+        config.model_provider_id = "test-provider".into();
+        mount_provider_home_for_config(&config)?;
+        let config = Arc::new(config);
         let auth = CredentialManager::from_auth_for_testing_with_home(
             RuxexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),
             home.path().into(),
@@ -161,6 +168,7 @@ impl Harness {
             state_db: None,
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,
+            auth_changes: Some(auth.auth_change_receiver()),
             runtime: AppServerRuntimeBuilder::new(model_provider).build(),
             user_verification: Arc::clone(&service),
             installation_id: "11111111-1111-4111-8111-111111111111".into(),

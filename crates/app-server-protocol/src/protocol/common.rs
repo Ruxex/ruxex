@@ -2443,6 +2443,7 @@ mod tests {
                     "turnId": "turn_123",
                     "serverName": "calendar",
                     "mode": "form",
+                    "_meta": null,
                     "message": "Allow this request?",
                     "requestedSchema": {
                         "type": "object",

@@ -459,7 +459,7 @@ mod tests {
             .await
             .expect_err("existing home without marker must be rejected");
 
-        assert!(error.to_string().contains("ruxex-home.json"));
+        assert!(format!("{error:#}").contains("ruxex-home.json"));
     }
 
     /// Direct database selection must preserve native path bytes.

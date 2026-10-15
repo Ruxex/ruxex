@@ -213,7 +213,7 @@ async fn find_thread_meta_candidates_filter_metadata_before_ranking() -> std::io
     ));
     std::fs::create_dir_all(&rollout_dir)?;
     write_rollout_with_metadata(&allowed_path, allowed_id)?;
-    write_rollout_with_source(&other_path, other_id, SessionSource::Cli)?;
+    write_rollout_with_source(&other_path, other_id, SessionSource::Exec)?;
     write_rollout_with_source(&noninteractive_path, noninteractive_id, SessionSource::Exec)?;
     write_index(
         &index_path,

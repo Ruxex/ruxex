@@ -9,6 +9,7 @@ use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_login::CredentialManager;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelProviderFactory;
+use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
 use ruxex_model_provider::ProviderDescriptor;
 use ruxex_model_provider::ProviderHomeError;
 use ruxex_model_provider::ProviderHomeMarker;
@@ -287,19 +288,24 @@ mod tests {
             .build()
             .await
             .expect("config should build");
+        let expected = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
+        mount_provider_home(temp.path(), &expected).expect("expected fixture marker should exist");
         std::fs::write(temp.path().join("state.sqlite"), b"existing state")
             .expect("state fixture should be written");
-        mount_provider_home(
-            temp.path(),
-            &ProviderDescriptor::new("different-provider", CURRENT_PROVIDER_PROTOCOL_VERSION),
+        let different =
+            ProviderDescriptor::new("different-provider", CURRENT_PROVIDER_PROTOCOL_VERSION);
+        let different_marker = ProviderHomeMarker::from(&different);
+        std::fs::write(
+            temp.path().join(PROVIDER_HOME_MARKER_FILE),
+            serde_json::to_vec_pretty(&different_marker).expect("fixture marker should serialize"),
         )
-        .expect("fixture marker should be written");
+        .expect("fixture marker should be replaced");
 
         let error = match configured_app_server_runtime_from_config(&config, true).await {
             Ok(_) => panic!("mismatched marker must reject runtime startup"),
             Err(error) => error,
         };
 
-        assert!(error.to_string().contains("incompatible marker"));
+        assert!(format!("{error:#}").contains("incompatible marker"));
     }
 }

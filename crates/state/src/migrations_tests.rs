@@ -9,7 +9,7 @@ use pretty_assertions::assert_eq;
 use ruxex_utils_absolute_path::test_support::PathExt;
 
 #[test]
-fn all_database_migrators_are_single_version_baselines() {
+fn database_migration_versions_are_ordered() {
     assert_eq!(
         STATE_MIGRATOR
             .migrations
@@ -18,20 +18,18 @@ fn all_database_migrators_are_single_version_baselines() {
             .collect::<Vec<_>>(),
         vec![1, 2]
     );
-    for migrator in [
-        &LOGS_MIGRATOR,
-        &GOALS_MIGRATOR,
-        &QUEUE_MIGRATOR,
-        &THREAD_HISTORY_MIGRATOR,
+    for (migrator, expected_versions) in [
+        (&LOGS_MIGRATOR, vec![1, 2]),
+        (&GOALS_MIGRATOR, vec![1]),
+        (&QUEUE_MIGRATOR, vec![1]),
+        (&THREAD_HISTORY_MIGRATOR, vec![1]),
     ] {
-        assert_eq!(
-            migrator
-                .migrations
-                .iter()
-                .map(|migration| migration.version)
-                .collect::<Vec<_>>(),
-            vec![1]
-        );
+        let versions = migrator
+            .migrations
+            .iter()
+            .map(|migration| migration.version)
+            .collect::<Vec<_>>();
+        assert_eq!(versions, expected_versions);
     }
 }
 

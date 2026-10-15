@@ -246,6 +246,6 @@ include_view_image_tool = false
     .unwrap();
     assert_eq!(
         ignored_config_warning(&config, &[]).unwrap(),
-        "Ruxex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_provider.unknown_timeout` is ignored.\n  session-flags: `model_provider.unknown_timeout` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
+        "Ruxex is ignoring 3 unrecognized configuration settings. Check for typos or deprecated settings.\n  enterprise-managed (Defaults, cfg): `model_provider` is ignored.\n  session-flags: `model_provider` is ignored.\n  session-flags: `profiles.work.features.include_view_image_tool` is ignored. Use [features].view_image to configure the image tool."
     );
 }

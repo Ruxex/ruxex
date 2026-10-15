@@ -114,14 +114,13 @@ async fn explicit_launch_overrides_take_precedence() {
 }
 
 #[tokio::test]
-async fn selected_custom_provider_and_service_tier_preserve_the_profile_model() {
+async fn selected_profile_model_and_service_tier_are_preserved() {
     let home = tempfile::tempdir().expect("tempdir");
     std::fs::write(home.path().join("config.toml"), "model = \"base-model\"\n")
         .expect("base config");
     std::fs::write(
         home.path().join("custom.config.toml"),
-        "model = \"custom-model\"\nservice_tier = \"flex\"\n\
-         [model_provider]\nid = \"custom\"\nname = \"Custom\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\n",
+        "model = \"custom-model\"\nservice_tier = \"flex\"\n",
     )
     .expect("profile");
     let mut actual = ConfigBuilder::default()
@@ -136,7 +135,7 @@ async fn selected_custom_provider_and_service_tier_preserve_the_profile_model() 
         .expect("config");
     let expected = actual.clone();
     assert_eq!(actual.model.as_deref(), Some("custom-model"));
-    assert_eq!(actual.model_provider_id, "custom");
+    assert_eq!(actual.model_provider_id, "cloudflare");
 
     apply_managed_new_thread_defaults(
         &mut actual,

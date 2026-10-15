@@ -1781,7 +1781,11 @@ mod tests {
         std::fs::write(home.path().join("auth.json"), old_shape.to_string())
             .expect("write old auth shape");
 
-        assert!(load_auth_credentials(home.path(), mode, keyring).is_err());
+        assert_eq!(
+            load_auth_credentials(home.path(), mode, keyring)
+                .expect("legacy provider-keyed auth should be ignored"),
+            None
+        );
     }
 
     #[test]
@@ -1810,13 +1814,19 @@ mod tests {
 
     #[test]
     fn obsolete_token_only_auth_is_rejected() {
-        let result: Result<AuthDotJson, _> = serde_json::from_value(serde_json::json!({
+        let auth: AuthDotJson = serde_json::from_value(serde_json::json!({
             "auth_mode": "legacy",
             "tokens": {"access_token": "old-token"},
             "last_refresh": "2026-09-30T00:00:00Z"
-        }));
+        }))
+        .expect("obsolete token-only auth should remain parseable");
 
-        assert!(result.is_err(), "obsolete token-only auth must be rejected");
+        assert!(
+            !auth
+                .auth()
+                .is_some_and(ProviderAuth::has_supported_credentials),
+            "obsolete token-only auth must not provide usable credentials"
+        );
     }
 
     #[tokio::test]

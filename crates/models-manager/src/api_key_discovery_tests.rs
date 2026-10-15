@@ -34,7 +34,7 @@ async fn api_key_discovery_disabled_preserves_command_auth_discovery() {
 async fn api_key_discovery_startup_flag_controls_fetches_and_cached_catalogs() {
     let home = tempdir().unwrap();
     let models = vec![remote_model("dynamic", "Dynamic", /*priority*/ 0)];
-    let endpoint = TestModelCatalogSource::without_refresh(vec![models.clone()]);
+    let endpoint = TestModelCatalogSource::with_api_key_auth(vec![models.clone()]);
     let manager = RemoteModelsManager::new(home.path().into(), endpoint.clone());
 
     for strategy in [

@@ -41,6 +41,7 @@ use super::support::FileSystemImplementation;
 use super::support::absolute_path;
 use super::support::create_file_system_context;
 use super::support::read_only_sandbox;
+use super::support::sandbox_unavailable;
 use super::support::workspace_write_sandbox;
 
 #[test]
@@ -136,6 +137,9 @@ async fn file_system_create_directory_creates_nested_directories(
     follow_symlinks: bool,
     sandboxed: bool,
 ) -> Result<()> {
+    if sandboxed && sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -169,6 +173,9 @@ async fn file_system_write_file_writes_bytes(
     follow_symlinks: bool,
     sandboxed: bool,
 ) -> Result<()> {
+    if sandboxed && sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -640,6 +647,9 @@ async fn file_system_walk_handles_invalid_roots_and_limits(
 async fn file_system_walk_honors_read_sandbox(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -715,6 +725,9 @@ async fn file_system_remove_no_follow_removes_file_and_empty_directory(
     implementation: FileSystemImplementation,
     sandboxed: bool,
 ) -> Result<()> {
+    if sandboxed && sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
     let tmp = TempDir::new()?;
@@ -821,6 +834,9 @@ async fn file_system_copy_rejects_directory_without_recursive(
 async fn file_system_sandboxed_metadata_and_read_allow_readable_root(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1050,6 +1066,9 @@ async fn file_system_restricted_reads_require_sandbox() -> Result<()> {
 #[cfg(unix)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sandboxed_file_operations_cannot_read_helper_siblings() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let helper_paths = crate::common::exec_server::test_ruxex_helper_paths()?;
     let root = TempDir::new()?;
     let runtime_dir = root.path().join("runtime");
@@ -1168,6 +1187,9 @@ pub(crate) async fn assert_sandboxed_canonicalize_resolves_directory_alias(
     implementation: FileSystemImplementation,
     create_directory_alias: impl FnOnce(&Path, &Path) -> Result<()>,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 
@@ -1200,6 +1222,9 @@ pub(crate) async fn assert_sandboxed_canonicalize_resolves_directory_alias(
 async fn file_system_sandboxed_write_allows_additional_write_root(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 

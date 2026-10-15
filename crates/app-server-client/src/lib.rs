@@ -935,6 +935,8 @@ mod tests {
     ) -> TestClient {
         let ruxex_home = TempDir::new().expect("temp dir");
         let config = Arc::new(build_test_config_for_ruxex_home(ruxex_home.path()).await);
+        mount_provider_home_for_config(&config)
+            .expect("provider home should mount before state DB");
         let state_db = init_state_db(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");

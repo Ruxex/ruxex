@@ -128,11 +128,6 @@ pub struct OrchestratorFeatureToml {
 #[schemars(deny_unknown_fields)]
 pub struct ConfigToml {
     /// Optional override of model selection.
-    ///
-    /// This is populated only by runtime overrides. It is intentionally not
-    /// deserialized from config.toml.
-    #[serde(skip)]
-    #[schemars(skip)]
     pub model: Option<String>,
     /// Connection settings for the single built-in provider mounted by this Ruxex runtime.
     /// This is supplied by the host/runtime and is not deserialized from user config.
