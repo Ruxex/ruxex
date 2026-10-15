@@ -129,7 +129,8 @@ mod tests {
 
     #[test]
     fn built_in_provider_factory_is_composed_by_this_crate() {
-        let provider = create_model_provider(ModelProviderInfo::default(), None);
+        let provider =
+            create_model_provider(ModelProviderInfo::create_responses_provider(None), None);
 
         assert_eq!(provider.descriptor().provider_kind, "Responses provider");
     }

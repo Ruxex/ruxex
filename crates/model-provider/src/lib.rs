@@ -34,6 +34,7 @@ pub use auth::credential_manager_for_provider;
 pub use auth::provider_auth;
 #[doc(hidden)]
 pub use auth::resolve_provider_auth;
+pub use auth::resolve_provider_auth_for_provider;
 pub use auth::unauthenticated_auth_provider;
 pub use bearer_auth_provider::BearerAuthProvider;
 pub use bearer_auth_provider::BearerAuthProvider as CoreAuthProvider;

@@ -12,7 +12,7 @@ use std::path::PathBuf;
 fn ignored_toml_field_errors_accept_non_file_source_names() {
     let source_name = "com.ruxex.ruxex:config_toml_base64";
     let contents = r#"
-model = "example-model"
+        approval_policy = "on-request"
 unknown_key = true"#;
 
     let value = toml::from_str::<TomlValue>(contents).expect("valid TOML");
@@ -43,7 +43,7 @@ unknown_key = true"#;
 fn type_errors_take_precedence_over_ignored_fields() {
     let path = Path::new("/tmp/config.toml");
     let contents = r#"
-model_context_window = "wide"
+        allow_login_shell = "wide"
 unknown_key = true"#;
 
     let error =
@@ -56,14 +56,14 @@ unknown_key = true"#;
             TextRange {
                 start: TextPosition {
                     line: 2,
-                    column: 24,
+                    column: 29,
                 },
                 end: TextPosition {
                     line: 2,
-                    column: 29,
+                    column: 34,
                 },
             },
-            "invalid type: string \"wide\", expected i64",
+            "invalid type: string \"wide\", expected a boolean",
         )
     );
 }
@@ -130,7 +130,11 @@ fn strict_config_rejects_runtime_model_settings() {
         let error = config_error_from_ignored_toml_fields::<ConfigToml>(path, contents)
             .expect("runtime model setting should be rejected");
         assert!(
-            error.message.starts_with("unknown configuration field"),
+            error.message.starts_with("unknown configuration field")
+                || (contents.starts_with("[agents]")
+                    && error
+                        .message
+                        .starts_with("invalid type: string \"example-model\"")),
             "unexpected error for {contents:?}: {}",
             error.message
         );

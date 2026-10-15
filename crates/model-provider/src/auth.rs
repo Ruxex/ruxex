@@ -95,11 +95,31 @@ pub fn resolve_provider_auth(
     auth: Option<&RuxexAuth>,
     provider: &ModelProviderInfo,
 ) -> ruxex_protocol::error::Result<SharedAuthProvider> {
+    resolve_provider_auth_scoped(auth, provider, false)
+}
+
+/// Resolves auth for a provider runtime whose credential manager owns `auth`.
+///
+/// A custom provider must not inherit ambient runtime credentials through the
+/// general resolver. The provider runtime can use this scoped variant when it
+/// has already obtained the credentials from its own injected manager.
+pub fn resolve_provider_auth_for_provider(
+    auth: Option<&RuxexAuth>,
+    provider: &ModelProviderInfo,
+) -> ruxex_protocol::error::Result<SharedAuthProvider> {
+    resolve_provider_auth_scoped(auth, provider, true)
+}
+
+fn resolve_provider_auth_scoped(
+    auth: Option<&RuxexAuth>,
+    provider: &ModelProviderInfo,
+    provider_credentials: bool,
+) -> ruxex_protocol::error::Result<SharedAuthProvider> {
     // An explicitly configured provider owns its credentials. Do not let the
     // runtime's ambient auth leak to a different endpoint. A provider with no
     // configured credential remains unauthenticated until its own login flow
     // supplies one.
-    if provider.base_url.is_some() {
+    if provider.base_url.is_some() && !provider_credentials {
         if provider.auth.is_some() {
             if let Some(auth) = auth {
                 return Ok(auth_provider_from_auth(auth));

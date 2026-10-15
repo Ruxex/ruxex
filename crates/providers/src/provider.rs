@@ -84,7 +84,7 @@ use ruxex_model_provider::cached_provider_auth;
 use ruxex_model_provider::credential_manager_for_provider;
 use ruxex_model_provider::headers_to_http;
 use ruxex_model_provider::provider_auth;
-use ruxex_model_provider::resolve_provider_auth;
+use ruxex_model_provider::resolve_provider_auth_for_provider;
 
 fn provider_chat_event_from_api(
     event: ruxex_api::ResponseEvent,
@@ -1209,7 +1209,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
     ) -> ModelProviderFuture<'_, ruxex_protocol::error::Result<SharedAuthProvider>> {
         Box::pin(async move {
             let auth = self.auth().await;
-            resolve_provider_auth(auth.as_ref(), self.info())
+            resolve_provider_auth_for_provider(auth.as_ref(), self.info())
         })
     }
 
@@ -1219,7 +1219,7 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             let api_provider = self
                 .info()
                 .to_api_provider(auth.as_ref().map(RuxexAuth::auth_mode))?;
-            let api_auth = resolve_provider_auth(auth.as_ref(), self.info())?;
+            let api_auth = resolve_provider_auth_for_provider(auth.as_ref(), self.info())?;
             let auth_telemetry = auth_header_telemetry(api_auth.as_ref());
             let (revision, owner_generation) = self
                 .credential_manager()
@@ -1700,8 +1700,8 @@ impl ProviderRuntime for ConfiguredModelProvider {
                     credential_manager.refresh_failure_for_auth(auth).is_some()
                 })
         });
-        let configured_auth =
-            self.info.experimental_bearer_token.is_some() || self.info.api_key().is_ok();
+        let configured_auth = self.info.experimental_bearer_token.is_some()
+            || matches!(self.info.api_key(), Ok(Some(_)));
         let account = if auth_invalid {
             None
         } else if auth.is_some() || configured_auth {
@@ -1877,7 +1877,7 @@ mod tests {
     #[tokio::test]
     async fn configured_provider_implements_neutral_lifecycle_directly() {
         let provider = create_model_provider(
-            ModelProviderInfo::default(),
+            ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
 
@@ -1915,7 +1915,7 @@ mod tests {
     #[tokio::test]
     async fn provider_exposes_neutral_login_lifecycle() {
         let provider = create_model_provider(
-            ModelProviderInfo::default(),
+            ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
 
@@ -1945,7 +1945,7 @@ mod tests {
         let provider = create_model_provider(info, /*credential_manager*/ None);
         let source = ProviderModelCatalogSource::new(provider);
 
-        assert!(!source.supports_api_key_models());
+        assert!(source.supports_api_key_models());
         assert!(source.supports_remote_models());
         assert!(!source.has_command_auth());
         assert!(source.identity().is_some());
@@ -2149,7 +2149,9 @@ mod tests {
         assert_eq!(
             provider.capabilities(),
             ProviderCapabilities {
+                history_notes: true,
                 remote_compaction: RemoteCompactionSupport::V2,
+                websocket: true,
                 ..ProviderCapabilities::default()
             }
         );

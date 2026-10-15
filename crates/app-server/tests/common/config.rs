@@ -166,6 +166,7 @@ pub fn write_mock_responses_config_toml(
 ) -> std::io::Result<()> {
     let config = MockResponsesConfig::new(server_uri)
         .with_model_provider(model_provider_id)
+        .with_provider_name(model_provider_id)
         .with_features(feature_flags)
         .with_root_config(&format!(
             "compact_prompt = \"{compact_prompt}\"\nmodel_auto_compact_token_limit = {auto_compact_limit}"

@@ -19,6 +19,7 @@ use ruxex_protocol::permissions::FileSystemSpecialPath;
 use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
@@ -231,6 +232,7 @@ async fn should_skip_bwrap_tests() -> bool {
     {
         Ok(output) => is_bwrap_unavailable_output(&output),
         Err(err) => match err.details() {
+            RuxexErrorDetails::Io(error) if error.kind() == ErrorKind::NotFound => true,
             RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 is_bwrap_unavailable_output(output)
             }
@@ -262,6 +264,10 @@ fn expect_denied(
 
 #[tokio::test]
 async fn test_root_read() {
+    if should_skip_bwrap_tests().await {
+        eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
+        return;
+    }
     run_cmd(&["ls", "-l", "/bin"], &[], SHORT_TIMEOUT_MS).await;
 }
 
