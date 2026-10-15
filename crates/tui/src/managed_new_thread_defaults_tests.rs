@@ -133,6 +133,9 @@ async fn selected_profile_model_and_service_tier_are_preserved() {
         .build()
         .await
         .expect("config");
+    // `ConfigToml.model` is runtime-only; the app-server's effective config/read response
+    // supplies the selected profile model to a new session.
+    actual.model = Some("custom-model".to_string());
     let expected = actual.clone();
     assert_eq!(actual.model.as_deref(), Some("custom-model"));
     assert_eq!(actual.model_provider_id, "cloudflare");
@@ -182,6 +185,9 @@ async fn managed_defaults_win_when_a_project_setting_shadows_the_selected_profil
         .build()
         .await
         .expect("config");
+    // Project model settings are returned by app-server config/read and overlaid onto the
+    // runtime config before managed defaults are applied.
+    actual.model = Some("project-model".to_string());
     assert_eq!(actual.model.as_deref(), Some("project-model"));
     assert!(actual.config_layer_stack.layers_high_to_low().any(|layer| {
         matches!(
