@@ -600,7 +600,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(unix)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn run_main_with_arg0_guard_keeps_aliases_alive_until_main_returns() -> anyhow::Result<()> {
         let temp_dir = TempDir::new()?;

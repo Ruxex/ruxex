@@ -996,6 +996,7 @@ impl FileSystemSandboxPolicy {
         {
             return FileSystemAccessMode::Deny;
         }
+        let path = normalize_policy_path_alias(path.clone());
 
         let Some(entries) = self.resolved_entries(context).into_iter().try_fold(
             Vec::new(),
@@ -1039,6 +1040,7 @@ impl FileSystemSandboxPolicy {
         if !matches!(self.kind, FileSystemSandboxKind::Restricted) {
             return None;
         }
+        let path = normalize_policy_path_alias(path.clone());
         let entries = self.resolved_entries(context);
         let (protected, metadata_name) = entries
             .iter()
@@ -1063,7 +1065,7 @@ impl FileSystemSandboxPolicy {
         context: &FileSystemSandboxPolicyContext<'_>,
         invalid_glob_behavior: InvalidDenyReadGlobBehavior,
     ) -> Result<PreparedReadDenyMatcher, String> {
-        let file_system_root = file_system_root(context);
+        let file_system_root = file_system_root(context).map(normalize_policy_path_alias);
         let denied_roots = self
             .resolved_entries(context)
             .into_iter()
@@ -1132,6 +1134,7 @@ impl FileSystemSandboxPolicy {
         if prepared.invalid_pattern {
             return true;
         }
+        let path = normalize_policy_path_alias(path.clone());
         prepared
             .denied_roots
             .iter()
@@ -1176,14 +1179,11 @@ impl FileSystemSandboxPolicy {
                 {
                     return Some(Err(error.to_string()));
                 }
-                Some(
-                    root
-                        .join(pattern)
-                        .map(|path| path.inferred_native_path_string())
-                        .map_err(|_| {
-                            format!("unable to resolve deny-read glob pattern `{pattern}`")
-                        }),
-                )
+                Some(root.join(pattern).map(normalize_policy_path_alias).map(|path| {
+                    path.inferred_native_path_string()
+                }).map_err(|_| {
+                    format!("unable to resolve deny-read glob pattern `{pattern}`")
+                }))
             })
             .collect()
     }
@@ -1790,7 +1790,7 @@ impl FileSystemSandboxPolicy {
             .filter_map(|entry| {
                 resolve_entry_path(&entry.path, cwd_absolute.as_ref()).map(|path| {
                     ResolvedFileSystemEntry {
-                        path,
+                        path: normalize_native_policy_path_alias(path),
                         access: entry.access,
                     }
                 })
@@ -2198,6 +2198,15 @@ fn normalize_policy_path_alias(path: PathUri) -> PathUri {
             return PathUri::from_abs_path(&normalize_trusted_top_level_alias(native));
         }
     }
+    path
+}
+
+fn normalize_native_policy_path_alias(path: AbsolutePathBuf) -> AbsolutePathBuf {
+    #[cfg(target_os = "macos")]
+    {
+        return normalize_trusted_top_level_alias(path);
+    }
+    #[cfg(not(target_os = "macos"))]
     path
 }
 
@@ -3077,6 +3086,29 @@ mod tests {
         let canonical_root = root.path().canonicalize().expect("canonical root");
         let target = PathUri::from_host_native_path(canonical_root.join("missing/file"))
             .expect("canonical target");
+
+        assert!(policy.can_write_path(&target, &context));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn permission_matching_normalizes_query_paths_against_canonical_policy_roots() {
+        let root = TempDir::new_in("/tmp").expect("tempdir under /tmp");
+        let logical_root = PathUri::from_host_native_path(root.path()).expect("logical root");
+        let canonical_root =
+            PathUri::from_host_native_path(root.path().canonicalize().expect("canonical root"))
+                .expect("canonical root uri");
+        let policy = FileSystemSandboxPolicy::restricted(vec![FileSystemSandboxEntry::new(
+            canonical_root.into(),
+            FileSystemAccessMode::Write,
+        )]);
+        let context = FileSystemSandboxPolicyContext {
+            cwd: &logical_root,
+            workspace_roots: std::slice::from_ref(&logical_root),
+            user_home_dir: None,
+            temporary_directories: None,
+        };
+        let target = logical_root.join("missing/file").expect("logical target");
 
         assert!(policy.can_write_path(&target, &context));
     }

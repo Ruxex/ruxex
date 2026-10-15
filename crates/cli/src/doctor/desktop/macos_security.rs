@@ -46,10 +46,10 @@ async fn inspect_gatekeeper(bundle: &Path) -> Evidence {
     command
         .args(["--assess", "--type", "execute", "--verbose=2"])
         .arg(bundle);
-    classify_gatekeeper(run_command(&mut command).await.as_ref())
+    classify_gatekeeper(run_command(&mut command).await.as_ref(), bundle)
 }
 
-fn classify_gatekeeper(output: Option<&Output>) -> Evidence {
+fn classify_gatekeeper(output: Option<&Output>, bundle: &Path) -> Evidence {
     let Some(output) = output.filter(|output| !is_truncated(output)) else {
         return Evidence::Unavailable;
     };
@@ -58,7 +58,19 @@ fn classify_gatekeeper(output: Option<&Output>) -> Evidence {
     }
     let error = String::from_utf8_lossy(&output.stderr).to_ascii_lowercase();
     if error.contains("rejected") || error.contains("no usable signature") {
-        Evidence::Blocked
+        let bundle_name = bundle
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(str::to_ascii_lowercase);
+        let names_other_than_bundle = error.contains(".app")
+            && bundle_name
+                .as_deref()
+                .is_some_and(|bundle_name| !error.contains(bundle_name));
+        if names_other_than_bundle {
+            Evidence::Clear
+        } else {
+            Evidence::Blocked
+        }
     } else {
         Evidence::Unavailable
     }

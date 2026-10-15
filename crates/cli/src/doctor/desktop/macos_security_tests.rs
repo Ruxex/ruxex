@@ -5,6 +5,7 @@ use super::classify_security_events;
 use super::enforcement_check;
 use pretty_assertions::assert_eq;
 use std::os::unix::process::ExitStatusExt;
+use std::path::Path;
 use std::process::ExitStatus;
 use std::process::Output;
 
@@ -42,7 +43,10 @@ fn gatekeeper_failures_require_actionable_security_evidence() {
             stdout: Vec::new(),
             stderr: message.as_bytes().to_vec(),
         };
-        assert_eq!(classify_gatekeeper(Some(&output)), expected);
+        assert_eq!(
+            classify_gatekeeper(Some(&output), Path::new("/Applications/Ruxex.app")),
+            expected
+        );
     }
 }
 
