@@ -206,18 +206,19 @@ async fn run_cmd_result_with_permission_profile_for_cwd(
     .await
 }
 
-fn is_bwrap_unavailable_output(output: &ruxex_protocol::exec_output::ExecToolCallOutput) -> bool {
-    output.stderr.text.contains(BWRAP_UNAVAILABLE_ERR)
+fn is_bwrap_unavailable_stderr(stderr: &str) -> bool {
+    stderr.contains(BWRAP_UNAVAILABLE_ERR)
         || BWRAP_PERMISSION_ERR_SNIPPETS
             .iter()
-            .any(|snippet| output.stderr.text.contains(snippet))
-        || (output
-            .stderr
-            .text
-            .contains("Can't mount proc on /newroot/proc")
-            && (output.stderr.text.contains("Operation not permitted")
-                || output.stderr.text.contains("Permission denied")
-                || output.stderr.text.contains("Invalid argument")))
+            .any(|snippet| stderr.contains(snippet))
+        || (stderr.contains("Can't mount proc on /newroot/proc")
+            && (stderr.contains("Operation not permitted")
+                || stderr.contains("Permission denied")
+                || stderr.contains("Invalid argument")))
+}
+
+fn is_bwrap_unavailable_output(output: &ruxex_protocol::exec_output::ExecToolCallOutput) -> bool {
+    is_bwrap_unavailable_stderr(&output.stderr.text)
 }
 
 async fn should_skip_bwrap_tests() -> bool {
@@ -226,7 +227,7 @@ async fn should_skip_bwrap_tests() -> bool {
         &[],
         NETWORK_TIMEOUT_MS,
         /*use_legacy_landlock*/ false,
-        /*network_access*/ true,
+        /*network_access*/ false,
     )
     .await
     {
@@ -374,9 +375,14 @@ async fn bwrap_preserves_writable_dev_shm_bind_mount() {
 
 #[tokio::test]
 async fn test_writable_root() {
+    if should_skip_bwrap_tests().await {
+        eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
+        return;
+    }
+
     let tmpdir = tempfile::tempdir().unwrap();
     let file_path = tmpdir.path().join("test");
-    run_cmd(
+    let result = run_cmd_result_with_writable_roots(
         &[
             "bash",
             "-lc",
@@ -386,8 +392,17 @@ async fn test_writable_root() {
         // We have seen timeouts when running this test in CI on GitHub,
         // so we are using a generous timeout until we can diagnose further.
         LONG_TIMEOUT_MS,
+        /*use_legacy_landlock*/ false,
+        /*network_access*/ false,
     )
     .await;
+    match result {
+        Ok(output) => assert_eq!(output.exit_code, 0),
+        Err(err) => match err.details() {
+            RuxexErrorDetails::Io(error) if error.kind() == ErrorKind::NotFound => return,
+            details => panic!("sandboxed command should execute: {details:?}"),
+        },
+    }
 }
 
 #[tokio::test]
@@ -418,7 +433,12 @@ async fn sandbox_ignores_missing_writable_roots_under_bwrap() {
 
 #[tokio::test]
 async fn test_no_new_privs_is_enabled() {
-    let output = run_cmd_output(
+    if should_skip_bwrap_tests().await {
+        eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
+        return;
+    }
+
+    let output = match run_cmd_result_with_writable_roots(
         &[
             "python3",
             "-c",
@@ -428,8 +448,17 @@ async fn test_no_new_privs_is_enabled() {
         // We have seen timeouts when running this test in CI on GitHub,
         // so we are using a generous timeout until we can diagnose further.
         LONG_TIMEOUT_MS,
+        /*use_legacy_landlock*/ false,
+        /*network_access*/ false,
     )
-    .await;
+    .await
+    {
+        Ok(output) => output,
+        Err(err) => match err.details() {
+            RuxexErrorDetails::Io(error) if error.kind() == ErrorKind::NotFound => return,
+            details => panic!("sandboxed command should execute: {details:?}"),
+        },
+    };
     assert_eq!(output.exit_code, 0);
     assert_eq!(output.stdout.text, "1\n");
 }
@@ -506,9 +535,36 @@ async fn sandbox_inner_stage_rejects_retained_capabilities() {
 }
 
 #[tokio::test]
-#[should_panic(expected = "Sandbox(Timeout")]
 async fn test_timeout() {
-    run_cmd(&["sleep", "2"], &[], /*timeout_ms*/ 50).await;
+    if should_skip_bwrap_tests().await {
+        eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
+        return;
+    }
+
+    let result = run_cmd_result_with_writable_roots(
+        &["sleep", "2"],
+        &[],
+        /*timeout_ms*/ 50,
+        /*use_legacy_landlock*/ false,
+        /*network_access*/ false,
+    )
+    .await;
+    if matches!(
+        &result,
+        Err(err) if matches!(
+            err.details(),
+            RuxexErrorDetails::Io(error) if error.kind() == ErrorKind::NotFound
+        )
+    ) {
+        return;
+    }
+    assert!(matches!(
+        result,
+        Err(err) if matches!(
+            err.details(),
+            RuxexErrorDetails::Sandbox(SandboxErr::Timeout { .. })
+        )
+    ));
 }
 
 /// Helper that runs `cmd` under the Linux sandbox and asserts that the command
@@ -516,6 +572,11 @@ async fn test_timeout() {
 /// is missing in which case we silently treat it as an accepted skip so the
 /// suite remains green on leaner CI images.
 async fn assert_network_blocked(cmd: &[&str]) {
+    if should_skip_bwrap_tests().await {
+        eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
+        return;
+    }
+
     let cwd = AbsolutePathBuf::current_dir().expect("cwd should exist");
     let sandbox_cwd = cwd.clone();
     let params = ExecParams {
@@ -552,6 +613,7 @@ async fn assert_network_blocked(cmd: &[&str]) {
             RuxexErrorDetails::Sandbox(SandboxErr::Denied { output, .. }) => {
                 output.as_ref().clone()
             }
+            RuxexErrorDetails::Io(error) if error.kind() == ErrorKind::NotFound => return,
             details => panic!("expected sandbox denied error, got: {details:?}"),
         },
     };
@@ -757,6 +819,28 @@ async fn sandbox_reports_ruxex_symlink_build_failure_without_panicking() {
         "stderr: {}",
         output.stderr.text
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_bwrap_unavailable_stderr;
+
+    #[test]
+    fn recognizes_network_namespace_permission_failures() {
+        assert!(is_bwrap_unavailable_stderr(
+            "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+        ));
+        assert!(is_bwrap_unavailable_stderr(
+            "bwrap: setting up uid map: Permission denied"
+        ));
+    }
+
+    #[test]
+    fn does_not_hide_unrelated_sandbox_failures() {
+        assert!(!is_bwrap_unavailable_stderr(
+            "bwrap: unknown option --not-a-real-option"
+        ));
+    }
 }
 
 #[tokio::test]

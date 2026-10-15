@@ -91,14 +91,19 @@ async fn should_skip_bwrap_tests() -> bool {
     let mut env = create_env_from_core_vars();
     strip_proxy_env(&mut env);
 
-    let output = run_linux_sandbox_direct(
+    let output = match try_run_linux_sandbox_direct(
         &["bash", "-c", "true"],
         &PermissionProfile::read_only(),
         /*allow_network_for_proxy*/ false,
         env,
         NETWORK_TIMEOUT_MS,
     )
-    .await;
+    .await
+    {
+        Ok(output) => output,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return true,
+        Err(error) => panic!("sandbox command should execute: {error}"),
+    };
     let stderr = String::from_utf8_lossy(&output.stderr);
     is_bwrap_unavailable_output(&output)
         || (!output.status.success() && is_managed_proxy_permission_error(stderr.as_ref()))
@@ -119,14 +124,21 @@ async fn managed_proxy_skip_reason() -> Option<String> {
     strip_proxy_env(&mut env);
     env.insert("HTTP_PROXY".to_string(), "http://127.0.0.1:9".to_string());
 
-    let output = run_linux_sandbox_direct(
+    let output = match try_run_linux_sandbox_direct(
         &["bash", "-c", "true"],
         &PermissionProfile::Disabled,
         /*allow_network_for_proxy*/ true,
         env,
         NETWORK_TIMEOUT_MS,
     )
-    .await;
+    .await
+    {
+        Ok(output) => output,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Some("bubblewrap runtime is unavailable in this environment".to_string());
+        }
+        Err(error) => panic!("sandbox command should execute: {error}"),
+    };
     if output.status.success() {
         return None;
     }
@@ -149,12 +161,31 @@ async fn run_linux_sandbox_direct(
     env: HashMap<String, String>,
     timeout_ms: u64,
 ) -> Output {
+    try_run_linux_sandbox_direct(
+        command,
+        permission_profile,
+        allow_network_for_proxy,
+        env,
+        timeout_ms,
+    )
+    .await
+    .expect("sandbox command should execute")
+}
+
+async fn try_run_linux_sandbox_direct(
+    command: &[&str],
+    permission_profile: &PermissionProfile,
+    allow_network_for_proxy: bool,
+    env: HashMap<String, String>,
+    timeout_ms: u64,
+) -> std::io::Result<Output> {
     let mut command =
         linux_sandbox_command(command, permission_profile, allow_network_for_proxy, env);
     tokio::time::timeout(Duration::from_millis(timeout_ms), command.output())
         .await
-        .expect("sandbox command should not time out")
-        .expect("sandbox command should execute")
+        .map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::TimedOut, "sandbox command timed out")
+        })?
 }
 
 fn linux_sandbox_command(

@@ -263,6 +263,9 @@ async fn file_system_read_file_returns_bytes(
 async fn file_system_read_file_stream_returns_bounded_chunks(
     implementation: FileSystemImplementation,
 ) -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let context = create_file_system_context(implementation).await?;
     let file_system = context.file_system;
 

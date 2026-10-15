@@ -15,7 +15,9 @@ use anyhow::Result;
 use anyhow::bail;
 use anyhow::ensure;
 use pretty_assertions::assert_eq;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use tempfile::TempDir;
+use uuid::Uuid;
 
 // Full startup continues after the composer first appears and can be slower under Rosetta in CI.
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 30);
@@ -382,7 +384,7 @@ fn contains_bytes(buffer: &[u8], needle: &[u8]) -> bool {
 pub(super) fn write_test_config(ruxex_home: &Path, repo_root: &Path) -> Result<()> {
     let repo_root = repo_root.display();
     let config = format!(
-        "model = \"provider-model-d\"\n\
+        "model = \"provider-model-d\"\ncli_auth_credentials_store = \"file\"\n\
          suppress_unstable_features_warning = true\nanalytics.enabled = false\n\n\
          [model_provider]\nid = \"provider\"\nname = \"Provider\"\nbase_url = \"http://127.0.0.1:1/v1\"\nwire_api = \"responses\"\nsupports_websockets = false\n\n\
          [projects.\"{repo_root}\"]\ntrust_level = \"trusted\"\n"
@@ -391,9 +393,21 @@ pub(super) fn write_test_config(ruxex_home: &Path, repo_root: &Path) -> Result<(
         .context("write focus-test Ruxex configuration")?;
     std::fs::write(
         ruxex_home.join("auth.json"),
-        r#"{"PROVIDER_API_KEY":"focus-palette-test","tokens":null,"last_refresh":null}"#,
+        r#"{"auth_mode":"apiKey","api_key":"focus-palette-test"}"#,
     )
-    .context("write focus-test API-key authentication")
+    .context("write focus-test API-key authentication")?;
+    std::fs::write(
+        ruxex_home.join("ruxex-home.json"),
+        serde_json::json!({
+            "formatVersion": 2,
+            "providerKind": "cloudflare",
+            "providerProtocolVersion": CURRENT_PROVIDER_PROTOCOL_VERSION,
+            "serverSignature": Uuid::new_v4().to_string(),
+        })
+        .to_string(),
+    )
+    .context("write focus-test provider-home marker")?;
+    Ok(())
 }
 
 #[test]

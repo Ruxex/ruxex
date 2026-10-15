@@ -13,7 +13,6 @@ use ruxex_protocol::permissions::FileSystemAccessMode;
 use ruxex_protocol::permissions::FileSystemPath;
 use ruxex_protocol::permissions::FileSystemSandboxEntry;
 use ruxex_protocol::permissions::FileSystemSandboxPolicy;
-use ruxex_protocol::permissions::FileSystemSpecialPath;
 use ruxex_protocol::permissions::NetworkSandboxPolicy;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
@@ -61,19 +60,86 @@ pub(crate) fn sandbox_unavailable() -> bool {
     #[cfg(target_os = "linux")]
     {
         static WARNING: OnceLock<Option<String>> = OnceLock::new();
-        return WARNING
+        let warning = WARNING
             .get_or_init(|| {
                 ruxex_sandboxing::system_bwrap_warning(
                     &PermissionProfile::read_only(),
                     &std::env::current_dir().expect("test cwd should exist"),
                 )
             })
-            .is_some();
+            .clone();
+        if warning.is_some() {
+            return true;
+        }
+
+        static PROBE_UNAVAILABLE: OnceLock<bool> = OnceLock::new();
+        return *PROBE_UNAVAILABLE.get_or_init(sandbox_runtime_probe_unavailable);
     }
 
     #[cfg(not(target_os = "linux"))]
     {
         false
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn sandbox_runtime_probe_unavailable() -> bool {
+    let Ok(helper_paths) = test_ruxex_helper_paths() else {
+        return true;
+    };
+    let Some(sandbox_exe) = helper_paths.ruxex_linux_sandbox_exe else {
+        return true;
+    };
+    let cwd = std::env::current_dir().expect("test cwd should exist");
+    let permission_profile = serde_json::to_string(&PermissionProfile::read_only())
+        .expect("permission profile should serialize");
+    let output = std::process::Command::new(sandbox_exe.as_path())
+        .args([
+            "--sandbox-policy-cwd",
+            cwd.to_str().expect("test cwd should be UTF-8"),
+            "--permission-profile",
+            permission_profile.as_str(),
+            "--",
+            "/bin/true",
+        ])
+        .output();
+    match output {
+        Ok(output) => {
+            !output.status.success()
+                && sandbox_probe_reports_unavailable(&String::from_utf8_lossy(&output.stderr))
+        }
+        Err(_) => true,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn sandbox_probe_reports_unavailable(stderr: &str) -> bool {
+    [
+        "loopback: Failed RTM_NEWADDR",
+        "loopback: Failed RTM_NEWLINK",
+        "setting up uid map: Permission denied",
+        "No permissions to create a new namespace",
+    ]
+    .iter()
+    .any(|snippet| stderr.contains(snippet))
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::sandbox_probe_reports_unavailable;
+
+    #[test]
+    fn recognizes_bubblewrap_network_namespace_failures() {
+        assert!(sandbox_probe_reports_unavailable(
+            "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+        ));
+    }
+
+    #[test]
+    fn ignores_unrelated_bubblewrap_failures() {
+        assert!(!sandbox_probe_reports_unavailable(
+            "bwrap: unknown option --not-a-real-option"
+        ));
     }
 }
 
