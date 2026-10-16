@@ -293,6 +293,18 @@ fn build_unix_connector(
     BoxError,
 > {
     let transport = UnixConnector::fixed(path);
-    let connector = HttpConnector::new(transport);
-    connector.boxed()
+    let connector = Arc::new(HttpConnector::new(
+        transport,
+        rama_core::rt::Executor::default(),
+    ));
+    service_fn(move |req| {
+        let connector = connector.clone();
+        async move {
+            connector
+                .serve(req)
+                .await
+                .map_err(|err| err.into_box_error())
+        }
+    })
+    .boxed()
 }

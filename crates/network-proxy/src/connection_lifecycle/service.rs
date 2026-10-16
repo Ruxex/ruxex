@@ -1,15 +1,17 @@
 //! Cancels connection work when its executor's proxy scope ends, including HTTP upgrades.
 
 use rama_core::Service;
+use rama_core::graceful::ShutdownGuard;
 
 #[derive(Clone)]
 pub(crate) struct CancelOnShutdown<S> {
     inner: S,
+    guard: ShutdownGuard,
 }
 
 impl<S> CancelOnShutdown<S> {
-    pub(crate) fn new(inner: S) -> Self {
-        Self { inner }
+    pub(crate) fn new(inner: S, guard: ShutdownGuard) -> Self {
+        Self { inner, guard }
     }
 }
 
@@ -22,6 +24,10 @@ where
     type Error = S::Error;
 
     async fn serve(&self, request: Request) -> Result<(), Self::Error> {
-        self.inner.serve(request).await
+        tokio::select! {
+            biased;
+            _ = self.guard.cancelled() => Ok(()),
+            result = self.inner.serve(request) => result,
+        }
     }
 }

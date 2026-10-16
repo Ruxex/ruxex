@@ -5,8 +5,10 @@ use crate::state::NetworkProxyState;
 use crate::system_dns::SystemDnsResolver;
 use rama_core::Service;
 use rama_core::error::BoxError;
+use rama_core::error::BoxErrorExt as _;
 use rama_core::error::ErrorExt as _;
 use rama_core::error::extra::OpaqueError;
+use rama_core::extensions::ExtensionsRef;
 #[cfg(target_os = "macos")]
 use rama_dns::client::DnsConnector;
 use rama_net::ConnectorTargetInputExt;
@@ -14,9 +16,17 @@ use rama_net::TransportProtocolInputExt;
 use rama_net::address::Host;
 use rama_net::address::HostWithPort;
 use rama_net::address::ProxyAddress;
+use rama_net::client::ConnectorTarget;
 use rama_net::client::EstablishedClientConnection;
+#[cfg(not(target_os = "macos"))]
+use rama_net::stream::Socket;
+#[cfg(not(target_os = "macos"))]
+use rama_net::stream::SocketInfo;
+#[cfg(not(target_os = "macos"))]
+use rama_net::transport::TransportProtocol;
 use rama_tcp::TcpStream;
 use rama_tcp::client::TcpStreamConnector;
+#[cfg(target_os = "macos")]
 use rama_tcp::client::service::TcpConnector;
 use std::io;
 use std::net::SocketAddr;
@@ -41,34 +51,99 @@ where
     type Error = BoxError;
 
     async fn serve(&self, input: Input) -> Result<Self::Output, Self::Error> {
-        let connector = TcpConnector::new();
+        #[cfg(not(target_os = "macos"))]
+        {
+            if input.extensions().self_get_ref::<ProxyAddress>().is_some() {
+                return serve_resolved_target(input, ()).await;
+            }
 
-        if input.extensions().get_ref::<ProxyAddress>().is_some() {
-            #[cfg(target_os = "macos")]
-            {
+            let target = connector_target_without_parent(&input)
+                .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
+            return serve_resolved_target(
+                input,
+                TargetCheckedStreamConnector {
+                    state: self.state.clone(),
+                    target,
+                },
+            )
+            .await;
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            let connector = TcpConnector::new();
+            if input.extensions().self_get_ref::<ProxyAddress>().is_some() {
                 return DnsConnector::with_resolver(connector, SystemDnsResolver::default())
                     .serve(input)
                     .await;
             }
 
-            #[cfg(not(target_os = "macos"))]
-            return connector.serve(input).await;
+            let target = connector_target_without_parent(&input)
+                .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
+            let connector = connector.with_connector(TargetCheckedStreamConnector {
+                state: self.state.clone(),
+                target,
+            });
+            return DnsConnector::with_resolver(connector, SystemDnsResolver::default())
+                .serve(input)
+                .await;
         }
-
-        let target = input
-            .connector_target()
-            .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
-
-        let connector = connector.with_connector(TargetCheckedStreamConnector {
-            state: self.state.clone(),
-            target,
-        });
-
-        #[cfg(target_os = "macos")]
-        let connector = DnsConnector::with_resolver(connector, SystemDnsResolver::default());
-
-        connector.serve(input).await
     }
+}
+
+#[cfg(not(target_os = "macos"))]
+async fn serve_resolved_target<Input, Connector>(
+    input: Input,
+    connector: Connector,
+) -> Result<EstablishedClientConnection<TcpStream, Input>, BoxError>
+where
+    Input: ConnectorTargetInputExt + TransportProtocolInputExt + Send + 'static,
+    Connector: TcpStreamConnector<Error: Into<BoxError>> + Send + 'static,
+{
+    if input.transport_protocol() == Some(TransportProtocol::Udp) {
+        return Err(BoxError::from_static_str(
+            "Tcp Connector Service cannot establish a UDP transport",
+        ));
+    }
+
+    let target = connector_target_without_parent(&input)
+        .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
+    let addresses = if let Ok(ip) = target.host.try_as_ip() {
+        vec![SocketAddr::from((ip, target.port))]
+    } else {
+        tokio::net::lookup_host((target.host.to_string(), target.port))
+            .await
+            .map_err(Into::<BoxError>::into)?
+            .collect::<Vec<_>>()
+    };
+    let mut last_error = None;
+    for addr in addresses {
+        match connector.connect(addr).await.map_err(Into::into) {
+            Ok(conn) => {
+                let socket_info = SocketInfo::new(conn.local_addr().ok(), addr.into());
+                conn.extensions().insert(socket_info);
+                return Ok(EstablishedClientConnection { input, conn });
+            }
+            Err(err) => last_error = Some(err),
+        }
+    }
+    Err(last_error
+        .unwrap_or_else(|| OpaqueError::from_static_str("DNS lookup returned no addresses").into()))
+}
+
+fn connector_target_without_parent<Input>(input: &Input) -> Option<HostWithPort>
+where
+    Input: ConnectorTargetInputExt,
+{
+    input
+        .extensions()
+        .self_get_ref::<ConnectorTarget>()
+        .map(|target| target.0.clone())
+        .or_else(|| {
+            input
+                .authority()
+                .and_then(|authority| authority.into_host_with_port(input.protocol_default_port()))
+        })
 }
 
 #[derive(Clone)]

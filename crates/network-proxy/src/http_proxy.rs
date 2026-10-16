@@ -39,6 +39,7 @@ use anyhow::Context as _;
 use anyhow::Result;
 use rama_core::Layer;
 use rama_core::Service;
+use rama_core::error::BoxError;
 use rama_core::error::ErrorExt as _;
 use rama_core::error::extra::OpaqueError;
 use rama_core::extensions::Extension;
@@ -65,6 +66,7 @@ use rama_http::matcher::MethodMatcher;
 use rama_http_backend::client::proxy::layer::HttpProxyConnector;
 use rama_http_backend::server::HttpServer;
 use rama_net::Protocol;
+use rama_net::address::HostWithPort;
 use rama_net::client::ConnectorService;
 use rama_net::client::EstablishedClientConnection;
 use rama_net::client::Request as TcpRequest;
@@ -104,7 +106,7 @@ pub async fn run_http_proxy(
     environment_id: Option<String>,
     guard: ShutdownGuard,
 ) -> Result<()> {
-    let listener = TcpListener::bind_address(addr, Executor::graceful(guard))
+    let listener = TcpListener::bind_address(addr, Executor::graceful(guard.clone()))
         .await
         // Rama's `BoxError` is a `Box<dyn Error + Send + Sync>` without an explicit `'static`
         // lifetime bound, which means it doesn't satisfy `anyhow::Context`'s `StdError` constraint.
@@ -113,7 +115,7 @@ pub async fn run_http_proxy(
         .map_err(|err| anyhow::anyhow!(err.to_string()))
         .with_context(|| format!("bind HTTP proxy: {addr}"))?;
 
-    run_http_proxy_with_listener(state, listener, policy_decider, environment_id).await
+    run_http_proxy_with_listener(state, listener, policy_decider, environment_id, guard).await
 }
 
 pub async fn run_http_proxy_with_std_listener(
@@ -123,9 +125,10 @@ pub async fn run_http_proxy_with_std_listener(
     environment_id: Option<String>,
     guard: ShutdownGuard,
 ) -> Result<()> {
-    let listener = TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard))
-        .context("convert std listener to HTTP proxy listener")?;
-    run_http_proxy_with_listener(state, listener, policy_decider, environment_id).await
+    let listener =
+        TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard.clone()))
+            .context("convert std listener to HTTP proxy listener")?;
+    run_http_proxy_with_listener(state, listener, policy_decider, environment_id, guard).await
 }
 
 async fn run_http_proxy_with_listener(
@@ -133,6 +136,7 @@ async fn run_http_proxy_with_listener(
     listener: TcpListener,
     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
     environment_id: Option<String>,
+    guard: ShutdownGuard,
 ) -> Result<()> {
     let addr = listener
         .local_addr()
@@ -141,7 +145,12 @@ async fn run_http_proxy_with_listener(
     info!("HTTP proxy listening on {addr}");
 
     listener
-        .serve(http_proxy_service(state, policy_decider, environment_id))
+        .serve(http_proxy_service(
+            state,
+            policy_decider,
+            environment_id,
+            guard,
+        ))
         .await;
     Ok(())
 }
@@ -150,6 +159,7 @@ pub(crate) fn http_proxy_service(
     state: Arc<NetworkProxyState>,
     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
     environment_id: Option<String>,
+    guard: ShutdownGuard,
 ) -> BoxService<TcpStream, (), rama_core::error::BoxError> {
     ensure_rustls_crypto_provider();
 
@@ -157,7 +167,7 @@ pub(crate) fn http_proxy_service(
     // forces every accepted socket through the HTTP version sniffing pre-read path before proxy
     // request parsing, which can stall some local clients on macOS before CONNECT/absolute-form
     // handling runs at all.
-    let executor = Executor::default();
+    let executor = Executor::graceful(guard.clone());
     let http_service = HttpServer::new_http1(executor.clone()).service(
         (
             UpgradeLayer::new(
@@ -180,7 +190,7 @@ pub(crate) fn http_proxy_service(
                         }
                     }
                 }),
-                CancelOnShutdown::new(service_fn(http_connect_proxy)),
+                CancelOnShutdown::new(service_fn(http_connect_proxy), guard.clone()),
             ),
             RemoveResponseHeaderLayer::hop_by_hop(),
         )
@@ -468,12 +478,12 @@ where
 {
     let authority = upgraded
         .extensions()
-        .get_ref::<ProxyTarget>()
+        .self_get_ref::<ProxyTarget>()
         .map(|target| target.0.clone())
         .ok_or_else(|| OpaqueError::from_static_str("missing forward authority"))?;
     let app_state = upgraded
         .extensions()
-        .get_arc::<NetworkProxyState>()
+        .self_get_arc::<NetworkProxyState>()
         .ok_or_else(|| OpaqueError::from_static_str("missing app state"))?;
     let allow_upstream_proxy = match app_state.allow_upstream_proxy().await {
         Ok(allowed) => allowed,
@@ -498,6 +508,7 @@ where
         ),
     }
 
+    let use_proxy = proxy.is_some();
     let extensions = upgraded.extensions().clone();
     if let Some(proxy) = proxy {
         extensions.insert(proxy);
@@ -505,49 +516,56 @@ where
 
     let req = TcpRequest::new_with_extensions(authority.clone(), extensions)
         .with_application_protocol(Protocol::HTTPS);
-    let proxy_connector = HttpProxyConnector::optional(TargetCheckedTcpConnector::new(app_state));
-    let tls_config = TlsClientConfig::new().with_alpn_http_auto();
-    let connector = TlsConnectorLayer::tunnel(None)
-        .with_base_config(tls_config)
-        .into_layer(proxy_connector);
     info!("CONNECT upstream dial started (target={authority})");
     let connect_started_at = Instant::now();
-    let EstablishedClientConnection { conn: target, .. } = match connector.connect(req).await {
-        Ok(connection) => {
-            info!(
-                "CONNECT upstream dial established (target={authority}, elapsed_ms={})",
-                connect_started_at.elapsed().as_millis()
-            );
-            connection
-        }
-        Err(err) => {
-            warn!(
-                "CONNECT upstream dial failed (target={authority}, elapsed_ms={})",
-                connect_started_at.elapsed().as_millis()
-            );
-            return Err(opaque_error(format!(
-                "establish CONNECT tunnel to {authority}: {err}"
-            )));
-        }
+    let result = if use_proxy {
+        let proxy_connector =
+            HttpProxyConnector::optional(TargetCheckedTcpConnector::new(app_state.clone()));
+        let connector = TlsConnectorLayer::tunnel(None)
+            .with_base_config(TlsClientConfig::new().with_alpn_http_auto())
+            .into_layer(proxy_connector);
+        connect_and_forward(connector, req, upgraded, authority.clone()).await
+    } else {
+        connect_and_forward(
+            TargetCheckedTcpConnector::new(app_state),
+            req,
+            upgraded,
+            authority.clone(),
+        )
+        .await
     };
+    result.map_err(|err| {
+        warn!(
+            "CONNECT upstream dial/forward failed (target={authority}, elapsed_ms={})",
+            connect_started_at.elapsed().as_millis()
+        );
+        opaque_error(format!(
+            "establish or forward CONNECT tunnel to {authority}: {err}"
+        ))
+    })
+}
 
+async fn connect_and_forward<C, I>(
+    connector: C,
+    req: TcpRequest,
+    upgraded: I,
+    authority: HostWithPort,
+) -> Result<(), BoxError>
+where
+    C: ConnectorService<TcpRequest>,
+    C::Connection: Io + Unpin,
+    I: Io + Unpin,
+{
+    let EstablishedClientConnection { conn: target, .. } =
+        connector.connect(req).await.map_err(Into::into)?;
     info!("CONNECT tunnel forwarding started (target={authority})");
     let forward_started_at = Instant::now();
-    forward_io(upgraded, target)
-        .await
-        .map(|_| {
-            info!(
-                "CONNECT tunnel forwarding completed (target={authority}, elapsed_ms={})",
-                forward_started_at.elapsed().as_millis()
-            );
-        })
-        .map_err(|err| {
-            warn!(
-                "CONNECT tunnel forwarding failed (target={authority}, elapsed_ms={})",
-                forward_started_at.elapsed().as_millis()
-            );
-            opaque_error(format!("forward CONNECT tunnel to {authority}: {err}"))
-        })
+    forward_io(upgraded, target).await.map(|_| {
+        info!(
+            "CONNECT tunnel forwarding completed (target={authority}, elapsed_ms={})",
+            forward_started_at.elapsed().as_millis()
+        );
+    })
 }
 
 async fn http_plain_proxy(

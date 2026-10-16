@@ -1,6 +1,7 @@
 use crate::attribution::BindConnectionAttribution;
 use crate::config::NetworkMode;
 use crate::connect_policy::TargetCheckedTcpConnector;
+use crate::connection_lifecycle::CancelOnShutdown;
 use crate::mitm;
 use crate::network_policy::BlockDecisionAuditEventArgs;
 use crate::network_policy::NetworkDecision;
@@ -70,7 +71,7 @@ pub async fn run_socks5(
     enable_socks5_udp: bool,
     guard: ShutdownGuard,
 ) -> Result<()> {
-    let listener = TcpListener::bind_address(addr, Executor::graceful(guard))
+    let listener = TcpListener::bind_address(addr, Executor::graceful(guard.clone()))
         .await
         // See `http_proxy.rs` for details on why we wrap `BoxError` before converting to anyhow.
         .map_err(|err| anyhow::anyhow!(err.to_string()))
@@ -82,6 +83,7 @@ pub async fn run_socks5(
         policy_decider,
         environment_id,
         enable_socks5_udp,
+        guard,
     )
     .await
 }
@@ -94,14 +96,16 @@ pub async fn run_socks5_with_std_listener(
     enable_socks5_udp: bool,
     guard: ShutdownGuard,
 ) -> Result<()> {
-    let listener = TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard))
-        .context("convert std listener to SOCKS5 proxy listener")?;
+    let listener =
+        TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard.clone()))
+            .context("convert std listener to SOCKS5 proxy listener")?;
     run_socks5_with_listener(
         state,
         listener,
         policy_decider,
         environment_id,
         enable_socks5_udp,
+        guard,
     )
     .await
 }
@@ -112,6 +116,7 @@ async fn run_socks5_with_listener(
     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
     environment_id: Option<String>,
     enable_socks5_udp: bool,
+    guard: ShutdownGuard,
 ) -> Result<()> {
     let addr = listener
         .local_addr()
@@ -137,6 +142,7 @@ async fn run_socks5_with_listener(
             policy_decider,
             environment_id,
             enable_socks5_udp,
+            guard,
         ))
         .await;
     Ok(())
@@ -147,6 +153,7 @@ pub(crate) fn socks5_proxy_service(
     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
     environment_id: Option<String>,
     enable_socks5_udp: bool,
+    guard: ShutdownGuard,
 ) -> BoxService<TcpStream, (), BoxError> {
     let tcp_connector = TargetCheckedTcpConnector::new(state.clone());
     let policy_tcp_connector = service_fn({
@@ -160,11 +167,14 @@ pub(crate) fn socks5_proxy_service(
         }
     });
 
-    let socks_proxy = service_fn(|request| async move { proxy_socks5_tcp(request).await });
+    let socks_proxy = CancelOnShutdown::new(
+        service_fn(|request| async move { proxy_socks5_tcp(request).await }),
+        guard.clone(),
+    );
     let socks_connector = DefaultConnector::default()
         .with_connector(policy_tcp_connector)
         .with_service(socks_proxy);
-    let base = Socks5Acceptor::new(Executor::default()).with_connector(socks_connector);
+    let base = Socks5Acceptor::new(Executor::graceful(guard)).with_connector(socks_connector);
 
     if enable_socks5_udp {
         let udp_state = state.clone();
