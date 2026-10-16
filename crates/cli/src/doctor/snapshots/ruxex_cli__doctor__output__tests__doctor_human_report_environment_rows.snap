@@ -1,0 +1,68 @@
+---
+source: crates/cli/src/doctor/output.rs
+assertion_line: 1294
+expression: "render_human_report(&report, detailed_no_color_unicode_options())"
+---
+Ruxex Doctor v0.0.0
+
+Notes
+   ⚠ terminal     narrow terminal
+   ✗ auth         token expired - Update the configured provider credentials.
+   ⚠ security     Microsoft Defender can interfere with Ruxex. Verify Ruxex exclusions.
+─────────────────────────────────────────────────────────────
+
+Environment
+  ✓ system       en-US
+      os                       macOS 15.0
+      OS language              en-US
+      VISUAL                   code --wait
+      EDITOR                   vim
+      PAGER                    less -R
+      GIT_PAGER                delta
+      GH_PAGER                 less
+      LESS                     -FRX
+  ✓ disk         sufficient free disk space (42.0 GiB)
+  ⚠ security     Microsoft Defender can interfere with Ruxex. Verify Ruxex exclusions.
+      endpoint products        Microsoft Defender
+      exclusion targets        verified Ruxex app and required helpers
+    ▸ Ruxex exclusions         not verified (expected Ruxex application and helper exclusions)
+    → Microsoft Defender: Add a certificate or executable-path exclusion for Ruxex and its helpers.
+  ✓ runtime      running local build on darwin-arm64
+  ✓ install      consistent
+      managed by               npm: no · bun: no · pnpm: no · Vite+: no · package root —
+  ✓ search       search is OK (bundled)
+  ✓ git          git version 2.54.0
+      selected git             /usr/bin/git
+      version                  git version 2.54.0
+      repo detected            true
+  ⚠ terminal     narrow terminal
+  ✓ title        default · project ruxex
+      title source             default
+      title items              activity, project-name
+      project value            ruxex
+  ✓ state        state paths inspectable
+
+Configuration
+  ✗ auth         token expired — Update the configured provider credentials.
+      PROVIDER_API_KEY         present
+
+Desktop App
+  ✓ desktop      the desktop application is installed
+      version                  1.2.3
+      running                  true
+      log directory            $HOME/Library/Logs/com.ruxex.ruxex
+  ✓ desktop      the desktop app-server initialized successfully
+
+Connectivity
+  ✓ network      network environment readable
+  ✓ websocket    Responses WebSocket handshake succeeded
+  ✓ reachability configured provider endpoints are reachable over HTTP
+
+Background Server
+  ✓ app-server   background server is not running
+
+─────────────────────────────────────────────────────────────
+14 ok · 3 notes · 2 warn · 1 fail failed
+
+--summary compact output           --all expand truncated lists
+--json redacted report

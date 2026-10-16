@@ -1,0 +1,89 @@
+mod artifact_operation;
+mod command_migration;
+mod executor_hooks;
+mod git_policy;
+pub mod installed_marketplaces;
+mod loaded_cache_metrics;
+pub mod loader;
+mod manager;
+pub mod manifest;
+pub mod marketplace;
+pub mod marketplace_add;
+mod marketplace_policy;
+pub mod marketplace_remove;
+pub mod marketplace_upgrade;
+mod npm_source;
+mod plugin_bundle_archive;
+mod plugin_metrics;
+mod plugin_metrics_sidecar;
+mod plugin_publish;
+mod provider;
+mod script_attribution;
+mod skill_snapshots;
+pub mod store;
+#[cfg(test)]
+mod test_support;
+pub mod toggles;
+
+pub(crate) use git_policy::PluginGitMode;
+pub(crate) use git_policy::configure_trusted_git_repository;
+
+pub const BUNDLED_MARKETPLACE_NAME: &str = "ruxex-bundled";
+pub(crate) const BUNDLED_ALPHA_MARKETPLACE_NAME: &str = "ruxex-bundled-alpha";
+pub(crate) const PRIMARY_RUNTIME_MARKETPLACE_NAME: &str = "ruxex-primary-runtime";
+
+#[cfg(test)]
+pub(crate) const TEST_CURATED_MARKETPLACE_NAME: &str = "test-curated";
+#[cfg(test)]
+pub(crate) const TEST_API_CURATED_MARKETPLACE_NAME: &str = "test-api-curated";
+
+pub type LoadedPlugin = ruxex_plugin::LoadedPlugin<ruxex_config::McpServerConfig>;
+pub type PluginLoadOutcome = ruxex_plugin::PluginLoadOutcome<ruxex_config::McpServerConfig>;
+
+pub use artifact_operation::ArtifactOperation;
+pub use artifact_operation::recognize_artifact_operation;
+pub use command_migration::CommandDescriptionMode;
+pub use command_migration::CommandMigrationProfile;
+pub use command_migration::RewriteProfile as CommandRewriteProfile;
+pub use command_migration::count_missing_commands_with_profile;
+pub use command_migration::import_commands_with_profile;
+pub use command_migration::missing_command_names_with_profile;
+pub use executor_hooks::executor_plugin_hook_sources;
+pub use loader::PluginHookLoadOutcome;
+pub use manager::ConfiguredMarketplace;
+pub use manager::ConfiguredMarketplaceListOutcome;
+pub use manager::ConfiguredMarketplacePlugin;
+pub use manager::EffectivePluginsChange;
+pub use manager::PluginDetail;
+pub use manager::PluginInstallError;
+pub use manager::PluginInstallOutcome;
+pub use manager::PluginInstallRequest;
+pub use manager::PluginMarketplaceContext;
+pub use manager::PluginMarketplaceScope;
+pub use manager::PluginReadOutcome;
+pub use manager::PluginReadRequest;
+pub use manager::PluginUninstallError;
+pub use manager::PluginsConfigInput;
+pub use manager::PluginsManager;
+pub use marketplace_policy::allowed_configured_marketplace_names;
+pub use marketplace_upgrade::ConfigLayerReload;
+pub use marketplace_upgrade::ConfiguredMarketplaceUpgradeError as PluginMarketplaceUpgradeError;
+pub use marketplace_upgrade::ConfiguredMarketplaceUpgradeOutcome as PluginMarketplaceUpgradeOutcome;
+pub use plugin_metrics::PluginMeasurementDefinition;
+pub use plugin_metrics::PluginMetricsOperation;
+pub use plugin_metrics::ResolvedPluginMetricsOperation;
+pub use plugin_metrics_sidecar::PLUGIN_METRICS_OUTPUT_ENV_VAR;
+pub use plugin_metrics_sidecar::PluginMeasurementBatch;
+pub use plugin_metrics_sidecar::PluginMeasurementRow;
+pub use plugin_metrics_sidecar::PluginMetricsSidecar;
+pub use plugin_metrics_sidecar::strip_output_env;
+pub use plugin_publish::PluginPublishError;
+pub use plugin_publish::PluginPublishOutcome;
+pub use plugin_publish::PluginPublishRequest;
+pub use plugin_publish::publish_plugin_bundle;
+pub use provider::ExecutorPluginProvider;
+pub use provider::ExecutorPluginProviderError;
+pub use provider::ResolvedExecutorPlugin;
+pub use script_attribution::PluginCommandAttribution;
+pub use script_attribution::TrustedPluginRoots;
+pub use script_attribution::command_script_arguments;

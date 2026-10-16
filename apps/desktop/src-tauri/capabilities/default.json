@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Minimal local capability set for Ruxex Desktop",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

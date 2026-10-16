@@ -1,0 +1,214 @@
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+
+use axum::http::HeaderValue;
+use ruxex_login::default_client::SetOriginatorError;
+use ruxex_login::default_client::USER_AGENT_SUFFIX;
+use ruxex_login::default_client::get_user_agent;
+use ruxex_login::default_client::set_default_client_residency_requirement;
+use ruxex_login::default_client::set_default_originator;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+
+use super::*;
+use crate::message_processor::ConnectionSessionState;
+use crate::message_processor::InitializedConnectionSessionState;
+use crate::transport::ConnectionOrigin;
+
+const NON_ORIGINATING_CLIENT_NAMES: &[&str] = &["ruxex_app_server_daemon", "ruxex-backend"];
+
+#[derive(Clone)]
+pub(crate) struct InitializeRequestProcessor {
+    outgoing: Arc<OutgoingMessageSender>,
+    config: Arc<Config>,
+    provider_descriptor: ProviderDescriptor,
+    config_warnings: Arc<Vec<ConfigWarningNotification>>,
+    user_verification: Arc<crate::user_verification::Service>,
+}
+
+impl InitializeRequestProcessor {
+    pub(crate) fn new(
+        outgoing: Arc<OutgoingMessageSender>,
+        config: Arc<Config>,
+        provider_descriptor: ProviderDescriptor,
+        config_warnings: Vec<ConfigWarningNotification>,
+        user_verification: Arc<crate::user_verification::Service>,
+    ) -> Self {
+        Self {
+            outgoing,
+            config,
+            provider_descriptor,
+            config_warnings: Arc::new(config_warnings),
+            user_verification,
+        }
+    }
+
+    pub(crate) async fn initialize(
+        &self,
+        connection_id: ConnectionId,
+        request_id: RequestId,
+        params: InitializeParams,
+        session: &ConnectionSessionState,
+        // `Some(...)` means the caller wants initialize to immediately mark the
+        // connection outbound-ready. Websocket JSON-RPC calls pass `None` so
+        // lib.rs can deliver connection-scoped initialize notifications first.
+        outbound_initialized: Option<&AtomicBool>,
+    ) -> Result<bool, JSONRPCErrorError> {
+        let connection_request_id = ConnectionRequestId {
+            connection_id,
+            request_id,
+        };
+        if session.initialized() {
+            return Err(invalid_request("Already initialized"));
+        }
+
+        // TODO(maxj): Revisit capability scoping for `experimental_api_enabled`.
+        // Current behavior is per-connection. Reviewer feedback notes this can
+        // create odd cross-client behavior (for example dynamic tool calls on a
+        // shared thread when another connected client did not opt into
+        // experimental API). Proposed direction is instance-global first-write-wins
+        // with initialize-time mismatch rejection.
+        let capabilities = params.capabilities.unwrap_or_default();
+        let experimental_api_enabled = capabilities.experimental_api;
+        let request_attestation = capabilities.request_attestation;
+        let extensions = capabilities.extensions.as_ref();
+        let mut client_mcp_extensions = ruxex_mcp::client_mcp_extensions(extensions);
+        let opt_out_notification_methods = capabilities
+            .opt_out_notification_methods
+            .unwrap_or_default();
+        let ClientInfo {
+            name,
+            title: _title,
+            version,
+        } = params.client_info;
+        // Validate before committing; set_default_originator validates while
+        // mutating process-global metadata.
+        if HeaderValue::from_str(&name).is_err() {
+            return Err(invalid_request(format!(
+                "Invalid clientInfo.name: '{name}'. Must be a valid HTTP header value."
+            )));
+        }
+        // Activate only the embedded TUI and local desktop host. Client-supplied
+        // extensions cannot opt other hosts into verification.
+        let user_verification_enabled = experimental_api_enabled
+            && matches!(
+                (session.origin, name.as_str()),
+                (ConnectionOrigin::InProcess, "ruxex-tui")
+                    | (ConnectionOrigin::Stdio, "Ruxex Desktop")
+            )
+            && tokio::task::spawn_blocking(self.user_verification.device_supported)
+                .await
+                .unwrap_or(false);
+        if user_verification_enabled {
+            let mut extensions = client_mcp_extensions
+                .iter()
+                .map(|(id, value)| (id.to_string(), value.clone()))
+                .collect::<std::collections::HashMap<_, _>>();
+            let settings = extensions
+                .entry("provider/elicitation".to_string())
+                .or_insert_with(|| serde_json::json!({}));
+            if !settings.is_object() {
+                *settings = serde_json::json!({});
+            }
+            settings["userVerification"] = serde_json::json!({});
+            client_mcp_extensions = ClientMcpExtensions::new(extensions);
+        }
+        let originator = name.clone();
+        let user_agent_suffix = format!("{name}; {version}");
+        let mutates_global_identity = !NON_ORIGINATING_CLIENT_NAMES.contains(&name.as_str());
+        let ruxex_home = self.config.ruxex_home.clone();
+        if session
+            .initialize(InitializedConnectionSessionState {
+                experimental_api_enabled,
+                opted_out_notification_methods: opt_out_notification_methods.into_iter().collect(),
+                app_server_client_name: name.clone(),
+                client_version: version,
+                request_attestation,
+                client_mcp_extensions,
+            })
+            .is_err()
+        {
+            return Err(invalid_request("Already initialized"));
+        }
+        if user_verification_enabled {
+            self.outgoing
+                .enable_user_verification_connection(connection_id)
+                .await;
+        }
+
+        if mutates_global_identity {
+            // Only real client initialization may mutate process-global client metadata.
+            if let Err(error) = set_default_originator(originator.clone()) {
+                match error {
+                    SetOriginatorError::InvalidHeaderValue => {
+                        tracing::warn!(
+                            client_info_name = %name,
+                            "validated clientInfo.name was rejected while setting originator"
+                        );
+                    }
+                    SetOriginatorError::AlreadyInitialized => {
+                        // No-op. This is expected to happen if the originator is already set via env var.
+                        // TODO(owen): Once we remove support for RUXEX_INTERNAL_ORIGINATOR_OVERRIDE,
+                        // this will be an unexpected state and we can return a JSON-RPC error indicating
+                        // internal server error.
+                    }
+                }
+            }
+        }
+        set_default_client_residency_requirement(self.config.enforce_residency.value());
+        if mutates_global_identity && let Ok(mut suffix) = USER_AGENT_SUFFIX.lock() {
+            *suffix = Some(user_agent_suffix);
+        }
+
+        let user_agent = get_user_agent();
+        let marker = mount_provider_home(&self.config.ruxex_home, &self.provider_descriptor)
+            .map_err(|error| {
+                invalid_request(format!("failed to mount provider data root: {error}"))
+            })?;
+        let response = InitializeResponse {
+            app_server_identity: AppServerIdentity::from_provider_home(
+                marker.server_signature,
+                &marker.provider_protocol_version,
+                Some(user_agent.clone()),
+            ),
+            user_agent,
+            ruxex_home: ruxex_home,
+            platform_family: std::env::consts::FAMILY.to_string(),
+            platform_os: std::env::consts::OS.to_string(),
+        };
+
+        self.outgoing
+            .send_response(connection_request_id, response)
+            .await;
+
+        if let Some(outbound_initialized) = outbound_initialized {
+            outbound_initialized.store(true, Ordering::Release);
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
+    pub(crate) async fn send_initialize_notifications_to_connection(
+        &self,
+        connection_id: ConnectionId,
+    ) {
+        for notification in self.config_warnings.iter().cloned() {
+            self.outgoing
+                .send_server_notification_to_connections(
+                    &[connection_id],
+                    ServerNotification::ConfigWarning(notification),
+                )
+                .await;
+        }
+    }
+
+    pub(crate) async fn send_initialize_notifications(&self) {
+        for notification in self.config_warnings.iter().cloned() {
+            self.outgoing
+                .send_server_notification(ServerNotification::ConfigWarning(notification))
+                .await;
+        }
+    }
+}

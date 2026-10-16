@@ -1,0 +1,98 @@
+//! Loads managed requirements independently of user and project configuration,
+//! retaining source layers for diagnostics during full configuration loads.
+
+use super::layer_io;
+use super::layer_io::LoadedConfigLayers;
+use super::load_requirements_toml;
+#[cfg(target_os = "macos")]
+use super::macos;
+use super::system_requirements_toml_file_with_overrides;
+use crate::ConfigRequirements;
+use crate::ConfigRequirementsToml;
+use crate::RequirementsLayerEntry;
+use crate::compose_requirements;
+use crate::config_requirements::ConfigRequirementsWithSources;
+use crate::state::ConfigLoadOptions;
+use crate::state::LoaderOverrides;
+use ruxex_file_system::ExecutorFileSystem;
+#[cfg(target_os = "macos")]
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use std::io;
+use std::path::Path;
+
+/// Loads current managed requirements without reading system defaults, user or
+/// project settings, or thread-provided configuration. Current MDM config and
+/// requirements are loaded as separate sources.
+pub async fn load_managed_requirements_state(
+    fs: &dyn ExecutorFileSystem,
+    ruxex_home: &Path,
+    options: impl Into<ConfigLoadOptions>,
+) -> io::Result<ConfigRequirementsToml> {
+    let ConfigLoadOptions {
+        loader_overrides: overrides,
+        strict_config,
+    } = options.into();
+    if overrides.ignore_managed_requirements {
+        return Ok(ConfigRequirementsToml::default());
+    }
+
+    let (requirements, _, _) =
+        load_requirements_from_sources(fs, ruxex_home, &overrides, strict_config).await?;
+    let _: ConfigRequirements = requirements.clone().try_into()?;
+    Ok(requirements.into_toml())
+}
+
+/// Composes the same requirements for full config loads and policy-only checks.
+/// The loaded MDM config and source layers are also returned for the full config
+/// stack and its ignored-field diagnostics.
+pub(super) async fn load_requirements_from_sources(
+    fs: &dyn ExecutorFileSystem,
+    ruxex_home: &Path,
+    overrides: &LoaderOverrides,
+    strict_config: bool,
+) -> io::Result<(
+    ConfigRequirementsWithSources,
+    LoadedConfigLayers,
+    Vec<RequirementsLayerEntry>,
+)> {
+    let mut requirements_layers = Vec::new();
+    let mut system_requirements_layer = None;
+    let managed_preferences_requirements_layer;
+    if !overrides.ignore_managed_requirements {
+        #[cfg(target_os = "macos")]
+        {
+            let base_dir = AbsolutePathBuf::from_absolute_path(ruxex_home)?;
+            managed_preferences_requirements_layer = macos::load_managed_admin_requirements_layer(
+                overrides
+                    .macos_managed_config_requirements_base64
+                    .as_deref(),
+            )
+            .await?
+            .map(|layer| layer.with_base_dir(base_dir));
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            managed_preferences_requirements_layer = None;
+        }
+
+        let requirements_file = system_requirements_toml_file_with_overrides(overrides)?;
+        system_requirements_layer = load_requirements_toml(fs, &requirements_file).await?;
+    } else {
+        managed_preferences_requirements_layer = None;
+    }
+
+    let loaded_config_layers =
+        layer_io::load_config_layers_internal(fs, ruxex_home, overrides.clone(), strict_config)
+            .await?;
+    if !overrides.ignore_managed_requirements {
+        requirements_layers.extend(system_requirements_layer);
+        requirements_layers.extend(managed_preferences_requirements_layer);
+    }
+
+    let mut requirements = compose_requirements(requirements_layers.clone())?.unwrap_or_default();
+    if overrides.ignore_login_requirements {
+        requirements.allowed_login_methods = None;
+        requirements.allowed_managed_workspaces = None;
+    }
+    Ok((requirements, loaded_config_layers, requirements_layers))
+}

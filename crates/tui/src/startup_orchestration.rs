@@ -1,0 +1,610 @@
+//! Orchestrates startup while the provisional composer owns terminal input.
+//!
+//! Lightweight validation runs before acquiring the terminal. Once the draft is visible, slow
+//! configuration and app-server initialization remain responsive to safe local editing.
+
+use super::*;
+use ruxex_terminal_detection::Multiplexer;
+use ruxex_terminal_detection::TerminalName;
+
+pub(super) async fn run_main_inner(
+    mut cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    host_executable: Option<std::path::PathBuf>,
+    brand_profile: Option<std::sync::Arc<dyn TuiBrandProfile>>,
+) -> std::io::Result<AppExitInfo> {
+    if cli.no_daemon && explicit_remote_endpoint.is_some() {
+        return Err(std::io::Error::other(
+            "--no-daemon cannot be used with --remote.",
+        ));
+    }
+    let strict_config = cli.strict_config;
+    if cli.shared.worktree {
+        if explicit_remote_endpoint.is_some() {
+            return Err(std::io::Error::other(
+                "`--worktree` is only supported for local sessions",
+            ));
+        }
+        if cli.fork_picker || cli.fork_last {
+            return Err(std::io::Error::other(
+                "`ruxex fork --worktree` requires an explicit session ID",
+            ));
+        }
+    }
+    let (sandbox_mode, approval_policy) = if cli.dangerously_bypass_approvals_and_sandbox {
+        (
+            Some(SandboxMode::DangerFullAccess),
+            Some(AskForApproval::Never.to_core()),
+        )
+    } else {
+        (
+            cli.sandbox_mode.map(Into::<SandboxMode>::into),
+            cli.approval_policy.map(Into::into),
+        )
+    };
+
+    // Map the legacy --search flag to the canonical web_search mode.
+    if cli.web_search {
+        cli.config_overrides
+            .raw_overrides
+            .push("web_search=\"live\"".to_string());
+    }
+
+    let raw_overrides = cli.config_overrides.raw_overrides.clone();
+    let overrides_cli = ruxex_utils_cli::CliConfigOverrides { raw_overrides };
+    let cli_kv_overrides = match overrides_cli.parse_overrides() {
+        // Parse `-c` overrides from the CLI.
+        Ok(v) => v,
+        #[allow(clippy::print_stderr)]
+        Err(e) => {
+            eprintln!("Error parsing -c overrides: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // we load config.toml here to determine project state.
+    #[allow(clippy::print_stderr)]
+    let ruxex_home = match find_ruxex_home() {
+        Ok(ruxex_home) => ruxex_home.to_path_buf(),
+        Err(err) => {
+            eprintln!("Error finding ruxex home: {err}");
+            std::process::exit(1);
+        }
+    };
+
+    let mut launch_loader_overrides = loader_overrides.clone();
+    if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
+        let user_config_path = resolve_profile_v2_config_path(&ruxex_home, profile_v2);
+        launch_loader_overrides.user_config_path = Some(user_config_path);
+        launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
+    }
+    if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() {
+        let validation_target = app_server_target_for_launch(
+            explicit_remote_endpoint.clone(),
+            /*default_daemon_socket*/ None,
+            /*can_reuse_implicit_local_daemon*/ false,
+        )?;
+        let validation_environment_manager =
+            if should_load_configured_environments(&loader_overrides, &validation_target) {
+                EnvironmentManager::prepare_from_ruxex_home(&ruxex_home).await
+            } else {
+                EnvironmentManager::prepare_from_env().await
+            }
+            .map_err(std::io::Error::other)?;
+        let validation_cwd = config_cwd_for_app_server_target(
+            cli.cwd.as_deref(),
+            &validation_target,
+            validation_environment_manager.default_environment_is_remote(),
+        )?;
+        let mut validation_loader_overrides = launch_loader_overrides.clone();
+        validation_loader_overrides.ignore_login_requirements =
+            validation_target.uses_remote_workspace();
+        load_config_or_exit(
+            cli_kv_overrides.clone(),
+            ConfigOverrides {
+                model: cli.model.clone(),
+                approval_policy,
+                sandbox_mode,
+                cwd: validation_cwd.map(AbsolutePathBuf::into_path_buf),
+                bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
+                additional_writable_roots: cli.add_dir.clone(),
+                ..Default::default()
+            },
+            validation_loader_overrides,
+            strict_config,
+        )
+        .await;
+    }
+
+    let daemon_exclusion =
+        daemon_startup::exclusion(&cli, &cli_kv_overrides, &launch_loader_overrides);
+    let reuse_implicit_local_daemon = daemon_exclusion.is_none();
+    let search_only_config_override = cli.web_search
+        && startup_preflight::has_only_search_config_override(&cli_kv_overrides)
+        && loader_overrides_are_default(&launch_loader_overrides)
+        && !strict_config
+        && !cli.bypass_hook_trust;
+    let initial_screen = if cli.resume_picker || cli.fork_picker || cli.agents_overview {
+        startup_draft::StartupDraftInitialScreen::SessionPicker
+    } else if explicit_remote_endpoint.is_none()
+        && (reuse_implicit_local_daemon || search_only_config_override)
+        && launch_loader_overrides.packaged_defaults_path.is_none()
+        && startup_preflight::should_delay_startup_composer_for_first_login(
+            &ruxex_home,
+            ruxex_config::loader::system_config_toml_file(),
+            || ruxex_config::loader::has_local_managed_configuration(&ruxex_home),
+            |name| std::env::var_os(name),
+        )
+    {
+        startup_draft::StartupDraftInitialScreen::Onboarding
+    } else {
+        startup_draft::StartupDraftInitialScreen::Composer
+    };
+    let session_action = if cli.fork_picker || cli.fork_last || cli.fork_session_id.is_some() {
+        startup_draft::StartupDraftSessionAction::Fork
+    } else if cli.resume_picker || cli.resume_last || cli.resume_session_id.is_some() {
+        startup_draft::StartupDraftSessionAction::Resume
+    } else {
+        startup_draft::StartupDraftSessionAction::New
+    };
+    let mut startup_draft =
+        startup_draft::StartupDraft::new(initial_screen, session_action, brand_profile)?;
+
+    let default_daemon = if explicit_remote_endpoint.is_none() && reuse_implicit_local_daemon {
+        startup_draft
+            .run_until(maybe_probe_default_daemon_socket(&ruxex_home))
+            .await?
+    } else {
+        None
+    };
+    let mut app_server_target = app_server_target_for_launch(
+        explicit_remote_endpoint,
+        default_daemon,
+        reuse_implicit_local_daemon,
+    )?;
+    let remote_cwd_override = cli
+        .cwd
+        .clone()
+        .filter(|_| app_server_target.uses_remote_workspace());
+
+    let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
+    )?;
+    let prepared_environment_manager =
+        if should_load_configured_environments(&loader_overrides, &app_server_target) {
+            startup_draft
+                .run_until(EnvironmentManager::prepare_from_ruxex_home(&ruxex_home))
+                .await?
+        } else {
+            startup_draft
+                .run_until(EnvironmentManager::prepare_from_env())
+                .await?
+        }
+        .map_err(std::io::Error::other)?;
+    if cli.shared.worktree
+        && (app_server_target.uses_remote_workspace()
+            || prepared_environment_manager.default_environment_is_remote())
+    {
+        return Err(std::io::Error::other(
+            "`--worktree` is only supported for local sessions",
+        ));
+    }
+    let cwd = cli.cwd.clone();
+    let config_cwd = config_cwd_for_app_server_target(
+        cwd.as_deref(),
+        &app_server_target,
+        prepared_environment_manager.default_environment_is_remote(),
+    )?;
+    let mut loader_overrides = loader_overrides;
+    if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
+        let user_config_path = resolve_profile_v2_config_path(&ruxex_home, profile_v2);
+        loader_overrides.user_config_path = Some(user_config_path);
+        loader_overrides.user_config_profile = Some(profile_v2.clone());
+    }
+    loader_overrides.ignore_login_requirements = app_server_target.uses_remote_workspace();
+
+    let bootstrap_config = startup_draft
+        .run_until(load_bootstrap_config_or_exit(
+            &ruxex_home,
+            config_cwd.as_ref(),
+            cli_kv_overrides.clone(),
+            loader_overrides.clone(),
+            strict_config,
+        ))
+        .await?;
+    let screen_reader_result = if !loader_overrides.ignore_user_config {
+        startup_draft
+            .run_until(screen_reader::initialize(
+                &bootstrap_config.config_layer_stack,
+            ))
+            .await?
+    } else {
+        Ok(())
+    };
+    let cwd_override = if app_server_target.uses_remote_workspace() {
+        None
+    } else {
+        cwd.clone()
+    };
+
+    let model = cli.model.clone();
+
+    let additional_dirs = cli.add_dir.clone();
+
+    let mut overrides = ConfigOverrides {
+        model,
+        approval_policy,
+        sandbox_mode,
+        cwd: cwd_override,
+        ruxex_self_exe: arg0_paths.ruxex_self_exe.clone(),
+        ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe.clone(),
+        show_raw_agent_reasoning: None,
+        bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
+        additional_writable_roots: additional_dirs,
+        ..Default::default()
+    };
+
+    let mut config = startup_draft
+        .run_until(load_config_or_exit(
+            cli_kv_overrides.clone(),
+            overrides.clone(),
+            loader_overrides.clone(),
+            strict_config,
+        ))
+        .await?;
+    let auto_start_daemon = config.features.enabled(Feature::DaemonAutoStart)
+        && !cli.agents_overview
+        && !cli.no_daemon
+        && !app_server_target.uses_remote_workspace();
+    if auto_start_daemon && daemon_exclusion.is_none() {
+        // The daemon creates its control state under RUXEX_HOME before it starts the
+        // managed app-server. Mount the provider home first so that this startup-created
+        // state cannot make a fresh root look like an uninitialized existing root.
+        ruxex_app_server_client::mount_provider_home_for_config(&config).map_err(|err| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("failed to mount provider data root: {err}"),
+            )
+        })?;
+        startup_draft.flush_pending_events().await?;
+        let output = startup_draft
+            .tui_mut()
+            .with_restored(|| async {
+                // Package installation may print progress; keep ordinary Ctrl+C handling.
+                crossterm::terminal::disable_raw_mode()?;
+                let result = if let Some(executable) = host_executable.as_deref() {
+                    ruxex_app_server_daemon::run_with_host_executable(
+                        ruxex_app_server_daemon::LifecycleCommand::Start,
+                        executable,
+                        &[
+                            std::ffi::OsString::from(super::APP_SERVER_DAEMON_MODE_ARG),
+                            std::ffi::OsString::from("--managed-daemon"),
+                        ],
+                    )
+                    .await
+                } else {
+                    ruxex_app_server_daemon::run(ruxex_app_server_daemon::LifecycleCommand::Start)
+                        .await
+                };
+                daemon_telemetry::record_start(&config, &result).await;
+                result.map_err(|err| {
+                    std::io::Error::other(format!("{err:#}\n{}", daemon_startup::FAILURE_HINT))
+                })
+            })
+            .await?;
+        app_server_target = AppServerTarget::LocalDaemon {
+            endpoint: RemoteAppServerEndpoint::UnixSocket {
+                socket_path: AbsolutePathBuf::from_absolute_path_checked(output.socket_path)?,
+            },
+            allow_embedded_fallback: false,
+        };
+    }
+    startup_draft.apply_config(&config);
+
+    let managed_worktree = if cli.shared.worktree {
+        let (destination, worktree) = startup_draft
+            .run_until(worktree_startup::prepare(
+                &mut cli,
+                config.clone(),
+                &mut overrides,
+                cli_kv_overrides.clone(),
+                loader_overrides.clone(),
+                strict_config,
+                &app_server_target,
+                &arg0_paths,
+            ))
+            .await?
+            .map_err(|err| std::io::Error::other(err.to_string()))?;
+        config = destination;
+        startup_draft.apply_config(&config);
+        Some(worktree)
+    } else {
+        None
+    };
+    let daemon_startup_warning = daemon_exclusion
+        .filter(|_| auto_start_daemon)
+        .map(|reason| {
+            format!(
+                "Running without the shared background server: {reason} requires embedded mode."
+            )
+        });
+    #[cfg(target_os = "macos")]
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
+        ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
+    );
+    let environment_manager = Arc::new(
+        prepared_environment_manager
+            .build(Some(local_runtime_paths), config.http_client_factory())
+            .map_err(std::io::Error::other)?,
+    );
+
+    remove_legacy_tui_log_file(config.ruxex_home.as_path());
+
+    let otel_originator = originator().value;
+    let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        ruxex_app_server_client::build_otel_provider(
+            &config,
+            env!("CARGO_PKG_VERSION"),
+            /*service_name_override*/ None,
+            /*default_metrics_enabled*/ true,
+        )
+    })) {
+        Ok(Ok(otel)) => otel,
+        Ok(Err(e)) => {
+            startup_draft.flush_pending_events().await?;
+            startup_draft
+                .tui_mut()
+                .with_restored(|| async {
+                    #[allow(clippy::print_stderr)]
+                    {
+                        eprintln!("Could not create otel exporter: {e}");
+                    }
+                })
+                .await;
+            None
+        }
+        Err(_) => {
+            #[allow(clippy::print_stderr)]
+            {
+                eprintln!("Could not create otel exporter: panicked during initialization");
+            }
+            startup_draft.tui_mut().recover_after_caught_panic()?;
+            None
+        }
+    };
+    let metrics = otel
+        .as_ref()
+        .and_then(ruxex_otel::OtelProvider::metrics)
+        .cloned();
+    if let Some(metrics) = &metrics {
+        let _ = ruxex_otel::record_process_start_once(metrics, otel_originator.as_str());
+        let telemetry =
+            ruxex_rollout::sqlite_telemetry_recorder(metrics.clone(), otel_originator.as_str());
+        let _ = ruxex_state::install_process_db_telemetry(telemetry);
+    }
+    let selection_reason = match (&app_server_target, daemon_exclusion) {
+        (AppServerTarget::Remote { .. }, _) => "explicit_remote",
+        _ if cli.agents_overview => "agents",
+        (_, Some("--no-daemon")) => "explicit_no_daemon",
+        (_, Some(_)) => "incompatible_option",
+        _ if auto_start_daemon => "auto_start",
+        (AppServerTarget::LocalDaemon { .. }, _) => "existing_daemon",
+        (AppServerTarget::Embedded, None) => "auto_start_disabled",
+    };
+    let daemon_settings = if metrics.is_some() {
+        ruxex_app_server_daemon::telemetry::settings_tags(&config.ruxex_home)
+            .await
+            .to_vec()
+    } else {
+        Vec::new()
+    };
+    let mut launch_tags = daemon_settings.to_vec();
+    launch_tags.extend([
+        ("daemon_selection_reason", selection_reason),
+        (
+            "daemon_auto_start",
+            if config.features.enabled(Feature::DaemonAutoStart) {
+                "enabled"
+            } else {
+                "disabled"
+            },
+        ),
+    ]);
+    // Record the first connection attempt's actual mode, including embedded fallback; never reconnects.
+    let launch_telemetry = move |target: &AppServerTarget, connected: bool| {
+        let Some(metrics) = metrics else { return };
+        let app_server_mode = match (connected, target) {
+            (false, _) => "unconfirmed",
+            (true, AppServerTarget::Embedded) => "in_process",
+            (true, AppServerTarget::LocalDaemon { .. }) => "local_daemon",
+            (true, AppServerTarget::Remote { .. }) => "remote",
+        };
+        // Use a fixed category, not the versioned or user-provided terminal identifier.
+        let terminal_info = ruxex_terminal_detection::terminal_info();
+        let terminal_name = match terminal_info.name {
+            TerminalName::AppleTerminal => "apple_terminal",
+            TerminalName::Ghostty => "ghostty",
+            TerminalName::Iterm2 => "iterm2",
+            TerminalName::WarpTerminal => "warp",
+            TerminalName::VsCode => "vscode",
+            TerminalName::WezTerm => "wezterm",
+            TerminalName::Kitty => "kitty",
+            TerminalName::Alacritty => "alacritty",
+            TerminalName::Konsole => "konsole",
+            TerminalName::GnomeTerminal => "gnome_terminal",
+            TerminalName::Vte => "vte",
+            TerminalName::Dumb => "dumb",
+            TerminalName::Unknown => "unknown",
+        };
+        let multiplexer = match terminal_info.multiplexer {
+            Some(Multiplexer::Tmux { .. }) => "tmux",
+            Some(Multiplexer::Zellij { .. }) => "zellij",
+            None => "none",
+        };
+        launch_tags.extend([
+            ("app_server_mode", app_server_mode),
+            ("terminal_name", terminal_name),
+            ("multiplexer", multiplexer),
+        ]);
+        let _ = metrics.counter("ruxex.tui.start", /*inc*/ 1, &launch_tags);
+    };
+    let launch_telemetry = daemon_telemetry::Launch(Some(launch_telemetry));
+    let state_db = startup_draft
+        .run_until(init_state_db_for_app_server_target(
+            &config,
+            &app_server_target,
+        ))
+        .await??;
+    let config_toml_log_dir_configured = config
+        .config_layer_stack
+        .effective_config()
+        .as_table()
+        .is_some_and(|table| table.contains_key("log_dir"))
+        || config
+            .config_layer_stack
+            .requirements_toml()
+            .log_dir
+            .is_some();
+
+    set_default_client_residency_requirement(config.enforce_residency.value());
+
+    if let Some(warning) = add_dir_warning_message(
+        &cli.add_dir,
+        &config.permissions.effective_permission_profile(),
+        config.cwd.as_path(),
+    ) {
+        #[allow(clippy::print_stderr)]
+        {
+            restore_terminal_before_fatal_exit();
+            eprintln!("Error adding directories: {warning}");
+            if let Some(worktree) = managed_worktree.as_ref() {
+                worktree.report_startup_failure();
+            }
+            launch_telemetry.record(&app_server_target, /*connected*/ false);
+            if let Some(otel) = otel {
+                let _ = otel
+                    .shutdown_with_timeout(INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT)
+                    .await;
+            }
+            std::process::exit(1);
+        }
+    }
+
+    if !app_server_target.uses_remote_workspace() {
+        #[allow(clippy::print_stderr)]
+        if let Err(err) = startup_draft
+            .run_until(enforce_login_restrictions(&config.auth_config()))
+            .await?
+        {
+            restore_terminal_before_fatal_exit();
+            eprintln!("{err}");
+            if let Some(worktree) = managed_worktree.as_ref() {
+                worktree.report_startup_failure();
+            }
+            launch_telemetry.record(&app_server_target, /*connected*/ false);
+            if let Some(otel) = otel {
+                let _ = otel
+                    .shutdown_with_timeout(INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT)
+                    .await;
+            }
+            std::process::exit(1);
+        }
+    }
+
+    let (tui_file_layer, _tui_file_log_guard) = if config_toml_log_dir_configured {
+        let log_dir = config.log_dir.clone();
+        std::fs::create_dir_all(&log_dir)?;
+        let mut log_file_opts = OpenOptions::new();
+        log_file_opts.create(true).append(true);
+
+        // Ensure the file is only readable and writable by the current user.
+        // Doing the equivalent to `chmod 600` on Windows is quite a bit more
+        // code and requires the Windows API crates.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            log_file_opts.mode(0o600);
+        }
+
+        let log_file = log_file_opts.open(log_dir.join(TUI_LOG_FILE_NAME))?;
+        let (non_blocking, guard) = non_blocking(log_file);
+        let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+            EnvFilter::new("ruxex_core=info,ruxex_tui=info,ruxex_rmcp_client=info")
+        });
+        let file_layer = tracing_subscriber::fmt::layer()
+            .with_writer(non_blocking)
+            .with_target(true)
+            .with_ansi(false)
+            .with_span_events(
+                tracing_subscriber::fmt::format::FmtSpan::NEW
+                    | tracing_subscriber::fmt::format::FmtSpan::CLOSE,
+            )
+            .with_filter(env_filter);
+        (Some(file_layer), Some(guard))
+    } else {
+        (None, None)
+    };
+
+    let otel_logger_layer = otel.as_ref().and_then(|o| o.logger_layer());
+
+    let otel_tracing_layer = otel.as_ref().and_then(|o| o.tracing_layer());
+
+    let log_db = state_db.clone().map(log_db::start);
+    let log_db_layer = log_db
+        .clone()
+        .map(|layer| layer.with_filter(log_db::default_filter()));
+
+    let _ = tracing_subscriber::registry()
+        .with(tui_file_layer)
+        .with(log_db_layer)
+        .with(otel_logger_layer)
+        .with(otel_tracing_layer)
+        .try_init();
+
+    if let Err(err) = screen_reader_result {
+        tracing::warn!("Could not save screen-reader detection: {err}");
+    }
+
+    let app_result = run_ratatui_app(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        strict_config,
+        app_server_target,
+        remote_cwd_override,
+        config,
+        overrides,
+        cli_kv_overrides,
+        log_db,
+        state_db,
+        environment_manager,
+        managed_worktree.clone(),
+        daemon_startup_warning,
+        launch_telemetry,
+        startup_draft,
+        provider_factory,
+    )
+    .await
+    .map_err(|err| {
+        err.downcast::<std::io::Error>()
+            .unwrap_or_else(|err| std::io::Error::other(err.to_string()))
+    });
+
+    if let Some(worktree) = managed_worktree.as_ref() {
+        worktree.report_startup_failure();
+    }
+
+    if let Some(otel) = otel
+        && let Err(err) = otel
+            .shutdown_with_timeout(INTERACTIVE_OTEL_SHUTDOWN_TIMEOUT)
+            .await
+    {
+        warn!(error = %err, "failed to finish interactive telemetry shutdown");
+    }
+
+    app_result
+}

@@ -1,0 +1,22 @@
+---
+source: crates/core/src/context/world_state/collaboration_mode_tests.rs
+assertion_line: 27
+expression: "render_section_cases(&[(Absent, Absent), (Absent, Known(&default)),\n(Known(&default), Known(&default)),\n(Known(&old_default), Known(&new_default)), (Known(&default), Known(&plan)),\n(Unknown, Known(&default)),])"
+---
+Absent -> Absent
+None
+
+Absent -> {"instructions":"12c90a2155849191651aeb84f07ae0edfaa93d31","mode":"default","model":"test-model"} (role - developer)
+<collaboration_mode>pair with the user</collaboration_mode>
+
+{"instructions":"12c90a2155849191651aeb84f07ae0edfaa93d31","mode":"default","model":"test-model"} -> {"instructions":"12c90a2155849191651aeb84f07ae0edfaa93d31","mode":"default","model":"test-model"}
+None
+
+{"instructions":"442500f237768b8ee2f21fb5639f41df76ba7b52","mode":"default","model":"test-model"} -> {"instructions":"9e49940d7039ac6318dce8210bd78d10408c44c7","mode":"default","model":"test-model"} (role - developer)
+<collaboration_mode>new instructions</collaboration_mode>
+
+{"instructions":"12c90a2155849191651aeb84f07ae0edfaa93d31","mode":"default","model":"test-model"} -> {"instructions":"351b0e1d3324ebb9dc2facaca38adcf30d17c608","mode":"plan","model":"test-model"} (role - developer)
+<collaboration_mode>make a plan</collaboration_mode>
+
+Unknown -> {"instructions":"12c90a2155849191651aeb84f07ae0edfaa93d31","mode":"default","model":"test-model"} (role - developer)
+<collaboration_mode>pair with the user</collaboration_mode>

@@ -1,0 +1,165 @@
+//! Catalogs must follow auth and provider changes without leaking default billing tiers.
+
+use std::sync::Arc;
+
+use anyhow::Result;
+use core_test_support::responses;
+use core_test_support::responses::ev_completed;
+use core_test_support::responses::ev_response_created;
+use core_test_support::responses::sse;
+use core_test_support::test_ruxex::test_ruxex;
+use ruxex_login::AuthCredentialsStoreMode;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::RuxexAuth;
+use ruxex_login::login_with_api_key;
+use ruxex_models_manager::manager::RefreshStrategy;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelVisibility;
+use pretty_assertions::assert_eq;
+use tempfile::TempDir;
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn auth_and_provider_switches_do_not_reuse_managed_catalog() -> Result<()> {
+    let server = wiremock::MockServer::start().await;
+    let home = Arc::new(TempDir::new()?);
+    let mut model = test_models_response()?
+        .models
+        .into_iter()
+        .find(|model| model.slug == "example-model")
+        .unwrap();
+    model.visibility = ModelVisibility::List;
+    model.default_service_tier = Some("flex".into());
+    let models_mock = responses::mount_models_once(
+        &server,
+        ModelCatalog {
+            models: vec![model.clone()],
+        },
+    )
+    .await;
+    let managed = test_ruxex()
+        .with_home(home.clone())
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
+        .with_model("example-model")
+        .build_with_auto_env(&server)
+        .await?;
+    assert!(home.path().join("models_cache.json").exists());
+    assert_eq!(
+        managed
+            .thread_manager
+            .get_models_manager()
+            .get_remote_models()
+            .await,
+        vec![model.clone()]
+    );
+    login_with_api_key(
+        home.path(),
+        "api-key",
+        AuthCredentialsStoreMode::File,
+        AuthKeyringBackendKind::default(),
+    )?;
+    let credential_manager = ruxex_core::test_support::credential_manager_from_auth_with_home(
+        RuxexAuth::from_api_key("api-key"),
+        home.path().to_path_buf(),
+    );
+    assert!(credential_manager.reload().await);
+    let manager = managed.thread_manager.get_models_manager();
+    let bundled = test_models_response()?.models;
+    assert_eq!(manager.get_remote_models().await, bundled);
+    assert_eq!(
+        manager
+            .raw_model_catalog(
+                RefreshStrategy::Offline,
+                ruxex_core::test_support::default_http_client_factory()
+            )
+            .await
+            .models,
+        bundled
+    );
+    assert_eq!(models_mock.requests().len(), 1);
+    drop(managed);
+    server.reset().await;
+
+    let mut api_model = model.clone();
+    api_model.default_service_tier = None;
+    let api_models_mock = responses::mount_models_once(
+        &server,
+        ModelCatalog {
+            models: vec![api_model],
+        },
+    )
+    .await;
+    let api = test_ruxex()
+        .with_home(home.clone())
+        .with_auth(RuxexAuth::from_api_key("api-key"))
+        .with_config(|config| {
+            config
+                .features
+                .enable(ruxex_features::Feature::ApiKeyModelDiscovery)
+                .expect("enable API-key model discovery");
+        })
+        .with_model("example-model")
+        .build_with_auto_env(&server)
+        .await?;
+    let ordinary = responses::mount_sse_once(
+        &server,
+        sse(vec![
+            ev_response_created("ordinary"),
+            ev_completed("ordinary"),
+        ]),
+    )
+    .await;
+    api.submit_turn("hello").await?;
+    assert_eq!(
+        ordinary.single_request().body_json().get("service_tier"),
+        None
+    );
+
+    let explicit = responses::mount_sse_once(
+        &server,
+        sse(vec![
+            ev_response_created("explicit"),
+            ev_completed("explicit"),
+        ]),
+    )
+    .await;
+    api.submit_turn_with_service_tier("hello again", Some("flex"))
+        .await?;
+    assert_eq!(
+        explicit.single_request().body_json()["service_tier"],
+        "flex"
+    );
+    assert_eq!(api_models_mock.requests().len(), 1);
+    drop(api);
+
+    let other_server = wiremock::MockServer::start().await;
+    model.default_service_tier = None;
+    model.display_name = "Second provider model".into();
+    let other_models = responses::mount_models_once(
+        &other_server,
+        ModelCatalog {
+            models: vec![model.clone()],
+        },
+    )
+    .await;
+    let other = test_ruxex()
+        .with_home(home)
+        .with_auth(RuxexAuth::from_api_key("test-api-key"))
+        .with_model("example-model")
+        .with_config(|config| {
+            config.model_provider_id = "second".into();
+            config.model_provider.name = "Second".into();
+        })
+        .build_with_auto_env(&other_server)
+        .await?;
+    assert_eq!(
+        other
+            .thread_manager
+            .get_models_manager()
+            .get_remote_models()
+            .await,
+        vec![model]
+    );
+    assert_eq!(other_models.requests().len(), 1);
+    Ok(())
+}

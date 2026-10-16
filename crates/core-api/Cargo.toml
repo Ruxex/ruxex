@@ -1,0 +1,31 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-core-api"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "ruxex_core_api"
+path = "src/lib.rs"
+test = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-app-server-protocol = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-home = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }

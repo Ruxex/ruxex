@@ -1,0 +1,424 @@
+use std::collections::BTreeMap;
+
+use ruxex_config::Constrained;
+use ruxex_config::ConstrainedWithSource;
+use ruxex_config::ConstraintError;
+use ruxex_config::ConstraintResult;
+use ruxex_config::FeatureRequirementsToml;
+use ruxex_config::RequirementSource;
+use ruxex_config::Sourced;
+
+use ruxex_config::config_toml::ConfigToml;
+use ruxex_features::Feature;
+use ruxex_features::FeatureConfigSource;
+use ruxex_features::FeatureOverrides;
+use ruxex_features::Features;
+use ruxex_features::canonical_feature_for_key;
+use ruxex_features::feature_for_key;
+
+/// Wrapper around [`Features`] which enforces constraints defined in
+/// `FeatureRequirementsToml` and provides normalization to ensure constraints
+/// are satisfied. Constraints are enforced on construction and mutation of
+/// `ManagedFeatures`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ManagedFeatures {
+    value: ConstrainedWithSource<Features>,
+    pinned_features: BTreeMap<Feature, bool>,
+}
+
+impl Default for ManagedFeatures {
+    fn default() -> Self {
+        Self {
+            value: ConstrainedWithSource::new(
+                Constrained::allow_any(Features::default()),
+                /*source*/ None,
+            ),
+            pinned_features: BTreeMap::new(),
+        }
+    }
+}
+
+impl ManagedFeatures {
+    pub(crate) fn from_configured(
+        configured_features: Features,
+        feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
+    ) -> std::io::Result<Self> {
+        Self::from_configured_with_optional_warnings(
+            configured_features,
+            feature_requirements,
+            /*startup_warnings*/ None,
+        )
+    }
+
+    /// Applies managed feature requirements and dependency normalization to
+    /// configured features, collecting warnings for unsupported requirements.
+    pub fn from_configured_with_warnings(
+        configured_features: Features,
+        feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
+        startup_warnings: &mut Vec<String>,
+    ) -> std::io::Result<Self> {
+        Self::from_configured_with_optional_warnings(
+            configured_features,
+            feature_requirements,
+            Some(startup_warnings),
+        )
+    }
+
+    fn from_configured_with_optional_warnings(
+        configured_features: Features,
+        feature_requirements: Option<Sourced<FeatureRequirementsToml>>,
+        startup_warnings: Option<&mut Vec<String>>,
+    ) -> std::io::Result<Self> {
+        let (pinned_features, source) = match feature_requirements {
+            Some(Sourced {
+                value: feature_requirements,
+                source,
+            }) => (
+                parse_feature_requirements(feature_requirements, &source, startup_warnings),
+                Some(source),
+            ),
+            None => (BTreeMap::new(), None),
+        };
+
+        let normalized_features = normalize_candidate(configured_features, &pinned_features);
+        validate_pinned_features(&normalized_features, &pinned_features, source.as_ref())?;
+        Ok(Self {
+            value: ConstrainedWithSource::new(Constrained::allow_any(normalized_features), source),
+            pinned_features,
+        })
+    }
+
+    pub fn get(&self) -> &Features {
+        self.value.get()
+    }
+
+    fn normalize_and_validate(&self, candidate: Features) -> ConstraintResult<Features> {
+        let normalized = normalize_candidate(candidate, &self.pinned_features);
+        self.value.can_set(&normalized)?;
+        validate_pinned_features_constraint(
+            &normalized,
+            &self.pinned_features,
+            self.value.source.as_ref(),
+        )?;
+        Ok(normalized)
+    }
+
+    pub fn can_set(&self, candidate: &Features) -> ConstraintResult<()> {
+        self.normalize_and_validate(candidate.clone()).map(|_| ())
+    }
+
+    pub fn set(&mut self, candidate: Features) -> ConstraintResult<()> {
+        let normalized = self.normalize_and_validate(candidate)?;
+        self.value.value.set(normalized)
+    }
+
+    pub fn set_enabled(&mut self, feature: Feature, enabled: bool) -> ConstraintResult<()> {
+        let mut next = self.get().clone();
+        next.set_enabled(feature, enabled);
+        self.set(next)
+    }
+
+    pub fn enable(&mut self, feature: Feature) -> ConstraintResult<()> {
+        self.set_enabled(feature, /*enabled*/ true)
+    }
+
+    pub fn disable(&mut self, feature: Feature) -> ConstraintResult<()> {
+        self.set_enabled(feature, /*enabled*/ false)
+    }
+}
+
+/// Only available for tests to ensure `ManagedFeatures` is constructed with
+/// any required constraints taken into account.
+#[cfg(test)]
+impl From<Features> for ManagedFeatures {
+    fn from(features: Features) -> Self {
+        Self {
+            value: ConstrainedWithSource::new(
+                Constrained::allow_any(features),
+                /*source*/ None,
+            ),
+            pinned_features: BTreeMap::new(),
+        }
+    }
+}
+
+impl std::ops::Deref for ManagedFeatures {
+    type Target = Features;
+
+    fn deref(&self) -> &Self::Target {
+        self.get()
+    }
+}
+
+fn normalize_candidate(
+    mut candidate: Features,
+    pinned_features: &BTreeMap<Feature, bool>,
+) -> Features {
+    // Legacy user opt-outs selected the removed shell backend. Only managed
+    // requirements may disable the remaining unified-exec implementation.
+    if !pinned_features.contains_key(&Feature::UnifiedExec) {
+        candidate.enable(Feature::UnifiedExec);
+    }
+
+    for (feature, enabled) in pinned_features {
+        candidate.set_enabled(*feature, *enabled);
+    }
+    candidate.normalize_dependencies();
+    candidate
+}
+
+fn validate_pinned_features_constraint(
+    normalized_features: &Features,
+    pinned_features: &BTreeMap<Feature, bool>,
+    source: Option<&RequirementSource>,
+) -> ConstraintResult<()> {
+    let Some(source) = source else {
+        return Ok(());
+    };
+    let allowed = feature_requirements_display(pinned_features);
+    for (feature, enabled) in pinned_features {
+        if normalized_features.enabled(*feature) != *enabled {
+            return Err(ConstraintError::InvalidValue {
+                field_name: "features",
+                candidate: format!(
+                    "{}={}",
+                    feature.key(),
+                    normalized_features.enabled(*feature)
+                ),
+                allowed,
+                requirement_source: source.clone(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_pinned_features(
+    normalized_features: &Features,
+    pinned_features: &BTreeMap<Feature, bool>,
+    source: Option<&RequirementSource>,
+) -> std::io::Result<()> {
+    validate_pinned_features_constraint(normalized_features, pinned_features, source)
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))
+}
+
+fn feature_requirements_display(feature_requirements: &BTreeMap<Feature, bool>) -> String {
+    let values = feature_requirements
+        .iter()
+        .map(|(feature, enabled)| format!("{}={enabled}", feature.key()))
+        .collect::<Vec<_>>();
+    format!("[{}]", values.join(", "))
+}
+
+fn parse_feature_requirements(
+    feature_requirements: FeatureRequirementsToml,
+    source: &RequirementSource,
+    mut startup_warnings: Option<&mut Vec<String>>,
+) -> BTreeMap<Feature, bool> {
+    let mut pinned_features = BTreeMap::new();
+    for (key, enabled) in feature_requirements.entries {
+        if let Some(feature) = canonical_feature_for_key(&key) {
+            pinned_features.insert(feature, enabled);
+            continue;
+        }
+
+        if let Some(feature) = feature_for_key(&key) {
+            push_feature_requirement_warning(
+                &mut startup_warnings,
+                format!(
+                    "Using legacy `features` requirement `{key}` from {source}; prefer canonical feature key `{}`",
+                    feature.key()
+                ),
+            );
+            pinned_features.insert(feature, enabled);
+            continue;
+        }
+
+        push_feature_requirement_warning(
+            &mut startup_warnings,
+            format!("Ignoring unknown `features` requirement `{key}` from {source}"),
+        );
+    }
+
+    pinned_features
+}
+
+fn push_feature_requirement_warning(
+    startup_warnings: &mut Option<&mut Vec<String>>,
+    message: String,
+) {
+    tracing::warn!("{message}");
+    if let Some(startup_warnings) = startup_warnings.as_deref_mut() {
+        startup_warnings.push(message);
+    }
+}
+
+fn explicit_feature_settings_in_config(cfg: &ConfigToml) -> Vec<(String, Feature, bool)> {
+    let mut explicit_settings = Vec::new();
+
+    if let Some(features) = cfg.features.as_ref() {
+        for (key, enabled) in features.entries() {
+            if let Some(feature) = feature_for_key(&key) {
+                explicit_settings.push((format!("features.{key}"), feature, enabled));
+            }
+        }
+    }
+    explicit_settings
+}
+
+pub(crate) fn validate_explicit_feature_settings_in_config_toml(
+    cfg: &ConfigToml,
+    feature_requirements: Option<&Sourced<FeatureRequirementsToml>>,
+) -> std::io::Result<()> {
+    let Some(Sourced {
+        value: feature_requirements,
+        source,
+    }) = feature_requirements
+    else {
+        return Ok(());
+    };
+
+    let pinned_features = parse_feature_requirements(
+        feature_requirements.clone(),
+        source,
+        /*startup_warnings*/ None,
+    );
+    if pinned_features.is_empty() {
+        return Ok(());
+    }
+
+    let allowed = feature_requirements_display(&pinned_features);
+    for (path, feature, enabled) in explicit_feature_settings_in_config(cfg) {
+        if pinned_features
+            .get(&feature)
+            .is_some_and(|required| *required != enabled)
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                ConstraintError::InvalidValue {
+                    field_name: "features",
+                    candidate: format!("{path}={enabled}"),
+                    allowed,
+                    requirement_source: source.clone(),
+                },
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+pub(crate) fn validate_feature_requirements_in_config_toml(
+    cfg: &ConfigToml,
+    feature_requirements: Option<&Sourced<FeatureRequirementsToml>>,
+) -> std::io::Result<()> {
+    let configured_features = Features::from_sources(
+        FeatureConfigSource {
+            features: cfg.features.as_ref(),
+        },
+        FeatureConfigSource::default(),
+        FeatureOverrides::default(),
+    );
+    ManagedFeatures::from_configured(configured_features, feature_requirements.cloned()).map(|_| ())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_config::RequirementSource;
+    use ruxex_config::Sourced;
+    use ruxex_features::FeaturesToml;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn normalizes_unified_exec_and_feature_dependencies() {
+        let mut configured = Features::default();
+        configured.set_enabled(Feature::UnifiedExec, false);
+        configured.set_enabled(Feature::CodeModeOnly, true);
+
+        let managed = ManagedFeatures::from_configured(configured, None)
+            .expect("unconstrained features should be accepted");
+
+        assert!(managed.enabled(Feature::UnifiedExec));
+        assert!(managed.enabled(Feature::CodeModeOnly));
+        assert!(managed.enabled(Feature::CodeMode));
+    }
+
+    #[test]
+    fn pinned_features_override_user_values_and_reject_conflicts() {
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([
+                    ("code_mode".to_string(), false),
+                    ("unified_exec".to_string(), true),
+                ]),
+            },
+            RequirementSource::Unknown,
+        );
+        let mut configured = Features::default();
+        configured.set_enabled(Feature::CodeMode, true);
+        configured.set_enabled(Feature::UnifiedExec, false);
+
+        let mut managed = ManagedFeatures::from_configured(configured, Some(requirements))
+            .expect("managed values should be normalized");
+        assert!(!managed.enabled(Feature::CodeMode));
+        assert!(managed.enabled(Feature::UnifiedExec));
+
+        managed
+            .enable(Feature::CodeMode)
+            .expect("managed requirements normalize user changes");
+        assert!(!managed.enabled(Feature::CodeMode));
+    }
+
+    #[test]
+    fn legacy_and_unknown_requirement_keys_are_reported() {
+        let mut warnings = Vec::new();
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([
+                    ("web_search".to_string(), false),
+                    ("not_a_feature".to_string(), true),
+                ]),
+            },
+            RequirementSource::Unknown,
+        );
+
+        let _ = ManagedFeatures::from_configured_with_warnings(
+            Features::default(),
+            Some(requirements),
+            &mut warnings,
+        )
+        .expect("legacy requirements should remain supported");
+
+        assert_eq!(warnings.len(), 2);
+        assert!(warnings.iter().any(|warning| warning.contains("legacy")));
+        assert!(
+            warnings
+                .iter()
+                .any(|warning| warning.contains("Ignoring unknown"))
+        );
+    }
+
+    #[test]
+    fn validates_explicit_feature_settings_against_requirements() {
+        let cfg = ConfigToml {
+            features: Some(FeaturesToml::from(BTreeMap::from([(
+                "code_mode".to_string(),
+                true,
+            )]))),
+            ..Default::default()
+        };
+        let requirements = Sourced::new(
+            FeatureRequirementsToml {
+                entries: BTreeMap::from([("code_mode".to_string(), false)]),
+            },
+            RequirementSource::Unknown,
+        );
+
+        let error = validate_explicit_feature_settings_in_config_toml(&cfg, Some(&requirements))
+            .expect_err("explicit conflicting feature should be rejected");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("features.code_mode"));
+    }
+}

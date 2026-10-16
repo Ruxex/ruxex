@@ -1,0 +1,9 @@
+[[production]]
+package = "ruxex-cli"
+bin = "ruxex"
+reason = "ruxex CLI binary"
+
+[[production]]
+package = "ruxex-app-server"
+bin = "ruxex-app-server"
+reason = "Ruxex app-server binary"

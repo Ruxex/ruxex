@@ -1,0 +1,1592 @@
+#![recursion_limit = "256"]
+#![deny(clippy::print_stdout, clippy::print_stderr)]
+
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_code_mode::CodeModeSessionProvider;
+use ruxex_code_mode::GrpcCodeModeSessionProvider;
+use ruxex_config::LoaderOverrides;
+use ruxex_config::NoopThreadConfigLoader;
+use ruxex_core::config::Config;
+use ruxex_core::config::UnsupportedUntrustedApprovalPolicyError;
+use ruxex_core::resolve_installation_id;
+#[cfg(debug_assertions)]
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_cli::CliConfigOverrides;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::io::ErrorKind;
+use std::io::Result as IoResult;
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::sync::atomic::AtomicBool;
+
+use crate::config_manager::ConfigManager;
+use crate::connection_cleanup::ConnectionCleanupTasks;
+use crate::message_processor::MessageProcessor;
+use crate::message_processor::MessageProcessorArgs;
+use crate::outgoing_message::ConnectionId;
+use crate::outgoing_message::OutgoingEnvelope;
+use crate::outgoing_message::OutgoingMessageSender;
+use crate::outgoing_message::QueuedOutgoingMessage;
+use crate::plugin_config_reload::PluginStartupConfig;
+use crate::runtime::configured_app_server_runtime;
+use crate::runtime::mount_provider_home_for_runtime;
+use crate::transport::CHANNEL_CAPACITY;
+use crate::transport::ConnectionOrigin;
+use crate::transport::ConnectionState;
+use crate::transport::DaemonShutdownAccess;
+use crate::transport::OutboundConnectionState;
+use crate::transport::TransportEvent;
+use crate::transport::acquire_app_server_startup_lock;
+use crate::transport::app_server_startup_lock_path;
+use crate::transport::auth::policy_from_settings;
+use crate::transport::route_outgoing_envelope;
+use crate::transport::start_control_socket_acceptor;
+use crate::transport::start_stdio_connection;
+use crate::transport::start_websocket_acceptor;
+use ruxex_app_server_protocol::ConfigWarningNotification;
+use ruxex_app_server_protocol::JSONRPCMessage;
+use ruxex_app_server_protocol::TextPosition as AppTextPosition;
+use ruxex_app_server_protocol::TextRange as AppTextRange;
+use ruxex_app_server_transport::daemon_recovery_file_path;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::ConfigLoadError;
+use ruxex_config::TextRange as CoreTextRange;
+use ruxex_core::ExecPolicyError;
+use ruxex_core::check_execpolicy_for_warnings;
+use ruxex_core::config::find_ruxex_home;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_features::Feature;
+use ruxex_login::CredentialManager;
+use ruxex_model_provider::mount_provider_home;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_rollout::state_db as rollout_state_db;
+use ruxex_state::log_db;
+use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
+use tracing::error;
+use tracing::info;
+use tracing::warn;
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::Layer;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::registry::Registry;
+use tracing_subscriber::util::SubscriberInitExt;
+
+const SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY: &str = "Ruxex rebuilt its local database.";
+
+fn is_unsupported_untrusted_approval_policy_error(err: &std::io::Error) -> bool {
+    err.get_ref().is_some_and(
+        <dyn std::error::Error + Send + Sync + 'static>::is::<
+            UnsupportedUntrustedApprovalPolicyError,
+        >,
+    )
+}
+
+mod app_server_tracing;
+mod attestation;
+mod bespoke_event_handling;
+mod code_mode_host;
+mod command_exec;
+mod config_layer;
+mod config_manager;
+mod config_manager_service;
+mod connection_cleanup;
+mod connection_rpc_gate;
+mod current_time;
+mod daemon_thread_recovery;
+mod dynamic_tools;
+mod effective_plugin_change;
+mod error_code;
+mod extensions;
+mod filters;
+mod fs_watch;
+mod fuzzy_file_search;
+mod image_url;
+pub mod in_process;
+mod mcp_refresh;
+mod message_processor;
+mod models;
+mod models_refresh_worker;
+mod notification_media;
+mod otel_reloader;
+mod outgoing_message;
+mod plugin_config_reload;
+mod request_processors;
+mod request_serialization;
+pub mod runtime;
+mod ruxex_home_metrics;
+mod server_request_error;
+mod skills_watcher;
+mod thread_state;
+mod thread_status;
+mod transport;
+mod turn_admission;
+mod turn_cost_worker;
+mod user_verification;
+mod user_verification_response;
+
+pub use crate::code_mode_host::AppServerCodeModeHostArgs;
+pub use crate::code_mode_host::CodeModeHostTransport;
+pub use crate::error_code::INPUT_TOO_LARGE_ERROR_CODE;
+pub use crate::error_code::INVALID_PARAMS_ERROR_CODE;
+pub use crate::runtime::provider_init_from_config;
+pub use crate::runtime::{AppServerRuntime, AppServerRuntimeBuilder};
+pub use crate::transport::AppServerTransport;
+pub use crate::transport::app_server_control_socket_path;
+pub use crate::transport::auth::AppServerWebsocketAuthArgs;
+pub use crate::transport::auth::AppServerWebsocketAuthSettings;
+pub use crate::transport::auth::WebsocketAuthCliMode;
+pub use ruxex_model_provider::{ModelProviderFactory, ProviderDescriptor, ProviderInit};
+
+pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+
+const LOG_FORMAT_ENV_VAR: &str = "LOG_FORMAT";
+const OTEL_SERVICE_NAME: &str = "ruxex-app-server";
+#[cfg(debug_assertions)]
+const TEST_USER_CONFIG_FILE_ENV_VAR: &str = "RUXEX_APP_SERVER_TEST_USER_CONFIG_FILE";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LogFormat {
+    Default,
+    Json,
+}
+
+type StderrLogLayer = Box<dyn Layer<Registry> + Send + Sync + 'static>;
+
+/// Control-plane messages from the processor/transport side to the outbound router task.
+///
+/// `run_main_with_transport_options` uses two loops/tasks:
+/// - processor loop: handles incoming JSON-RPC and request dispatch
+/// - outbound loop: performs potentially slow writes to per-connection writers
+///
+/// `OutboundControlEvent` keeps those loops coordinated without sharing mutable
+/// connection state directly. In particular, the outbound loop needs to know
+/// when a connection opens/closes so it can route messages correctly.
+enum OutboundControlEvent {
+    /// Register a new writer for an opened connection.
+    Opened {
+        connection_id: ConnectionId,
+        writer: mpsc::Sender<QueuedOutgoingMessage>,
+        disconnect_sender: Option<CancellationToken>,
+        initialized: Arc<AtomicBool>,
+        experimental_api_enabled: Arc<AtomicBool>,
+        opted_out_notification_methods: Arc<RwLock<HashSet<String>>>,
+    },
+    /// Remove state for a closed/disconnected connection.
+    Closed { connection_id: ConnectionId },
+    /// Disconnect all connection-oriented clients during graceful restart.
+    DisconnectAll,
+}
+
+#[derive(Default)]
+struct ShutdownState {
+    requested: bool,
+    forced: bool,
+    last_logged_running_turn_count: Option<usize>,
+}
+
+enum ShutdownAction {
+    Noop,
+    Finish,
+}
+
+#[derive(Clone, Copy)]
+enum ShutdownSignal {
+    Forceable,
+    #[cfg(unix)]
+    GracefulOnly,
+}
+
+async fn shutdown_signal() -> IoResult<ShutdownSignal> {
+    #[cfg(unix)]
+    {
+        use tokio::signal::unix::SignalKind;
+        use tokio::signal::unix::signal;
+
+        let mut term = signal(SignalKind::terminate())?;
+        let mut hangup = signal(SignalKind::hangup())?;
+        tokio::select! {
+            ctrl_c_result = tokio::signal::ctrl_c() => ctrl_c_result.map(|_| ShutdownSignal::Forceable),
+            _ = term.recv() => Ok(ShutdownSignal::Forceable),
+            _ = hangup.recv() => Ok(ShutdownSignal::GracefulOnly),
+        }
+    }
+}
+
+impl ShutdownState {
+    fn requested(&self) -> bool {
+        self.requested
+    }
+
+    fn forced(&self) -> bool {
+        self.forced
+    }
+
+    fn on_signal(
+        &mut self,
+        signal: ShutdownSignal,
+        connection_count: usize,
+        running_turn_count: usize,
+        turn_admission: &turn_admission::TurnAdmission,
+    ) {
+        if self.requested {
+            if matches!(signal, ShutdownSignal::Forceable) {
+                self.forced = true;
+            }
+            return;
+        }
+
+        turn_admission.begin_drain();
+        self.requested = true;
+        self.last_logged_running_turn_count = None;
+        info!(
+            "received shutdown signal; entering graceful restart drain (connections={}, runningAssistantTurns={}, new client turns rejected)",
+            connection_count, running_turn_count,
+        );
+    }
+
+    fn update(
+        &mut self,
+        running_turn_count: usize,
+        active_admissions: usize,
+        connection_count: usize,
+    ) -> ShutdownAction {
+        if !self.requested {
+            return ShutdownAction::Noop;
+        }
+
+        if self.forced || (running_turn_count == 0 && active_admissions == 0) {
+            if self.forced {
+                info!(
+                    "received second shutdown signal; forcing restart with {running_turn_count} running assistant turn(s) and {connection_count} connection(s)"
+                );
+            } else {
+                info!(
+                    "shutdown signal restart: no assistant turns running; stopping acceptor and disconnecting {connection_count} connection(s)"
+                );
+            }
+            return ShutdownAction::Finish;
+        }
+
+        if self.last_logged_running_turn_count != Some(running_turn_count) {
+            info!(
+                "shutdown signal restart: waiting for {running_turn_count} running assistant turn(s) and {active_admissions} admitted request(s) to finish"
+            );
+            self.last_logged_running_turn_count = Some(running_turn_count);
+        }
+
+        ShutdownAction::Noop
+    }
+}
+
+fn config_warning_from_error(
+    summary: impl Into<String>,
+    err: &std::io::Error,
+) -> ConfigWarningNotification {
+    let (path, range) = match config_error_location(err) {
+        Some((path, range)) => (Some(path), Some(range)),
+        None => (None, None),
+    };
+    ConfigWarningNotification {
+        summary: summary.into(),
+        details: Some(err.to_string()),
+        path,
+        range,
+    }
+}
+
+fn config_error_location(err: &std::io::Error) -> Option<(String, AppTextRange)> {
+    err.get_ref()
+        .and_then(|err| err.downcast_ref::<ConfigLoadError>())
+        .map(|err| {
+            let config_error = err.config_error();
+            (
+                config_error.path.to_string_lossy().to_string(),
+                app_text_range(&config_error.range),
+            )
+        })
+}
+
+fn exec_policy_warning_location(err: &ExecPolicyError) -> (Option<String>, Option<AppTextRange>) {
+    match err {
+        ExecPolicyError::ParsePolicy { path, source } => {
+            if let Some(location) = source.location() {
+                let range = AppTextRange {
+                    start: AppTextPosition {
+                        line: location.range.start.line,
+                        column: location.range.start.column,
+                    },
+                    end: AppTextPosition {
+                        line: location.range.end.line,
+                        column: location.range.end.column,
+                    },
+                };
+                return (Some(location.path), Some(range));
+            }
+            (Some(path.clone()), None)
+        }
+        _ => (None, None),
+    }
+}
+
+fn exec_policy_config_warning(err: &ExecPolicyError) -> ConfigWarningNotification {
+    let (path, range) = exec_policy_warning_location(err);
+    ConfigWarningNotification {
+        summary: "Error parsing rules; custom rules not applied.".to_string(),
+        details: Some(err.to_string()),
+        path,
+        range,
+    }
+}
+
+fn app_text_range(range: &CoreTextRange) -> AppTextRange {
+    AppTextRange {
+        start: AppTextPosition {
+            line: range.start.line,
+            column: range.start.column,
+        },
+        end: AppTextPosition {
+            line: range.end.line,
+            column: range.end.column,
+        },
+    }
+}
+
+fn project_config_warning(config: &Config) -> Option<ConfigWarningNotification> {
+    let mut disabled_folders = Vec::new();
+
+    for layer in config.config_layer_stack.all_layers_low_to_high() {
+        let ConfigLayerSource::Project { dot_ruxex_folder } = &layer.name else {
+            continue;
+        };
+        let Some(disabled_reason) = &layer.disabled_reason else {
+            continue;
+        };
+        disabled_folders.push((
+            dot_ruxex_folder.as_path().display().to_string(),
+            disabled_reason.clone(),
+        ));
+    }
+
+    if disabled_folders.is_empty() {
+        return None;
+    }
+
+    let mut message = concat!(
+        "Project-local config, hooks, and exec policies are disabled in the following folders ",
+        "until the project is trusted, but skills still load.\n",
+    )
+    .to_string();
+    for (index, (folder, reason)) in disabled_folders.iter().enumerate() {
+        let display_index = index + 1;
+        message.push_str(&format!("    {display_index}. {folder}\n"));
+        message.push_str(&format!("       {reason}\n"));
+    }
+
+    Some(ConfigWarningNotification {
+        summary: message,
+        details: None,
+        path: None,
+        range: None,
+    })
+}
+
+impl LogFormat {
+    fn from_env_value(value: Option<&str>) -> Self {
+        match value.map(str::trim).map(str::to_ascii_lowercase) {
+            Some(value) if value == "json" => Self::Json,
+            _ => Self::Default,
+        }
+    }
+}
+
+fn log_format_from_env() -> LogFormat {
+    let value = std::env::var(LOG_FORMAT_ENV_VAR).ok();
+    LogFormat::from_env_value(value.as_deref())
+}
+
+pub async fn run_main(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+) -> IoResult<()> {
+    run_main_with_transport_options(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        AppServerTransport::Stdio,
+        SessionSource::VSCode,
+        AppServerWebsocketAuthSettings::default(),
+        AppServerRuntimeOptions::default(),
+    )
+    .await
+    .map(|_| ())
+}
+
+/// Reports whether shutdown finished or the managed daemon must exit without waiting for I/O.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AppServerExit {
+    Graceful,
+    /// Executables should exit before dropping their runtime; libraries must not exit their host.
+    Forced,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PluginStartupTasks {
+    Start,
+    Skip,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AppServerRuntimeOptions {
+    pub code_mode_host_transport: CodeModeHostTransport,
+    pub plugin_startup_tasks: PluginStartupTasks,
+    pub install_shutdown_signal_handler: bool,
+    pub managed_daemon: bool,
+}
+
+impl Default for AppServerRuntimeOptions {
+    fn default() -> Self {
+        Self {
+            code_mode_host_transport: CodeModeHostTransport::Local,
+            plugin_startup_tasks: PluginStartupTasks::Start,
+            install_shutdown_signal_handler: true,
+            managed_daemon: false,
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+        None,
+    )
+    .await
+}
+
+/// Starts the daemon transport using a host-injected AppServer runtime.
+///
+/// The injected runtime is the single provider instance used by the daemon.
+/// Its provider descriptor is validated against the provider-scoped data root
+/// before credentials or SQLite state are opened.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_runtime(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    runtime: AppServerRuntime,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        Some(runtime),
+        None,
+    )
+    .await
+}
+
+/// Starts the AppServer using the concrete provider type selected by the host
+/// binary. The provider is constructed in this process with
+/// [`ModelProviderFactory::new`].
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_provider<P: ModelProviderFactory>(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+        Some((
+            AppServerRuntimeBuilder::build_from_provider_factory::<P>,
+            P::provider_descriptor(),
+        )),
+    )
+    .await
+}
+
+/// Starts the AppServer using a provider factory selected by the embedding host.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_main_with_transport_options_and_provider_factory(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    provider_factory: ProviderRuntimeFactory,
+) -> IoResult<AppServerExit> {
+    run_main_with_transport_options_and_optional_runtime(
+        arg0_paths,
+        cli_config_overrides,
+        loader_overrides,
+        strict_config,
+        default_metrics_enabled,
+        transport,
+        session_source,
+        auth,
+        runtime_options,
+        None,
+        Some(provider_factory),
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn run_main_with_transport_options_and_optional_runtime(
+    arg0_paths: Arg0DispatchPaths,
+    cli_config_overrides: CliConfigOverrides,
+    loader_overrides: LoaderOverrides,
+    strict_config: bool,
+    default_metrics_enabled: bool,
+    transport: AppServerTransport,
+    session_source: SessionSource,
+    auth: AppServerWebsocketAuthSettings,
+    runtime_options: AppServerRuntimeOptions,
+    injected_runtime: Option<AppServerRuntime>,
+    provider_factory: Option<(fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor)>,
+) -> IoResult<AppServerExit> {
+    let loader_overrides = loader_overrides_with_test_user_config_file(
+        loader_overrides,
+        test_user_config_file_from_env(),
+    )?;
+    let (transport_event_tx, mut transport_event_rx) =
+        mpsc::channel::<TransportEvent>(CHANNEL_CAPACITY);
+    let (outgoing_tx, mut outgoing_rx) = mpsc::channel::<OutgoingEnvelope>(CHANNEL_CAPACITY);
+    let (outbound_control_tx, mut outbound_control_rx) =
+        mpsc::channel::<OutboundControlEvent>(CHANNEL_CAPACITY);
+
+    // Parse CLI overrides once and derive the base Config eagerly so later
+    // components do not need to work with raw TOML values.
+    let cli_kv_overrides = cli_config_overrides.parse_overrides().map_err(|e| {
+        std::io::Error::new(
+            ErrorKind::InvalidInput,
+            format!("error parsing -c overrides: {e}"),
+        )
+    })?;
+    let ruxex_home = find_ruxex_home()?;
+    let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
+    )?;
+    let ignore_user_config = loader_overrides.ignore_user_config;
+    let config_manager = ConfigManager::new(
+        ruxex_home.to_path_buf(),
+        cli_kv_overrides.clone(),
+        loader_overrides,
+        strict_config,
+        arg0_paths.clone(),
+        Arc::new(NoopThreadConfigLoader),
+    );
+    match config_manager
+        .load_latest_config(/*fallback_cwd*/ None)
+        .await
+    {
+        Ok(_) => {}
+        Err(err) if is_unsupported_untrusted_approval_policy_error(&err) => {
+            return Err(err);
+        }
+        Err(err) => {
+            warn!(error = %err, "Failed to preload config for cloud config bundle");
+            // If this fails, we cannot install cloud/thread config loaders, so non-strict
+            // startup continues without managed cloud config.
+        }
+    };
+    let mut config_warnings = Vec::new();
+    let mut plugin_startup_config = PluginStartupConfig::Current;
+    let config = match config_manager
+        .load_latest_config(/*fallback_cwd*/ None)
+        .await
+    {
+        Ok(config) => config,
+        Err(err) if is_unsupported_untrusted_approval_policy_error(&err) => {
+            return Err(err);
+        }
+        Err(err) => {
+            if strict_config {
+                return Err(err);
+            }
+
+            let message = config_warning_from_error("Invalid configuration; using defaults.", &err);
+            config_warnings.push(message);
+            plugin_startup_config = PluginStartupConfig::Defaults;
+            config_manager.load_default_config().await.map_err(|e| {
+                std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("error loading default config after config error: {e}"),
+                )
+            })?
+        }
+    };
+    config.auth_config().validate()?;
+    let (runtime, credential_manager) = match injected_runtime {
+        Some(runtime) => {
+            mount_provider_home_for_runtime(&config, &runtime).map_err(|error| {
+                std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("failed to mount injected provider data root: {error}"),
+                )
+            })?;
+            (runtime, None)
+        }
+        None => {
+            let descriptor = provider_factory
+                .as_ref()
+                .map(|(_, descriptor)| descriptor)
+                .cloned()
+                .unwrap_or_else(|| AppServerRuntimeBuilder::descriptor_for(&config.model_provider));
+            mount_provider_home(&config.ruxex_home, &descriptor).map_err(|error| {
+                std::io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("failed to mount provider data root: {error}"),
+                )
+            })?;
+            let credential_manager =
+                CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
+                    .await
+                    .map_err(std::io::Error::other)?;
+            let runtime = provider_factory
+                .map(|(factory, _)| {
+                    factory(ProviderInit {
+                        provider_info: config.model_provider.clone(),
+                        credential_manager: Arc::clone(&credential_manager),
+                        http_client_factory: config.http_client_factory(),
+                    })
+                })
+                .unwrap_or_else(|| {
+                    configured_app_server_runtime(
+                        config.model_provider.clone(),
+                        Arc::clone(&credential_manager),
+                        config.http_client_factory(),
+                    )
+                });
+            (runtime, Some(credential_manager))
+        }
+    };
+    #[cfg(target_os = "macos")]
+    let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
+        ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
+    );
+    let code_mode_session_provider: Option<Arc<dyn CodeModeSessionProvider>> =
+        match &runtime_options.code_mode_host_transport {
+            CodeModeHostTransport::Local => None,
+            CodeModeHostTransport::Grpc(url) => {
+                if !config.features.enabled(Feature::CodeModeHost) {
+                    return Err(std::io::Error::new(
+                        ErrorKind::InvalidInput,
+                        "remote code-mode host requires the code_mode_host feature to be enabled",
+                    ));
+                }
+                Some(Arc::new(
+                    GrpcCodeModeSessionProvider::with_http_client_factory(
+                        url.to_string(),
+                        config.http_client_factory(),
+                    ),
+                ))
+            }
+        };
+    let environment_manager = if ignore_user_config {
+        EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory()).await
+    } else {
+        EnvironmentManager::from_ruxex_home(
+            ruxex_home.clone(),
+            Some(local_runtime_paths),
+            config.http_client_factory(),
+        )
+        .await
+    }
+    .map(Arc::new)
+    .map_err(std::io::Error::other)?;
+
+    let otel = ruxex_core::otel_init::build_provider(
+        &config,
+        env!("CARGO_PKG_VERSION"),
+        Some(OTEL_SERVICE_NAME),
+        default_metrics_enabled,
+    )
+    .map_err(|e| {
+        std::io::Error::new(
+            ErrorKind::InvalidData,
+            format!("error loading otel config: {e}"),
+        )
+    })?;
+    ruxex_core::otel_init::record_process_start(otel.as_ref(), OTEL_SERVICE_NAME);
+    ruxex_core::otel_init::install_sqlite_telemetry(otel.as_ref(), OTEL_SERVICE_NAME);
+    let unix_socket_startup_lock = match &transport {
+        AppServerTransport::UnixSocket { .. } => {
+            let startup_lock_path = app_server_startup_lock_path(&ruxex_home)?;
+            let startup_lock = acquire_app_server_startup_lock(startup_lock_path).await?;
+            Some(startup_lock)
+        }
+        _ => None,
+    };
+    let state_db_init = match init_sqlite_state_db_with_fresh_start_on_corruption(&config).await {
+        Ok(state_db_init) => state_db_init,
+        Err(err) => {
+            return Err(std::io::Error::other(format!(
+                "failed to initialize sqlite state runtime under {}: {err}",
+                config.sqlite_config().home().display()
+            )));
+        }
+    };
+    let state_db = state_db_init.state_db;
+    if let Some(recovery_notice) = state_db_init.recovery_notice {
+        config_warnings.push(ConfigWarningNotification {
+            summary: SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY.to_string(),
+            details: Some(recovery_notice.details),
+            path: None,
+            range: None,
+        });
+    }
+
+    if let Ok(Some(err)) = check_execpolicy_for_warnings(&config.config_layer_stack).await {
+        config_warnings.push(exec_policy_config_warning(&err));
+    }
+
+    if let Some(warning) = project_config_warning(&config) {
+        config_warnings.push(warning);
+    }
+    for warning in &config.startup_warnings {
+        config_warnings.push(ConfigWarningNotification {
+            summary: warning.clone(),
+            details: None,
+            path: None,
+            range: None,
+        });
+    }
+    if let Some(warning) = ruxex_core::config::system_bwrap_warning(
+        &config.permissions.effective_permission_profile(),
+        &config.cwd,
+    ) {
+        config_warnings.push(ConfigWarningNotification {
+            summary: warning,
+            details: None,
+            path: None,
+            range: None,
+        });
+    }
+
+    // Install a simple subscriber so `tracing` output is visible. Users can
+    // control the log level with `RUST_LOG` and switch to JSON logs with
+    // `LOG_FORMAT=json`.
+    let stderr_fmt: StderrLogLayer = match log_format_from_env() {
+        LogFormat::Json => tracing_subscriber::fmt::layer()
+            .json()
+            .with_writer(std::io::stderr)
+            .with_span_events(tracing_subscriber::fmt::format::FmtSpan::FULL)
+            .with_filter(EnvFilter::from_default_env())
+            .boxed(),
+        LogFormat::Default => tracing_subscriber::fmt::layer()
+            .with_writer(std::io::stderr)
+            .with_span_events(tracing_subscriber::fmt::format::FmtSpan::FULL)
+            .with_filter(EnvFilter::from_default_env())
+            .boxed(),
+    };
+
+    let log_db = state_db.clone().map(log_db::start);
+    let log_db_layer = log_db
+        .clone()
+        .map(|layer| layer.with_filter(log_db::default_filter()));
+    let (otel_layers, otel_logger_reload_handle) = otel_reloader::layers(otel.as_ref());
+    let _ = tracing_subscriber::registry()
+        .with(stderr_fmt)
+        .with(log_db_layer)
+        .with(otel_layers)
+        .try_init();
+    for warning in &config_warnings {
+        match &warning.details {
+            Some(details) => error!("{} {}", warning.summary, details),
+            None => error!("{}", warning.summary),
+        }
+    }
+    let transport_shutdown_token = CancellationToken::new();
+    let mut transport_accept_handles = Vec::<JoinHandle<()>>::new();
+
+    let single_client_mode = matches!(&transport, AppServerTransport::Stdio);
+    let graceful_signal_restart_enabled =
+        runtime_options.install_shutdown_signal_handler && !single_client_mode;
+    let managed_daemon = matches!(&transport, AppServerTransport::UnixSocket { .. })
+        && runtime_options.managed_daemon;
+    match &transport {
+        AppServerTransport::Stdio => {
+            let handle = start_stdio_connection(
+                transport_event_tx.clone(),
+                runtime_options.install_shutdown_signal_handler,
+            )
+            .await?;
+            transport_accept_handles.push(handle);
+        }
+        AppServerTransport::UnixSocket { socket_path } => {
+            let accept_handle = start_control_socket_acceptor(
+                socket_path.clone(),
+                transport_event_tx.clone(),
+                transport_shutdown_token.clone(),
+                if std::env::var_os(ruxex_app_server_transport::DAEMON_SHUTDOWN_SOCKET_ENV)
+                    .is_some()
+                {
+                    DaemonShutdownAccess::Managed
+                } else {
+                    DaemonShutdownAccess::Disabled
+                },
+            )
+            .await?;
+            transport_accept_handles.push(accept_handle);
+        }
+        AppServerTransport::WebSocket { bind_address } => {
+            let accept_handle = start_websocket_acceptor(
+                *bind_address,
+                transport_event_tx.clone(),
+                transport_shutdown_token.clone(),
+                policy_from_settings(&auth)?,
+            )
+            .await?;
+            transport_accept_handles.push(accept_handle);
+        }
+        AppServerTransport::Off => {}
+    }
+    drop(unix_socket_startup_lock);
+
+    let no_local_transport = transport_accept_handles.is_empty();
+    if no_local_transport {
+        return Err(std::io::Error::new(
+            ErrorKind::InvalidInput,
+            "no transport configured; use --listen",
+        ));
+    }
+    let installation_id = resolve_installation_id(&config.ruxex_home).await?;
+
+    // Only the standalone server measures its local home, not embedded/cloud runtimes.
+    if let Some(metrics) = otel.as_ref().and_then(ruxex_otel::OtelProvider::metrics) {
+        ruxex_home_metrics::spawn(&config, metrics.clone(), transport_shutdown_token.clone());
+    }
+
+    let otel_reloader_handle = otel_reloader::spawn(
+        otel,
+        otel_logger_reload_handle,
+        config_manager.clone(),
+        credential_manager.clone(),
+        default_metrics_enabled,
+        transport_shutdown_token.clone(),
+    );
+
+    let outbound_handle = tokio::spawn(async move {
+        let mut outbound_connections = HashMap::<ConnectionId, OutboundConnectionState>::new();
+        loop {
+            tokio::select! {
+                    biased;
+                    event = outbound_control_rx.recv() => {
+                        let Some(event) = event else {
+                            break;
+                        };
+                        match event {
+                            OutboundControlEvent::Opened {
+                                connection_id,
+                                writer,
+                                disconnect_sender,
+                                initialized,
+                                experimental_api_enabled,
+                                opted_out_notification_methods,
+                            } => {
+                                outbound_connections.insert(
+                                    connection_id,
+                                    OutboundConnectionState::new(
+                                        writer,
+                                        initialized,
+                                        experimental_api_enabled,
+                                        opted_out_notification_methods,
+                                        disconnect_sender,
+                                    ),
+                                );
+                            }
+                            OutboundControlEvent::Closed { connection_id } => {
+                                outbound_connections.remove(&connection_id);
+                            }
+                            OutboundControlEvent::DisconnectAll => {
+                                info!(
+                                    "disconnecting {} outbound websocket connection(s) for graceful restart",
+                                    outbound_connections.len()
+                                );
+                                for connection_state in outbound_connections.values() {
+                                    connection_state.request_disconnect();
+                                }
+                                outbound_connections.clear();
+                            }
+                        }
+                    }
+                    envelope = outgoing_rx.recv() => {
+                    let Some(envelope) = envelope else {
+                        break;
+                    };
+                    route_outgoing_envelope(&mut outbound_connections, envelope).await;
+                }
+            }
+        }
+        info!("outbound router task exited (channel closed)");
+    });
+
+    let recovery_file = daemon_recovery_file_path(&config.ruxex_home);
+    let processor_handle = tokio::spawn({
+        let outgoing_message_sender = Arc::new(OutgoingMessageSender::new(outgoing_tx, ()));
+        let outbound_control_tx = outbound_control_tx;
+        let processor = Arc::new(MessageProcessor::new(MessageProcessorArgs {
+            outgoing: outgoing_message_sender,
+            arg0_paths,
+            config: Arc::new(config),
+            config_manager,
+            environment_manager,
+            log_db,
+            state_db: state_db.clone(),
+            config_warnings,
+            session_source,
+            auth_changes: credential_manager
+                .as_ref()
+                .map(|manager| manager.auth_change_receiver()),
+            user_verification: Arc::new(crate::user_verification::Service::new(runtime.provider())),
+            runtime,
+            installation_id,
+            code_mode_session_provider,
+            plugin_startup_tasks: matches!(
+                runtime_options.plugin_startup_tasks,
+                PluginStartupTasks::Start
+            )
+            .then_some(plugin_startup_config),
+        }));
+        let mut thread_created_rx = processor.thread_created_receiver();
+        let mut running_turn_count_rx = processor.subscribe_running_assistant_turn_count();
+        let mut active_admissions_rx = processor.turn_admission.subscribe_active();
+        let mut connections = HashMap::<ConnectionId, ConnectionState>::new();
+        let mut connection_cleanup_tasks = ConnectionCleanupTasks::new();
+        let mut thread_listener_tasks = tokio::task::JoinSet::new();
+        let transport_shutdown_token = transport_shutdown_token.clone();
+        async move {
+            let recovery_task = if managed_daemon {
+                match daemon_thread_recovery::start_recovery(
+                    recovery_file.clone(),
+                    Arc::clone(&processor),
+                )
+                .await
+                {
+                    Ok(task) => Some(task),
+                    Err(err) => {
+                        warn!("failed to consume daemon recovery snapshot: {err}");
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+            let mut listen_for_threads = true;
+            // Keep force signals and daemon control events responsive while saving.
+            let mut snapshot = Box::pin(async {
+                let processor = Arc::clone(&processor);
+                let recovery_file = recovery_file.clone();
+                // Run independently: snapshot locks can require the event loop to make progress.
+                let task = tokio::spawn(async move {
+                    let saved = processor.daemon_recovery_snapshot().await;
+                    if let Err(err) = daemon_thread_recovery::snapshot(recovery_file, saved).await {
+                        warn!("failed to save threads during daemon shutdown: {err}");
+                    }
+                });
+                let _ = tokio_util::task::AbortOnDropHandle::new(task).await;
+            });
+            let mut snapshot_finished = !managed_daemon;
+            let mut clients_disconnected = false;
+            let mut shutdown_state = ShutdownState::default();
+            let mut shutdown_signal_future = Box::pin(shutdown_signal());
+            let exit_reason = loop {
+                // Sample submissions first: one can publish a running turn before
+                // releasing its permit, and shutdown must observe that new turn.
+                let active_admissions = *active_admissions_rx.borrow_and_update();
+                let running_turn_count = *running_turn_count_rx.borrow_and_update();
+                let ready_to_exit = matches!(
+                    shutdown_state.update(running_turn_count, active_admissions, connections.len()),
+                    ShutdownAction::Finish
+                );
+                if ready_to_exit {
+                    if let Some(task) = &recovery_task {
+                        task.abort();
+                    }
+                    let finished = snapshot_finished || shutdown_state.forced();
+                    if finished {
+                        transport_shutdown_token.cancel();
+                    }
+                    if managed_daemon && shutdown_state.forced() {
+                        break "forced_shutdown_requested";
+                    }
+                    if !clients_disconnected {
+                        let _ = outbound_control_tx
+                            .send(OutboundControlEvent::DisconnectAll)
+                            .await;
+                        clients_disconnected = true;
+                    }
+                    if finished {
+                        break "shutdown_requested";
+                    }
+                }
+
+                tokio::select! {
+                    _ = &mut snapshot, if shutdown_state.requested() && active_admissions == 0 && !snapshot_finished => {
+                        snapshot_finished = true;
+                    }
+                    shutdown_signal_result = &mut shutdown_signal_future, if graceful_signal_restart_enabled && !shutdown_state.forced() => {
+                        shutdown_signal_future.set(shutdown_signal());
+                        let signal = match shutdown_signal_result {
+                            Ok(signal) => signal,
+                            Err(err) => {
+                                warn!("failed to listen for shutdown signal during graceful restart drain: {err}");
+                                continue;
+                            }
+                        };
+                        let running_turn_count = *running_turn_count_rx.borrow();
+                        shutdown_state.on_signal(signal, connections.len(), running_turn_count, &processor.turn_admission);
+                    }
+                    changed = running_turn_count_rx.changed(), if shutdown_state.requested() => {
+                        if changed.is_err() {
+                            warn!("running-turn watcher closed during graceful restart drain");
+                        }
+                    }
+                    changed = active_admissions_rx.changed(), if shutdown_state.requested() => {
+                        if changed.is_err() {
+                            warn!("turn admission watcher closed during graceful restart drain");
+                        }
+                    }
+                    event = transport_event_rx.recv() => {
+                        let Some(event) = event else {
+                            break "transport_channel_closed";
+                        };
+                        if ready_to_exit && !matches!(event, TransportEvent::DaemonShutdown) {
+                            if let TransportEvent::ConnectionOpened { disconnect_sender: Some(token), .. } = event {
+                                token.cancel();
+                            }
+                            continue;
+                        }
+                        match event {
+                            TransportEvent::DaemonShutdown => {
+                                shutdown_state.on_signal(ShutdownSignal::Forceable, connections.len(), *running_turn_count_rx.borrow(), &processor.turn_admission);
+                            }
+                            TransportEvent::ConnectionOpened {
+                                connection_id,
+                                origin,
+                                writer,
+                                disconnect_sender,
+                            } => {
+                                let outbound_initialized = Arc::new(AtomicBool::new(false));
+                                let outbound_experimental_api_enabled =
+                                    Arc::new(AtomicBool::new(false));
+                                let outbound_opted_out_notification_methods =
+                                    Arc::new(RwLock::new(HashSet::new()));
+                                if outbound_control_tx
+                                    .send(OutboundControlEvent::Opened {
+                                        connection_id,
+                                        writer,
+                                        disconnect_sender,
+                                        initialized: Arc::clone(&outbound_initialized),
+                                        experimental_api_enabled: Arc::clone(
+                                            &outbound_experimental_api_enabled,
+                                        ),
+                                        opted_out_notification_methods: Arc::clone(
+                                            &outbound_opted_out_notification_methods,
+                                        ),
+                                    })
+                                    .await
+                                    .is_err()
+                                {
+                                    break "outbound_router_closed";
+                                }
+                                connections.insert(
+                                    connection_id,
+                                    ConnectionState::new(
+                                        origin,
+                                        outbound_initialized,
+                                        outbound_experimental_api_enabled,
+                                        outbound_opted_out_notification_methods,
+                                    ),
+                                );
+                            }
+                            TransportEvent::ConnectionClosed { connection_id } => {
+                                let Some(connection_state) = connections.remove(&connection_id) else {
+                                    continue;
+                                };
+                                let stdio_closed = connection_state.origin == ConnectionOrigin::Stdio;
+                                connection_state.session.rpc_gate.close().await;
+                                let outbound_closed = outbound_control_tx
+                                    .send(OutboundControlEvent::Closed { connection_id })
+                                    .await
+                                    .is_ok();
+                                let processor = Arc::clone(&processor);
+                                connection_cleanup_tasks.spawn(async move {
+                                    processor
+                                        .connection_closed(connection_id, &connection_state.session)
+                                        .await;
+                                });
+                                if !outbound_closed {
+                                    break "outbound_router_closed";
+                                }
+                                if single_client_mode && stdio_closed {
+                                    break "stdio_connection_closed";
+                                }
+                            }
+                            TransportEvent::IncomingMessage { connection_id, message } => {
+                                let Some(connection_state) = connections.get_mut(&connection_id) else {
+                                    warn!("dropping message from unknown connection: {connection_id:?}");
+                                    continue;
+                                };
+                                if connection_state.session.rpc_gate.is_closed() {
+                                    continue;
+                                }
+                                match message {
+                                    JSONRPCMessage::Request(request) => {
+                                        let was_initialized =
+                                            connection_state.session.initialized();
+                                        processor
+                                            .process_request(
+                                                connection_id,
+                                                request,
+                                                &transport,
+                                                Arc::clone(&connection_state.session),
+                                            )
+                                            .await;
+                                        let opted_out_notification_methods_snapshot = connection_state
+                                            .session
+                                            .opted_out_notification_methods();
+                                        let experimental_api_enabled =
+                                            connection_state.session.experimental_api_enabled();
+                                        let is_initialized = connection_state.session.initialized();
+                                        if let Ok(mut opted_out_notification_methods) = connection_state
+                                            .outbound_opted_out_notification_methods
+                                            .write()
+                                        {
+                                            *opted_out_notification_methods =
+                                                opted_out_notification_methods_snapshot;
+                                        } else {
+                                            warn!(
+                                                "failed to update outbound opted-out notifications"
+                                            );
+                                        }
+                                        connection_state
+                                            .outbound_experimental_api_enabled
+                                            .store(
+                                                experimental_api_enabled,
+                                                std::sync::atomic::Ordering::Release,
+                                            );
+                                        if !was_initialized && is_initialized {
+                                            processor
+                                                .send_initialize_notifications_to_connection(
+                                                    connection_id,
+                                                )
+                                                .await;
+                                            processor
+                                                .connection_initialized(
+                                                    connection_id,
+                                                    connection_state
+                                                        .session
+                                                        .request_attestation(),
+                                                )
+                                                .await;
+                                            connection_state
+                                                .outbound_initialized
+                                                .store(true, std::sync::atomic::Ordering::Release);
+                                        }
+                                    }
+                                    JSONRPCMessage::Response(response) => {
+                                        processor.process_response(connection_id, response).await;
+                                    }
+                                    JSONRPCMessage::Notification(notification) => {
+                                        processor.process_notification(notification).await;
+                                    }
+                                    JSONRPCMessage::Error(err) => {
+                                        processor.process_error(connection_id, err).await;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ = connection_cleanup_tasks.reap_next() => {}
+                    result = thread_listener_tasks.join_next(), if !thread_listener_tasks.is_empty() => {
+                        if let Some(Err(err)) = result {
+                            warn!("thread listener attachment failed: {err}");
+                        }
+                    }
+                    created = thread_created_rx.recv(), if listen_for_threads && !ready_to_exit => {
+                        match created {
+                            Ok(thread_id) => {
+                                let mut initialized_connection_ids = Vec::new();
+                                for (connection_id, connection_state) in &connections {
+                                    if connection_state.session.initialized() {
+                                        initialized_connection_ids.push(*connection_id);
+                                    }
+                                }
+                                let processor = Arc::clone(&processor);
+                                // Attachment can wait on snapshot locks; keep force shutdown responsive.
+                                thread_listener_tasks.spawn(async move {
+                                    processor
+                                        .try_attach_thread_listener(
+                                            thread_id,
+                                            initialized_connection_ids,
+                                        )
+                                        .await;
+                                });
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                                // TODO(jif) handle lag.
+                                // Assumes thread creation volume is low enough that lag never happens.
+                                // If it does, we log and continue without resyncing to avoid attaching
+                                // listeners for threads that should remain unsubscribed.
+                                warn!("thread_created receiver lagged; skipping resync");
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                                listen_for_threads = false;
+                            }
+                        }
+                    }
+                }
+            };
+
+            if let Some(task) = recovery_task {
+                task.abort();
+            }
+            drop(snapshot);
+            drop(thread_listener_tasks);
+            if !shutdown_state.forced() {
+                futures::future::join_all(connections.iter().map(
+                    |(&connection_id, connection_state)| {
+                        processor.connection_closed(connection_id, &connection_state.session)
+                    },
+                ))
+                .await;
+                connection_cleanup_tasks.drain().await;
+                processor.drain_background_tasks().await;
+                processor.shutdown_threads().await;
+            } else {
+                connection_cleanup_tasks.abort();
+            }
+            info!(
+                exit_reason,
+                remaining_connection_count = connections.len(),
+                shutdown_forced = shutdown_state.forced(),
+                "processor task exited"
+            );
+            if managed_daemon && shutdown_state.forced() {
+                AppServerExit::Forced
+            } else {
+                AppServerExit::Graceful
+            }
+        }
+    });
+
+    drop(transport_event_tx);
+
+    if matches!(processor_handle.await, Ok(AppServerExit::Forced)) {
+        return Ok(AppServerExit::Forced);
+    }
+    let _ = outbound_handle.await;
+
+    transport_shutdown_token.cancel();
+    let _ = otel_reloader_handle.await;
+    for handle in transport_accept_handles {
+        let _ = handle.await;
+    }
+
+    Ok(AppServerExit::Graceful)
+}
+
+struct SqliteRecoveryNotice {
+    details: String,
+}
+
+struct RecoveredSqliteDatabase {
+    database_path: String,
+    backup_folder: String,
+}
+
+struct StateDbInitResult {
+    state_db: Option<rollout_state_db::StateDbHandle>,
+    recovery_notice: Option<SqliteRecoveryNotice>,
+}
+
+async fn init_sqlite_state_db_with_fresh_start_on_corruption(
+    config: &Config,
+) -> anyhow::Result<StateDbInitResult> {
+    let mut attempted_backups = HashSet::new();
+    let mut recovered_databases = Vec::new();
+    loop {
+        let err = match rollout_state_db::try_init(config).await {
+            Ok(state_db) => {
+                let recovery_notice = sqlite_recovery_notice(&recovered_databases);
+                if recovery_notice.is_some() {
+                    emit_state_db_backup_warning(SQLITE_RECOVERY_CONFIG_WARNING_SUMMARY);
+                    for recovered_database in &recovered_databases {
+                        emit_state_db_backup_warning(&format!(
+                            "Database path: {}",
+                            recovered_database.database_path
+                        ));
+                        emit_state_db_backup_warning(&format!(
+                            "Backup folder: {}",
+                            recovered_database.backup_folder
+                        ));
+                    }
+                }
+                return Ok(StateDbInitResult {
+                    state_db: Some(state_db),
+                    recovery_notice,
+                });
+            }
+            Err(err) => err,
+        };
+        let database_path = ruxex_state::runtime_db_path_for_corruption_error(&err)
+            .unwrap_or_else(|| config.sqlite_config().state_db_path());
+        if !ruxex_state::is_sqlite_corruption_error(&err)
+            && !sqlite_home_is_blocking_file(database_path.as_path())
+        {
+            return Err(err);
+        }
+
+        if !attempted_backups.insert(database_path.clone()) {
+            return Err(anyhow::anyhow!(
+                "failed to initialize sqlite state runtime after moving damaged database file into a backup folder: {err}"
+            ));
+        }
+
+        let original_error = err.to_string();
+        emit_state_db_backup_warning(&format!(
+            "Ruxex local database at {} appears damaged. Moving it into a backup folder so the app server can rebuild it from saved data.",
+            database_path.display()
+        ));
+        let backups = ruxex_state::backup_runtime_db_for_fresh_start(database_path.as_path())
+            .await
+            .map_err(|backup_err| {
+                anyhow::anyhow!(
+                    "failed to move damaged sqlite state database files into a backup folder: {backup_err}; original error: {original_error}"
+                )
+            })?;
+        for backup in &backups {
+            emit_state_db_backup_warning(&format!(
+                "Moved damaged Ruxex local database file {} to {}",
+                backup.original_path.display(),
+                backup.backup_path.display()
+            ));
+        }
+        if let Some(first_backup) = backups.first()
+            && let Some(backup_folder) = first_backup.backup_path.parent()
+        {
+            recovered_databases.push(RecoveredSqliteDatabase {
+                database_path: first_backup.original_path.display().to_string(),
+                backup_folder: backup_folder.display().to_string(),
+            });
+        }
+    }
+}
+
+fn sqlite_home_is_blocking_file(database_path: &Path) -> bool {
+    database_path
+        .parent()
+        .and_then(|path| std::fs::metadata(path).ok())
+        .is_some_and(|metadata| metadata.is_file())
+}
+
+fn sqlite_recovery_notice(
+    recovered_databases: &[RecoveredSqliteDatabase],
+) -> Option<SqliteRecoveryNotice> {
+    if recovered_databases.is_empty() {
+        return None;
+    }
+
+    let details = recovered_databases
+        .iter()
+        .map(|recovered_database| {
+            format!(
+                "Database path: {}\nBackup folder: {}",
+                recovered_database.database_path, recovered_database.backup_folder
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    Some(SqliteRecoveryNotice { details })
+}
+
+fn emit_state_db_backup_warning(message: &str) {
+    warn!("{message}");
+    if !tracing::dispatcher::has_been_set() {
+        #[allow(clippy::print_stderr)]
+        {
+            eprintln!("{message}");
+        }
+    }
+}
+
+fn test_user_config_file_from_env() -> Option<std::path::PathBuf> {
+    #[cfg(debug_assertions)]
+    {
+        std::env::var_os(TEST_USER_CONFIG_FILE_ENV_VAR)
+            .filter(|value| !value.is_empty())
+            .map(std::path::PathBuf::from)
+    }
+
+    #[cfg(not(debug_assertions))]
+    None
+}
+
+fn loader_overrides_with_test_user_config_file(
+    mut loader_overrides: LoaderOverrides,
+    test_user_config_file: Option<std::path::PathBuf>,
+) -> IoResult<LoaderOverrides> {
+    #[cfg(debug_assertions)]
+    if let Some(path) = test_user_config_file {
+        let path = AbsolutePathBuf::from_absolute_path(path).map_err(|err| {
+            std::io::Error::new(
+                ErrorKind::InvalidInput,
+                format!("invalid test user config path: {err}"),
+            )
+        })?;
+        warn!(
+            path = %path.as_path().display(),
+            "using debug-only app-server test user config file"
+        );
+        loader_overrides.user_config_path = Some(path);
+    }
+
+    #[cfg(not(debug_assertions))]
+    let _ = test_user_config_file;
+
+    Ok(loader_overrides)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LogFormat;
+    use super::ShutdownAction;
+    use super::ShutdownSignal;
+    use super::ShutdownState;
+    #[cfg(debug_assertions)]
+    use super::loader_overrides_with_test_user_config_file;
+    use super::turn_admission::TurnAdmission;
+    use pretty_assertions::assert_eq;
+    #[cfg(debug_assertions)]
+    use ruxex_config::LoaderOverrides;
+    #[cfg(debug_assertions)]
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+
+    #[test]
+    fn shutdown_waits_for_admitted_requests_but_force_remains_available() {
+        let admission = TurnAdmission::default();
+        let active = admission.subscribe_active();
+        let in_flight = admission.admit().expect("request admitted");
+        let mut shutdown = ShutdownState::default();
+        let connection_count = 1;
+        let running_turn_count = 0;
+        shutdown.on_signal(
+            ShutdownSignal::Forceable,
+            connection_count,
+            running_turn_count,
+            &admission,
+        );
+        assert!(matches!(
+            shutdown.update(running_turn_count, *active.borrow(), connection_count),
+            ShutdownAction::Noop
+        ));
+        shutdown.on_signal(
+            ShutdownSignal::Forceable,
+            connection_count,
+            running_turn_count,
+            &admission,
+        );
+        assert!(shutdown.forced());
+        assert!(matches!(
+            shutdown.update(running_turn_count, *active.borrow(), connection_count),
+            ShutdownAction::Finish
+        ));
+        drop(in_flight);
+    }
+
+    #[test]
+    fn log_format_from_env_value_matches_json_values_case_insensitively() {
+        assert_eq!(LogFormat::from_env_value(Some("json")), LogFormat::Json);
+        assert_eq!(LogFormat::from_env_value(Some("JSON")), LogFormat::Json);
+        assert_eq!(LogFormat::from_env_value(Some("  Json  ")), LogFormat::Json);
+    }
+
+    #[test]
+    fn log_format_from_env_value_defaults_for_non_json_values() {
+        assert_eq!(
+            LogFormat::from_env_value(/*value*/ None),
+            LogFormat::Default
+        );
+        assert_eq!(LogFormat::from_env_value(Some("")), LogFormat::Default);
+        assert_eq!(LogFormat::from_env_value(Some("text")), LogFormat::Default);
+        assert_eq!(LogFormat::from_env_value(Some("jsonl")), LogFormat::Default);
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn debug_test_user_config_file_overrides_loader_path() {
+        let path = std::env::temp_dir().join("ruxex-app-server-test-config.toml");
+        let loader_overrides = loader_overrides_with_test_user_config_file(
+            LoaderOverrides::default(),
+            Some(path.clone()),
+        )
+        .expect("test config path should be valid");
+
+        assert_eq!(
+            loader_overrides.user_config_path,
+            Some(AbsolutePathBuf::from_absolute_path(path).expect("absolute test path"))
+        );
+    }
+}

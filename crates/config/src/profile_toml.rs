@@ -1,0 +1,72 @@
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde::Serialize;
+
+use crate::config_toml::ToolsToml;
+use crate::types::MetricsConfigToml;
+use crate::types::SessionPickerViewMode;
+use ruxex_features::FeaturesToml;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::SandboxMode;
+use ruxex_protocol::config_types::Verbosity;
+use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_protocol::protocol::AskForApproval;
+
+/// Collection of common configuration options that a user can define as a unit
+/// in `config.toml`.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct ConfigProfile {
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub model: Option<String>,
+    /// Optional explicit service tier request id for new turns (for example
+    /// `default`, `priority`, or `flex`; legacy `fast` also works).
+    pub service_tier: Option<String>,
+    #[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]
+    pub approval_policy: Option<AskForApproval>,
+    pub sandbox_mode: Option<SandboxMode>,
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub model_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub plan_mode_reasoning_effort: Option<ReasoningEffort>,
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub model_reasoning_summary: Option<ReasoningSummary>,
+    pub model_verbosity: Option<Verbosity>,
+    /// Optional path to a JSON model catalog (applied on startup only).
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub model_catalog_json: Option<AbsolutePathBuf>,
+    pub managed_auth_base_url: Option<String>,
+    /// Optional path to a file containing model instructions.
+    pub model_instructions_file: Option<AbsolutePathBuf>,
+    pub include_permissions_instructions: Option<bool>,
+    pub include_collaboration_mode_instructions: Option<bool>,
+    pub include_environment_context: Option<bool>,
+    pub tools: Option<ToolsToml>,
+    pub web_search: Option<WebSearchMode>,
+    pub metrics: Option<MetricsConfigToml>,
+    /// TUI settings scoped to this profile.
+    #[serde(default)]
+    pub tui: Option<ProfileTui>,
+    /// Optional feature toggles scoped to this profile.
+    #[serde(default)]
+    // Injects known feature keys into the schema and forbids unknown keys.
+    #[schemars(schema_with = "crate::schema::features_schema")]
+    pub features: Option<FeaturesToml>,
+}
+
+/// TUI settings supported inside a named profile.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(deny_unknown_fields)]
+pub struct ProfileTui {
+    /// Preferred layout for resume/fork session picker results.
+    #[serde(default)]
+    pub session_picker_view: Option<SessionPickerViewMode>,
+}
