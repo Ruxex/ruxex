@@ -22,7 +22,10 @@ jobs:
     name: build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
-      CARGO_INCREMENTAL: 0
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +36,32 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "=== After cleanup ==="
+          df -h
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -51,24 +80,12 @@ jobs:
           rustup default 1.98.1
           rustc --version --verbose
 
-      - name: Restore Cargo and native artifact caches
-        uses: actions/cache@v4.2.3
+      - name: Restore Rust and native artifact caches
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-deps-v3-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-deps-v3-
-
-      - name: Restore target cache for build probe
-        uses: actions/cache@v4.2.3
-        with:
-          path: target
-          key: ${{ runner.os }}-rust-1.98.1-target-probe-v3-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-target-probe-v3-
+          shared-key: ${{ runner.os }}-rust-1.98.1-deps-v4
+          cache-targets: "false"
+          cache-directories: .build-cache/rusty-v8
 
       - name: Inspect disk after cache restore
         run: |
@@ -85,26 +102,29 @@ jobs:
       - name: Build workspace
         run: just build --workspace
 
-      - name: Inspect disk after workspace build
+      - name: Report disk usage
         if: always()
+        shell: bash
         run: |
           set -euo pipefail
           {
-            echo "Disk after workspace build:"
-            df -h .
-            for path in \
-              target \
-              target/debug \
-              target/debug/deps \
-              target/debug/build \
-              target/debug/incremental \
-              .build-cache/rusty-v8 \
-              "$HOME/.cargo/registry" \
-              "$HOME/.cargo/git"; do
-              if [ -e "$path" ]; then
-                du -sh "$path"
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
               fi
-            done
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
           } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
 
       - name: Upload capacity report
@@ -120,7 +140,10 @@ jobs:
     name: test archive (${{ matrix.os }}, ${{ matrix.group }})
     runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
     env:
-      CARGO_INCREMENTAL: 0
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -351,26 +374,29 @@ jobs:
 
       - name: Free disk space on Linux
         if: matrix.os == 'linux'
+        shell: bash
         run: |
           set -euo pipefail
-          echo "Disk before cleanup:"
-          df -h .
-          for path in \
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
             /opt/ghc \
             /usr/local/.ghcup \
             /usr/local/lib/android \
             /usr/local/share/powershell \
             /usr/local/share/vcpkg \
             /usr/share/dotnet \
-            /usr/share/swift; do
-            if [ -e "$path" ]; then
-              sudo rm -rf -- "$path"
-            fi
-          done
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
-          echo "Disk after cleanup:"
-          df -h .
+
+          echo "=== After cleanup ==="
+          df -h
 
       - name: Install Linux dependencies
         if: matrix.os == 'linux'
@@ -389,16 +415,12 @@ jobs:
           rustup default 1.98.1
           rustc --version --verbose
 
-      - name: Restore Cargo and native artifact caches
-        uses: actions/cache@v4.2.3
+      - name: Restore Rust and native artifact caches
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-deps-v3-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-deps-v3-
+          shared-key: ${{ runner.os }}-rust-1.98.1-deps-v4
+          cache-targets: "false"
+          cache-directories: .build-cache/rusty-v8
 
       - name: Inspect disk before archive build
         run: |
@@ -426,28 +448,30 @@ jobs:
             "$NEXTEST_FILTERSET" \
             $NEXTEST_PACKAGE_ARGS
 
-      - name: Inspect disk after archive build
+      - name: Report disk usage
         if: always()
+        shell: bash
         run: |
           set -euo pipefail
           archive="$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
           {
-            echo "Disk after archive build:"
-            df -h .
-            for path in \
-              target \
-              target/debug \
-              target/debug/deps \
-              target/debug/build \
-              target/debug/incremental \
-              .build-cache/rusty-v8 \
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
+              fi
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
               "$HOME/.cargo/registry" \
               "$HOME/.cargo/git" \
-              "$RUNNER_TEMP/ruxex-nextest"; do
-              if [ -e "$path" ]; then
-                du -sh "$path"
-              fi
-            done
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
             if [ -f "$archive" ]; then
               echo "Archive:"
               du -sh "$archive"
@@ -478,6 +502,11 @@ jobs:
       - test-archive
     if: ${{ needs.build.result == 'success' && needs.test-archive.result == 'success' }}
     runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -494,6 +523,32 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: matrix.os == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "=== After cleanup ==="
+          df -h
 
       - name: Install Linux dependencies
         if: matrix.os == 'linux'
@@ -512,16 +567,12 @@ jobs:
           rustup default 1.98.1
           rustc --version --verbose
 
-      - name: Restore Cargo and native artifact caches
-        uses: actions/cache@v4.2.3
+      - name: Restore Rust and native artifact caches
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            .build-cache/rusty-v8
-          key: ${{ runner.os }}-rust-1.98.1-deps-v3-${{ hashFiles('Cargo.lock', 'third_party/v8/*') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-1.98.1-deps-v3-
+          shared-key: ${{ runner.os }}-rust-1.98.1-deps-v4
+          cache-targets: "false"
+          cache-directories: .build-cache/rusty-v8
 
       - name: Inspect disk before test group
         run: |
@@ -585,27 +636,31 @@ jobs:
           just test-archive-run \
             "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
 
-      - name: Inspect disk after test group
+      - name: Report disk usage
         if: always()
+        shell: bash
         run: |
           set -euo pipefail
           {
-            echo "Disk after test group:"
-            df -h .
-            for path in \
-              target \
-              target/debug \
-              target/debug/deps \
-              target/debug/build \
-              target/debug/incremental \
-              .build-cache/rusty-v8 \
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
+              fi
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
               "$HOME/.cargo/registry" \
               "$HOME/.cargo/git" \
-              "$RUNNER_TEMP/ruxex-nextest"; do
-              if [ -e "$path" ]; then
-                du -sh "$path"
-              fi
-            done
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
+            echo "=== Nextest archive ==="
+            du -sh "$RUNNER_TEMP/ruxex-nextest" 2>/dev/null || true
           } | tee -a "$RUNNER_TEMP/ruxex-capacity-report.txt"
 
       - name: Upload capacity report
