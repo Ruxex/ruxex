@@ -24,9 +24,10 @@ fn stable_dns_connector_accepts_the_system_resolver() {
 #[tokio::test]
 async fn native_resolution_supports_both_address_families() {
     let domain: Domain = "localhost".parse().expect("valid domain");
+    let resolver = SystemDnsResolver::default();
     let (ipv4, ipv6) = tokio::join!(
-        SystemDnsResolver::default().ipv4_lookup(domain.clone()),
-        SystemDnsResolver::default().ipv6_lookup(domain),
+        resolver.ipv4_lookup(domain.clone()),
+        resolver.ipv6_lookup(domain),
     );
 
     assert_eq!(
@@ -90,7 +91,7 @@ async fn connector_resolves_upstream_proxy_instead_of_destination() {
     let connector = TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(
         NetworkProxyConfig::default(),
     )));
-    let mut request =
+    let request =
         Request::new(HostWithPort::try_from("destination.invalid:80").expect("valid destination"));
     request.extensions().insert_arc(
         ProxyAddress::try_from(format!("http://localhost:{}", target.port()))
