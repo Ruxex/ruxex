@@ -12,6 +12,7 @@ use rama_net::address::ProxyAddress;
 use rama_net::client::Request;
 use rama_net::stream::Socket;
 use rama_tcp::client::service::TcpConnector;
+use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -24,8 +25,8 @@ fn stable_dns_connector_accepts_the_system_resolver() {
 async fn native_resolution_supports_both_address_families() {
     let domain: Domain = "localhost".parse().expect("valid domain");
     let (ipv4, ipv6) = tokio::join!(
-        SystemDnsResolver.ipv4_lookup(domain.clone()),
-        SystemDnsResolver.ipv6_lookup(domain),
+        SystemDnsResolver::default().ipv4_lookup(domain.clone()),
+        SystemDnsResolver::default().ipv6_lookup(domain),
     );
 
     assert_eq!(
@@ -93,7 +94,8 @@ async fn connector_resolves_upstream_proxy_instead_of_destination() {
         Request::new(HostWithPort::try_from("destination.invalid:80").expect("valid destination"));
     request.extensions().insert_arc(
         ProxyAddress::try_from(format!("http://localhost:{}", target.port()))
-            .expect("valid upstream proxy"),
+            .expect("valid upstream proxy")
+            .into(),
     );
 
     let connection = connector.serve(request).await.expect("connect to proxy");
