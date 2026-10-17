@@ -1456,22 +1456,28 @@ fn github_enterprise_credentials_bind_to_gh_host() {
         let broker = CredentialBroker::new(/*enabled*/ true);
         let mut env = env_map([
             ("GH_HOST", hint),
-            ("GH_ENTERPRISE_TOKEN", "ghp-enterprise-real"),
+            (
+                "GH_ENTERPRISE_TOKEN",
+                "ghp_enterprise_abcdefghijklmnopqrstuvwxyz0123456789",
+            ),
         ]);
         broker.virtualize_child_env(&mut env);
         let dummy = env["GH_ENTERPRISE_TOKEN"].clone();
-        assert_ne!(dummy, "ghp-enterprise-real", "{hint}");
+        assert_ne!(
+            dummy, "ghp_enterprise_abcdefghijklmnopqrstuvwxyz0123456789",
+            "{hint}"
+        );
         env.remove("GH_HOST");
         env.insert(
             "GH_ENTERPRISE_TOKEN".to_string(),
-            "ghp-enterprise-real".to_string(),
+            "ghp_enterprise_abcdefghijklmnopqrstuvwxyz0123456789".to_string(),
         );
         broker.virtualize_child_env(&mut env);
         let mut headers = headers_with_bearer(&dummy);
         broker.inject_request_headers(host, &mut headers);
         assert_eq!(
             authorization(&headers),
-            Some("Bearer ghp-enterprise-real"),
+            Some("Bearer ghp_enterprise_abcdefghijklmnopqrstuvwxyz0123456789"),
             "{hint}"
         );
     }

@@ -43,6 +43,10 @@ fn policy_ctx(
     target_port: u16,
 ) -> MitmPolicyContext {
     MitmPolicyContext {
+        target: rama_net::address::HostWithPort::new(
+            rama_net::address::Host::try_from(target_host).unwrap(),
+            target_port,
+        ),
         target_host: target_host.to_string(),
         target_port,
         scheme: Scheme::HTTPS,

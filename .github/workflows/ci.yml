@@ -233,9 +233,11 @@ jobs:
               --package ruxex-code-mode-host
           - group: app-2-tui
             filter: >-
+              package(ruxex-provider-host-example) |
               package(ruxex-desktop) |
               package(ruxex-tui)
             package_args: >-
+              --package ruxex-provider-host-example
               --package ruxex-desktop
               --package ruxex-tui
           - group: app-2

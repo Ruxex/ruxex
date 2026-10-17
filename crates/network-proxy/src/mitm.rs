@@ -23,6 +23,7 @@ use rama_core::Service;
 use rama_core::bytes::Bytes;
 use rama_core::error::BoxError;
 use rama_core::extensions::Extension;
+use rama_core::extensions::Extensions;
 use rama_core::extensions::ExtensionsRef;
 use rama_core::futures::stream::Stream as FuturesStream;
 use rama_core::io::Io;
@@ -40,6 +41,9 @@ use rama_http::layer::remove_header::RemoveRequestHeaderLayer;
 use rama_http::layer::remove_header::RemoveResponseHeaderLayer;
 use rama_http_backend::server::HttpServer;
 use rama_net::Protocol as Scheme;
+use rama_net::address::HostWithPort;
+use rama_net::client::ConnectorTarget;
+use rama_net::conn::ConnectionHealthWatcher;
 use rama_net::stream::SocketInfo;
 use rama_net::uri::Uri;
 use rama_tls::server::TlsServerConfig;
@@ -50,6 +54,9 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::Context as TaskContext;
 use std::task::Poll;
+use tokio::io::AsyncRead;
+use tokio::io::AsyncWrite;
+use tokio::io::ReadBuf;
 use tracing::info;
 use tracing::warn;
 
@@ -64,6 +71,58 @@ pub struct MitmState {
 
 impl Extension for MitmState {}
 
+struct FlatMitmIo<S> {
+    inner: S,
+    extensions: Extensions,
+}
+
+impl<S> ExtensionsRef for FlatMitmIo<S> {
+    fn extensions(&self) -> &Extensions {
+        &self.extensions
+    }
+}
+
+impl<S> AsyncRead for FlatMitmIo<S>
+where
+    S: AsyncRead + Unpin,
+{
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut TaskContext<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        Pin::new(&mut self.inner).poll_read(cx, buf)
+    }
+}
+
+impl<S> AsyncWrite for FlatMitmIo<S>
+where
+    S: AsyncWrite + Unpin,
+{
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut TaskContext<'_>,
+        buf: &[u8],
+    ) -> Poll<std::io::Result<usize>> {
+        Pin::new(&mut self.inner).poll_write(cx, buf)
+    }
+
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut TaskContext<'_>) -> Poll<std::io::Result<()>> {
+        Pin::new(&mut self.inner).poll_flush(cx)
+    }
+
+    fn poll_shutdown(
+        mut self: Pin<&mut Self>,
+        cx: &mut TaskContext<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        Pin::new(&mut self.inner).poll_shutdown(cx)
+    }
+
+    fn is_write_vectored(&self) -> bool {
+        self.inner.is_write_vectored()
+    }
+}
+
 pub(crate) struct MitmUpstreamConfig {
     pub(crate) allow_upstream_proxy: bool,
     pub(crate) external_ca: Option<NetworkMitmCaConfig>,
@@ -71,6 +130,7 @@ pub(crate) struct MitmUpstreamConfig {
 
 #[derive(Clone)]
 struct MitmPolicyContext {
+    target: HostWithPort,
     target_host: String,
     target_port: u16,
     scheme: Scheme,
@@ -150,11 +210,11 @@ where
 {
     let mitm = stream
         .extensions()
-        .get_arc::<MitmState>()
+        .self_get_arc::<MitmState>()
         .context("missing MITM state")?;
     let app_state = stream
         .extensions()
-        .get_arc::<NetworkProxyState>()
+        .self_get_arc::<NetworkProxyState>()
         .context("missing app state")?;
     let target = stream
         .extensions()
@@ -187,44 +247,70 @@ where
     };
     let request_ctx = Arc::new(MitmRequestContext {
         policy: MitmPolicyContext {
+            target: target.clone(),
             target_host,
             target_port,
             scheme,
             mode,
             app_state,
         },
-        mitm,
+        mitm: mitm.clone(),
         upstream,
     });
 
-    let executor = Executor::default();
-
-    let http_service = HttpServer::auto(executor).service(
-        (
-            (request_ctx.policy.scheme == Scheme::HTTPS)
-                .then(RemoveResponseHeaderLayer::hop_by_hop),
-            (request_ctx.policy.scheme == Scheme::HTTPS).then(RemoveRequestHeaderLayer::hop_by_hop),
-        )
-            .into_layer(service_fn({
-                let request_ctx = request_ctx.clone();
-                move |req| {
-                    let request_ctx = request_ctx.clone();
-                    async move { handle_mitm_request(req, request_ctx).await }
-                }
-            })),
+    let extensions = Extensions::new();
+    extensions.insert_arc(mitm.clone());
+    extensions.insert_arc(request_ctx.policy.app_state.clone());
+    extensions.insert(ProxyTarget(target.clone()));
+    extensions.insert(mode);
+    extensions.insert(ConnectionHealthWatcher::default());
+    extensions.insert(
+        stream
+            .extensions()
+            .self_get_ref::<SocketInfo>()
+            .cloned()
+            .unwrap_or_else(|| {
+                SocketInfo::new(None, rama_net::address::SocketAddress::default_ipv4(0))
+            }),
     );
+    let stream = FlatMitmIo {
+        inner: stream,
+        extensions,
+    };
 
-    match acceptor_data {
-        Some(acceptor_data) => {
-            TlsAcceptorLayer::new(acceptor_data)
-                .with_store_client_hello(true)
-                .into_layer(http_service)
-                .serve(stream)
-                .await
+    let executor = Executor::default();
+    let handler = service_fn({
+        let request_ctx = request_ctx.clone();
+        move |req| {
+            let request_ctx = request_ctx.clone();
+            async move { handle_mitm_request(req, request_ctx).await }
         }
-        None => http_service.serve(stream).await,
-    }
-    .map_err(|err| anyhow!("MITM serve error: {err}"))?;
+    });
+    let serve_result = if request_ctx.policy.scheme == Scheme::HTTPS {
+        let http_service = HttpServer::auto(executor).service(
+            (
+                RemoveResponseHeaderLayer::hop_by_hop(),
+                RemoveRequestHeaderLayer::hop_by_hop(),
+            )
+                .into_layer(handler),
+        );
+        match acceptor_data {
+            Some(acceptor_data) => {
+                TlsAcceptorLayer::new(acceptor_data)
+                    .with_store_client_hello(true)
+                    .into_layer(http_service)
+                    .serve(stream)
+                    .await
+            }
+            None => http_service.serve(stream).await,
+        }
+    } else {
+        HttpServer::auto(executor)
+            .service(handler)
+            .serve(stream)
+            .await
+    };
+    serve_result.map_err(|err| anyhow!("MITM serve error: {err}"))?;
     Ok(())
 }
 
@@ -258,7 +344,14 @@ async fn forward_request(req: Request, request_ctx: &MitmRequestContext) -> Resu
 
     let (mut parts, body) = req.into_parts();
     let authority = authority_header_value(&target_host, target_port, &request_ctx.policy.scheme);
-    parts.uri = Uri::parse(format!("{}://{authority}{path}", request_ctx.policy.scheme))?;
+    if path == "*" {
+        parts.uri = Uri::parse("*")?;
+        parts
+            .extensions
+            .insert(ConnectorTarget(request_ctx.policy.target.clone()));
+    } else {
+        parts.uri = Uri::parse(format!("{}://{authority}{path}", request_ctx.policy.scheme))?;
+    }
     // Server-wide OPTIONS must not borrow authority from a narrower credential URL prefix.
     let credential_path = if path == "*" { "/" } else { &path };
     let credential_destination = format!(

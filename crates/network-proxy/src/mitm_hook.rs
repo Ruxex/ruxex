@@ -482,7 +482,11 @@ fn compile_path_matchers(path_prefixes: &[String]) -> Result<Vec<PathMatcher>> {
                     if prefix.is_empty() {
                         return Err(anyhow!("path_prefixes must not contain empty entries"));
                     }
-                    Ok(PathMatcher::Prefix(prefix.to_string()))
+                    Ok(PathMatcher::Prefix(
+                        rama_net::uri::PathRef::from_raw_str(prefix)
+                            .as_encoded_str()
+                            .into_owned(),
+                    ))
                 }
                 MatcherPattern::Glob(glob_pattern) => Ok(PathMatcher::Glob(compile_glob_matcher(
                     glob_pattern,

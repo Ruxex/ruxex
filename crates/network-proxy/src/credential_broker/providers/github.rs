@@ -142,23 +142,36 @@ fn github_host_hint(env: &HashMap<String, String>) -> Option<String> {
     if value.is_empty() || value.contains(['/', '\\', '@', '?', '#', '*']) {
         return None;
     }
-    let authority = if value.parse::<std::net::IpAddr>().is_ok()
+    let parsed_host = if let Some(bracketed) = value.strip_prefix('[') {
+        let (host, suffix) = bracketed.split_once(']')?;
+        if !suffix.is_empty() {
+            suffix.strip_prefix(':')?.parse::<u16>().ok()?;
+        }
+        let host = host.to_string();
+        if host.parse::<std::net::IpAddr>().is_err()
+            && crate::policy::unscoped_ip_literal(&host).is_none()
+        {
+            return None;
+        }
+        host
+    } else if value.parse::<std::net::IpAddr>().is_ok()
         || crate::policy::unscoped_ip_literal(value).is_some()
     {
-        format!("[{value}]")
-    } else {
         value.to_string()
+    } else {
+        let authority = value.to_string();
+        let parsed = authority.parse::<rama_net::address::Authority>().ok()?;
+        let parsed_host = parsed.address.host.to_string();
+        let suffix = authority.strip_prefix(&parsed_host)?;
+        if !suffix.is_empty() {
+            suffix.strip_prefix(':')?.parse::<u16>().ok()?;
+        }
+        parsed_host
     };
-    let parsed = authority.parse::<rama_net::address::Authority>().ok()?;
-    let parsed_host = parsed.address.host.to_string();
-    let suffix = authority.strip_prefix(&parsed_host)?;
-    if !suffix.is_empty() {
-        suffix.strip_prefix(':')?.parse::<u16>().ok()?;
-    }
     let host = normalize_host(&parsed_host);
     let ip_literal = host.parse::<std::net::IpAddr>().is_ok()
         || crate::policy::unscoped_ip_literal(&host).is_some();
-    if !ip_literal && (parsed_host.starts_with('[') || url::Host::parse(&host).is_err()) {
+    if !ip_literal && url::Host::parse(&host).is_err() {
         return None;
     }
     Some(host)

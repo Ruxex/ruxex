@@ -4,10 +4,10 @@
 use anyhow::Context;
 use anyhow::Result;
 use rama_core::Service;
-use rama_core::bytes::Bytes;
 use rama_core::extensions::ExtensionsRef;
+use rama_core::io::HeapReader;
 use rama_core::io::Io;
-use rama_core::io::rewind::Rewind;
+use rama_core::io::PrefixedIo;
 use rama_http::HeaderValue;
 use rama_http::Method;
 use rama_http::Request;
@@ -17,6 +17,7 @@ use rama_http::header::CONNECTION;
 use rama_http::header::PROXY_AUTHENTICATE;
 use rama_http::header::UPGRADE;
 use rama_http::io::upgrade::OnUpgrade;
+use rama_net::address::Authority;
 use rama_net::uri::Uri;
 use std::time::Duration;
 use tokio::io::AsyncReadExt;
@@ -42,7 +43,7 @@ const MAX_REQUEST_LINE: usize = 8192;
 pub(crate) async fn peek_protocol<S>(
     mut stream: S,
     protocols: BrokeredProtocols,
-) -> Result<(TunnelProtocol, Rewind<S>)>
+) -> Result<(TunnelProtocol, PrefixedIo<HeapReader, S>)>
 where
     S: Io + Unpin + ExtensionsRef,
 {
@@ -83,7 +84,8 @@ where
                     let version = parts.next()?;
                     return (parts.next().is_none()
                         && Method::from_bytes(method.as_bytes()).is_ok()
-                        && target.parse::<Uri>().is_ok()
+                        && (target.parse::<Uri>().is_ok()
+                            || (method == "CONNECT" && target.parse::<Authority>().is_ok()))
                         && (matches!(version, "HTTP/1.0" | "HTTP/1.1")
                             || (method == "PRI" && target == "*" && version == "HTTP/2.0")))
                         .then_some(());
@@ -111,7 +113,7 @@ where
     } else {
         TunnelProtocol::Opaque
     };
-    Ok((protocol, Rewind::new_buffered(stream, Bytes::from(prefix))))
+    Ok((protocol, PrefixedIo::new(HeapReader::from(prefix), stream)))
 }
 
 /// Preserve HTTP/1 upgrades on an already-authorized tunnel without interpreting upgraded bytes.
