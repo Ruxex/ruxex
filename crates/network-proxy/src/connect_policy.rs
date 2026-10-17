@@ -88,6 +88,7 @@ where
 
             let target = connector_target_without_parent(&input)
                 .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
+            input.extensions().insert(ConnectorTarget(target.clone()));
             let connector = connector.with_connector(TargetCheckedStreamConnector {
                 state: self.state.clone(),
                 target,
