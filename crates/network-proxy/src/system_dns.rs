@@ -6,7 +6,7 @@
 //! that are provided by applications that modify / hook
 //! into macOS DNS behavior (i.e. proxies, VPNs, etc)
 use rama_core::error::BoxError;
-use rama_core::futures::{Stream, StreamExt as _, TryStreamExt as _};
+use rama_core::futures::{Stream, TryStreamExt as _};
 use rama_dns::client::AppleDnsResolver;
 use rama_dns::client::resolver::DnsAddressResolver;
 use rama_net::address::Domain;

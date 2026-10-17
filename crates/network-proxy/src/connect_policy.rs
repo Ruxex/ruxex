@@ -5,9 +5,11 @@ use crate::state::NetworkProxyState;
 use crate::system_dns::SystemDnsResolver;
 use rama_core::Service;
 use rama_core::error::BoxError;
+#[cfg(not(target_os = "macos"))]
 use rama_core::error::BoxErrorExt as _;
 use rama_core::error::ErrorExt as _;
 use rama_core::error::extra::OpaqueError;
+#[cfg(not(target_os = "macos"))]
 use rama_core::extensions::ExtensionsRef;
 #[cfg(target_os = "macos")]
 use rama_dns::client::DnsConnector;
