@@ -25,7 +25,6 @@ ruxex-home = { workspace = true }
 ruxex-features = { workspace = true }
 ruxex-hooks = { workspace = true }
 ruxex-login = { workspace = true }
-ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
 ruxex-models-manager = { workspace = true }
 ruxex-providers = { workspace = true }

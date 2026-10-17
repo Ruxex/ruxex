@@ -264,14 +264,11 @@ name = "app_test_support"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
  "chrono",
  "core_test_support",
- "pretty_assertions",
  "ruxex-app-server-protocol",
  "ruxex-config",
  "ruxex-core",
- "ruxex-exec-server",
  "ruxex-features",
  "ruxex-login",
  "ruxex-model-provider",
@@ -282,8 +279,6 @@ dependencies = [
  "shlex",
  "tempfile",
  "tokio",
- "tokio-util",
- "url",
  "uuid",
  "wiremock",
 ]
@@ -1728,7 +1723,6 @@ dependencies = [
  "ruxex-hooks",
  "ruxex-http-client",
  "ruxex-login",
- "ruxex-model-provider",
  "ruxex-model-provider-info",
  "ruxex-models-manager",
  "ruxex-protocol",
@@ -12142,11 +12136,9 @@ name = "ruxex-utils-path-uri"
 version = "0.0.0"
 dependencies = [
  "base64 0.22.1",
- "pretty_assertions",
  "ruxex-utils-absolute-path",
  "schemars 0.8.22",
  "serde",
- "serde_json",
  "thiserror 2.0.18",
  "ts-rs",
  "url",

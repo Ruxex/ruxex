@@ -13,12 +13,10 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-base64 = { workspace = true }
 chrono = { workspace = true }
 ruxex-app-server-protocol = { workspace = true }
 ruxex-config = { workspace = true }
 ruxex-core = { workspace = true }
-ruxex-exec-server = { workspace = true }
 ruxex-features = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
@@ -38,12 +36,7 @@ tokio = { workspace = true, features = [
     "test-util",
     "time",
 ] }
-tokio-util = { workspace = true }
-url = { workspace = true }
 uuid = { workspace = true }
 wiremock = { workspace = true }
 core_test_support = { path = "../../../core/tests/common" }
 shlex = { workspace = true }
-
-[dev-dependencies]
-pretty_assertions = { workspace = true }

@@ -55,7 +55,10 @@ where
     async fn serve(&self, input: Input) -> Result<Self::Output, Self::Error> {
         #[cfg(not(target_os = "macos"))]
         {
-            if input.extensions().self_get_ref::<ProxyAddress>().is_some() {
+            if let Some(proxy) = input.extensions().self_get_ref::<ProxyAddress>() {
+                input
+                    .extensions()
+                    .insert(ConnectorTarget(proxy.address.clone()));
                 return serve_resolved_target(input, ()).await;
             }
 
@@ -74,7 +77,10 @@ where
         #[cfg(target_os = "macos")]
         {
             let connector = TcpConnector::new();
-            if input.extensions().self_get_ref::<ProxyAddress>().is_some() {
+            if let Some(proxy) = input.extensions().self_get_ref::<ProxyAddress>() {
+                input
+                    .extensions()
+                    .insert(ConnectorTarget(proxy.address.clone()));
                 return DnsConnector::with_resolver(connector, SystemDnsResolver::default())
                     .serve(input)
                     .await;
@@ -316,6 +322,29 @@ mod tests {
             result.is_ok(),
             "explicitly allowlisted localhost target should be allowed: {result:?}"
         );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn proxy_connector_uses_proxy_address_as_target() {
+        let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
+            .await
+            .expect("bind local listener");
+        let target = listener.local_addr().expect("local addr");
+        let connector = TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(
+            NetworkProxyConfig::default(),
+        )));
+        let request = rama_net::client::Request::new(
+            HostWithPort::try_from("destination.invalid:80").expect("valid destination"),
+        );
+        request.extensions().insert(
+            ProxyAddress::try_from(format!("http://{}", target)).expect("valid upstream proxy"),
+        );
+
+        let connection = Service::serve(&connector, request)
+            .await
+            .expect("connect to proxy");
+
+        assert_eq!(connection.conn.peer_addr().expect("peer addr"), target);
     }
 
     #[test]
