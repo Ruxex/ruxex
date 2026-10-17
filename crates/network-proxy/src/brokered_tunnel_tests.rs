@@ -395,8 +395,14 @@ async fn plaintext_tunnels_reject_retargeting_and_nested_connect() {
     }
 }
 
-#[tokio::test]
-async fn plaintext_tunnels_preserve_server_first_and_client_first_opaque_bytes() {
+#[test]
+fn plaintext_tunnels_preserve_server_first_and_client_first_opaque_bytes() {
+    crate::test_support::run_on_large_stack(
+        plaintext_tunnels_preserve_server_first_and_client_first_opaque_bytes_inner(),
+    );
+}
+
+async fn plaintext_tunnels_preserve_server_first_and_client_first_opaque_bytes_inner() {
     for transport in [Transport::Connect, Transport::Socks5] {
         for server_first in [true, false] {
             let target = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();

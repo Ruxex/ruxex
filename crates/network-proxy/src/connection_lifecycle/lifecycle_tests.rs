@@ -54,19 +54,28 @@ enum StopProxy {
     CancelWait,
 }
 
-#[tokio::test]
-async fn shutdown_closes_proxy_connections() -> Result<()> {
-    assert_stop_closes_connections(StopProxy::Shutdown).await
+#[test]
+fn shutdown_closes_proxy_connections() {
+    crate::test_support::run_on_large_stack(async {
+        assert_stop_closes_connections(StopProxy::Shutdown).await
+    })
+    .unwrap();
 }
 
-#[tokio::test]
-async fn dropping_handle_closes_proxy_connections() -> Result<()> {
-    assert_stop_closes_connections(StopProxy::Drop).await
+#[test]
+fn dropping_handle_closes_proxy_connections() {
+    crate::test_support::run_on_large_stack(async {
+        assert_stop_closes_connections(StopProxy::Drop).await
+    })
+    .unwrap();
 }
 
-#[tokio::test]
-async fn canceling_wait_closes_proxy_connections() -> Result<()> {
-    assert_stop_closes_connections(StopProxy::CancelWait).await
+#[test]
+fn canceling_wait_closes_proxy_connections() {
+    crate::test_support::run_on_large_stack(async {
+        assert_stop_closes_connections(StopProxy::CancelWait).await
+    })
+    .unwrap();
 }
 
 async fn assert_stop_closes_connections(stop: StopProxy) -> Result<()> {

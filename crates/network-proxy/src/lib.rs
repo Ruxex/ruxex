@@ -29,6 +29,8 @@ mod socks5;
 mod state;
 #[cfg(target_os = "macos")]
 mod system_dns;
+#[cfg(test)]
+mod test_support;
 mod upstream;
 
 pub use attribution::PROXY_ATTRIBUTION_TOKEN_ENV_KEY;

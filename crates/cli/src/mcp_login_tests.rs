@@ -37,10 +37,9 @@ fn callback_line_is_bounded_and_does_not_expose_input_in_errors() {
         "No OAuth callback URL received before input closed"
     );
     assert_eq!(
-        format!(
-            "{:?}",
-            read_callback_line(Cursor::new(b"sensitive\xff")).unwrap_err()
-        ),
+        read_callback_line(Cursor::new(b"sensitive\xff"))
+            .unwrap_err()
+            .to_string(),
         "OAuth callback URL must be valid UTF-8"
     );
 }

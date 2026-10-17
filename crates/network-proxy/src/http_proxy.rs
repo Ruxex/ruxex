@@ -1548,8 +1548,14 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn brokered_connect_forwards_server_first_opaque_protocol_without_mitm() {
+    #[test]
+    fn brokered_connect_forwards_server_first_opaque_protocol_without_mitm() {
+        crate::test_support::run_on_large_stack(
+            brokered_connect_forwards_server_first_opaque_protocol_without_mitm_inner(),
+        );
+    }
+
+    async fn brokered_connect_forwards_server_first_opaque_protocol_without_mitm_inner() {
         let server_banner = b"SSH-2.0-server\r\n";
         let target_listener = TokioTcpListener::bind((Ipv4Addr::LOCALHOST, 0))
             .await
