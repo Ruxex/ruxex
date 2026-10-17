@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 ruxex-core = { workspace = true }
 ruxex-extension-api = { workspace = true }
-ruxex-http-client = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-providers = { workspace = true }

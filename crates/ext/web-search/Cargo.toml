@@ -17,7 +17,6 @@ ruxex-api = { workspace = true }
 ruxex-core = { workspace = true }
 ruxex-extension-api = { workspace = true }
 ruxex-extension-items = { workspace = true }
-ruxex-http-client = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }

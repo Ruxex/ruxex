@@ -9189,16 +9189,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ratatui-macros"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed7dc68daa7498a43e4d68e0eb078427e10c38fbcfbb1e42d955f1fa2140d814"
-dependencies = [
- "ratatui-core",
- "ratatui-widgets",
-]
-
-[[package]]
 name = "ratatui-termina"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9944,7 +9934,6 @@ dependencies = [
  "pretty_assertions",
  "ruxex-app-server-protocol",
  "ruxex-app-server-transport",
- "ruxex-http-client",
  "ruxex-install-context",
  "ruxex-uds",
  "ruxex-utils-home-dir",
@@ -10341,7 +10330,6 @@ dependencies = [
  "core-foundation 0.9.4",
  "dns-lookup",
  "dunce",
- "futures",
  "gethostname",
  "indexmap 2.14.0",
  "libc",
@@ -10533,7 +10521,6 @@ dependencies = [
  "ruxex-history",
  "ruxex-home",
  "ruxex-login",
- "ruxex-model-provider-info",
  "ruxex-models-manager",
  "ruxex-protocol",
  "ruxex-state",
@@ -10942,7 +10929,6 @@ dependencies = [
  "ruxex-config",
  "ruxex-core",
  "ruxex-extension-api",
- "ruxex-http-client",
  "ruxex-login",
  "ruxex-model-provider",
  "ruxex-model-provider-info",
@@ -11571,7 +11557,6 @@ dependencies = [
  "chrono",
  "pretty_assertions",
  "regex",
- "ruxex-extension-items",
  "ruxex-file-search",
  "ruxex-git-utils",
  "ruxex-history",
@@ -11722,7 +11707,6 @@ dependencies = [
  "tokio",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
- "url",
 ]
 
 [[package]]
@@ -11807,7 +11791,6 @@ dependencies = [
  "pretty_assertions",
  "pulldown-cmark",
  "ruxex-app-server-protocol",
- "ruxex-extension-items",
  "ruxex-git-utils",
  "ruxex-install-context",
  "ruxex-otel",
@@ -11816,7 +11799,6 @@ dependencies = [
  "ruxex-state",
  "ruxex-utils-absolute-path",
  "ruxex-utils-path",
- "ruxex-utils-path-uri",
  "serde",
  "serde_json",
  "sqlx",
@@ -11848,7 +11830,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.18",
- "tracing",
  "urlencoding",
 ]
 
@@ -11883,7 +11864,6 @@ dependencies = [
  "pulldown-cmark",
  "rand 0.9.3",
  "ratatui",
- "ratatui-macros",
  "regex-lite",
  "rmcp",
  "ruxex-ansi-escape",
@@ -12238,7 +12218,6 @@ dependencies = [
  "ruxex-core",
  "ruxex-extension-api",
  "ruxex-extension-items",
- "ruxex-http-client",
  "ruxex-login",
  "ruxex-model-provider",
  "ruxex-model-provider-info",

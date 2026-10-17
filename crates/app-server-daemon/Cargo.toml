@@ -16,7 +16,6 @@ workspace = true
 anyhow = { workspace = true }
 ruxex-app-server-protocol = { workspace = true }
 ruxex-app-server-transport = { workspace = true }
-ruxex-http-client = { workspace = true }
 ruxex-install-context = { workspace = true }
 ruxex-utils-home-dir = { workspace = true }
 ruxex-uds = { workspace = true }

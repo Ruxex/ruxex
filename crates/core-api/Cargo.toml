@@ -24,7 +24,6 @@ ruxex-history = { workspace = true }
 ruxex-exec-server = { workspace = true }
 ruxex-features = { workspace = true }
 ruxex-login = { workspace = true }
-ruxex-model-provider-info = { workspace = true }
 ruxex-models-manager = { workspace = true }
 ruxex-protocol = { workspace = true }
 ruxex-state = { workspace = true }

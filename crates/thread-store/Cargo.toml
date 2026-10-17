@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
 ruxex-app-server-protocol = { workspace = true }
-ruxex-extension-items = { workspace = true }
 ruxex-git-utils = { workspace = true }
 ruxex-install-context = { workspace = true }
 ruxex-otel = { workspace = true }
@@ -24,7 +23,6 @@ ruxex-rollout = { workspace = true }
 ruxex-state = { workspace = true }
 ruxex-utils-absolute-path = { workspace = true }
 ruxex-utils-path = { workspace = true }
-ruxex-utils-path-uri = { workspace = true }
 futures = { workspace = true }
 pulldown-cmark = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

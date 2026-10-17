@@ -15,7 +15,6 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-ruxex-extension-items = { workspace = true }
 ruxex-file-search = { workspace = true }
 ruxex-git-utils = { workspace = true }
 ruxex-history = { workspace = true }
