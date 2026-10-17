@@ -78,26 +78,39 @@ where
         {
             let connector = TcpConnector::new();
             if let Some(proxy) = input.extensions().self_get_ref::<ProxyAddress>() {
-                input
-                    .extensions()
-                    .insert(ConnectorTarget(proxy.address.clone()));
-                return DnsConnector::with_resolver(connector, SystemDnsResolver::default())
-                    .serve(input)
-                    .await;
+                let target = proxy.address.clone();
+                input.extensions().insert(ConnectorTarget(target.clone()));
+                return if target_needs_dns(&target) {
+                    DnsConnector::with_resolver(connector, SystemDnsResolver::default())
+                        .serve(input)
+                        .await
+                } else {
+                    connector.serve(input).await
+                };
             }
 
             let target = connector_target_without_parent(&input)
                 .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))?;
+            let needs_dns = target_needs_dns(&target);
             input.extensions().insert(ConnectorTarget(target.clone()));
             let connector = connector.with_connector(TargetCheckedStreamConnector {
                 state: self.state.clone(),
                 target,
             });
-            return DnsConnector::with_resolver(connector, SystemDnsResolver::default())
-                .serve(input)
-                .await;
+            return if needs_dns {
+                DnsConnector::with_resolver(connector, SystemDnsResolver::default())
+                    .serve(input)
+                    .await
+            } else {
+                connector.serve(input).await
+            };
         }
     }
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn target_needs_dns(target: &HostWithPort) -> bool {
+    target.host.try_as_ip().is_err()
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -357,6 +370,18 @@ mod tests {
         assert!(!target_matches_non_public_addr(
             &host,
             Ipv4Addr::LOCALHOST.into()
+        ));
+    }
+
+    #[test]
+    fn dns_is_not_needed_for_ip_targets() {
+        assert!(!target_needs_dns(&HostWithPort::from(
+            "127.0.0.1:8080"
+                .parse::<SocketAddr>()
+                .expect("valid address"),
+        )));
+        assert!(target_needs_dns(
+            &HostWithPort::try_from("localhost:8080").expect("valid hostname")
         ));
     }
 }
