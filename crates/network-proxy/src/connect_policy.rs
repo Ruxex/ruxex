@@ -236,7 +236,9 @@ mod tests {
     use super::*;
     use crate::config::NetworkProxyConfig;
     use crate::state::network_proxy_state_for_policy;
+    use rama_core::extensions::ExtensionsRef;
     use rama_net::address::HostWithPort;
+    use rama_net::stream::Socket;
     use std::net::Ipv4Addr;
     use tokio::net::TcpListener;
 
