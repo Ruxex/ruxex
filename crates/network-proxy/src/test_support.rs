@@ -1,6 +1,12 @@
 use std::future::Future;
 
-const TEST_THREAD_STACK_SIZE: usize = 16 * 1024 * 1024;
+const TEST_THREAD_STACK_SIZE: usize = if cfg!(target_os = "macos") {
+    // Rama 0.3's macOS proxy and lifecycle service stack is substantially deeper than
+    // the Linux path when exercised through the real listener.
+    64 * 1024 * 1024
+} else {
+    16 * 1024 * 1024
+};
 
 pub(crate) fn run_on_large_stack<F, T>(future: F) -> T
 where
