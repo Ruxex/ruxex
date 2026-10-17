@@ -43,6 +43,7 @@ use rama_core::error::BoxError;
 use rama_core::error::ErrorExt as _;
 use rama_core::error::extra::OpaqueError;
 use rama_core::extensions::Extension;
+use rama_core::extensions::Extensions;
 use rama_core::extensions::ExtensionsRef;
 use rama_core::graceful::ShutdownGuard;
 use rama_core::io::Io;
@@ -183,7 +184,15 @@ pub(crate) fn http_proxy_service(
                             http_connect_accept(policy_decider, environment_id, req)
                                 .await
                                 .map(|(response, request)| UpgradeResponse {
-                                    extensions: request.extensions().clone(),
+                                    // Do not copy the whole request extension store here. Since
+                                    // Rama 0.3.0, HTTP/1 server requests carry an
+                                    // `Ingress<Extensions>` wrapper pointing at the connection
+                                    // extensions. `UpgradeService` extends the upgraded IO with
+                                    // this store; copying that wrapper back into the same IO
+                                    // creates a self-reference. Rama's recursive extension
+                                    // lookup then follows `Ingress` forever and overflows the
+                                    // stack while searching for a missing extension.
+                                    extensions: connect_upgrade_extensions(&request),
                                     response,
                                     request,
                                 })
@@ -202,6 +211,31 @@ pub(crate) fn http_proxy_service(
     );
 
     BindConnectionAttribution::new(http_service, state, environment_id).boxed()
+}
+
+fn connect_upgrade_extensions(request: &Request) -> Extensions {
+    let extensions = Extensions::new();
+
+    // These are the only request values consumed by `http_connect_proxy` after the
+    // HTTP upgrade. Keeping this list explicit prevents Rama's connection wrappers
+    // from being copied into the upgraded IO extension store.
+    if let Some(state) = request.extensions().get_arc::<NetworkProxyState>() {
+        extensions.insert_arc(state);
+    }
+    if let Some(target) = request.extensions().self_get_ref::<ProxyTarget>() {
+        extensions.insert(target.clone());
+    }
+    if let Some(mode) = request.extensions().self_get_ref::<ConnectMitmMode>() {
+        extensions.insert(*mode);
+    }
+    if let Some(mode) = request.extensions().self_get_ref::<NetworkMode>() {
+        extensions.insert(*mode);
+    }
+    if let Some(mitm_state) = request.extensions().self_get_arc::<mitm::MitmState>() {
+        extensions.insert_arc(mitm_state);
+    }
+
+    extensions
 }
 
 async fn http_connect_accept(
