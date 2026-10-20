@@ -16,4 +16,5 @@ workspace = true
 [dependencies]
 ansi-to-tui = { workspace = true }
 ratatui = { workspace = true }
+ratatui-core-upstream = { workspace = true }
 tracing = { workspace = true, features = ["log"] }

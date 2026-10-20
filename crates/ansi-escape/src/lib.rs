@@ -1,7 +1,10 @@
 use ansi_to_tui::Error;
 use ansi_to_tui::IntoText;
-use ratatui::text::Line;
-use ratatui::text::Text;
+use ratatui::layout::Alignment;
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Line, Span, Text};
+
+use ratatui_core_upstream as upstream_core;
 
 // Expand tabs in a best-effort way for transcript rendering.
 // Tabs can interact poorly with left-gutter prefixes in our TUI and CLI
@@ -41,7 +44,7 @@ pub fn ansi_escape(s: &str) -> Text<'static> {
     // to_text() claims to be faster, but introduces complex lifetime issues
     // such that it's not worth it.
     match s.into_text() {
-        Ok(text) => text,
+        Ok(text) => convert_text(text),
         Err(err) => match err {
             Error::NomError(message) => {
                 tracing::error!(
@@ -55,4 +58,76 @@ pub fn ansi_escape(s: &str) -> Text<'static> {
             }
         },
     }
+}
+
+fn convert_text(text: upstream_core::text::Text<'static>) -> Text<'static> {
+    Text {
+        alignment: text.alignment.map(convert_alignment),
+        style: convert_style(text.style),
+        lines: text.lines.into_iter().map(convert_line).collect(),
+    }
+}
+
+fn convert_line(line: upstream_core::text::Line<'static>) -> Line<'static> {
+    Line {
+        style: convert_style(line.style),
+        alignment: line.alignment.map(convert_alignment),
+        spans: line.spans.into_iter().map(convert_span).collect(),
+    }
+}
+
+fn convert_span(span: upstream_core::text::Span<'static>) -> Span<'static> {
+    Span {
+        style: convert_style(span.style),
+        content: span.content,
+    }
+}
+
+fn convert_alignment(alignment: upstream_core::layout::Alignment) -> Alignment {
+    match alignment {
+        upstream_core::layout::Alignment::Left => Alignment::Left,
+        upstream_core::layout::Alignment::Center => Alignment::Center,
+        upstream_core::layout::Alignment::Right => Alignment::Right,
+    }
+}
+
+fn convert_style(style: upstream_core::style::Style) -> Style {
+    let mut converted = Style::default();
+    if let Some(fg) = style.fg {
+        converted = converted.fg(convert_color(fg));
+    }
+    if let Some(bg) = style.bg {
+        converted = converted.bg(convert_color(bg));
+    }
+    converted
+        .add_modifier(convert_modifier(style.add_modifier))
+        .remove_modifier(convert_modifier(style.sub_modifier))
+}
+
+fn convert_color(color: upstream_core::style::Color) -> Color {
+    match color {
+        upstream_core::style::Color::Reset => Color::Reset,
+        upstream_core::style::Color::Black => Color::Black,
+        upstream_core::style::Color::Red => Color::Red,
+        upstream_core::style::Color::Green => Color::Green,
+        upstream_core::style::Color::Yellow => Color::Yellow,
+        upstream_core::style::Color::Blue => Color::Blue,
+        upstream_core::style::Color::Magenta => Color::Magenta,
+        upstream_core::style::Color::Cyan => Color::Cyan,
+        upstream_core::style::Color::Gray => Color::Gray,
+        upstream_core::style::Color::DarkGray => Color::DarkGray,
+        upstream_core::style::Color::LightRed => Color::LightRed,
+        upstream_core::style::Color::LightGreen => Color::LightGreen,
+        upstream_core::style::Color::LightYellow => Color::LightYellow,
+        upstream_core::style::Color::LightBlue => Color::LightBlue,
+        upstream_core::style::Color::LightMagenta => Color::LightMagenta,
+        upstream_core::style::Color::LightCyan => Color::LightCyan,
+        upstream_core::style::Color::White => Color::White,
+        upstream_core::style::Color::Rgb(red, green, blue) => Color::Rgb(red, green, blue),
+        upstream_core::style::Color::Indexed(index) => Color::Indexed(index),
+    }
+}
+
+fn convert_modifier(modifier: upstream_core::style::Modifier) -> Modifier {
+    Modifier::from_bits_retain(modifier.bits())
 }
