@@ -1,0 +1,336 @@
+//! Shared implementation for `ruxex archive`, `ruxex delete`, and `ruxex unarchive`.
+//!
+//! The CLI commands are thin app-server clients: resolve a user-provided UUID or exact session
+//! name, then call the corresponding app-server RPC.
+
+use std::io::IsTerminal;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use crate::Cli;
+use crate::app_server_session::AppServerSession;
+use crate::legacy_core::config::ConfigBuilder;
+use crate::legacy_core::config::ConfigOverrides;
+use crate::legacy_core::config::resolve_profile_v2_config_path;
+use crate::named_session_lookup::SessionCollection;
+use crate::named_session_lookup::display_label;
+use crate::named_session_lookup::lookup;
+use color_eyre::eyre::Result;
+use color_eyre::eyre::WrapErr;
+use color_eyre::eyre::eyre;
+use ruxex_app_server_protocol::Thread as AppServerThread;
+use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::LoaderOverrides;
+use ruxex_exec_server::EnvironmentManager;
+use ruxex_exec_server::ExecServerRuntimePaths;
+use ruxex_protocol::ThreadId;
+use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::find_ruxex_home;
+
+use super::ProviderRuntimeFactory;
+use super::RemoteAppServerEndpoint;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeleteConfirmation {
+    Prompt,
+    Skip,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionArchiveAction {
+    Archive,
+    Delete(DeleteConfirmation),
+    Unarchive,
+}
+
+pub struct SessionArchiveCommandOptions {
+    pub cli: Cli,
+    pub arg0_paths: Arg0DispatchPaths,
+    pub explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    pub provider_factory: Option<ProviderRuntimeFactory>,
+}
+
+fn success_message(
+    action: SessionArchiveAction,
+    session_id: ThreadId,
+    session_name: Option<&str>,
+) -> String {
+    let action = match action {
+        SessionArchiveAction::Archive => "Archived",
+        SessionArchiveAction::Delete(_) => "Deleted",
+        SessionArchiveAction::Unarchive => "Unarchived",
+    };
+    match session_name {
+        Some(name) => format!("{action} session {name} ({session_id})."),
+        None => format!("{action} session {session_id}."),
+    }
+}
+
+struct ResolvedSessionTarget {
+    session_id: ThreadId,
+    session_name: Option<String>,
+}
+
+pub async fn run_session_archive_command(
+    action: SessionArchiveAction,
+    target: String,
+    options: SessionArchiveCommandOptions,
+) -> Result<String> {
+    let ruxex_home = find_ruxex_home().wrap_err("failed to find Ruxex home")?;
+    let mut app_server =
+        start_app_server_for_session_command(options, ruxex_home.to_path_buf()).await?;
+    run_session_archive_action_with_app_server(
+        &mut app_server,
+        ruxex_home.as_path(),
+        action,
+        &target,
+    )
+    .await
+}
+
+async fn run_session_archive_action_with_app_server(
+    app_server: &mut AppServerSession,
+    ruxex_home: &Path,
+    action: SessionArchiveAction,
+    target: &str,
+) -> Result<String> {
+    let resolved = resolve_session_target(app_server, ruxex_home, action, target).await?;
+    let session_name = match action {
+        SessionArchiveAction::Archive => {
+            app_server.thread_archive(resolved.session_id).await?;
+            resolved.session_name
+        }
+        SessionArchiveAction::Delete(confirmation) => {
+            if matches!(confirmation, DeleteConfirmation::Prompt)
+                && !confirm_session_delete(&resolved)?
+            {
+                return Ok("Delete cancelled.".to_string());
+            }
+            app_server.thread_delete(resolved.session_id).await?;
+            resolved.session_name
+        }
+        SessionArchiveAction::Unarchive => {
+            let thread = app_server.thread_unarchive(resolved.session_id).await?;
+            thread.name.or(resolved.session_name)
+        }
+    };
+    Ok(success_message(
+        action,
+        resolved.session_id,
+        session_name.as_deref(),
+    ))
+}
+
+async fn resolve_session_target(
+    app_server: &mut AppServerSession,
+    ruxex_home: &Path,
+    action: SessionArchiveAction,
+    target: &str,
+) -> Result<ResolvedSessionTarget> {
+    if let Ok(session_id) = ThreadId::from_string(target) {
+        if matches!(
+            action,
+            SessionArchiveAction::Delete(DeleteConfirmation::Prompt)
+        ) {
+            let thread = app_server
+                .thread_read(session_id, /*include_turns*/ false)
+                .await
+                .with_context(|| {
+                    format!("No active or archived session found matching '{target}'.")
+                })?;
+            return Ok(ResolvedSessionTarget {
+                session_id,
+                session_name: thread.name,
+            });
+        }
+        return Ok(ResolvedSessionTarget {
+            session_id,
+            session_name: None,
+        });
+    }
+
+    let (search_scope, collections): (&str, &[SessionCollection]) = match action {
+        SessionArchiveAction::Archive => ("active", &[SessionCollection::Active]),
+        SessionArchiveAction::Delete(_) => (
+            "active or archived",
+            &[SessionCollection::Active, SessionCollection::Archived],
+        ),
+        SessionArchiveAction::Unarchive => ("archived", &[SessionCollection::Archived]),
+    };
+    if let Some(thread) = lookup(
+        app_server,
+        ruxex_home,
+        target,
+        collections,
+        &[super::resume_source_kinds(
+            /*include_non_interactive*/ false,
+        )],
+    )
+    .await?
+    {
+        return session_target_from_app_server_thread(thread);
+    }
+    Err(eyre!(
+        "No {search_scope} session found matching '{target}'."
+    ))
+}
+
+fn session_target_from_app_server_thread(thread: AppServerThread) -> Result<ResolvedSessionTarget> {
+    let session_id = ThreadId::from_string(&thread.id)
+        .wrap_err_with(|| format!("app server returned invalid session id `{}`", thread.id))?;
+    Ok(ResolvedSessionTarget {
+        session_id,
+        session_name: Some(display_label(&thread).to_string()),
+    })
+}
+
+fn confirm_session_delete(target: &ResolvedSessionTarget) -> Result<bool> {
+    if !(std::io::stdin().is_terminal() && std::io::stderr().is_terminal()) {
+        return Err(eyre!(
+            "cannot confirm session deletion without an interactive terminal; rerun with --force and a session UUID"
+        ));
+    }
+
+    let mut stderr = std::io::stderr().lock();
+    match target.session_name.as_deref() {
+        Some(name) => writeln!(
+            stderr,
+            "Permanently delete session '{name}' ({})?",
+            target.session_id
+        ),
+        None => writeln!(stderr, "Permanently delete session {}?", target.session_id),
+    }?;
+    writeln!(
+        stderr,
+        "This cannot be undone. Subagent threads will also be deleted."
+    )?;
+    write!(stderr, "Continue? [y/N]: ")?;
+    stderr.flush()?;
+
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    let answer = input.trim();
+    Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
+}
+
+pub(super) async fn start_app_server_for_session_command(
+    options: SessionArchiveCommandOptions,
+    ruxex_home: PathBuf,
+) -> Result<AppServerSession> {
+    let SessionArchiveCommandOptions {
+        cli,
+        arg0_paths,
+        explicit_remote_endpoint,
+        provider_factory,
+    } = options;
+    if cli.no_daemon && explicit_remote_endpoint.is_some() {
+        return Err(eyre!("--no-daemon cannot be used with --remote."));
+    }
+    let loader_overrides = LoaderOverrides::default();
+    let strict_config = cli.strict_config;
+    let raw_overrides = cli.config_overrides.raw_overrides.clone();
+    let overrides_cli = CliConfigOverrides { raw_overrides };
+    let cli_kv_overrides = overrides_cli
+        .parse_overrides()
+        .map_err(|err| eyre!("failed to parse -c overrides: {err}"))?;
+    let mut launch_loader_overrides = loader_overrides.clone();
+    if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
+        launch_loader_overrides.user_config_path = Some(resolve_profile_v2_config_path(
+            ruxex_home.as_path(),
+            profile_v2,
+        ));
+        launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
+    }
+
+    let reuse_implicit_local_daemon = !cli.no_daemon
+        && super::daemon_startup::config_exclusion(
+            &cli_kv_overrides,
+            &launch_loader_overrides,
+            strict_config,
+            cli.bypass_hook_trust,
+        )
+        .is_none();
+    let default_daemon = if explicit_remote_endpoint.is_none() && reuse_implicit_local_daemon {
+        super::maybe_probe_default_daemon_socket(ruxex_home.as_path()).await
+    } else {
+        None
+    };
+    let mut app_server_target = super::app_server_target_for_launch(
+        explicit_remote_endpoint,
+        default_daemon,
+        reuse_implicit_local_daemon,
+    )?;
+    let remote_cwd_override = cli
+        .cwd
+        .clone()
+        .filter(|_| app_server_target.uses_remote_workspace());
+
+    let local_runtime_paths = ExecServerRuntimePaths::from_optional_paths(
+        arg0_paths.ruxex_self_exe.clone(),
+        arg0_paths.ruxex_linux_sandbox_exe.clone(),
+    )
+    .wrap_err("failed to resolve local runtime paths")?;
+    let prepared_environment_manager = EnvironmentManager::prepare_from_env()
+        .await
+        .wrap_err("failed to discover execution environments")?;
+    let mut loader_overrides = loader_overrides;
+    if let Some(profile_v2) = cli.config_profile_v2.as_ref() {
+        loader_overrides.user_config_path = Some(resolve_profile_v2_config_path(
+            ruxex_home.as_path(),
+            profile_v2,
+        ));
+        loader_overrides.user_config_profile = Some(profile_v2.clone());
+    }
+    loader_overrides.ignore_login_requirements = app_server_target.uses_remote_workspace();
+
+    let model = cli.model.clone();
+    let cwd = cli.cwd.clone();
+    let config = ConfigBuilder::default()
+        .cli_overrides(cli_kv_overrides.clone())
+        .harness_overrides(ConfigOverrides {
+            model,
+            cwd: if app_server_target.uses_remote_workspace() {
+                None
+            } else {
+                cwd
+            },
+            ruxex_self_exe: arg0_paths.ruxex_self_exe.clone(),
+            ruxex_linux_sandbox_exe: arg0_paths.ruxex_linux_sandbox_exe.clone(),
+            show_raw_agent_reasoning: None,
+            bypass_hook_trust: cli.bypass_hook_trust.then_some(true),
+            ..Default::default()
+        })
+        .loader_overrides(loader_overrides.clone())
+        .strict_config(strict_config)
+        .build()
+        .await
+        .wrap_err("failed to load configuration")?;
+    let environment_manager = Arc::new(
+        prepared_environment_manager
+            .build(Some(local_runtime_paths), config.http_client_factory())
+            .wrap_err("failed to initialize environment manager")?,
+    );
+    let mut state_db = super::init_state_db_for_app_server_target(&config, &app_server_target)
+        .await
+        .wrap_err("failed to initialize state database")?;
+    let app_server = super::start_app_server(
+        &mut app_server_target,
+        arg0_paths,
+        config,
+        cli_kv_overrides,
+        loader_overrides,
+        strict_config,
+        /*log_db*/ None,
+        &mut state_db,
+        environment_manager,
+        provider_factory,
+        super::ProductIdentity::ruxex(),
+    )
+    .await?;
+    Ok(
+        AppServerSession::new(app_server, app_server_target.thread_params_mode())
+            .with_remote_cwd_override(remote_cwd_override),
+    )
+}

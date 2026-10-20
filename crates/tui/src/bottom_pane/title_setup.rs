@@ -1,0 +1,388 @@
+//! Terminal title configuration view for customizing the terminal window/tab title.
+//!
+//! This module provides an interactive picker for selecting which items appear
+//! in the terminal title. Users can:
+//!
+//! - Select items
+//! - Reorder items
+//! - Preview the rendered title
+
+use itertools::Itertools;
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::text::Line;
+use strum::IntoEnumIterator;
+use strum_macros::Display;
+use strum_macros::EnumIter;
+use strum_macros::EnumString;
+
+use crate::app_event::AppEvent;
+use crate::app_event_sender::AppEventSender;
+use crate::bottom_pane::ACTION_REQUIRED_PREVIEW_PREFIX;
+use crate::bottom_pane::CancellationEvent;
+use crate::bottom_pane::bottom_pane_view::BottomPaneView;
+use crate::bottom_pane::build_action_required_title_text;
+use crate::bottom_pane::multi_select_picker::MultiSelectItem;
+use crate::bottom_pane::multi_select_picker::MultiSelectPicker;
+use crate::bottom_pane::status_surface_preview::StatusSurfacePreviewData;
+use crate::bottom_pane::status_surface_preview::StatusSurfacePreviewItem;
+use crate::keymap::ListKeymap;
+use crate::render::renderable::Renderable;
+
+/// Available items that can be displayed in the terminal title.
+///
+/// Variants serialize to kebab-case identifiers (e.g. `AppName` -> `"app-name"`)
+/// via strum. These identifiers are persisted in user config files, so renaming
+/// or removing a variant is a breaking config change.
+#[derive(EnumIter, EnumString, Display, Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[strum(serialize_all = "kebab-case")]
+pub(crate) enum TerminalTitleItem {
+    /// Ruxex app name.
+    AppName,
+    /// Project root name, or a compact cwd fallback.
+    #[strum(to_string = "project-name", serialize = "project")]
+    Project,
+    /// Current working directory path.
+    CurrentDir,
+    /// Terminal-title activity indicator while active.
+    #[strum(to_string = "activity", serialize = "spinner")]
+    Spinner,
+    /// Compact runtime run-state text.
+    #[strum(to_string = "run-state", serialize = "status")]
+    Status,
+    /// Current thread name, omitted when unnamed.
+    ThreadName,
+    /// Current thread title (if available).
+    #[strum(to_string = "thread-title", serialize = "thread")]
+    Thread,
+    /// Current git branch (if available).
+    GitBranch,
+    /// Percentage of context window remaining.
+    ContextRemaining,
+    /// Percentage of context window used.
+    #[strum(to_string = "context-used", serialize = "context-usage")]
+    ContextUsed,
+    /// Remaining usage on the primary rate limit.
+    FiveHourLimit,
+    /// Remaining usage on the secondary rate limit.
+    WeeklyLimit,
+    /// Ruxex application version.
+    RuxexVersion,
+    /// Total tokens used in the current session.
+    UsedTokens,
+    /// Total input tokens consumed.
+    TotalInputTokens,
+    /// Total output tokens generated.
+    TotalOutputTokens,
+    /// Estimated credits attributed directly to the current enterprise thread.
+    ThreadCredits,
+    /// Estimated dollar cost attributed directly to the current enterprise thread.
+    EstimatedThreadCost,
+    /// Full thread UUID.
+    #[strum(to_string = "thread-id", serialize = "session-id")]
+    SessionId,
+    /// Current model name.
+    #[strum(to_string = "model", serialize = "model-name")]
+    Model,
+    /// Current model name with reasoning level.
+    ModelWithReasoning,
+    /// Current reasoning level.
+    Reasoning,
+    /// Latest checklist task progress from `update_plan` (if available).
+    TaskProgress,
+}
+
+impl TerminalTitleItem {
+    pub(crate) fn description(self) -> &'static str {
+        match self {
+            TerminalTitleItem::AppName => "Ruxex app name",
+            TerminalTitleItem::Project => "Project name (falls back to current directory name)",
+            TerminalTitleItem::CurrentDir => "Current working directory",
+            TerminalTitleItem::Spinner => {
+                "Spinner while working, action-required message while blocked."
+            }
+            TerminalTitleItem::Status => {
+                "Compact session run-state text (Ready, Working, Thinking)"
+            }
+            TerminalTitleItem::ThreadName => "Current thread name (omitted when unnamed)",
+            TerminalTitleItem::Thread => "Current thread title, or thread identifier when unnamed",
+            TerminalTitleItem::GitBranch => "Current Git branch (omitted when unavailable)",
+            TerminalTitleItem::ContextRemaining => {
+                "Percentage of context window remaining (omitted when unknown)"
+            }
+            TerminalTitleItem::ContextUsed => {
+                "Percentage of context window used (omitted when unknown)"
+            }
+            TerminalTitleItem::FiveHourLimit => {
+                "Remaining usage on the primary usage limit (omitted when unavailable)"
+            }
+            TerminalTitleItem::WeeklyLimit => {
+                "Remaining usage on the secondary usage limit (omitted when unavailable)"
+            }
+            TerminalTitleItem::RuxexVersion => "Ruxex application version",
+            TerminalTitleItem::UsedTokens => "Total tokens used in session (omitted when zero)",
+            TerminalTitleItem::TotalInputTokens => "Total input tokens used in session",
+            TerminalTitleItem::TotalOutputTokens => "Total output tokens used in session",
+            TerminalTitleItem::ThreadCredits => {
+                "Estimated current-thread credits (Enterprise workspaces only; omitted when unavailable)"
+            }
+            TerminalTitleItem::EstimatedThreadCost => {
+                "Estimated current-thread cost (Enterprise workspaces only; omitted when unavailable)"
+            }
+            TerminalTitleItem::SessionId => {
+                "Current thread identifier (omitted until thread starts)"
+            }
+            TerminalTitleItem::Model => "Current model name",
+            TerminalTitleItem::ModelWithReasoning => "Current model name with reasoning level",
+            TerminalTitleItem::Reasoning => "Current reasoning level",
+            TerminalTitleItem::TaskProgress => {
+                "Latest task progress from update_plan (omitted until available)"
+            }
+        }
+    }
+
+    pub(crate) fn preview_item(self) -> Option<StatusSurfacePreviewItem> {
+        match self {
+            TerminalTitleItem::AppName => Some(StatusSurfacePreviewItem::AppName),
+            TerminalTitleItem::Project => Some(StatusSurfacePreviewItem::ProjectName),
+            TerminalTitleItem::CurrentDir => Some(StatusSurfacePreviewItem::CurrentDir),
+            TerminalTitleItem::Spinner => None,
+            TerminalTitleItem::Status => Some(StatusSurfacePreviewItem::Status),
+            TerminalTitleItem::ThreadName => Some(StatusSurfacePreviewItem::ThreadName),
+            TerminalTitleItem::Thread => Some(StatusSurfacePreviewItem::ThreadTitle),
+            TerminalTitleItem::GitBranch => Some(StatusSurfacePreviewItem::GitBranch),
+            TerminalTitleItem::ContextRemaining => Some(StatusSurfacePreviewItem::ContextRemaining),
+            TerminalTitleItem::ContextUsed => Some(StatusSurfacePreviewItem::ContextUsed),
+            TerminalTitleItem::FiveHourLimit => Some(StatusSurfacePreviewItem::FiveHourLimit),
+            TerminalTitleItem::WeeklyLimit => Some(StatusSurfacePreviewItem::WeeklyLimit),
+            TerminalTitleItem::RuxexVersion => Some(StatusSurfacePreviewItem::RuxexVersion),
+            TerminalTitleItem::UsedTokens => Some(StatusSurfacePreviewItem::UsedTokens),
+            TerminalTitleItem::TotalInputTokens => Some(StatusSurfacePreviewItem::TotalInputTokens),
+            TerminalTitleItem::TotalOutputTokens => {
+                Some(StatusSurfacePreviewItem::TotalOutputTokens)
+            }
+            TerminalTitleItem::ThreadCredits => Some(StatusSurfacePreviewItem::ThreadCredits),
+            TerminalTitleItem::EstimatedThreadCost => {
+                Some(StatusSurfacePreviewItem::EstimatedThreadCost)
+            }
+            TerminalTitleItem::SessionId => Some(StatusSurfacePreviewItem::SessionId),
+            TerminalTitleItem::Model => Some(StatusSurfacePreviewItem::Model),
+            TerminalTitleItem::ModelWithReasoning => {
+                Some(StatusSurfacePreviewItem::ModelWithReasoning)
+            }
+            TerminalTitleItem::Reasoning => Some(StatusSurfacePreviewItem::Reasoning),
+            TerminalTitleItem::TaskProgress => Some(StatusSurfacePreviewItem::TaskProgress),
+        }
+    }
+
+    /// Returns the separator to place before this item in a rendered title.
+    ///
+    /// The activity indicator gets a plain space on either side so it reads as
+    /// `my-project <activity> Working` rather than `my-project | <activity> | Working`.
+    /// All other adjacent items are joined with ` | `.
+    pub(crate) fn separator_from_previous(self, previous: Option<Self>) -> &'static str {
+        match previous {
+            None => "",
+            Some(previous)
+                if previous == TerminalTitleItem::Spinner || self == TerminalTitleItem::Spinner =>
+            {
+                " "
+            }
+            Some(_) => " | ",
+        }
+    }
+}
+
+pub(crate) fn preview_line_for_title_items(
+    items: &[TerminalTitleItem],
+    preview_data: &StatusSurfacePreviewData,
+) -> Option<Line<'static>> {
+    if items.contains(&TerminalTitleItem::Spinner) {
+        let preview = build_action_required_title_text(
+            ACTION_REQUIRED_PREVIEW_PREFIX,
+            items.iter().copied(),
+            &[],
+            |item| {
+                item.preview_item()
+                    .and_then(|preview_item| preview_data.value_for(preview_item))
+                    .map(str::to_owned)
+            },
+        );
+        return Some(Line::from(preview));
+    }
+
+    let mut previous = None;
+    let preview = items
+        .iter()
+        .copied()
+        .fold(String::new(), |mut preview, item| {
+            let Some(value) = item
+                .preview_item()
+                .and_then(|preview_item| preview_data.value_for(preview_item))
+            else {
+                return preview;
+            };
+            preview.push_str(item.separator_from_previous(previous));
+            preview.push_str(value);
+            previous = Some(item);
+            preview
+        });
+    if preview.is_empty() {
+        None
+    } else {
+        Some(Line::from(preview))
+    }
+}
+
+fn parse_terminal_title_items<T>(ids: impl Iterator<Item = T>) -> Option<Vec<TerminalTitleItem>>
+where
+    T: AsRef<str>,
+{
+    // Treat parsing as all-or-nothing so preview/confirm callbacks never emit
+    // a partially interpreted ordering. Invalid ids are ignored when building
+    // the picker, but once the user is interacting with the picker we only want
+    // to persist or preview a fully valid selection.
+    ids.map(|id| id.as_ref().parse::<TerminalTitleItem>())
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+}
+
+/// Interactive view for configuring terminal-title items.
+pub(crate) struct TerminalTitleSetupView {
+    picker: MultiSelectPicker,
+}
+
+impl TerminalTitleSetupView {
+    /// Creates the terminal-title picker, preserving the configured item order first.
+    ///
+    /// Unknown configured ids are skipped here instead of surfaced inline. The
+    /// main TUI still warns about them when rendering the actual title, but the
+    /// picker itself only exposes the selectable items it can meaningfully
+    /// preview and persist.
+    pub(crate) fn new(
+        title_items: Option<&[String]>,
+        preview_data: StatusSurfacePreviewData,
+        app_event_tx: AppEventSender,
+        list_keymap: ListKeymap,
+    ) -> Self {
+        let selected_items = title_items
+            .into_iter()
+            .flatten()
+            .filter_map(|id| id.parse::<TerminalTitleItem>().ok())
+            .unique()
+            .collect_vec();
+        let selected_set = selected_items
+            .iter()
+            .copied()
+            .collect::<std::collections::HashSet<_>>();
+        let items = selected_items
+            .into_iter()
+            .map(|item| Self::title_select_item(item, /*enabled*/ true, &preview_data))
+            .chain(
+                TerminalTitleItem::iter()
+                    .filter(|item| !selected_set.contains(item))
+                    .map(|item| {
+                        Self::title_select_item(item, /*enabled*/ false, &preview_data)
+                    }),
+            )
+            .collect();
+
+        Self {
+            picker: MultiSelectPicker::builder(
+                "Configure Terminal Title".to_string(),
+                Some("Select which items to display in the terminal title.".to_string()),
+                app_event_tx,
+            )
+            .list_keymap(list_keymap)
+            .items(items)
+            .enable_ordering()
+            .on_preview(move |items| {
+                let items = parse_terminal_title_items(
+                    items
+                        .iter()
+                        .filter(|item| item.enabled)
+                        .map(|item| item.id.as_str()),
+                )?;
+                preview_line_for_title_items(&items, &preview_data)
+            })
+            .on_change(|items, app_event| {
+                let Some(items) = parse_terminal_title_items(
+                    items
+                        .iter()
+                        .filter(|item| item.enabled)
+                        .map(|item| item.id.as_str()),
+                ) else {
+                    return;
+                };
+                app_event.send(AppEvent::TerminalTitleSetupPreview { items });
+            })
+            .on_confirm(|ids, app_event| {
+                let Some(items) = parse_terminal_title_items(ids.iter().map(String::as_str)) else {
+                    return;
+                };
+                app_event.send(AppEvent::TerminalTitleSetup { items });
+            })
+            .on_cancel(|app_event| {
+                app_event.send(AppEvent::TerminalTitleSetupCancelled);
+            })
+            .build(),
+        }
+    }
+
+    fn title_select_item(
+        item: TerminalTitleItem,
+        enabled: bool,
+        preview_data: &StatusSurfacePreviewData,
+    ) -> MultiSelectItem {
+        let default_name = item.to_string();
+        let default_description = item.description();
+        let (name, description) = match item.preview_item() {
+            Some(
+                preview_item @ (StatusSurfacePreviewItem::FiveHourLimit
+                | StatusSurfacePreviewItem::WeeklyLimit),
+            ) => (
+                preview_data.rate_limit_item_name(preview_item, &default_name),
+                preview_data.rate_limit_item_description(preview_item, default_description),
+            ),
+            _ => (default_name, default_description.to_string()),
+        };
+
+        MultiSelectItem {
+            id: item.to_string(),
+            name,
+            description: Some(description),
+            enabled,
+            orderable: true,
+            section_break_after: false,
+        }
+    }
+}
+
+impl BottomPaneView for TerminalTitleSetupView {
+    fn keymap_contexts(&self) -> crate::keymap::KeymapContextSet {
+        crate::keymap::KeymapContextSet::new(crate::keymap::KeymapContext::List)
+    }
+
+    fn handle_key_event(&mut self, key_event: crossterm::event::KeyEvent) {
+        self.picker.handle_key_event(key_event);
+    }
+
+    fn is_complete(&self) -> bool {
+        self.picker.complete
+    }
+
+    fn on_ctrl_c(&mut self) -> CancellationEvent {
+        self.picker.close();
+        CancellationEvent::Handled
+    }
+}
+
+impl Renderable for TerminalTitleSetupView {
+    fn render(&self, area: Rect, buf: &mut Buffer) {
+        self.picker.render(area, buf);
+    }
+
+    fn desired_height(&self, width: u16) -> u16 {
+        self.picker.desired_height(width)
+    }
+}

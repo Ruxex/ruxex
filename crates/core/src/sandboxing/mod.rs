@@ -1,0 +1,163 @@
+/*
+Module: sandboxing
+
+Core-owned adapter types for exec/runtime plumbing. Policy selection and
+command transformation live in the ruxex-sandboxing crate; this module keeps
+the exec-only metadata and translates transformed sandbox commands back into
+ExecRequest for execution.
+*/
+
+use crate::exec::ExecCapturePolicy;
+use crate::exec::ExecExpiration;
+use crate::exec::StdoutStream;
+use crate::exec::execute_exec_request;
+#[cfg(target_os = "macos")]
+use crate::spawn::RUXEX_SANDBOX_ENV_VAR;
+use crate::spawn::RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use ruxex_file_system::FileSystemSandboxContext;
+use ruxex_network_proxy::ManagedNetworkSandboxContext;
+use ruxex_network_proxy::NetworkProxy;
+use ruxex_network_proxy::RemoteNetworkProxyLaunchConfig;
+use ruxex_protocol::error::RuxexErr;
+use ruxex_protocol::exec_output::ExecToolCallOutput;
+use ruxex_protocol::models::PermissionProfile;
+pub use ruxex_protocol::models::SandboxPermissions;
+use ruxex_sandboxing::SandboxExecRequest;
+use ruxex_sandboxing::SandboxType;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use std::collections::HashMap;
+
+#[derive(Debug)]
+pub(crate) struct ExecOptions {
+    pub(crate) expiration: ExecExpiration,
+    pub(crate) capture_policy: ExecCapturePolicy,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ExecServerEnvConfig {
+    pub(crate) policy: ruxex_exec_server::ExecEnvPolicy,
+    pub(crate) local_policy_env: HashMap<String, String>,
+}
+
+#[derive(Debug)]
+pub struct ExecRequest {
+    pub command: Vec<String>,
+    pub cwd: PathUri,
+    pub env: HashMap<String, String>,
+    pub(crate) exec_server_env_config: Option<ExecServerEnvConfig>,
+    pub(crate) exec_server_shell_snapshot: Option<ruxex_exec_server::ShellSnapshotRequest>,
+    pub network: Option<NetworkProxy>,
+    pub network_environment_id: Option<String>,
+    pub expiration: ExecExpiration,
+    pub capture_policy: ExecCapturePolicy,
+    pub sandbox: SandboxType,
+    pub permission_profile: PermissionProfile,
+    pub arg0: Option<String>,
+    pub(crate) exec_server_sandbox: Option<FileSystemSandboxContext>,
+    pub(crate) exec_server_enforce_managed_network: bool,
+    pub(crate) exec_server_managed_network: Option<ManagedNetworkSandboxContext>,
+    pub(crate) exec_server_network_proxy: Option<RemoteNetworkProxyLaunchConfig>,
+}
+
+impl ExecRequest {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        command: Vec<String>,
+        cwd: AbsolutePathBuf,
+        env: HashMap<String, String>,
+        network: Option<NetworkProxy>,
+        network_environment_id: Option<String>,
+        expiration: ExecExpiration,
+        capture_policy: ExecCapturePolicy,
+        sandbox: SandboxType,
+        permission_profile: PermissionProfile,
+        arg0: Option<String>,
+    ) -> Self {
+        let cwd = PathUri::from_abs_path(&cwd);
+        Self {
+            command,
+            cwd,
+            env,
+            exec_server_env_config: None,
+            exec_server_shell_snapshot: None,
+            network,
+            network_environment_id,
+            expiration,
+            capture_policy,
+            sandbox,
+            permission_profile,
+            arg0,
+            exec_server_sandbox: None,
+            exec_server_enforce_managed_network: false,
+            exec_server_managed_network: None,
+            exec_server_network_proxy: None,
+        }
+    }
+
+    pub(crate) fn from_sandbox_exec_request(
+        request: SandboxExecRequest,
+        options: ExecOptions,
+    ) -> Result<Self, RuxexErr> {
+        let SandboxExecRequest {
+            command,
+            cwd,
+            sandbox_policy_cwd: _,
+            mut env,
+            network,
+            network_environment_id,
+            sandbox,
+            permission_profile,
+            arg0,
+            ..
+        } = request;
+        let ExecOptions {
+            expiration,
+            capture_policy,
+        } = options;
+        let network_sandbox_policy = permission_profile.network_sandbox_policy();
+        if !network_sandbox_policy.is_enabled() {
+            env.insert(
+                RUXEX_SANDBOX_NETWORK_DISABLED_ENV_VAR.to_string(),
+                "1".to_string(),
+            );
+        }
+        #[cfg(target_os = "macos")]
+        if sandbox == SandboxType::MacosSeatbelt {
+            env.insert(RUXEX_SANDBOX_ENV_VAR.to_string(), "seatbelt".to_string());
+        }
+        Ok(Self {
+            command,
+            cwd,
+            env,
+            exec_server_env_config: None,
+            exec_server_shell_snapshot: None,
+            network,
+            network_environment_id,
+            expiration,
+            capture_policy,
+            sandbox,
+            permission_profile,
+            arg0,
+            exec_server_sandbox: None,
+            exec_server_enforce_managed_network: false,
+            exec_server_managed_network: None,
+            exec_server_network_proxy: None,
+        })
+    }
+}
+
+pub async fn execute_env(
+    exec_request: ExecRequest,
+    stdout_stream: Option<StdoutStream>,
+) -> ruxex_protocol::error::Result<ExecToolCallOutput> {
+    execute_exec_request(exec_request, stdout_stream, /*after_spawn*/ None).await
+}
+
+pub async fn execute_exec_request_with_after_spawn(
+    exec_request: ExecRequest,
+    stdout_stream: Option<StdoutStream>,
+    after_spawn: Option<Box<dyn FnOnce() + Send>>,
+) -> ruxex_protocol::error::Result<ExecToolCallOutput> {
+    execute_exec_request(exec_request, stdout_stream, after_spawn).await
+}

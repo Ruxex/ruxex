@@ -1,0 +1,27 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-prompts"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "ruxex_prompts"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+ruxex-collaboration-mode-templates = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-template = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

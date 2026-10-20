@@ -1,0 +1,43 @@
+[package]
+name = "app_test_support"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+path = "lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+chrono = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = [
+    "io-util",
+    "io-std",
+    "macros",
+    "net",
+    "process",
+    "rt-multi-thread",
+    "sync",
+    "test-util",
+    "time",
+] }
+uuid = { workspace = true }
+wiremock = { workspace = true }
+core_test_support = { path = "../../../core/tests/common" }
+shlex = { workspace = true }

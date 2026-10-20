@@ -1,0 +1,686 @@
+name: CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "NOTICE"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "NOTICE"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 2
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-14
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake just pkg-config
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: Restore Rust and native artifact caches
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ runner.os }}-rust-1.98.1-deps-v4
+          cache-targets: "false"
+          cache-directories: .build-cache/rusty-v8
+
+      - name: Inspect disk after cache restore
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
+
+      - name: Check production targets
+        run: just check
+
+      - name: Build workspace
+        run: just build --workspace
+
+      - name: Report disk usage
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
+              fi
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-build-${{ matrix.os }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1
+
+  test-archive:
+    name: test archive (${{ matrix.os }}, ${{ matrix.group }})
+    runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - linux
+          - macos
+        group:
+          - core-1
+          - app-1
+          - app-2-tui
+          - app-2
+          - runtime
+        include:
+          - group: core-1
+            filter: >-
+              package(ruxex-api) |
+              package(ruxex-config) |
+              package(ruxex-config-schema) |
+              package(ruxex-core) |
+              package(ruxex-core-api) |
+              package(ruxex-core-plugins) |
+              package(ruxex-model-provider) |
+              package(ruxex-model-provider-info) |
+              package(ruxex-models-manager) |
+              package(ruxex-protocol) |
+              package(ruxex-provider-host-example) |
+              package(ruxex-providers) |
+              package(core_test_support) |
+              package(ruxex-agent-graph-store) |
+              package(ruxex-agent-roles) |
+              package(ruxex-attachment-store) |
+              package(ruxex-context-fragments) |
+              package(ruxex-history) |
+              package(ruxex-message-history) |
+              package(ruxex-prompts) |
+              package(ruxex-rollout) |
+              package(ruxex-rollout-trace) |
+              package(ruxex-state) |
+              package(ruxex-thread-store)
+            package_args: >-
+              --package ruxex-api
+              --package ruxex-config
+              --package ruxex-config-schema
+              --package ruxex-core
+              --package ruxex-core-api
+              --package ruxex-core-plugins
+              --package ruxex-model-provider
+              --package ruxex-model-provider-info
+              --package ruxex-models-manager
+              --package ruxex-protocol
+              --package ruxex-provider-host-example
+              --package ruxex-providers
+              --package core_test_support
+              --package ruxex-agent-graph-store
+              --package ruxex-agent-roles
+              --package ruxex-attachment-store
+              --package ruxex-context-fragments
+              --package ruxex-history
+              --package ruxex-message-history
+              --package ruxex-prompts
+              --package ruxex-rollout
+              --package ruxex-rollout-trace
+              --package ruxex-state
+              --package ruxex-thread-store
+          - group: app-1
+            filter: >-
+              package(app_test_support) |
+              package(ruxex-app-server) |
+              package(ruxex-app-server-client) |
+              package(ruxex-app-server-daemon) |
+              package(ruxex-app-server-protocol) |
+              package(ruxex-app-server-protocol-noop-macros) |
+              package(ruxex-app-server-test-client) |
+              package(ruxex-app-server-transport) |
+              package(ruxex-cli) |
+              package(ruxex-code-mode-host)
+            package_args: >-
+              --package app_test_support
+              --package ruxex-app-server
+              --package ruxex-app-server-client
+              --package ruxex-app-server-daemon
+              --package ruxex-app-server-protocol
+              --package ruxex-app-server-protocol-noop-macros
+              --package ruxex-app-server-test-client
+              --package ruxex-app-server-transport
+              --package ruxex-cli
+              --package ruxex-code-mode-host
+          - group: app-2-tui
+            filter: >-
+              package(ruxex-provider-host-example) |
+              package(ruxex-desktop) |
+              package(ruxex-tui)
+            package_args: >-
+              --package ruxex-provider-host-example
+              --package ruxex-desktop
+              --package ruxex-tui
+          - group: app-2
+            filter: >-
+              package(ruxex-provider-host-example) |
+              package(ruxex-agent-extension) |
+              package(ruxex-code-mode) |
+              package(ruxex-code-mode-protocol) |
+              package(ruxex-code-mode-runtime) |
+              package(ruxex-extension-api) |
+              package(ruxex-extension-items) |
+              package(ruxex-goal-extension) |
+              package(ruxex-history-notes-extension) |
+              package(ruxex-mcp) |
+              package(ruxex-mcp-extension) |
+              package(ruxex-plugin) |
+              package(ruxex-queue-extension) |
+              package(ruxex-rmcp-client) |
+              package(ruxex-skills) |
+              package(ruxex-skills-extension) |
+              package(ruxex-tools) |
+              package(ruxex-web-search-extension)
+            package_args: >-
+              --package ruxex-provider-host-example
+              --package ruxex-agent-extension
+              --package ruxex-code-mode
+              --package ruxex-code-mode-protocol
+              --package ruxex-code-mode-runtime
+              --package ruxex-extension-api
+              --package ruxex-extension-items
+              --package ruxex-goal-extension
+              --package ruxex-history-notes-extension
+              --package ruxex-mcp
+              --package ruxex-mcp-extension
+              --package ruxex-plugin
+              --package ruxex-queue-extension
+              --package ruxex-rmcp-client
+              --package ruxex-skills
+              --package ruxex-skills-extension
+              --package ruxex-tools
+              --package ruxex-web-search-extension
+          - group: runtime
+            filter: >-
+              not (
+                package(ruxex-core*) |
+                package(ruxex-config*) |
+                package(ruxex-state) |
+                package(ruxex-history) |
+                package(ruxex-thread-store) |
+                package(ruxex-message-history) |
+                package(ruxex-model*) |
+                package(ruxex-providers) |
+                package(ruxex-protocol) |
+                package(ruxex-api) |
+                package(ruxex-context-fragments) |
+                package(ruxex-prompts) |
+                package(ruxex-rollout*) |
+                package(core_test_support) |
+                package(ruxex-agent-graph-store) |
+                package(ruxex-agent-roles) |
+                package(ruxex-attachment-store) |
+                package(ruxex-provider-host-example) |
+                package(ruxex-app-server*) |
+                package(ruxex-cli) |
+                package(ruxex-tui) |
+                package(ruxex-code-mode*) |
+                package(ruxex-plugin) |
+                package(ruxex-skills*) |
+                package(ruxex-tools) |
+                package(ruxex-extension*) |
+                package(ruxex-*-extension) |
+                package(ruxex-mcp) |
+                package(ruxex-rmcp-client) |
+                package(ruxex-desktop) |
+                package(app_test_support)
+              )
+            package_args: >-
+              --workspace
+              --exclude app_test_support
+              --exclude core_test_support
+              --exclude ruxex-agent-extension
+              --exclude ruxex-agent-graph-store
+              --exclude ruxex-agent-roles
+              --exclude ruxex-api
+              --exclude ruxex-app-server
+              --exclude ruxex-app-server-client
+              --exclude ruxex-app-server-daemon
+              --exclude ruxex-app-server-protocol
+              --exclude ruxex-app-server-protocol-noop-macros
+              --exclude ruxex-app-server-test-client
+              --exclude ruxex-app-server-transport
+              --exclude ruxex-attachment-store
+              --exclude ruxex-cli
+              --exclude ruxex-code-mode
+              --exclude ruxex-code-mode-host
+              --exclude ruxex-code-mode-protocol
+              --exclude ruxex-code-mode-runtime
+              --exclude ruxex-config
+              --exclude ruxex-config-schema
+              --exclude ruxex-core
+              --exclude ruxex-core-api
+              --exclude ruxex-core-plugins
+              --exclude ruxex-context-fragments
+              --exclude ruxex-desktop
+              --exclude ruxex-extension-api
+              --exclude ruxex-extension-items
+              --exclude ruxex-goal-extension
+              --exclude ruxex-history
+              --exclude ruxex-history-notes-extension
+              --exclude ruxex-message-history
+              --exclude ruxex-mcp
+              --exclude ruxex-mcp-extension
+              --exclude ruxex-model-provider
+              --exclude ruxex-model-provider-info
+              --exclude ruxex-models-manager
+              --exclude ruxex-plugin
+              --exclude ruxex-prompts
+              --exclude ruxex-protocol
+              --exclude ruxex-provider-host-example
+              --exclude ruxex-providers
+              --exclude ruxex-queue-extension
+              --exclude ruxex-rmcp-client
+              --exclude ruxex-rollout
+              --exclude ruxex-rollout-trace
+              --exclude ruxex-skills
+              --exclude ruxex-skills-extension
+              --exclude ruxex-state
+              --exclude ruxex-thread-store
+              --exclude ruxex-tools
+              --exclude ruxex-tui
+              --exclude ruxex-web-search-extension
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: matrix.os == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos'
+        run: brew install cmake just pkg-config
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: Restore Rust and native artifact caches
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ runner.os }}-rust-1.98.1-deps-v4
+          cache-targets: "false"
+          cache-directories: .build-cache/rusty-v8
+
+      - name: Inspect disk before archive build
+        run: |
+          df -h .
+          for path in target .build-cache/rusty-v8 ~/.cargo/registry ~/.cargo/git; do
+            if [ -e "$path" ]; then
+              du -sh "$path"
+            fi
+          done
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2.62.49
+        with:
+          tool: nextest
+          version: 0.9.103
+
+      - name: Build nextest archive
+        env:
+          NEXTEST_FILTERSET: ${{ matrix.filter }}
+          NEXTEST_PACKAGE_ARGS: ${{ matrix.package_args }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ruxex-nextest"
+          just test-archive \
+            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst" \
+            "$NEXTEST_FILTERSET" \
+            $NEXTEST_PACKAGE_ARGS
+
+      - name: Report disk usage
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
+          {
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
+              fi
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
+            if [ -f "$archive" ]; then
+              echo "Archive:"
+              du -sh "$archive"
+            fi
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-archive-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload nextest archive
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  test-shard:
+    name: test group (${{ matrix.os }}, ${{ matrix.group }})
+    needs:
+      - test-archive
+    # The archive already contains the compiled test binaries. Keep the
+    # production build as an independent required job, but do not make test
+    # execution wait for it unnecessarily.
+    if: ${{ needs.test-archive.result == 'success' }}
+    runs-on: ${{ matrix.os == 'macos' && 'macos-14' || 'ubuntu-24.04' }}
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
+      CARGO_PROFILE_TEST_DEBUG: "line-tables-only"
+      RUST_BACKTRACE: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - linux
+          - macos
+        group:
+          - core-1
+          - app-1
+          - app-2-tui
+          - app-2
+          - runtime
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Free disk space on Linux
+        if: matrix.os == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== Before cleanup ==="
+          df -h
+
+          sudo rm -rf \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /usr/local/share/powershell \
+            /usr/local/share/vcpkg \
+            /usr/share/dotnet \
+            /usr/share/swift \
+            /usr/share/java \
+            /opt/az
+
+          docker image prune -af
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential clang cmake file just libayatana-appindicator3-dev libcap-dev libglib2.0-dev libgtk-3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev mold pkg-config wget
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos'
+        run: command -v just >/dev/null 2>&1 || brew install just
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      # Test shards execute an existing nextest archive and do not compile
+      # Rust code. Restore only the native V8 input they still need instead
+      # of restoring Cargo's registry and git caches as well.
+      - name: Restore Rusty V8 cache
+        uses: actions/cache@v4
+        with:
+          path: .build-cache/rusty-v8
+          key: ${{ runner.os }}-rusty-v8-${{ hashFiles('Cargo.toml', 'third_party/v8/**') }}
+
+      - name: Inspect disk before test group
+        run: |
+          set -euo pipefail
+          {
+            echo "Disk before test group:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2.62.49
+        with:
+          tool: nextest
+          version: 0.9.103
+
+      - name: Download nextest archive
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-nextest
+
+      - name: Inspect disk after test archive download
+        if: always()
+        run: |
+          set -euo pipefail
+          {
+            echo "Disk after test archive download:"
+            df -h .
+            for path in \
+              target \
+              target/debug \
+              target/debug/deps \
+              target/debug/build \
+              target/debug/incremental \
+              .build-cache/rusty-v8 \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              "$RUNNER_TEMP/ruxex-nextest"; do
+              if [ -e "$path" ]; then
+                du -sh "$path"
+              fi
+            done
+          } | tee -a "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Run test group
+        run: |
+          just test-archive-run \
+            "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst"
+
+      - name: Report disk usage
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "=== Filesystem ==="
+            df -h
+            echo "=== Cargo target ==="
+            if [ -d target ]; then
+              if [ "$RUNNER_OS" = "Linux" ]; then
+                du -h --max-depth=2 target | sort -h | tail -30 || true
+              else
+                du -h -d 2 target | sort -h | tail -30 || true
+              fi
+            fi
+            echo "=== Cargo cache ==="
+            du -sh \
+              "$HOME/.cargo/registry" \
+              "$HOME/.cargo/git" \
+              2>/dev/null || true
+            echo "=== Native artifacts ==="
+            du -sh .build-cache/rusty-v8 2>/dev/null || true
+            echo "=== Nextest archive ==="
+            du -sh "$RUNNER_TEMP/ruxex-nextest" 2>/dev/null || true
+          } | tee -a "$RUNNER_TEMP/ruxex-capacity-report.txt"
+
+      - name: Upload capacity report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ruxex-capacity-test-${{ matrix.os }}-${{ matrix.group }}
+          path: ${{ runner.temp }}/ruxex-capacity-report.txt
+          if-no-files-found: warn
+          retention-days: 1

@@ -1,0 +1,638 @@
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+
+use ruxex_config::McpServerConfig;
+use ruxex_config::McpServerOAuthConfig;
+use ruxex_config::McpServerTransportConfig;
+use ruxex_config::load_global_mcp_servers;
+use ruxex_login::default_client::is_first_party_originator;
+use ruxex_login::default_client::originator;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::request_user_input::RequestUserInputArgs;
+use ruxex_protocol::request_user_input::RequestUserInputQuestion;
+use ruxex_protocol::request_user_input::RequestUserInputQuestionOption;
+use ruxex_protocol::request_user_input::RequestUserInputResponse;
+use ruxex_rmcp_client::McpOAuthClientRegistration;
+use ruxex_rmcp_client::OAuthDiscoveryTimeout;
+use ruxex_rmcp_client::StreamableHttpRedirectMode;
+use ruxex_rmcp_client::perform_oauth_login;
+use tokio_util::sync::CancellationToken;
+use tracing::warn;
+
+use crate::config::edit::ConfigEditsBuilder;
+use crate::session::session::Session;
+use crate::session::turn_context::TurnContext;
+use ruxex_mcp::ElicitationReviewerHandle;
+use ruxex_mcp::McpOAuthLoginSupport;
+use ruxex_mcp::McpPermissionPromptAutoApproveContext;
+use ruxex_mcp::mcp_permission_prompt_is_auto_approved;
+use ruxex_mcp::oauth_login_support;
+use ruxex_mcp::resolve_oauth_scopes;
+use ruxex_mcp::should_retry_without_scopes;
+use ruxex_skills::SkillMetadata;
+use ruxex_skills::SkillToolDependency;
+
+const SKILL_MCP_DEPENDENCY_PROMPT_ID: &str = "skill_mcp_dependency_install";
+const MCP_DEPENDENCY_OPTION_INSTALL: &str = "Install";
+const MCP_DEPENDENCY_OPTION_SKIP: &str = "Continue anyway";
+
+pub(crate) async fn maybe_prompt_and_install_mcp_dependencies(
+    sess: &Session,
+    turn_context: &TurnContext,
+    cancellation_token: &CancellationToken,
+    mentioned_skills: &[SkillMetadata],
+    elicitation_reviewer: Option<ElicitationReviewerHandle>,
+) {
+    let originator_value = originator().value;
+    if !is_first_party_originator(originator_value.as_str()) {
+        // Only support first-party clients for now.
+        return;
+    }
+
+    let config = turn_context.config.clone();
+    if mentioned_skills.is_empty()
+        || !config
+            .features
+            .enabled(ruxex_features::Feature::SkillMcpDependencyInstall)
+    {
+        return;
+    }
+
+    let installed = sess.runtime_mcp_servers(config.as_ref()).await;
+    let missing = collect_missing_mcp_dependencies(mentioned_skills, &installed);
+    if missing.is_empty() {
+        return;
+    }
+
+    let unprompted_missing = filter_prompted_mcp_dependencies(sess, &missing).await;
+    // Do not prompt for servers that managed or attachment policy would reject.
+    let unprompted_missing =
+        admit_mcp_dependencies(sess, config.as_ref(), unprompted_missing).await;
+    if unprompted_missing.is_empty() {
+        return;
+    }
+
+    if should_install_mcp_dependencies(sess, turn_context, &unprompted_missing, cancellation_token)
+        .await
+    {
+        // Policy may have changed while waiting for the installation prompt.
+        let missing = admit_mcp_dependencies(sess, config.as_ref(), unprompted_missing).await;
+        maybe_install_mcp_dependencies(sess, turn_context, missing, elicitation_reviewer).await;
+    }
+}
+
+// Resolve proposed servers through the existing policy-aware catalog before installing them.
+async fn admit_mcp_dependencies(
+    sess: &Session,
+    config: &crate::config::Config,
+    mut candidates: HashMap<String, McpServerConfig>,
+) -> HashMap<String, McpServerConfig> {
+    if candidates.is_empty() {
+        return candidates;
+    }
+
+    // Stage candidates in memory so global requirements apply before catalog resolution.
+    let mut candidate_config = config.clone();
+    let mut servers = config.mcp_servers.get().clone();
+    servers.extend(candidates.clone());
+    if let Err(err) = candidate_config.mcp_servers.set(servers) {
+        warn!("failed to validate MCP dependencies for mentioned skills: {err}");
+        return HashMap::new();
+    }
+
+    // Keep only the same candidate when attachment policy leaves it enabled.
+    let catalog = sess.runtime_mcp_config(&candidate_config).await;
+    candidates.retain(|name, config| {
+        catalog
+            .mcp_server_catalog
+            .server(name)
+            .is_some_and(|server| server.config().enabled && server.config() == config)
+    });
+    candidates
+}
+
+async fn maybe_install_mcp_dependencies(
+    sess: &Session,
+    turn_context: &TurnContext,
+    missing: HashMap<String, McpServerConfig>,
+    elicitation_reviewer: Option<ElicitationReviewerHandle>,
+) {
+    if missing.is_empty() {
+        return;
+    }
+
+    let config = turn_context.config.as_ref();
+    let ruxex_home = config.ruxex_home.clone();
+    let mut servers = match load_global_mcp_servers(&ruxex_home).await {
+        Ok(servers) => servers,
+        Err(err) => {
+            warn!("failed to load MCP servers while installing skill dependencies: {err}");
+            return;
+        }
+    };
+
+    let mut added = Vec::new();
+    for (name, config) in missing {
+        if servers.contains_key(&name) {
+            continue;
+        }
+        servers.insert(name.clone(), config.clone());
+        added.push((name, config));
+    }
+
+    if added.is_empty() {
+        return;
+    }
+
+    if let Err(err) = ConfigEditsBuilder::new(&ruxex_home)
+        .replace_mcp_servers(&servers)
+        .apply()
+        .await
+    {
+        warn!("failed to persist MCP dependencies for mentioned skills: {err}");
+        return;
+    }
+
+    let (_, runtime_context) = sess.runtime_mcp_config_and_context(config).await;
+    for (name, server_config) in added {
+        let http_client = match runtime_context.resolve_http_client(&name, &server_config) {
+            Ok(http_client) => http_client,
+            Err(err) => {
+                warn!("failed to resolve MCP dependency runtime for {name}: {err}");
+                continue;
+            }
+        };
+        let discovery_timeout = if server_config.is_local_environment() {
+            OAuthDiscoveryTimeout::LOCAL
+        } else {
+            OAuthDiscoveryTimeout::Requested
+        };
+        let login_support = oauth_login_support(
+            &server_config.transport,
+            Arc::clone(&http_client),
+            discovery_timeout,
+            StreamableHttpRedirectMode::Legacy,
+        )
+        .await;
+        let oauth_config = match login_support {
+            McpOAuthLoginSupport::Supported(config) => config,
+            McpOAuthLoginSupport::Unsupported => continue,
+            McpOAuthLoginSupport::Unknown(err) => {
+                warn!("MCP server may or may not require login for dependency {name}: {err}");
+                continue;
+            }
+        };
+
+        let resolved_scopes = resolve_oauth_scopes(
+            /*explicit_scopes*/ None,
+            server_config.scopes.clone(),
+            oauth_config.discovered_scopes.clone(),
+        );
+        let oauth_client_id = server_config.oauth_client_id();
+        let oauth_credential_name = server_config.oauth_credential_name(&name);
+        let callback_port = server_config.oauth_callback_port(config.mcp_oauth_callback_port);
+        let first_attempt = perform_oauth_login(
+            oauth_credential_name.as_ref(),
+            &oauth_config.url,
+            config.mcp_oauth_credentials_store_mode,
+            config.auth_keyring_backend_kind(),
+            oauth_config.http_headers.clone(),
+            oauth_config.env_http_headers.clone(),
+            &resolved_scopes.scopes,
+            oauth_client_id,
+            McpOAuthClientRegistration::Auto,
+            server_config.oauth_resource.as_deref(),
+            callback_port,
+            config.mcp_oauth_callback_url.as_deref(),
+            config.mcp_oauth_callback_url.as_deref(),
+            Arc::clone(&http_client),
+        )
+        .await;
+
+        if let Err(err) = first_attempt {
+            if should_retry_without_scopes(&resolved_scopes, &err) {
+                if let Err(err) = perform_oauth_login(
+                    oauth_credential_name.as_ref(),
+                    &oauth_config.url,
+                    config.mcp_oauth_credentials_store_mode,
+                    config.auth_keyring_backend_kind(),
+                    oauth_config.http_headers,
+                    oauth_config.env_http_headers,
+                    &[],
+                    oauth_client_id,
+                    McpOAuthClientRegistration::Auto,
+                    server_config.oauth_resource.as_deref(),
+                    callback_port,
+                    config.mcp_oauth_callback_url.as_deref(),
+                    config.mcp_oauth_callback_url.as_deref(),
+                    Arc::clone(&http_client),
+                )
+                .await
+                {
+                    warn!("failed to login to MCP dependency {name}: {err}");
+                }
+            } else {
+                warn!("failed to login to MCP dependency {name}: {err}");
+            }
+        }
+    }
+
+    let mut refresh_config = config.clone();
+    let mut configured_servers = config.mcp_servers.get().clone();
+    for (name, server_config) in &servers {
+        configured_servers
+            .entry(name.clone())
+            .or_insert_with(|| server_config.clone());
+    }
+    if let Err(err) = refresh_config.mcp_servers.set(configured_servers) {
+        warn!("failed to refresh MCP dependencies for mentioned skills: {err}");
+        return;
+    }
+    sess.refresh_mcp_servers_now(turn_context, &refresh_config, elicitation_reviewer)
+        .await;
+}
+
+async fn should_install_mcp_dependencies(
+    sess: &Session,
+    turn_context: &TurnContext,
+    missing: &HashMap<String, McpServerConfig>,
+    cancellation_token: &CancellationToken,
+) -> bool {
+    if mcp_permission_prompt_is_auto_approved(
+        turn_context.approval_policy(),
+        &turn_context.permission_profile(),
+        McpPermissionPromptAutoApproveContext::default(),
+    ) {
+        return true;
+    }
+
+    if turn_context.approval_policy() == AskForApproval::Never {
+        return false;
+    }
+
+    let server_list = format_missing_mcp_dependencies(missing);
+    let question = RequestUserInputQuestion {
+        id: SKILL_MCP_DEPENDENCY_PROMPT_ID.to_string(),
+        header: "Install MCP servers?".to_string(),
+        question: format!(
+            "The following MCP servers are required by the selected skills but are not installed yet: {server_list}. Install them now?"
+        ),
+        is_other: false,
+        is_secret: false,
+        options: Some(vec![
+            RequestUserInputQuestionOption {
+                label: MCP_DEPENDENCY_OPTION_INSTALL.to_string(),
+                description:
+                    "Install and enable the missing MCP servers in your global config."
+                        .to_string(),
+            },
+            RequestUserInputQuestionOption {
+                label: MCP_DEPENDENCY_OPTION_SKIP.to_string(),
+                description: "Skip installation for now and do not show again for these MCP servers in this session."
+                    .to_string(),
+            },
+        ]),
+    };
+    let args = RequestUserInputArgs {
+        questions: vec![question],
+        is_blocking: true,
+    };
+    let sub_id = &turn_context.sub_id;
+    let call_id = format!("mcp-deps-{sub_id}");
+    let response_fut = sess.request_user_input(turn_context, call_id, args);
+    let response = tokio::select! {
+        biased;
+        _ = cancellation_token.cancelled() => {
+            let empty = RequestUserInputResponse {
+                answers: HashMap::new(),
+            };
+            sess.notify_user_input_response(sub_id, empty.clone()).await;
+            empty
+        }
+        response = response_fut => response.map(|accepted| accepted.response).unwrap_or_else(|| RequestUserInputResponse {
+            answers: HashMap::new(),
+        }),
+    };
+
+    let install = response
+        .answers
+        .get(SKILL_MCP_DEPENDENCY_PROMPT_ID)
+        .is_some_and(|answer| {
+            answer
+                .answers
+                .iter()
+                .any(|entry| entry == MCP_DEPENDENCY_OPTION_INSTALL)
+        });
+
+    let prompted_keys = missing
+        .iter()
+        .map(|(name, config)| canonical_mcp_server_key(name, config));
+    sess.record_mcp_dependency_prompted(prompted_keys).await;
+
+    install
+}
+
+async fn filter_prompted_mcp_dependencies(
+    sess: &Session,
+    missing: &HashMap<String, McpServerConfig>,
+) -> HashMap<String, McpServerConfig> {
+    let prompted = sess.mcp_dependency_prompted().await;
+    if prompted.is_empty() {
+        return missing.clone();
+    }
+
+    missing
+        .iter()
+        .filter(|(name, config)| !prompted.contains(&canonical_mcp_server_key(name, config)))
+        .map(|(name, config)| (name.clone(), config.clone()))
+        .collect()
+}
+
+fn format_missing_mcp_dependencies(missing: &HashMap<String, McpServerConfig>) -> String {
+    let mut names = missing.keys().cloned().collect::<Vec<_>>();
+    names.sort();
+    names.join(", ")
+}
+
+fn canonical_mcp_key(transport: &str, identifier: &str, fallback: &str) -> String {
+    let identifier = identifier.trim();
+    if identifier.is_empty() {
+        fallback.to_string()
+    } else {
+        format!("mcp__{transport}__{identifier}")
+    }
+}
+
+fn canonical_mcp_server_key(name: &str, config: &McpServerConfig) -> String {
+    match &config.transport {
+        McpServerTransportConfig::Stdio { command, .. } => {
+            canonical_mcp_key("stdio", command, name)
+        }
+        McpServerTransportConfig::StreamableHttp { url, .. } => {
+            canonical_mcp_key("streamable_http", url, name)
+        }
+    }
+}
+
+fn canonical_mcp_dependency_key(dependency: &SkillToolDependency) -> Result<String, String> {
+    let transport = dependency.transport.as_deref().unwrap_or("streamable_http");
+    if transport.eq_ignore_ascii_case("streamable_http") {
+        let url = dependency
+            .url
+            .as_ref()
+            .ok_or_else(|| "missing url for streamable_http dependency".to_string())?;
+        return Ok(canonical_mcp_key("streamable_http", url, &dependency.value));
+    }
+    if transport.eq_ignore_ascii_case("stdio") {
+        let command = dependency
+            .command
+            .as_ref()
+            .ok_or_else(|| "missing command for stdio dependency".to_string())?;
+        return Ok(canonical_mcp_key("stdio", command, &dependency.value));
+    }
+    Err(format!("unsupported transport {transport}"))
+}
+
+fn mcp_dependency_to_server_config(
+    dependency: &SkillToolDependency,
+) -> Result<McpServerConfig, String> {
+    let transport = dependency.transport.as_deref().unwrap_or("streamable_http");
+    if transport.eq_ignore_ascii_case("streamable_http") {
+        let url = dependency
+            .url
+            .as_ref()
+            .ok_or_else(|| "missing url for streamable_http dependency".to_string())?;
+        return Ok(McpServerConfig {
+            auth: Default::default(),
+            transport: McpServerTransportConfig::StreamableHttp {
+                url: url.clone(),
+                bearer_token_env_var: None,
+                http_headers: None,
+                env_http_headers: None,
+                http_headers_helper: None,
+            },
+            environment_id: ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            enabled: true,
+            required: false,
+            supports_parallel_tool_calls: false,
+            omit_tools_from: None,
+            disabled_reason: None,
+            startup_timeout_sec: None,
+            tool_timeout_sec: None,
+            default_tools_approval_mode: None,
+            enabled_tools: None,
+            disabled_tools: None,
+            scopes: None,
+            oauth: dependency
+                .oauth_callback_port
+                .map(|callback_port| McpServerOAuthConfig {
+                    client_id: None,
+                    callback_url: None,
+                    callback_port: Some(callback_port),
+                    ..Default::default()
+                }),
+            oauth_resource: None,
+            tools: HashMap::new(),
+        });
+    }
+
+    if transport.eq_ignore_ascii_case("stdio") {
+        let command = dependency
+            .command
+            .as_ref()
+            .ok_or_else(|| "missing command for stdio dependency".to_string())?;
+        return Ok(McpServerConfig {
+            auth: Default::default(),
+            transport: McpServerTransportConfig::Stdio {
+                command: command.clone(),
+                args: Vec::new(),
+                env: None,
+                env_vars: Vec::new(),
+                cwd: None,
+            },
+            environment_id: ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID.to_string(),
+            enabled: true,
+            required: false,
+            supports_parallel_tool_calls: false,
+            omit_tools_from: None,
+            disabled_reason: None,
+            startup_timeout_sec: None,
+            tool_timeout_sec: None,
+            default_tools_approval_mode: None,
+            enabled_tools: None,
+            disabled_tools: None,
+            scopes: None,
+            oauth: None,
+            oauth_resource: None,
+            tools: HashMap::new(),
+        });
+    }
+
+    Err(format!("unsupported transport {transport}"))
+}
+
+fn collect_missing_mcp_dependencies(
+    mentioned_skills: &[SkillMetadata],
+    installed: &HashMap<String, McpServerConfig>,
+) -> HashMap<String, McpServerConfig> {
+    let mut missing = HashMap::new();
+    let installed_keys: HashSet<String> = installed
+        .iter()
+        .map(|(name, config)| canonical_mcp_server_key(name, config))
+        .collect();
+    let mut seen_canonical_keys = HashSet::new();
+
+    for skill in mentioned_skills {
+        let Some(dependencies) = skill.dependencies.as_ref() else {
+            continue;
+        };
+
+        for tool in &dependencies.tools {
+            if !tool.r#type.eq_ignore_ascii_case("mcp") {
+                continue;
+            }
+            let dependency_key = match canonical_mcp_dependency_key(tool) {
+                Ok(key) => key,
+                Err(err) => {
+                    let dependency = tool.value.as_str();
+                    let skill_name = skill.name.as_str();
+                    warn!(
+                        "unable to auto-install MCP dependency {dependency} for skill {skill_name}: {err}",
+                    );
+                    continue;
+                }
+            };
+            if installed_keys.contains(&dependency_key)
+                || seen_canonical_keys.contains(&dependency_key)
+            {
+                continue;
+            }
+
+            let config = match mcp_dependency_to_server_config(tool) {
+                Ok(config) => config,
+                Err(err) => {
+                    let dependency = dependency_key.as_str();
+                    let skill_name = skill.name.as_str();
+                    warn!(
+                        "unable to auto-install MCP dependency {dependency} for skill {skill_name}: {err}",
+                    );
+                    continue;
+                }
+            };
+
+            missing.insert(tool.value.clone(), config);
+            seen_canonical_keys.insert(dependency_key);
+        }
+    }
+
+    missing
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_protocol::protocol::SkillScope;
+    use ruxex_skills::SkillDependencies;
+    use ruxex_skills::SkillToolDependency;
+    use std::collections::HashMap;
+
+    fn dependency(transport: Option<&str>, value: &str) -> SkillToolDependency {
+        SkillToolDependency {
+            r#type: "mcp".to_string(),
+            value: value.to_string(),
+            description: None,
+            transport: transport.map(str::to_string),
+            command: None,
+            url: None,
+            oauth_callback_port: None,
+        }
+    }
+
+    fn skill(tools: Vec<SkillToolDependency>) -> SkillMetadata {
+        SkillMetadata {
+            name: "demo".to_string(),
+            description: "demo skill".to_string(),
+            short_description: None,
+            interface: None,
+            dependencies: Some(SkillDependencies { tools }),
+            policy: None,
+            path_to_skills_md: ruxex_utils_absolute_path::AbsolutePathBuf::try_from(
+                "/tmp/skill/SKILL.md",
+            )
+            .expect("absolute skill path"),
+            scope: SkillScope::User,
+            plugin_id: None,
+            remote_plugin_id: None,
+        }
+    }
+
+    #[test]
+    fn canonical_keys_use_transport_identifiers_and_fallbacks() {
+        assert_eq!(
+            canonical_mcp_key("stdio", " node ", "fallback"),
+            "mcp__stdio__node"
+        );
+        assert_eq!(canonical_mcp_key("stdio", "  ", "fallback"), "fallback");
+
+        let mut stdio_dependency = dependency(Some("stdio"), "server");
+        stdio_dependency.command = Some("node".to_string());
+        let stdio = mcp_dependency_to_server_config(&stdio_dependency)
+            .expect("stdio dependency should become a server");
+        assert_eq!(
+            canonical_mcp_server_key("server", &stdio),
+            "mcp__stdio__node"
+        );
+    }
+
+    #[test]
+    fn dependency_config_supports_http_and_stdio_and_rejects_invalid_inputs() {
+        let mut http = dependency(None, "remote");
+        http.url = Some("https://example.test/mcp".to_string());
+        http.oauth_callback_port = Some(4567);
+        let config = mcp_dependency_to_server_config(&http).expect("http dependency");
+        assert!(
+            matches!(config.transport, McpServerTransportConfig::StreamableHttp { ref url, .. } if url == "https://example.test/mcp")
+        );
+        assert_eq!(
+            config.oauth.as_ref().and_then(|oauth| oauth.callback_port),
+            Some(4567)
+        );
+        assert_eq!(
+            canonical_mcp_dependency_key(&http).unwrap(),
+            "mcp__streamable_http__https://example.test/mcp"
+        );
+
+        let mut stdio = dependency(Some("STDIO"), "worker");
+        stdio.command = Some("worker-cli".to_string());
+        let config = mcp_dependency_to_server_config(&stdio).expect("stdio dependency");
+        assert!(
+            matches!(config.transport, McpServerTransportConfig::Stdio { ref command, .. } if command == "worker-cli")
+        );
+
+        let missing_url = dependency(Some("streamable_http"), "remote");
+        assert!(canonical_mcp_dependency_key(&missing_url).is_err());
+        assert!(mcp_dependency_to_server_config(&missing_url).is_err());
+        let unsupported = dependency(Some("other"), "x");
+        assert!(canonical_mcp_dependency_key(&unsupported).is_err());
+    }
+
+    #[test]
+    fn collects_unique_missing_mcp_dependencies_and_ignores_non_mcp_tools() {
+        let mut remote = dependency(None, "remote");
+        remote.url = Some("https://example.test/mcp".to_string());
+        let duplicate = remote.clone();
+        let ignored = SkillToolDependency {
+            r#type: "shell".to_string(),
+            ..dependency(None, "ignored")
+        };
+        let skills = vec![skill(vec![remote, duplicate, ignored])];
+        let missing = collect_missing_mcp_dependencies(&skills, &HashMap::new());
+        assert_eq!(missing.len(), 1);
+        assert!(missing.contains_key("remote"));
+
+        let installed = missing.clone();
+        assert!(collect_missing_mcp_dependencies(&skills, &installed).is_empty());
+        assert_eq!(format_missing_mcp_dependencies(&missing), "remote");
+    }
+}

@@ -1,0 +1,68 @@
+[package]
+name = "ruxex-app-server-transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_app_server_transport"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true, default-features = false, features = [
+    "http1",
+    "json",
+    "tokio",
+    "ws",
+] }
+base64 = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+ruxex-api = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-rustls-provider = { workspace = true }
+constant_time_eq = { workspace = true }
+futures = { workspace = true }
+gethostname = { workspace = true }
+hmac = { workspace = true }
+httpdate = { workspace = true }
+jsonwebtoken = { workspace = true }
+owo-colors = { workspace = true, features = ["supports-colors"] }
+rand = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = [
+    "io-std",
+    "macros",
+    "process",
+    "rt-multi-thread",
+] }
+tokio-tungstenite = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true, features = ["log"] }
+url = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v7"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
+signal-hook = { workspace = true }
+
+[dev-dependencies]
+chrono = { workspace = true }
+ruxex-config = { workspace = true }
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }

@@ -1,0 +1,682 @@
+//! Types used to define loaded and effective Ruxex configuration values.
+
+// Note this file should generally be restricted to simple struct/enum
+// definitions that do not contain business logic.
+
+pub use crate::mcp_ema::McpEnterpriseManagedAuthConfig;
+pub use crate::mcp_ema::McpServerIdpOAuthConfig;
+pub use crate::mcp_types::AppToolApproval;
+pub use crate::mcp_types::McpServerAuth;
+pub use crate::mcp_types::McpServerConfig;
+pub use crate::mcp_types::McpServerDisabledReason;
+pub use crate::mcp_types::McpServerEnvVar;
+pub use crate::mcp_types::McpServerOAuthConfig;
+pub use crate::mcp_types::McpServerToolConfig;
+pub use crate::mcp_types::McpServerTransportConfig;
+pub use crate::mcp_types::RawMcpServerConfig;
+pub use crate::shell_environment_policy::ShellEnvironmentPolicyToml;
+pub use ruxex_protocol::config_types::AltScreenMode;
+pub use ruxex_protocol::config_types::ModeKind;
+pub use ruxex_protocol::config_types::ServiceTier;
+pub use ruxex_protocol::config_types::WebSearchMode;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::fmt;
+
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde::Serialize;
+
+pub use crate::tui_keymap::KeybindingSpec;
+pub use crate::tui_keymap::KeybindingsSpec;
+pub use crate::tui_keymap::MAX_FUNCTION_KEY;
+pub use crate::tui_keymap::TuiAgentsKeymap;
+pub use crate::tui_keymap::TuiApprovalKeymap;
+pub use crate::tui_keymap::TuiChatKeymap;
+pub use crate::tui_keymap::TuiComposerKeymap;
+pub use crate::tui_keymap::TuiEditorKeymap;
+pub use crate::tui_keymap::TuiGlobalKeymap;
+pub use crate::tui_keymap::TuiKeymap;
+pub use crate::tui_keymap::TuiListKeymap;
+pub use crate::tui_keymap::TuiPagerKeymap;
+pub use crate::tui_keymap::TuiVimNormalKeymap;
+pub use crate::tui_keymap::TuiVimOperatorKeymap;
+pub use crate::tui_keymap::TuiVimSearchKeymap;
+
+pub const DEFAULT_OTEL_ENVIRONMENT: &str = "dev";
+
+const fn default_enabled() -> bool {
+    true
+}
+
+/// Preferred layout for the resume/fork session picker.
+#[derive(Serialize, Deserialize, Debug, Default, Copy, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum SessionPickerViewMode {
+    Comfortable,
+    #[default]
+    Dense,
+}
+
+impl SessionPickerViewMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Comfortable => "comfortable",
+            Self::Dense => "dense",
+        }
+    }
+}
+
+impl fmt::Display for SessionPickerViewMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// Working directory to use when resuming or forking a session.
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum ResumeCwdMode {
+    /// Use the directory where Ruxex was launched.
+    Current,
+    /// Use the latest working directory recorded in the selected session.
+    Session,
+}
+
+impl ResumeCwdMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Current => "current",
+            Self::Session => "session",
+        }
+    }
+}
+
+/// Determine where Ruxex should store CLI auth credentials.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthCredentialsStoreMode {
+    #[default]
+    /// Persist credentials in RUXEX_HOME/auth.json.
+    File,
+    /// Persist credentials in the keyring. Fail if unavailable.
+    Keyring,
+    /// Use keyring when available; otherwise, fall back to a file in RUXEX_HOME.
+    Auto,
+    /// Store credentials in memory only for the current process.
+    Ephemeral,
+}
+
+/// Determine where Ruxex should store and read MCP credentials.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OAuthCredentialsStoreMode {
+    /// Prefer `Keyring` and use `File` when keyring storage is unavailable.
+    /// Once an MCP client loads credentials from one store, that client keeps the resolved store
+    /// for its lifetime so refreshes cannot switch to a possibly stale credential source.
+    /// Credentials stored in the keyring will only be readable by Ruxex unless the user explicitly grants access via OS-level keyring access.
+    #[default]
+    Auto,
+    /// RUXEX_HOME/.credentials.json
+    /// This file will be readable to Ruxex and other applications running as the same user.
+    File,
+    /// Keyring when available, otherwise fail.
+    Keyring,
+}
+
+/// Determine how auth credentials should use keyring-backed storage.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthKeyringBackendKind {
+    /// Store the serialized auth payload directly in the OS keyring.
+    Direct,
+    /// Store auth payloads in the local encrypted secrets file, with the file key in the OS keyring.
+    Secrets,
+}
+
+impl Default for AuthKeyringBackendKind {
+    fn default() -> Self {
+        Self::Direct
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, JsonSchema)]
+pub enum UriBasedFileOpener {
+    #[serde(rename = "vscode")]
+    VsCode,
+
+    #[serde(rename = "vscode-insiders")]
+    VsCodeInsiders,
+
+    #[serde(rename = "windsurf")]
+    Windsurf,
+
+    #[serde(rename = "cursor")]
+    Cursor,
+
+    /// Option to disable the URI-based file opener.
+    #[serde(rename = "none")]
+    None,
+}
+
+/// Settings that govern if and what will be written to `~/.ruxex/history.jsonl`.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[serde(default)]
+#[schemars(deny_unknown_fields)]
+pub struct History {
+    /// If true, history entries will not be written to disk.
+    pub persistence: HistoryPersistence,
+
+    /// If set, the maximum size of the history file in bytes. The oldest entries
+    /// are dropped once the file exceeds this limit.
+    pub max_bytes: Option<usize>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Default, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum HistoryPersistence {
+    /// Save all history entries to disk.
+    #[default]
+    SaveAll,
+    /// Do not write history to disk.
+    None,
+}
+
+// ===== Analytics configuration =====
+
+/// Metrics settings loaded from config.toml. Fields are optional so we can apply defaults.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct MetricsConfigToml {
+    /// When `false`, disables metrics across Ruxex product surfaces in this profile.
+    pub enabled: Option<bool>,
+}
+
+// ===== OTEL configuration =====
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum OtelHttpProtocol {
+    /// Binary payload
+    Binary,
+    /// JSON payload
+    Json,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case")]
+pub struct OtelTlsConfig {
+    pub ca_certificate: Option<AbsolutePathBuf>,
+    pub client_certificate: Option<AbsolutePathBuf>,
+    pub client_private_key: Option<AbsolutePathBuf>,
+}
+
+/// Which OTEL exporter to use.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case")]
+pub enum OtelExporterKind {
+    None,
+    OtlpHttp {
+        endpoint: String,
+        #[serde(default)]
+        headers: HashMap<String, String>,
+        protocol: OtelHttpProtocol,
+        #[serde(default)]
+        tls: Option<OtelTlsConfig>,
+    },
+    OtlpGrpc {
+        endpoint: String,
+        #[serde(default)]
+        headers: HashMap<String, String>,
+        #[serde(default)]
+        tls: Option<OtelTlsConfig>,
+    },
+}
+
+/// OTEL settings loaded from config.toml. Fields are optional so we can apply defaults.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct OtelConfigToml {
+    /// Byte limit for tool-result log output; independent of model-visible output.
+    #[serde(default)]
+    pub tool_result: ruxex_protocol::config_types::ToolResultLogConfig,
+    /// Log user prompt in traces
+    pub log_user_prompt: Option<bool>,
+
+    /// Mark traces with environment (dev, staging, prod, test). Defaults to dev.
+    pub environment: Option<String>,
+
+    /// Optional log exporter
+    pub exporter: Option<OtelExporterKind>,
+
+    /// Optional trace exporter
+    pub trace_exporter: Option<OtelExporterKind>,
+
+    /// Optional metrics exporter
+    pub metrics_exporter: Option<OtelExporterKind>,
+
+    /// Attributes to add to every exported trace span.
+    pub span_attributes: Option<BTreeMap<String, String>>,
+
+    /// Semicolon-separated `key:value` fields to upsert into W3C tracestate members.
+    pub tracestate: Option<BTreeMap<String, BTreeMap<String, String>>>,
+}
+
+/// Effective OTEL settings after defaults are applied.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OtelConfig {
+    pub tool_result: ruxex_protocol::config_types::ToolResultLogConfig,
+    pub log_user_prompt: bool,
+    pub environment: String,
+    pub exporter: OtelExporterKind,
+    pub trace_exporter: OtelExporterKind,
+    pub metrics_exporter: OtelExporterKind,
+    pub span_attributes: BTreeMap<String, String>,
+    pub tracestate: BTreeMap<String, BTreeMap<String, String>>,
+}
+
+impl Default for OtelConfig {
+    fn default() -> Self {
+        OtelConfig {
+            tool_result: Default::default(),
+            log_user_prompt: false,
+            environment: DEFAULT_OTEL_ENVIRONMENT.to_owned(),
+            exporter: OtelExporterKind::None,
+            trace_exporter: OtelExporterKind::None,
+            metrics_exporter: OtelExporterKind::None,
+            span_attributes: BTreeMap::new(),
+            tracestate: BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum Notifications {
+    Enabled(bool),
+    Custom(Vec<String>),
+}
+
+impl Default for Notifications {
+    fn default() -> Self {
+        Self::Enabled(true)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum NotificationMethod {
+    #[default]
+    Auto,
+    Osc9,
+    Bel,
+}
+
+impl fmt::Display for NotificationMethod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NotificationMethod::Auto => write!(f, "auto"),
+            NotificationMethod::Osc9 => write!(f, "osc9"),
+            NotificationMethod::Bel => write!(f, "bel"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum NotificationCondition {
+    /// Emit TUI notifications only while the terminal is unfocused.
+    #[default]
+    Unfocused,
+    /// Emit TUI notifications regardless of terminal focus.
+    Always,
+}
+
+impl fmt::Display for NotificationCondition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NotificationCondition::Unfocused => write!(f, "unfocused"),
+            NotificationCondition::Always => write!(f, "always"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct TuiNotificationSettings {
+    /// Enable desktop notifications from the TUI.
+    /// Defaults to `true`.
+    #[serde(default, rename = "notifications")]
+    pub notifications: Notifications,
+
+    /// Notification method to use for terminal notifications.
+    /// Defaults to `auto`.
+    #[serde(default, rename = "notification_method")]
+    pub method: NotificationMethod,
+
+    /// Controls whether TUI notifications are delivered only when the terminal is unfocused or
+    /// regardless of focus. Defaults to `unfocused`.
+    #[serde(default, rename = "notification_condition")]
+    pub condition: NotificationCondition,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct ModelAvailabilityNuxConfig {
+    /// Number of times a startup availability NUX has been shown per model slug.
+    #[serde(default, flatten)]
+    pub shown_count: HashMap<String, u32>,
+}
+
+/// Fallback resize-reflow row cap when Ruxex cannot identify a terminal-specific scrollback size.
+pub const DEFAULT_TERMINAL_RESIZE_REFLOW_FALLBACK_MAX_ROWS: usize = 1_000;
+
+/// Collection of settings that are specific to the TUI.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct Tui {
+    #[serde(default, flatten)]
+    pub notification_settings: TuiNotificationSettings,
+
+    /// Enable animations (welcome screen, shimmer effects, spinners).
+    /// Defaults to `true`.
+    #[serde(default = "default_true")]
+    pub animations: bool,
+
+    /// Records the one-time screen-reader detection attempt. Either value skips detection.
+    pub screen_reader_detection_done: Option<bool>,
+
+    /// Enable decorative effects such as Astra composer stars. Also requires animations.
+    /// Defaults to `true`.
+    #[serde(default = "default_true")]
+    pub whimsy: bool,
+
+    /// Show startup tooltips in the TUI welcome screen.
+    /// Defaults to `true`.
+    #[serde(default = "default_true")]
+    pub show_tooltips: bool,
+
+    /// Show an informational notice when the connected app server is an older stable release.
+    /// Defaults to `true`; this does not control compatibility errors or version status.
+    #[serde(default = "default_true")]
+    pub show_server_version_notice: bool,
+
+    /// Generate automatic conversation recaps when the terminal is unfocused.
+    /// Defaults to `true`. Disabling this leaves `/recap` available on demand.
+    #[serde(default = "default_true")]
+    pub auto_recap: bool,
+
+    /// When true, disables burst-paste detection for typed input entirely.
+    /// All characters are inserted as they are received, and no buffering
+    /// or placeholder replacement will occur for fast keypress bursts.
+    /// Defaults to `false`.
+    pub disable_paste_burst: Option<bool>,
+
+    /// Start the composer in Vim mode (`Normal`) by default.
+    /// Defaults to `false`.
+    #[serde(default)]
+    pub vim_mode_default: bool,
+
+    /// Escape returns from async questions to the composer, preserving the answer draft.
+    #[serde(default = "default_true")]
+    pub question_esc_back: bool,
+
+    /// Start the TUI in raw scrollback mode for copy-friendly transcript output.
+    /// Defaults to `false`.
+    #[serde(default)]
+    pub raw_output_mode: bool,
+
+    /// Controls whether the TUI uses the terminal's alternate screen buffer.
+    ///
+    /// - `auto` (default): Use alternate screen.
+    /// - `always`: Always use alternate screen.
+    /// - `never`: Never use alternate screen (inline mode only, preserves scrollback).
+    #[serde(default)]
+    pub alternate_screen: AltScreenMode,
+
+    /// Ordered list of status line item identifiers.
+    ///
+    /// When set, the TUI renders the selected items as the status line.
+    /// When unset, the TUI defaults to: `model-with-reasoning`, `current-dir`, and `thread-name`.
+    #[serde(default)]
+    pub status_line: Option<Vec<String>>,
+
+    /// Color status line items with colors derived from the active syntax theme.
+    /// Defaults to `true`.
+    #[serde(default = "default_true")]
+    pub status_line_use_colors: bool,
+
+    /// Ordered list of terminal title item identifiers.
+    ///
+    /// When set, the TUI renders the selected items into the terminal window/tab title.
+    /// When unset, the TUI defaults to: `activity`, `thread-name`, and `project-name`.
+    /// The `activity` item spins while working and shows an action-required
+    /// message when blocked on the user.
+    #[serde(default)]
+    pub terminal_title: Option<Vec<String>>,
+
+    /// Syntax highlighting theme name (kebab-case).
+    ///
+    /// When set, overrides automatic light/dark theme detection.
+    /// Use `/theme` in the TUI or see `$RUXEX_HOME/themes` for custom themes.
+    #[serde(default)]
+    pub theme: Option<String>,
+
+    /// Preferred layout for resume/fork session picker results.
+    #[serde(default)]
+    pub session_picker_view: Option<SessionPickerViewMode>,
+
+    /// Working directory to use when resuming or forking a session.
+    /// When unset, prompt if the current and session directories differ.
+    #[serde(default)]
+    pub resume_cwd: Option<ResumeCwdMode>,
+
+    /// Keybinding overrides for the TUI.
+    ///
+    /// This supports rebinding selected actions globally and by context.
+    /// Context bindings take precedence over `global` bindings.
+    #[serde(default)]
+    pub keymap: TuiKeymap,
+
+    /// Startup tooltip availability NUX state persisted by the TUI.
+    #[serde(default)]
+    pub model_availability_nux: ModelAvailabilityNuxConfig,
+
+    /// Trim terminal resize-reflow replay to the most recent rendered terminal rows when the
+    /// transcript exceeds this cap. Omit to use Ruxex's terminal-specific default. Set to `0` to
+    /// keep all rendered rows.
+    #[serde(default)]
+    #[schemars(range(min = 0))]
+    pub terminal_resize_reflow_max_rows: Option<usize>,
+}
+
+const fn default_true() -> bool {
+    true
+}
+
+/// Settings for notices we display to users via the tui and app-server clients
+/// (primarily the Ruxex IDE extension). NOTE: these are different from
+/// notifications - notices are warnings, NUX screens, acknowledgements, etc.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct ExternalConfigMigrationPrompts {
+    /// Tracks whether home-level external config migration prompts are hidden.
+    pub home: Option<bool>,
+    /// Tracks the last time the home-level external config migration prompt was shown.
+    pub home_last_prompted_at: Option<i64>,
+    /// Tracks which project paths have opted out of external config migration prompts.
+    #[serde(default)]
+    pub projects: BTreeMap<String, bool>,
+    /// Tracks the last time a project-level external config migration prompt was shown.
+    #[serde(default)]
+    pub project_last_prompted_at: BTreeMap<String, i64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct Notice {
+    /// Tracks whether the user has acknowledged the full access warning prompt.
+    pub hide_full_access_warning: Option<bool>,
+    /// Tracks whether the user has acknowledged the world-writable directories warning.
+    pub hide_world_writable_warning: Option<bool>,
+    /// Tracks whether the user opted out of the rate limit model switch reminder.
+    pub hide_rate_limit_model_nudge: Option<bool>,
+    /// Tracks acknowledged model migrations as old->new model slug mappings.
+    #[serde(default)]
+    pub model_migrations: BTreeMap<String, String>,
+    /// Tracks scopes where external config migration prompts should be suppressed.
+    #[serde(default)]
+    pub external_config_migration_prompts: ExternalConfigMigrationPrompts,
+}
+
+pub use crate::skills_config::BundledSkillsConfig;
+pub use crate::skills_config::SkillConfig;
+pub use crate::skills_config::SkillsConfig;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct PluginConfig {
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
+
+    /// Per-MCP-server policy overlays for MCP servers contributed by this plugin.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub mcp_servers: HashMap<String, PluginMcpServerConfig>,
+}
+
+/// Policy settings for a plugin-provided MCP server.
+///
+/// This intentionally excludes transport settings: plugin manifests own how the
+/// MCP server is launched, while host config owns enablement, auth, and tool policy.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct PluginMcpServerConfig {
+    /// When `false`, Ruxex skips initializing this plugin MCP server.
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
+
+    /// Host-configured EMA registration; the plugin still owns its endpoint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ema_auth: Option<PluginMcpServerEmaAuthConfig>,
+
+    /// Approval mode for tools in this server unless a tool override exists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_tools_approval_mode: Option<AppToolApproval>,
+
+    /// Explicit allow-list of tools exposed from this server.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enabled_tools: Option<Vec<String>>,
+
+    /// Explicit deny-list of tools. These tools are removed after applying `enabled_tools`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub disabled_tools: Option<Vec<String>>,
+
+    /// Per-tool policy settings keyed by tool name.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub tools: HashMap<String, McpServerToolConfig>,
+}
+
+impl Default for PluginMcpServerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            ema_auth: None,
+            default_tools_approval_mode: None,
+            enabled_tools: None,
+            disabled_tools: None,
+            tools: HashMap::new(),
+        }
+    }
+}
+
+/// Resource registration applied through an existing per-plugin policy overlay.
+/// The enterprise IdP is selected separately by trusted host configuration.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginMcpServerEmaAuthConfig {
+    /// Exact plugin endpoint approved by the host; never overrides the declaration.
+    pub url: String,
+    pub client_id: String,
+    pub authorization_server_issuer: String,
+    #[serde(default)]
+    pub scopes: Vec<String>,
+    pub resource: String,
+}
+
+impl PluginMcpServerEmaAuthConfig {
+    pub fn apply(&self, server: &mut McpServerConfig) {
+        let registration_error = if self.resource.trim().is_empty() {
+            Some("plugin EMA registration requires a resource")
+        } else if !server.matches_requirement(&crate::McpServerRequirement::Identity {
+            identity: crate::McpServerIdentity::Url {
+                url: self.url.clone(),
+            },
+        }) {
+            Some("plugin endpoint does not match its EMA registration")
+        } else {
+            None
+        };
+        if registration_error.is_some() && server.enabled {
+            server.enabled = false;
+            server.disabled_reason = Some(crate::McpServerDisabledReason::EmaRegistration);
+        }
+        server.auth = McpServerAuth::EmaAuth;
+        let oauth = server.oauth.get_or_insert_default();
+        oauth.client_id = Some(self.client_id.clone());
+        oauth.authorization_server_issuer = Some(self.authorization_server_issuer.clone());
+        server.scopes = Some(self.scopes.clone());
+        oauth.ema_registration = None;
+        oauth.ema_registration_error = registration_error;
+        server.oauth_resource = Some(self.resource.clone());
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct MarketplaceConfig {
+    /// Last time Ruxex successfully added or refreshed this marketplace.
+    #[serde(default)]
+    pub last_updated: Option<String>,
+    /// Git revision Ruxex last successfully activated for this marketplace.
+    #[serde(default)]
+    pub last_revision: Option<String>,
+    /// Source kind used to install this marketplace.
+    #[serde(default)]
+    pub source_type: Option<MarketplaceSourceType>,
+    /// Source location used when the marketplace was added.
+    #[serde(default)]
+    pub source: Option<String>,
+    /// Git ref to check out when `source_type` is `git`.
+    #[serde(default, rename = "ref")]
+    pub ref_name: Option<String>,
+    /// Sparse checkout paths used when `source_type` is `git`.
+    #[serde(default)]
+    pub sparse_paths: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MarketplaceSourceType {
+    Git,
+    Local,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema)]
+#[schemars(deny_unknown_fields)]
+pub struct SandboxWorkspaceWrite {
+    #[serde(default)]
+    pub writable_roots: Vec<AbsolutePathBuf>,
+    #[serde(default)]
+    pub network_access: bool,
+    #[serde(default)]
+    pub exclude_tmpdir_env_var: bool,
+    #[serde(default)]
+    pub exclude_slash_tmp: bool,
+}
+
+#[cfg(test)]
+#[path = "types_tests.rs"]
+mod tests;

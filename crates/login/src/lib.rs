@@ -1,0 +1,37 @@
+pub mod auth;
+pub mod auth_env_telemetry;
+mod outbound_proxy;
+pub mod test_support;
+
+pub use ruxex_config::types::AuthCredentialsStoreMode;
+pub use ruxex_http_client::BuildCustomCaTransportError as BuildLoginHttpClientError;
+
+pub use auth::AuthChangeState;
+pub use auth::AuthConfig;
+pub use auth::AuthDotJson;
+pub use auth::AuthHeaders;
+pub use auth::AuthKeyringBackendKind;
+pub use auth::CredentialManager;
+pub use auth::CredentialManagerConfig;
+pub use auth::CredentialManagerInitializationError;
+pub use auth::ExternalAuth;
+pub use auth::ExternalAuthFuture;
+pub use auth::ExternalAuthRefreshContext;
+pub use auth::ExternalAuthRefreshReason;
+pub use auth::ProviderAuth;
+pub use auth::RUXEX_API_KEY_ENV_VAR;
+pub use auth::RefreshTokenError;
+pub use auth::RuxexAuth;
+pub use auth::UnauthorizedRecovery;
+pub use auth::default_client;
+pub use auth::delete_auth_credentials;
+pub use auth::enforce_login_restrictions;
+pub use auth::load_auth_credentials;
+pub use auth::load_auth_dot_json;
+pub use auth::login_with_api_key;
+pub use auth::logout;
+pub use auth::save_auth;
+pub use auth::save_auth_credentials;
+pub use auth_env_telemetry::AuthEnvTelemetry;
+pub use auth_env_telemetry::collect_auth_env_telemetry;
+pub use outbound_proxy::AuthRouteConfig;

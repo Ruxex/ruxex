@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AuthMode": {
+      "description": "Authentication mode for configured model providers.",
+      "oneOf": [
+        {
+          "description": "API key provided by the caller and stored by Ruxex.",
+          "enum": [
+            "apikey"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Backend auth supplied as request headers.",
+          "enum": [
+            "headers"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "PlanType": {
+      "enum": [
+        "free",
+        "go",
+        "plus",
+        "pro",
+        "prolite",
+        "team",
+        "self_serve_business_prolite",
+        "self_serve_business_usage_based",
+        "business",
+        "ent26",
+        "enterprise_cbp_automation",
+        "enterprise_cbp_usage_based",
+        "enterprise",
+        "edu",
+        "edu_plus",
+        "edu_pro",
+        "unknown"
+      ],
+      "type": "string"
+    }
+  },
+  "properties": {
+    "authMode": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AuthMode"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "planType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PlanType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "title": "AccountUpdatedNotification",
+  "type": "object"
+}

@@ -1,0 +1,60 @@
+[package]
+name = "ruxex-network-proxy"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_network_proxy"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+chrono = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-rustls-provider = { workspace = true }
+globset = { workspace = true }
+opentelemetry = { workspace = true }
+rand = { workspace = true }
+rand_regex = { workspace = true }
+regex = { workspace = true }
+regex-automata = { workspace = true }
+regex-syntax = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+url = { workspace = true }
+rama-core = { version = "=0.3.0" }
+rama-crypto = { version = "=0.3.0", features = ["ring"] }
+rama-http = { version = "=0.3.0" }
+rama-http-backend = { version = "=0.3.0", features = ["tls"] }
+rama-net = { version = "=0.3.0", features = ["http"] }
+rama-socks5 = { version = "=0.3.0" }
+rama-tcp = { version = "=0.3.0" }
+rama-tls-rustls = { version = "=0.3.0", features = ["http"] }
+rama-tls = { version = "=0.3.0" }
+rustls-native-certs = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = { workspace = true }
+rama-unix = { version = "=0.3.0" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+rama-dns = { version = "=0.3.0" }
+security-framework = "3"

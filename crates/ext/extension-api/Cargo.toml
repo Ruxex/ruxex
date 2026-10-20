@@ -1,0 +1,30 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-extension-api"
+version.workspace = true
+
+[lib]
+name = "ruxex_extension_api"
+path = "src/lib.rs"
+test = false
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-history = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-exec-server-protocol = { workspace = true }
+ruxex-mcp = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

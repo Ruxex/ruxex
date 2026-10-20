@@ -1,0 +1,1283 @@
+use std::future::Future;
+use std::io::ErrorKind;
+use std::mem::swap;
+use std::path::Path;
+use std::path::PathBuf;
+use std::process::Command;
+use std::sync::Arc;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
+
+use anyhow::Context;
+use anyhow::Result;
+use anyhow::anyhow;
+use futures::future::BoxFuture;
+use ruxex_attachment_store::AttachmentStore;
+use ruxex_core::RuxexThread;
+pub use ruxex_core::StartThreadOptions;
+use ruxex_core::ThreadManager;
+use ruxex_core::TimeProvider;
+pub use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_core::resolve_installation_id;
+use ruxex_core::shell::Shell;
+use ruxex_core::thread_store_from_config;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::RemoveOptions;
+use ruxex_extension_api::ExtensionRegistry;
+use ruxex_extension_api::LoadInstructionsFuture;
+use ruxex_extension_api::UserInstructionsProvider;
+use ruxex_extension_api::empty_extension_registry;
+use ruxex_features::Feature;
+use ruxex_home::RuxexHomeUserInstructionsProvider;
+use ruxex_login::RuxexAuth;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::test_support::test_models_response;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::ReasoningSummary;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::mcp::ClientMcpExtensions;
+use ruxex_protocol::model_types::ModelCatalog;
+use ruxex_protocol::model_types::ModelInfo;
+use ruxex_protocol::model_types::TruncationPolicyConfig;
+use ruxex_protocol::model_types::WebSearchToolType;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EnvironmentConfigState;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::SandboxPolicy;
+use ruxex_protocol::protocol::SessionConfiguredEvent;
+use ruxex_protocol::protocol::SessionSource;
+use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
+use ruxex_protocol::protocol::TurnEnvironmentSelections;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::create_model_provider;
+use ruxex_thread_store::ThreadStore;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
+use serde_json::Value;
+use tempfile::TempDir;
+use wiremock::MockServer;
+
+use crate::TempDirExt;
+use crate::load_default_config_for_test;
+use crate::responses::WebSocketTestServer;
+use crate::responses::output_value_to_text;
+use crate::responses::start_mock_server;
+use crate::streaming_sse::StreamingSseServer;
+use crate::wait_for_event;
+use crate::wait_for_event_match;
+use crate::wait_for_event_with_timeout;
+use wiremock::Match;
+use wiremock::matchers::path_regex;
+
+type ConfigMutator = dyn FnOnce(&mut Config) + Send;
+type PreBuildHook = dyn FnOnce(&Path) + Send + 'static;
+type WorkspaceSetup = dyn FnOnce(AbsolutePathBuf, Arc<dyn ExecutorFileSystem>) -> BoxFuture<'static, Result<()>>
+    + Send;
+const TEST_MODEL_WITH_EXPERIMENTAL_TOOLS: &str = "test-model-with-experimental-tools";
+const SUBMIT_TURN_COMPLETE_TIMEOUT: Duration = Duration::from_secs(30);
+
+pub struct RecordingUserInstructionsProvider {
+    inner: Arc<dyn UserInstructionsProvider>,
+    load_count: AtomicUsize,
+}
+
+impl RecordingUserInstructionsProvider {
+    pub fn new(inner: Arc<dyn UserInstructionsProvider>) -> Self {
+        Self {
+            inner,
+            load_count: AtomicUsize::new(0),
+        }
+    }
+
+    pub fn load_count(&self) -> usize {
+        self.load_count.load(Ordering::SeqCst)
+    }
+}
+
+impl UserInstructionsProvider for RecordingUserInstructionsProvider {
+    fn load_user_instructions(&self) -> LoadInstructionsFuture<'_> {
+        self.load_count.fetch_add(1, Ordering::SeqCst);
+        self.inner.load_user_instructions()
+    }
+}
+
+pub fn local(cwd: AbsolutePathBuf) -> TurnEnvironmentSelection {
+    TurnEnvironmentSelection {
+        environment_id: ruxex_exec_server::LOCAL_ENVIRONMENT_ID.to_string(),
+        cwd: PathUri::from_abs_path(&cwd),
+        workspace_roots: vec![PathUri::from_abs_path(&cwd)],
+        config: EnvironmentConfigState::FromThread,
+    }
+}
+
+/// Converts the host-shaped /C:/... cwd projection used by Wine tests back
+/// into the selected executor's Windows URI.
+pub fn executor_path_uri(path: impl AsRef<Path>) -> Result<PathUri> {
+    Ok(PathUri::from_host_native_path(path.as_ref())?)
+}
+
+pub fn local_selections(cwd: AbsolutePathBuf) -> TurnEnvironmentSelections {
+    TurnEnvironmentSelections::new(cwd.clone(), vec![local(cwd)])
+}
+
+#[derive(Debug)]
+pub struct TestEnv {
+    environment: ruxex_exec_server::Environment,
+    exec_server_url: Option<String>,
+    cwd: AbsolutePathBuf,
+    selection: TurnEnvironmentSelection,
+    local_cwd_temp_dir: Option<Arc<TempDir>>,
+    remote_container_name: Option<String>,
+}
+
+impl TestEnv {
+    pub async fn local() -> Result<Self> {
+        Self::local_with_exec_server_url(/*exec_server_url*/ None).await
+    }
+
+    /// Builds a host-local test environment, optionally using the provided
+    /// exec-server URL instead of the normal implicit local executor.
+    pub async fn local_with_exec_server_url(_exec_server_url: Option<String>) -> Result<Self> {
+        let local_cwd_temp_dir = Arc::new(TempDir::new()?);
+        let cwd = local_cwd_temp_dir.abs();
+        let selection = local(cwd.clone());
+        let environment = ruxex_exec_server::Environment::create_for_tests(None)?;
+        Ok(Self {
+            environment,
+            exec_server_url: None,
+            cwd,
+            selection,
+            local_cwd_temp_dir: Some(local_cwd_temp_dir),
+            remote_container_name: None,
+        })
+    }
+
+    pub fn cwd(&self) -> &AbsolutePathBuf {
+        &self.cwd
+    }
+
+    pub fn environment(&self) -> &ruxex_exec_server::Environment {
+        &self.environment
+    }
+
+    pub fn exec_server_url(&self) -> Option<&str> {
+        self.exec_server_url.as_deref()
+    }
+
+    /// Returns the environment and target-native cwd selected by the test harness.
+    pub fn selection(&self) -> &TurnEnvironmentSelection {
+        &self.selection
+    }
+
+    fn local_cwd_temp_dir(&self) -> Option<Arc<TempDir>> {
+        self.local_cwd_temp_dir.clone()
+    }
+}
+
+impl Drop for TestEnv {
+    fn drop(&mut self) {
+        if let Some(container_name) = &self.remote_container_name {
+            let script = format!("rm -rf {}", self.cwd.as_path().display());
+            let _ = docker_command_capture_stdout(["exec", container_name, "sh", "-lc", &script]);
+        }
+    }
+}
+
+pub async fn test_env() -> Result<TestEnv> {
+    TestEnv::local().await
+}
+
+fn docker_command_capture_stdout<const N: usize>(args: [&str; N]) -> Result<String> {
+    let output = Command::new("docker")
+        .args(args)
+        .output()
+        .with_context(|| format!("run docker {args:?}"))?;
+    if !output.status.success() {
+        return Err(anyhow!(
+            "docker {:?} failed: stdout={} stderr={}",
+            args,
+            String::from_utf8_lossy(&output.stdout).trim(),
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    String::from_utf8(output.stdout).context("docker stdout must be utf-8")
+}
+
+/// Non-default apply_patch model output shapes used by compatibility tests.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ApplyPatchModelOutput {
+    ExecCommandViaHeredoc,
+}
+
+/// Returns the permission fields required by test thread-settings overrides.
+pub fn turn_permission_fields(
+    permission_profile: PermissionProfile,
+    cwd: &Path,
+) -> (SandboxPolicy, Option<PermissionProfile>) {
+    let sandbox_policy = permission_profile
+        .to_legacy_sandbox_policy(cwd)
+        .unwrap_or_else(|_| SandboxPolicy::new_read_only_policy());
+    (sandbox_policy, Some(permission_profile))
+}
+
+pub struct TestRuxexBuilder {
+    config_mutators: Vec<Box<ConfigMutator>>,
+    auth: RuxexAuth,
+    pre_build_hooks: Vec<Box<PreBuildHook>>,
+    workspace_setups: Vec<Box<WorkspaceSetup>>,
+    home: Option<Arc<TempDir>>,
+    user_shell_override: Option<Shell>,
+    exec_server_url: Option<String>,
+    extensions: Arc<ExtensionRegistry<Config>>,
+    user_instructions_provider: Option<Arc<dyn UserInstructionsProvider>>,
+    external_time_provider: Option<Arc<dyn TimeProvider>>,
+    code_mode_host_program: Option<PathBuf>,
+    history_mode: Option<ThreadHistoryMode>,
+    models_manager: Option<SharedModelsManager>,
+    thread_store: Option<Arc<dyn ThreadStore>>,
+    image_store: Arc<dyn AttachmentStore>,
+}
+
+impl TestRuxexBuilder {
+    pub fn with_thread_store(mut self, thread_store: Arc<dyn ThreadStore>) -> Self {
+        self.thread_store = Some(thread_store);
+        self
+    }
+
+    pub fn with_config<T>(mut self, mutator: T) -> Self
+    where
+        T: FnOnce(&mut Config) + Send + 'static,
+    {
+        self.config_mutators.push(Box::new(mutator));
+        self
+    }
+
+    pub fn with_auth(mut self, auth: RuxexAuth) -> Self {
+        self.auth = auth;
+        self
+    }
+
+    pub fn with_models_manager(mut self, models_manager: SharedModelsManager) -> Self {
+        self.models_manager = Some(models_manager);
+        self
+    }
+
+    pub fn with_image_store(mut self, image_store: Arc<dyn AttachmentStore>) -> Self {
+        self.image_store = image_store;
+        self
+    }
+
+    pub fn with_model(self, model: &str) -> Self {
+        let new_model = model.to_string();
+        self.with_config(move |config| {
+            config.model = Some(new_model);
+        })
+    }
+
+    pub fn with_history_mode(mut self, history_mode: ThreadHistoryMode) -> Self {
+        self.history_mode = Some(history_mode);
+        self
+    }
+
+    pub fn with_model_info_override<T>(self, model: &str, override_model_info: T) -> Self
+    where
+        T: FnOnce(&mut ModelInfo) + Send + 'static,
+    {
+        let model = model.to_string();
+        self.with_config(move |config| {
+            let model_catalog = config.model_catalog.get_or_insert_with(|| {
+                test_models_response().expect("test model catalog should parse")
+            });
+            if !model_catalog
+                .models
+                .iter()
+                .any(|candidate| candidate.slug == model)
+            {
+                let mut fixture = test_models_response()
+                    .expect("bundled model catalog should parse")
+                    .models
+                    .into_iter()
+                    .find(|candidate| candidate.slug == "example-model")
+                    .expect("missing bundled model example-model");
+                fixture.slug = model.clone();
+                fixture.display_name = model.clone();
+                model_catalog.models.push(fixture);
+            }
+            let model_info = model_catalog
+                .models
+                .iter_mut()
+                .find(|model_info| model_info.slug == model)
+                .expect("model should exist in the configured model catalog");
+            override_model_info(model_info);
+            config.model = Some(model);
+        })
+    }
+
+    pub fn with_pre_build_hook<F>(mut self, hook: F) -> Self
+    where
+        F: FnOnce(&Path) + Send + 'static,
+    {
+        self.pre_build_hooks.push(Box::new(hook));
+        self
+    }
+
+    pub fn with_workspace_setup<F, Fut>(mut self, setup: F) -> Self
+    where
+        F: FnOnce(AbsolutePathBuf, Arc<dyn ExecutorFileSystem>) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<()>> + Send + 'static,
+    {
+        self.workspace_setups
+            .push(Box::new(move |cwd, fs| Box::pin(setup(cwd, fs))));
+        self
+    }
+
+    pub fn with_home(mut self, home: Arc<TempDir>) -> Self {
+        self.home = Some(home);
+        self
+    }
+
+    pub fn with_user_shell(mut self, user_shell: Shell) -> Self {
+        self.user_shell_override = Some(user_shell);
+        self
+    }
+
+    pub fn with_exec_server_url(mut self, exec_server_url: impl Into<String>) -> Self {
+        self.exec_server_url = Some(exec_server_url.into());
+        self
+    }
+
+    pub fn with_extensions(mut self, extensions: Arc<ExtensionRegistry<Config>>) -> Self {
+        self.extensions = extensions;
+        self
+    }
+
+    pub fn with_user_instructions_provider(
+        mut self,
+        provider: Arc<dyn UserInstructionsProvider>,
+    ) -> Self {
+        self.user_instructions_provider = Some(provider);
+        self
+    }
+
+    pub fn with_external_time_provider(mut self, provider: Arc<dyn TimeProvider>) -> Self {
+        self.external_time_provider = Some(provider);
+        self
+    }
+
+    pub fn with_code_mode_host_program(mut self, host_program: PathBuf) -> Self {
+        self.code_mode_host_program = Some(host_program);
+        self
+    }
+
+    pub fn with_windows_cmd_shell(self) -> Self {
+        self
+    }
+
+    pub async fn build(&mut self, server: &wiremock::MockServer) -> anyhow::Result<TestRuxex> {
+        let home = match self.home.clone() {
+            Some(home) => home,
+            None => Arc::new(TempDir::new()?),
+        };
+        let base_url = format!("{}/v1", server.uri());
+        let test_env = TestEnv::local().await?;
+        Box::pin(self.build_with_home_and_base_url(
+            base_url, home, /*resume_from*/ None, test_env,
+            /*include_local_environment*/ false,
+        ))
+        .await
+    }
+
+    /// Builds a test runtime using the execution environment selected by the test process.
+    ///
+    /// With no remote test configuration, or with `RUXEX_TEST_ENVIRONMENT=local`, this uses a
+    /// temporary local environment just like [`Self::build`]. `RUXEX_TEST_ENVIRONMENT=docker` or
+    /// `RUXEX_TEST_ENVIRONMENT=wine-exec` selects the remote exec server configured by
+    /// `RUXEX_TEST_REMOTE_EXEC_SERVER_URL`; the legacy `RUXEX_TEST_REMOTE_ENV` Docker-container
+    /// configuration does the same. Only the automatically selected environment is registered.
+    /// Use [`Self::build_with_remote_and_local_env`] when a remote test also needs the local
+    /// environment to be selectable explicitly.
+    pub async fn build_with_auto_env(
+        &mut self,
+        server: &wiremock::MockServer,
+    ) -> anyhow::Result<TestRuxex> {
+        let test_env = test_env().await?;
+        self.build_with_environment(server, test_env).await
+    }
+
+    /// Builds a test runtime using an explicitly selected execution environment.
+    pub async fn build_with_environment(
+        &mut self,
+        server: &wiremock::MockServer,
+        test_env: TestEnv,
+    ) -> anyhow::Result<TestRuxex> {
+        let home = match self.home.clone() {
+            Some(home) => home,
+            None => Arc::new(TempDir::new()?),
+        };
+        let base_url = format!("{}/v1", server.uri());
+        Box::pin(self.build_with_home_and_base_url(
+            base_url, home, /*resume_from*/ None, test_env,
+            /*include_local_environment*/ false,
+        ))
+        .await
+    }
+
+    pub async fn build_with_remote_and_local_env(
+        &mut self,
+        server: &wiremock::MockServer,
+    ) -> anyhow::Result<TestRuxex> {
+        let home = match self.home.clone() {
+            Some(home) => home,
+            None => Arc::new(TempDir::new()?),
+        };
+        let base_url = format!("{}/v1", server.uri());
+        let test_env = test_env().await?;
+        Box::pin(self.build_with_home_and_base_url(
+            base_url, home, /*resume_from*/ None, test_env,
+            /*include_local_environment*/ true,
+        ))
+        .await
+    }
+
+    pub async fn build_with_streaming_server(
+        &mut self,
+        server: &StreamingSseServer,
+    ) -> anyhow::Result<TestRuxex> {
+        let base_url = server.uri();
+        let home = match self.home.clone() {
+            Some(home) => home,
+            None => Arc::new(TempDir::new()?),
+        };
+        let test_env = TestEnv::local().await?;
+        Box::pin(self.build_with_home_and_base_url(
+            format!("{base_url}/v1"),
+            home,
+            /*resume_from*/ None,
+            test_env,
+            /*include_local_environment*/ false,
+        ))
+        .await
+    }
+
+    pub async fn build_with_websocket_server(
+        &mut self,
+        server: &WebSocketTestServer,
+    ) -> anyhow::Result<TestRuxex> {
+        let base_url = format!("{}/v1", server.uri());
+        let home = match self.home.clone() {
+            Some(home) => home,
+            None => Arc::new(TempDir::new()?),
+        };
+        self.config_mutators.push(Box::new(move |config| {
+            config.model_provider.supports_websockets = true;
+        }));
+        let test_env = TestEnv::local().await?;
+        Box::pin(self.build_with_home_and_base_url(
+            base_url, home, /*resume_from*/ None, test_env,
+            /*include_local_environment*/ false,
+        ))
+        .await
+    }
+
+    pub async fn resume(
+        &mut self,
+        server: &wiremock::MockServer,
+        home: Arc<TempDir>,
+        rollout_path: PathBuf,
+    ) -> anyhow::Result<TestRuxex> {
+        let base_url = format!("{}/v1", server.uri());
+        let test_env = TestEnv::local().await?;
+        Box::pin(self.build_with_home_and_base_url(
+            base_url,
+            home,
+            Some(rollout_path),
+            test_env,
+            /*include_local_environment*/ false,
+        ))
+        .await
+    }
+
+    pub async fn restart(
+        &mut self,
+        server: &MockServer,
+        previous: &TestRuxex,
+    ) -> Result<TestRuxex> {
+        let rollout_path = previous
+            .session_configured
+            .rollout_path
+            .clone()
+            .context("rollout path")?;
+        previous.ruxex.shutdown_and_wait().await?;
+        self.resume(server, Arc::clone(&previous.home), rollout_path)
+            .await
+    }
+
+    async fn build_with_home_and_base_url(
+        &mut self,
+        base_url: String,
+        home: Arc<TempDir>,
+        resume_from: Option<PathBuf>,
+        test_env: TestEnv,
+        include_local_environment: bool,
+    ) -> anyhow::Result<TestRuxex> {
+        let (config, fallback_cwd) = self
+            .prepare_config(base_url, &home, test_env.cwd().clone())
+            .await?;
+        let exec_server_url = self
+            .exec_server_url
+            .clone()
+            .or_else(|| test_env.exec_server_url.clone());
+        #[cfg(target_os = "linux")]
+        let ruxex_linux_sandbox_exe = Some(
+            crate::find_ruxex_linux_sandbox_exe()
+                .context("should find binary for ruxex-linux-sandbox")?,
+        );
+        #[cfg(not(target_os = "linux"))]
+        let ruxex_linux_sandbox_exe = None;
+        let local_runtime_paths = ruxex_exec_server::ExecServerRuntimePaths::new(
+            std::env::current_exe()?,
+            ruxex_linux_sandbox_exe,
+        )?;
+        let environment_manager = Arc::new(if include_local_environment {
+            ruxex_exec_server::EnvironmentManager::create_for_tests_with_local(
+                exec_server_url,
+                local_runtime_paths,
+            )
+            .await
+        } else {
+            ruxex_exec_server::EnvironmentManager::create_for_tests(
+                exec_server_url,
+                Some(local_runtime_paths),
+            )
+            .await
+        });
+        let file_system = test_env.environment().get_filesystem();
+        let mut workspace_setups = vec![];
+        swap(&mut self.workspace_setups, &mut workspace_setups);
+        for setup in workspace_setups {
+            setup(config.cwd.clone(), Arc::clone(&file_system)).await?;
+        }
+        let cwd = test_env.local_cwd_temp_dir().unwrap_or(fallback_cwd);
+        Box::pin(self.build_from_config(
+            config,
+            cwd,
+            home,
+            resume_from,
+            test_env,
+            environment_manager,
+        ))
+        .await
+    }
+
+    async fn build_from_config(
+        &mut self,
+        config: Config,
+        cwd: Arc<TempDir>,
+        home: Arc<TempDir>,
+        resume_from: Option<PathBuf>,
+        test_env: TestEnv,
+        environment_manager: Arc<ruxex_exec_server::EnvironmentManager>,
+    ) -> anyhow::Result<TestRuxex> {
+        let auth = self.auth.clone();
+        let state_db = ruxex_core::init_state_db(&config).await;
+        let thread_store = self
+            .thread_store
+            .clone()
+            .unwrap_or_else(|| thread_store_from_config(&config, state_db.clone()));
+        let installation_id = resolve_installation_id(&config.ruxex_home).await?;
+        let user_instructions_provider =
+            self.user_instructions_provider.clone().unwrap_or_else(|| {
+                Arc::new(RuxexHomeUserInstructionsProvider::new(
+                    config.ruxex_home.clone(),
+                ))
+            });
+        let credential_manager = ruxex_core::test_support::credential_manager_from_auth_with_home(
+            auth.clone(),
+            config.ruxex_home.to_path_buf(),
+        );
+        let provider = create_model_provider(
+            config.model_provider.clone(),
+            Some(credential_manager.clone()),
+        );
+        let models_manager = self.models_manager.clone().unwrap_or_else(|| {
+            ruxex_core::build_models_manager_with_provider(&config, provider.clone())
+        });
+        let code_mode_host_program = self
+            .code_mode_host_program
+            .take()
+            .or_else(|| ruxex_utils_cargo_bin::cargo_bin("ruxex-code-mode-host").ok());
+        let thread_manager = Arc::new_cyclic(|_| {
+            let extensions = self.extensions.to_builder();
+            let thread_manager = ThreadManager::new(
+                &config,
+                provider,
+                models_manager,
+                SessionSource::Exec,
+                Arc::clone(&environment_manager),
+                Arc::new(extensions.build()),
+                user_instructions_provider,
+                Arc::clone(&self.image_store),
+                Arc::clone(&thread_store),
+                ruxex_core::local_agent_graph_store_from_state_db(state_db.as_ref()),
+                installation_id,
+                /*attestation_provider*/ None,
+                /*external_time_provider*/ self.external_time_provider.clone(),
+            );
+            if config.features.enabled(Feature::CodeModeHost)
+                && let Some(code_mode_host_program) = code_mode_host_program
+            {
+                ruxex_core::test_support::with_code_mode_host_program(
+                    thread_manager,
+                    code_mode_host_program,
+                    &config,
+                )
+            } else {
+                thread_manager
+            }
+        });
+        let user_shell_override = self.user_shell_override.clone();
+        let client_mcp_extensions = || ClientMcpExtensions::new(None);
+
+        let new_conversation =
+            match (resume_from, user_shell_override) {
+                (Some(path), Some(user_shell_override)) => Box::pin(
+                    ruxex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
+                        thread_manager.as_ref(),
+                        config.clone(),
+                        path,
+                        user_shell_override,
+                        false,
+                    ),
+                )
+                .await?,
+                (Some(path), None) => {
+                    Box::pin(thread_manager.resume_thread_from_rollout(
+                        config.clone(),
+                        path,
+                        /*parent_trace*/ None,
+                        client_mcp_extensions(),
+                    ))
+                    .await?
+                }
+                (None, Some(user_shell_override)) => {
+                    Box::pin(
+                        ruxex_core::test_support::start_thread_with_user_shell_override(
+                            thread_manager.as_ref(),
+                            config.clone(),
+                            user_shell_override,
+                            false,
+                        ),
+                    )
+                    .await?
+                }
+                (None, None) => {
+                    let environments = None;
+                    Box::pin(thread_manager.start_thread(StartThreadOptions {
+                        history_mode: self.history_mode,
+                        client_mcp_extensions: client_mcp_extensions(),
+                        environments,
+                        ..StartThreadOptions::new(config.clone())
+                    }))
+                    .await?
+                }
+            };
+
+        Ok(TestRuxex {
+            home,
+            cwd,
+            config,
+            ruxex: new_conversation.thread,
+            session_configured: new_conversation.session_configured,
+            thread_manager,
+            thread_store,
+            _test_env: test_env,
+        })
+    }
+
+    async fn prepare_config(
+        &mut self,
+        base_url: String,
+        home: &TempDir,
+        cwd_override: AbsolutePathBuf,
+    ) -> anyhow::Result<(Config, Arc<TempDir>)> {
+        let model_provider = ModelProviderInfo {
+            base_url: Some(base_url),
+            // Most core tests use SSE-only mock servers, so keep websocket transport off unless
+            // a test explicitly opts into websocket coverage.
+            supports_websockets: false,
+            ..ModelProviderInfo::create_responses_provider(None)
+        };
+        let cwd = Arc::new(TempDir::new()?);
+        for hook in self.pre_build_hooks.drain(..) {
+            hook(home.path());
+        }
+        let mut config = load_default_config_for_test(home).await;
+        // Keep generic tests stable when the bundled catalog default changes. Tests that need a
+        // specific model can still override this with a config mutator.
+        config.model = Some("example-model".to_string());
+        config.cwd = cwd_override;
+        config.model_provider = model_provider;
+        if let Ok(path) = ruxex_utils_cargo_bin::cargo_bin("ruxex-exec") {
+            // `ruxex-exec` also supports `--ruxex-run-as-apply-patch`, so use it
+            // when the multitool binary is not available in test builds.
+            config.ruxex_self_exe = Some(path);
+        } else if let Ok(exe) = std::env::current_exe()
+            && let Some(bin_dir) = exe.parent().and_then(|parent| parent.parent())
+        {
+            let ruxex_exec = bin_dir.join("ruxex-exec");
+            if ruxex_exec.is_file() {
+                config.ruxex_self_exe = Some(ruxex_exec);
+            }
+        }
+
+        let mut mutators = vec![];
+        swap(&mut self.config_mutators, &mut mutators);
+        for mutator in mutators {
+            mutator(&mut config);
+        }
+        ensure_test_model_catalog(&mut config)?;
+
+        Ok((config, cwd))
+    }
+}
+
+fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
+    if config.model.as_deref() != Some(TEST_MODEL_WITH_EXPERIMENTAL_TOOLS)
+        || config.model_catalog.is_some()
+    {
+        return Ok(());
+    }
+
+    let bundled_models = test_models_response().expect("test model catalog should parse");
+    let mut model = bundled_models
+        .models
+        .iter()
+        .find(|candidate| candidate.slug == "example-model")
+        .cloned()
+        .expect("missing bundled model example-model");
+    model.slug = TEST_MODEL_WITH_EXPERIMENTAL_TOOLS.to_string();
+    model.display_name = TEST_MODEL_WITH_EXPERIMENTAL_TOOLS.to_string();
+    model.experimental_supported_tools = vec!["test_sync_tool".to_string()];
+    model.truncation_policy = TruncationPolicyConfig::bytes(/*limit*/ 10_000);
+    model.default_reasoning_summary = ReasoningSummary::Auto;
+    model.comp_hash = None;
+    model.service_tiers.clear();
+    model.additional_speed_tiers.clear();
+    model.web_search_tool_type = WebSearchToolType::Text;
+    model.supports_image_detail_original = false;
+    config.model_catalog = Some(ModelCatalog {
+        models: vec![model],
+    });
+    Ok(())
+}
+
+pub struct TestRuxex {
+    pub home: Arc<TempDir>,
+    pub cwd: Arc<TempDir>,
+    pub ruxex: Arc<RuxexThread>,
+    pub session_configured: SessionConfiguredEvent,
+    pub config: Config,
+    pub thread_manager: Arc<ThreadManager>,
+    pub thread_store: Arc<dyn ThreadStore>,
+    _test_env: TestEnv,
+}
+
+impl TestRuxex {
+    pub fn cwd_path(&self) -> &Path {
+        self.cwd.path()
+    }
+
+    pub fn ruxex_home_path(&self) -> &Path {
+        self.config.ruxex_home.as_path()
+    }
+
+    pub fn workspace_path(&self, rel: impl AsRef<Path>) -> PathBuf {
+        self.cwd_path().join(rel)
+    }
+
+    pub fn workspace_path_uri(&self, rel: impl AsRef<Path>) -> Result<PathUri> {
+        let rel = rel
+            .as_ref()
+            .to_str()
+            .context("test workspace path must be UTF-8")?;
+        Ok(self.executor_environment().selection().cwd.join(rel)?)
+    }
+
+    pub fn executor_environment(&self) -> &TestEnv {
+        &self._test_env
+    }
+
+    pub fn fs(&self) -> Arc<dyn ExecutorFileSystem> {
+        self._test_env.environment().get_filesystem()
+    }
+
+    pub async fn submit_turn(&self, prompt: &str) -> Result<()> {
+        self.submit_turn_with_permission_profile(prompt, PermissionProfile::Disabled)
+            .await
+    }
+
+    /// Submits a text turn without changing the current thread settings.
+    pub async fn submit_text_turn(&self, prompt: &str) -> Result<()> {
+        self.ruxex
+            .start_or_steer_turn(TurnInputRequest::user_input(vec![UserInput::Text {
+                text: prompt.into(),
+                text_elements: Vec::new(),
+            }]))
+            .await?;
+
+        wait_for_event(&self.ruxex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+        Ok(())
+    }
+
+    pub async fn submit_turn_with_permission_profile(
+        &self,
+        prompt: &str,
+        permission_profile: PermissionProfile,
+    ) -> Result<()> {
+        self.submit_turn_with_approval_and_permission_profile(
+            prompt,
+            AskForApproval::Never,
+            permission_profile,
+        )
+        .await
+    }
+
+    pub async fn submit_turn_with_policy(
+        &self,
+        prompt: &str,
+        sandbox_policy: SandboxPolicy,
+    ) -> Result<()> {
+        self.submit_turn_with_policies(prompt, AskForApproval::Never, sandbox_policy)
+            .await
+    }
+
+    pub async fn submit_turn_with_service_tier(
+        &self,
+        prompt: &str,
+        service_tier: Option<&str>,
+    ) -> Result<()> {
+        self.submit_turn_with_permission_profile_context(
+            prompt,
+            AskForApproval::Never,
+            PermissionProfile::Disabled,
+            Some(service_tier.map(str::to_string)),
+            /*environments*/ None,
+        )
+        .await
+    }
+
+    pub async fn submit_turn_with_policies(
+        &self,
+        prompt: &str,
+        approval_policy: AskForApproval,
+        sandbox_policy: SandboxPolicy,
+    ) -> Result<()> {
+        let permission_profile = PermissionProfile::from_legacy_sandbox_policy_for_cwd(
+            &sandbox_policy,
+            self.config.cwd.as_path(),
+        );
+        self.submit_turn_with_context(
+            prompt,
+            approval_policy,
+            permission_profile,
+            /*service_tier*/ None,
+            /*environments*/ None,
+        )
+        .await
+    }
+
+    pub async fn submit_turn_with_approval_and_permission_profile(
+        &self,
+        prompt: &str,
+        approval_policy: AskForApproval,
+        permission_profile: PermissionProfile,
+    ) -> Result<()> {
+        self.submit_turn_with_permission_profile_context(
+            prompt,
+            approval_policy,
+            permission_profile,
+            /*service_tier*/ None,
+            /*environments*/ None,
+        )
+        .await
+    }
+
+    pub async fn submit_turn_with_environments(
+        &self,
+        prompt: &str,
+        environments: Option<Vec<TurnEnvironmentSelection>>,
+    ) -> Result<()> {
+        self.submit_turn_with_permission_profile_context(
+            prompt,
+            AskForApproval::Never,
+            PermissionProfile::Disabled,
+            /*service_tier*/ None,
+            environments,
+        )
+        .await
+    }
+
+    async fn submit_turn_with_permission_profile_context(
+        &self,
+        prompt: &str,
+        approval_policy: AskForApproval,
+        permission_profile: PermissionProfile,
+        service_tier: Option<Option<String>>,
+        environments: Option<Vec<TurnEnvironmentSelection>>,
+    ) -> Result<()> {
+        self.submit_turn_with_context(
+            prompt,
+            approval_policy,
+            permission_profile,
+            service_tier,
+            environments,
+        )
+        .await
+    }
+
+    async fn submit_turn_with_context(
+        &self,
+        prompt: &str,
+        approval_policy: AskForApproval,
+        permission_profile: PermissionProfile,
+        service_tier: Option<Option<String>>,
+        environments: Option<Vec<TurnEnvironmentSelection>>,
+    ) -> Result<()> {
+        let (sandbox_policy, permission_profile) =
+            turn_permission_fields(permission_profile, self.config.cwd.as_path());
+        let session_model = self.session_configured.model.clone();
+        let turn_environment_selections = environments.map(|environments| {
+            TurnEnvironmentSelections::new(self.config.cwd.clone(), environments)
+        });
+        self.ruxex
+            .start_or_steer_turn(
+                TurnInputRequest::user_input(vec![UserInput::Text {
+                    text: prompt.into(),
+                    text_elements: Vec::new(),
+                }])
+                .with_thread_settings(ThreadSettingsOverrides {
+                    environments: turn_environment_selections,
+                    approval_policy: Some(approval_policy),
+                    sandbox_policy: Some(sandbox_policy),
+                    permission_profile,
+                    service_tier,
+                    collaboration_mode: Some(CollaborationMode {
+                        mode: ModeKind::Default,
+                        settings: Settings {
+                            model: session_model,
+                            reasoning_effort: None,
+                            developer_instructions: None,
+                        },
+                    }),
+                    ..Default::default()
+                }),
+            )
+            .await?;
+
+        let turn_id = wait_for_event_match(&self.ruxex, |event| match event {
+            EventMsg::TurnStarted(event) => Some(event.turn_id.clone()),
+            _ => None,
+        })
+        .await;
+        wait_for_event_with_timeout(
+            &self.ruxex,
+            |event| match event {
+                EventMsg::TurnComplete(event) => event.turn_id == turn_id,
+                _ => false,
+            },
+            SUBMIT_TURN_COMPLETE_TIMEOUT,
+        )
+        .await;
+        Ok(())
+    }
+}
+
+pub struct TestRuxexHarness {
+    server: MockServer,
+    test: TestRuxex,
+}
+
+impl TestRuxexHarness {
+    pub async fn with_builder(mut builder: TestRuxexBuilder) -> Result<Self> {
+        let server = start_mock_server().await;
+        let test = builder.build(&server).await?;
+        Ok(Self { server, test })
+    }
+
+    pub async fn with_auto_env_builder(mut builder: TestRuxexBuilder) -> Result<Self> {
+        let server = start_mock_server().await;
+        let test = builder.build_with_auto_env(&server).await?;
+        Ok(Self { server, test })
+    }
+
+    pub fn server(&self) -> &MockServer {
+        &self.server
+    }
+
+    pub fn test(&self) -> &TestRuxex {
+        &self.test
+    }
+
+    pub fn cwd(&self) -> &Path {
+        self.test.config.cwd.as_path()
+    }
+
+    pub fn path(&self, rel: impl AsRef<Path>) -> PathBuf {
+        self.path_abs(rel).into_path_buf()
+    }
+
+    pub fn path_abs(&self, rel: impl AsRef<Path>) -> AbsolutePathBuf {
+        self.test.config.cwd.join(rel)
+    }
+
+    pub async fn write_file(
+        &self,
+        rel: impl AsRef<Path>,
+        contents: impl AsRef<[u8]>,
+    ) -> Result<()> {
+        let path_uri = self.test.workspace_path_uri(rel)?;
+        if let Some(parent_uri) = path_uri.parent() {
+            self.test
+                .fs()
+                .create_directory(
+                    &parent_uri,
+                    CreateDirectoryOptions {
+                        recursive: true,
+                        follow_symlinks: true,
+                    },
+                    /*sandbox*/ None,
+                )
+                .await?;
+        }
+        self.test
+            .fs()
+            .write_file(
+                &path_uri,
+                contents.as_ref().to_vec(),
+                Default::default(),
+                /*sandbox*/ None,
+            )
+            .await?;
+        Ok(())
+    }
+
+    pub async fn read_file_text(&self, rel: impl AsRef<Path>) -> Result<String> {
+        let path_uri = self.test.workspace_path_uri(rel)?;
+        Ok(self
+            .test
+            .fs()
+            .read_file_text(&path_uri, Default::default(), /*sandbox*/ None)
+            .await?)
+    }
+
+    pub async fn create_dir_all(&self, rel: impl AsRef<Path>) -> Result<()> {
+        let path_uri = self.test.workspace_path_uri(rel)?;
+        self.test
+            .fs()
+            .create_directory(
+                &path_uri,
+                CreateDirectoryOptions {
+                    recursive: true,
+                    follow_symlinks: true,
+                },
+                /*sandbox*/ None,
+            )
+            .await?;
+        Ok(())
+    }
+
+    pub async fn path_exists(&self, rel: impl AsRef<Path>) -> Result<bool> {
+        self.path_uri_exists(&self.test.workspace_path_uri(rel)?)
+            .await
+    }
+
+    pub async fn remove_abs_path(&self, path: &AbsolutePathBuf) -> Result<()> {
+        let path_uri = PathUri::from_abs_path(path);
+        self.test
+            .fs()
+            .remove(
+                &path_uri,
+                RemoveOptions {
+                    recursive: false,
+                    force: true,
+                    follow_symlinks: true,
+                },
+                /*sandbox*/ None,
+            )
+            .await?;
+        Ok(())
+    }
+
+    pub async fn abs_path_exists(&self, path: &AbsolutePathBuf) -> Result<bool> {
+        let path_uri = PathUri::from_abs_path(path);
+        self.path_uri_exists(&path_uri).await
+    }
+
+    async fn path_uri_exists(&self, path_uri: &PathUri) -> Result<bool> {
+        match self
+            .test
+            .fs()
+            .get_metadata(path_uri, Default::default(), /*sandbox*/ None)
+            .await
+        {
+            Ok(_) => Ok(true),
+            Err(err) if err.kind() == ErrorKind::NotFound => Ok(false),
+            Err(err) => Err(err.into()),
+        }
+    }
+
+    pub async fn submit(&self, prompt: &str) -> Result<()> {
+        // Box the submit-and-wait path so callers do not inline the full turn
+        // future into their own async state.
+        Box::pin(self.test.submit_turn(prompt)).await
+    }
+
+    pub async fn submit_with_permission_profile(
+        &self,
+        prompt: &str,
+        permission_profile: PermissionProfile,
+    ) -> Result<()> {
+        self.test
+            .submit_turn_with_permission_profile(prompt, permission_profile)
+            .await
+    }
+
+    pub async fn request_bodies(&self) -> Vec<Value> {
+        let path_matcher = path_regex(".*/responses$");
+        self.server
+            .received_requests()
+            .await
+            .expect("mock server should not fail")
+            .into_iter()
+            .filter(|req| path_matcher.matches(req))
+            .map(|req| {
+                req.body_json::<Value>()
+                    .expect("request body to be valid JSON")
+            })
+            .collect()
+    }
+
+    pub async fn function_call_output_value(&self, call_id: &str) -> Value {
+        let bodies = self.request_bodies().await;
+        function_call_output(&bodies, call_id).clone()
+    }
+
+    pub async fn function_call_stdout(&self, call_id: &str) -> String {
+        self.function_call_output_value(call_id)
+            .await
+            .get("output")
+            .and_then(Value::as_str)
+            .expect("output string")
+            .to_string()
+    }
+
+    pub async fn custom_tool_call_output(&self, call_id: &str) -> String {
+        let bodies = self.request_bodies().await;
+        custom_tool_call_output_text(&bodies, call_id)
+    }
+
+    pub async fn apply_patch_output(&self, call_id: &str) -> String {
+        self.custom_tool_call_output(call_id).await
+    }
+}
+
+fn custom_tool_call_output<'a>(bodies: &'a [Value], call_id: &str) -> &'a Value {
+    let missing_output = format!("custom_tool_call_output {call_id} not found");
+    bodies
+        .iter()
+        .filter_map(|body| body.get("input").and_then(Value::as_array))
+        .flatten()
+        .find(|item| {
+            item.get("type").and_then(Value::as_str) == Some("custom_tool_call_output")
+                && item.get("call_id").and_then(Value::as_str) == Some(call_id)
+        })
+        .expect(&missing_output)
+}
+
+fn custom_tool_call_output_text(bodies: &[Value], call_id: &str) -> String {
+    let missing_output = format!("custom_tool_call_output {call_id} missing output");
+    let output = custom_tool_call_output(bodies, call_id)
+        .get("output")
+        .expect(&missing_output);
+    output_value_to_text(output).expect("custom tool call output missing text output")
+}
+
+fn function_call_output<'a>(bodies: &'a [Value], call_id: &str) -> &'a Value {
+    let missing_output = format!("function_call_output {call_id} not found");
+    bodies
+        .iter()
+        .filter_map(|body| body.get("input").and_then(Value::as_array))
+        .flatten()
+        .find(|item| {
+            item.get("type").and_then(Value::as_str) == Some("function_call_output")
+                && item.get("call_id").and_then(Value::as_str) == Some(call_id)
+        })
+        .expect(&missing_output)
+}
+
+pub fn test_ruxex() -> TestRuxexBuilder {
+    TestRuxexBuilder {
+        config_mutators: vec![Box::new(|config| {
+            // Snapshot tests opt in explicitly; avoid spawning login shells for every test.
+            config
+                .features
+                .disable(Feature::ShellSnapshot)
+                .expect("test config should allow ShellSnapshot override");
+        })],
+        auth: RuxexAuth::from_api_key("dummy"),
+        pre_build_hooks: vec![],
+        workspace_setups: vec![],
+        home: None,
+        user_shell_override: None,
+        exec_server_url: None,
+        extensions: empty_extension_registry(),
+        user_instructions_provider: None,
+        external_time_provider: None,
+        code_mode_host_program: None,
+        history_mode: None,
+        models_manager: None,
+        thread_store: None,
+        image_store: ruxex_core::passthrough_image_store(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use serde_json::json;
+
+    #[test]
+    fn custom_tool_call_output_text_returns_output_text() {
+        let bodies = vec![json!({
+            "input": [{
+                "type": "custom_tool_call_output",
+                "call_id": "call-1",
+                "output": "hello"
+            }]
+        })];
+
+        assert_eq!(custom_tool_call_output_text(&bodies, "call-1"), "hello");
+    }
+
+    #[test]
+    #[should_panic(expected = "custom_tool_call_output call-2 missing output")]
+    fn custom_tool_call_output_text_panics_when_output_is_missing() {
+        let bodies = vec![json!({
+            "input": [{
+                "type": "custom_tool_call_output",
+                "call_id": "call-2"
+            }]
+        })];
+
+        let _ = custom_tool_call_output_text(&bodies, "call-2");
+    }
+}

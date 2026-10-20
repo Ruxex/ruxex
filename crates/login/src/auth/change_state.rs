@@ -1,0 +1,26 @@
+//! Tracks credential changes separately from ownership changes, before notifications coalesce.
+
+use super::RuxexAuth;
+
+/// Opaque revisions local to one auth manager. Consumers must reset on reconnect.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct AuthChangeState {
+    /// Advances whenever cached credentials change.
+    pub generation: u64,
+    /// Advances on login, logout, or changes of user, workspace, or auth mode.
+    /// Credential changes with incomplete owner identity also advance this revision.
+    pub owner_generation: u64,
+}
+
+pub(super) fn same_owner(previous: Option<&RuxexAuth>, current: Option<&RuxexAuth>) -> bool {
+    let (Some(previous), Some(current)) = (previous, current) else {
+        return false;
+    };
+    if previous.api_auth_mode() != current.api_auth_mode() {
+        return false;
+    }
+    let Some(workspace) = previous.get_account_id() else {
+        return false;
+    };
+    !workspace.trim().is_empty() && current.get_account_id().as_ref() == Some(&workspace)
+}

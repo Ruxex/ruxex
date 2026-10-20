@@ -1,0 +1,4418 @@
+use std::collections::BTreeMap;
+use std::sync::Mutex;
+use std::sync::OnceLock;
+use std::time::Duration;
+
+use anyhow::Result;
+use anyhow::bail;
+use app_test_support::ApiKeyAuthFixture;
+use app_test_support::TestAppServer;
+use app_test_support::to_response;
+use app_test_support::write_api_key_auth;
+use chrono::Duration as ChronoDuration;
+use chrono::Utc;
+use ruxex_app_server_protocol::HookMetadata;
+use ruxex_app_server_protocol::HookTrustStatus;
+use ruxex_app_server_protocol::HooksListParams;
+use ruxex_app_server_protocol::HooksListResponse;
+use ruxex_app_server_protocol::JSONRPCResponse;
+use ruxex_app_server_protocol::LoginAccountResponse;
+use ruxex_app_server_protocol::PluginAuthPolicy;
+use ruxex_app_server_protocol::PluginDisabledReason;
+use ruxex_app_server_protocol::PluginInstallParams;
+use ruxex_app_server_protocol::PluginInstallPolicy;
+use ruxex_app_server_protocol::PluginInstallPolicySource;
+use ruxex_app_server_protocol::PluginInstalledParams;
+use ruxex_app_server_protocol::PluginInstalledResponse;
+use ruxex_app_server_protocol::PluginListMarketplaceKind;
+use ruxex_app_server_protocol::PluginListParams;
+use ruxex_app_server_protocol::PluginListResponse;
+use ruxex_app_server_protocol::PluginMarketplaceEntry;
+use ruxex_app_server_protocol::PluginShareDiscoverability;
+use ruxex_app_server_protocol::PluginSource;
+use ruxex_app_server_protocol::PluginSummary;
+use ruxex_app_server_protocol::RequestId;
+use ruxex_config::types::AuthCredentialsStoreMode;
+use ruxex_core::config::set_project_trust_level;
+use ruxex_login::AuthKeyringBackendKind;
+use ruxex_login::login_with_api_key;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use flate2::Compression;
+use flate2::write::GzEncoder;
+use pretty_assertions::assert_eq;
+use tempfile::TempDir;
+use test_case::test_case;
+use tokio::time::sleep;
+use tokio::time::timeout;
+use wiremock::Mock;
+use wiremock::MockServer;
+use wiremock::ResponseTemplate;
+use wiremock::matchers::header;
+use wiremock::matchers::method;
+use wiremock::matchers::path;
+use wiremock::matchers::query_param;
+use wiremock::matchers::query_param_is_missing;
+
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
+const TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS: &str =
+    "RUXEX_TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS";
+const ALTERNATE_MARKETPLACE_RELATIVE_PATH: &str = ".claude-plugin/marketplace.json";
+const ALTERNATE_PLUGIN_MANIFEST_RELATIVE_PATH: &str = ".claude-plugin/plugin.json";
+type RemoteInstalledPluginFixtures = BTreeMap<String, BTreeMap<String, Vec<serde_json::Value>>>;
+static REMOTE_INSTALLED_PLUGIN_FIXTURES: OnceLock<Mutex<RemoteInstalledPluginFixtures>> =
+    OnceLock::new();
+
+fn write_plugins_enabled_config(ruxex_home: &std::path::Path) -> std::io::Result<()> {
+    std::fs::write(
+        ruxex_home.join("config.toml"),
+        r#"[features]
+plugins = true
+"#,
+    )
+}
+
+fn write_plugins_enabled_config_with_base_url(
+    ruxex_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
+    std::fs::write(
+        ruxex_home.join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{base_url}"
+
+[features]
+plugins = true
+"#,
+        ),
+    )
+}
+
+fn write_remote_plugins_disabled_config_with_base_url(
+    ruxex_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
+    std::fs::write(
+        ruxex_home.join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{base_url}"
+
+[features]
+plugins = true
+remote_plugin = false
+"#,
+        ),
+    )
+}
+
+#[tokio::test]
+async fn plugin_list_skips_invalid_marketplace_file_and_reports_error() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    let marketplace_path =
+        AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
+    std::fs::write(marketplace_path.as_path(), "{not json")?;
+
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert!(
+        response
+            .marketplaces
+            .iter()
+            .all(|marketplace| { marketplace.path.as_ref() != Some(&marketplace_path) }),
+        "invalid marketplace should be skipped"
+    );
+    assert_eq!(response.marketplace_load_errors.len(), 1);
+    assert_eq!(
+        response.marketplace_load_errors[0].marketplace_path,
+        marketplace_path
+    );
+    assert!(
+        response.marketplace_load_errors[0]
+            .message
+            .contains("invalid marketplace file"),
+        "unexpected error: {:?}",
+        response.marketplace_load_errors
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_rpcs_reject_repository_spoofing_provider_curated() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repository = TempDir::new()?;
+    std::fs::create_dir_all(repository.path().join(".git"))?;
+    std::fs::create_dir_all(repository.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(repository.path().join("attacker/.ruxex-plugin"))?;
+    std::fs::write(
+        repository.path().join("attacker/.ruxex-plugin/plugin.json"),
+        r#"{"name":"attacker"}"#,
+    )?;
+    let marketplace_path =
+        AbsolutePathBuf::try_from(repository.path().join(".agents/plugins/marketplace.json"))?;
+    std::fs::write(
+        marketplace_path.as_path(),
+        r#"{"name":"test-curated","plugins":[{"name":"attacker","source":{"source":"local","path":"./attacker"}}]}"#,
+    )?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    let original_config = std::fs::read(ruxex_home.path().join("config.toml"))?;
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repository.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    assert!(
+        response
+            .marketplaces
+            .iter()
+            .all(|marketplace| marketplace.path.as_ref() != Some(&marketplace_path))
+    );
+
+    let request_id = mcp
+        .send_plugin_install_request(PluginInstallParams {
+            marketplace_path: Some(marketplace_path),
+            remote_marketplace_name: None,
+            install_attempt_id: None,
+            plugin_name: "attacker".to_string(),
+        })
+        .await?;
+    let error = timeout(
+        DEFAULT_TIMEOUT,
+        mcp.read_stream_until_error_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+    assert!(error.error.message.contains("reserved"));
+    assert!(!ruxex_home.path().join("plugins/cache").exists());
+    assert_eq!(
+        std::fs::read(ruxex_home.path().join("config.toml"))?,
+        original_config
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_installed_ignores_local_cache_without_catalog() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    write_installed_plugin(&ruxex_home, "test-curated", "linear")?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        r#"[features]
+plugins = true
+
+[plugins."linear@test-curated"]
+enabled = true
+"#,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: None,
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces, Vec::new());
+    assert_eq!(response.marketplace_load_errors, Vec::new());
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_rejects_relative_cwds() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_raw_request(
+            "plugin/list",
+            Some(serde_json::json!({
+                "cwds": ["relative-root"],
+            })),
+        )
+        .await?;
+
+    let err = timeout(
+        DEFAULT_TIMEOUT,
+        mcp.read_stream_until_error_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+
+    assert_eq!(err.error.code, -32600);
+    assert!(err.error.message.contains("Invalid request"));
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_keeps_valid_marketplaces_when_another_marketplace_fails_to_load() -> Result<()>
+{
+    let ruxex_home = TempDir::new()?;
+    let valid_repo_root = TempDir::new()?;
+    let invalid_repo_root = TempDir::new()?;
+    std::fs::create_dir_all(valid_repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(valid_repo_root.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(
+        valid_repo_root
+            .path()
+            .join("plugins/valid-plugin/.ruxex-plugin"),
+    )?;
+    std::fs::create_dir_all(invalid_repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(invalid_repo_root.path().join(".agents/plugins"))?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+
+    let valid_marketplace_path = AbsolutePathBuf::try_from(
+        valid_repo_root
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+    )?;
+    let invalid_marketplace_path = AbsolutePathBuf::try_from(
+        invalid_repo_root
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+    )?;
+    let valid_plugin_path =
+        AbsolutePathBuf::try_from(valid_repo_root.path().join("plugins/valid-plugin"))?;
+
+    std::fs::write(
+        valid_marketplace_path.as_path(),
+        r#"{
+  "name": "valid-marketplace",
+  "plugins": [
+    {
+      "name": "valid-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/valid-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        valid_repo_root
+            .path()
+            .join("plugins/valid-plugin/.ruxex-plugin/plugin.json"),
+        r#"{"name":"valid-plugin","keywords":["api-key","developer tools"]}"#,
+    )?;
+    std::fs::write(invalid_marketplace_path.as_path(), "{not json")?;
+
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![
+                AbsolutePathBuf::try_from(valid_repo_root.path())?,
+                AbsolutePathBuf::try_from(invalid_repo_root.path())?,
+            ]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(
+        response.marketplaces,
+        vec![PluginMarketplaceEntry {
+            name: "valid-marketplace".to_string(),
+            path: Some(valid_marketplace_path),
+            interface: None,
+            plugins: vec![PluginSummary {
+                id: "valid-plugin@valid-marketplace".to_string(),
+                remote_plugin_id: None,
+                version: None,
+                local_version: None,
+                name: "valid-plugin".to_string(),
+                share_context: None,
+                source: PluginSource::Local {
+                    path: valid_plugin_path,
+                },
+                installed: false,
+                installed_at: None,
+                enabled: false,
+                install_policy: PluginInstallPolicy::Available,
+                install_policy_source: None,
+                must_show_installation_interstitial: None,
+                auth_policy: PluginAuthPolicy::OnInstall,
+                availability: ruxex_app_server_protocol::PluginAvailability::Available,
+                disabled_reason: None,
+                eligible_plan_types: None,
+                interface: None,
+                keywords: vec!["api-key".to_string(), "developer tools".to_string()],
+            }],
+        }]
+    );
+    assert_eq!(response.marketplace_load_errors.len(), 1);
+    assert_eq!(
+        response.marketplace_load_errors[0].marketplace_path,
+        invalid_marketplace_path
+    );
+    assert!(
+        response.marketplace_load_errors[0]
+            .message
+            .contains("invalid marketplace file"),
+        "unexpected error: {:?}",
+        response.marketplace_load_errors
+    );
+    assert!(response.featured_plugin_ids.is_empty());
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_uses_alternate_discoverable_manifest_and_keeps_undiscoverable_plugins()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    let valid_plugin_root = repo_root.path().join("plugins/valid-plugin");
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(
+        repo_root
+            .path()
+            .join(ALTERNATE_MARKETPLACE_RELATIVE_PATH)
+            .parent()
+            .unwrap(),
+    )?;
+    std::fs::create_dir_all(
+        valid_plugin_root
+            .join(ALTERNATE_PLUGIN_MANIFEST_RELATIVE_PATH)
+            .parent()
+            .unwrap(),
+    )?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+
+    let marketplace_path =
+        AbsolutePathBuf::try_from(repo_root.path().join(ALTERNATE_MARKETPLACE_RELATIVE_PATH))?;
+    let valid_plugin_path = AbsolutePathBuf::try_from(valid_plugin_root.clone())?;
+
+    std::fs::write(
+        marketplace_path.as_path(),
+        r#"{
+  "name": "alternate-marketplace",
+  "plugins": [
+    {
+      "name": "valid-plugin",
+      "source": "./plugins/valid-plugin"
+    },
+    {
+      "name": "missing-plugin",
+      "source": "./plugins/missing-plugin"
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        valid_plugin_root.join(ALTERNATE_PLUGIN_MANIFEST_RELATIVE_PATH),
+        r#"{
+  "name": "valid-plugin",
+  "interface": {
+    "displayName": "Valid Plugin"
+  }
+}"#,
+    )?;
+
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(
+        response.marketplaces,
+        vec![PluginMarketplaceEntry {
+            name: "alternate-marketplace".to_string(),
+            path: Some(marketplace_path),
+            interface: None,
+            plugins: vec![
+                PluginSummary {
+                    id: "valid-plugin@alternate-marketplace".to_string(),
+                    remote_plugin_id: None,
+                    version: None,
+                    local_version: None,
+                    name: "valid-plugin".to_string(),
+                    share_context: None,
+                    source: PluginSource::Local {
+                        path: valid_plugin_path,
+                    },
+                    installed: false,
+                    installed_at: None,
+                    enabled: false,
+                    install_policy: PluginInstallPolicy::Available,
+                    install_policy_source: None,
+                    must_show_installation_interstitial: None,
+                    auth_policy: PluginAuthPolicy::OnInstall,
+                    availability: ruxex_app_server_protocol::PluginAvailability::Available,
+                    disabled_reason: None,
+                    eligible_plan_types: None,
+                    interface: Some(ruxex_app_server_protocol::PluginInterface {
+                        display_name: Some("Valid Plugin".to_string()),
+                        short_description: None,
+                        long_description: None,
+                        developer_name: None,
+                        category: None,
+                        capabilities: Vec::new(),
+                        website_url: None,
+                        privacy_policy_url: None,
+                        terms_of_service_url: None,
+                        default_prompt: None,
+                        brand_color: None,
+                        composer_icon: None,
+                        composer_icon_url: None,
+                        logo: None,
+                        logo_dark: None,
+                        logo_url: None,
+                        logo_url_dark: None,
+                        screenshots: Vec::new(),
+                        screenshot_urls: Vec::new(),
+                    }),
+                    keywords: Vec::new(),
+                },
+                PluginSummary {
+                    id: "missing-plugin@alternate-marketplace".to_string(),
+                    remote_plugin_id: None,
+                    version: None,
+                    local_version: None,
+                    name: "missing-plugin".to_string(),
+                    share_context: None,
+                    source: PluginSource::Local {
+                        path: AbsolutePathBuf::try_from(
+                            repo_root.path().join("plugins/missing-plugin"),
+                        )?,
+                    },
+                    installed: false,
+                    installed_at: None,
+                    enabled: false,
+                    install_policy: PluginInstallPolicy::Available,
+                    install_policy_source: None,
+                    must_show_installation_interstitial: None,
+                    auth_policy: PluginAuthPolicy::OnInstall,
+                    availability: ruxex_app_server_protocol::PluginAvailability::Available,
+                    disabled_reason: None,
+                    eligible_plan_types: None,
+                    interface: None,
+                    keywords: Vec::new(),
+                },
+            ],
+        }]
+    );
+    assert!(response.marketplace_load_errors.is_empty());
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_omitted_cwds_excludes_server_project_config() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let project_marketplace = TempDir::new()?;
+    std::fs::create_dir_all(ruxex_home.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(ruxex_home.path().join(".git"))?;
+    std::fs::create_dir_all(ruxex_home.path().join(".ruxex"))?;
+    std::fs::create_dir_all(project_marketplace.path().join(".agents/plugins"))?;
+    write_installed_plugin(&ruxex_home, "home-marketplace", "home-plugin")?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        "[features]\nplugins = true\n[plugins.\"home-plugin@home-marketplace\"]\nenabled = true\n",
+    )?;
+    std::fs::write(
+        ruxex_home.path().join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "home-marketplace",
+  "plugins": [
+    {
+      "name": "home-plugin",
+      "source": {
+        "source": "local",
+        "path": "./home-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        project_marketplace
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+        r#"{"name":"project-marketplace","plugins":[{"name":"project-plugin","source":{"source":"local","path":"./project-plugin"}}]}"#,
+    )?;
+    let source = serde_json::to_string(&project_marketplace.path().to_string_lossy())?;
+    std::fs::write(
+        ruxex_home.path().join(".ruxex/config.toml"),
+        format!(
+            "[marketplaces.project-marketplace]\nsource_type = \"local\"\nsource = {source}\n\n[plugins.\"home-plugin@home-marketplace\"]\nenabled = false\n"
+        ),
+    )?;
+    set_project_trust_level(ruxex_home.path(), ruxex_home.path(), TrustLevel::Trusted)?;
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    for (cwds, expected) in [
+        (None, vec![("home-plugin@home-marketplace", true, true)]),
+        (
+            Some(Vec::new()),
+            vec![("home-plugin@home-marketplace", true, true)],
+        ),
+        (
+            Some(vec![AbsolutePathBuf::try_from(ruxex_home.path())?]),
+            vec![
+                ("home-plugin@home-marketplace", true, false),
+                ("project-plugin@project-marketplace", false, false),
+            ],
+        ),
+    ] {
+        let request_id = mcp
+            .send_plugin_list_request(PluginListParams {
+                cwds,
+                marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+                force_refetch: false,
+            })
+            .await?;
+        let response: PluginListResponse =
+            timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+        let mut plugins = response
+            .marketplaces
+            .iter()
+            .flat_map(|marketplace| &marketplace.plugins)
+            .map(|plugin| (plugin.id.as_str(), plugin.installed, plugin.enabled))
+            .collect::<Vec<_>>();
+        plugins.sort_unstable();
+        assert_eq!(plugins, expected);
+        assert_eq!(response.marketplace_load_errors, Vec::new());
+    }
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_returns_share_context_for_shared_local_plugin() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    let plugin_root = repo_root.path().join("plugins/demo-plugin");
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    std::fs::write(
+        repo_root.path().join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "test-curated",
+  "plugins": [
+    {
+      "name": "demo-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/demo-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        plugin_root.join(".ruxex-plugin/plugin.json"),
+        r#"{"name":"demo-plugin","version":"1.2.3"}"#,
+    )?;
+    write_plugin_share_local_path_mapping(
+        ruxex_home.path(),
+        "plugins_123",
+        &AbsolutePathBuf::try_from(plugin_root)?,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let plugin = response
+        .marketplaces
+        .iter()
+        .flat_map(|marketplace| marketplace.plugins.iter())
+        .find(|plugin| plugin.name == "demo-plugin")
+        .expect("expected demo-plugin entry");
+    assert_eq!(plugin.remote_plugin_id, None);
+    assert_eq!(plugin.local_version.as_deref(), Some("1.2.3"));
+    let share_context = plugin
+        .share_context
+        .as_ref()
+        .expect("expected share context");
+    assert_eq!(share_context.remote_plugin_id, "plugins_123");
+    assert_eq!(share_context.remote_version, None);
+    assert_eq!(share_context.discoverability, None);
+    assert_eq!(share_context.share_url, None);
+    assert_eq!(share_context.creator_account_user_id, None);
+    assert_eq!(share_context.creator_name, None);
+    assert_eq!(share_context.share_principals, None);
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_force_refetch_waits_for_same_path_local_plugin_upgrade() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let marketplace_root = TempDir::new()?;
+    std::fs::create_dir_all(marketplace_root.path().join(".git"))?;
+    std::fs::create_dir_all(marketplace_root.path().join(".agents/plugins"))?;
+    let source_manifest = marketplace_root
+        .path()
+        .join("sample-plugin/.ruxex-plugin/plugin.json");
+    std::fs::create_dir_all(source_manifest.parent().expect("source manifest parent"))?;
+    std::fs::write(
+        &source_manifest,
+        r#"{"name":"sample-plugin","version":"1.0.0"}"#,
+    )?;
+    std::fs::write(
+        marketplace_root
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "sample-marketplace",
+  "plugins": [
+    {
+      "name": "sample-plugin",
+      "source": {
+        "source": "local",
+        "path": "./sample-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        r#"[features]
+plugins = true
+remote_plugin = false
+
+[plugins."sample-plugin@sample-marketplace"]
+enabled = true
+"#,
+    )?;
+    write_installed_plugin_with_version(
+        &ruxex_home,
+        "sample-marketplace",
+        "sample-plugin",
+        "1.0.0",
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(marketplace_root.path())?]),
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+            force_refetch: true,
+        })
+        .await?;
+    let initial_response: JSONRPCResponse = timeout(
+        DEFAULT_TIMEOUT,
+        mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+    let _: PluginListResponse = to_response(initial_response)?;
+
+    std::fs::write(
+        &source_manifest,
+        r#"{"name":"sample-plugin","version":"1.1.0"}"#,
+    )?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(marketplace_root.path())?]),
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+            force_refetch: true,
+        })
+        .await?;
+    let response: JSONRPCResponse = timeout(
+        DEFAULT_TIMEOUT,
+        mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+    let response: PluginListResponse = to_response(response)?;
+    let plugin = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "sample-marketplace")
+        .and_then(|marketplace| {
+            marketplace
+                .plugins
+                .iter()
+                .find(|plugin| plugin.name == "sample-plugin")
+        })
+        .expect("upgraded local plugin should appear in its marketplace response");
+    assert!(plugin.installed);
+    assert!(plugin.enabled);
+    assert_eq!(plugin.local_version.as_deref(), Some("1.1.0"));
+
+    let plugin_cache = ruxex_home
+        .path()
+        .join("plugins/cache/sample-marketplace/sample-plugin");
+    let installed_manifest = plugin_cache.join("1.1.0/.ruxex-plugin/plugin.json");
+    assert!(
+        installed_manifest.is_file(),
+        "force-refetched plugin/list must finish installing the newer local plugin before responding"
+    );
+    assert!(
+        !plugin_cache.join("1.0.0").exists(),
+        "force-refetched plugin/list must remove the superseded local plugin before responding"
+    );
+    let installed_manifest: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(installed_manifest)?)?;
+    assert_eq!(installed_manifest["version"], serde_json::json!("1.1.0"));
+
+    Ok(())
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum MarketplaceRefreshScenario {
+    Distinct,
+    Duplicate,
+    DuplicateConfiguredInLaterCwd,
+}
+
+#[test_case(true, true, MarketplaceRefreshScenario::Distinct; "forced")]
+#[test_case(false, true, MarketplaceRefreshScenario::Distinct; "background")]
+#[test_case(true, false, MarketplaceRefreshScenario::Distinct; "forced with project-enabled plugins")]
+#[test_case(false, false, MarketplaceRefreshScenario::Distinct; "background with project-enabled plugins")]
+#[test_case(true, true, MarketplaceRefreshScenario::Duplicate; "forced preserves source precedence")]
+#[test_case(false, true, MarketplaceRefreshScenario::Duplicate; "background preserves source precedence")]
+#[test_case(true, true, MarketplaceRefreshScenario::DuplicateConfiguredInLaterCwd; "forced merges later repository configuration")]
+#[test_case(false, true, MarketplaceRefreshScenario::DuplicateConfiguredInLaterCwd; "background merges later repository configuration")]
+#[tokio::test]
+async fn plugin_list_refreshes_plugins_from_each_cwd(
+    force_refetch: bool,
+    home_plugins_enabled: bool,
+    scenario: MarketplaceRefreshScenario,
+) -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!("[features]\nplugins = {home_plugins_enabled}\n"),
+    )?;
+    let workspace = TempDir::new()?;
+    let repos = [
+        workspace.path().join("z_repo"),
+        workspace.path().join("a_repo"),
+    ];
+    let names = if scenario == MarketplaceRefreshScenario::Distinct {
+        ["first", "second"]
+    } else {
+        ["first", "first"]
+    };
+    let versions = ["1.1.0", "2.0.0"];
+    for ((repo, name), version) in repos.iter().zip(names).zip(versions) {
+        for directory in [".git", ".ruxex", ".agents/plugins", "sample/.ruxex-plugin"] {
+            std::fs::create_dir_all(repo.join(directory))?;
+        }
+        std::fs::write(
+            repo.join("sample/.ruxex-plugin/plugin.json"),
+            serde_json::to_vec(&serde_json::json!({"name": "sample", "version": version}))?,
+        )?;
+        std::fs::write(
+            repo.join(".agents/plugins/marketplace.json"),
+            serde_json::to_vec(&serde_json::json!({"name": name, "plugins": [{
+                "name": "sample", "source": {"source": "local", "path": "./sample"}
+            }]}))?,
+        )?;
+        let plugin_config = if scenario == MarketplaceRefreshScenario::DuplicateConfiguredInLaterCwd
+            && repo == &repos[0]
+        {
+            String::new()
+        } else {
+            format!("[plugins.\"sample@{name}\"]\nenabled = true\n")
+        };
+        std::fs::write(
+            repo.join(".ruxex/config.toml"),
+            format!("[features]\nplugins = true\n{plugin_config}"),
+        )?;
+        set_project_trust_level(ruxex_home.path(), repo, TrustLevel::Trusted)?;
+        write_installed_plugin_with_version(&ruxex_home, name, "sample", "1.0.0")?;
+    }
+    let mut server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+    let cwds = repos
+        .iter()
+        .map(|repo| AbsolutePathBuf::try_from(repo.as_path()))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    let id = server
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(cwds.clone()),
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+            force_refetch,
+        })
+        .await?;
+    let response: PluginListResponse = timeout(DEFAULT_TIMEOUT, server.read_response(id)).await??;
+    assert_eq!(response.marketplace_load_errors, Vec::new());
+    let expected_sources = names
+        .into_iter()
+        .zip(versions)
+        .take(if scenario == MarketplaceRefreshScenario::Distinct {
+            2
+        } else {
+            1
+        })
+        .collect::<Vec<_>>();
+    for (name, version) in &expected_sources {
+        let manifest = ruxex_home.path().join(format!(
+            "plugins/cache/{name}/sample/{version}/.ruxex-plugin/plugin.json"
+        ));
+        if !force_refetch {
+            wait_for_path_exists(&manifest).await?;
+        }
+        let value: serde_json::Value = serde_json::from_slice(&std::fs::read(manifest)?)?;
+        assert_eq!(value["version"], *version);
+    }
+    let id = server
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: Some(cwds),
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, server.read_response(id)).await??;
+    let mut plugins = response
+        .marketplaces
+        .iter()
+        .filter(|marketplace| ["first", "second"].contains(&marketplace.name.as_str()))
+        .flat_map(|marketplace| &marketplace.plugins)
+        .map(|plugin| (plugin.id.clone(), plugin.enabled))
+        .collect::<Vec<_>>();
+    plugins.sort_unstable();
+    let expected_plugins = expected_sources
+        .iter()
+        .map(|(name, _)| (format!("sample@{name}"), true))
+        .collect::<Vec<_>>();
+    assert_eq!(plugins, expected_plugins);
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_catalogs_skip_invalid_project_config_and_report_cwd_error() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    let workspace = TempDir::new()?;
+    let invalid_repo = workspace.path().join("invalid");
+    let valid_repo = workspace.path().join("valid");
+    for repo in [&invalid_repo, &valid_repo] {
+        for directory in [".git", ".ruxex", ".agents/plugins"] {
+            std::fs::create_dir_all(repo.join(directory))?;
+        }
+        set_project_trust_level(ruxex_home.path(), repo, TrustLevel::Trusted)?;
+    }
+    std::fs::write(invalid_repo.join(".ruxex/config.toml"), "invalid = [\n")?;
+    std::fs::write(
+        valid_repo.join(".ruxex/config.toml"),
+        "[plugins.\"sample@valid-marketplace\"]\nenabled = true\n",
+    )?;
+    std::fs::write(
+        valid_repo.join(".agents/plugins/marketplace.json"),
+        r#"{"name":"valid-marketplace","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"}}]}"#,
+    )?;
+    write_installed_plugin(&ruxex_home, "valid-marketplace", "sample")?;
+
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+    let invalid_cwd = AbsolutePathBuf::try_from(invalid_repo.as_path())?;
+    let cwds = vec![
+        invalid_cwd.clone(),
+        AbsolutePathBuf::try_from(valid_repo.as_path())?,
+    ];
+
+    let request_id = server
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(cwds.clone()),
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, server.read_response(request_id)).await??;
+    assert_eq!(
+        response
+            .marketplaces
+            .iter()
+            .flat_map(|marketplace| &marketplace.plugins)
+            .map(|plugin| (plugin.id.as_str(), plugin.installed, plugin.enabled))
+            .collect::<Vec<_>>(),
+        vec![("sample@valid-marketplace", true, true)]
+    );
+    assert_eq!(response.marketplace_load_errors.len(), 1);
+    assert_eq!(
+        response.marketplace_load_errors[0].marketplace_path,
+        invalid_cwd
+    );
+    assert!(
+        response.marketplace_load_errors[0]
+            .message
+            .contains("failed to reload config")
+    );
+
+    let request_id = server
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: Some(cwds),
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, server.read_response(request_id)).await??;
+    assert_eq!(
+        response
+            .marketplaces
+            .iter()
+            .flat_map(|marketplace| &marketplace.plugins)
+            .map(|plugin| (plugin.id.as_str(), plugin.enabled))
+            .collect::<Vec<_>>(),
+        vec![("sample@valid-marketplace", true)]
+    );
+    assert_eq!(response.marketplace_load_errors.len(), 1);
+    assert_eq!(
+        response.marketplace_load_errors[0].marketplace_path,
+        invalid_cwd
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_includes_install_and_enabled_state_from_config() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    write_installed_plugin(&ruxex_home, "test-curated", "enabled-plugin")?;
+    write_installed_plugin(&ruxex_home, "test-curated", "disabled-plugin")?;
+    std::fs::write(
+        repo_root.path().join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "test-curated",
+  "interface": {
+    "displayName": "Official"
+  },
+  "plugins": [
+    {
+      "name": "enabled-plugin",
+      "source": {
+        "source": "local",
+        "path": "./enabled-plugin"
+      }
+    },
+    {
+      "name": "disabled-plugin",
+      "source": {
+        "source": "local",
+        "path": "./disabled-plugin"
+      }
+    },
+    {
+      "name": "uninstalled-plugin",
+      "source": {
+        "source": "local",
+        "path": "./uninstalled-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        r#"[features]
+plugins = true
+
+[plugins."enabled-plugin@test-curated"]
+enabled = true
+
+[plugins."disabled-plugin@test-curated"]
+enabled = false
+"#,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let marketplace = response
+        .marketplaces
+        .into_iter()
+        .find(|marketplace| {
+            marketplace.path.as_ref()
+                == Some(
+                    &AbsolutePathBuf::try_from(
+                        repo_root.path().join(".agents/plugins/marketplace.json"),
+                    )
+                    .expect("absolute marketplace path"),
+                )
+        })
+        .expect("expected repo marketplace entry");
+
+    assert_eq!(marketplace.name, "test-curated");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Official")
+    );
+    assert_eq!(marketplace.plugins.len(), 3);
+    assert_eq!(marketplace.plugins[0].id, "enabled-plugin@test-curated");
+    assert_eq!(marketplace.plugins[0].name, "enabled-plugin");
+    assert_eq!(marketplace.plugins[0].installed, true);
+    assert_eq!(marketplace.plugins[0].enabled, true);
+    assert_eq!(
+        marketplace.plugins[0].install_policy,
+        PluginInstallPolicy::Available
+    );
+    assert_eq!(
+        marketplace.plugins[0].auth_policy,
+        PluginAuthPolicy::OnInstall
+    );
+    assert_eq!(marketplace.plugins[1].id, "disabled-plugin@test-curated");
+    assert_eq!(marketplace.plugins[1].name, "disabled-plugin");
+    assert_eq!(marketplace.plugins[1].installed, true);
+    assert_eq!(marketplace.plugins[1].enabled, false);
+    assert_eq!(
+        marketplace.plugins[1].install_policy,
+        PluginInstallPolicy::Available
+    );
+    assert_eq!(
+        marketplace.plugins[1].auth_policy,
+        PluginAuthPolicy::OnInstall
+    );
+    assert_eq!(
+        marketplace.plugins[2].id,
+        "uninstalled-plugin@test-curated"
+    );
+    assert_eq!(marketplace.plugins[2].name, "uninstalled-plugin");
+    assert_eq!(marketplace.plugins[2].installed, false);
+    assert_eq!(marketplace.plugins[2].enabled, false);
+    assert_eq!(
+        marketplace.plugins[2].install_policy,
+        PluginInstallPolicy::Available
+    );
+    assert_eq!(
+        marketplace.plugins[2].auth_policy,
+        PluginAuthPolicy::OnInstall
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_deduplicates_sources_and_merges_enabled_state() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    std::fs::create_dir_all(ruxex_home.path().join(".agents/plugins"))?;
+    write_installed_plugin(&ruxex_home, "test-curated", "shared-plugin")?;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        r#"[features]
+plugins = true
+
+[plugins."shared-plugin@test-curated"]
+enabled = true
+"#,
+    )?;
+
+    let workspace_enabled = TempDir::new()?;
+    std::fs::create_dir_all(workspace_enabled.path().join(".git"))?;
+    std::fs::create_dir_all(workspace_enabled.path().join(".agents/plugins"))?;
+    std::fs::write(
+        workspace_enabled
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "test-curated",
+  "plugins": [
+    {
+      "name": "shared-plugin",
+      "source": {
+        "source": "local",
+        "path": "./shared-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::create_dir_all(workspace_enabled.path().join(".ruxex"))?;
+    std::fs::write(
+        workspace_enabled.path().join(".ruxex/config.toml"),
+        r#"[plugins."shared-plugin@test-curated"]
+enabled = false
+"#,
+    )?;
+    set_project_trust_level(
+        ruxex_home.path(),
+        workspace_enabled.path(),
+        TrustLevel::Trusted,
+    )?;
+
+    let workspace_default = TempDir::new()?;
+    std::fs::create_dir_all(workspace_default.path().join(".git"))?;
+    std::fs::create_dir_all(workspace_default.path().join(".agents/plugins"))?;
+    std::fs::copy(
+        workspace_enabled
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+        workspace_default
+            .path()
+            .join(".agents/plugins/marketplace.json"),
+    )?;
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![
+                AbsolutePathBuf::try_from(workspace_enabled.path())?,
+                AbsolutePathBuf::try_from(workspace_default.path())?,
+            ]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let marketplaces = response
+        .marketplaces
+        .iter()
+        .filter(|marketplace| marketplace.name == "test-curated")
+        .map(|marketplace| {
+            (
+                marketplace.name.as_str(),
+                marketplace
+                    .plugins
+                    .iter()
+                    .map(|plugin| (plugin.id.as_str(), plugin.installed, plugin.enabled))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        marketplaces,
+        vec![(
+            "test-curated",
+            vec![("shared-plugin@test-curated", true, true)]
+        )]
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    let plugin_root = repo_root.path().join("plugins/demo-plugin");
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    std::fs::write(
+        repo_root.path().join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "test-curated",
+  "plugins": [
+    {
+      "name": "demo-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/demo-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        plugin_root.join(".ruxex-plugin/plugin.json"),
+        r##"{
+  "name": "demo-plugin",
+  "interface": {
+    "displayName": "Plugin Display Name",
+    "shortDescription": "Short description for subtitle",
+    "longDescription": "Long description for details page",
+    "developerName": "provider",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "websiteURL": "https://provider.com/",
+    "privacyPolicyURL": "https://provider.com/policies/row-privacy-policy/",
+    "termsOfServiceURL": "https://provider.com/policies/row-terms-of-use/",
+    "defaultPrompt": [
+      "Starter prompt for trying a plugin",
+      "Find my next action"
+    ],
+    "brandColor": "#3B82F6",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": ["./assets/screenshot1.png", "./assets/screenshot2.png"]
+  }
+}"##,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let plugin = response
+        .marketplaces
+        .iter()
+        .flat_map(|marketplace| marketplace.plugins.iter())
+        .find(|plugin| plugin.name == "demo-plugin")
+        .expect("expected demo-plugin entry");
+
+    assert_eq!(plugin.id, "demo-plugin@test-curated");
+    assert_eq!(plugin.installed, false);
+    assert_eq!(plugin.enabled, false);
+    assert_eq!(plugin.install_policy, PluginInstallPolicy::Available);
+    assert_eq!(plugin.auth_policy, PluginAuthPolicy::OnInstall);
+    let interface = plugin
+        .interface
+        .as_ref()
+        .expect("expected plugin interface");
+    assert_eq!(
+        interface.display_name.as_deref(),
+        Some("Plugin Display Name")
+    );
+    assert_eq!(interface.category.as_deref(), Some("Design"));
+    assert_eq!(
+        interface.website_url.as_deref(),
+        Some("https://provider.com/")
+    );
+    assert_eq!(
+        interface.privacy_policy_url.as_deref(),
+        Some("https://provider.com/policies/row-privacy-policy/")
+    );
+    assert_eq!(
+        interface.terms_of_service_url.as_deref(),
+        Some("https://provider.com/policies/row-terms-of-use/")
+    );
+    assert_eq!(
+        interface.default_prompt,
+        Some(vec![
+            "Starter prompt for trying a plugin".to_string(),
+            "Find my next action".to_string()
+        ])
+    );
+    assert_eq!(
+        interface.composer_icon,
+        Some(AbsolutePathBuf::try_from(
+            plugin_root.join("assets/icon.png")
+        )?)
+    );
+    assert_eq!(
+        interface.logo,
+        Some(AbsolutePathBuf::try_from(
+            plugin_root.join("assets/logo.png")
+        )?)
+    );
+    assert_eq!(
+        interface.screenshots,
+        vec![
+            AbsolutePathBuf::try_from(plugin_root.join("assets/screenshot1.png"))?,
+            AbsolutePathBuf::try_from(plugin_root.join("assets/screenshot2.png"))?,
+        ]
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_accepts_legacy_string_default_prompt() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    let plugin_root = repo_root.path().join("plugins/demo-plugin");
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    std::fs::create_dir_all(plugin_root.join(".ruxex-plugin"))?;
+    write_plugins_enabled_config(ruxex_home.path())?;
+    std::fs::write(
+        repo_root.path().join(".agents/plugins/marketplace.json"),
+        r#"{
+  "name": "test-curated",
+  "plugins": [
+    {
+      "name": "demo-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/demo-plugin"
+      }
+    }
+  ]
+}"#,
+    )?;
+    std::fs::write(
+        plugin_root.join(".ruxex-plugin/plugin.json"),
+        r##"{
+  "name": "demo-plugin",
+  "interface": {
+    "defaultPrompt": "Starter prompt for trying a plugin"
+  }
+}"##,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(vec![AbsolutePathBuf::try_from(repo_root.path())?]),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let plugin = response
+        .marketplaces
+        .iter()
+        .flat_map(|marketplace| marketplace.plugins.iter())
+        .find(|plugin| plugin.name == "demo-plugin")
+        .expect("expected demo-plugin entry");
+    assert_eq!(
+        plugin
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.default_prompt.clone()),
+        Some(vec!["Starter prompt for trying a plugin".to_string()])
+    );
+    Ok(())
+}
+
+#[test_case(false; "configured globally")]
+#[test_case(true; "configured in later repository")]
+#[tokio::test]
+async fn plugin_list_returns_installed_git_source_interface_from_cache(
+    configured_in_later_cwd: bool,
+) -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let repo_root = TempDir::new()?;
+    let missing_remote_repo = repo_root.path().join("missing-remote-plugin-repo");
+    let missing_remote_repo_url = url::Url::from_directory_path(&missing_remote_repo)
+        .expect("temporary repository path should produce a file URL")
+        .to_string();
+    std::fs::create_dir_all(repo_root.path().join(".git"))?;
+    std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
+    std::fs::write(
+        repo_root.path().join(".agents/plugins/marketplace.json"),
+        format!(
+            r#"{{
+  "name": "debug",
+  "plugins": [
+    {{
+      "name": "toolkit",
+      "source": {{
+        "source": "git-subdir",
+        "url": "{missing_remote_repo_url}",
+        "path": "plugins/toolkit"
+      }},
+      "category": "Developer Tools"
+    }}
+  ]
+}}"#
+        ),
+    )?;
+    let cached_plugin_root = ruxex_home.path().join("plugins/cache/debug/toolkit/local");
+    std::fs::create_dir_all(cached_plugin_root.join(".ruxex-plugin"))?;
+    std::fs::write(
+        cached_plugin_root.join(".ruxex-plugin/plugin.json"),
+        r##"{
+  "name": "toolkit",
+  "interface": {
+    "displayName": "Toolkit",
+    "shortDescription": "Search cached data",
+    "category": "Cached Category",
+    "brandColor": "#3B82F6",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png"
+  }
+}"##,
+    )?;
+    let plugin_config = r#"[plugins."toolkit@debug"]
+enabled = true
+"#;
+    let user_plugin_config = if configured_in_later_cwd {
+        ""
+    } else {
+        plugin_config
+    };
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!("[features]\nplugins = true\n\n{user_plugin_config}"),
+    )?;
+    let later_repo = TempDir::new()?;
+    let mut cwds = vec![AbsolutePathBuf::try_from(repo_root.path())?];
+    if configured_in_later_cwd {
+        for directory in [".git", ".ruxex", ".agents/plugins"] {
+            std::fs::create_dir_all(later_repo.path().join(directory))?;
+        }
+        std::fs::copy(
+            repo_root.path().join(".agents/plugins/marketplace.json"),
+            later_repo.path().join(".agents/plugins/marketplace.json"),
+        )?;
+        std::fs::write(later_repo.path().join(".ruxex/config.toml"), plugin_config)?;
+        set_project_trust_level(ruxex_home.path(), later_repo.path(), TrustLevel::Trusted)?;
+        cwds.push(AbsolutePathBuf::try_from(later_repo.path())?);
+    }
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: Some(cwds),
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let plugin = response
+        .marketplaces
+        .iter()
+        .flat_map(|marketplace| marketplace.plugins.iter())
+        .find(|plugin| plugin.name == "toolkit")
+        .expect("expected toolkit entry");
+
+    assert_eq!(plugin.id, "toolkit@debug");
+    assert_eq!(plugin.installed, true);
+    assert_eq!(plugin.enabled, true);
+    assert_eq!(
+        plugin.source,
+        PluginSource::Git {
+            url: missing_remote_repo_url,
+            path: Some("plugins/toolkit".to_string()),
+            ref_name: None,
+            sha: None,
+        }
+    );
+    let interface = plugin
+        .interface
+        .as_ref()
+        .expect("expected cached plugin interface");
+    assert_eq!(interface.display_name.as_deref(), Some("Toolkit"));
+    assert_eq!(
+        interface.short_description.as_deref(),
+        Some("Search cached data")
+    );
+    assert_eq!(interface.category.as_deref(), Some("Developer Tools"));
+    assert_eq!(interface.brand_color.as_deref(), Some("#3B82F6"));
+    let canonical_cached_plugin_root = std::fs::canonicalize(&cached_plugin_root)?;
+    assert_eq!(
+        interface.composer_icon,
+        Some(AbsolutePathBuf::try_from(
+            canonical_cached_plugin_root.join("assets/icon.png")
+        )?)
+    );
+    assert_eq!(
+        interface.logo,
+        Some(AbsolutePathBuf::try_from(
+            canonical_cached_plugin_root.join("assets/logo.png")
+        )?)
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn app_server_startup_sync_downloads_remote_installed_plugin_bundles() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let bundle_url = mount_remote_plugin_bundle(
+        &server,
+        "linear",
+        remote_plugin_bundle_tar_gz_bytes("linear", /*hooks_json*/ None)?,
+    )
+    .await;
+    let remote_app_manifest = serde_json::json!({
+        "apps": {
+            "linear-remote": {
+                "id": "remote-linear-app"
+            }
+        }
+    });
+    let global_installed_body = remote_installed_plugin_body_with_app_manifest(
+        &bundle_url,
+        "1.2.3",
+        /*enabled*/ true,
+        remote_app_manifest.clone(),
+    );
+    mount_remote_installed_plugins(&server, "GLOBAL", &global_installed_body).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let installed_path = ruxex_home
+        .path()
+        .join("plugins/cache/test-remote/linear/1.2.3");
+    let _mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_plugin_startup_tasks()
+        .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    wait_for_path_exists(&installed_path.join(".ruxex-plugin/plugin.json")).await?;
+    let installed_plugin_manifest: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(installed_path.join(".ruxex-plugin/plugin.json"))?,
+    )?;
+    assert_eq!(
+        installed_plugin_manifest["version"],
+        serde_json::json!("1.2.3")
+    );
+    let installed_app_manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(installed_path.join(".app.json"))?)?;
+    assert_eq!(installed_app_manifest, remote_app_manifest);
+    assert!(installed_path.join("skills/plan-work/SKILL.md").is_file());
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
+    assert!(!config.contains("linear@test-remote"));
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_sync_upgrades_and_removes_remote_installed_plugin_bundles() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+    write_installed_plugin_with_version(&ruxex_home, "test-remote", "linear", "1.0.0")?;
+    write_installed_plugin_with_version(&ruxex_home, "test-remote", "stale", "1.0.0")?;
+
+    let bundle_url = mount_remote_plugin_bundle(
+        &server,
+        "linear",
+        remote_plugin_bundle_tar_gz_bytes("linear", /*hooks_json*/ None)?,
+    )
+    .await;
+    let remote_app_manifest = serde_json::json!({
+        "apps": {
+            "linear-remote": {
+                "id": "remote-linear-app"
+            }
+        }
+    });
+    let global_installed_body = remote_installed_plugin_body_with_app_manifest(
+        &bundle_url,
+        "1.2.3",
+        /*enabled*/ true,
+        remote_app_manifest.clone(),
+    );
+    mount_remote_plugin_list(&server, "GLOBAL", &global_installed_body).await;
+    mount_remote_plugin_list(&server, "WORKSPACE", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", &global_installed_body).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let old_path = ruxex_home
+        .path()
+        .join("plugins/cache/test-remote/linear/1.0.0");
+    let new_path = ruxex_home
+        .path()
+        .join("plugins/cache/test-remote/linear/1.2.3");
+    let stale_path = ruxex_home
+        .path()
+        .join("plugins/cache/test-remote/stale");
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    let remote_marketplace = response
+        .marketplaces
+        .into_iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-remote marketplace entry");
+    assert_eq!(
+        remote_marketplace
+            .plugins
+            .into_iter()
+            .map(|plugin| (plugin.id, plugin.installed, plugin.enabled))
+            .collect::<Vec<_>>(),
+        vec![("linear@test-remote".to_string(), true, true)]
+    );
+
+    wait_for_path_exists(&new_path.join(".ruxex-plugin/plugin.json")).await?;
+    let installed_plugin_manifest: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(new_path.join(".ruxex-plugin/plugin.json"))?,
+    )?;
+    assert_eq!(
+        installed_plugin_manifest["version"],
+        serde_json::json!("1.2.3")
+    );
+    let installed_app_manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(new_path.join(".app.json"))?)?;
+    assert_eq!(installed_app_manifest, remote_app_manifest);
+    wait_for_path_missing(&old_path).await?;
+    wait_for_path_missing(&stale_path).await?;
+    let config = std::fs::read_to_string(ruxex_home.path().join("config.toml"))?;
+    assert!(!config.contains("linear@test-remote"));
+    Ok(())
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ProjectPluginConfiguration {
+    None,
+    Disabled,
+    Invalid,
+}
+
+#[test_case(ProjectPluginConfiguration::None; "without project override")]
+#[test_case(ProjectPluginConfiguration::Disabled; "project disables local plugins")]
+#[test_case(ProjectPluginConfiguration::Invalid; "invalid project preserves remote plugins")]
+#[tokio::test]
+async fn plugin_list_includes_remote_marketplaces_when_remote_plugin_enabled(
+    project_configuration: ProjectPluginConfiguration,
+) -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+    write_installed_plugin_with_version(&ruxex_home, "test-remote", "linear", "1.2.3")?;
+
+    let repo = TempDir::new()?;
+    let cwds = if project_configuration != ProjectPluginConfiguration::None {
+        for directory in [".git", ".ruxex", ".agents/plugins"] {
+            std::fs::create_dir_all(repo.path().join(directory))?;
+        }
+        let config = if project_configuration == ProjectPluginConfiguration::Invalid {
+            "invalid = [\n"
+        } else {
+            "[features]\nplugins = false\n[plugins.\"sample@disabled-local\"]\nenabled = true\n"
+        };
+        std::fs::write(repo.path().join(".ruxex/config.toml"), config)?;
+        std::fs::write(
+            repo.path().join(".agents/plugins/marketplace.json"),
+            r#"{"name":"disabled-local","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"}}]}"#,
+        )?;
+        set_project_trust_level(ruxex_home.path(), repo.path(), TrustLevel::Trusted)?;
+        Some(vec![AbsolutePathBuf::try_from(repo.path())?])
+    } else {
+        None
+    };
+
+    let global_directory_body = r#"{
+  "plugins": [
+    {
+      "id": "plugins~Plugin_00000000000000000000000000000000",
+      "name": "linear",
+      "scope": "GLOBAL",
+      "installation_policy": "AVAILABLE",
+      "installation_policy_source": "IMPLICIT_CANONICAL_APP",
+      "must_show_installation_interstitial": true,
+      "authentication_policy": "ON_USE",
+      "status": "ENABLED",
+      "release": {
+        "version": "1.2.3",
+        "display_name": "Linear",
+        "description": "Track work in Linear",
+        "app_ids": [],
+        "keywords": ["issue-tracking", "project management"],
+        "interface": {
+          "short_description": "Plan and track work",
+          "capabilities": ["Read", "Write"],
+          "default_prompt": "Use the legacy Linear prompt",
+          "default_prompts": ["Create a Linear issue", "Review my Linear projects"],
+          "logo_url": "https://example.com/linear.png",
+          "screenshot_urls": ["https://example.com/linear-shot.png"]
+        },
+        "skills": []
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "next_page_token": null
+  }
+}"#;
+    let empty_page_body = r#"{
+  "plugins": [],
+  "pagination": {
+    "limit": 50,
+    "next_page_token": null
+  }
+}"#;
+    let global_installed_body = r#"{
+  "plugins": [
+    {
+      "id": "plugins~Plugin_00000000000000000000000000000000",
+      "name": "linear",
+      "scope": "GLOBAL",
+      "installation_policy": "AVAILABLE",
+      "installation_policy_source": "WORKSPACE_SETTING",
+      "installed_at": "2026-01-02T00:00:00Z",
+      "must_show_installation_interstitial": false,
+      "authentication_policy": "ON_USE",
+      "status": "ENABLED",
+      "release": {
+        "version": "1.2.3",
+        "display_name": "Linear",
+        "description": "Track work in Linear",
+        "app_ids": [],
+        "interface": {
+          "short_description": "Plan and track work",
+          "capabilities": ["Read", "Write"],
+          "logo_url": "https://example.com/linear.png",
+          "screenshot_urls": ["https://example.com/linear-shot.png"]
+        },
+        "skills": []
+      },
+      "enabled": true,
+      "disabled_skill_names": []
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "next_page_token": null
+  }
+}"#;
+
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "GLOBAL"))
+        .and(query_param("limit", "200"))
+        .and(header("authorization", "Bearer test-token"))
+        .and(header("oai-product-sku", "codex"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(global_directory_body))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "WORKSPACE"))
+        .and(query_param("limit", "200"))
+        .and(header("authorization", "Bearer test-token"))
+        .and(header("oai-product-sku", "codex"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/installed"))
+        .and(query_param("scope", "GLOBAL"))
+        .and(header("authorization", "Bearer test-token"))
+        .and(header("oai-product-sku", "codex"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(global_installed_body))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/installed"))
+        .and(query_param("scope", "WORKSPACE"))
+        .and(header("authorization", "Bearer test-token"))
+        .and(header("oai-product-sku", "codex"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(empty_page_body))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/backend-api/plugins/featured"))
+        .and(query_param("platform", "codex"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_string(r#"["linear@test-remote"]"#),
+        )
+        .mount(&server)
+        .await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    if project_configuration == ProjectPluginConfiguration::Invalid {
+        assert_eq!(response.marketplace_load_errors.len(), 1);
+        assert_eq!(
+            response.marketplace_load_errors[0].marketplace_path,
+            AbsolutePathBuf::try_from(repo.path())?
+        );
+    } else {
+        assert!(response.marketplace_load_errors.is_empty());
+    }
+    assert!(
+        !response
+            .marketplaces
+            .iter()
+            .any(|marketplace| marketplace.name == "disabled-local")
+    );
+    let remote_marketplace = response
+        .marketplaces
+        .into_iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-curated remote marketplace");
+    assert_eq!(remote_marketplace.path, None);
+    assert_eq!(
+        remote_marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("provider Curated Remote")
+    );
+    assert_eq!(remote_marketplace.plugins.len(), 1);
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_00000000000000000000000000000000")
+    );
+    assert_eq!(remote_marketplace.plugins[0].name, "linear");
+    assert_eq!(remote_marketplace.plugins[0].source, PluginSource::Remote);
+    assert_eq!(
+        remote_marketplace.plugins[0].version.as_deref(),
+        Some("1.2.3")
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].local_version.as_deref(),
+        Some("1.2.3")
+    );
+    assert_eq!(remote_marketplace.plugins[0].installed, true);
+    assert_eq!(
+        remote_marketplace.plugins[0].installed_at,
+        Some(1_767_312_000)
+    );
+    assert_eq!(remote_marketplace.plugins[0].enabled, true);
+    assert_eq!(
+        remote_marketplace.plugins[0].install_policy_source,
+        Some(PluginInstallPolicySource::ImplicitCanonicalApp)
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].must_show_installation_interstitial,
+        Some(true)
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].availability,
+        ruxex_app_server_protocol::PluginAvailability::Available
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0]
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Linear")
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0]
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.default_prompt.clone()),
+        Some(vec![
+            "Create a Linear issue".to_string(),
+            "Review my Linear projects".to_string(),
+        ])
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].keywords,
+        vec![
+            "issue-tracking".to_string(),
+            "project management".to_string()
+        ]
+    );
+    let cache_files = std::fs::read_dir(ruxex_home.path().join("cache/remote_plugin_catalog"))?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<Result<Vec<_>, _>>()?;
+    assert_eq!(cache_files.len(), 1);
+    let cached_catalog: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&cache_files[0])?)?;
+    assert_eq!(cached_catalog["schema_version"], serde_json::json!(1));
+    assert!(cached_catalog["fetched_at"].as_str().is_some());
+    assert_eq!(
+        cached_catalog["plugins"][0]["installation_policy_source"],
+        serde_json::json!("IMPLICIT_CANONICAL_APP")
+    );
+    assert_eq!(
+        cached_catalog["plugins"][0]["must_show_installation_interstitial"],
+        serde_json::json!(true)
+    );
+    assert_eq!(
+        cached_catalog["plugins"][0]["release"]["interface"]["default_prompts"],
+        serde_json::json!(["Create a Linear issue", "Review my Linear projects"])
+    );
+    let cached_plugin_ids = cached_catalog["plugins"]
+        .as_array()
+        .expect("cached plugins should be an array")
+        .iter()
+        .map(|plugin| plugin["id"].as_str().expect("cached plugin id").to_string())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        cached_plugin_ids,
+        vec!["plugins~Plugin_00000000000000000000000000000000".to_string()]
+    );
+    assert_eq!(
+        response.featured_plugin_ids,
+        vec!["linear@test-remote".to_string()]
+    );
+    assert!(
+        !server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests")
+            .iter()
+            .any(|request| request
+                .url
+                .query_pairs()
+                .any(|(name, value)| name == "collection" && value == "vertical"))
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_honors_global_remote_catalog_cache_ttl() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let cached_remote_plugin_id = "plugins~Plugin_00000000000000000000000000000000";
+    let refreshed_remote_plugin_id = "plugins~Plugin_11111111111111111111111111111111";
+    let cached_body =
+        remote_plugin_list_body(cached_remote_plugin_id, "linear", "Linear", "Plan work");
+    let refreshed_body = remote_plugin_list_body(
+        refreshed_remote_plugin_id,
+        "notion",
+        "Notion",
+        "Capture notes",
+    );
+    mount_remote_plugin_list(&server, "GLOBAL", &cached_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected warmed remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+    assert_eq!(
+        remote_marketplace.plugins[0].must_show_installation_interstitial,
+        None
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[cached_remote_plugin_id])
+        .await?;
+
+    server.reset().await;
+    mount_remote_plugin_list(&server, "GLOBAL", &refreshed_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected cached remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[cached_remote_plugin_id])
+        .await?;
+
+    rewrite_cached_remote_catalog_fetched_at(
+        ruxex_home.path(),
+        Utc::now() - ChronoDuration::hours(4),
+    )?;
+    server.reset().await;
+    mount_delayed_remote_plugin_list(&server, "GLOBAL", &refreshed_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected stale cached remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected stale cached remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[refreshed_remote_plugin_id])
+        .await?;
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn app_server_startup_refreshes_cached_remote_catalog_without_blocking_plugin_list()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let cached_remote_plugin_id = "plugins~Plugin_00000000000000000000000000000000";
+    let refreshed_remote_plugin_id = "plugins~Plugin_11111111111111111111111111111111";
+    mount_remote_plugin_list(
+        &server,
+        "GLOBAL",
+        &remote_plugin_list_body(cached_remote_plugin_id, "linear", "Linear", "Plan work"),
+    )
+    .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut app_server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.initialize()).await??;
+    let request_id = app_server
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let _: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            app_server.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[cached_remote_plugin_id])
+        .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.shutdown_gracefully()).await??;
+
+    server.reset().await;
+    let refreshed_body = remote_plugin_list_body(
+        refreshed_remote_plugin_id,
+        "notion",
+        "Notion",
+        "Capture notes",
+    );
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "GLOBAL"))
+        .and(query_param("limit", "200"))
+        .and(header("authorization", "Bearer test-token"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_string(refreshed_body)
+                .set_delay(Duration::from_secs(/*secs*/ 2)),
+        )
+        .mount(&server)
+        .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut app_server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_plugin_startup_tasks()
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.initialize()).await??;
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+
+    let request_id = app_server
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            app_server.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected cached remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "linear@test-remote"
+    );
+
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[refreshed_remote_plugin_id])
+        .await?;
+    let request_id = app_server
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            app_server.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected refreshed remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "notion@test-remote"
+    );
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn app_server_startup_skips_disabled_remote_plugin_catalog_scopes() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    let base_url = format!("{}/backend-api/", server.uri());
+    write_remote_plugin_catalog_config(ruxex_home.path(), &base_url)?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let global_plugin_id = "plugins~Plugin_00000000000000000000000000000000";
+    let user_plugin_id = "plugins~Plugin_11111111111111111111111111111111";
+    let workspace_plugin_id = "plugins~Plugin_22222222222222222222222222222222";
+    let global_body = remote_plugin_list_body(global_plugin_id, "global-linear", "Linear", "Plan");
+    let user_body = user_remote_plugin_page_body(
+        user_plugin_id,
+        "private-linear",
+        "Private Linear",
+        "PRIVATE",
+        /*enabled*/ None,
+    );
+    let workspace_body = workspace_remote_plugin_page_body(
+        workspace_plugin_id,
+        "workspace-linear",
+        "Workspace Linear",
+        "LISTED",
+        /*enabled*/ None,
+    );
+    mount_remote_plugin_list(&server, "GLOBAL", &global_body).await;
+    mount_remote_plugin_list(&server, "USER", &user_body).await;
+    mount_remote_plugin_list(&server, "WORKSPACE", &workspace_body).await;
+    for scope in ["GLOBAL", "USER", "WORKSPACE"] {
+        mount_remote_installed_plugins(&server, scope, empty_remote_installed_plugins_body()).await;
+    }
+
+    let mut app_server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.initialize()).await??;
+    for marketplace_kinds in [
+        None,
+        Some(vec![
+            PluginListMarketplaceKind::CreatedByMeRemote,
+            PluginListMarketplaceKind::WorkspaceDirectory,
+        ]),
+    ] {
+        let request_id = app_server
+            .send_plugin_list_request(PluginListParams {
+                cwds: None,
+                marketplace_kinds,
+                force_refetch: false,
+            })
+            .await?;
+        let _: PluginListResponse = to_response(
+            timeout(
+                DEFAULT_TIMEOUT,
+                app_server.read_stream_until_response_message(RequestId::Integer(request_id)),
+            )
+            .await??,
+        )?;
+    }
+    wait_for_cached_remote_catalog_plugin_ids(
+        ruxex_home.path(),
+        &[global_plugin_id, user_plugin_id, workspace_plugin_id],
+    )
+    .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.shutdown_gracefully()).await??;
+
+    write_remote_plugins_disabled_config_with_base_url(ruxex_home.path(), &base_url)?;
+    server.reset().await;
+    mount_remote_plugin_list(&server, "GLOBAL", &global_body).await;
+    mount_remote_plugin_list(&server, "USER", &user_body).await;
+    mount_remote_plugin_list(&server, "WORKSPACE", &workspace_body).await;
+    for scope in ["GLOBAL", "USER", "WORKSPACE"] {
+        mount_remote_installed_plugins(&server, scope, empty_remote_installed_plugins_body()).await;
+    }
+
+    let mut app_server = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_plugin_startup_tasks()
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, app_server.initialize()).await??;
+    wait_for_remote_plugin_list_scope_request_count(
+        &server,
+        "WORKSPACE",
+        /*expected_count*/ 1,
+    )
+    .await?;
+
+    let requested_scopes = server
+        .received_requests()
+        .await
+        .expect("wiremock should record requests")
+        .into_iter()
+        .filter(|request| {
+            request.method == "GET" && request.url.path().ends_with("/ps/plugins/list")
+        })
+        .filter_map(|request| {
+            request
+                .url
+                .query_pairs()
+                .find(|(name, _)| name == "scope")
+                .map(|(_, scope)| scope.into_owned())
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(requested_scopes, vec!["WORKSPACE".to_string()]);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_force_refetch_bypasses_fresh_global_remote_catalog_cache() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let cached_remote_plugin_id = "plugins~Plugin_00000000000000000000000000000000";
+    let refreshed_remote_plugin_id = "plugins~Plugin_11111111111111111111111111111111";
+    mount_remote_plugin_list(
+        &server,
+        "GLOBAL",
+        &remote_plugin_list_body(cached_remote_plugin_id, "linear", "Linear", "Plan work"),
+    )
+    .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build()
+        .await?;
+    timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let _: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[cached_remote_plugin_id])
+        .await?;
+
+    server.reset().await;
+    mount_delayed_remote_plugin_list(
+        &server,
+        "GLOBAL",
+        &remote_plugin_list_body(
+            refreshed_remote_plugin_id,
+            "notion",
+            "Notion",
+            "Capture notes",
+        ),
+    )
+    .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: true,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected refreshed remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "notion@test-remote"
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 1).await?;
+    wait_for_cached_remote_catalog_plugin_ids(ruxex_home.path(), &[refreshed_remote_plugin_id])
+        .await?;
+
+    server.reset().await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    let remote_marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected cached refreshed remote marketplace");
+    assert_eq!(
+        remote_marketplace.plugins[0].id,
+        "notion@test-remote"
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_includes_provider_curated_remote_collection_when_remote_plugin_disabled_and_requested()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugins_disabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let collection_body = r#"{
+  "plugins": [
+    {
+      "id": "plugins~Plugin_00000000000000000000000000000000",
+      "name": "linear",
+      "scope": "GLOBAL",
+      "installation_policy": "AVAILABLE",
+      "authentication_policy": "ON_USE",
+      "status": "ENABLED",
+      "release": {
+        "version": "1.2.3",
+        "display_name": "Linear",
+        "description": "Track work in Linear",
+        "app_ids": [],
+        "interface": {
+          "short_description": "Plan and track work",
+          "capabilities": ["Read", "Write"]
+        },
+        "skills": []
+      }
+    }
+  ],
+  "pagination": {
+    "limit": 50,
+    "next_page_token": null
+  }
+}"#;
+    mount_provider_curated_remote_collection_plugin_list(&server, collection_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Vertical]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    let remote_marketplace = response
+        .marketplaces
+        .into_iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected test-curated remote marketplace");
+    assert_eq!(remote_marketplace.path, None);
+    assert_eq!(
+        remote_marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("provider Curated Remote")
+    );
+    assert_eq!(remote_marketplace.plugins.len(), 1);
+    let plugin = &remote_marketplace.plugins[0];
+    assert_eq!(plugin.id, "linear@test-remote");
+    assert_eq!(
+        plugin.remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_00000000000000000000000000000000")
+    );
+    assert_eq!(plugin.name, "linear");
+    assert_eq!(plugin.source, PluginSource::Remote);
+    assert_eq!(plugin.version.as_deref(), Some("1.2.3"));
+    assert_eq!(plugin.installed, false);
+    assert_eq!(plugin.enabled, false);
+
+    let requests = server
+        .received_requests()
+        .await
+        .expect("wiremock should record requests");
+    assert!(requests.iter().any(|request| {
+        request.method == "GET"
+            && request.url.path().ends_with("/ps/plugins/list")
+            && request
+                .url
+                .query_pairs()
+                .any(|(name, value)| name == "collection" && value == "vertical")
+    }));
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_propagates_provider_curated_remote_collection_errors_when_remote_plugin_disabled()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugins_disabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "GLOBAL"))
+        .and(query_param("limit", "200"))
+        .and(query_param("collection", "vertical"))
+        .and(header("authorization", "Bearer test-token"))
+        .respond_with(ResponseTemplate::new(500).set_body_string("temporary failure"))
+        .mount(&server)
+        .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Vertical]),
+            force_refetch: false,
+        })
+        .await?;
+    let err = timeout(
+        DEFAULT_TIMEOUT,
+        mcp.read_stream_until_error_message(RequestId::Integer(request_id)),
+    )
+    .await??;
+
+    assert_eq!(err.error.code, -32603);
+    assert!(
+        err.error
+            .message
+            .contains("list provider Curated remote plugin catalog")
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_skips_provider_curated_remote_collection_for_api_auth_when_remote_plugin_disabled()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugins_disabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    login_with_api_key(
+        ruxex_home.path(),
+        "sk-test-key",
+        AuthCredentialsStoreMode::File,
+        AuthKeyringBackendKind::default(),
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Vertical]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert!(response.marketplaces.is_empty());
+    assert!(response.marketplace_load_errors.is_empty());
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_does_not_query_provider_curated_remote_collection_by_default() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_plugins_enabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert!(
+        response
+            .marketplaces
+            .iter()
+            .all(|marketplace| marketplace.name != "test-remote")
+    );
+    assert!(
+        server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests")
+            .iter()
+            .all(|request| !request
+                .url
+                .query_pairs()
+                .any(|(name, value)| name == "collection" && value == "vertical"))
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_vertical_kind_noops_when_remote_plugin_enabled() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Vertical]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert!(
+        response
+            .marketplaces
+            .iter()
+            .all(|marketplace| marketplace.name != "test-remote")
+    );
+    assert!(
+        server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests")
+            .iter()
+            .all(|request| !request
+                .url
+                .query_pairs()
+                .any(|(name, value)| name == "collection" && value == "vertical"))
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_does_not_append_global_remote_when_marketplace_kinds_are_explicit()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::Local]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert!(
+        response
+            .marketplaces
+            .iter()
+            .all(|marketplace| marketplace.name != "test-remote")
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_installed_includes_remote_shared_with_me_plugins_when_remote_plugin_disabled()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+remote_plugin = false
+plugin_sharing = true
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+    let mut workspace_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_22222222222222222222222222222222",
+            "shared-linear",
+            "Shared Linear",
+            "PRIVATE",
+            /*enabled*/ Some(true),
+        ))?;
+    let unlisted_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_33333333333333333333333333333333",
+            "unlisted-linear",
+            "Unlisted Linear",
+            "UNLISTED",
+            /*enabled*/ Some(false),
+        ))?;
+    workspace_installed_body["plugins"]
+        .as_array_mut()
+        .expect("installed plugins should be an array")
+        .push(unlisted_installed_body["plugins"][0].clone());
+    let workspace_installed_body = serde_json::to_string(&workspace_installed_body)?;
+    let global_installed_body = remote_installed_plugin_body("", "1.2.3", /*enabled*/ true);
+    mount_remote_installed_plugins(&server, "GLOBAL", &global_installed_body).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", &workspace_installed_body).await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: None,
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 1);
+    let marketplace = &response.marketplaces[0];
+    assert_eq!(marketplace.name, "workspace-shared-with-me");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Shared with me")
+    );
+    assert_eq!(
+        marketplace
+            .plugins
+            .iter()
+            .map(|plugin| {
+                (
+                    plugin.id.clone(),
+                    plugin.version.clone(),
+                    plugin.installed,
+                    plugin.enabled,
+                )
+            })
+            .collect::<Vec<_>>(),
+        vec![
+            (
+                "shared-linear@workspace-shared-with-me".to_string(),
+                Some("1.2.3".to_string()),
+                true,
+                true
+            ),
+            (
+                "unlisted-linear@workspace-shared-with-me".to_string(),
+                Some("1.2.3".to_string()),
+                true,
+                false
+            )
+        ]
+    );
+    wait_for_remote_installed_snapshot_request(&server).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_installed_includes_workspace_directory_without_plugin_sharing_when_remote_plugin_disabled()
+-> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+remote_plugin = false
+plugin_sharing = false
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+    let mut workspace_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_11111111111111111111111111111111",
+            "workspace-linear",
+            "Workspace Linear",
+            "LISTED",
+            /*enabled*/ Some(true),
+        ))?;
+    let shared_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_22222222222222222222222222222222",
+            "shared-linear",
+            "Shared Linear",
+            "PRIVATE",
+            /*enabled*/ Some(true),
+        ))?;
+    workspace_installed_body["plugins"]
+        .as_array_mut()
+        .expect("installed plugins should be an array")
+        .push(shared_installed_body["plugins"][0].clone());
+    let workspace_installed_body = serde_json::to_string(&workspace_installed_body)?;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", &workspace_installed_body).await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: None,
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 1);
+    let marketplace = &response.marketplaces[0];
+    assert_eq!(marketplace.name, "workspace-directory");
+    assert_eq!(
+        marketplace
+            .plugins
+            .iter()
+            .map(|plugin| (plugin.id.clone(), plugin.installed, plugin.enabled))
+            .collect::<Vec<_>>(),
+        vec![(
+            "workspace-linear@workspace-directory".to_string(),
+            true,
+            true
+        )]
+    );
+    wait_for_remote_installed_snapshot_request(&server).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_installed_includes_created_by_me_when_remote_plugins_enabled() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+plugin_sharing = false
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    let bundle_url = mount_remote_plugin_bundle(
+        &server,
+        "private-linear",
+        remote_plugin_bundle_tar_gz_bytes("private-linear", /*hooks_json*/ None)?,
+    )
+    .await;
+    let mut user_installed_body: serde_json::Value =
+        serde_json::from_str(&user_remote_plugin_page_body(
+            "plugins~Plugin_55555555555555555555555555555555",
+            "private-linear",
+            "Private Linear",
+            "PRIVATE",
+            /*enabled*/ Some(true),
+        ))?;
+    user_installed_body["plugins"][0]["release"]["bundle_download_url"] =
+        serde_json::json!(bundle_url);
+    mount_remote_installed_plugins(
+        &server,
+        "USER",
+        &serde_json::to_string(&user_installed_body)?,
+    )
+    .await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds: None,
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 1);
+    assert_eq!(response.marketplaces[0].name, "created-by-me-remote");
+    assert_eq!(
+        response.marketplaces[0]
+            .plugins
+            .iter()
+            .map(|plugin| (plugin.id.as_str(), plugin.installed, plugin.enabled))
+            .collect::<Vec<_>>(),
+        vec![("private-linear@created-by-me-remote", true, true)]
+    );
+    wait_for_path_exists(
+        &ruxex_home.path().join(
+            "plugins/cache/created-by-me-remote/private-linear/1.2.3/.ruxex-plugin/plugin.json",
+        ),
+    )
+    .await?;
+    wait_for_remote_installed_snapshot_request(&server).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_installed_trusts_new_workspace_listed_plugin_hooks() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    let disabled_hook_key = "available-hooks@workspace-directory:hooks/hooks.json:pre_tool_use:0:0";
+    let unrelated_hook_key = "unrelated@test:hooks/hooks.json:session_start:0:0";
+    write_remote_plugin_hook_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+        &format!(
+            r#"
+[hooks.state."{disabled_hook_key}"]
+enabled = false
+
+[hooks.state."{unrelated_hook_key}"]
+enabled = false
+trusted_hash = "sha256:unrelated"
+"#,
+        ),
+    )?;
+    write_remote_plugin_test_auth(ruxex_home.path())?;
+
+    let available_bundle_url = mount_remote_plugin_bundle_with_hooks(
+        &server,
+        "available-hooks",
+        Some(
+            r#"{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"echo available"}]}]}}"#,
+        ),
+    )
+    .await?;
+    let default_bundle_url = mount_remote_plugin_bundle_with_hooks(
+        &server,
+        "default-hooks",
+        Some(
+            r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo default"}]}]}}"#,
+        ),
+    )
+    .await?;
+    let no_hooks_bundle_url =
+        mount_remote_plugin_bundle_with_hooks(&server, "no-hooks", /*hooks_json*/ None).await?;
+    mount_workspace_bundle_sync(
+        &server,
+        &[
+            ("available-hooks", "AVAILABLE", &available_bundle_url),
+            ("default-hooks", "INSTALLED_BY_DEFAULT", &default_bundle_url),
+            ("no-hooks", "AVAILABLE", &no_hooks_bundle_url),
+        ],
+    )
+    .await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    trigger_plugin_installed_sync(&mut mcp).await?;
+    let plugin_ids = [
+        "available-hooks@workspace-directory",
+        "default-hooks@workspace-directory",
+    ];
+    let hooks = wait_for_plugin_hooks(
+        &mut mcp,
+        ruxex_home.path(),
+        &plugin_ids,
+        HookTrustStatus::Trusted,
+    )
+    .await?;
+    for plugin_id in plugin_ids {
+        assert!(
+            hooks
+                .iter()
+                .any(|hook| hook.plugin_id.as_deref() == Some(plugin_id))
+        );
+    }
+    wait_for_path_exists(
+        &ruxex_home
+            .path()
+            .join("plugins/cache/workspace-directory/no-hooks/1.2.3/.ruxex-plugin/plugin.json"),
+    )
+    .await?;
+    let config: toml::Value = toml::from_str(&std::fs::read_to_string(
+        ruxex_home.path().join("config.toml"),
+    )?)?;
+    let hook_states = config["hooks"]["state"].as_table().expect("hook states");
+    for hook in &hooks {
+        assert_eq!(
+            hook_states[hook.key.as_str()]["trusted_hash"].as_str(),
+            Some(hook.current_hash.as_str())
+        );
+    }
+    assert!(
+        !hooks
+            .iter()
+            .find(|hook| hook.key == disabled_hook_key)
+            .expect("disabled hook")
+            .enabled
+    );
+    assert_eq!(
+        hook_states[disabled_hook_key]["enabled"].as_bool(),
+        Some(false)
+    );
+    assert_eq!(
+        hook_states[unrelated_hook_key]["trusted_hash"].as_str(),
+        Some("sha256:unrelated")
+    );
+    assert_eq!(
+        hook_states[unrelated_hook_key]["enabled"].as_bool(),
+        Some(false)
+    );
+    Ok(())
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn plugin_installed_hook_trust_write_failure_stays_untrusted() -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::symlink;
+
+    let ruxex_home = TempDir::new()?;
+    let config_target_dir = TempDir::new()?;
+    let config_target = config_target_dir.path().join("config.toml");
+    let server = MockServer::start().await;
+    write_remote_plugin_hook_config(
+        config_target_dir.path(),
+        &format!("{}/backend-api/", server.uri()),
+        "",
+    )?;
+    symlink(&config_target, ruxex_home.path().join("config.toml"))?;
+    write_remote_plugin_test_auth(ruxex_home.path())?;
+
+    let bundle_url = mount_remote_plugin_bundle_with_hooks(
+        &server,
+        "failed-trust",
+        Some(
+            r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo fail closed"}]}]}}"#,
+        ),
+    )
+    .await?;
+    mount_workspace_bundle_sync(&server, &[("failed-trust", "AVAILABLE", &bundle_url)]).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[(TEST_ALLOW_HTTP_REMOTE_PLUGIN_BUNDLE_DOWNLOADS, Some("1"))])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let original_permissions = std::fs::metadata(config_target_dir.path())?.permissions();
+    let _permission_guard = RestorePermissions(
+        config_target_dir.path().to_path_buf(),
+        original_permissions.clone(),
+    );
+    let mut read_only_permissions = original_permissions;
+    read_only_permissions.set_mode(read_only_permissions.mode() & !0o222);
+    std::fs::set_permissions(config_target_dir.path(), read_only_permissions)?;
+
+    trigger_plugin_installed_sync(&mut mcp).await?;
+    let plugin_ids = ["failed-trust@workspace-directory"];
+    let before = wait_for_plugin_hooks(
+        &mut mcp,
+        ruxex_home.path(),
+        &plugin_ids,
+        HookTrustStatus::Untrusted,
+    )
+    .await?;
+    sleep(Duration::from_millis(300)).await;
+    let after = wait_for_plugin_hooks(
+        &mut mcp,
+        ruxex_home.path(),
+        &plugin_ids,
+        HookTrustStatus::Untrusted,
+    )
+    .await?;
+
+    assert_eq!(after[0].current_hash, before[0].current_hash);
+    assert!(!std::fs::read_to_string(config_target)?.contains("trusted_hash"));
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_fetches_workspace_directory_kind_when_remote_plugin_disabled() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugins_disabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let workspace_plugin_body = workspace_remote_plugin_page_body(
+        "plugins~Plugin_11111111111111111111111111111111",
+        "workspace-linear",
+        "Workspace Linear",
+        "LISTED",
+        /*enabled*/ None,
+    );
+    let workspace_installed_body = workspace_remote_plugin_page_body(
+        "plugins~Plugin_11111111111111111111111111111111",
+        "workspace-linear",
+        "Workspace Linear",
+        "LISTED",
+        /*enabled*/ Some(false),
+    );
+    let refreshed_workspace_plugin_body = workspace_remote_plugin_page_body(
+        "plugins~Plugin_22222222222222222222222222222222",
+        "workspace-notion",
+        "Workspace Notion",
+        "LISTED",
+        /*enabled*/ None,
+    );
+    mount_remote_plugin_list(&server, "WORKSPACE", &workspace_plugin_body).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", &workspace_installed_body).await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::WorkspaceDirectory]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 1);
+    let marketplace = &response.marketplaces[0];
+    assert_eq!(marketplace.name, "workspace-directory");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Workspace Directory")
+    );
+    assert_eq!(marketplace.plugins.len(), 1);
+    assert_eq!(
+        marketplace.plugins[0].id,
+        "workspace-linear@workspace-directory"
+    );
+    assert_eq!(
+        marketplace.plugins[0].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_11111111111111111111111111111111")
+    );
+    assert_eq!(marketplace.plugins[0].name, "workspace-linear");
+    assert_eq!(marketplace.plugins[0].installed, true);
+    assert_eq!(marketplace.plugins[0].enabled, false);
+    assert!(
+        !server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests")
+            .iter()
+            .any(|request| request
+                .url
+                .query()
+                .is_some_and(|query| query.contains("scope=GLOBAL")))
+    );
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::WorkspaceDirectory]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    assert_eq!(
+        response.marketplaces[0].plugins[0].id,
+        "workspace-linear@workspace-directory"
+    );
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_list_scope_request_count(
+        &server,
+        "WORKSPACE",
+        /*expected_count*/ 1,
+    )
+    .await?;
+
+    rewrite_cached_remote_catalog_fetched_at(
+        ruxex_home.path(),
+        Utc::now() - ChronoDuration::hours(4),
+    )?;
+    server.reset().await;
+    mount_delayed_remote_plugin_list(&server, "WORKSPACE", &refreshed_workspace_plugin_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::WorkspaceDirectory]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    assert_eq!(
+        response.marketplaces[0].plugins[0].id,
+        "workspace-linear@workspace-directory"
+    );
+
+    wait_for_remote_plugin_list_scope_request_count(
+        &server,
+        "WORKSPACE",
+        /*expected_count*/ 1,
+    )
+    .await?;
+    wait_for_cached_remote_catalog_plugin_ids(
+        ruxex_home.path(),
+        &["plugins~Plugin_22222222222222222222222222222222"],
+    )
+    .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::WorkspaceDirectory]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    assert_eq!(
+        response.marketplaces[0].plugins[0].id,
+        "workspace-notion@workspace-directory"
+    );
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_list_scope_request_count(
+        &server,
+        "WORKSPACE",
+        /*expected_count*/ 1,
+    )
+    .await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_fetches_user_plugins_in_created_by_me_remote_marketplace() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+plugin_sharing = false
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut private_page: serde_json::Value = serde_json::from_str(&user_remote_plugin_page_body(
+        "plugins~Plugin_55555555555555555555555555555555",
+        "private-linear",
+        "Private Linear",
+        "PRIVATE",
+        /*enabled*/ None,
+    ))?;
+    private_page["pagination"]["next_page_token"] = serde_json::json!("page-2");
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "USER"))
+        .and(query_param("limit", "200"))
+        .and(query_param_is_missing("pageToken"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(private_page))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/backend-api/ps/plugins/list"))
+        .and(query_param("scope", "USER"))
+        .and(query_param("limit", "200"))
+        .and(query_param("pageToken", "page-2"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_string(user_remote_plugin_page_body(
+                "plugins~Plugin_66666666666666666666666666666666",
+                "second-private-linear",
+                "Second Private Linear",
+                "PRIVATE",
+                /*enabled*/ None,
+            )),
+        )
+        .mount(&server)
+        .await;
+    mount_remote_installed_plugins(
+        &server,
+        "USER",
+        &user_remote_plugin_page_body(
+            "plugins~Plugin_55555555555555555555555555555555",
+            "private-linear",
+            "Private Linear",
+            "PRIVATE",
+            /*enabled*/ Some(true),
+        ),
+    )
+    .await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", empty_remote_installed_plugins_body())
+        .await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::CreatedByMeRemote]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 1);
+    let marketplace = &response.marketplaces[0];
+    assert_eq!(marketplace.name, "created-by-me-remote");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Created by me")
+    );
+    assert_eq!(marketplace.plugins.len(), 2);
+    assert_eq!(
+        marketplace.plugins[0].id,
+        "private-linear@created-by-me-remote"
+    );
+    assert_eq!(
+        marketplace.plugins[0].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_55555555555555555555555555555555")
+    );
+    assert_eq!(marketplace.plugins[0].installed, true);
+    assert_eq!(marketplace.plugins[0].enabled, true);
+    assert_eq!(marketplace.plugins[0].share_context, None);
+    assert_eq!(
+        marketplace.plugins[1].id,
+        "second-private-linear@created-by-me-remote"
+    );
+    assert_eq!(marketplace.plugins[1].installed, false);
+    assert_eq!(marketplace.plugins[1].enabled, false);
+    assert!(
+        !server
+            .received_requests()
+            .await
+            .expect("wiremock should record requests")
+            .iter()
+            .any(|request| {
+                request.url.path().ends_with("/ps/plugins/list")
+                    && request
+                        .url
+                        .query_pairs()
+                        .any(|(key, value)| key == "scope" && value != "USER")
+            })
+    );
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::CreatedByMeRemote]),
+            force_refetch: false,
+        })
+        .await?;
+    let response: PluginListResponse = to_response(
+        timeout(
+            DEFAULT_TIMEOUT,
+            mcp.read_stream_until_response_message(RequestId::Integer(request_id)),
+        )
+        .await??,
+    )?;
+    assert_eq!(response.marketplaces[0].plugins.len(), 2);
+    sleep(Duration::from_millis(100)).await;
+    wait_for_remote_plugin_list_scope_request_count(&server, "USER", /*expected_count*/ 2).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_fetches_shared_with_me_kind() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_plugins_enabled_config_with_base_url(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut shared_plugin_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_22222222222222222222222222222222",
+            "shared-linear",
+            "Shared Linear",
+            "PRIVATE",
+            /*enabled*/ None,
+        ))?;
+    shared_plugin_body["plugins"][0]["share_principals"] = serde_json::Value::Null;
+    let shared_unlisted_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_44444444444444444444444444444444",
+            "shared-unlisted-linear",
+            "Shared Unlisted Linear",
+            "UNLISTED",
+            /*enabled*/ None,
+        ))?;
+    shared_plugin_body["plugins"]
+        .as_array_mut()
+        .expect("shared plugins should be an array")
+        .push(shared_unlisted_body["plugins"][0].clone());
+    let shared_plugin_body = serde_json::to_string(&shared_plugin_body)?;
+    let mut workspace_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_22222222222222222222222222222222",
+            "shared-linear",
+            "Shared Linear",
+            "PRIVATE",
+            /*enabled*/ Some(true),
+        ))?;
+    let unlisted_installed_body: serde_json::Value =
+        serde_json::from_str(&workspace_remote_plugin_page_body(
+            "plugins~Plugin_33333333333333333333333333333333",
+            "unlisted-linear",
+            "Unlisted Linear",
+            "UNLISTED",
+            /*enabled*/ Some(false),
+        ))?;
+    workspace_installed_body["plugins"]
+        .as_array_mut()
+        .expect("installed plugins should be an array")
+        .push(unlisted_installed_body["plugins"][0].clone());
+    let workspace_installed_body = serde_json::to_string(&workspace_installed_body)?;
+    mount_shared_workspace_plugins(&server, &shared_plugin_body).await;
+    mount_remote_installed_plugins(&server, "GLOBAL", empty_remote_installed_plugins_body()).await;
+    mount_remote_installed_plugins(&server, "WORKSPACE", &workspace_installed_body).await;
+    mount_empty_user_installed_plugins(&server).await;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::SharedWithMe]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(response.marketplaces.len(), 2);
+    let marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "workspace-shared-with-me-private")
+        .expect("expected private shared-with-me marketplace");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Shared with me")
+    );
+    assert_eq!(marketplace.plugins.len(), 2);
+    assert_eq!(
+        marketplace.plugins[0].id,
+        "shared-linear@workspace-shared-with-me"
+    );
+    assert_eq!(
+        marketplace.plugins[0].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_22222222222222222222222222222222")
+    );
+    assert_eq!(marketplace.plugins[0].name, "shared-linear");
+    assert_eq!(marketplace.plugins[0].installed, true);
+    assert_eq!(marketplace.plugins[0].enabled, true);
+    let share_context = marketplace.plugins[0]
+        .share_context
+        .as_ref()
+        .expect("expected share context");
+    assert_eq!(
+        share_context.remote_plugin_id,
+        "plugins~Plugin_22222222222222222222222222222222"
+    );
+    assert_eq!(share_context.remote_version.as_deref(), Some("1.2.3"));
+    assert_eq!(
+        share_context.discoverability,
+        Some(PluginShareDiscoverability::Private)
+    );
+    assert_eq!(
+        share_context.creator_account_user_id.as_deref(),
+        Some("user-gavin__account-123")
+    );
+    assert_eq!(share_context.creator_name.as_deref(), Some("Gavin"));
+    assert_eq!(
+        share_context.share_url.as_deref(),
+        Some("https://provider.example/plugins/share/share-key-1")
+    );
+    assert_eq!(share_context.share_principals, None);
+    assert_eq!(
+        marketplace.plugins[1].id,
+        "shared-unlisted-linear@workspace-shared-with-me"
+    );
+    assert_eq!(
+        marketplace.plugins[1].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_44444444444444444444444444444444")
+    );
+    assert_eq!(marketplace.plugins[1].name, "shared-unlisted-linear");
+    assert_eq!(marketplace.plugins[1].installed, false);
+    assert_eq!(marketplace.plugins[1].enabled, false);
+    let share_context = marketplace.plugins[1]
+        .share_context
+        .as_ref()
+        .expect("expected share context");
+    assert_eq!(
+        share_context.remote_plugin_id,
+        "plugins~Plugin_44444444444444444444444444444444"
+    );
+    assert_eq!(
+        share_context.discoverability,
+        Some(PluginShareDiscoverability::Unlisted)
+    );
+
+    let marketplace = response
+        .marketplaces
+        .iter()
+        .find(|marketplace| marketplace.name == "workspace-shared-with-me-unlisted")
+        .expect("expected unlisted shared-with-me marketplace");
+    assert_eq!(
+        marketplace
+            .interface
+            .as_ref()
+            .and_then(|interface| interface.display_name.as_deref()),
+        Some("Shared with me (unlisted)")
+    );
+    assert_eq!(marketplace.plugins.len(), 1);
+    assert_eq!(
+        marketplace.plugins[0].id,
+        "unlisted-linear@workspace-shared-with-me"
+    );
+    assert_eq!(
+        marketplace.plugins[0].remote_plugin_id.as_deref(),
+        Some("plugins~Plugin_33333333333333333333333333333333")
+    );
+    assert_eq!(marketplace.plugins[0].name, "unlisted-linear");
+    assert_eq!(marketplace.plugins[0].installed, true);
+    assert_eq!(marketplace.plugins[0].enabled, false);
+    let share_context = marketplace.plugins[0]
+        .share_context
+        .as_ref()
+        .expect("expected share context");
+    assert_eq!(
+        share_context.remote_plugin_id,
+        "plugins~Plugin_33333333333333333333333333333333"
+    );
+    assert_eq!(share_context.remote_version.as_deref(), Some("1.2.3"));
+    assert_eq!(
+        share_context.discoverability,
+        Some(PluginShareDiscoverability::Unlisted)
+    );
+    wait_for_remote_installed_snapshot_request(&server).await?;
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_omits_shared_with_me_kind_when_plugin_sharing_disabled() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+plugin_sharing = false
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::SharedWithMe]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(
+        response,
+        PluginListResponse {
+            marketplaces: Vec::new(),
+            marketplace_load_errors: Vec::new(),
+            featured_plugin_ids: Vec::new(),
+        }
+    );
+    wait_for_remote_plugin_request_count(
+        &server,
+        "/ps/plugins/workspace/shared",
+        /*expected_count*/ 0,
+    )
+    .await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_omits_created_by_me_when_remote_plugins_disabled() -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = true
+remote_plugin = false
+plugin_sharing = true
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: Some(vec![PluginListMarketplaceKind::CreatedByMeRemote]),
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+    assert_eq!(
+        response,
+        PluginListResponse {
+            marketplaces: Vec::new(),
+            marketplace_load_errors: Vec::new(),
+            featured_plugin_ids: Vec::new(),
+        }
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn plugin_list_marks_remote_plugin_disabled_by_admin() -> Result<()> {
+    assert_disabled_remote_plugin_metadata(
+        PluginDisabledReason::DisabledByAdmin,
+        /*eligible_plan_types*/ None,
+        PluginInstallPolicy::Available,
+    )
+    .await
+}
+
+#[tokio::test]
+async fn plugin_list_preserves_plan_ineligible_remote_plugin_metadata() -> Result<()> {
+    assert_disabled_remote_plugin_metadata(
+        PluginDisabledReason::PlanNotEligible,
+        Some(vec![
+            "plus".to_string(),
+            "pro".to_string(),
+            "enterprise_cbp_automation".to_string(),
+        ]),
+        PluginInstallPolicy::NotAvailable,
+    )
+    .await
+}
+
+async fn assert_disabled_remote_plugin_metadata(
+    disabled_reason: PluginDisabledReason,
+    eligible_plan_types: Option<Vec<String>>,
+    installation_policy: PluginInstallPolicy,
+) -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    write_remote_plugin_catalog_config(
+        ruxex_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let plugin = serde_json::json!({
+        "id": "plugins~Plugin_00000000000000000000000000000000",
+        "name": "gmail",
+        "scope": "GLOBAL",
+        "installation_policy": installation_policy,
+        "authentication_policy": "ON_USE",
+        "status": "DISABLED_BY_ADMIN",
+        "disabled_reason": disabled_reason,
+        "eligible_plan_types": eligible_plan_types,
+        "release": {
+            "display_name": "Gmail",
+            "description": "Search and manage email",
+            "app_ids": [],
+            "interface": {},
+            "skills": [],
+        },
+    });
+    let global_directory_body = serde_json::json!({
+        "plugins": [plugin.clone()],
+        "pagination": {
+            "limit": 50,
+            "next_page_token": null,
+        },
+    });
+    let mut installed_plugin = plugin;
+    installed_plugin["enabled"] = serde_json::json!(true);
+    installed_plugin["disabled_skill_names"] = serde_json::json!([]);
+    let global_installed_body = serde_json::json!({
+        "plugins": [installed_plugin],
+        "pagination": {
+            "limit": 50,
+            "next_page_token": null,
+        },
+    });
+    let empty_page_body = serde_json::json!({
+        "plugins": [],
+        "pagination": {
+            "limit": 50,
+            "next_page_token": null,
+        },
+    });
+
+    for (scope, body) in [
+        ("GLOBAL", &global_directory_body),
+        ("WORKSPACE", &empty_page_body),
+    ] {
+        Mock::given(method("GET"))
+            .and(path("/backend-api/ps/plugins/list"))
+            .and(query_param("scope", scope))
+            .and(query_param("limit", "200"))
+            .and(header("authorization", "Bearer test-token"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+    }
+    for (scope, body) in [
+        ("GLOBAL", &global_installed_body),
+        ("WORKSPACE", &empty_page_body),
+    ] {
+        Mock::given(method("GET"))
+            .and(path("/backend-api/ps/plugins/installed"))
+            .and(query_param("scope", scope))
+            .and(header("authorization", "Bearer test-token"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+    }
+
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    let request_id = mcp
+        .send_plugin_list_request(PluginListParams {
+            cwds: None,
+            marketplace_kinds: None,
+            force_refetch: false,
+        })
+        .await?;
+
+    let response: PluginListResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    let remote_marketplace = response
+        .marketplaces
+        .into_iter()
+        .find(|marketplace| marketplace.name == "test-remote")
+        .expect("expected managed remote marketplace");
+    let plugin = remote_marketplace
+        .plugins
+        .first()
+        .expect("expected remote plugin");
+    assert_eq!(plugin.installed, true);
+    assert_eq!(plugin.enabled, true);
+    assert_eq!(
+        plugin.availability,
+        ruxex_app_server_protocol::PluginAvailability::DisabledByAdmin
+    );
+    assert_eq!(plugin.disabled_reason, Some(disabled_reason));
+    assert_eq!(plugin.eligible_plan_types, eligible_plan_types);
+    assert_eq!(plugin.install_policy, installation_policy);
+    Ok(())
+}
+
+#[test_case(false; "no project override")]
+#[test_case(true; "project enables local plugins only")]
+#[tokio::test]
+async fn plugin_list_does_not_fetch_remote_marketplaces_when_plugins_disabled(
+    project_enables_plugins: bool,
+) -> Result<()> {
+    let ruxex_home = TempDir::new()?;
+    let server = MockServer::start().await;
+    std::fs::write(
+        ruxex_home.path().join("config.toml"),
+        format!(
+            r#"
+managed_auth_base_url = "{}/backend-api/"
+
+[features]
+plugins = false
+remote_plugin = true
+"#,
+            server.uri()
+        ),
+    )?;
+    write_api_key_auth(
+        ruxex_home.path(),
+        ApiKeyAuthFixture::new("test-token")
+            .account_id("account-123")
+            .user_id("user-123")
+            .workspace_id("account-123"),
+        AuthCredentialsStoreMode::File,
+    )?;
+
+    let repo = TempDir::new()?;
+    for directory in [".git", ".ruxex", ".agents/plugins"] {
+        std::fs::create_dir_all(repo.path().join(directory))?;
+    }
+    std::fs::write(
+        repo.path().join(".ruxex/config.toml"),
+        "[features]\nplugins = true\n[plugins.\"sample@local\"]\nenabled = true\n",
+    )?;
+    std::fs::write(
+        repo.path().join(".agents/plugins/marketplace.json"),
+        r#"{"name":"local","plugins":[{"name":"sample","source":{"source":"local","path":"./sample"}}]}"#,
+    )?;
+    write_installed_plugin(&ruxex_home, "local", "sample")?;
+    set_project_trust_level(ruxex_home.path(), repo.path(), TrustLevel::Trusted)?;
+    let repo_cwd = AbsolutePathBuf::try_from(repo.path())?;
+    let cwds = project_enables_plugins.then(|| vec![repo_cwd]);
+
+    let home = ruxex_home.path().to_string_lossy().into_owned();
+    let mut mcp = TestAppServer::builder()
+        .with_ruxex_home(ruxex_home.path())
+        .with_env_overrides(&[
+            ("HOME", Some(home.as_str())),
+            ("USERPROFILE", Some(home.as_str())),
+        ])
+        .build_initialized_with_timeout(DEFAULT_TIMEOUT)
+        .await?;
+
+    for marketplace_kinds in [
+        None,
+        Some(vec![
+            PluginListMarketplaceKind::Local,
+            PluginListMarketplaceKind::WorkspaceDirectory,
+            PluginListMarketplaceKind::CreatedByMeRemote,
+            PluginListMarketplaceKind::SharedWithMe,
+            PluginListMarketplaceKind::Vertical,
+        ]),
+    ] {
+        let request_id = mcp
+            .send_plugin_list_request(PluginListParams {
+                cwds: cwds.clone(),
+                marketplace_kinds,
+                force_refetch: false,
+            })
+            .await?;
+
+        let response: PluginListResponse =
+            timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+
+        let ids = response
+            .marketplaces
+            .iter()
+            .flat_map(|marketplace| &marketplace.plugins)
+            .map(|plugin| plugin.id.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            ids,
+            if project_enables_plugins {
+                vec!["sample@local"]
+            } else {
+                vec![]
+            }
+        );
+        assert_eq!(response.featured_plugin_ids, Vec::<String>::new());
+    }
+    let request_id = mcp
+        .send_plugin_installed_request(PluginInstalledParams {
+            cwds,
+            install_suggestion_plugin_names: None,
+        })
+        .await?;
+    let response: PluginInstalledResponse =
+        timeout(DEFAULT_TIMEOUT, mcp.read_response(request_id)).await??;
+    let ids = response
+        .marketplaces
+        .iter()
+        .flat_map(|marketplace| &marketplace.plugins)
+        .map(|plugin| plugin.id.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        ids,
+        if project_enables_plugins {
+            vec!["sample@local"]
+        } else {
+            vec![]
+        }
+    );
+    wait_for_remote_plugin_request_count(&server, "/ps/plugins/list", /*expected_count*/ 0).await?;
+    Ok(())
+}
+
+#[cfg(unix)]
+struct RestorePermissions(std::path::PathBuf, std::fs::Permissions);
+
+#[cfg(unix)]
+impl Drop for RestorePermissions {
+    fn drop(&mut self) {
+        let _ = std::fs::set_permissions(&self.0, self.1.clone());
+    }
+}

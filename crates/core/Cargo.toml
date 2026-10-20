@@ -1,0 +1,158 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-core"
+version.workspace = true
+
+[lib]
+name = "ruxex_core"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+arc-swap = { workspace = true }
+async-channel = { workspace = true }
+base64 = { workspace = true }
+bm25 = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+ruxex-agent-graph-store = { workspace = true }
+ruxex-agent-roles = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-apply-patch = { workspace = true }
+ruxex-async-utils = { workspace = true }
+ruxex-attachment-store = { workspace = true }
+ruxex-client = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-credential-broker = { workspace = true }
+ruxex-core-plugins = { workspace = true }
+ruxex-diagnostics = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-mcp = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-execpolicy = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-hooks = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-plugin = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-response-debug-context = { workspace = true }
+ruxex-prompts = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-rollout-trace = { workspace = true }
+ruxex-rmcp-client = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-skills = { workspace = true }
+ruxex-skills-extension = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-terminal-detection = { workspace = true }
+ruxex-thread-store = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-audio = { workspace = true }
+ruxex-utils-cache = { workspace = true }
+ruxex-utils-git-discovery = { workspace = true }
+ruxex-utils-image = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
+ruxex-utils-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-plugins = { workspace = true }
+ruxex-utils-pty = { workspace = true }
+ruxex-utils-string = { workspace = true }
+ruxex-utils-stream-parser = { workspace = true }
+dirs = { workspace = true }
+dunce = { workspace = true }
+eventsource-stream = { workspace = true }
+futures = { workspace = true }
+http = { workspace = true }
+iana-time-zone = { workspace = true }
+image = { workspace = true, features = ["jpeg", "png", "webp"] }
+indexmap = { workspace = true }
+libc = { workspace = true }
+once_cell = { workspace = true }
+rand = { workspace = true }
+regex-lite = { workspace = true }
+rmcp = { workspace = true, default-features = false, features = [
+    "base64",
+    "macros",
+    "schemars",
+    "server",
+] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha1 = { workspace = true }
+shlex = { workspace = true }
+similar = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = [
+    "io-std",
+    "macros",
+    "process",
+    "rt-multi-thread",
+    "signal",
+] }
+tokio-util = { workspace = true, features = ["rt"] }
+tokio-tungstenite = { workspace = true }
+toml = { workspace = true }
+toml_edit = { workspace = true }
+tracing = { workspace = true, features = ["log"] }
+url = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v4", "v5", "v7"] }
+which = { workspace = true }
+
+# Build OpenSSL from source for musl builds.
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl-sys = { workspace = true, features = ["vendored"] }
+
+# Build OpenSSL from source for musl builds.
+[target.aarch64-unknown-linux-musl.dependencies]
+openssl-sys = { workspace = true, features = ["vendored"] }
+
+[target.'cfg(unix)'.dependencies]
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+ruxex-home = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
+ruxex-utils-redacted-string = { workspace = true }
+core_test_support = { workspace = true }
+ctor = { workspace = true }
+insta = { workspace = true }
+maplit = { workspace = true }
+opentelemetry = { workspace = true }
+predicates = { workspace = true }
+pretty_assertions = { workspace = true }
+test-case = "3.3.1"
+opentelemetry_sdk = { workspace = true, features = [
+    "experimental_metrics_custom_reader",
+    "metrics",
+] }
+tempfile = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+tracing-subscriber = { workspace = true }
+walkdir = { workspace = true }
+wiremock = { workspace = true }
+zstd = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["openssl-sys"]

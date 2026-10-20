@@ -1,0 +1,71 @@
+//! Emits bounded process lifecycle telemetry using identity captured at launch.
+//! Reconnects and later process operations must not replace that identity.
+
+use opentelemetry::trace::SpanContext;
+use ruxex_sandboxing::SandboxType;
+
+/// Log fields captured at launch, never refreshed from a resumed session.
+#[derive(Clone, Default)]
+pub(crate) struct ProcessTelemetry {
+    pub(crate) launch_context: Option<SpanContext>,
+    pub(crate) thread_id: Option<String>,
+    pub(crate) tool_call_id: Option<String>,
+}
+
+/// Lifecycle events with outcome fields only when a process has exited.
+pub(crate) enum ProcessTelemetryEvent {
+    Start,
+    SpawnFailed,
+    SandboxDenied,
+    Exit {
+        exit_code: i32,
+        termination_requested: bool,
+    },
+}
+
+impl ProcessTelemetry {
+    pub(crate) fn log(&self, event: ProcessTelemetryEvent, sandbox: SandboxType) {
+        let (event_name, exit_code, termination_requested, reason) = match event {
+            ProcessTelemetryEvent::Start => ("ruxex.exec_server.process_start", None, None, None),
+            ProcessTelemetryEvent::SpawnFailed => {
+                ("ruxex.exec_server.process_spawn_failed", None, None, None)
+            }
+            ProcessTelemetryEvent::SandboxDenied => (
+                "ruxex.exec_server.sandbox_denied",
+                None,
+                None,
+                Some("inferred_denial"),
+            ),
+            ProcessTelemetryEvent::Exit {
+                exit_code,
+                termination_requested,
+            } => (
+                "ruxex.exec_server.process_exit",
+                Some(exit_code),
+                Some(termination_requested),
+                None,
+            ),
+        };
+        let trace_id = self
+            .launch_context
+            .as_ref()
+            .map(|span| span.trace_id().to_string());
+        let span_id = self
+            .launch_context
+            .as_ref()
+            .map(|span| span.span_id().to_string());
+        tracing::event!(
+            target: "ruxex_otel.log_only",
+            tracing::Level::INFO,
+            event.name = event_name,
+            launch.trace_id = trace_id.as_deref(),
+            launch.span_id = span_id.as_deref(),
+            conversation.id = self.thread_id.as_deref(),
+            tool.call_id = self.tool_call_id.as_deref(),
+            sandbox.type = ?sandbox,
+            process.exit_code = exit_code,
+            process.termination_requested = termination_requested,
+            reason,
+        );
+    }
+}

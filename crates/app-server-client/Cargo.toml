@@ -1,0 +1,40 @@
+[package]
+name = "ruxex-app-server-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_app_server_client"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-app-server = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-rustls-provider = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt"] }
+tokio-tungstenite = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

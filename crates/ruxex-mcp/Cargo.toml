@@ -1,0 +1,45 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-mcp"
+version.workspace = true
+
+[lib]
+name = "ruxex_mcp"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+arc-swap = { workspace = true }
+async-channel = { workspace = true }
+ruxex-async-utils = { workspace = true }
+ruxex-api = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-diagnostics = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-rmcp-client = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+futures = { workspace = true }
+lru = { workspace = true }
+regex-lite = { workspace = true }
+rmcp = { workspace = true, default-features = false, features = ["base64", "macros", "schemars", "server"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha1 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["io-util", "macros", "rt-multi-thread"] }
+tokio-util = { workspace = true, features = ["rt"] }
+tracing = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+ruxex-exec-server-test-support = { workspace = true }
+pretty_assertions = { workspace = true }
+rmcp = { workspace = true, default-features = false, features = ["base64", "macros", "schemars", "server"] }
+tempfile = { workspace = true }

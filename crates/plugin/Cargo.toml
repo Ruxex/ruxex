@@ -1,0 +1,25 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-plugin"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "ruxex_plugin"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-config = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-plugins = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

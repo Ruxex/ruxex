@@ -1,81 +1,118 @@
-<p align="center"><strong>Codex CLI</strong> is a coding agent from OpenAI that runs locally on your computer.
-<p align="center">
-  <img src="https://github.com/openai/codex/blob/main/.github/codex-cli-splash.png" alt="Codex CLI splash" width="80%" />
-</p>
-</br>
-If you want Codex in your code editor (VS Code, Cursor, Windsurf), <a href="https://developers.openai.com/codex/ide">install in your IDE.</a>
-</br>If you want the desktop app experience, run <code>codex app</code> or visit <a href="https://chatgpt.com/codex?app-landing-page=true">the Codex App page</a>.
-</br>If you are looking for the <em>cloud-based agent</em> from OpenAI, <strong>Codex Web</strong>, go to <a href="https://chatgpt.com/codex">chatgpt.com/codex</a>.</p>
+# Ruxex
 
----
+Ruxex is a provider-neutral AI agent framework for building applications with
+an App Server, CLI/TUI, tools, MCP, sandboxing, and persistence.
 
-## Quickstart
+Ruxex started as a fork of OpenAI's Codex and is developed as an independent,
+provider-neutral Rust library for custom hosts and model providers. See
+[Attribution and notices](#attribution-and-notices) for provenance details.
 
-### Installing and running Codex CLI
+## What Ruxex gives you
 
-Run the following on Mac or Linux to install Codex CLI:
+Ruxex provides the common building blocks of an AI agent, including model
+conversations, threads and rollouts, tool execution, MCP integration,
+sandboxing, persistence, and an embeddable App Server.
 
-```shell
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
+The application host chooses one model provider when it starts a runtime. A
+thread or rollout does not choose a provider, and a running runtime does not
+switch providers. This keeps provider credentials, HTTP details, and wire
+formats out of the agent and session layers.
+
+## Use Ruxex in your application
+
+Ruxex provides an App Server and a CLI with an interactive TUI. A host
+application supplies three independent pieces:
+
+- [`ModelProvider`](MODEL-PROVIDER.md) for LLM endpoints, authentication,
+  models, and wire formats;
+- [`TuiBrandProfile`](TUI-BRAND.md) for terminal presentation; and
+- [`ProductIdentity`](PRODUCT-IDENTITY.md) for the application's name,
+  identity, data home, and App Server product metadata.
+
+This keeps provider-specific HTTP details, product identity, and TUI
+presentation out of threads, rollouts, and the shared runtime.
+
+Ruxex is currently distributed from Git rather than crates.io. This is
+intentional: the current implementation depends on Ruxex-maintained revisions
+of some upstream crates, including proxy support that is not available from
+the corresponding crates.io releases. The crates.io package name is reserved
+by a [placeholder](placeholder/README.md); do not use a registry-only
+dependency such as `ruxex = "0.1"`.
+
+Add the facade crate to your application and pin it to a reviewed commit or
+release tag:
+
+```toml
+[dependencies]
+ruxex = {
+    git = "https://github.com/Ruxex/ruxex.git",
+    tag = "v0.1.0"
+}
 ```
 
-Run the following on Windows to install Codex CLI:
+The CLI/TUI entry point accepts all three host-defined pieces. The CLI invokes
+the provider factory and constructs the App Server internally:
 
-```shell
-powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```rust
+use std::sync::Arc;
+
+use ruxex::{
+    AppServerRuntimeBuilder, ModelProviderFactory, ProductIdentity,
+    ProviderRuntimeFactory, TuiBrandProfile,
+};
+
+// MyProvider implements ModelProvider and ModelProviderFactory.
+// Implement the provider's LLM endpoint, credentials, and wire format here.
+// MyTuiBrandProfile implements TuiBrandProfile.
+let tui_brand: Arc<dyn TuiBrandProfile> = Arc::new(MyTuiBrandProfile);
+let provider_factory: ProviderRuntimeFactory = (
+    AppServerRuntimeBuilder::build_from_provider_factory::<MyProvider>,
+    MyProvider::provider_descriptor(),
+);
+let product_identity = ProductIdentity::new(
+    "Example Agent",
+    "example-agent",
+    ".example-agent",
+    "example-home.json",
+)?;
+
+ruxex::run_with_provider_factory_and_identity(
+    arg0_paths,
+    provider_factory,
+    product_identity,
+    Some(Arc::new(MyTuiBrandProfile)),
+)
+.await?;
 ```
 
-The standalone installers download from `https://releases.openai.com/codex` by default and fall back to GitHub Releases if a metadata or asset download is unavailable. To force GitHub Releases, set `CODEX_INSTALLER_USE_RELEASES_OPENAI_COM` to `false` (`0` and `no` are also accepted):
+When the default product identity is sufficient, the shorter
+`ruxex::run::<MyProvider>(arg0_paths, brand_profile)` entry point is also
+available.
 
-```shell
-curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false sh
-```
+See [`crates/model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
+for the provider contract and the linked documents above for the three host
+integration points. If you embed the App Server without the CLI, you can use
+its runtime builder directly.
 
-```powershell
-$env:CODEX_INSTALLER_USE_RELEASES_OPENAI_COM='false'; irm https://chatgpt.com/codex/install.ps1 | iex
-```
+Rusty V8 setup is required only for hosts that enable JavaScript code mode;
+see [Rusty V8 setup](RUSTY-V8.md).
 
-Codex CLI can also be installed via the following package managers:
+## Data, credentials, and product identity
 
-```shell
-# Install using npm
-npm install -g @openai/codex
-```
+By default, a Ruxex application stores data under `~/.ruxex`. A host can use
+`RUXEX_HOME` or, preferably for a separately branded product, inject a
+[`ProductIdentity`](PRODUCT-IDENTITY.md) with its own data directory and
+marker filename. Provider credentials belong to the provider/runtime
+lifecycle and are not stored in threads or rollouts.
 
-```shell
-# Install using Homebrew
-brew install --cask codex
-```
+Ruxex `0.1.0` is pre-1.0 and its APIs may evolve. Repository development
+instructions are kept separate from this library-user guide.
 
-Then simply run `codex` to get started.
+## Attribution and notices
 
-<details>
-<summary>You can also go to the <a href="https://github.com/openai/codex/releases/latest">latest GitHub Release</a> and download the appropriate binary for your platform.</summary>
-
-Each GitHub Release contains many executables, but in practice, you likely want one of these:
-
-- macOS
-  - Apple Silicon/arm64: `codex-aarch64-apple-darwin.tar.gz`
-  - x86_64 (older Mac hardware): `codex-x86_64-apple-darwin.tar.gz`
-- Linux
-  - x86_64: `codex-x86_64-unknown-linux-musl.tar.gz`
-  - arm64: `codex-aarch64-unknown-linux-musl.tar.gz`
-
-Each archive contains a single entry with the platform baked into the name (e.g., `codex-x86_64-unknown-linux-musl`), so you likely want to rename it to `codex` after extracting it.
-
-</details>
-
-### Using Codex with your ChatGPT plan
-
-Run `codex` and select **Sign in with ChatGPT**. We recommend signing into your ChatGPT account to use Codex as part of your Plus, Pro, Business, Edu, or Enterprise plan. [Learn more about what's included in your ChatGPT plan](https://help.openai.com/en/articles/11369540-codex-in-chatgpt).
-
-You can also use Codex with an API key, but this requires [additional setup](https://developers.openai.com/codex/auth#sign-in-with-an-api-key).
-
-## Docs
-
-- [**Codex Documentation**](https://developers.openai.com/codex)
-- [**Contributing**](./docs/contributing.md)
-- [**Installing & building**](./docs/install.md)
-- [**Open source fund**](./docs/open-source-fund.md)
-
-This repository is licensed under the [Apache-2.0 License](LICENSE).
+Ruxex is an independent derivative work based on OpenAI's Codex project. The
+fork was created from Codex commit
+[`e269f2164cbb9f499e4f22301c393500e2a831f3`](https://github.com/openai/codex/commit/e269f2164cbb9f499e4f22301c393500e2a831f3).
+We are grateful to the Codex maintainers and contributors for the work on
+which Ruxex builds. See [`NOTICE`](NOTICE) for fork provenance and third-party
+attributions, and [`LICENSE`](LICENSE) for the applicable license terms.

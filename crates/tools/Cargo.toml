@@ -1,0 +1,37 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "ruxex-tools"
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+bitflags = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-system = { workspace = true }
+ruxex-extension-items = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-output-truncation = { workspace = true }
+ruxex-utils-string = { workspace = true }
+jsonptr = { workspace = true }
+rmcp = { workspace = true, default-features = false, features = [
+    "base64",
+    "macros",
+    "schemars",
+    "server",
+] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["raw_value"] }
+thiserror = { workspace = true }
+urlencoding = { workspace = true }
+
+[dev-dependencies]
+ruxex-utils-cargo-bin = { workspace = true }
+pretty_assertions = { workspace = true }
+
+[lib]
+doctest = false

@@ -1,0 +1,13 @@
+---
+source: cli/src/main.rs
+assertion_line: 3324
+expression: "errors.join(\"\\n\")"
+---
+ruxex --worktree login: `--worktree` supports new interactive sessions, `ruxex fork`, `ruxex exec`, and `ruxex exec fork`
+ruxex fork --worktree: `ruxex fork --worktree` requires an explicit session ID
+ruxex fork --worktree --last: `ruxex fork --worktree` requires an explicit session ID
+ruxex exec resume --worktree session: `--worktree` cannot resume an existing session; use `ruxex exec fork --worktree`
+ruxex exec review --worktree: `--worktree` is not supported for code review
+ruxex resume --worktree session: `--worktree` supports new interactive sessions, `ruxex fork`, `ruxex exec`, and `ruxex exec fork`
+ruxex archive session --worktree: `--worktree` supports new interactive sessions, `ruxex fork`, `ruxex exec`, and `ruxex exec fork`
+ruxex queue --thread session --message hi --worktree: `--worktree` supports new interactive sessions, `ruxex fork`, `ruxex exec`, and `ruxex exec fork`

@@ -1,0 +1,19 @@
+[package]
+name = "ruxex-utils-sandbox-summary"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-protocol = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+
+[dev-dependencies]
+ruxex-utils-absolute-path = { workspace = true }
+pretty_assertions = { workspace = true }
+
+[lib]
+doctest = false

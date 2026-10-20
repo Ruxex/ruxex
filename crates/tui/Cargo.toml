@@ -1,0 +1,162 @@
+[package]
+name = "ruxex-tui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+autobins = false
+
+[[bin]]
+name = "md-events"
+path = "src/bin/md-events.rs"
+
+[[bin]]
+name = "ruxex-tui-preview"
+path = "src/bin/tui-preview.rs"
+
+[lib]
+name = "ruxex_tui"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-build-info = { workspace = true }
+anyhow = { workspace = true }
+axum = { workspace = true, default-features = false, features = ["http1", "tokio"] }
+base64 = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+clap = { workspace = true, features = ["derive"] }
+ruxex-ansi-escape = { workspace = true }
+ruxex-app-server-client = { workspace = true }
+ruxex-app-server-daemon = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-context-fragments = { workspace = true }
+ruxex-core-plugins = { workspace = true }
+ruxex-history = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-file-search = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-mermaid = { workspace = true }
+ruxex-message-history = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-plugin = { workspace = true }
+ruxex-protocol = { workspace = true }
+futures = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-terminal-detection = { workspace = true }
+ruxex-worktree = { workspace = true }
+ruxex-utils-approval-presets = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-cli = { workspace = true }
+ruxex-utils-elapsed = { workspace = true }
+ruxex-utils-fuzzy-match = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-plugins = { workspace = true }
+ruxex-utils-sandbox-summary = { workspace = true }
+ruxex-utils-sleep-inhibitor = { workspace = true }
+ruxex-utils-string = { workspace = true }
+color-eyre = { workspace = true }
+crossterm = { workspace = true, features = ["bracketed-paste", "event-stream"] }
+derive_more = { workspace = true, features = ["is_variant"] }
+diffy = { workspace = true }
+dirs = { workspace = true }
+dunce = { workspace = true }
+image = { workspace = true, features = ["jpeg", "png", "gif", "webp"] }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
+pathdiff = { workspace = true }
+pulldown-cmark = { workspace = true, features = ["html"] }
+rand = { workspace = true }
+ratatui = { workspace = true, features = [
+    "scrolling-regions",
+    "unstable-backend-writer",
+    "unstable-rendered-line-info",
+    "unstable-widget-ref",
+] }
+regex-lite = { workspace = true }
+rmcp = { workspace = true, features = ["server", "transport-streamable-http-server"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, features = ["preserve_order"] }
+sha2 = { workspace = true }
+shlex = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+supports-color = { workspace = true }
+tempfile = { workspace = true }
+textwrap = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = [
+    "io-std",
+    "macros",
+    "process",
+    "rt-multi-thread",
+    "signal",
+    "test-util",
+    "time",
+] }
+tokio-stream = { workspace = true, features = ["sync"] }
+toml = { workspace = true }
+toml_edit = { workspace = true }
+tracing = { workspace = true, features = ["log"] }
+tracing-appender = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+syntect = "5"
+two-face = { version = "0.5", default-features = false, features = ["syntect-default-onig"] }
+unicode-segmentation = { workspace = true }
+unicode-width = { workspace = true }
+url = { workspace = true }
+urlencoding = { workspace = true }
+webbrowser = { workspace = true }
+uuid = { workspace = true }
+
+tokio-util = { workspace = true, features = ["time"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSAccessibility", "NSWorkspace"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Keep the same executor features as the credential store, which also uses zbus.
+zbus = "4.4.0"
+
+
+# Clipboard support via `arboard` is not available on Android/Termux.
+# Only include it for non-Android targets so the crate builds on Android.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+arboard = { workspace = true }
+
+
+[dev-dependencies]
+app_test_support = { workspace = true }
+ruxex-mcp = { workspace = true }
+core_test_support = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+futures = { workspace = true }
+http = { workspace = true }
+pretty_assertions = { workspace = true }
+rand = { workspace = true }
+serial_test = { workspace = true }
+tokio-tungstenite = { workspace = true }
+vt100 = { workspace = true }
+uuid = { workspace = true }
+wiremock = { workspace = true }

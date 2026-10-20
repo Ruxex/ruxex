@@ -1,0 +1,36 @@
+[package]
+name = "ruxex-sandboxing"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_sandboxing"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-uds = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+ruxex-utils-pty = { workspace = true }
+dunce = { workspace = true }
+libc = { workspace = true }
+serde_json = { workspace = true }
+regex-lite = { workspace = true }
+tokio = { workspace = true, features = ["rt", "sync"] }
+tracing = { workspace = true, features = ["log"] }
+url = { workspace = true }
+which = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "time"] }

@@ -1,0 +1,42 @@
+[package]
+name = "ruxex-app-server-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_app_server_daemon"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-app-server-transport = { workspace = true }
+ruxex-install-context = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-uds = { workspace = true }
+futures = { workspace = true }
+libc = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+semver = { workspace = true }
+blake3 = { workspace = true }
+tokio = { workspace = true, features = [
+    "fs",
+    "io-util",
+    "macros",
+    "process",
+    "rt-multi-thread",
+    "signal",
+    "time",
+] }
+tempfile = { workspace = true }
+tokio-tungstenite = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

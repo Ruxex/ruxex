@@ -1,0 +1,141 @@
+[package]
+name = "ruxex-app-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ruxex-app-server"
+path = "src/main.rs"
+
+[[bin]]
+name = "ruxex-app-server-test-notify-capture"
+path = "src/bin/notify_capture.rs"
+
+[[bin]]
+name = "exec-server"
+path = "src/bin/exec_server.rs"
+
+[lib]
+name = "ruxex_app_server"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = { workspace = true }
+axum = { workspace = true, default-features = false, features = [
+    "http1",
+    "json",
+    "tokio",
+    "ws",
+] }
+ruxex-agent-extension = { workspace = true }
+ruxex-arg0 = { workspace = true }
+ruxex-code-mode = { workspace = true }
+ruxex-config = { workspace = true }
+ruxex-network-proxy = { workspace = true }
+ruxex-core = { workspace = true }
+ruxex-core-plugins = { workspace = true }
+ruxex-diagnostics = { workspace = true }
+ruxex-home = { workspace = true }
+ruxex-exec-server = { workspace = true }
+ruxex-extension-api = { workspace = true }
+ruxex-features = { workspace = true }
+ruxex-goal-extension = { workspace = true }
+ruxex-git-utils = { workspace = true }
+ruxex-file-watcher = { workspace = true }
+ruxex-hooks = { workspace = true }
+ruxex-history-notes-extension = { workspace = true }
+ruxex-http-client = { workspace = true }
+ruxex-otel = { workspace = true }
+ruxex-plugin = { workspace = true }
+ruxex-shell-command = { workspace = true }
+ruxex-skills = { workspace = true }
+ruxex-skills-extension = { workspace = true }
+ruxex-utils-cli = { workspace = true }
+ruxex-user-verification = { workspace = true }
+ruxex-utils-pty = { workspace = true }
+ruxex-file-search = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-web-search-extension = { workspace = true }
+ruxex-mcp = { workspace = true }
+ruxex-mcp-extension = { workspace = true }
+ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-models-manager = { workspace = true }
+ruxex-providers = { workspace = true }
+ruxex-prompts = { workspace = true }
+ruxex-protocol = { workspace = true }
+ruxex-queue-extension = { workspace = true }
+ruxex-app-server-protocol = { workspace = true }
+ruxex-app-server-transport = { workspace = true }
+ruxex-rmcp-client = { workspace = true }
+ruxex-rollout = { workspace = true }
+ruxex-sandboxing = { workspace = true }
+ruxex-state = { workspace = true }
+ruxex-thread-store = { workspace = true }
+ruxex-tools = { workspace = true }
+ruxex-utils-absolute-path = { workspace = true }
+ruxex-utils-home-dir = { workspace = true }
+ruxex-utils-json-to-toml = { workspace = true }
+ruxex-utils-path-uri = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+futures = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+toml = { workspace = true }
+toml_edit = { workspace = true }
+tokio = { workspace = true, features = [
+    "io-std",
+    "macros",
+    "process",
+    "rt-multi-thread",
+    "signal",
+] }
+tokio-util = { workspace = true }
+tracing = { workspace = true, features = ["log"] }
+tracing-subscriber = { workspace = true, features = ["env-filter", "fmt", "json"] }
+url = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v7"] }
+
+[target.'cfg(all(target_os = "linux", target_env = "musl", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
+tikv-jemallocator = { workspace = true }
+
+[dev-dependencies]
+ruxex-uds = { workspace = true }
+app_test_support = { workspace = true }
+axum = { workspace = true, default-features = false, features = [
+    "http1",
+    "json",
+    "tokio",
+] }
+base64 = { workspace = true }
+ruxex-utils-cargo-bin = { workspace = true }
+core_test_support = { workspace = true }
+flate2 = { workspace = true }
+hmac = { workspace = true }
+http = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry_sdk = { workspace = true }
+pretty_assertions = { workspace = true }
+rmcp = { workspace = true, default-features = false, features = [
+    "elicitation",
+    "server",
+    "transport-streamable-http-server",
+] }
+shlex = { workspace = true }
+sqlx = { workspace = true }
+tar = { workspace = true }
+test-case = "3.3.1"
+tokio-tungstenite = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+wiremock = { workspace = true }

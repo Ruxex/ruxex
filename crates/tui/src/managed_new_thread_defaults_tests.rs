@@ -1,0 +1,214 @@
+use super::*;
+use crate::legacy_core::config::ConfigBuilder;
+use pretty_assertions::assert_eq;
+use ruxex_config::ConfigLayerSource;
+use ruxex_config::LoaderOverrides;
+use ruxex_protocol::config_types::TrustLevel;
+use ruxex_protocol::model_types::ReasoningEffort;
+use ruxex_utils_absolute_path::test_support::PathBufExt;
+
+async fn test_config() -> Config {
+    let ruxex_home = tempfile::tempdir().expect("tempdir").keep();
+    ConfigBuilder::default()
+        .ruxex_home(ruxex_home)
+        .build()
+        .await
+        .expect("config")
+}
+
+fn defaults() -> NewThreadModelDefaults {
+    NewThreadModelDefaults {
+        model: Some("managed-model".to_string()),
+        model_reasoning_effort: Some(ReasoningEffort::High),
+        service_tier: Some("flex".to_string()),
+    }
+}
+
+#[tokio::test]
+async fn applies_managed_defaults_to_a_new_thread_config() {
+    let mut actual = test_config().await;
+    actual.model = Some("configured-model".to_string());
+    actual.model_reasoning_effort = Some(ReasoningEffort::Low);
+    actual.service_tier = Some("flex".to_string());
+    let mut expected = actual.clone();
+    expected.model = Some("managed-model".to_string());
+    expected.model_reasoning_effort = Some(ReasoningEffort::High);
+    expected.service_tier = Some("flex".to_string());
+
+    apply_managed_new_thread_defaults(
+        &mut actual,
+        Some(&defaults()),
+        &[],
+        &ConfigOverrides::default(),
+    );
+
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn explicit_model_skips_managed_model_and_reasoning_effort() {
+    let mut actual = test_config().await;
+    actual.model = Some("explicit-model".to_string());
+    actual.model_reasoning_effort = None;
+    actual.service_tier = Some("flex".to_string());
+    let mut expected = actual.clone();
+    expected.service_tier = Some("flex".to_string());
+    let harness_overrides = ConfigOverrides {
+        model: Some("explicit-model".to_string()),
+        ..ConfigOverrides::default()
+    };
+
+    apply_managed_new_thread_defaults(&mut actual, Some(&defaults()), &[], &harness_overrides);
+
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn explicit_reasoning_effort_skips_managed_model_and_reasoning_effort() {
+    let mut actual = test_config().await;
+    actual.model = Some("configured-model".to_string());
+    actual.model_reasoning_effort = Some(ReasoningEffort::Low);
+    actual.service_tier = Some("flex".to_string());
+    let mut expected = actual.clone();
+    expected.service_tier = Some("flex".to_string());
+    let cli_kv_overrides = vec![(
+        "model_reasoning_effort".to_string(),
+        TomlValue::String("low".to_string()),
+    )];
+
+    apply_managed_new_thread_defaults(
+        &mut actual,
+        Some(&defaults()),
+        &cli_kv_overrides,
+        &ConfigOverrides::default(),
+    );
+
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn explicit_launch_overrides_take_precedence() {
+    let mut actual = test_config().await;
+    actual.model = Some("explicit-model".to_string());
+    actual.model_reasoning_effort = Some(ReasoningEffort::Low);
+    actual.service_tier = Some("flex".to_string());
+    let expected = actual.clone();
+    let cli_kv_overrides = vec![(
+        "model_reasoning_effort".to_string(),
+        TomlValue::String("low".to_string()),
+    )];
+    let harness_overrides = ConfigOverrides {
+        model: Some("explicit-model".to_string()),
+        service_tier: Some(Some("flex".to_string())),
+        ..ConfigOverrides::default()
+    };
+
+    apply_managed_new_thread_defaults(
+        &mut actual,
+        Some(&defaults()),
+        &cli_kv_overrides,
+        &harness_overrides,
+    );
+
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn selected_profile_model_and_service_tier_are_preserved() {
+    let home = tempfile::tempdir().expect("tempdir");
+    std::fs::write(home.path().join("config.toml"), "model = \"base-model\"\n")
+        .expect("base config");
+    std::fs::write(
+        home.path().join("custom.config.toml"),
+        "model = \"custom-model\"\nservice_tier = \"flex\"\n",
+    )
+    .expect("profile");
+    let mut actual = ConfigBuilder::default()
+        .ruxex_home(home.path().to_path_buf())
+        .loader_overrides(LoaderOverrides {
+            user_config_path: Some(home.path().join("custom.config.toml").abs()),
+            user_config_profile: Some("custom".parse().expect("profile name")),
+            ..LoaderOverrides::without_managed_config_for_tests()
+        })
+        .build()
+        .await
+        .expect("config");
+    // `ConfigToml.model` is runtime-only; the app-server's effective config/read response
+    // supplies the selected profile model to a new session.
+    actual.model = Some("custom-model".to_string());
+    let expected = actual.clone();
+    assert_eq!(actual.model.as_deref(), Some("custom-model"));
+    assert_eq!(actual.model_provider_id, "cloudflare");
+
+    apply_managed_new_thread_defaults(
+        &mut actual,
+        Some(&defaults()),
+        &[],
+        &ConfigOverrides::default(),
+    );
+
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn managed_defaults_win_when_a_project_setting_shadows_the_selected_profile() {
+    let home = tempfile::tempdir().expect("tempdir");
+    let project = tempfile::tempdir().expect("project");
+    std::fs::write(
+        home.path().join("work.config.toml"),
+        "model = \"profile-model\"\n",
+    )
+    .expect("profile");
+    std::fs::create_dir(project.path().join(".ruxex")).expect("project config directory");
+    std::fs::write(
+        project.path().join(".ruxex/config.toml"),
+        "model = \"project-model\"\n",
+    )
+    .expect("project config");
+    crate::legacy_core::config::set_project_trust_level(
+        home.path(),
+        project.path(),
+        TrustLevel::Trusted,
+    )
+    .expect("trusted project");
+    let mut actual = ConfigBuilder::default()
+        .ruxex_home(home.path().to_path_buf())
+        .loader_overrides(LoaderOverrides {
+            user_config_path: Some(home.path().join("work.config.toml").abs()),
+            user_config_profile: Some("work".parse().expect("profile name")),
+            ..LoaderOverrides::without_managed_config_for_tests()
+        })
+        .harness_overrides(ConfigOverrides {
+            cwd: Some(project.path().to_path_buf()),
+            ..ConfigOverrides::default()
+        })
+        .build()
+        .await
+        .expect("config");
+    // Project model settings are returned by app-server config/read and overlaid onto the
+    // runtime config before managed defaults are applied.
+    actual.model = Some("project-model".to_string());
+    assert_eq!(actual.model.as_deref(), Some("project-model"));
+    assert!(actual.config_layer_stack.layers_high_to_low().any(|layer| {
+        matches!(
+            layer.name,
+            ConfigLayerSource::User {
+                profile: Some(_),
+                ..
+            }
+        ) && layer.config.get("model").is_some()
+    }));
+    let mut expected = actual.clone();
+    expected.model = Some("managed-model".to_string());
+    expected.model_reasoning_effort = Some(ReasoningEffort::High);
+    expected.service_tier = Some("flex".to_string());
+
+    apply_managed_new_thread_defaults(
+        &mut actual,
+        Some(&defaults()),
+        &[],
+        &ConfigOverrides::default(),
+    );
+
+    assert_eq!(actual, expected);
+}

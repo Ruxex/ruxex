@@ -1,0 +1,61 @@
+name: Publish crates.io placeholder
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate packaging without publishing to crates.io
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crates-io-placeholder-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish placeholder
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4.2.2
+
+      - name: Install native linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes binutils build-essential
+
+      - name: Select repository Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal
+          rustup default 1.98.1
+          rustc --version --verbose
+
+      - name: List package contents
+        working-directory: placeholder
+        run: cargo package --list
+
+      - name: Validate package publication
+        working-directory: placeholder
+        env:
+          RUSTFLAGS: "-C link-arg=-fuse-ld=bfd"
+        run: cargo publish --dry-run
+
+      - name: Publish placeholder to crates.io
+        if: ${{ inputs.dry_run == false }}
+        working-directory: placeholder
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          RUSTFLAGS: "-C link-arg=-fuse-ld=bfd"
+        run: |
+          set -euo pipefail
+          if [[ -z "${CARGO_REGISTRY_TOKEN:-}" ]]; then
+            echo "CARGO_REGISTRY_TOKEN is required for a real publish." >&2
+            exit 1
+          fi
+          cargo publish

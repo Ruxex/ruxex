@@ -1,0 +1,3 @@
+[target.'cfg(all(target_os = "linux", target_env = "gnu"))']
+linker = "gcc"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]

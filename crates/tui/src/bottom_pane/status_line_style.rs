@@ -1,0 +1,193 @@
+//! Theme-derived styling for the configurable footer statusline.
+
+use ratatui::prelude::Stylize;
+use ratatui::style::Color;
+use ratatui::style::Style;
+use ratatui::text::Line;
+use ratatui::text::Span;
+
+use super::status_line_setup::StatusLineItem;
+use crate::render::highlight::foreground_style_for_scopes;
+use crate::thread_color::thread_color;
+use ruxex_protocol::ThreadId;
+
+const STATUS_LINE_SEPARATOR: &str = " · ";
+const STATUS_LINE_COLOR_SATURATION_PERCENT: u16 = 85;
+const STATUS_LINE_COLOR_BRIGHTNESS_PERCENT: u16 = 100;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum StatusLineAccent {
+    Model,
+    Path,
+    Branch,
+    State,
+    Usage,
+    Limit,
+    Metadata,
+    Mode,
+    Thread,
+    Progress,
+}
+
+impl StatusLineAccent {
+    fn for_item(item: StatusLineItem) -> Self {
+        match item {
+            StatusLineItem::ModelName
+            | StatusLineItem::ModelWithReasoning
+            | StatusLineItem::Reasoning => Self::Model,
+            StatusLineItem::CurrentDir | StatusLineItem::ProjectRoot => Self::Path,
+            StatusLineItem::GitBranch
+            | StatusLineItem::PullRequestNumber
+            | StatusLineItem::BranchChanges => Self::Branch,
+            StatusLineItem::Status => Self::State,
+            StatusLineItem::ContextRemaining
+            | StatusLineItem::ContextUsed
+            | StatusLineItem::ContextWindowSize
+            | StatusLineItem::UsedTokens
+            | StatusLineItem::TotalInputTokens
+            | StatusLineItem::TotalOutputTokens
+            | StatusLineItem::ThreadCredits
+            | StatusLineItem::EstimatedThreadCost => Self::Usage,
+            StatusLineItem::FiveHourLimit | StatusLineItem::WeeklyLimit => Self::Limit,
+            StatusLineItem::RuxexVersion | StatusLineItem::Hostname | StatusLineItem::SessionId => {
+                Self::Metadata
+            }
+            StatusLineItem::RawOutput => Self::Mode,
+            StatusLineItem::Permissions => Self::Mode,
+            StatusLineItem::ApprovalMode => Self::Mode,
+            StatusLineItem::ThreadName | StatusLineItem::ThreadTitle => Self::Thread,
+            StatusLineItem::TaskProgress => Self::Progress,
+        }
+    }
+
+    fn scopes(self) -> &'static [&'static str] {
+        match self {
+            Self::Model => &["entity.name.type", "support.type", "variable"],
+            Self::Path => &["string", "markup.underline.link"],
+            Self::Branch => &["entity.name.function", "entity.name.tag"],
+            Self::State => &["keyword.control", "keyword"],
+            Self::Usage => &["constant.numeric", "constant"],
+            Self::Limit => &["constant.language", "storage.type"],
+            Self::Metadata => &["comment", "constant.other"],
+            Self::Mode => &["storage.modifier", "keyword.operator"],
+            Self::Thread => &["markup.heading", "entity.name.section"],
+            Self::Progress => &["markup.inserted", "constant.numeric"],
+        }
+    }
+
+    fn fallback_style(self) -> Style {
+        match self {
+            Self::Model | Self::State | Self::Metadata | Self::Mode => Style::default().cyan(),
+            Self::Path | Self::Usage | Self::Progress => Style::default().green(),
+            Self::Branch | Self::Limit | Self::Thread => Style::default().magenta(),
+        }
+    }
+}
+
+pub(crate) fn status_line_from_segments<I>(
+    segments: I,
+    use_theme_colors: bool,
+    thread_id: Option<ThreadId>,
+) -> Option<Line<'static>>
+where
+    I: IntoIterator<Item = (StatusLineItem, String)>,
+{
+    status_line_from_segments_with_resolver(segments, use_theme_colors, thread_id, |accent| {
+        foreground_style_for_scopes(accent.scopes())
+    })
+}
+
+fn status_line_from_segments_with_resolver<I, F>(
+    segments: I,
+    use_theme_colors: bool,
+    thread_id: Option<ThreadId>,
+    theme_style_for_accent: F,
+) -> Option<Line<'static>>
+where
+    I: IntoIterator<Item = (StatusLineItem, String)>,
+    F: Fn(StatusLineAccent) -> Option<Style>,
+{
+    let mut spans = Vec::new();
+    for (item, text) in segments {
+        if !spans.is_empty() {
+            spans.push(STATUS_LINE_SEPARATOR.dim());
+        }
+        let style = if use_theme_colors
+            && matches!(
+                item,
+                StatusLineItem::ThreadName | StatusLineItem::ThreadTitle
+            )
+            && let Some(thread_id) = thread_id
+        {
+            Style::default().fg(thread_color(thread_id))
+        } else if use_theme_colors {
+            let accent = StatusLineAccent::for_item(item);
+            soften_status_line_style(
+                theme_style_for_accent(accent).unwrap_or_else(|| accent.fallback_style()),
+            )
+        } else {
+            Style::default().dim()
+        };
+        let style = if item == StatusLineItem::PullRequestNumber {
+            style.underlined()
+        } else {
+            style
+        };
+        spans.push(Span::styled(text, style));
+    }
+
+    (!spans.is_empty()).then(|| Line::from(spans))
+}
+
+fn soften_status_line_style(mut style: Style) -> Style {
+    if let Some(fg) = style.fg {
+        style.fg = Some(soften_status_line_color(fg));
+    }
+    style
+}
+
+#[allow(clippy::disallowed_methods)]
+fn soften_status_line_color(color: Color) -> Color {
+    match color {
+        Color::Rgb(r, g, b) => {
+            let luma = weighted_luma(r, g, b);
+            Color::Rgb(
+                soften_rgb_channel(r, luma),
+                soften_rgb_channel(g, luma),
+                soften_rgb_channel(b, luma),
+            )
+        }
+        Color::LightRed => Color::Red,
+        Color::LightGreen => Color::Green,
+        Color::LightYellow => Color::Yellow,
+        Color::LightBlue => Color::Blue,
+        Color::LightMagenta => Color::Magenta,
+        Color::LightCyan => Color::Cyan,
+        Color::White => Color::Gray,
+        Color::Reset
+        | Color::Black
+        | Color::Red
+        | Color::Green
+        | Color::Yellow
+        | Color::Blue
+        | Color::Magenta
+        | Color::Cyan
+        | Color::Gray
+        | Color::DarkGray
+        | Color::Indexed(_) => color,
+    }
+}
+
+fn weighted_luma(r: u8, g: u8, b: u8) -> u16 {
+    (77 * u16::from(r) + 150 * u16::from(g) + 29 * u16::from(b)) / 256
+}
+
+fn soften_rgb_channel(channel: u8, luma: u16) -> u8 {
+    let channel = u16::from(channel);
+    let softened = (channel * STATUS_LINE_COLOR_SATURATION_PERCENT
+        + luma * (100 - STATUS_LINE_COLOR_SATURATION_PERCENT)
+        + 50)
+        / 100;
+
+    ((softened * STATUS_LINE_COLOR_BRIGHTNESS_PERCENT + 50) / 100) as u8
+}
