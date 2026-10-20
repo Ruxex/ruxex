@@ -1457,6 +1457,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact_str"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79fcda08c33bb58b97008b2cdada6622500e949e060f5913361763121abd2416"
+dependencies = [
+ "castaway",
+ "cfg-if",
+ "itoa",
+ "static_assertions",
+ "zmij",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1665,6 +1678,7 @@ dependencies = [
  "ruxex-protocol",
  "ruxex-providers",
  "ruxex-thread-store",
+ "ruxex-tokio-tungstenite",
  "ruxex-utils-absolute-path",
  "ruxex-utils-cargo-bin",
  "ruxex-utils-path-uri",
@@ -1672,7 +1686,6 @@ dependencies = [
  "shlex",
  "tempfile",
  "tokio",
- "tokio-tungstenite",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
@@ -1771,24 +1784,6 @@ name = "crossbeam-utils"
 version = "0.8.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
-
-[[package]]
-name = "crossterm"
-version = "0.29.0"
-source = "git+https://github.com/openai-oss-forks/crossterm?rev=45fecb9508105988f42fe6ff0441783ed3717f92#45fecb9508105988f42fe6ff0441783ed3717f92"
-dependencies = [
- "bitflags 2.13.1",
- "crossterm_winapi",
- "derive_more 2.1.1",
- "document-features",
- "futures-core",
- "mio",
- "parking_lot",
- "rustix 1.1.4",
- "signal-hook",
- "signal-hook-mio",
- "winapi",
-]
 
 [[package]]
 name = "crossterm_winapi"
@@ -2547,15 +2542,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "document-features"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
-dependencies = [
- "litrs",
-]
-
-[[package]]
 name = "dom_query"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2937,12 +2923,6 @@ dependencies = [
  "regex-automata",
  "regex-syntax",
 ]
-
-[[package]]
-name = "fast-srgb8"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd2e7510819d6fbf51a5545c8f922716ecfb14df168a3242f7d33e0239efe6a1"
 
 [[package]]
 name = "faster-hex"
@@ -6083,9 +6063,9 @@ dependencies = [
 
 [[package]]
 name = "line-clipping"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f50e8f47623268b5407192d26876c4d7f89d686ca130fdc53bced4814cd29f8"
+checksum = "e752191d037c44ad111a8caa762921926658402f01cc1253f7bef2020ece4f5e"
 dependencies = [
  "bitflags 2.13.1",
 ]
@@ -6135,12 +6115,6 @@ name = "litemap"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6373607a59f0be73a39b6fe456b8192fcc3585f602af20751600e974dd455e77"
-
-[[package]]
-name = "litrs"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
 name = "lock_api"
@@ -6793,7 +6767,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "680998035259dcfcafe653688bf2aa6d3e2dc05e98be6ab46afb089dc84f1df8"
 dependencies = [
- "proc-macro-crate 2.0.2",
+ "proc-macro-crate 3.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -7380,26 +7354,35 @@ dependencies = [
 
 [[package]]
 name = "palette"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cbf71184cc5ecc2e4e1baccdb21026c20e5fc3dcf63028a086131b3ab00b6e6"
+checksum = "ddeed8580d347d2abf3dcf06a5f0b3dc020258338526b277847cd4248a70fc64"
 dependencies = [
  "approx",
- "fast-srgb8",
  "libm",
  "palette_derive",
+ "palette_math",
 ]
 
 [[package]]
 name = "palette_derive"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5030daf005bface118c096f510ffb781fc28f9ab6a32ab224d8631be6851d30"
+checksum = "88537020289b719d81be994ccf1bbf4990f477e2f69ee52fe3e45f43a02e56be"
 dependencies = [
  "by_address",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "palette_math"
+version = "0.7.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e6eb142958d64335fb0e345c5b9ead2ecd6fc438c307e9d7d3c4fd428dbaf12"
+dependencies = [
+ "libm",
 ]
 
 [[package]]
@@ -8964,104 +8947,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "ratatui"
-version = "0.30.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3274ba0a2c5e1bcad2a2005d20f4dc59dad26b2eb0940fb094500dba4099d57d"
-dependencies = [
- "instability",
- "ratatui-core",
- "ratatui-crossterm",
- "ratatui-termina",
- "ratatui-termion",
- "ratatui-termwiz",
- "ratatui-widgets",
- "serde",
-]
-
-[[package]]
 name = "ratatui-core"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cbb175c433c8e28a809d1f5773a2ae96e68c0ce40db865cbab1020bf33ae479c"
 dependencies = [
  "bitflags 2.13.1",
- "compact_str",
- "critical-section",
+ "compact_str 0.9.1",
  "hashbrown 0.17.1",
  "itertools 0.14.0",
  "kasuari",
  "lru",
- "palette",
- "serde",
  "strum 0.28.0",
  "thiserror 2.0.18",
  "unicode-segmentation",
- "unicode-truncate",
- "unicode-width 0.2.1",
-]
-
-[[package]]
-name = "ratatui-crossterm"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567584a3b0e6a8203c23de40b4861497266725eb5363dbfd18a1edd603cca9f0"
-dependencies = [
- "cfg-if",
- "crossterm",
- "instability",
- "ratatui-core",
-]
-
-[[package]]
-name = "ratatui-termina"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0bf912d9e66f057a759d92e386a280ea886b352ab757d6ac4d653c7ed2c43c2"
-dependencies = [
- "instability",
- "ratatui-core",
- "termina",
-]
-
-[[package]]
-name = "ratatui-termion"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87c732202fa5a71a9da0991013f0853e53f87048f45198e3a1ca3ee722accc2f"
-dependencies = [
- "instability",
- "ratatui-core",
- "termion",
-]
-
-[[package]]
-name = "ratatui-termwiz"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "faf03e0380b7744054d6cb74224fe3adf062a029754933f575ca1e3b4c2ce977"
-dependencies = [
- "ratatui-core",
- "termwiz",
-]
-
-[[package]]
-name = "ratatui-widgets"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66e3d19bcc9130ca376277d93b60767ff121ace3be06f5f95f81dd68956407d1"
-dependencies = [
- "bitflags 2.13.1",
- "hashbrown 0.17.1",
- "indoc",
- "instability",
- "itertools 0.14.0",
- "line-clipping",
- "ratatui-core",
- "serde",
- "strum 0.28.0",
- "time",
- "unicode-segmentation",
+ "unicode-truncate 2.0.1",
  "unicode-width 0.2.1",
 ]
 
@@ -9596,7 +9496,8 @@ name = "ruxex-ansi-escape"
 version = "0.1.0"
 dependencies = [
  "ansi-to-tui",
- "ratatui",
+ "ratatui-core",
+ "ruxex-ratatui",
  "tracing",
 ]
 
@@ -9619,6 +9520,8 @@ dependencies = [
  "ruxex-client",
  "ruxex-http-client",
  "ruxex-protocol",
+ "ruxex-tokio-tungstenite",
+ "ruxex-tungstenite",
  "ruxex-utils-rustls-provider",
  "ruxex-websocket-client",
  "schemars 0.8.22",
@@ -9628,10 +9531,8 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-test",
- "tokio-tungstenite",
  "tokio-util",
  "tracing",
- "tungstenite",
  "url",
  "uuid",
  "wiremock",
@@ -9697,6 +9598,7 @@ dependencies = [
  "ruxex-skills-extension",
  "ruxex-state",
  "ruxex-thread-store",
+ "ruxex-tokio-tungstenite",
  "ruxex-tools",
  "ruxex-uds",
  "ruxex-user-verification",
@@ -9720,7 +9622,6 @@ dependencies = [
  "tikv-jemallocator",
  "time",
  "tokio",
- "tokio-tungstenite",
  "tokio-util",
  "toml 0.9.11+spec-1.1.0",
  "toml_edit 0.24.0+spec-1.1.0",
@@ -9745,6 +9646,7 @@ dependencies = [
  "ruxex-core",
  "ruxex-exec-server",
  "ruxex-protocol",
+ "ruxex-tokio-tungstenite",
  "ruxex-uds",
  "ruxex-utils-absolute-path",
  "ruxex-utils-home-dir",
@@ -9753,7 +9655,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
- "tokio-tungstenite",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
  "url",
@@ -9771,6 +9672,7 @@ dependencies = [
  "ruxex-app-server-protocol",
  "ruxex-app-server-transport",
  "ruxex-install-context",
+ "ruxex-tokio-tungstenite",
  "ruxex-uds",
  "ruxex-utils-home-dir",
  "semver",
@@ -9778,7 +9680,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
- "tokio-tungstenite",
  "tracing",
 ]
 
@@ -9831,13 +9732,13 @@ dependencies = [
  "ruxex-core",
  "ruxex-otel",
  "ruxex-protocol",
+ "ruxex-tungstenite",
  "ruxex-utils-cli",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
- "tungstenite",
  "url",
  "uuid",
 ]
@@ -9869,6 +9770,7 @@ dependencies = [
  "ruxex-model-provider",
  "ruxex-protocol",
  "ruxex-state",
+ "ruxex-tokio-tungstenite",
  "ruxex-uds",
  "ruxex-utils-absolute-path",
  "ruxex-utils-rustls-provider",
@@ -9879,7 +9781,6 @@ dependencies = [
  "tempfile",
  "time",
  "tokio",
- "tokio-tungstenite",
  "tokio-util",
  "tracing",
  "url",
@@ -9974,7 +9875,6 @@ dependencies = [
  "chrono",
  "clap",
  "clap_complete",
- "crossterm",
  "flate2",
  "futures",
  "http",
@@ -9995,6 +9895,7 @@ dependencies = [
  "ruxex-core",
  "ruxex-core-plugins",
  "ruxex-credential-broker",
+ "ruxex-crossterm",
  "ruxex-exec",
  "ruxex-exec-server",
  "ruxex-execpolicy",
@@ -10022,6 +9923,7 @@ dependencies = [
  "ruxex-tcp-tunnel",
  "ruxex-terminal-detection",
  "ruxex-thread-store",
+ "ruxex-tokio-tungstenite",
  "ruxex-tui",
  "ruxex-utils-absolute-path",
  "ruxex-utils-cli",
@@ -10038,7 +9940,6 @@ dependencies = [
  "tempfile",
  "tikv-jemallocator",
  "tokio",
- "tokio-tungstenite",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
  "tracing-subscriber",
@@ -10289,6 +10190,7 @@ dependencies = [
  "ruxex-state",
  "ruxex-terminal-detection",
  "ruxex-thread-store",
+ "ruxex-tokio-tungstenite",
  "ruxex-tools",
  "ruxex-utils-absolute-path",
  "ruxex-utils-audio",
@@ -10314,7 +10216,6 @@ dependencies = [
  "test-case",
  "thiserror 2.0.18",
  "tokio",
- "tokio-tungstenite",
  "tokio-util",
  "toml 0.9.11+spec-1.1.0",
  "toml_edit 0.24.0+spec-1.1.0",
@@ -10403,6 +10304,24 @@ name = "ruxex-credential-broker"
 version = "0.1.0"
 dependencies = [
  "tokio",
+]
+
+[[package]]
+name = "ruxex-crossterm"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5f51f2a872e1d764b715a74ca32570cae2fff912713de94f68f5683fd995ec4"
+dependencies = [
+ "bitflags 2.13.1",
+ "crossterm_winapi",
+ "derive_more 2.1.1",
+ "futures-core",
+ "mio",
+ "parking_lot",
+ "rustix 1.1.4",
+ "signal-hook",
+ "signal-hook-mio",
+ "winapi",
 ]
 
 [[package]]
@@ -10552,9 +10471,9 @@ dependencies = [
  "prost",
  "ruxex-exec-server",
  "ruxex-http-client",
+ "ruxex-tokio-tungstenite",
  "serde_json",
  "tokio",
- "tokio-tungstenite",
 ]
 
 [[package]]
@@ -11005,6 +10924,7 @@ dependencies = [
  "ruxex-otel",
  "ruxex-protocol",
  "ruxex-response-debug-context",
+ "ruxex-tokio-tungstenite",
  "ruxex-utils-redacted-string",
  "serde",
  "serde_json",
@@ -11012,7 +10932,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
- "tokio-tungstenite",
  "tracing",
  "url",
  "uuid",
@@ -11117,6 +11036,7 @@ dependencies = [
  "pretty_assertions",
  "reqwest 0.12.28",
  "ruxex-protocol",
+ "ruxex-tokio-tungstenite",
  "ruxex-utils-absolute-path",
  "ruxex-utils-string",
  "seccompiler",
@@ -11125,7 +11045,6 @@ dependencies = [
  "strum_macros 0.28.0",
  "thiserror 2.0.18",
  "tokio",
- "tokio-tungstenite",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
@@ -11255,6 +11174,7 @@ dependencies = [
  "ruxex-otel",
  "ruxex-protocol",
  "ruxex-response-debug-context",
+ "ruxex-tokio-tungstenite",
  "ruxex-utils-redacted-string",
  "serde",
  "serde_json",
@@ -11262,7 +11182,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
- "tokio-tungstenite",
  "tracing",
  "url",
  "uuid",
@@ -11288,6 +11207,108 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "ruxex-ratatui"
+version = "0.30.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8723dc9c98dbc5bb885e6fb0a82b23c7635266d942bde3bdeb124afed4ecc689"
+dependencies = [
+ "instability",
+ "ruxex-ratatui-core",
+ "ruxex-ratatui-crossterm",
+ "ruxex-ratatui-termina",
+ "ruxex-ratatui-termion",
+ "ruxex-ratatui-termwiz",
+ "ruxex-ratatui-widgets",
+ "serde",
+]
+
+[[package]]
+name = "ruxex-ratatui-core"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a90a4e9c4a4804c555c0fc97fd8da6c229cb14a8f05b4348e36fe402c0680e5"
+dependencies = [
+ "bitflags 2.13.1",
+ "compact_str 0.10.0",
+ "critical-section",
+ "hashbrown 0.17.1",
+ "itertools 0.15.0",
+ "kasuari",
+ "lru",
+ "palette",
+ "serde",
+ "strum 0.28.0",
+ "thiserror 2.0.18",
+ "unicode-segmentation",
+ "unicode-truncate 3.0.0",
+ "unicode-width 0.2.1",
+]
+
+[[package]]
+name = "ruxex-ratatui-crossterm"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c01e68edada0a5dc1a6527691b8104e59246b8391bccd4ca20a5cf648ae2780"
+dependencies = [
+ "cfg-if",
+ "instability",
+ "ruxex-crossterm",
+ "ruxex-ratatui-core",
+]
+
+[[package]]
+name = "ruxex-ratatui-termina"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f6aee7c55b9c754558735c44a8548a66b757304dbc6000512d2f5fe237e252f"
+dependencies = [
+ "instability",
+ "ruxex-ratatui-core",
+ "termina",
+]
+
+[[package]]
+name = "ruxex-ratatui-termion"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09fc5f4ece3d31e1b25ccbfd13b5325b35b6a79c2f5da34e8595687a869e3f3e"
+dependencies = [
+ "instability",
+ "ruxex-ratatui-core",
+ "termion",
+]
+
+[[package]]
+name = "ruxex-ratatui-termwiz"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acdd466b66b3c6e8b670eeb30fba732e12d8643b10441710708ab5847cf9555f"
+dependencies = [
+ "ruxex-ratatui-core",
+ "termwiz",
+]
+
+[[package]]
+name = "ruxex-ratatui-widgets"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b00b24012f33bc5584c5f46e60d43cd00d760442ab795cbeb87c21b314b248e"
+dependencies = [
+ "bitflags 2.13.1",
+ "hashbrown 0.17.1",
+ "indoc",
+ "instability",
+ "itertools 0.15.0",
+ "line-clipping",
+ "ruxex-ratatui-core",
+ "serde",
+ "strum 0.28.0",
+ "time",
+ "unicode-segmentation",
+ "unicode-width 0.2.1",
 ]
 
 [[package]]
@@ -11608,6 +11629,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ruxex-tokio-tungstenite"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fce19d7a5e6d9e0b97a5b501d64dcdf5a0908cd37111e038b3ffa4e23ecbca3d"
+dependencies = [
+ "futures-util",
+ "log",
+ "rustls",
+ "rustls-native-certs",
+ "rustls-pki-types",
+ "ruxex-tungstenite",
+ "tokio",
+ "tokio-rustls",
+]
+
+[[package]]
 name = "ruxex-tools"
 version = "0.1.0"
 dependencies = [
@@ -11643,7 +11680,6 @@ dependencies = [
  "clap",
  "color-eyre",
  "core_test_support",
- "crossterm",
  "derive_more 2.1.1",
  "diffy",
  "dirs 6.0.0",
@@ -11659,7 +11695,6 @@ dependencies = [
  "pretty_assertions",
  "pulldown-cmark",
  "rand 0.9.3",
- "ratatui",
  "regex-lite",
  "rmcp",
  "ruxex-ansi-escape",
@@ -11671,6 +11706,7 @@ dependencies = [
  "ruxex-config",
  "ruxex-context-fragments",
  "ruxex-core-plugins",
+ "ruxex-crossterm",
  "ruxex-exec-server",
  "ruxex-features",
  "ruxex-file-search",
@@ -11688,11 +11724,13 @@ dependencies = [
  "ruxex-otel",
  "ruxex-plugin",
  "ruxex-protocol",
+ "ruxex-ratatui",
  "ruxex-rollout",
  "ruxex-sandboxing",
  "ruxex-shell-command",
  "ruxex-state",
  "ruxex-terminal-detection",
+ "ruxex-tokio-tungstenite",
  "ruxex-uds",
  "ruxex-utils-absolute-path",
  "ruxex-utils-approval-presets",
@@ -11722,7 +11760,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-stream",
- "tokio-tungstenite",
  "tokio-util",
  "toml 0.9.11+spec-1.1.0",
  "toml_edit 0.24.0+spec-1.1.0",
@@ -11739,6 +11776,26 @@ dependencies = [
  "webbrowser",
  "wiremock",
  "zbus",
+]
+
+[[package]]
+name = "ruxex-tungstenite"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b63760e9a94c6a2992a47c776185d028852597c137fc019e823103fe15a1ae1"
+dependencies = [
+ "bytes",
+ "data-encoding",
+ "headers",
+ "http",
+ "httparse",
+ "log",
+ "rand 0.9.3",
+ "rustls",
+ "rustls-pki-types",
+ "sha1 0.10.6",
+ "thiserror 2.0.18",
+ "utf-8",
 ]
 
 [[package]]
@@ -12035,10 +12092,10 @@ dependencies = [
  "rcgen",
  "rustls",
  "ruxex-http-client",
+ "ruxex-tokio-tungstenite",
  "ruxex-utils-rustls-provider",
  "tokio",
  "tokio-rustls",
- "tokio-tungstenite",
  "url",
 ]
 
@@ -14066,9 +14123,9 @@ dependencies = [
 
 [[package]]
 name = "termina"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9048a889effe34a5cddee0af7f53285198b16dca3be510858d38dfdb3e62a04e"
+checksum = "881a7f20ade48167027822c52a0aeca879afa3174b15c71997827826bce669f9"
 dependencies = [
  "bitflags 2.13.1",
  "parking_lot",
@@ -14472,15 +14529,12 @@ dependencies = [
 [[package]]
 name = "tokio-tungstenite"
 version = "0.28.0"
-source = "git+https://github.com/openai-oss-forks/tokio-tungstenite?rev=0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186#0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d25a406cddcc431a75d3d9afc6a7c0f7428d4891dd973e4d54c56b46127bf857"
 dependencies = [
  "futures-util",
  "log",
- "rustls",
- "rustls-native-certs",
- "rustls-pki-types",
  "tokio",
- "tokio-rustls",
  "tungstenite",
 ]
 
@@ -15000,18 +15054,16 @@ dependencies = [
 
 [[package]]
 name = "tungstenite"
-version = "0.27.0"
-source = "git+https://github.com/openai-oss-forks/tungstenite-rs?rev=4fffad30fe373adbdcffab9545e9e9bf4f2fc19f#4fffad30fe373adbdcffab9545e9e9bf4f2fc19f"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8628dcc84e5a09eb3d8423d6cb682965dea9133204e8fb3efee74c2a0c259442"
 dependencies = [
  "bytes",
  "data-encoding",
- "headers",
  "http",
  "httparse",
  "log",
  "rand 0.9.3",
- "rustls",
- "rustls-pki-types",
  "sha1 0.10.6",
  "thiserror 2.0.18",
  "utf-8",
@@ -15149,6 +15201,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16b380a1238663e5f8a691f9039c73e1cdae598a30e9855f541d29b08b53e9a5"
 dependencies = [
  "itertools 0.14.0",
+ "unicode-segmentation",
+ "unicode-width 0.2.1",
+]
+
+[[package]]
+name = "unicode-truncate"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5dde200aa133f5b6d9cc616878815ffaa45ad9529ef4a2f04d86bab91d63984"
+dependencies = [
+ "itertools 0.15.0",
  "unicode-segmentation",
  "unicode-width 0.2.1",
 ]

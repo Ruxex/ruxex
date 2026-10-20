@@ -312,7 +312,7 @@ color-eyre = "0.6.3"
 constant_time_eq = "0.3.1"
 crossbeam-channel = "0.5.15"
 crypto_box = { version = "0.9.1", features = ["seal"] }
-crossterm = { version = "0.29.0", git = "https://github.com/openai-oss-forks/crossterm", rev = "45fecb9508105988f42fe6ff0441783ed3717f92" }
+crossterm = { package = "ruxex-crossterm", version = "0.29.0" }
 ctor = "0.6.3"
 deno_core_icudata = "0.77.0"
 derive_more = "2"
@@ -380,12 +380,13 @@ pulldown-cmark = { version = "0.10", default-features = false }
 quick-xml = "0.41.0"
 rand = "0.9"
 rand_regex = "0.18.1"
-ratatui = { version = "0.30.2", default-features = false, features = [
+ratatui = { package = "ruxex-ratatui", version = "0.30.2", default-features = false, features = [
     "crossterm",
     "layout-cache",
     "underline-color",
 ] }
-ratatui-macros = "0.7.2"
+ratatui-core-upstream = { package = "ratatui-core", version = "0.1.2" }
+ratatui-macros = { package = "ruxex-ratatui-macros", version = "0.7.2" }
 rcgen = { version = "0.14.7", default-features = false, features = [
     "aws_lc_rs",
     "pem",
@@ -458,7 +459,7 @@ tokio = "1"
 tokio-rustls = "0.26.4"
 tokio-stream = "0.1.18"
 tokio-test = "0.4"
-tokio-tungstenite = { version = "0.28.0", git = "https://github.com/openai-oss-forks/tokio-tungstenite", rev = "0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186", features = [
+tokio-tungstenite = { package = "ruxex-tokio-tungstenite", version = "0.28.0", features = [
     "proxy",
     "rustls-tls-native-roots",
 ] }
@@ -475,7 +476,7 @@ tonic-prost = "0.14.3"
 tree-sitter = "0.25.10"
 tree-sitter-bash = "0.25"
 ts-rs = "11"
-tungstenite = { version = "0.27.0", git = "https://github.com/openai-oss-forks/tungstenite-rs", rev = "4fffad30fe373adbdcffab9545e9e9bf4f2fc19f", features = ["proxy"] }
+tungstenite = { package = "ruxex-tungstenite", version = "0.27.0", features = ["proxy"] }
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2"
 url = "2"
@@ -576,20 +577,3 @@ strip = false
 debug = "limited"
 inherits = "test"
 opt-level = 0
-
-[patch.crates-io]
-# Uncomment to debug local changes.
-# ratatui = { path = "../../ratatui" }
-# Keep these pinned fork sources: the active build depends on their patched
-# platform and WebSocket compatibility fixes.
-crossterm = { version = "0.29.0", git = "https://github.com/openai-oss-forks/crossterm", rev = "45fecb9508105988f42fe6ff0441783ed3717f92" }
-tokio-tungstenite = { version = "0.28.0", git = "https://github.com/openai-oss-forks/tokio-tungstenite", rev = "0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186" }
-tungstenite = { version = "0.27.0", git = "https://github.com/openai-oss-forks/tungstenite-rs", rev = "4fffad30fe373adbdcffab9545e9e9bf4f2fc19f" }
-
-# Uncomment to debug local changes.
-# rmcp = { path = "../../rust-sdk/crates/rmcp" }
-
-# Keep this alternate source patch in sync with the active tungstenite fork
-# above so both Git URL spellings resolve to the same pinned revision.
-[patch."ssh://git@github.com/openai-oss-forks/tungstenite-rs.git"]
-tungstenite = { version = "0.27.0", git = "https://github.com/openai-oss-forks/tungstenite-rs", rev = "4fffad30fe373adbdcffab9545e9e9bf4f2fc19f" }
