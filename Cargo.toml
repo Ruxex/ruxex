@@ -312,7 +312,7 @@ color-eyre = "0.6.3"
 constant_time_eq = "0.3.1"
 crossbeam-channel = "0.5.15"
 crypto_box = { version = "0.9.1", features = ["seal"] }
-crossterm = "0.29.0"
+crossterm = { version = "0.29.0", git = "https://github.com/openai-oss-forks/crossterm", rev = "45fecb9508105988f42fe6ff0441783ed3717f92" }
 ctor = "0.6.3"
 deno_core_icudata = "0.77.0"
 derive_more = "2"
