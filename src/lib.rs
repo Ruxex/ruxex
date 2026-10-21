@@ -58,6 +58,11 @@ pub mod home {
 
 /// Provider implementation APIs grouped by responsibility.
 pub mod provider {
+    /// Client-side typed credential discovery contracts.
+    pub mod credentials {
+        pub use ruxex_provider_auth::*;
+    }
+
     /// Provider-neutral contract types implemented by provider adapters.
     pub mod contract {
         pub use ruxex_model_provider::*;

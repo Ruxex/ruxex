@@ -14,3 +14,6 @@ workspace = true
 
 [dependencies]
 ruxex-model-provider = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
