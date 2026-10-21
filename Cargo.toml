@@ -36,6 +36,7 @@ members = [
     "crates/attachment-store",
     "crates/async-utils",
     "crates/app-server",
+    "crates/app-server-mock",
     "crates/app-server-transport",
     "crates/app-server-daemon",
     "crates/app-server-client",
@@ -169,6 +170,7 @@ ruxex-ansi-escape = { path = "crates/ansi-escape", version = "0.1.0" }
 ruxex-api = { path = "crates/ruxex-api", version = "0.1.0" }
 ruxex-attachment-store = { path = "crates/attachment-store", version = "0.1.0" }
 ruxex-app-server = { path = "crates/app-server", version = "0.1.0" }
+ruxex-app-server-mock = { path = "crates/app-server-mock", version = "0.1.0" }
 ruxex-app-server-transport = { path = "crates/app-server-transport", version = "0.1.0" }
 ruxex-app-server-daemon = { path = "crates/app-server-daemon", version = "0.1.0" }
 ruxex-app-server-client = { path = "crates/app-server-client", version = "0.1.0" }

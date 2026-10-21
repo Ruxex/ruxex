@@ -9684,6 +9684,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ruxex-app-server-mock"
+version = "0.1.0"
+dependencies = [
+ "ruxex-app-server-protocol",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "ruxex-app-server-protocol"
 version = "0.1.0"
 dependencies = [

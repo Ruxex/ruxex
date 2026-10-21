@@ -1,0 +1,23 @@
+[package]
+name = "ruxex-app-server-mock"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[lib]
+name = "ruxex_app_server_mock"
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+name = "ruxex-app-server-mock"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-app-server-protocol = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["io-std", "io-util", "macros", "rt-multi-thread"] }
