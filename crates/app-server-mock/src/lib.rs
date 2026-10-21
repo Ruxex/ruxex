@@ -1,15 +1,39 @@
 //! Deterministic AppServer implementation for end-to-end tests.
 
+use futures::{SinkExt, StreamExt};
 use ruxex_app_server_protocol::{
     JSONRPCError, JSONRPCErrorError, JSONRPCMessage, JSONRPCRequest, JSONRPCResponse, RequestId,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use std::{collections::BTreeMap, io, path::PathBuf};
+use std::{
+    collections::BTreeMap,
+    io,
+    path::{Path, PathBuf},
+};
 use tokio::io::{AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader, BufWriter};
+use tokio::net::TcpListener;
+use tokio_tungstenite::{accept_async, tungstenite::Message};
 
 const MOCK_SIGNATURE: &str = "ruxex-app-server-mock";
 const MOCK_PROVIDER_PROTOCOL_VERSION: &str = "mock";
 const MOCK_BUILD_VERSION: &str = "ruxex-app-server-mock/0.1.0";
+
+/// JSON fixtures consumed by the mock binary or library builder.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct MockScenario {
+    /// Response values keyed by JSON-RPC method name.
+    #[serde(default)]
+    pub responses: BTreeMap<String, Value>,
+}
+
+impl MockScenario {
+    /// Loads a scenario from a JSON file.
+    pub fn from_path(path: impl AsRef<Path>) -> io::Result<Self> {
+        let contents = std::fs::read_to_string(path)?;
+        serde_json::from_str(&contents).map_err(io::Error::other)
+    }
+}
 
 /// Builder for a [`MockAppServer`].
 #[derive(Debug, Default)]
@@ -21,6 +45,12 @@ pub struct MockAppServerBuilder {
 }
 
 impl MockAppServerBuilder {
+    /// Adds all response fixtures from a scenario.
+    pub fn with_scenario(mut self, scenario: MockScenario) -> Self {
+        self.responses.extend(scenario.responses);
+        self
+    }
+
     /// Configures a JSON response fixture for a request method.
     pub fn with_response(mut self, method: impl Into<String>, response: Value) -> Self {
         self.responses.insert(method.into(), response);
@@ -51,7 +81,8 @@ impl MockAppServerBuilder {
     /// [`Self::with_ruxex_home`] when a test needs a fixed path.
     pub fn build(self) -> io::Result<MockAppServer> {
         let ruxex_home = match self.ruxex_home {
-            Some(path) => path,
+            Some(path) if path.is_absolute() => path,
+            Some(path) => std::env::current_dir()?.join(path),
             None => std::env::current_dir()?,
         };
 
@@ -141,6 +172,21 @@ impl MockAppServer {
         Ok(())
     }
 
+    /// Runs the mock as a WebSocket server for clients that already support
+    /// the AppServer Unix-socket/WebSocket transport, such as the Tauri
+    /// template. Each accepted connection has the same deterministic fixtures.
+    pub async fn run_websocket(&self, listener: TcpListener) -> io::Result<()> {
+        loop {
+            let (stream, peer) = listener.accept().await?;
+            let server = self.clone();
+            tokio::spawn(async move {
+                if let Err(error) = server.serve_websocket(stream).await {
+                    eprintln!("ruxex-app-server-mock: websocket {peer}: {error}");
+                }
+            });
+        }
+    }
+
     fn handle_request(&self, request: JSONRPCRequest) -> JSONRPCMessage {
         let result = self
             .responses
@@ -177,6 +223,53 @@ impl MockAppServer {
                 "buildVersion": MOCK_BUILD_VERSION,
             },
         })
+    }
+
+    async fn serve_websocket(&self, stream: tokio::net::TcpStream) -> io::Result<()> {
+        let mut socket = accept_async(stream).await.map_err(io::Error::other)?;
+        while let Some(message) = socket.next().await {
+            match message.map_err(io::Error::other)? {
+                Message::Text(text) => {
+                    if let Some(response) = self.response_for_line(&text) {
+                        let payload = serde_json::to_string(&response).map_err(io::Error::other)?;
+                        socket
+                            .send(Message::Text(payload.into()))
+                            .await
+                            .map_err(io::Error::other)?;
+                    }
+                }
+                Message::Ping(payload) => {
+                    socket
+                        .send(Message::Pong(payload))
+                        .await
+                        .map_err(io::Error::other)?;
+                }
+                Message::Close(_) => break,
+                Message::Binary(_) | Message::Pong(_) | Message::Frame(_) => {}
+            }
+        }
+        Ok(())
+    }
+
+    fn response_for_line(&self, line: &str) -> Option<JSONRPCMessage> {
+        match serde_json::from_str::<JSONRPCMessage>(line) {
+            Ok(message) => self.handle_message(message),
+            Err(error) => {
+                if let Some(id) = recover_request_id(line) {
+                    Some(JSONRPCMessage::Error(JSONRPCError {
+                        error: JSONRPCErrorError {
+                            code: -32600,
+                            data: None,
+                            message: "invalid request".to_owned(),
+                        },
+                        id,
+                    }))
+                } else {
+                    eprintln!("ruxex-app-server-mock: ignoring invalid input: {error}");
+                    None
+                }
+            }
+        }
     }
 }
 

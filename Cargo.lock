@@ -9687,8 +9687,12 @@ dependencies = [
 name = "ruxex-app-server-mock"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "ruxex-app-server-protocol",
+ "ruxex-tokio-tungstenite",
+ "serde",
  "serde_json",
+ "tempfile",
  "tokio",
 ]
 

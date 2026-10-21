@@ -24,6 +24,43 @@ printf '%s\n' '{"id":1,"method":"thread/start"}' \
 `initialize` には E2E クライアントが検証できる mock identity と platform 情報を
 含む payload を返します。notification と受信済み response/error には応答しません。
 
+## Scenario and isolated home
+
+子プロセスから typed response fixture を読み込む場合は、scenario JSON を渡します。
+
+```json
+{
+  "responses": {
+    "thread/start": {"threadId": "e2e-thread"},
+    "account/read": {"account": null}
+  }
+}
+```
+
+```sh
+ruxex-app-server-mock \
+  --scenario ./e2e/scenario.json \
+  --ruxex-home ./tmp/e2e-home
+```
+
+`RUXEX_MOCK_SCENARIO`、`RUXEX_MOCK_HOME`、`RUXEX_MOCK_LISTEN` でも指定でき、
+`RUXEX_HOME` は mock home のフォールバックとして利用されます。
+
+## WebSocket mode
+
+Tauri template の既存 WebSocket 接続経路を使う場合は `--listen` を指定します。
+stdio と同じ protocol を WebSocket text frame で提供します。
+
+```sh
+ruxex-app-server-mock \
+  --listen 127.0.0.1:43123 \
+  --scenario ./e2e/scenario.json
+```
+
+Tauri 側では `ws://127.0.0.1:43123` を WebSocket endpoint として指定できます。
+mock binary は production runtime package へ自動で混ぜず、E2E 用の build artifact
+として配置してください。
+
 ## Library
 
 同一 package の library API では、method 単位の fixture を設定できます。
