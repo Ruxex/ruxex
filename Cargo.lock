@@ -8196,6 +8196,7 @@ dependencies = [
  "ruxex-model-provider-info",
  "ruxex-models-manager",
  "ruxex-protocol",
+ "ruxex-provider-auth",
  "ruxex-tui",
  "ruxex-utils-home-dir",
 ]
@@ -9898,6 +9899,14 @@ dependencies = [
  "ts-rs",
  "uuid",
  "wildmatch",
+]
+
+[[package]]
+name = "ruxex-provider-auth"
+version = "0.1.5"
+dependencies = [
+ "ruxex-model-provider",
+ "tokio",
 ]
 
 [[package]]
