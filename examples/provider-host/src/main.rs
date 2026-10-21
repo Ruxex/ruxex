@@ -1,3 +1,6 @@
+mod cloudflare;
+
+use cloudflare::CloudflareProvider;
 use ruxex_app_server::AppServerRuntime;
 use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server::ProviderDescriptor;
@@ -8,7 +11,6 @@ use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
 use ruxex_cli::run_host_app_server_daemon;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::CloudflareModelProvider;
 
 const TEST_PROVIDER_INFO_ENV: &str = "RUXEX_TEST_PROVIDER_INFO";
 
@@ -59,7 +61,7 @@ fn main() -> anyhow::Result<()> {
                 )
                 .await?
             } else {
-                run_host_app_server_daemon::<CloudflareModelProvider>(
+                run_host_app_server_daemon::<CloudflareProvider>(
                     arg0_paths,
                     Default::default(),
                     Default::default(),
@@ -73,7 +75,7 @@ fn main() -> anyhow::Result<()> {
         } else if test_provider {
             ruxex_cli::run_with_provider_factory(arg0_paths, test_provider_factory(), None).await?;
         } else {
-            ruxex_cli::run::<CloudflareModelProvider>(arg0_paths, None).await?;
+            ruxex_cli::run::<CloudflareProvider>(arg0_paths, None).await?;
         }
         Ok(())
     })

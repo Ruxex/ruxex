@@ -38,6 +38,7 @@ pub mod catalog {
     pub use ruxex_models_manager::manager::ModelsManagerFuture;
     pub use ruxex_models_manager::manager::RefreshStrategy;
     pub use ruxex_models_manager::manager::SharedModelsManager;
+    pub use ruxex_models_manager::model_info::model_info_template_from_slug;
 }
 
 /// Ruxex HTTP client construction and request metadata APIs.
