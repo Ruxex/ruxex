@@ -96,6 +96,7 @@ pub mod provider {
         pub use ruxex_protocol::config_types::Verbosity;
         pub use ruxex_protocol::model_types::ModelCatalog;
         pub use ruxex_protocol::model_types::ModelInfo;
+        pub use ruxex_protocol::model_types::ModelVisibility;
         pub use ruxex_protocol::model_types::ReasoningEffort;
         pub use ruxex_protocol::models::ResponseItem;
         pub use ruxex_protocol::protocol::ModelVerification;
