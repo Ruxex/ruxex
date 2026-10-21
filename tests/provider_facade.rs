@@ -1,0 +1,159 @@
+use std::sync::Arc;
+
+use ruxex::provider::auth::CredentialManager;
+use ruxex::provider::config::{ModelProviderInfo, WireApi};
+use ruxex::provider::protocol::{
+    ModelCatalog, ModelVerification, ProviderAccount, ProviderAuthStatus, RateLimitSnapshot,
+    ReasoningEffort, ReasoningSummary, ResponseItem, ResponseUsageMetadata, SessionSource,
+    TokenUsage,
+};
+use ruxex::provider::transport::{
+    ClientRouteClass, HttpClientFactory, HttpTransport, ReqwestTransport,
+};
+use ruxex::provider::{ModelProvider, ModelProviderFactory, ProviderInit};
+
+fn accepts_provider<P: ModelProvider>() {}
+
+fn accepts_provider_factory<P: ModelProviderFactory>() {}
+
+fn accepts_http_transport<T: HttpTransport>() {}
+
+#[test]
+fn provider_facade_exposes_the_provider_author_surface() {
+    accepts_provider::<TestProvider>();
+    accepts_provider_factory::<TestProvider>();
+
+    let _ = ModelProviderInfo {
+        wire_api: WireApi::Responses,
+        ..ModelProviderInfo::default()
+    };
+    let _: fn(ProviderInit) = accepts_provider_init;
+
+    let _: Option<Arc<CredentialManager>> = None;
+    let _: Option<HttpClientFactory> = None;
+    let _: Option<ClientRouteClass> = None;
+    accepts_http_transport::<ReqwestTransport>();
+
+    let _: Option<ResponseItem> = None;
+    let _: Option<ModelCatalog> = None;
+    let _: Option<ProviderAccount> = None;
+    let _: Option<ProviderAuthStatus> = None;
+    let _: Option<RateLimitSnapshot> = None;
+    let _: Option<ReasoningEffort> = None;
+    let _: Option<ReasoningSummary> = None;
+    let _: Option<ResponseUsageMetadata> = None;
+    let _: Option<SessionSource> = None;
+    let _: Option<TokenUsage> = None;
+    let _: Option<ModelVerification> = None;
+}
+
+fn accepts_provider_init(_: ProviderInit) {}
+
+#[derive(Debug)]
+struct TestProvider;
+
+impl ModelProvider for TestProvider {
+    fn descriptor(&self) -> ruxex::provider::contract::ProviderDescriptor {
+        ruxex::provider::contract::ProviderDescriptor::new("test", "1")
+    }
+
+    fn capabilities(&self) -> ruxex::provider::contract::ProviderCapabilities {
+        ruxex::provider::contract::ProviderCapabilities::default()
+    }
+
+    fn chat(
+        &self,
+        _request: ruxex::provider::contract::ChatRequest,
+    ) -> ruxex::provider::contract::ProviderFuture<
+        '_,
+        ruxex::provider::contract::ProviderResult<ruxex::provider::contract::ProviderChatStream>,
+    > {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn list_models(
+        &self,
+        _request: ruxex::provider::contract::ListModelsRequest,
+    ) -> ruxex::provider::contract::ProviderFuture<
+        '_,
+        ruxex::provider::contract::ProviderResult<ruxex::provider::contract::ProviderModelCatalog>,
+    > {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn auth_state(&self) -> ruxex::provider::contract::ProviderAuthState {
+        ruxex::provider::contract::ProviderAuthState {
+            status: ProviderAuthStatus::Unauthenticated,
+            account_id: None,
+            display_name: None,
+            managed_auth: false,
+            revision: None,
+        }
+    }
+
+    fn request_snapshot(
+        &self,
+    ) -> ruxex::provider::contract::ProviderFuture<
+        '_,
+        ruxex::provider::contract::ProviderResult<
+            ruxex::provider::contract::ProviderRequestSnapshot,
+        >,
+    > {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn auth_fields(&self) -> Vec<ruxex::provider::contract::ProviderAuthField> {
+        Vec::new()
+    }
+
+    fn account_state(
+        &self,
+    ) -> ruxex::provider::contract::ProviderResult<ruxex::provider::contract::ProviderAccountState>
+    {
+        Err(ruxex::provider::contract::ProviderError::Unsupported)
+    }
+
+    fn login(
+        &self,
+        _credentials: std::collections::BTreeMap<String, String>,
+    ) -> ruxex::provider::contract::ProviderFuture<'_, ruxex::provider::contract::ProviderResult<()>>
+    {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn logout(
+        &self,
+    ) -> ruxex::provider::contract::ProviderFuture<'_, ruxex::provider::contract::ProviderResult<()>>
+    {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn delete(
+        &self,
+    ) -> ruxex::provider::contract::ProviderFuture<
+        '_,
+        ruxex::provider::contract::ProviderResult<bool>,
+    > {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+
+    fn usage(
+        &self,
+        _request: ruxex::provider::contract::UsageRequest,
+    ) -> ruxex::provider::contract::ProviderFuture<
+        '_,
+        ruxex::provider::contract::ProviderResult<ruxex::provider::contract::ProviderUsage>,
+    > {
+        Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
+    }
+}
+
+impl ModelProviderFactory for TestProvider {
+    fn provider_descriptor() -> ruxex::provider::contract::ProviderDescriptor {
+        ruxex::provider::contract::ProviderDescriptor::new("test", "1")
+    }
+
+    fn new(_: ProviderInit) -> Self {
+        Self
+    }
+}

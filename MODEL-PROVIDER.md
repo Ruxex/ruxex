@@ -19,6 +19,17 @@ providers or store credentials.
 See the [`ModelProvider` contract](crates/model-provider/src/contract.rs) for
 the required interface.
 
+Provider implementations can use the provider facade from the root crate. The
+contract is available directly from `ruxex::provider`, while configuration,
+authentication, protocol values, and Ruxex HTTP transport helpers are grouped
+under `ruxex::provider::{config, auth, protocol, transport}`.
+
+```rust
+use ruxex::provider::{ModelProvider, ModelProviderFactory, ProviderInit};
+use ruxex::provider::config::ModelProviderInfo;
+use ruxex::provider::protocol::ResponseItem;
+```
+
 ## Conformance tests
 
 Compilation proves that a type implements the trait, but it does not prove
