@@ -12,6 +12,13 @@ use ruxex::provider::transport::{
 };
 use ruxex::provider::{ModelProvider, ModelProviderFactory, ProviderInit};
 
+use ruxex::api::{
+    ApiError, AuthProvider, ChatClient, ChatRequest, ChatRequestBuilder, ChatRequestInput,
+    ChatUsageDecoder, Compression, ModelsClient, Provider, RequestTelemetry,
+    ReqwestTransport as ApiReqwestTransport, ResponseEvent, ResponseStream, ResponsesApiRequest,
+    ResponsesClient, RetryConfig, SearchClient, SearchRequest, SharedAuthProvider,
+    StandardChatCompletionApi,
+};
 use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard, arg0_dispatch};
 use ruxex::catalog::{
     ModelCatalogAuthContext, ModelCatalogFuture, ModelCatalogSnapshot, ModelCatalogSource,
@@ -98,6 +105,30 @@ fn facade_exposes_host_integration_and_catalog_surfaces() {
     let _: Option<ProviderModelCatalogSource> = None;
     let _: Option<RefreshStrategy> = None;
     let _: Option<SharedModelsManager> = None;
+}
+
+#[test]
+fn facade_exposes_api_client_and_protocol_surfaces() {
+    let _: Option<ApiError> = None;
+    let _: Option<ChatRequest> = None;
+    let _: Option<ChatRequestBuilder<'static>> = None;
+    let _: Option<ChatRequestInput<'static>> = None;
+    let _: Option<&dyn ChatUsageDecoder> = None;
+    let _: Option<Compression> = None;
+    let _: Option<ChatClient<ApiReqwestTransport>> = None;
+    let _: Option<Provider> = None;
+    let _: Option<ResponsesApiRequest> = None;
+    let _: Option<ResponsesClient<ApiReqwestTransport>> = None;
+    let _: Option<ModelsClient<ApiReqwestTransport>> = None;
+    let _: Option<SearchClient<ApiReqwestTransport>> = None;
+    let _: Option<ResponseEvent> = None;
+    let _: Option<ResponseStream> = None;
+    let _: Option<RetryConfig> = None;
+    let _: Option<SearchRequest> = None;
+    let _: Option<SharedAuthProvider> = None;
+    let _: Option<StandardChatCompletionApi> = None;
+    let _: Option<&dyn AuthProvider> = None;
+    let _: Option<&dyn RequestTelemetry> = None;
 }
 
 fn accepts_provider_init(_: ProviderInit) {}

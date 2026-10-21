@@ -35,6 +35,10 @@ catalog}`. These modules expose helper-executable dispatch, default HTTP
 client construction, product-home and global-instruction APIs, and the
 provider/model-manager catalog contracts.
 
+Provider-facing API clients and protocol types are available from
+`ruxex::api`, including `ResponsesClient`, `ModelsClient`, `SearchClient`,
+`Provider`, authentication traits, request types, and response events.
+
 ## Conformance tests
 
 Compilation proves that a type implements the trait, but it does not prove

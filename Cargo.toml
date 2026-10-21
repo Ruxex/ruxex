@@ -21,6 +21,7 @@ include = [
 
 [dependencies]
 ruxex-arg0 = { workspace = true }
+ruxex-api = { workspace = true }
 ruxex-app-server = { workspace = true }
 ruxex-cli = { workspace = true }
 ruxex-home = { workspace = true }

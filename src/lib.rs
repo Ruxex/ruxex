@@ -20,6 +20,11 @@ pub mod arg0 {
     pub use ruxex_arg0::*;
 }
 
+/// Provider-facing HTTP API clients, request types, and protocol values.
+pub mod api {
+    pub use ruxex_api::*;
+}
+
 /// Model catalog contracts and manager-facing catalog APIs.
 pub mod catalog {
     pub use ruxex_model_provider::ProviderModelCatalog;

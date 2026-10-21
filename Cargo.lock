@@ -8185,6 +8185,7 @@ dependencies = [
 name = "ruxex"
 version = "0.1.3"
 dependencies = [
+ "ruxex-api",
  "ruxex-app-server",
  "ruxex-arg0",
  "ruxex-cli",
