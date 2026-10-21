@@ -29,6 +29,7 @@ ruxex-http-client = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
+ruxex-provider-auth = { workspace = true }
 ruxex-models-manager = { workspace = true }
 ruxex-protocol = { workspace = true }
 ruxex-tui = { workspace = true }
@@ -99,6 +100,7 @@ members = [
     "crates/ruxex-mcp",
     "crates/mermaid",
     "crates/model-provider-info",
+    "crates/provider-auth",
     "crates/models-manager",
     "crates/model-provider-contract-tests",
     "crates/providers",
@@ -232,6 +234,7 @@ ruxex-web-search-extension = { path = "crates/ext/web-search", version = "0.1.0"
 ruxex-mcp = { path = "crates/ruxex-mcp", version = "0.1.0" }
 ruxex-mcp-extension = { path = "crates/ext/mcp", version = "0.1.0" }
 ruxex-model-provider-info = { path = "crates/model-provider-info", version = "0.1.0" }
+ruxex-provider-auth = { path = "crates/provider-auth", version = "0.1.0" }
 ruxex-models-manager = { path = "crates/models-manager", version = "0.1.0" }
 ruxex-providers = { path = "crates/providers", version = "0.1.0" }
 ruxex-network-proxy = { path = "crates/network-proxy", version = "0.1.0" }

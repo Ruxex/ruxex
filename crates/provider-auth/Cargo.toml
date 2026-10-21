@@ -1,0 +1,16 @@
+[package]
+name = "ruxex-provider-auth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "ruxex_provider_auth"
+path = "src/lib.rs"
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-model-provider = { workspace = true }
