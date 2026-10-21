@@ -17,7 +17,7 @@ use tokio_tungstenite::{accept_async, tungstenite::Message};
 
 const MOCK_SIGNATURE: &str = "ruxex-app-server-mock";
 const MOCK_PROVIDER_PROTOCOL_VERSION: &str = "mock";
-const MOCK_BUILD_VERSION: &str = "ruxex-app-server-mock/0.1.0";
+const MOCK_BUILD_VERSION: &str = concat!("ruxex-app-server-mock/", env!("CARGO_PKG_VERSION"));
 
 /// JSON fixtures consumed by the mock binary or library builder.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

@@ -94,7 +94,6 @@ __pycache__/
 
 /target/
 /target-*/
-apps/desktop/src-tauri/gen/
 
 # local audit and generated inspection output
 /docs/inspection/

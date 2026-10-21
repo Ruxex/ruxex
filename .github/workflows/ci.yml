@@ -243,11 +243,9 @@ jobs:
           - group: app-2-tui
             filter: >-
               package(ruxex-provider-host-example) |
-              package(ruxex-desktop) |
               package(ruxex-tui)
             package_args: >-
               --package ruxex-provider-host-example
-              --package ruxex-desktop
               --package ruxex-tui
           - group: app-2
             filter: >-
@@ -320,7 +318,6 @@ jobs:
                 package(ruxex-*-extension) |
                 package(ruxex-mcp) |
                 package(ruxex-rmcp-client) |
-                package(ruxex-desktop) |
                 package(app_test_support)
               )
             package_args: >-
@@ -350,7 +347,6 @@ jobs:
               --exclude ruxex-core-api
               --exclude ruxex-core-plugins
               --exclude ruxex-context-fragments
-              --exclude ruxex-desktop
               --exclude ruxex-extension-api
               --exclude ruxex-extension-items
               --exclude ruxex-goal-extension
