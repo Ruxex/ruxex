@@ -25,7 +25,6 @@ use ruxex_app_server_protocol::ConfiguredHookMatcherGroup;
 use ruxex_app_server_protocol::InAppBrowserRequirements;
 use ruxex_app_server_protocol::JSONRPCErrorError;
 use ruxex_app_server_protocol::ManagedHooksRequirements;
-use ruxex_app_server_protocol::ModelProviderAuthField;
 use ruxex_app_server_protocol::ModelProviderCapabilitiesReadResponse;
 use ruxex_app_server_protocol::ModelProviderReadResponse;
 use ruxex_app_server_protocol::ModelsRequirements;
@@ -190,15 +189,6 @@ impl ConfigRequestProcessor {
             id: descriptor.provider_kind.clone(),
             name: descriptor.provider_kind,
             auth_status: account_state.auth_status,
-            auth_fields: provider
-                .auth_fields()
-                .into_iter()
-                .map(|field| ModelProviderAuthField {
-                    id: field.id,
-                    label: field.label,
-                    secret: field.secret,
-                })
-                .collect(),
         })
     }
 

@@ -469,10 +469,6 @@ mod tests {
             }
         }
 
-        fn auth_fields(&self) -> Vec<ruxex_model_provider::ProviderAuthField> {
-            Vec::new()
-        }
-
         fn login(
             &self,
             _credentials: BTreeMap<String, String>,

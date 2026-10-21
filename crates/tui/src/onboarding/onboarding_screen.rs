@@ -26,7 +26,6 @@ use ruxex_app_server_client::AppServerEvent;
 use ruxex_app_server_client::AppServerRequestHandle;
 use ruxex_app_server_protocol::ClientRequest;
 use ruxex_app_server_protocol::ConfigBatchWriteParams;
-use ruxex_app_server_protocol::ModelProviderAuthField;
 use ruxex_app_server_protocol::RequestId;
 use ruxex_exec_server::LOCAL_FS;
 use ruxex_git_utils::resolve_root_git_project_for_trust;
@@ -94,7 +93,6 @@ pub(crate) struct OnboardingScreenArgs {
     pub show_login_screen: bool,
     pub login_status: LoginStatus,
     pub app_server_request_handle: Option<AppServerRequestHandle>,
-    pub provider_auth_fields: Vec<ModelProviderAuthField>,
     pub provider_credential_resolver: Option<SharedProviderCredentialResolver>,
     pub config: Config,
     pub brand_profile: Arc<dyn TuiBrandProfile>,
@@ -122,7 +120,6 @@ impl OnboardingScreen {
             show_login_screen,
             login_status,
             app_server_request_handle,
-            provider_auth_fields,
             provider_credential_resolver,
             config,
             brand_profile,
@@ -143,7 +140,6 @@ impl OnboardingScreen {
                     tui.frame_requester(),
                     app_server_request_handle,
                     auth_config,
-                    provider_auth_fields,
                     provider_credential_resolver,
                 )));
             } else {
@@ -270,7 +266,7 @@ impl OnboardingScreen {
 impl KeyboardHandler for OnboardingScreen {
     /// Route key events to onboarding steps while preserving text-entry safety.
     ///
-    /// provider API-key entry suppresses printable quit bindings after typing
+    /// Resolver text entry suppresses printable quit bindings after typing
     /// starts.
     /// Control/alt quit chords still work as emergency exits.
     fn handle_key_event(&mut self, key_event: KeyEvent) {

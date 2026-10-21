@@ -10584,25 +10584,6 @@
         "title": "ModelListResponse",
         "type": "object"
       },
-      "ModelProviderAuthField": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "secret": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "label",
-          "secret"
-        ],
-        "type": "object"
-      },
       "ModelProviderCapabilitiesReadParams": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "ModelProviderCapabilitiesReadParams",
@@ -10677,12 +10658,6 @@
       "ModelProviderReadResponse": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "properties": {
-          "authFields": {
-            "items": {
-              "$ref": "#/definitions/v2/ModelProviderAuthField"
-            },
-            "type": "array"
-          },
           "authStatus": {
             "$ref": "#/definitions/v2/ProviderAuthStatus"
           },
@@ -10694,7 +10669,6 @@
           }
         },
         "required": [
-          "authFields",
           "authStatus",
           "id",
           "name"

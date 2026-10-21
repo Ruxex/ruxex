@@ -1269,7 +1269,6 @@ async fn run_ratatui_app(
             return Err(err.into());
         }
     };
-    let provider_auth_fields = provider.auth_fields;
     let provider_credential_resolver = provider_credentials::resolver_for_provider(
         provider_credential_resolvers.as_ref(),
         &provider.id,
@@ -1313,7 +1312,6 @@ async fn run_ratatui_app(
                 app_server_request_handle: app_server
                     .as_ref()
                     .map(AppServerSession::request_handle),
-                provider_auth_fields: provider_auth_fields.clone(),
                 provider_credential_resolver: provider_credential_resolver.clone(),
                 config: initial_config.clone(),
                 brand_profile: tui.brand_profile().clone(),

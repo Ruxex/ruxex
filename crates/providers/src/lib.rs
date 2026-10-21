@@ -28,7 +28,6 @@ mod tests {
     use ruxex_model_provider::ModelProvider;
     use ruxex_model_provider::ProviderAccountState;
     use ruxex_model_provider::ProviderAuthEnvironment;
-    use ruxex_model_provider::ProviderAuthField;
     use ruxex_model_provider::ProviderAuthState;
     use ruxex_model_provider::ProviderCapabilities;
     use ruxex_model_provider::ProviderChatStream;
@@ -87,10 +86,6 @@ mod tests {
 
         fn auth_environment(&self) -> ProviderAuthEnvironment {
             ProviderAuthEnvironment::default()
-        }
-
-        fn auth_fields(&self) -> Vec<ProviderAuthField> {
-            Vec::new()
         }
 
         fn account_state(&self) -> ProviderResult<ProviderAccountState> {

@@ -77,8 +77,7 @@ async fn connected_trust_cancellation_and_acceptance_control_task_creation() -> 
                             "modelProvider/read" => json!({
                                 "id": "cloudflare",
                                 "name": "cloudflare",
-                                "authStatus": "authenticated",
-                                "authFields": [{"id": "api_key", "label": "API key", "secret": true}]
+                                "authStatus": "authenticated"
                             }),
                             "modelProvider/capabilities/read" => json!({
                                 "modelListing": true,

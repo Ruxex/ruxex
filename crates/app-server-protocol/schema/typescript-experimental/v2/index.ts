@@ -230,7 +230,6 @@ export type { ModelAccessPrograms } from "./ModelAccessPrograms";
 export type { ModelAvailabilityNux } from "./ModelAvailabilityNux";
 export type { ModelListParams } from "./ModelListParams";
 export type { ModelListResponse } from "./ModelListResponse";
-export type { ModelProviderAuthField } from "./ModelProviderAuthField";
 export type { ModelProviderCapabilitiesReadParams } from "./ModelProviderCapabilitiesReadParams";
 export type { ModelProviderCapabilitiesReadResponse } from "./ModelProviderCapabilitiesReadResponse";
 export type { ModelProviderReadParams } from "./ModelProviderReadParams";

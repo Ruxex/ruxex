@@ -25,7 +25,6 @@ use ruxex::provider::ModelProvider;
 use ruxex::provider::ModelProviderFactory;
 use ruxex::provider::ProviderAccountState;
 use ruxex::provider::ProviderAuthEnvironment;
-use ruxex::provider::ProviderAuthField;
 use ruxex::provider::ProviderCapabilities;
 use ruxex::provider::ProviderChatEvent;
 use ruxex::provider::ProviderConnectionKey;
@@ -384,13 +383,6 @@ impl ModelProvider for CloudflareProvider {
                 credential_snapshot: Arc::new(CloudflareCredentialSnapshot(credentials)),
             })
         })
-    }
-
-    fn auth_fields(&self) -> Vec<ProviderAuthField> {
-        vec![
-            ProviderAuthField::new("api_key", "API token", true),
-            ProviderAuthField::new("account_id", "Account ID", false),
-        ]
     }
 
     fn account_state(&self) -> ProviderResult<ProviderAccountState> {

@@ -79,16 +79,6 @@ pub struct ModelProviderReadResponse {
     pub id: String,
     pub name: String,
     pub auth_status: ProviderAuthStatus,
-    pub auth_fields: Vec<ModelProviderAuthField>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub struct ModelProviderAuthField {
-    pub id: String,
-    pub label: String,
-    pub secret: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]

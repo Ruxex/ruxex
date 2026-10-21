@@ -37,7 +37,6 @@ use ruxex_login::RuxexAuth;
 use ruxex_login::default_client::ClientRedirectPolicy;
 use ruxex_login::default_client::create_client_for_route;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_model_provider_info::ProviderAuthField;
 use ruxex_model_provider_info::WireApi;
 use ruxex_models_manager::manager::ModelCatalogSnapshot;
 use ruxex_protocol::account::ProviderAccount;
@@ -695,15 +694,6 @@ pub(super) trait ProviderRuntime: fmt::Debug + Send + Sync + 'static {
             self.provider_id().unwrap_or(self.info().name.as_str()),
             CURRENT_PROVIDER_PROTOCOL_VERSION,
         )
-    }
-
-    /// Returns the credential values requested by the interactive setup flow.
-    fn auth_fields(&self) -> Vec<ProviderAuthField> {
-        if self.info().auth.is_some() || self.info().experimental_bearer_token.is_some() {
-            Vec::new()
-        } else {
-            vec![ProviderAuthField::new("api_key", "API key", true)]
-        }
     }
 
     /// Returns non-secret environment metadata for host-owned telemetry.
@@ -1435,15 +1425,6 @@ macro_rules! impl_model_provider_for_runtime {
                 })
             }
 
-            fn auth_fields(&self) -> Vec<ruxex_model_provider::ProviderAuthField> {
-                ProviderRuntime::auth_fields(self)
-                    .into_iter()
-                    .map(|field| {
-                        ruxex_model_provider::ProviderAuthField::new(field.id, field.label, field.secret)
-                    })
-                    .collect()
-            }
-
             fn account_state(
                 &self,
             ) -> ruxex_model_provider::ProviderResult<ruxex_model_provider::ProviderAccountState> {
@@ -1806,23 +1787,6 @@ mod tests {
     }
 
     #[test]
-    fn cloudflare_declares_api_key_and_account_id_auth_fields() {
-        let provider = create_model_provider(
-            ModelProviderInfo::create_cloudflare_provider(),
-            /*credential_manager*/ None,
-        );
-
-        assert_eq!(
-            provider
-                .auth_fields()
-                .into_iter()
-                .map(|field| field.id)
-                .collect::<Vec<_>>(),
-            vec!["api_key", "account_id"]
-        );
-    }
-
-    #[test]
     fn provider_descriptor_uses_explicit_provider_id_and_round_trips() {
         let provider = create_model_provider(
             ModelProviderInfo {
@@ -1883,7 +1847,6 @@ mod tests {
         );
 
         assert_eq!(provider.descriptor().provider_kind, "Responses provider");
-        assert_eq!(provider.auth_fields()[0].id, "api_key");
         assert!(matches!(
             provider.delete().await,
             Err(ruxex_model_provider::ProviderError::Unsupported)

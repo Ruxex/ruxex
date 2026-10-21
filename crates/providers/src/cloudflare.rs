@@ -16,7 +16,6 @@ use ruxex_login::default_client::create_client_for_route_async;
 use ruxex_model_provider_info::CLOUDFLARE_ACCOUNT_ID_ENV_VAR;
 use ruxex_model_provider_info::CLOUDFLARE_PROVIDER_ID;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_model_provider_info::ProviderAuthField;
 use ruxex_models_manager::manager::ModelCatalogSnapshot;
 use ruxex_models_manager::model_info::model_info_template_from_slug;
 use ruxex_protocol::account::ProviderAccount;
@@ -221,13 +220,6 @@ impl ProviderRuntime for CloudflareModelProvider {
             supports_tool_strict_mode: self.info.supports_tool_strict_mode,
             ..ProviderCapabilities::default()
         }
-    }
-
-    fn auth_fields(&self) -> Vec<ProviderAuthField> {
-        vec![
-            ProviderAuthField::new("api_key", "API key", true),
-            ProviderAuthField::new("account_id", "Account ID", false),
-        ]
     }
 
     fn api(&self) -> ProviderApi {

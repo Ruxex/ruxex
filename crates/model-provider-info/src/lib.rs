@@ -67,23 +67,6 @@ pub const CLOUDFLARE_PROVIDER_NAME: &str = "Cloudflare Workers AI";
 pub const CLOUDFLARE_API_TOKEN_ENV_VAR: &str = "CLOUDFLARE_API_TOKEN";
 pub const CLOUDFLARE_ACCOUNT_ID_ENV_VAR: &str = "CLOUDFLARE_ACCOUNT_ID";
 
-/// A credential value requested by a provider during interactive setup.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProviderAuthField {
-    pub id: String,
-    pub label: String,
-    pub secret: bool,
-}
-
-impl ProviderAuthField {
-    pub fn new(id: impl Into<String>, label: impl Into<String>, secret: bool) -> Self {
-        Self {
-            id: id.into(),
-            label: label.into(),
-            secret,
-        }
-    }
-}
 /// Wire protocol that the provider speaks.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]

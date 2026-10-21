@@ -192,10 +192,6 @@ impl ModelProvider for TestProvider {
         Box::pin(async { Err(ruxex::provider::contract::ProviderError::Unsupported) })
     }
 
-    fn auth_fields(&self) -> Vec<ruxex::provider::contract::ProviderAuthField> {
-        Vec::new()
-    }
-
     fn account_state(
         &self,
     ) -> ruxex::provider::contract::ProviderResult<ruxex::provider::contract::ProviderAccountState>

@@ -45,7 +45,6 @@ pub use contract::ListModelsRequest;
 pub use contract::ModelProvider;
 pub use contract::ProviderAccountState;
 pub use contract::ProviderAuthEnvironment;
-pub use contract::ProviderAuthField;
 pub use contract::ProviderAuthRecoveryMessages;
 pub use contract::ProviderAuthState;
 pub use contract::ProviderBackendRequest;

@@ -1,25 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "ModelProviderAuthField": {
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "secret": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "id",
-        "label",
-        "secret"
-      ],
-      "type": "object"
-    },
     "ProviderAuthStatus": {
       "description": "Authentication state for the mounted model provider.",
       "oneOf": [
@@ -48,12 +29,6 @@
     }
   },
   "properties": {
-    "authFields": {
-      "items": {
-        "$ref": "#/definitions/ModelProviderAuthField"
-      },
-      "type": "array"
-    },
     "authStatus": {
       "$ref": "#/definitions/ProviderAuthStatus"
     },
@@ -65,7 +40,6 @@
     }
   },
   "required": [
-    "authFields",
     "authStatus",
     "id",
     "name"

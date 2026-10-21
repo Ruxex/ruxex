@@ -374,14 +374,6 @@ pub struct ProviderModelCatalogAuth {
     pub has_api_key_auth: bool,
 }
 
-/// A provider-owned credential field exposed to a host login form.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProviderAuthField {
-    pub id: String,
-    pub label: String,
-    pub secret: bool,
-}
-
 /// Outcome of a provider-owned attempt to recover from an authentication failure.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProviderUnauthorizedRecovery {
@@ -396,16 +388,6 @@ pub enum ProviderUnauthorizedRecovery {
 pub struct ProviderAuthRecoveryMessages {
     pub started: &'static str,
     pub succeeded: &'static str,
-}
-
-impl ProviderAuthField {
-    pub fn new(id: impl Into<String>, label: impl Into<String>, secret: bool) -> Self {
-        Self {
-            id: id.into(),
-            label: label.into(),
-            secret,
-        }
-    }
 }
 
 /// Provider-owned account and usage state suitable for host/UI projection.
@@ -792,8 +774,6 @@ pub trait ModelProvider: fmt::Debug + Send + Sync + 'static {
 
     fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>>;
 
-    fn auth_fields(&self) -> Vec<ProviderAuthField>;
-
     fn account_state(&self) -> ProviderResult<ProviderAccountState>;
 
     fn login(
@@ -875,10 +855,6 @@ mod tests {
                     credential_snapshot: Arc::new(FakeCredentialSnapshot),
                 })
             })
-        }
-
-        fn auth_fields(&self) -> Vec<ProviderAuthField> {
-            vec![ProviderAuthField::new("api_key", "API key", true)]
         }
 
         fn account_state(&self) -> ProviderResult<ProviderAccountState> {
