@@ -12,6 +12,22 @@ use ruxex::provider::transport::{
 };
 use ruxex::provider::{ModelProvider, ModelProviderFactory, ProviderInit};
 
+use ruxex::arg0::{Arg0DispatchPaths, Arg0PathEntryGuard, arg0_dispatch};
+use ruxex::catalog::{
+    ModelCatalogAuthContext, ModelCatalogFuture, ModelCatalogSnapshot, ModelCatalogSource,
+    ModelsManager, ModelsManagerFuture, ProviderModelCatalog, ProviderModelCatalogAuth,
+    ProviderModelCatalogSource, RefreshStrategy, SharedModelsManager,
+};
+use ruxex::client::{
+    ClientRedirectPolicy, Originator, create_client, create_client_for_route,
+    create_client_for_route_async, create_client_without_request_logging, default_headers,
+    get_user_agent, originator,
+};
+use ruxex::home::{
+    DEFAULT_RUXEX_HOME_DIR_NAME, DEFAULT_RUXEX_HOME_MARKER_FILE, ProductIdentity,
+    RuxexHomeUserInstructionsProvider, find_product_home, find_ruxex_home,
+};
+
 fn accepts_provider<P: ModelProvider>() {}
 
 fn accepts_provider_factory<P: ModelProviderFactory>() {}
@@ -45,6 +61,43 @@ fn provider_facade_exposes_the_provider_author_surface() {
     let _: Option<SessionSource> = None;
     let _: Option<TokenUsage> = None;
     let _: Option<ModelVerification> = None;
+}
+
+#[test]
+fn facade_exposes_host_integration_and_catalog_surfaces() {
+    let _: Option<Arg0DispatchPaths> = None;
+    let _: Option<Arg0PathEntryGuard> = None;
+    let _ = arg0_dispatch;
+
+    let _: Option<Originator> = None;
+    let _: Option<ClientRedirectPolicy> = None;
+    let _ = (
+        create_client,
+        create_client_for_route,
+        create_client_for_route_async,
+        create_client_without_request_logging,
+        default_headers,
+        get_user_agent,
+        originator,
+    );
+
+    let _: Option<ProductIdentity> = None;
+    let _: Option<RuxexHomeUserInstructionsProvider> = None;
+    let _: &str = DEFAULT_RUXEX_HOME_DIR_NAME;
+    let _: &str = DEFAULT_RUXEX_HOME_MARKER_FILE;
+    let _ = (find_product_home, find_ruxex_home);
+
+    let _: Option<ModelCatalogAuthContext> = None;
+    let _: Option<ModelCatalogFuture<'static, ()>> = None;
+    let _: Option<ModelCatalogSnapshot> = None;
+    let _: Option<&dyn ModelCatalogSource> = None;
+    let _: Option<ModelsManagerFuture<'static, ()>> = None;
+    let _: Option<&dyn ModelsManager> = None;
+    let _: Option<ProviderModelCatalog> = None;
+    let _: Option<ProviderModelCatalogAuth> = None;
+    let _: Option<ProviderModelCatalogSource> = None;
+    let _: Option<RefreshStrategy> = None;
+    let _: Option<SharedModelsManager> = None;
 }
 
 fn accepts_provider_init(_: ProviderInit) {}

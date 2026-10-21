@@ -15,6 +15,41 @@ pub use ruxex_model_provider::SharedModelProvider;
 pub use ruxex_tui::TuiBrandProfile;
 pub use ruxex_utils_home_dir::ProductIdentity;
 
+/// Arg0 dispatch and helper executable setup APIs.
+pub mod arg0 {
+    pub use ruxex_arg0::*;
+}
+
+/// Model catalog contracts and manager-facing catalog APIs.
+pub mod catalog {
+    pub use ruxex_model_provider::ProviderModelCatalog;
+    pub use ruxex_model_provider::ProviderModelCatalogAuth;
+    pub use ruxex_model_provider::ProviderModelCatalogSource;
+    pub use ruxex_models_manager::manager::ModelCatalogAuthContext;
+    pub use ruxex_models_manager::manager::ModelCatalogFuture;
+    pub use ruxex_models_manager::manager::ModelCatalogSnapshot;
+    pub use ruxex_models_manager::manager::ModelCatalogSource;
+    pub use ruxex_models_manager::manager::ModelsManager;
+    pub use ruxex_models_manager::manager::ModelsManagerFuture;
+    pub use ruxex_models_manager::manager::RefreshStrategy;
+    pub use ruxex_models_manager::manager::SharedModelsManager;
+}
+
+/// Ruxex HTTP client construction and request metadata APIs.
+pub mod client {
+    pub use ruxex_login::default_client::*;
+}
+
+/// Ruxex home-directory and global user-instructions APIs.
+pub mod home {
+    pub use ruxex_home::*;
+    pub use ruxex_utils_home_dir::DEFAULT_RUXEX_HOME_DIR_NAME;
+    pub use ruxex_utils_home_dir::DEFAULT_RUXEX_HOME_MARKER_FILE;
+    pub use ruxex_utils_home_dir::ProductIdentity;
+    pub use ruxex_utils_home_dir::find_product_home;
+    pub use ruxex_utils_home_dir::find_ruxex_home;
+}
+
 /// Provider implementation APIs grouped by responsibility.
 pub mod provider {
     /// Provider-neutral contract types implemented by provider adapters.

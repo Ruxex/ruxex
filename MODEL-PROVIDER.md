@@ -30,6 +30,11 @@ use ruxex::provider::config::ModelProviderInfo;
 use ruxex::provider::protocol::ResponseItem;
 ```
 
+Host integration helpers are available from `ruxex::{arg0, client, home,
+catalog}`. These modules expose helper-executable dispatch, default HTTP
+client construction, product-home and global-instruction APIs, and the
+provider/model-manager catalog contracts.
+
 ## Conformance tests
 
 Compilation proves that a type implements the trait, but it does not prove
