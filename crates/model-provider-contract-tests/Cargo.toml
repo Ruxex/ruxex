@@ -1,0 +1,24 @@
+[package]
+name = "ruxex-model-provider-contract-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[lib]
+name = "ruxex_model_provider_contract_tests"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+ruxex-model-provider = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+ruxex-http-client = { workspace = true }
+ruxex-login = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-protocol = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt"] }

@@ -91,6 +91,7 @@ members = [
     "crates/mermaid",
     "crates/model-provider-info",
     "crates/models-manager",
+    "crates/model-provider-contract-tests",
     "crates/providers",
     "examples/provider-host",
     "crates/network-proxy",

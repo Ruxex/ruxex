@@ -10939,6 +10939,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ruxex-model-provider-contract-tests"
+version = "0.1.0"
+dependencies = [
+ "ruxex-http-client",
+ "ruxex-login",
+ "ruxex-model-provider",
+ "ruxex-model-provider-info",
+ "ruxex-protocol",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "ruxex-model-provider-info"
 version = "0.1.0"
 dependencies = [
