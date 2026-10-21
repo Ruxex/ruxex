@@ -1,6 +1,9 @@
 mod cloudflare;
 
 use cloudflare::CloudflareProvider;
+use ruxex::provider::credentials::ProviderCredentialResolverRegistry;
+use ruxex::provider::transport::HttpClientFactory;
+use ruxex::provider::transport::OutboundProxyPolicy;
 use ruxex_app_server::AppServerRuntime;
 use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server::ProviderDescriptor;
@@ -10,6 +13,7 @@ use ruxex_arg0::arg0_dispatch_or_else;
 use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
 use ruxex_cli::run_host_app_server_daemon;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::ModelProviderFactory;
 use ruxex_model_provider_info::ModelProviderInfo;
 
 const TEST_PROVIDER_INFO_ENV: &str = "RUXEX_TEST_PROVIDER_INFO";
@@ -75,7 +79,23 @@ fn main() -> anyhow::Result<()> {
         } else if test_provider {
             ruxex_cli::run_with_provider_factory(arg0_paths, test_provider_factory(), None).await?;
         } else {
-            ruxex_cli::run::<CloudflareProvider>(arg0_paths, None).await?;
+            let mut resolvers = ProviderCredentialResolverRegistry::new();
+            resolvers.register_typed::<ruxex_providers::CloudflareCredentials, _>(
+                ruxex_providers::create_cloudflare_credential_resolver(HttpClientFactory::new(
+                    OutboundProxyPolicy::ReqwestDefault,
+                )),
+            )?;
+            ruxex_cli::run_with_provider_factory_and_identity_and_resolvers(
+                arg0_paths,
+                (
+                    AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareProvider>,
+                    CloudflareProvider::provider_descriptor(),
+                ),
+                Some(resolvers),
+                ruxex::ProductIdentity::ruxex(),
+                None,
+            )
+            .await?;
         }
         Ok(())
     })

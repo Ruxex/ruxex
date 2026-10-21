@@ -19,4 +19,5 @@ ruxex-app-server = { workspace = true }
 ruxex-cli = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
+ruxex-providers = { workspace = true }
 serde_json = { workspace = true }

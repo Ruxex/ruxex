@@ -800,6 +800,7 @@ pub async fn run<P: ModelProviderFactory>(
             ruxex_app_server::AppServerRuntimeBuilder::build_from_provider_factory::<P>,
             P::provider_descriptor(),
         )),
+        None,
         ProductIdentity::ruxex(),
         brand_profile,
     )
@@ -815,6 +816,7 @@ pub async fn run_with_provider_factory(
     run_cli_with_product_identity(
         arg0_paths,
         Some(provider_factory),
+        None,
         ProductIdentity::ruxex(),
         brand_profile,
     )
@@ -831,6 +833,45 @@ pub async fn run_with_provider_factory_and_identity(
     run_cli_with_product_identity(
         arg0_paths,
         Some(provider_factory),
+        None,
+        product_identity,
+        brand_profile,
+    )
+    .await
+}
+
+/// Runs the CLI with client-side credential resolvers using the default product identity.
+pub async fn run_with_provider_factory_and_resolvers(
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ruxex_tui::ProviderRuntimeFactory,
+    provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
+    brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
+) -> anyhow::Result<()> {
+    run_with_provider_factory_and_identity_and_resolvers(
+        arg0_paths,
+        provider_factory,
+        provider_credential_resolvers,
+        ProductIdentity::ruxex(),
+        brand_profile,
+    )
+    .await
+}
+
+/// Runs the CLI with a host-selected provider runtime and client-side credential resolvers.
+///
+/// Resolvers execute in the embedding client and only their completed credential fields are sent
+/// to the App Server login request.
+pub async fn run_with_provider_factory_and_identity_and_resolvers(
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ruxex_tui::ProviderRuntimeFactory,
+    provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
+    product_identity: ProductIdentity,
+    brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
+) -> anyhow::Result<()> {
+    run_cli_with_product_identity(
+        arg0_paths,
+        Some(provider_factory),
+        provider_credential_resolvers,
         product_identity,
         brand_profile,
     )
@@ -840,6 +881,7 @@ pub async fn run_with_provider_factory_and_identity(
 async fn run_cli_with_product_identity(
     arg0_paths: Arg0DispatchPaths,
     provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
     product_identity: ProductIdentity,
     brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
 ) -> anyhow::Result<()> {
@@ -927,6 +969,7 @@ async fn run_cli_with_product_identity(
                 root_remote_auth_token_env.clone(),
                 arg0_paths.clone(),
                 provider_factory.clone(),
+                provider_credential_resolvers.clone(),
                 brand_profile.clone(),
                 product_identity.clone(),
             )
@@ -1211,6 +1254,7 @@ async fn run_cli_with_product_identity(
                     .or(root_remote_auth_token_env.clone()),
                 arg0_paths.clone(),
                 provider_factory.clone(),
+                provider_credential_resolvers.clone(),
                 brand_profile.clone(),
                 product_identity.clone(),
             )
@@ -1297,6 +1341,7 @@ async fn run_cli_with_product_identity(
                     .or(root_remote_auth_token_env.clone()),
                 arg0_paths.clone(),
                 provider_factory.clone(),
+                provider_credential_resolvers.clone(),
                 brand_profile.clone(),
                 product_identity.clone(),
             )
@@ -2077,6 +2122,7 @@ async fn run_interactive_tui(
     remote_auth_token_env: Option<String>,
     arg0_paths: Arg0DispatchPaths,
     provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
     brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
     product_identity: ProductIdentity,
 ) -> std::io::Result<AppExitInfo> {
@@ -2151,12 +2197,13 @@ async fn run_interactive_tui(
         None
     };
     let start_tui = || {
-        ruxex_tui::run_with_provider_factory_and_identity(
+        ruxex_tui::run_with_provider_factory_and_identity_and_resolvers(
             interactive.clone(),
             arg0_paths.clone(),
             ruxex_config::LoaderOverrides::default(),
             remote_endpoint.clone(),
             provider_factory.clone(),
+            provider_credential_resolvers.clone(),
             provider_executable.clone(),
             product_identity.clone(),
             brand_profile.clone(),

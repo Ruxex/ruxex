@@ -5,10 +5,14 @@
 //! `AppServerRuntime`.
 
 pub mod cloudflare;
+pub mod cloudflare_auth;
 mod provider;
 
 pub use cloudflare::CloudflareModelProvider;
 pub use cloudflare::create_cloudflare_provider;
+pub use cloudflare_auth::CloudflareCredentialResolver;
+pub use cloudflare_auth::CloudflareCredentials;
+pub use cloudflare_auth::create_cloudflare_credential_resolver;
 pub use provider::create_model_provider;
 pub use provider::create_model_provider_with_http_client_factory;
 pub use ruxex_model_provider::SharedModelProvider;

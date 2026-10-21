@@ -48,6 +48,7 @@ ruxex-mermaid = { workspace = true }
 ruxex-message-history = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
+ruxex-provider-auth = { workspace = true }
 ruxex-models-manager = { workspace = true }
 ruxex-otel = { workspace = true }
 ruxex-plugin = { workspace = true }

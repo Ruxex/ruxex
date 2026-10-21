@@ -8,6 +8,8 @@ pub use ruxex_cli::ProviderRuntimeFactory;
 pub use ruxex_cli::run;
 pub use ruxex_cli::run_with_provider_factory;
 pub use ruxex_cli::run_with_provider_factory_and_identity;
+pub use ruxex_cli::run_with_provider_factory_and_identity_and_resolvers;
+pub use ruxex_cli::run_with_provider_factory_and_resolvers;
 pub use ruxex_model_provider::ModelProvider;
 pub use ruxex_model_provider::ModelProviderFactory;
 pub use ruxex_model_provider::ProviderInit;
@@ -89,6 +91,7 @@ pub mod provider {
         pub use ruxex_http_client::ClientRouteClass;
         pub use ruxex_http_client::HttpClientFactory;
         pub use ruxex_http_client::HttpTransport;
+        pub use ruxex_http_client::OutboundProxyPolicy;
         pub use ruxex_http_client::ReqwestTransport;
     }
 

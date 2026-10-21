@@ -126,7 +126,7 @@ impl CredentialStep {
 }
 
 /// Stateful client-side credential collection flow.
-pub trait CredentialFlow<C: ProviderCredentials>: Send {
+pub trait CredentialFlow<C: ProviderCredentials>: Send + Sync {
     fn current_step(&self) -> CredentialStep;
 
     fn submit(
@@ -153,7 +153,7 @@ pub trait ProviderCredentialSink<C: ProviderCredentials>: Send + Sync {
 }
 
 /// Type-erased credential flow exposed to client UIs.
-pub trait ErasedCredentialFlow: Send {
+pub trait ErasedCredentialFlow: Send + Sync {
     fn current_step(&self) -> CredentialStep;
 
     fn submit(
@@ -305,6 +305,17 @@ impl ProviderCredentialResolverRegistry {
         }
         self.resolvers.push(resolver);
         Ok(())
+    }
+
+    pub fn register_typed<C, R>(&mut self, resolver: R) -> ProviderResult<()>
+    where
+        C: ProviderCredentials,
+        R: ProviderCredentialResolver<C> + 'static,
+    {
+        self.register(Arc::new(ErasedResolver {
+            resolver: Arc::new(resolver),
+            _credentials: PhantomData,
+        }))
     }
 
     pub fn resolver_for(&self, provider_id: &str) -> Option<SharedProviderCredentialResolver> {

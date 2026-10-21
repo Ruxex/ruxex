@@ -21,6 +21,9 @@ pub(crate) use cli_main::resolve_remote_endpoint;
 pub use cli_main::run;
 pub use cli_main::run_with_provider_factory;
 pub use cli_main::run_with_provider_factory_and_identity;
+pub use cli_main::run_with_provider_factory_and_identity_and_resolvers;
+pub use cli_main::run_with_provider_factory_and_resolvers;
+pub use ruxex_tui::ProviderCredentialResolverRegistry;
 
 pub type ProviderRuntimeFactory = ruxex_tui::ProviderRuntimeFactory;
 

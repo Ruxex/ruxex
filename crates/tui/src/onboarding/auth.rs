@@ -32,6 +32,11 @@ use ruxex_app_server_protocol::LoginAccountParams;
 use ruxex_app_server_protocol::LoginAccountResponse;
 use ruxex_app_server_protocol::ModelProviderAuthField;
 use ruxex_login::AuthConfig;
+use ruxex_provider_auth::CredentialInput;
+use ruxex_provider_auth::CredentialStep;
+use ruxex_provider_auth::CredentialValue;
+use ruxex_provider_auth::ErasedCredentialFlow;
+use ruxex_provider_auth::SharedProviderCredentialResolver;
 
 use ruxex_protocol::config_types::ForcedLoginMethod;
 use std::collections::BTreeMap;
@@ -52,9 +57,10 @@ pub(crate) fn mark_underlined_hyperlink(buf: &mut Buffer, area: Rect, url: &str)
     crate::terminal_hyperlinks::mark_underlined_hyperlink(buf, area, url);
 }
 
-#[derive(Clone)]
 pub(crate) enum SignInState {
     ApiKeyEntry(ApiKeyInputState),
+    ResolverLoading,
+    ResolverStep(ResolverInputState),
     ApiKeyConfigured,
 }
 
@@ -123,8 +129,38 @@ impl ApiKeyInputState {
     }
 }
 
+struct ResolverInputState {
+    flow: Option<Box<dyn ErasedCredentialFlow>>,
+    step: CredentialStep,
+    value: String,
+    selected: usize,
+}
+
+impl ResolverInputState {
+    fn new(flow: Box<dyn ErasedCredentialFlow>, step: CredentialStep) -> Self {
+        Self {
+            flow: Some(flow),
+            step,
+            value: String::new(),
+            selected: 0,
+        }
+    }
+
+    fn selected_value(&self) -> Option<String> {
+        let CredentialStep::Select { options, .. } = &self.step else {
+            return None;
+        };
+        options
+            .get(self.selected)
+            .map(|option| option.value.clone())
+    }
+}
+
 impl KeyboardHandler for AuthModeWidget {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if self.handle_resolver_key_event(&key_event) {
+            return;
+        }
         if self.handle_api_key_entry_key_event(&key_event) {
             return;
         }
@@ -136,6 +172,12 @@ impl KeyboardHandler for AuthModeWidget {
             SignInState::ApiKeyEntry(_) => {
                 drop(sign_in_state);
                 let _ = self.handle_api_key_entry_paste(pasted);
+            }
+            SignInState::ResolverStep(state)
+                if matches!(state.step, CredentialStep::Input { .. }) =>
+            {
+                drop(sign_in_state);
+                let _ = self.handle_resolver_input_paste(pasted);
             }
             _ => {}
         }
@@ -150,6 +192,7 @@ pub(crate) struct AuthModeWidget {
     pub sign_in_state: Arc<RwLock<SignInState>>,
     pub app_server_request_handle: AppServerRequestHandle,
     pub auth_config: AuthConfig,
+    pub provider_credential_resolver: Option<SharedProviderCredentialResolver>,
 }
 
 impl AuthModeWidget {
@@ -158,7 +201,13 @@ impl AuthModeWidget {
         app_server_request_handle: AppServerRequestHandle,
         auth_config: AuthConfig,
         auth_fields: Vec<ModelProviderAuthField>,
+        provider_credential_resolver: Option<SharedProviderCredentialResolver>,
     ) -> Self {
+        let auth_fields = if provider_credential_resolver.is_some() {
+            auth_fields.into_iter().take(1).collect()
+        } else {
+            auth_fields
+        };
         Self {
             request_frame,
             error: Arc::new(RwLock::new(None)),
@@ -167,6 +216,7 @@ impl AuthModeWidget {
             ))),
             app_server_request_handle,
             auth_config,
+            provider_credential_resolver,
         }
     }
 
@@ -177,7 +227,9 @@ impl AuthModeWidget {
             .ok()
             .and_then(|state| match &*state {
                 SignInState::ApiKeyEntry(state) => Some(state.fields.clone()),
-                SignInState::ApiKeyConfigured => None,
+                SignInState::ResolverLoading
+                | SignInState::ResolverStep(_)
+                | SignInState::ApiKeyConfigured => None,
             })
             .unwrap_or_default();
         *self.sign_in_state.write().unwrap() =
@@ -197,7 +249,7 @@ impl AuthModeWidget {
     /// Returns whether the auth flow is currently accepting text input.
     pub(crate) fn is_text_entry_active(&self) -> bool {
         self.sign_in_state.read().is_ok_and(|guard| match &*guard {
-            SignInState::ApiKeyEntry(_) => true,
+            SignInState::ApiKeyEntry(_) | SignInState::ResolverStep(_) => true,
             _ => false,
         })
     }
@@ -208,6 +260,7 @@ impl AuthModeWidget {
     pub(crate) fn should_suppress_printable_quit(&self) -> bool {
         self.sign_in_state.read().is_ok_and(|guard| match &*guard {
             SignInState::ApiKeyEntry(state) => !state.value.is_empty(),
+            SignInState::ResolverStep(state) => !state.value.is_empty(),
             _ => false,
         })
     }
@@ -307,6 +360,115 @@ impl AuthModeWidget {
             .render(footer_area, buf);
     }
 
+    fn render_resolver_loading(&self, area: Rect, buf: &mut Buffer) {
+        Paragraph::new(vec![
+            Line::from("> Discovering provider credentials...".bold()),
+            "".into(),
+            "  Please wait while the provider account options are loaded.".into(),
+        ])
+        .wrap(Wrap { trim: false })
+        .render(area, buf);
+    }
+
+    fn render_resolver_step(&self, area: Rect, buf: &mut Buffer, state: &ResolverInputState) {
+        let [intro_area, input_area, footer_area] = Layout::vertical([
+            Constraint::Min(4),
+            Constraint::Length(5),
+            Constraint::Min(2),
+        ])
+        .areas(area);
+        let mut footer_lines = vec![
+            Line::from(vec![
+                "  Press ".dim(),
+                keys::CONFIRM[0].into(),
+                " to continue".dim(),
+            ]),
+            Line::from(vec![
+                "  Press ".dim(),
+                self.cancel_binding().into(),
+                " to go back".dim(),
+            ]),
+        ];
+        match &state.step {
+            CredentialStep::Input { label, secret, .. } => {
+                Paragraph::new(vec![
+                    Line::from(vec!["> ".into(), format!("Enter {label}").bold()]),
+                    "".into(),
+                    "  This value stays on this client until all credentials are complete.".into(),
+                ])
+                .wrap(Wrap { trim: false })
+                .render(intro_area, buf);
+                let displayed: Line = if state.value.is_empty() {
+                    format!("Enter {label}").dim().into()
+                } else if *secret {
+                    "•".repeat(state.value.chars().count()).into()
+                } else {
+                    state.value.clone().into()
+                };
+                Paragraph::new(displayed)
+                    .block(
+                        Block::default()
+                            .title(label.clone())
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded)
+                            .border_style(Style::default().fg(Color::Cyan)),
+                    )
+                    .render(input_area, buf);
+            }
+            CredentialStep::Select { label, options, .. } => {
+                Paragraph::new(vec![
+                    Line::from(vec!["> ".into(), label.clone().bold()]),
+                    "".into(),
+                    "  Use ↑/↓ to choose an option.".into(),
+                ])
+                .wrap(Wrap { trim: false })
+                .render(intro_area, buf);
+                let lines = options
+                    .iter()
+                    .enumerate()
+                    .map(|(index, option)| {
+                        if index == state.selected {
+                            Line::from(format!("› {}", option.label)).fg(Color::Cyan)
+                        } else {
+                            Line::from(format!("  {}", option.label))
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                Paragraph::new(lines)
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded),
+                    )
+                    .render(input_area, buf);
+            }
+            CredentialStep::Info { message } => {
+                Paragraph::new(vec![
+                    Line::from("> Provider information".bold()),
+                    "".into(),
+                    message.clone().into(),
+                ])
+                .wrap(Wrap { trim: false })
+                .render(intro_area, buf);
+                footer_lines[0] = Line::from(vec![
+                    "  Press ".dim(),
+                    keys::CONFIRM[0].into(),
+                    " to continue".dim(),
+                ]);
+            }
+            CredentialStep::Complete => {
+                Paragraph::new("Completing provider credentials...").render(intro_area, buf);
+            }
+        }
+        if let Some(error) = self.error_message() {
+            footer_lines.push("".into());
+            footer_lines.push(error.red().into());
+        }
+        Paragraph::new(footer_lines)
+            .wrap(Wrap { trim: false })
+            .render(footer_area, buf);
+    }
+
     fn handle_api_key_entry_key_event(&mut self, key_event: &KeyEvent) -> bool {
         let mut should_save: Option<String> = None;
         let mut credentials = BTreeMap::new();
@@ -375,11 +537,246 @@ impl AuthModeWidget {
         }
 
         if let Some(api_key) = should_save {
-            self.save_api_key(api_key, credentials, retry_state.expect("save state"));
+            if self.provider_credential_resolver.is_some() {
+                self.start_resolver(api_key);
+            } else {
+                self.save_api_key(api_key, credentials, retry_state.expect("save state"));
+            }
         } else if should_request_frame {
             self.request_frame.schedule_frame();
         }
         true
+    }
+
+    fn start_resolver(&mut self, api_key: String) {
+        if !self.is_api_login_allowed() {
+            self.disallow_api_login();
+            return;
+        }
+        let Some(resolver) = self.provider_credential_resolver.clone() else {
+            return;
+        };
+        *self.sign_in_state.write().unwrap() = SignInState::ResolverLoading;
+        self.set_error(None);
+        let sign_in_state = self.sign_in_state.clone();
+        let error = self.error.clone();
+        let request_frame = self.request_frame.clone();
+        tokio::spawn(async move {
+            let retry_api_key = api_key.clone();
+            let result = async {
+                let mut flow = resolver.begin(CredentialInput::empty()).await?;
+                let step = flow.submit(CredentialValue::secret(api_key)).await?;
+                Ok::<_, ruxex_model_provider::ProviderError>((flow, step))
+            }
+            .await;
+            match result {
+                Ok((flow, step)) => {
+                    *error.write().unwrap() = None;
+                    *sign_in_state.write().unwrap() =
+                        SignInState::ResolverStep(ResolverInputState::new(flow, step));
+                }
+                Err(err) => {
+                    *error.write().unwrap() =
+                        Some(format!("Failed to discover credentials: {err}"));
+                    *sign_in_state.write().unwrap() = SignInState::ApiKeyEntry(ApiKeyInputState {
+                        fields: vec![ModelProviderAuthField {
+                            id: "api_key".to_string(),
+                            label: "API key".to_string(),
+                            secret: true,
+                        }],
+                        field_index: 0,
+                        values: BTreeMap::new(),
+                        value: retry_api_key,
+                        prepopulated_from_env: true,
+                    });
+                }
+            }
+            request_frame.schedule_frame();
+        });
+        self.request_frame.schedule_frame();
+    }
+
+    fn handle_resolver_input_paste(&mut self, pasted: String) -> bool {
+        let trimmed = pasted.trim();
+        if trimmed.is_empty() {
+            return false;
+        }
+        let mut guard = self.sign_in_state.write().unwrap();
+        let SignInState::ResolverStep(state) = &mut *guard else {
+            return false;
+        };
+        if matches!(state.step, CredentialStep::Input { .. }) {
+            state.value.push_str(trimmed);
+            self.set_error(None);
+            drop(guard);
+            self.request_frame.schedule_frame();
+            true
+        } else {
+            false
+        }
+    }
+
+    fn handle_resolver_key_event(&mut self, key_event: &KeyEvent) -> bool {
+        let mut submit = None;
+        let mut finish = false;
+        let mut should_request_frame = false;
+        {
+            let mut guard = self.sign_in_state.write().unwrap();
+            let SignInState::ResolverStep(state) = &mut *guard else {
+                return false;
+            };
+            match &state.step {
+                CredentialStep::Select { options, .. } => {
+                    if keys::CANCEL.is_pressed(*key_event) {
+                        *guard = SignInState::ApiKeyEntry(ApiKeyInputState::new(vec![]));
+                        should_request_frame = true;
+                    } else {
+                        match key_event.code {
+                            KeyCode::Up => {
+                                if state.selected > 0 {
+                                    state.selected -= 1;
+                                }
+                                should_request_frame = true;
+                            }
+                            KeyCode::Down => {
+                                if state.selected + 1 < options.len() {
+                                    state.selected += 1;
+                                }
+                                should_request_frame = true;
+                            }
+                            _ if keys::CONFIRM.is_pressed(*key_event) => {
+                                submit = state.selected_value().map(CredentialValue::selection);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                CredentialStep::Input { .. } => {
+                    if keys::CANCEL.is_pressed(*key_event) {
+                        *guard = SignInState::ApiKeyEntry(ApiKeyInputState::new(vec![]));
+                        should_request_frame = true;
+                    } else if keys::CONFIRM.is_pressed(*key_event) {
+                        if state.value.trim().is_empty() {
+                            self.set_error(Some("Value cannot be empty".to_string()));
+                            should_request_frame = true;
+                        } else {
+                            submit = Some(CredentialValue::text(state.value.trim()));
+                        }
+                    } else {
+                        match key_event.code {
+                            KeyCode::Backspace => {
+                                state.value.pop();
+                                self.set_error(None);
+                                should_request_frame = true;
+                            }
+                            KeyCode::Char(c)
+                                if key_event.kind == KeyEventKind::Press
+                                    && !key_event.modifiers.contains(KeyModifiers::SUPER)
+                                    && !key_event.modifiers.contains(KeyModifiers::CONTROL)
+                                    && !key_event.modifiers.contains(KeyModifiers::ALT) =>
+                            {
+                                state.value.push(c);
+                                self.set_error(None);
+                                should_request_frame = true;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                CredentialStep::Info { .. } => {
+                    if keys::CONFIRM.is_pressed(*key_event) {
+                        submit = Some(CredentialValue::text(String::new()));
+                    }
+                }
+                CredentialStep::Complete => {
+                    if keys::CONFIRM.is_pressed(*key_event) {
+                        finish = true;
+                    }
+                }
+            }
+        }
+        if let Some(value) = submit {
+            self.submit_resolver_value(value);
+        } else if finish {
+            match self.finish_resolver() {
+                Some(Ok((api_key, credentials))) => {
+                    self.save_api_key(api_key, credentials, ApiKeyInputState::new(vec![]));
+                }
+                Some(Err(message)) => {
+                    *self.sign_in_state.write().unwrap() =
+                        SignInState::ApiKeyEntry(ApiKeyInputState::new(vec![]));
+                    self.set_error(Some(message));
+                    self.request_frame.schedule_frame();
+                }
+                None => {}
+            }
+        } else if should_request_frame {
+            self.request_frame.schedule_frame();
+        }
+        true
+    }
+
+    fn submit_resolver_value(&mut self, value: CredentialValue) {
+        let flow = {
+            let mut guard = self.sign_in_state.write().unwrap();
+            let SignInState::ResolverStep(state) = &mut *guard else {
+                return;
+            };
+            let Some(flow) = state.flow.take() else {
+                return;
+            };
+            *guard = SignInState::ResolverLoading;
+            flow
+        };
+        let sign_in_state = self.sign_in_state.clone();
+        let error = self.error.clone();
+        let request_frame = self.request_frame.clone();
+        tokio::spawn(async move {
+            let mut flow = flow;
+            let result = flow.submit(value).await.map(|step| (flow, step));
+            match result {
+                Ok((flow, CredentialStep::Complete)) => {
+                    *sign_in_state.write().unwrap() = SignInState::ResolverStep(
+                        ResolverInputState::new(flow, CredentialStep::Complete),
+                    );
+                }
+                Ok((flow, step)) => {
+                    *error.write().unwrap() = None;
+                    *sign_in_state.write().unwrap() =
+                        SignInState::ResolverStep(ResolverInputState::new(flow, step));
+                }
+                Err(err) => {
+                    *error.write().unwrap() = Some(format!("Failed to resolve credentials: {err}"));
+                    *sign_in_state.write().unwrap() =
+                        SignInState::ApiKeyEntry(ApiKeyInputState::new(vec![]));
+                }
+            }
+            request_frame.schedule_frame();
+        });
+        self.request_frame.schedule_frame();
+    }
+
+    fn finish_resolver(&self) -> Option<Result<(String, BTreeMap<String, String>), String>> {
+        let mut guard = self.sign_in_state.write().unwrap();
+        let SignInState::ResolverStep(state) =
+            std::mem::replace(&mut *guard, SignInState::ResolverLoading)
+        else {
+            return None;
+        };
+        let Some(flow) = state.flow else {
+            return None;
+        };
+        Some(flow.finish().map_or_else(
+            |err| Err(format!("Failed to complete credentials: {err}")),
+            |mut credentials| {
+                credentials
+                    .remove("api_key")
+                    .map(|api_key| Ok((api_key, credentials)))
+                    .unwrap_or_else(|| {
+                        Err("Resolved credentials did not contain an API key".to_string())
+                    })
+            },
+        ))
     }
 
     fn handle_api_key_entry_paste(&mut self, pasted: String) -> bool {
@@ -452,6 +849,7 @@ impl StepStateProvider for AuthModeWidget {
         let sign_in_state = self.sign_in_state.read().unwrap();
         match &*sign_in_state {
             SignInState::ApiKeyEntry(_) => StepState::InProgress,
+            SignInState::ResolverLoading | SignInState::ResolverStep(_) => StepState::InProgress,
             SignInState::ApiKeyConfigured => StepState::Complete,
         }
     }
@@ -464,6 +862,8 @@ impl WidgetRef for AuthModeWidget {
             SignInState::ApiKeyEntry(state) => {
                 self.render_api_key_entry(area, buf, state);
             }
+            SignInState::ResolverLoading => self.render_resolver_loading(area, buf),
+            SignInState::ResolverStep(state) => self.render_resolver_step(area, buf, state),
             SignInState::ApiKeyConfigured => {
                 self.render_api_key_configured(area, buf);
             }

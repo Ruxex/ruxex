@@ -30,6 +30,7 @@ use ruxex_app_server_protocol::ModelProviderAuthField;
 use ruxex_app_server_protocol::RequestId;
 use ruxex_exec_server::LOCAL_FS;
 use ruxex_git_utils::resolve_root_git_project_for_trust;
+use ruxex_provider_auth::SharedProviderCredentialResolver;
 
 use crate::LoginStatus;
 use crate::app_server_session::AppServerSession;
@@ -94,6 +95,7 @@ pub(crate) struct OnboardingScreenArgs {
     pub login_status: LoginStatus,
     pub app_server_request_handle: Option<AppServerRequestHandle>,
     pub provider_auth_fields: Vec<ModelProviderAuthField>,
+    pub provider_credential_resolver: Option<SharedProviderCredentialResolver>,
     pub config: Config,
     pub brand_profile: Arc<dyn TuiBrandProfile>,
 }
@@ -121,6 +123,7 @@ impl OnboardingScreen {
             login_status,
             app_server_request_handle,
             provider_auth_fields,
+            provider_credential_resolver,
             config,
             brand_profile,
         } = args;
@@ -141,6 +144,7 @@ impl OnboardingScreen {
                     app_server_request_handle,
                     auth_config,
                     provider_auth_fields,
+                    provider_credential_resolver,
                 )));
             } else {
                 tracing::warn!("skipping onboarding login step without app-server request handle");

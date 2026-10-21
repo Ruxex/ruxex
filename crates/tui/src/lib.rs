@@ -62,6 +62,7 @@ use ruxex_protocol::ThreadId;
 use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::config_types::AltScreenMode;
 use ruxex_protocol::config_types::SandboxMode;
+pub use ruxex_provider_auth::ProviderCredentialResolverRegistry;
 use ruxex_rollout::StateDbHandle;
 use ruxex_rollout::state_db;
 use ruxex_state::log_db;
@@ -170,6 +171,7 @@ mod npm_registry;
 pub(crate) mod onboarding;
 mod pager_overlay;
 pub mod preview;
+mod provider_credentials;
 pub(crate) mod public_widgets;
 mod render;
 mod resize_reflow_cap;
@@ -1077,6 +1079,32 @@ pub async fn run_with_provider_factory(
     .await
 }
 
+/// Runs the TUI with provider runtime and client-side credential resolvers using the default identity.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_with_provider_factory_and_resolvers(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ProviderCredentialResolverRegistry>,
+    provider_executable: Option<PathBuf>,
+    brand_profile: Option<Arc<dyn TuiBrandProfile>>,
+) -> std::io::Result<AppExitInfo> {
+    run_with_provider_factory_and_identity_and_resolvers(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        explicit_remote_endpoint,
+        provider_factory,
+        provider_credential_resolvers,
+        provider_executable,
+        ProductIdentity::ruxex(),
+        brand_profile,
+    )
+    .await
+}
+
 /// Runs the TUI with both product identity and UI brand supplied by the host.
 pub async fn run_with_provider_factory_and_identity(
     cli: Cli,
@@ -1084,6 +1112,33 @@ pub async fn run_with_provider_factory_and_identity(
     loader_overrides: LoaderOverrides,
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
     provider_factory: Option<ProviderRuntimeFactory>,
+    provider_executable: Option<PathBuf>,
+    product_identity: ProductIdentity,
+    brand_profile: Option<Arc<dyn TuiBrandProfile>>,
+) -> std::io::Result<AppExitInfo> {
+    run_with_provider_factory_and_identity_and_resolvers(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        explicit_remote_endpoint,
+        provider_factory,
+        None,
+        provider_executable,
+        product_identity,
+        brand_profile,
+    )
+    .await
+}
+
+/// Runs the TUI with provider runtime and client-side credential resolvers supplied by the host.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_with_provider_factory_and_identity_and_resolvers(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ProviderCredentialResolverRegistry>,
     provider_executable: Option<PathBuf>,
     product_identity: ProductIdentity,
     brand_profile: Option<Arc<dyn TuiBrandProfile>>,
@@ -1096,6 +1151,7 @@ pub async fn run_with_provider_factory_and_identity(
         loader_overrides,
         explicit_remote_endpoint,
         provider_factory,
+        provider_credential_resolvers,
         provider_executable,
         brand_profile,
         product_identity,
@@ -1132,6 +1188,7 @@ async fn run_ratatui_app(
     launch_telemetry: daemon_telemetry::Launch<impl FnOnce(&AppServerTarget, bool)>,
     startup_draft: startup_draft::StartupDraft,
     provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ProviderCredentialResolverRegistry>,
     product_identity: ProductIdentity,
 ) -> color_eyre::Result<AppExitInfo> {
     let uses_remote_workspace = app_server_target.uses_remote_workspace();
@@ -1213,6 +1270,10 @@ async fn run_ratatui_app(
         }
     };
     let provider_auth_fields = provider.auth_fields;
+    let provider_credential_resolver = provider_credentials::resolver_for_provider(
+        provider_credential_resolvers.as_ref(),
+        &provider.id,
+    );
     let initial_model_provider_id = initial_config.model_provider_id.clone();
 
     let Some(active_app_server) = app_server.as_mut() else {
@@ -1253,6 +1314,7 @@ async fn run_ratatui_app(
                     .as_ref()
                     .map(AppServerSession::request_handle),
                 provider_auth_fields: provider_auth_fields.clone(),
+                provider_credential_resolver: provider_credential_resolver.clone(),
                 config: initial_config.clone(),
                 brand_profile: tui.brand_profile().clone(),
             },

@@ -13,6 +13,7 @@ pub(super) async fn run_main_inner(
     loader_overrides: LoaderOverrides,
     explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
     provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ProviderCredentialResolverRegistry>,
     host_executable: Option<std::path::PathBuf>,
     brand_profile: Option<std::sync::Arc<dyn TuiBrandProfile>>,
     product_identity: ProductIdentity,
@@ -592,6 +593,7 @@ pub(super) async fn run_main_inner(
         launch_telemetry,
         startup_draft,
         provider_factory,
+        provider_credential_resolvers,
         product_identity,
     )
     .await
