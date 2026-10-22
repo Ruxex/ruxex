@@ -7,8 +7,27 @@ use crate::ruxex_thread::RuxexThread;
 use crate::thread_manager::ThreadManagerState;
 use pretty_assertions::assert_eq;
 use ruxex_features::Feature;
-use ruxex_login::RuxexAuth;
+use ruxex_model_provider::ChatRequest;
+use ruxex_model_provider::ListModelsRequest;
+use ruxex_model_provider::ModelProvider;
+use ruxex_model_provider::ProviderAccountState;
+use ruxex_model_provider::ProviderAuthState;
+use ruxex_model_provider::ProviderCapabilities;
+use ruxex_model_provider::ProviderChatStream;
+use ruxex_model_provider::ProviderConnectionKey;
+use ruxex_model_provider::ProviderCredentialSnapshot;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderError;
+use ruxex_model_provider::ProviderFuture;
+use ruxex_model_provider::ProviderModelCatalog;
+use ruxex_model_provider::ProviderRequestAuth;
+use ruxex_model_provider::ProviderRequestSnapshot;
+use ruxex_model_provider::ProviderResult;
+use ruxex_model_provider::ProviderUsage;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_model_provider::UsageRequest;
 use ruxex_protocol::ThreadId;
+use ruxex_protocol::account::ProviderAuthStatus;
 use ruxex_protocol::error::RuxexErrorDetails;
 use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::SessionSource;
@@ -17,7 +36,108 @@ use ruxex_protocol::protocol::ThreadSource;
 use ruxex_protocol::protocol::TurnAbortReason;
 use ruxex_protocol::protocol::TurnAbortedEvent;
 use ruxex_protocol::protocol::TurnCompleteEvent;
+use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Debug)]
+struct TestCredentialSnapshot;
+
+impl ProviderCredentialSnapshot for TestCredentialSnapshot {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+#[derive(Debug)]
+struct TestProvider;
+
+impl ModelProvider for TestProvider {
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::new("core-residency-test", "1")
+    }
+
+    fn capabilities(&self) -> ProviderCapabilities {
+        ProviderCapabilities::default()
+    }
+
+    fn chat(
+        &self,
+        _request: ChatRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>> {
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
+
+    fn list_models(
+        &self,
+        _request: ListModelsRequest,
+    ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>> {
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
+
+    fn auth_state(&self) -> ProviderAuthState {
+        ProviderAuthState {
+            status: ProviderAuthStatus::Unauthenticated,
+            account_id: None,
+            display_name: None,
+            managed_auth: false,
+            revision: None,
+        }
+    }
+
+    fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
+        Box::pin(async {
+            Ok(ProviderRequestSnapshot {
+                auth: ProviderRequestAuth {
+                    authenticated: false,
+                    managed_auth: false,
+                    auth_header_attached: false,
+                    auth_header_name: None,
+                    revision: None,
+                    owner_generation: None,
+                },
+                connection_key: ProviderConnectionKey {
+                    provider_kind: "core-residency-test".to_string(),
+                    auth_revision: None,
+                },
+                credential_snapshot: Arc::new(TestCredentialSnapshot),
+            })
+        })
+    }
+
+    fn account_state(&self) -> ProviderResult<ProviderAccountState> {
+        Ok(ProviderAccountState {
+            provider_id: "core-residency-test".to_string(),
+            account: None,
+            account_id: None,
+            display_name: None,
+            auth_status: ProviderAuthStatus::Unauthenticated,
+            usage: None,
+        })
+    }
+
+    fn login(
+        &self,
+        _credentials: BTreeMap<String, String>,
+    ) -> ProviderFuture<'_, ProviderResult<()>> {
+        Box::pin(async { Ok(()) })
+    }
+
+    fn logout(&self) -> ProviderFuture<'_, ProviderResult<()>> {
+        Box::pin(async { Ok(()) })
+    }
+
+    fn delete(&self) -> ProviderFuture<'_, ProviderResult<bool>> {
+        Box::pin(async { Ok(false) })
+    }
+
+    fn usage(&self, _request: UsageRequest) -> ProviderFuture<'_, ProviderResult<ProviderUsage>> {
+        Box::pin(async { Err(ProviderError::Unsupported) })
+    }
+}
+
+fn test_provider() -> SharedModelProvider {
+    Arc::new(TestProvider)
+}
 
 #[tokio::test]
 async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
@@ -27,9 +147,8 @@ async fn residency_slot_reservation_unloads_oldest_idle_v2_agent() {
     let temp_home = tempfile::tempdir().expect("create temp home");
     config.ruxex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
-    let manager = ThreadManager::with_models_provider_and_home_for_tests(
-        RuxexAuth::from_api_key("dummy"),
-        config.model_provider.clone(),
+    let manager = ThreadManager::with_provider_and_home_for_tests(
+        test_provider(),
         config.ruxex_home.to_path_buf(),
         Arc::new(ruxex_exec_server::EnvironmentManager::default_for_tests()),
     );
@@ -75,9 +194,8 @@ async fn interrupted_v2_agent_is_lost_after_residency_eviction() {
     let temp_home = tempfile::tempdir().expect("create temp home");
     config.ruxex_home = temp_home.path().to_path_buf().try_into().unwrap();
     config.cwd = temp_home.path().to_path_buf().try_into().unwrap();
-    let manager = ThreadManager::with_models_provider_and_home_for_tests(
-        RuxexAuth::from_api_key("dummy"),
-        config.model_provider.clone(),
+    let manager = ThreadManager::with_provider_and_home_for_tests(
+        test_provider(),
         config.ruxex_home.to_path_buf(),
         Arc::new(ruxex_exec_server::EnvironmentManager::default_for_tests()),
     );

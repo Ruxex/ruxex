@@ -15,11 +15,8 @@ use ruxex_http_client::HttpClientFactory;
 use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
-use ruxex_model_provider::ProviderModelCatalogSource;
-use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_model_provider::SharedModelProvider;
 use ruxex_models_manager::collaboration_mode_presets;
-use ruxex_models_manager::manager::SharedModelsManager;
-use ruxex_models_manager::manager::build_models_manager;
 use ruxex_models_manager::test_support::construct_model_info_offline_for_tests;
 use ruxex_models_manager::test_support::test_models_response;
 use ruxex_protocol::ThreadId;
@@ -28,7 +25,6 @@ use ruxex_protocol::mcp::ClientMcpExtensions;
 use ruxex_protocol::model_types::ModelInfo;
 use ruxex_protocol::model_types::ModelPreset;
 use ruxex_protocol::protocol::SessionSource;
-use ruxex_providers::create_model_provider;
 
 use crate::ThreadManager;
 use crate::config::Config;
@@ -84,11 +80,11 @@ pub fn with_code_mode_host_program(
     thread_manager.with_code_mode_host_program_for_tests(host_program, config)
 }
 
-pub fn thread_manager_with_models_provider(
+pub fn thread_manager_with_provider(
     auth: RuxexAuth,
-    provider: ModelProviderInfo,
+    provider: SharedModelProvider,
 ) -> ThreadManager {
-    ThreadManager::with_models_provider_for_tests(auth, provider)
+    ThreadManager::with_provider_for_tests(auth, provider)
 }
 
 pub async fn start_thread_with_user_shell_override(
@@ -121,19 +117,6 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
             ClientMcpExtensions::new(None),
         )
         .await
-}
-
-pub fn models_manager_with_provider(
-    ruxex_home: PathBuf,
-    credential_manager: Arc<CredentialManager>,
-    provider: ModelProviderInfo,
-) -> SharedModelsManager {
-    let provider = create_model_provider(provider, Some(credential_manager.clone()));
-    build_models_manager(
-        ruxex_home,
-        Arc::new(ProviderModelCatalogSource::new(provider.clone())),
-        /*config_model_catalog*/ None,
-    )
 }
 
 pub fn default_http_client_factory() -> HttpClientFactory {

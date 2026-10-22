@@ -2,6 +2,7 @@
 
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
+use core_test_support::thread_manager_with_model_provider_info;
 use core_test_support::wait_for_event;
 use ruxex_config::CONFIG_TOML_FILE;
 use ruxex_core::NewThread;
@@ -35,7 +36,7 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = thread_manager_with_model_provider_info(
         RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
@@ -81,7 +82,7 @@ async fn suppresses_warning_when_configured() {
         )
         .expect("feature user config should be valid");
 
-    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = thread_manager_with_model_provider_info(
         RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );

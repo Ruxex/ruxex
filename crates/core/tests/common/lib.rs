@@ -5,6 +5,7 @@ use anyhow::ensure;
 use ctor::ctor;
 use ruxex_arg0::Arg0PathEntryGuard;
 use ruxex_utils_cargo_bin::CargoBinError;
+use std::sync::Arc;
 use std::sync::OnceLock;
 use tempfile::TempDir;
 
@@ -16,6 +17,12 @@ use ruxex_core::config::ConfigBuilder;
 use ruxex_core::config::ConfigOverrides;
 pub use ruxex_core::test_support::TestRuxexResponsesRequestKind;
 pub use ruxex_core::test_support::responses_metadata;
+use ruxex_model_provider::ProviderModelCatalogSource;
+use ruxex_model_provider::SharedModelProvider;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_models_manager::manager::SharedModelsManager;
+use ruxex_models_manager::manager::build_models_manager;
+use ruxex_providers::create_model_provider;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 pub use ruxex_utils_absolute_path::test_support::PathBufExt;
 pub use ruxex_utils_absolute_path::test_support::PathExt;
@@ -87,6 +94,182 @@ pub fn test_path_buf(unix_path: &str) -> PathBuf {
 pub fn test_absolute_path(unix_path: &str) -> AbsolutePathBuf {
     AbsolutePathBuf::from_absolute_path(test_path_buf(unix_path))
         .expect("test path should be absolute")
+}
+
+pub fn model_provider_from_info(
+    provider_info: ModelProviderInfo,
+    credential_manager: Arc<ruxex_login::CredentialManager>,
+) -> SharedModelProvider {
+    create_model_provider(provider_info, Some(credential_manager))
+}
+
+pub fn thread_manager_with_model_provider_info(
+    auth: ruxex_login::RuxexAuth,
+    provider_info: ModelProviderInfo,
+) -> ruxex_core::ThreadManager {
+    let credential_manager = ruxex_core::test_support::credential_manager_from_auth(auth.clone());
+    ruxex_core::test_support::thread_manager_with_provider(
+        auth,
+        model_provider_from_info(provider_info, credential_manager),
+    )
+}
+
+pub fn models_manager_with_provider(
+    ruxex_home: PathBuf,
+    provider: SharedModelProvider,
+) -> SharedModelsManager {
+    build_models_manager(
+        ruxex_home,
+        Arc::new(ProviderModelCatalogSource::new(provider)),
+        /*config_model_catalog*/ None,
+    )
+}
+
+pub fn models_manager_with_model_provider_info(
+    ruxex_home: PathBuf,
+    credential_manager: Arc<ruxex_login::CredentialManager>,
+    provider_info: ModelProviderInfo,
+) -> SharedModelsManager {
+    let provider = model_provider_from_info(provider_info, credential_manager.clone());
+    models_manager_with_provider(ruxex_home, provider)
+}
+
+#[cfg(test)]
+mod provider_injection_tests {
+    use super::*;
+    use ruxex_model_provider::ChatRequest;
+    use ruxex_model_provider::ListModelsRequest;
+    use ruxex_model_provider::ModelProvider;
+    use ruxex_model_provider::ProviderAccountState;
+    use ruxex_model_provider::ProviderAuthState;
+    use ruxex_model_provider::ProviderCapabilities;
+    use ruxex_model_provider::ProviderChatStream;
+    use ruxex_model_provider::ProviderConnectionKey;
+    use ruxex_model_provider::ProviderCredentialSnapshot;
+    use ruxex_model_provider::ProviderDescriptor;
+    use ruxex_model_provider::ProviderError;
+    use ruxex_model_provider::ProviderFuture;
+    use ruxex_model_provider::ProviderModelCatalog;
+    use ruxex_model_provider::ProviderRequestAuth;
+    use ruxex_model_provider::ProviderRequestSnapshot;
+    use ruxex_model_provider::ProviderResult;
+    use ruxex_model_provider::ProviderUsage;
+    use ruxex_model_provider::UsageRequest;
+    use ruxex_protocol::account::ProviderAuthStatus;
+    use std::collections::BTreeMap;
+
+    #[derive(Debug)]
+    struct FakeCredentialSnapshot;
+
+    impl ProviderCredentialSnapshot for FakeCredentialSnapshot {
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
+        }
+    }
+
+    #[derive(Debug)]
+    struct FakeProvider;
+
+    impl ModelProvider for FakeProvider {
+        fn descriptor(&self) -> ProviderDescriptor {
+            ProviderDescriptor::new("injected-test-provider", "1")
+        }
+
+        fn capabilities(&self) -> ProviderCapabilities {
+            ProviderCapabilities::default()
+        }
+
+        fn chat(
+            &self,
+            _request: ChatRequest,
+        ) -> ProviderFuture<'_, ProviderResult<ProviderChatStream>> {
+            Box::pin(async { Err(ProviderError::Unsupported) })
+        }
+
+        fn list_models(
+            &self,
+            _request: ListModelsRequest,
+        ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>> {
+            Box::pin(async { Err(ProviderError::Unsupported) })
+        }
+
+        fn auth_state(&self) -> ProviderAuthState {
+            ProviderAuthState {
+                status: ProviderAuthStatus::Unauthenticated,
+                account_id: None,
+                display_name: None,
+                managed_auth: false,
+                revision: None,
+            }
+        }
+
+        fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
+            Box::pin(async {
+                Ok(ProviderRequestSnapshot {
+                    auth: ProviderRequestAuth {
+                        authenticated: false,
+                        managed_auth: false,
+                        auth_header_attached: false,
+                        auth_header_name: None,
+                        revision: None,
+                        owner_generation: None,
+                    },
+                    connection_key: ProviderConnectionKey {
+                        provider_kind: "injected-test-provider".to_string(),
+                        auth_revision: None,
+                    },
+                    credential_snapshot: Arc::new(FakeCredentialSnapshot),
+                })
+            })
+        }
+
+        fn account_state(&self) -> ProviderResult<ProviderAccountState> {
+            Ok(ProviderAccountState {
+                provider_id: "injected-test-provider".to_string(),
+                account: None,
+                account_id: None,
+                display_name: None,
+                auth_status: ProviderAuthStatus::Unauthenticated,
+                usage: None,
+            })
+        }
+
+        fn login(
+            &self,
+            _credentials: BTreeMap<String, String>,
+        ) -> ProviderFuture<'_, ProviderResult<()>> {
+            Box::pin(async { Ok(()) })
+        }
+
+        fn logout(&self) -> ProviderFuture<'_, ProviderResult<()>> {
+            Box::pin(async { Ok(()) })
+        }
+
+        fn delete(&self) -> ProviderFuture<'_, ProviderResult<bool>> {
+            Box::pin(async { Ok(false) })
+        }
+
+        fn usage(
+            &self,
+            _request: UsageRequest,
+        ) -> ProviderFuture<'_, ProviderResult<ProviderUsage>> {
+            Box::pin(async { Err(ProviderError::Unsupported) })
+        }
+    }
+
+    #[tokio::test]
+    async fn injected_provider_descriptor_is_retained_by_thread_manager() {
+        let provider: SharedModelProvider = Arc::new(FakeProvider);
+        let manager = ruxex_core::test_support::thread_manager_with_provider(
+            ruxex_login::RuxexAuth::from_api_key("test"),
+            provider,
+        );
+
+        assert_eq!(
+            manager.model_provider().descriptor(),
+            ProviderDescriptor::new("injected-test-provider", "1")
+        );
+    }
 }
 
 #[allow(clippy::expect_used)]

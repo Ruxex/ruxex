@@ -44,13 +44,11 @@ use ruxex_features::Feature;
 use ruxex_history::InitialHistory;
 use ruxex_history::ResumedHistory;
 use ruxex_history::RolloutItem;
-use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
 use ruxex_login::default_client::INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use ruxex_login::default_client::originator;
 use ruxex_model_provider::ProviderModelCatalogSource;
 use ruxex_model_provider::SharedModelProvider;
-use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_models_manager::manager::RefreshStrategy;
 use ruxex_models_manager::manager::SharedModelsManager;
 use ruxex_models_manager::manager::build_models_manager as build_catalog_models_manager;
@@ -73,7 +71,6 @@ use ruxex_protocol::protocol::TurnAbortReason;
 use ruxex_protocol::protocol::TurnAbortedEvent;
 use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use ruxex_protocol::protocol::W3cTraceContext;
-use ruxex_providers::create_model_provider;
 use ruxex_rollout::state_db::StateDbHandle;
 use ruxex_skills_extension::HostSkillsService;
 use ruxex_thread_store::InMemoryThreadStore;
@@ -612,12 +609,10 @@ impl ThreadManager {
         self
     }
 
-    /// Construct with a dummy CredentialManager containing the provided RuxexAuth.
+    /// Construct a test manager with an already-injected provider.
     /// Used for integration tests: should not be used by ordinary business logic.
-    pub(crate) fn with_models_provider_for_tests(
-        auth: RuxexAuth,
-        provider: ModelProviderInfo,
-    ) -> Self {
+    pub(crate) fn with_provider_for_tests(auth: RuxexAuth, provider: SharedModelProvider) -> Self {
+        let _ = auth;
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
         let ruxex_home = std::env::temp_dir().join(format!(
             "ruxex-thread-manager-test-{}",
@@ -625,8 +620,7 @@ impl ThreadManager {
         ));
         std::fs::create_dir_all(&ruxex_home)
             .unwrap_or_else(|err| panic!("temp ruxex home dir create failed: {err}"));
-        let mut manager = Self::with_models_provider_and_home_for_tests(
-            auth,
+        let mut manager = Self::with_provider_and_home_for_tests(
             provider,
             ruxex_home.clone(),
             Arc::new(EnvironmentManager::default_for_tests()),
@@ -635,16 +629,14 @@ impl ThreadManager {
         manager
     }
 
-    /// Construct with a dummy CredentialManager containing the provided RuxexAuth and ruxex home.
+    /// Construct a test manager with an already-injected provider and ruxex home.
     /// Used for integration tests: should not be used by ordinary business logic.
-    pub(crate) fn with_models_provider_and_home_for_tests(
-        auth: RuxexAuth,
-        provider: ModelProviderInfo,
+    pub(crate) fn with_provider_and_home_for_tests(
+        provider: SharedModelProvider,
         ruxex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
     ) -> Self {
-        Self::with_models_provider_home_and_state_for_tests(
-            auth,
+        Self::with_provider_home_and_state_for_tests(
             provider,
             ruxex_home,
             environment_manager,
@@ -652,15 +644,13 @@ impl ThreadManager {
         )
     }
 
-    pub(crate) fn with_models_provider_home_and_state_for_tests(
-        auth: RuxexAuth,
-        provider: ModelProviderInfo,
+    pub(crate) fn with_provider_home_and_state_for_tests(
+        provider: SharedModelProvider,
         ruxex_home: PathBuf,
         environment_manager: Arc<EnvironmentManager>,
         state_db: Option<StateDbHandle>,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
-        let credential_manager = CredentialManager::from_auth_for_testing(auth);
         let installation_id = uuid::Uuid::new_v4().to_string();
         let absolute_ruxex_home = match AbsolutePathBuf::from_absolute_path_checked(&ruxex_home) {
             Ok(ruxex_home) => ruxex_home,
@@ -690,7 +680,6 @@ impl ThreadManager {
             state_db.clone(),
         ));
         let agent_graph_store = local_agent_graph_store_from_state_db(state_db.as_ref());
-        let provider = create_model_provider(provider, Some(credential_manager.clone()));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),

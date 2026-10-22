@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
+use core_test_support::thread_manager_with_model_provider_info;
 use core_test_support::wait_for_event;
 use ruxex_core::NewThread;
 use ruxex_history::InitialHistory;
@@ -104,7 +105,7 @@ async fn emits_warning_when_resumed_model_differs() {
 
     let initial_history = resume_history(&config, "previous-model", &rollout_path);
 
-    let thread_manager = ruxex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = thread_manager_with_model_provider_info(
         RuxexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );

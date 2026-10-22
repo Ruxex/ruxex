@@ -2,6 +2,7 @@
 use anyhow::Result;
 use core_test_support::TempDirExt;
 use core_test_support::load_default_config_for_test;
+use core_test_support::models_manager_with_model_provider_info;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -183,9 +184,9 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1046,9 +1047,9 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1112,9 +1113,9 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1164,9 +1165,9 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1213,9 +1214,9 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1260,9 +1261,9 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 
@@ -1332,9 +1333,9 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
         base_url: Some(format!("{}/v1", server.uri())),
         ..ModelProviderInfo::create_responses_provider(None)
     };
-    let manager = ruxex_core::test_support::models_manager_with_provider(
+    let manager = models_manager_with_model_provider_info(
         ruxex_home.path().to_path_buf(),
-        ruxex_core::test_support::credential_manager_from_auth(auth),
+        core_test_support::credential_manager_from_auth(auth),
         provider,
     );
 

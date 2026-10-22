@@ -51,7 +51,6 @@ ruxex-network-proxy = { workspace = true }
 ruxex-otel = { workspace = true }
 ruxex-plugin = { workspace = true }
 ruxex-model-provider = { workspace = true }
-ruxex-providers = { workspace = true }
 ruxex-protocol = { workspace = true }
 ruxex-response-debug-context = { workspace = true }
 ruxex-prompts = { workspace = true }
