@@ -3,17 +3,25 @@
 //! The implementation remains split across the workspace crates, while this
 //! crate presents the main host integration points from one dependency.
 
+#[cfg(feature = "app-server")]
 pub use ruxex_app_server::runtime::AppServerRuntimeBuilder;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::ProviderRuntimeFactory;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::run;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::run_with_provider_factory;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::run_with_provider_factory_and_identity;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::run_with_provider_factory_and_identity_and_resolvers;
+#[cfg(feature = "cli")]
 pub use ruxex_cli::run_with_provider_factory_and_resolvers;
 pub use ruxex_model_provider::ModelProvider;
 pub use ruxex_model_provider::ModelProviderFactory;
 pub use ruxex_model_provider::ProviderInit;
 pub use ruxex_model_provider::SharedModelProvider;
+#[cfg(feature = "tui")]
 pub use ruxex_tui::TuiBrandProfile;
 pub use ruxex_utils_home_dir::ProductIdentity;
 
@@ -115,11 +123,13 @@ pub mod provider {
 }
 
 /// Advanced App Server APIs.
+#[cfg(feature = "app-server")]
 pub mod app_server {
     pub use ruxex_app_server::*;
 }
 
 /// CLI and provider-owned host lifecycle APIs.
+#[cfg(feature = "cli")]
 pub mod cli {
     pub use ruxex_cli::*;
 }
@@ -130,6 +140,7 @@ pub mod model_provider {
 }
 
 /// TUI widgets, themes, and branding APIs.
+#[cfg(feature = "tui")]
 pub mod tui {
     pub use ruxex_tui::*;
 }

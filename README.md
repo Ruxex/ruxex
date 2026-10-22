@@ -50,6 +50,24 @@ ruxex = {
 }
 ```
 
+The default `full` feature preserves the App Server, CLI, and TUI facade. A
+host that embeds the App Server without the terminal UI can opt out of the
+default integration features:
+
+```toml
+[dependencies]
+ruxex = {
+    git = "https://github.com/Ruxex/ruxex.git",
+    tag = "v0.2.0",
+    default-features = false,
+    features = ["app-server"]
+}
+```
+
+The `cli` feature implies `app-server` and `tui`, because the current CLI
+implementation uses the TUI integration. The provider-neutral contract and
+protocol modules remain available without these facade features.
+
 The CLI/TUI entry point accepts all three host-defined pieces. The CLI invokes
 the provider factory and constructs the App Server internally:
 
