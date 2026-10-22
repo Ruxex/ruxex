@@ -108,6 +108,21 @@ jobs:
       - name: Check production targets
         run: just check
 
+      - name: Check focused facade feature profiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          just check -p ruxex --no-default-features --features app-server --lib
+          just check -p ruxex --no-default-features --features cli --lib
+          just check -p ruxex --features full --lib
+
+          tree="$(cargo tree -p ruxex --no-default-features --features app-server --edges normal)"
+          if grep -Eq '^ruxex-(cli|tui) ' <<<"$tree"; then
+            echo "The provider-neutral App Server facade unexpectedly includes CLI/TUI:" >&2
+            grep -E '^ruxex-(cli|tui) ' <<<"$tree" >&2
+            exit 1
+          fi
+
       - name: Build workspace
         run: just build --workspace
 
