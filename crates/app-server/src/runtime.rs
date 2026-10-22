@@ -163,9 +163,9 @@ mod tests {
     use ruxex_model_provider::SharedModelProvider;
 
     fn test_provider_with_id(provider_id: &str) -> SharedModelProvider {
-        Arc::new(ruxex_providers::CloudflareModelProvider::new(
+        Arc::new(ruxex_providers::ResponsesModelProvider::new(
             Some(provider_id.to_string()),
-            ModelProviderInfo::create_cloudflare_provider(),
+            ModelProviderInfo::create_responses_provider(None),
             None,
             HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         ))

@@ -1,7 +1,7 @@
 //! Resolution and definitions for the model provider mounted by Ruxex.
 //!
 //! Providers can be defined in two places:
-//!   1. Built-in defaults compiled into the binary so Ruxex works out-of-the-box.
+//!   1. The generic Responses-compatible default compiled into the binary.
 //!   2. A single user-defined entry inside `~/.ruxex/config.toml` under the
 //!      `model_provider` key.
 //!
@@ -61,11 +61,6 @@ pub const DEFAULT_WEBSOCKET_CONNECT_TIMEOUT_MS: u64 = 15_000;
 const MAX_STREAM_MAX_RETRIES: u64 = 100;
 /// Hard cap for user-configured `request_max_retries`.
 const MAX_REQUEST_MAX_RETRIES: u64 = 100;
-
-pub const CLOUDFLARE_PROVIDER_ID: &str = "cloudflare";
-pub const CLOUDFLARE_PROVIDER_NAME: &str = "Cloudflare Workers AI";
-pub const CLOUDFLARE_API_TOKEN_ENV_VAR: &str = "CLOUDFLARE_API_TOKEN";
-pub const CLOUDFLARE_ACCOUNT_ID_ENV_VAR: &str = "CLOUDFLARE_ACCOUNT_ID";
 
 /// Wire protocol that the provider speaks.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, JsonSchema)]
@@ -337,20 +332,6 @@ impl ModelProviderInfo {
         }
     }
 
-    pub fn create_cloudflare_provider() -> ModelProviderInfo {
-        ModelProviderInfo {
-            id: Some(CLOUDFLARE_PROVIDER_ID.to_string()),
-            name: CLOUDFLARE_PROVIDER_NAME.to_string(),
-            env_key: Some(CLOUDFLARE_API_TOKEN_ENV_VAR.to_string()),
-            env_key_instructions: Some(
-                "Set CLOUDFLARE_API_TOKEN to a Cloudflare API token with Workers AI access."
-                    .to_string(),
-            ),
-            wire_api: WireApi::Chat,
-            ..ModelProviderInfo::default()
-        }
-    }
-
     /// Returns whether this provider uses the Responses wire protocol.
     pub fn is_responses_provider(&self) -> bool {
         self.wire_api == WireApi::Responses
@@ -363,14 +344,17 @@ impl ModelProviderInfo {
 
 /// Resolve configuration input to the one provider mounted by a runtime.
 ///
-/// The built-in provider is available as the default. User configuration may
-/// replace it with one explicit provider definition, but there is no provider
-/// registry or active-provider selector at this boundary.
+/// The generic Responses-compatible provider is available as the default. User
+/// configuration may replace it with one explicit provider definition, but
+/// there is no provider registry or active-provider selector at this boundary.
 pub fn resolve_model_provider(
     configured_provider: Option<ModelProviderInfo>,
 ) -> Result<ResolvedModelProvider, String> {
-    let provider_info =
-        configured_provider.unwrap_or_else(ModelProviderInfo::create_cloudflare_provider);
+    let provider_info = configured_provider.unwrap_or_else(|| {
+        let mut provider = ModelProviderInfo::create_responses_provider(None);
+        provider.id = Some("responses".to_string());
+        provider
+    });
     if provider_info.name.trim().is_empty() {
         return Err("model_provider.name must not be empty".to_string());
     }

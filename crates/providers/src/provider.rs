@@ -49,9 +49,6 @@ use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::cloudflare::CloudflareModelProvider;
-#[cfg(test)]
-use crate::cloudflare::create_cloudflare_provider;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelProviderFactory;
 use ruxex_model_provider::ModelsEndpoint;
@@ -1497,7 +1494,6 @@ fn map_provider_auth_error(error: ProviderAuthError) -> ruxex_model_provider::Pr
 }
 
 impl_model_provider_for_runtime!(ResponsesModelProvider);
-impl_model_provider_for_runtime!(CloudflareModelProvider);
 
 fn environment_variable_present(name: &str) -> bool {
     match std::env::var(name) {
@@ -1742,10 +1738,13 @@ mod tests {
     }
 
     #[test]
-    fn cloudflare_selects_chat_runtime_api() {
-        let provider = CloudflareModelProvider::new(
-            Some(ruxex_model_provider_info::CLOUDFLARE_PROVIDER_ID.to_string()),
-            ModelProviderInfo::create_cloudflare_provider(),
+    fn configured_provider_selects_chat_runtime_api() {
+        let provider = ResponsesModelProvider::new(
+            ModelProviderInfo {
+                id: Some("chat-provider".to_string()),
+                wire_api: WireApi::Chat,
+                ..ModelProviderInfo::create_responses_provider(None)
+            },
             /*credential_manager*/ None,
             HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         );
@@ -1883,66 +1882,18 @@ mod tests {
 
     #[test]
     fn provider_model_catalog_source_preserves_provider_capabilities() {
-        let mut info = ModelProviderInfo::create_cloudflare_provider();
+        let mut info = ModelProviderInfo::create_responses_provider(None);
         info.base_url = Some("https://example.test".to_string());
-        info.env_key = None;
-        let provider = create_cloudflare_provider(
-            info.id.clone(),
-            info,
-            /*credential_manager*/ None,
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        );
+        // Use an environment variable that is present in the test process so
+        // identity generation does not fail before the capability assertions.
+        info.env_key = Some("PATH".to_string());
+        let provider = create_responses_provider(info, /*credential_manager*/ None);
         let source = ProviderModelCatalogSource::new(provider);
 
         assert!(source.supports_api_key_models());
         assert!(source.supports_remote_models());
         assert!(!source.has_command_auth());
         assert!(source.identity().is_some());
-    }
-
-    #[tokio::test]
-    async fn cloudflare_lists_models_from_cloudflare_search_endpoint() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/models/search"))
-            .and(wiremock::matchers::query_param("task", "Text Generation"))
-            .and(wiremock::matchers::query_param("hide_experimental", "true"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "success": true,
-                "errors": [],
-                "messages": [],
-                "result": [{
-                    "name": "@cf/meta/llama-3.1-8b-instruct",
-                    "description": "Llama 3.1 8B instruct"
-                }]
-            })))
-            .expect(1)
-            .mount(&server)
-            .await;
-
-        let mut info = ModelProviderInfo::create_cloudflare_provider();
-        info.base_url = Some(server.uri());
-        info.env_key = None;
-        let provider = create_cloudflare_provider(
-            info.id.clone(),
-            info,
-            /*credential_manager*/ None,
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        );
-        let catalog = provider
-            .list_models(ruxex_model_provider::ListModelsRequest::new("test-client"))
-            .await
-            .expect("Cloudflare provider should list models");
-
-        assert_eq!(catalog.catalog.models.len(), 1);
-        assert_eq!(
-            catalog.catalog.models[0].slug,
-            "@cf/meta/llama-3.1-8b-instruct"
-        );
-        assert_eq!(
-            catalog.catalog.models[0].description.as_deref(),
-            Some("Llama 3.1 8B instruct")
-        );
     }
 
     #[test]

@@ -11,7 +11,7 @@ use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_arg0::arg0_dispatch_or_else;
 use ruxex_config::LoaderOverrides;
 use ruxex_protocol::protocol::SessionSource;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 use ruxex_utils_cli::CliConfigOverrides;
 
 #[cfg(all(
@@ -100,7 +100,7 @@ fn main() -> anyhow::Result<()> {
         if disable_plugin_startup_tasks_for_tests {
             runtime_options.plugin_startup_tasks = PluginStartupTasks::Skip;
         }
-        let exit = run_main_with_transport_options_and_provider::<CloudflareModelProvider>(
+        let exit = run_main_with_transport_options_and_provider::<ResponsesModelProvider>(
             arg0_paths,
             config_overrides,
             loader_overrides,

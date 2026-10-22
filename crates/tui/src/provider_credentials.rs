@@ -41,9 +41,9 @@ mod tests {
     fn selects_resolver_for_matching_provider_descriptor() {
         let mut registry = ProviderCredentialResolverRegistry::new();
         registry
-            .register(Arc::new(FakeResolver("cloudflare")))
+            .register(Arc::new(FakeResolver("test-provider")))
             .unwrap();
-        let descriptor = ProviderDescriptor::new("cloudflare", "1");
+        let descriptor = ProviderDescriptor::new("test-provider", "1");
 
         assert!(resolver_for_provider(Some(&registry), &descriptor.provider_kind).is_some());
     }
@@ -52,7 +52,7 @@ mod tests {
     fn rejects_resolver_for_another_provider() {
         let mut registry = ProviderCredentialResolverRegistry::new();
         registry
-            .register(Arc::new(FakeResolver("cloudflare")))
+            .register(Arc::new(FakeResolver("test-provider")))
             .unwrap();
         let descriptor = ProviderDescriptor::new("other", "1");
 

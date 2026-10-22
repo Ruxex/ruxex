@@ -931,9 +931,9 @@ mod tests {
         let ruxex_home = TempDir::new().expect("temporary provider home");
         let config = build_test_config_for_ruxex_home(ruxex_home.path()).await;
         let runtime =
-            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
+            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::ResponsesModelProvider::new(
                 Some("injected-provider".to_string()),
-                ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+                ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(None),
                 None,
                 ruxex_http_client::HttpClientFactory::new(
                     ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
@@ -983,9 +983,9 @@ mod tests {
             .await
             .expect("state db should initialize for in-process test");
         let runtime =
-            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
-                Some("cloudflare".to_string()),
-                ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::ResponsesModelProvider::new(
+                Some("responses".to_string()),
+                ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(None),
                 None,
                 ruxex_http_client::HttpClientFactory::new(
                     ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,

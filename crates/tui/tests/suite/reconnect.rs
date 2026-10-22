@@ -81,8 +81,8 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                         json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "authenticated"})
                     }
                     "modelProvider/read" => json!({
-                        "id": "cloudflare",
-                        "name": "cloudflare",
+                        "id": "responses",
+                        "name": "responses",
                         "authStatus": "authenticated"
                     }),
                     "modelProvider/capabilities/read" => json!({

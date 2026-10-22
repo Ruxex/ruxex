@@ -1,6 +1,9 @@
 mod cloudflare;
+mod cloudflare_auth;
 
 use cloudflare::CloudflareProvider;
+use cloudflare_auth::CloudflareCredentials;
+use cloudflare_auth::create_cloudflare_credential_resolver;
 use ruxex::provider::credentials::ProviderCredentialResolverRegistry;
 use ruxex::provider::transport::HttpClientFactory;
 use ruxex::provider::transport::OutboundProxyPolicy;
@@ -79,8 +82,8 @@ fn main() -> anyhow::Result<()> {
             ruxex_cli::run_with_provider_factory(arg0_paths, test_provider_factory(), None).await?;
         } else {
             let mut resolvers = ProviderCredentialResolverRegistry::new();
-            resolvers.register_typed::<ruxex_providers::CloudflareCredentials, _>(
-                ruxex_providers::create_cloudflare_credential_resolver(HttpClientFactory::new(
+            resolvers.register_typed::<CloudflareCredentials, _>(
+                create_cloudflare_credential_resolver(HttpClientFactory::new(
                     OutboundProxyPolicy::ReqwestDefault,
                 )),
             )?;

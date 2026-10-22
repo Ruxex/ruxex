@@ -62,7 +62,7 @@ use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::config_types::AltScreenMode;
 use ruxex_protocol::config_types::SandboxMode;
 pub use ruxex_provider_auth::ProviderCredentialResolverRegistry;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 use ruxex_rollout::StateDbHandle;
 use ruxex_rollout::state_db;
 use ruxex_state::log_db;
@@ -256,8 +256,8 @@ pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, Provide
 
 fn default_provider_factory() -> ProviderRuntimeFactory {
     (
-        AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareModelProvider>,
-        CloudflareModelProvider::provider_descriptor(),
+        AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>,
+        ResponsesModelProvider::provider_descriptor(),
     )
 }
 

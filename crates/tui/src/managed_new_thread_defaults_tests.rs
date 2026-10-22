@@ -138,7 +138,7 @@ async fn selected_profile_model_and_service_tier_are_preserved() {
     actual.model = Some("custom-model".to_string());
     let expected = actual.clone();
     assert_eq!(actual.model.as_deref(), Some("custom-model"));
-    assert_eq!(actual.model_provider_id, "cloudflare");
+    assert_eq!(actual.model_provider_id, "responses");
 
     apply_managed_new_thread_defaults(
         &mut actual,

@@ -20,4 +20,5 @@ ruxex-cli = { workspace = true }
 ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
 ruxex-providers = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

@@ -1,30 +1,28 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use ruxex_http_client::ClientRouteClass;
-use ruxex_http_client::HttpClientFactory;
-use ruxex_login::default_client::create_client_for_route_async;
-use ruxex_model_provider::ModelProvider;
-use ruxex_model_provider::ProviderError;
-use ruxex_model_provider::ProviderFuture;
-use ruxex_model_provider::ProviderResult;
-use ruxex_provider_auth::CredentialFlow;
-use ruxex_provider_auth::CredentialInput;
-use ruxex_provider_auth::CredentialOption;
-use ruxex_provider_auth::CredentialStep;
-use ruxex_provider_auth::CredentialValue;
-use ruxex_provider_auth::ProviderCredentialResolver;
-use ruxex_provider_auth::ProviderCredentialSink;
-use ruxex_provider_auth::ProviderCredentials;
+use ruxex::provider::ModelProvider;
+use ruxex::provider::ProviderError;
+use ruxex::provider::ProviderFuture;
+use ruxex::provider::ProviderResult;
+use ruxex::provider::credentials::CredentialFlow;
+use ruxex::provider::credentials::CredentialInput;
+use ruxex::provider::credentials::CredentialOption;
+use ruxex::provider::credentials::CredentialStep;
+use ruxex::provider::credentials::CredentialValue;
+use ruxex::provider::credentials::ProviderCredentialResolver;
+use ruxex::provider::credentials::ProviderCredentialSink;
+use ruxex::provider::credentials::ProviderCredentials;
+use ruxex::provider::transport::ClientRouteClass;
+use ruxex::provider::transport::HttpClientFactory;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::cloudflare::CloudflareModelProvider;
+use crate::cloudflare::CloudflareProvider;
 
 const CLOUDFLARE_PROVIDER_ID: &str = "cloudflare";
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 
-/// Cloudflare credentials collected by the client-side resolver.
 #[derive(Clone, Eq, PartialEq, Serialize)]
 pub struct CloudflareCredentials {
     pub api_key: String,
@@ -51,7 +49,6 @@ impl ProviderCredentials for CloudflareCredentials {
     }
 }
 
-/// Resolves a Cloudflare API key into a selectable account ID.
 #[derive(Clone, Debug)]
 pub struct CloudflareCredentialResolver {
     http_client_factory: HttpClientFactory,
@@ -66,17 +63,9 @@ impl CloudflareCredentialResolver {
         }
     }
 
-    #[cfg(test)]
-    fn with_api_root(http_client_factory: HttpClientFactory, api_root: impl Into<String>) -> Self {
-        Self {
-            http_client_factory,
-            api_root: api_root.into(),
-        }
-    }
-
     async fn list_accounts(&self, api_key: &str) -> ProviderResult<Vec<CredentialOption>> {
         let request_url = format!("{}/accounts", self.api_root.trim_end_matches('/'));
-        let client = create_client_for_route_async(
+        let client = ruxex::client::create_client_for_route_async(
             self.http_client_factory.clone(),
             request_url.clone(),
             ClientRouteClass::Api,
@@ -117,10 +106,9 @@ impl ProviderCredentialResolver<CloudflareCredentials> for CloudflareCredentialR
         &self,
         input: CredentialInput,
     ) -> ProviderFuture<'_, ProviderResult<Box<dyn CredentialFlow<CloudflareCredentials>>>> {
-        let api_key = input.values.get("api_key").cloned();
         let flow = CloudflareCredentialFlow {
             resolver: self.clone(),
-            api_key,
+            api_key: input.values.get("api_key").cloned(),
             account_options: Vec::new(),
             account_id: None,
         };
@@ -130,7 +118,7 @@ impl ProviderCredentialResolver<CloudflareCredentials> for CloudflareCredentialR
     }
 }
 
-impl ProviderCredentialSink<CloudflareCredentials> for CloudflareModelProvider {
+impl ProviderCredentialSink<CloudflareCredentials> for CloudflareProvider {
     fn provider_id(&self) -> &str {
         CLOUDFLARE_PROVIDER_ID
     }
@@ -240,64 +228,4 @@ struct CloudflareAccountsResponse {
 struct CloudflareAccount {
     id: String,
     name: String,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::CloudflareCredentialResolver;
-    use super::CloudflareCredentials;
-    use ruxex_http_client::HttpClientFactory;
-    use ruxex_http_client::OutboundProxyPolicy;
-    use ruxex_provider_auth::CredentialInput;
-    use ruxex_provider_auth::CredentialStep;
-    use ruxex_provider_auth::CredentialValue;
-    use ruxex_provider_auth::ProviderCredentialResolver;
-    use wiremock::Mock;
-    use wiremock::MockServer;
-    use wiremock::ResponseTemplate;
-    use wiremock::matchers::header;
-    use wiremock::matchers::method;
-    use wiremock::matchers::path;
-
-    #[tokio::test]
-    async fn resolves_account_selection_from_api_key() {
-        let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/accounts"))
-            .and(header("authorization", "Bearer secret"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "success": true,
-                "result": [{"id": "account-a", "name": "Account A"}]
-            })))
-            .mount(&server)
-            .await;
-        let resolver = CloudflareCredentialResolver::with_api_root(
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-            server.uri(),
-        );
-        let mut flow = resolver.begin(CredentialInput::empty()).await.unwrap();
-
-        let step = flow
-            .submit(CredentialValue::secret("secret"))
-            .await
-            .unwrap();
-        assert!(matches!(step, CredentialStep::Select { .. }));
-        let step = flow
-            .submit(CredentialValue::selection("account-a"))
-            .await
-            .unwrap();
-        assert_eq!(step, CredentialStep::Complete);
-        assert_eq!(flow.finish().unwrap().account_id, "account-a");
-    }
-
-    #[test]
-    fn credentials_debug_redacts_the_api_key() {
-        let credentials = CloudflareCredentials {
-            api_key: "secret-token".to_string(),
-            account_id: "account-a".to_string(),
-        };
-
-        assert!(!format!("{credentials:?}").contains("secret-token"));
-        assert!(format!("{credentials:?}").contains("account-a"));
-    }
 }

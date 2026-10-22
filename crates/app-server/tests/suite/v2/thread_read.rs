@@ -74,7 +74,7 @@ use ruxex_protocol::protocol::UserMessageEvent;
 use ruxex_protocol::user_input::ByteRange;
 use ruxex_protocol::user_input::TextElement;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 use ruxex_rollout::RolloutItem;
 use ruxex_thread_store::AppendThreadItemsParams;
 use ruxex_thread_store::CreateThreadParams;
@@ -104,9 +104,9 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
 fn test_runtime() -> ruxex_app_server::AppServerRuntime {
-    AppServerRuntimeBuilder::new(Arc::new(CloudflareModelProvider::new(
-        Some("cloudflare".to_string()),
-        ModelProviderInfo::create_cloudflare_provider(),
+    AppServerRuntimeBuilder::new(Arc::new(ResponsesModelProvider::new(
+        Some("responses".to_string()),
+        ModelProviderInfo::create_responses_provider(None),
         None,
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
     )))

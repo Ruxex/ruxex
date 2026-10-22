@@ -241,15 +241,14 @@ fn test_resolve_model_provider_returns_one_custom_provider() {
 }
 
 #[test]
-fn test_resolve_model_provider_uses_builtin_default() {
+fn test_resolve_model_provider_uses_responses_default() {
     let resolved = resolve_model_provider(None).expect("built-in provider should resolve");
+    let mut expected = ModelProviderInfo::create_responses_provider(None);
+    expected.id = Some("responses".to_string());
 
-    assert_eq!(resolved.id, CLOUDFLARE_PROVIDER_ID);
-    assert_eq!(resolved.info.id.as_deref(), Some(CLOUDFLARE_PROVIDER_ID));
-    assert_eq!(
-        resolved.info.name,
-        ModelProviderInfo::create_cloudflare_provider().name
-    );
+    assert_eq!(resolved.id, "responses");
+    assert_eq!(resolved.info.id.as_deref(), Some("responses"));
+    assert_eq!(resolved.info, expected);
 }
 
 #[test]

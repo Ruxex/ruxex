@@ -1735,7 +1735,7 @@ fn initialize_test_provider_home(ruxex_home: &Path) -> anyhow::Result<()> {
             })
         })
         .filter(|provider_id| !provider_id.is_empty())
-        .unwrap_or_else(|| "cloudflare".to_string());
+        .unwrap_or_else(|| "responses".to_string());
     let descriptor = ProviderDescriptor::new(provider_id, CURRENT_PROVIDER_PROTOCOL_VERSION);
     let marker = ProviderHomeMarker::from(&descriptor);
     std::fs::write(marker_path, serde_json::to_vec_pretty(&marker)?)?;

@@ -127,7 +127,7 @@ impl Harness {
             .build()
             .await?;
         // These lifecycle tests inject a provider-neutral header identity. The default
-        // Cloudflare fixture expects an API-key account-id credential instead, so use the
+        // The provider fixture expects an API-key account-id credential instead, so use the
         // generic configured provider contract that preserves the injected identity.
         config.model_provider = ModelProviderInfo::create_responses_provider(None);
         config.model_provider_id = "test-provider".into();

@@ -136,7 +136,7 @@ use ruxex_protocol::protocol::ReviewTarget;
 use ruxex_protocol::protocol::SessionConfiguredEvent;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 use ruxex_rollout::find_thread_meta_by_name_str;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
@@ -599,8 +599,8 @@ async fn run_main_with_runtime_factory(
         ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
     );
     let provider_factory = provider_factory.unwrap_or((
-        AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareModelProvider>,
-        CloudflareModelProvider::provider_descriptor(),
+        AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>,
+        ResponsesModelProvider::provider_descriptor(),
     ));
     let init =
         provider_init_from_config_with_descriptor(&config, true, &provider_factory.1).await?;

@@ -70,7 +70,7 @@ use ruxex_home::RuxexHomeUserInstructionsProvider;
 use ruxex_models_manager::manager::RefreshStrategy;
 use ruxex_protocol::protocol::AskForApproval;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 use ruxex_terminal_detection::TerminalName;
 
 /// Ruxex CLI
@@ -788,9 +788,9 @@ type ProviderRuntimeFactory = (
 fn default_provider_factory() -> ProviderRuntimeFactory {
     (
         ruxex_app_server::AppServerRuntimeBuilder::build_from_provider_factory::<
-            CloudflareModelProvider,
+            ResponsesModelProvider,
         >,
-        CloudflareModelProvider::provider_descriptor(),
+        ResponsesModelProvider::provider_descriptor(),
     )
 }
 

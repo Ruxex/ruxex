@@ -5,7 +5,7 @@ use super::*;
 use ruxex_app_server_client::AppServerRuntime;
 use ruxex_app_server_client::provider_init_from_config_with_descriptor;
 use ruxex_model_provider::ModelProviderFactory;
-use ruxex_providers::CloudflareModelProvider;
+use ruxex_providers::ResponsesModelProvider;
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
@@ -20,9 +20,9 @@ pub(super) async fn fork_source(
 ) -> anyhow::Result<std::path::PathBuf> {
     let provider_factory = provider_factory.unwrap_or((
         ruxex_app_server_client::AppServerRuntimeBuilder::build_from_provider_factory::<
-            CloudflareModelProvider,
+            ResponsesModelProvider,
         >,
-        CloudflareModelProvider::provider_descriptor(),
+        ResponsesModelProvider::provider_descriptor(),
     ));
     let init = provider_init_from_config_with_descriptor(config, true, &provider_factory.1).await?;
     let runtime = (provider_factory.0)(init);

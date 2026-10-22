@@ -858,9 +858,9 @@ mod tests {
     use tempfile::TempDir;
 
     fn test_runtime(provider_id: &str) -> AppServerRuntime {
-        AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
+        AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::ResponsesModelProvider::new(
             Some(provider_id.to_string()),
-            ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+            ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(None),
             None,
             HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         )))
@@ -912,7 +912,7 @@ mod tests {
             config_warnings: Vec::new(),
             session_source,
             enable_api_key_env: false,
-            runtime: Some(test_runtime("cloudflare")),
+            runtime: Some(test_runtime("responses")),
             product_identity: ProductIdentity::ruxex(),
             initialize: InitializeParams {
                 client_info: ClientInfo {
@@ -940,7 +940,7 @@ mod tests {
         let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
-        let runtime = test_runtime("cloudflare");
+        let runtime = test_runtime("responses");
         let expected_provider = runtime.provider_descriptor().provider_kind.clone();
         let client = InProcessAppServerBuilder::new(InProcessStartArgs {
             arg0_paths: Arg0DispatchPaths::default(),
