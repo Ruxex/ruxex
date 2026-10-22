@@ -1056,7 +1056,15 @@ async fn run_cli_with_product_identity(
             prepend_config_flags(&mut mcp_cli.config_overrides, root_config_overrides.clone());
             let loader_overrides =
                 loader_overrides_for_profile(interactive.config_profile_v2.as_ref())?;
-            mcp_cli.run(loader_overrides).await?;
+            mcp_cli
+                .run(
+                    loader_overrides,
+                    provider_factory
+                        .as_ref()
+                        .expect("CLI provider factory is initialized above"),
+                    &product_identity,
+                )
+                .await?;
         }
         Some(Subcommand::Plugin(plugin_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -1074,23 +1082,54 @@ async fn run_cli_with_product_identity(
                     let overrides = config_overrides
                         .parse_overrides()
                         .map_err(anyhow::Error::msg)?;
-                    plugin_cmd::run_plugin_add(overrides, args).await?;
+                    plugin_cmd::run_plugin_add(
+                        overrides,
+                        args,
+                        provider_factory
+                            .as_ref()
+                            .expect("CLI provider factory is initialized above"),
+                        &product_identity,
+                    )
+                    .await?;
                 }
                 PluginSubcommand::List(args) => {
                     let overrides = config_overrides
                         .parse_overrides()
                         .map_err(anyhow::Error::msg)?;
-                    plugin_cmd::run_plugin_list(overrides, args).await?;
+                    plugin_cmd::run_plugin_list(
+                        overrides,
+                        args,
+                        provider_factory
+                            .as_ref()
+                            .expect("CLI provider factory is initialized above"),
+                        &product_identity,
+                    )
+                    .await?;
                 }
                 PluginSubcommand::Marketplace(mut marketplace_cli) => {
                     prepend_config_flags(&mut marketplace_cli.config_overrides, config_overrides);
-                    marketplace_cli.run().await?;
+                    marketplace_cli
+                        .run(
+                            provider_factory
+                                .as_ref()
+                                .expect("CLI provider factory is initialized above"),
+                            &product_identity,
+                        )
+                        .await?;
                 }
                 PluginSubcommand::Remove(args) => {
                     let overrides = config_overrides
                         .parse_overrides()
                         .map_err(anyhow::Error::msg)?;
-                    plugin_cmd::run_plugin_remove(overrides, args).await?;
+                    plugin_cmd::run_plugin_remove(
+                        overrides,
+                        args,
+                        provider_factory
+                            .as_ref()
+                            .expect("CLI provider factory is initialized above"),
+                        &product_identity,
+                    )
+                    .await?;
                 }
             }
         }

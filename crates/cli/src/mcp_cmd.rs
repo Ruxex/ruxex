@@ -38,6 +38,7 @@ use ruxex_rmcp_client::delete_oauth_tokens;
 use ruxex_rmcp_client::resolve_mcp_oauth_callback_url;
 use ruxex_utils_cli::CliConfigOverrides;
 use ruxex_utils_cli::format_env_display;
+use ruxex_utils_home_dir::ProductIdentity;
 
 use crate::cloud_config;
 use crate::mcp_login::McpLoginMode;
@@ -216,7 +217,12 @@ pub struct LogoutArgs {
 }
 
 impl McpCli {
-    pub async fn run(self, loader_overrides: LoaderOverrides) -> Result<()> {
+    pub async fn run(
+        self,
+        loader_overrides: LoaderOverrides,
+        provider_factory: &crate::ProviderRuntimeFactory,
+        product_identity: &ProductIdentity,
+    ) -> Result<()> {
         let McpCli {
             config_overrides,
             subcommand,
@@ -229,27 +235,44 @@ impl McpCli {
         match subcommand {
             McpSubcommand::List(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
-                cloud_config::mount_provider_home(&config)?;
+                cloud_config::mount_provider_home_for_provider(
+                    &config,
+                    &provider_factory.1,
+                    product_identity,
+                )?;
                 run_list(&config, args).await?;
             }
             McpSubcommand::Get(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
+                cloud_config::mount_provider_home_for_provider(
+                    &config,
+                    &provider_factory.1,
+                    product_identity,
+                )?;
                 run_get(&config, args).await?;
             }
             McpSubcommand::Add(args) => {
-                run_add(&config_overrides, args).await?;
+                run_add(&config_overrides, args, provider_factory, product_identity).await?;
             }
             McpSubcommand::Remove(args) => {
-                run_remove(&config_overrides, args).await?;
+                run_remove(&config_overrides, args, provider_factory, product_identity).await?;
             }
             McpSubcommand::Login(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
-                cloud_config::mount_provider_home(&config)?;
+                cloud_config::mount_provider_home_for_provider(
+                    &config,
+                    &provider_factory.1,
+                    product_identity,
+                )?;
                 run_login(&config, args).await?;
             }
             McpSubcommand::Logout(args) => {
                 let config = cloud_config::load_config(&config_overrides, loader_overrides).await?;
-                cloud_config::mount_provider_home(&config)?;
+                cloud_config::mount_provider_home_for_provider(
+                    &config,
+                    &provider_factory.1,
+                    product_identity,
+                )?;
                 run_logout(&config, args).await?;
             }
         }
@@ -274,7 +297,12 @@ async fn validate_profile_v2_migration(
     Ok(())
 }
 
-async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Result<()> {
+async fn run_add(
+    config_overrides: &CliConfigOverrides,
+    add_args: AddArgs,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
+) -> Result<()> {
     // Validate any provided overrides even though they are not currently applied.
     let overrides = config_overrides
         .parse_overrides()
@@ -282,6 +310,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
+    cloud_config::mount_provider_home_for_provider(&config, &provider_factory.1, product_identity)?;
 
     let AddArgs {
         name,
@@ -466,10 +495,19 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
     Ok(())
 }
 
-async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveArgs) -> Result<()> {
-    config_overrides
+async fn run_remove(
+    config_overrides: &CliConfigOverrides,
+    remove_args: RemoveArgs,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
+) -> Result<()> {
+    let overrides = config_overrides
         .parse_overrides()
         .map_err(anyhow::Error::msg)?;
+    let config = Config::load_with_cli_overrides(overrides)
+        .await
+        .context("failed to load configuration")?;
+    cloud_config::mount_provider_home_for_provider(&config, &provider_factory.1, product_identity)?;
 
     let RemoveArgs { name } = remove_args;
 

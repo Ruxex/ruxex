@@ -2,7 +2,6 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use clap::Parser;
-use ruxex_app_server::runtime::mount_provider_home_for_config;
 use ruxex_core::config::Config;
 use ruxex_core::config::find_ruxex_home;
 use ruxex_core::plugins_manager_for_config;
@@ -23,6 +22,7 @@ use ruxex_core_plugins::marketplace::find_marketplace_manifest_path;
 use ruxex_plugin::PluginId;
 use ruxex_plugin::validate_plugin_segment;
 use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::ProductIdentity;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -125,8 +125,11 @@ pub struct RemovePluginArgs {
 pub async fn run_plugin_add(
     overrides: Vec<(String, toml::Value)>,
     args: AddPluginArgs,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
 ) -> Result<()> {
-    let context = load_plugin_command_context(overrides).await?;
+    let context =
+        load_plugin_command_context(overrides, provider_factory, product_identity).await?;
     let AddPluginArgs {
         plugin,
         marketplace_name,
@@ -193,8 +196,11 @@ impl JsonPluginAddOutput {
 pub async fn run_plugin_list(
     overrides: Vec<(String, toml::Value)>,
     args: ListPluginsArgs,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
 ) -> Result<()> {
-    let context = load_plugin_command_context(overrides).await?;
+    let context =
+        load_plugin_command_context(overrides, provider_factory, product_identity).await?;
     let PluginCommandContext {
         ruxex_home,
         plugins_input,
@@ -532,8 +538,11 @@ fn auth_policy_label(policy: MarketplacePluginAuthPolicy) -> &'static str {
 pub async fn run_plugin_remove(
     overrides: Vec<(String, toml::Value)>,
     args: RemovePluginArgs,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
 ) -> Result<()> {
-    let context = load_plugin_command_context(overrides).await?;
+    let context =
+        load_plugin_command_context(overrides, provider_factory, product_identity).await?;
     let RemovePluginArgs {
         plugin,
         marketplace_name,
@@ -585,12 +594,19 @@ struct PluginCommandContext {
 
 async fn load_plugin_command_context(
     overrides: Vec<(String, toml::Value)>,
+    provider_factory: &crate::ProviderRuntimeFactory,
+    product_identity: &ProductIdentity,
 ) -> Result<PluginCommandContext> {
     let ruxex_home = find_ruxex_home().context("failed to resolve RUXEX_HOME")?;
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    mount_provider_home_for_config(&config).context("failed to mount provider data root")?;
+    ruxex_model_provider::mount_provider_home_with_marker(
+        &config.ruxex_home,
+        product_identity.home_marker_file(),
+        &provider_factory.1,
+    )
+    .context("failed to mount provider data root")?;
     let plugins_input = config.plugins_config_input();
     let manager = Arc::new(plugins_manager_for_config(
         &config,

@@ -23,6 +23,7 @@ use ruxex_core_plugins::publish_plugin_bundle;
 use ruxex_http_client::ClientRouteClass;
 use ruxex_http_client::RouteAwareClientPool;
 use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::ProductIdentity;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -157,7 +158,11 @@ struct RemoveMarketplaceArgs {
 }
 
 impl MarketplaceCli {
-    pub async fn run(self) -> Result<()> {
+    pub async fn run(
+        self,
+        provider_factory: &crate::ProviderRuntimeFactory,
+        product_identity: &ProductIdentity,
+    ) -> Result<()> {
         let MarketplaceCli {
             config_overrides,
             subcommand,
@@ -170,7 +175,12 @@ impl MarketplaceCli {
         )
         .await?;
         let config = builder.clone().build().await?;
-        cloud_config::mount_provider_home(&config)?;
+        ruxex_model_provider::mount_provider_home_with_marker(
+            &config.ruxex_home,
+            product_identity.home_marker_file(),
+            &provider_factory.1,
+        )
+        .context("failed to mount provider data root")?;
 
         match subcommand {
             MarketplaceSubcommand::Add(args) => run_add(config, args).await?,

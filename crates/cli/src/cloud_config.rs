@@ -1,13 +1,14 @@
 use anyhow::Context;
 use anyhow::Result;
-use ruxex_app_server::runtime::mount_provider_home_for_config;
 use ruxex_core::config::Config;
 use ruxex_core::config::ConfigBuilder;
 use ruxex_core::config::ConfigOverrides;
 use ruxex_core::config::LoaderOverrides;
 use ruxex_core::config::find_ruxex_home;
+use ruxex_model_provider::ProviderDescriptor;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::ProductIdentity;
 
 pub(crate) async fn load_config(
     config_overrides: &CliConfigOverrides,
@@ -25,10 +26,41 @@ pub(crate) async fn load_config(
 }
 
 /// Validate the provider-scoped data root before a CLI command opens provider credentials.
-pub(crate) fn mount_provider_home(config: &Config) -> Result<()> {
-    mount_provider_home_for_config(config)
-        .map(|_| ())
-        .context("failed to mount provider data root")
+pub(crate) fn mount_provider_home_for_provider(
+    config: &Config,
+    provider_descriptor: &ProviderDescriptor,
+    product_identity: &ProductIdentity,
+) -> Result<ruxex_model_provider::ProviderHomeMarker> {
+    ruxex_model_provider::mount_provider_home_with_marker(
+        &config.ruxex_home,
+        product_identity.home_marker_file(),
+        provider_descriptor,
+    )
+    .context("failed to mount provider data root")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+
+    #[tokio::test]
+    async fn host_provider_home_mount_uses_injected_descriptor() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        let descriptor =
+            ProviderDescriptor::new("host-provider", CURRENT_PROVIDER_PROTOCOL_VERSION);
+
+        let marker =
+            mount_provider_home_for_provider(&config, &descriptor, &ProductIdentity::ruxex())
+                .expect("host provider home should mount");
+
+        assert_eq!(marker.provider_kind, "host-provider");
+    }
 }
 
 pub(crate) async fn config_builder(
