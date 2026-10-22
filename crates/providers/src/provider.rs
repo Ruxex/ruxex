@@ -53,6 +53,7 @@ use crate::cloudflare::CloudflareModelProvider;
 #[cfg(test)]
 use crate::cloudflare::create_cloudflare_provider;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::ModelProviderFactory;
 use ruxex_model_provider::ModelsEndpoint;
 use ruxex_model_provider::ProviderAuthEnvironment;
 use ruxex_model_provider::ProviderAuthRecoveryMessages;
@@ -1571,6 +1572,20 @@ impl ResponsesModelProvider {
             credential_manager,
             http_client_factory,
         }
+    }
+}
+
+impl ModelProviderFactory for ResponsesModelProvider {
+    fn provider_descriptor() -> ProviderDescriptor {
+        ProviderDescriptor::new("responses", CURRENT_PROVIDER_PROTOCOL_VERSION)
+    }
+
+    fn new(init: ruxex_model_provider::ProviderInit) -> Self {
+        Self::new(
+            init.provider_info,
+            Some(init.credential_manager),
+            init.http_client_factory,
+        )
     }
 }
 

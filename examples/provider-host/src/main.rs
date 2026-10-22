@@ -15,6 +15,7 @@ use ruxex_cli::run_host_app_server_daemon;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelProviderFactory;
 use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::ResponsesModelProvider;
 
 const TEST_PROVIDER_INFO_ENV: &str = "RUXEX_TEST_PROVIDER_INFO";
 
@@ -39,7 +40,7 @@ fn test_provider_runtime(init: ProviderInit) -> AppServerRuntime {
             .expect("RUXEX_TEST_PROVIDER_INFO must be set for the test provider host"),
     )
     .expect("RUXEX_TEST_PROVIDER_INFO must contain a ModelProviderInfo JSON object");
-    AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareProvider>(ProviderInit {
+    AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>(ProviderInit {
         provider_info,
         ..init
     })
