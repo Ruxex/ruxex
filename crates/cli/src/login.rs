@@ -1,36 +1,50 @@
 //! CLI authentication status and logout commands.
 
-use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_core::config::Config;
 use ruxex_login::CredentialManager;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderInit;
+use ruxex_model_provider::SharedModelProvider;
 use ruxex_model_provider::mount_provider_home;
 use ruxex_protocol::account::ProviderAuthStatus;
 use ruxex_utils_cli::CliConfigOverrides;
 use std::sync::Arc;
 
-async fn load_cli_credential_manager(config: &Config) -> anyhow::Result<Arc<CredentialManager>> {
-    let provider_descriptor = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
+async fn load_cli_credential_manager(
+    config: &Config,
+    provider_descriptor: &ProviderDescriptor,
+) -> anyhow::Result<Arc<CredentialManager>> {
     mount_provider_home(&config.ruxex_home, &provider_descriptor)
         .map_err(|err| anyhow::anyhow!("failed to mount provider data root: {err}"))?;
     Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }
 
-pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
+fn provider_from_factory(
+    config: &Config,
+    credential_manager: Arc<CredentialManager>,
+    provider_factory: crate::ProviderRuntimeFactory,
+) -> SharedModelProvider {
+    (provider_factory.0)(ProviderInit {
+        provider_info: config.model_provider.clone(),
+        credential_manager,
+        http_client_factory: config.http_client_factory(),
+    })
+    .provider()
+}
+
+pub async fn run_login_status(
+    cli_config_overrides: CliConfigOverrides,
+    provider_factory: crate::ProviderRuntimeFactory,
+) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_credential_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config, &provider_factory.1).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error checking login status: {err}");
             std::process::exit(1);
         }
     };
-    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-        config.model_provider.clone(),
-        Some(manager),
-        config.http_client_factory(),
-    )
-    .build()
-    .provider();
+    let provider = provider_from_factory(&config, manager, provider_factory);
     let authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
     eprintln!(
         "{}: {}",
@@ -44,22 +58,19 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     std::process::exit(if authenticated { 0 } else { 1 });
 }
 
-pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
+pub async fn run_logout(
+    cli_config_overrides: CliConfigOverrides,
+    provider_factory: crate::ProviderRuntimeFactory,
+) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_credential_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config, &provider_factory.1).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error logging out: {err}");
             std::process::exit(1);
         }
     };
-    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-        config.model_provider.clone(),
-        Some(Arc::clone(&manager)),
-        config.http_client_factory(),
-    )
-    .build()
-    .provider();
+    let provider = provider_from_factory(&config, Arc::clone(&manager), provider_factory);
     let was_authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
     match provider.logout().await {
         Ok(()) => {}
@@ -77,22 +88,19 @@ pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     std::process::exit(0);
 }
 
-pub async fn run_login_delete(cli_config_overrides: CliConfigOverrides) -> ! {
+pub async fn run_login_delete(
+    cli_config_overrides: CliConfigOverrides,
+    provider_factory: crate::ProviderRuntimeFactory,
+) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
-    let manager = match load_cli_credential_manager(&config).await {
+    let manager = match load_cli_credential_manager(&config, &provider_factory.1).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Error loading credentials: {err}");
             std::process::exit(1);
         }
     };
-    let provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-        config.model_provider.clone(),
-        Some(manager),
-        config.http_client_factory(),
-    )
-    .build()
-    .provider();
+    let provider = provider_from_factory(&config, manager, provider_factory);
     match provider.delete().await {
         Ok(true) => eprintln!(
             "Deleted credentials for model provider `{}`",

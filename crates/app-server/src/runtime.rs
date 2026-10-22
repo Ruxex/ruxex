@@ -4,8 +4,6 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use ruxex_core::config::Config;
-use ruxex_http_client::HttpClientFactory;
-use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_login::CredentialManager;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelProviderFactory;
@@ -19,7 +17,6 @@ use ruxex_model_provider::SharedModelProvider;
 use ruxex_model_provider::mount_provider_home;
 use ruxex_model_provider::mount_provider_home_with_marker;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::create_model_provider_with_http_client_factory;
 
 /// The single provider contract shared by an AppServer transport and its clients.
 #[derive(Clone)]
@@ -94,36 +91,6 @@ pub fn mount_provider_home_for_runtime_with_marker(
     )
 }
 
-/// Mounts the provider home and constructs the single runtime owned by a local host.
-pub async fn configured_app_server_runtime_from_config(
-    config: &Config,
-    enable_api_key_env: bool,
-) -> anyhow::Result<AppServerRuntime> {
-    let init = provider_init_from_config(config, enable_api_key_env).await?;
-    Ok(
-        AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-            init.provider_info,
-            Some(init.credential_manager),
-            init.http_client_factory,
-        )
-        .build(),
-    )
-}
-
-/// Mounts the provider home and loads the process-local inputs for a
-/// host-owned provider constructor.
-pub async fn provider_init_from_config(
-    config: &Config,
-    enable_api_key_env: bool,
-) -> anyhow::Result<ProviderInit> {
-    provider_init_from_config_with_descriptor(
-        config,
-        enable_api_key_env,
-        &AppServerRuntimeBuilder::descriptor_for(&config.model_provider),
-    )
-    .await
-}
-
 /// Mounts the provider home using the host-selected provider identity and
 /// loads the process-local inputs for a provider constructor.
 pub async fn provider_init_from_config_with_descriptor(
@@ -162,35 +129,6 @@ impl AppServerRuntimeBuilder {
         Self::from_provider_factory::<P>(init).build()
     }
 
-    /// Starts building a runtime for the provider selected by host configuration.
-    ///
-    /// Provider selection belongs at this host boundary. Callers that already own a concrete
-    /// provider can use [`Self::new`].
-    pub fn from_provider_info(
-        provider_info: ModelProviderInfo,
-        credential_manager: Option<Arc<CredentialManager>>,
-    ) -> Self {
-        Self::from_provider_info_with_http_client_factory(
-            provider_info,
-            credential_manager.clone(),
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        )
-    }
-
-    /// Starts building a configured runtime with the host's outbound transport policy.
-    pub fn from_provider_info_with_http_client_factory(
-        provider_info: ModelProviderInfo,
-        credential_manager: Option<Arc<CredentialManager>>,
-        http_client_factory: HttpClientFactory,
-    ) -> Self {
-        let provider = create_model_provider_with_http_client_factory(
-            provider_info,
-            credential_manager.clone(),
-            http_client_factory,
-        );
-        Self { provider }
-    }
-
     /// Returns the descriptor that must be used when mounting this configured provider's data
     /// root, without constructing credentials or opening provider state.
     pub fn descriptor_for(provider_info: &ModelProviderInfo) -> ProviderDescriptor {
@@ -203,21 +141,6 @@ impl AppServerRuntimeBuilder {
             provider: self.provider,
         }
     }
-}
-
-/// Creates the configured AppServer runtime for startup paths that do not
-/// receive an already-built runtime from their host.
-pub(crate) fn configured_app_server_runtime(
-    provider_info: ModelProviderInfo,
-    credential_manager: Arc<CredentialManager>,
-    http_client_factory: HttpClientFactory,
-) -> AppServerRuntime {
-    AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-        provider_info,
-        Some(credential_manager),
-        http_client_factory,
-    )
-    .build()
 }
 
 pub(crate) fn configured_provider_descriptor(
@@ -235,11 +158,26 @@ pub(crate) fn configured_provider_descriptor(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_model_provider::SharedModelProvider;
+
+    fn test_provider_with_id(provider_id: &str) -> SharedModelProvider {
+        Arc::new(ruxex_providers::CloudflareModelProvider::new(
+            Some(provider_id.to_string()),
+            ModelProviderInfo::create_cloudflare_provider(),
+            None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        ))
+    }
+
+    fn test_provider() -> SharedModelProvider {
+        test_provider_with_id("test-provider")
+    }
 
     #[test]
     fn contract_is_derived_from_the_runtime_provider() {
-        let runtime =
-            AppServerRuntimeBuilder::from_provider_info(ModelProviderInfo::default(), None).build();
+        let runtime = AppServerRuntimeBuilder::new(test_provider()).build();
 
         assert_eq!(
             runtime.provider_descriptor(),
@@ -295,14 +233,8 @@ mod tests {
             .build()
             .await
             .expect("config should build");
-        let runtime = AppServerRuntimeBuilder::from_provider_info(
-            ModelProviderInfo {
-                id: Some("injected-provider".to_string()),
-                ..ModelProviderInfo::default()
-            },
-            None,
-        )
-        .build();
+        let runtime =
+            AppServerRuntimeBuilder::new(test_provider_with_id("injected-provider")).build();
 
         let marker = mount_provider_home_for_runtime(&config, &runtime)
             .expect("injected provider home should mount");
@@ -331,7 +263,8 @@ mod tests {
         )
         .expect("fixture marker should be replaced");
 
-        let error = match configured_app_server_runtime_from_config(&config, true).await {
+        let error = match provider_init_from_config_with_descriptor(&config, true, &expected).await
+        {
             Ok(_) => panic!("mismatched marker must reject runtime startup"),
             Err(error) => error,
         };

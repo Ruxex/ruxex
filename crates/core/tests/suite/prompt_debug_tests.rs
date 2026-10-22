@@ -12,7 +12,7 @@ use ruxex_login::CredentialManager;
 use ruxex_protocol::models::ContentItem;
 use ruxex_protocol::models::ResponseItem;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -36,7 +36,7 @@ async fn build_prompt_input_includes_context_and_user_message() -> Result<()> {
         config.ruxex_home.clone(),
     ));
     let credential_manager = CredentialManager::shared_from_config(&config, false).await?;
-    let provider = create_model_provider(
+    let provider = create_responses_provider(
         config.model_provider.clone(),
         Some(credential_manager.clone()),
     );

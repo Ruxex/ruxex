@@ -29,7 +29,7 @@ cli = ["app-server", "tui", "dep:ruxex-cli"]
 [dependencies]
 ruxex-arg0 = { workspace = true }
 ruxex-api = { workspace = true }
-ruxex-app-server = { workspace = true, optional = true }
+ruxex-app-server = { workspace = true, default-features = false, optional = true }
 ruxex-cli = { workspace = true, optional = true }
 ruxex-home = { workspace = true }
 ruxex-http-client = { workspace = true }
@@ -185,7 +185,7 @@ ruxex-agent-roles = { path = "crates/agent-roles", version = "0.2.0" }
 ruxex-ansi-escape = { path = "crates/ansi-escape", version = "0.2.0" }
 ruxex-api = { path = "crates/ruxex-api", version = "0.2.0" }
 ruxex-attachment-store = { path = "crates/attachment-store", version = "0.2.0" }
-ruxex-app-server = { path = "crates/app-server", version = "0.2.0" }
+ruxex-app-server = { path = "crates/app-server", version = "0.2.0", default-features = false }
 ruxex-app-server-mock = { path = "crates/app-server-mock", version = "0.2.0" }
 ruxex-app-server-transport = { path = "crates/app-server-transport", version = "0.2.0" }
 ruxex-app-server-daemon = { path = "crates/app-server-daemon", version = "0.2.0" }

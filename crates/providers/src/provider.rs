@@ -50,6 +50,8 @@ use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::cloudflare::CloudflareModelProvider;
+#[cfg(test)]
+use crate::cloudflare::create_cloudflare_provider;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 use ruxex_model_provider::ModelsEndpoint;
 use ruxex_model_provider::ProviderAuthEnvironment;
@@ -1493,7 +1495,7 @@ fn map_provider_auth_error(error: ProviderAuthError) -> ruxex_model_provider::Pr
     }
 }
 
-impl_model_provider_for_runtime!(ConfiguredModelProvider);
+impl_model_provider_for_runtime!(ResponsesModelProvider);
 impl_model_provider_for_runtime!(CloudflareModelProvider);
 
 fn environment_variable_present(name: &str) -> bool {
@@ -1509,106 +1511,54 @@ pub(crate) type ModelProviderFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Se
 /// Shared runtime model provider handle.
 pub(super) type SharedProviderRuntime = Arc<dyn ProviderRuntime>;
 
-/// Creates the provider-neutral model provider for configured provider metadata.
-pub fn create_model_provider(
-    provider_info: ModelProviderInfo,
-    credential_manager: Option<Arc<CredentialManager>>,
-) -> ruxex_model_provider::SharedModelProvider {
-    create_model_provider_with_http_client_factory(
-        provider_info,
-        credential_manager,
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-    )
-}
-
-/// Creates the configured provider with the host-selected outbound transport.
-pub fn create_model_provider_with_http_client_factory(
-    provider_info: ModelProviderInfo,
-    credential_manager: Option<Arc<CredentialManager>>,
-    http_client_factory: HttpClientFactory,
-) -> ruxex_model_provider::SharedModelProvider {
-    create_model_provider_internal(provider_info, credential_manager, http_client_factory)
-}
-
 #[cfg(test)]
 fn create_runtime_provider(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
 ) -> SharedProviderRuntime {
-    create_runtime_provider_with_http_client_factory(
+    Arc::new(ResponsesModelProvider::new(
+        provider_info,
+        credential_manager,
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    ))
+}
+
+/// Creates the explicit Responses-compatible provider for configured metadata.
+pub fn create_responses_provider(
+    provider_info: ModelProviderInfo,
+    credential_manager: Option<Arc<CredentialManager>>,
+) -> ruxex_model_provider::SharedModelProvider {
+    create_responses_provider_with_http_client_factory(
         provider_info,
         credential_manager,
         HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
     )
 }
 
-#[cfg(test)]
-fn create_runtime_provider_with_http_client_factory(
-    provider_info: ModelProviderInfo,
-    credential_manager: Option<Arc<CredentialManager>>,
-    http_client_factory: HttpClientFactory,
-) -> SharedProviderRuntime {
-    create_provider_instance(
-        provider_info,
-        credential_manager,
-        http_client_factory,
-        |provider| Arc::new(provider) as SharedProviderRuntime,
-        |provider| Arc::new(provider) as SharedProviderRuntime,
-    )
-}
-
-fn create_model_provider_internal(
+/// Creates the explicit Responses-compatible provider with the host's transport policy.
+pub fn create_responses_provider_with_http_client_factory(
     provider_info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
 ) -> ruxex_model_provider::SharedModelProvider {
-    create_provider_instance(
+    Arc::new(ResponsesModelProvider::new(
         provider_info,
         credential_manager,
         http_client_factory,
-        |provider| Arc::new(provider) as ruxex_model_provider::SharedModelProvider,
-        |provider| Arc::new(provider) as ruxex_model_provider::SharedModelProvider,
-    )
+    ))
 }
 
-fn create_provider_instance<T>(
-    provider_info: ModelProviderInfo,
-    credential_manager: Option<Arc<CredentialManager>>,
-    http_client_factory: HttpClientFactory,
-    configured: impl FnOnce(ConfiguredModelProvider) -> T,
-    cloudflare: impl FnOnce(CloudflareModelProvider) -> T,
-) -> T {
-    let provider_id = provider_info.id.clone();
-    match provider_info.name.as_str() {
-        ruxex_model_provider_info::CLOUDFLARE_PROVIDER_NAME => {
-            cloudflare(CloudflareModelProvider::new(
-                provider_id,
-                provider_info,
-                credential_manager,
-                http_client_factory,
-            ))
-        }
-        _ => configured(ConfiguredModelProvider::new(
-            provider_id,
-            provider_info,
-            credential_manager,
-            http_client_factory,
-        )),
-    }
-}
-
-/// Runtime model provider backed by configured `ModelProviderInfo`.
+/// Responses-compatible provider backed by configured `ModelProviderInfo`.
 #[derive(Clone, Debug)]
-struct ConfiguredModelProvider {
+pub struct ResponsesModelProvider {
     provider_id: Option<String>,
     info: ModelProviderInfo,
     credential_manager: Option<Arc<CredentialManager>>,
     http_client_factory: HttpClientFactory,
 }
 
-impl ConfiguredModelProvider {
+impl ResponsesModelProvider {
     fn new(
-        provider_id: Option<String>,
         provider_info: ModelProviderInfo,
         credential_manager: Option<Arc<CredentialManager>>,
         http_client_factory: HttpClientFactory,
@@ -1616,7 +1566,7 @@ impl ConfiguredModelProvider {
         let credential_manager =
             credential_manager_for_provider(credential_manager, &provider_info);
         Self {
-            provider_id,
+            provider_id: provider_info.id.clone(),
             info: provider_info,
             credential_manager,
             http_client_factory,
@@ -1624,7 +1574,7 @@ impl ConfiguredModelProvider {
     }
 }
 
-impl ProviderRuntime for ConfiguredModelProvider {
+impl ProviderRuntime for ResponsesModelProvider {
     fn http_client_factory(&self) -> HttpClientFactory {
         self.http_client_factory.clone()
     }
@@ -1745,7 +1695,7 @@ mod tests {
 
     #[test]
     fn factory_returns_provider_neutral_contract() {
-        let _provider: ruxex_model_provider::SharedModelProvider = create_model_provider(
+        let _provider: ruxex_model_provider::SharedModelProvider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1778,9 +1728,11 @@ mod tests {
 
     #[test]
     fn cloudflare_selects_chat_runtime_api() {
-        let provider = create_runtime_provider(
+        let provider = CloudflareModelProvider::new(
+            Some(ruxex_model_provider_info::CLOUDFLARE_PROVIDER_ID.to_string()),
             ModelProviderInfo::create_cloudflare_provider(),
             /*credential_manager*/ None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
         );
 
         assert!(matches!(provider.api(), ProviderApi::Chat(_)));
@@ -1788,7 +1740,7 @@ mod tests {
 
     #[test]
     fn provider_descriptor_uses_explicit_provider_id_and_round_trips() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo {
                 id: Some("account-a".to_string()),
                 ..ModelProviderInfo::create_responses_provider(None)
@@ -1811,7 +1763,7 @@ mod tests {
 
     #[test]
     fn provider_descriptor_falls_back_to_provider_name_without_id() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1827,7 +1779,7 @@ mod tests {
 
     #[test]
     fn provider_capabilities_report_common_operation_support() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1841,7 +1793,7 @@ mod tests {
 
     #[tokio::test]
     async fn configured_provider_implements_neutral_lifecycle_directly() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1855,7 +1807,7 @@ mod tests {
 
     #[test]
     fn responses_provider_declares_history_notes_capability() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1865,7 +1817,7 @@ mod tests {
 
     #[test]
     fn configured_provider_reports_standalone_web_search_capability() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo {
                 supports_standalone_web_search: true,
                 ..ModelProviderInfo::default()
@@ -1878,7 +1830,7 @@ mod tests {
 
     #[test]
     fn configured_provider_reports_tool_strict_mode_capability() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo {
                 supports_tool_strict_mode: true,
                 ..ModelProviderInfo::default()
@@ -1891,7 +1843,7 @@ mod tests {
 
     #[tokio::test]
     async fn provider_exposes_neutral_login_lifecycle() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(None),
             /*credential_manager*/ None,
         );
@@ -1919,7 +1871,12 @@ mod tests {
         let mut info = ModelProviderInfo::create_cloudflare_provider();
         info.base_url = Some("https://example.test".to_string());
         info.env_key = None;
-        let provider = create_model_provider(info, /*credential_manager*/ None);
+        let provider = create_cloudflare_provider(
+            info.id.clone(),
+            info,
+            /*credential_manager*/ None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        );
         let source = ProviderModelCatalogSource::new(provider);
 
         assert!(source.supports_api_key_models());
@@ -1951,7 +1908,12 @@ mod tests {
         let mut info = ModelProviderInfo::create_cloudflare_provider();
         info.base_url = Some(server.uri());
         info.env_key = None;
-        let provider = create_model_provider(info, /*credential_manager*/ None);
+        let provider = create_cloudflare_provider(
+            info.id.clone(),
+            info,
+            /*credential_manager*/ None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        );
         let catalog = provider
             .list_models(ruxex_model_provider::ListModelsRequest::new("test-client"))
             .await
@@ -1982,7 +1944,7 @@ mod tests {
     fn provider_implementation_exposes_auth_environment_without_provider_info() {
         let mut info = ModelProviderInfo::create_responses_provider(None);
         info.env_key = Some("RUXEX_TEST_PROVIDER_KEY".to_string());
-        let provider = create_model_provider(info, /*credential_manager*/ None);
+        let provider = create_responses_provider(info, /*credential_manager*/ None);
 
         let environment = provider.auth_environment();
 
@@ -2119,7 +2081,7 @@ mod tests {
 
     #[test]
     fn responses_provider_enables_remote_compaction() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*credential_manager*/ None,
         );
@@ -2165,13 +2127,14 @@ mod tests {
         ];
 
         for (provider_info, expected) in cases {
-            let provider = create_model_provider(provider_info, /*credential_manager*/ None);
+            let provider =
+                create_responses_provider(provider_info, /*credential_manager*/ None);
             assert_eq!(provider.capabilities().remote_compaction, expected);
         }
     }
 
     #[test]
-    fn create_model_provider_builds_command_credential_manager_without_base_manager() {
+    fn create_responses_provider_builds_command_credential_manager_without_base_manager() {
         let provider = create_runtime_provider(
             provider_info_with_command_auth(),
             /*credential_manager*/ None,
@@ -2228,7 +2191,7 @@ mod tests {
 
     #[tokio::test]
     async fn configured_provider_usage_is_unsupported_by_default() {
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo::create_responses_provider(/*base_url*/ None),
             /*credential_manager*/ None,
         );
@@ -2289,7 +2252,7 @@ mod tests {
         provider_info.experimental_bearer_token = Some("provider-token".into());
         let credential_manager =
             CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key("ambient-api-key"));
-        let provider = create_model_provider(provider_info, Some(credential_manager.clone()));
+        let provider = create_responses_provider(provider_info, Some(credential_manager.clone()));
 
         let manager = build_models_manager(
             test_ruxex_home(),

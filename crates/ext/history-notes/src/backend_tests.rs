@@ -5,7 +5,7 @@ use ruxex_login::AuthHeaders;
 use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use ruxex_utils_output_truncation::TruncationPolicy;
 use serde_json::json;
 use wiremock::Mock;
@@ -36,7 +36,7 @@ async fn routes_through_ruxex_backend_and_injects_trusted_session_agent_context(
     );
     let credential_manager =
         CredentialManager::from_auth_for_testing(RuxexAuth::Headers(AuthHeaders::new(headers)));
-    let provider = create_model_provider(
+    let provider = create_responses_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/ruxex",
             server.uri()
@@ -117,7 +117,7 @@ async fn marks_encrypted_history_and_notes_arguments_without_changing_the_json_b
     let credential_manager = CredentialManager::from_auth_for_testing(RuxexAuth::Headers(
         AuthHeaders::new(HeaderMap::new()),
     ));
-    let backend = HistoryNotesBackend::new(create_model_provider(
+    let backend = HistoryNotesBackend::new(create_responses_provider(
         ModelProviderInfo::create_responses_provider(Some(format!(
             "{}/backend-api/ruxex",
             server.uri()

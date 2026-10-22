@@ -25,6 +25,7 @@ use ruxex_app_server::in_process;
 use ruxex_app_server::in_process::InProcessClientHandle;
 use ruxex_app_server::in_process::InProcessServerEvent;
 use ruxex_app_server::in_process::InProcessStartArgs;
+use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server_protocol::ClientInfo;
 use ruxex_app_server_protocol::ClientRequest;
 use ruxex_app_server_protocol::InitializeParams;
@@ -55,6 +56,10 @@ use ruxex_config::NoopThreadConfigLoader;
 use ruxex_core::config::Config;
 use ruxex_core::config::ConfigBuilder;
 use ruxex_exec_server::EnvironmentManager;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_features::Feature;
 use ruxex_protocol::ThreadId;
 use ruxex_protocol::models::BaseInstructions;
@@ -71,6 +76,16 @@ use tokio::time::timeout;
 use uuid::Uuid;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+fn test_runtime() -> ruxex_app_server::AppServerRuntime {
+    AppServerRuntimeBuilder::new(Arc::new(CloudflareModelProvider::new(
+        Some("cloudflare".to_string()),
+        ModelProviderInfo::create_cloudflare_provider(),
+        None,
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    )))
+    .build()
+}
 
 #[tokio::test]
 async fn thread_section_operations_without_sqlite_return_method_not_found() -> Result<()> {
@@ -533,7 +548,7 @@ async fn start_in_process_client(
         config_warnings: Vec::new(),
         session_source: SessionSource::Cli,
         enable_api_key_env: false,
-        runtime: None,
+        runtime: Some(test_runtime()),
         product_identity: ruxex_utils_home_dir::ProductIdentity::ruxex(),
         initialize: InitializeParams {
             client_info: ClientInfo {

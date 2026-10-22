@@ -36,7 +36,6 @@ use ruxex_app_server_client::ProviderInit;
 use ruxex_app_server_client::RemoteAppServerClient;
 use ruxex_app_server_client::RemoteAppServerConnectArgs;
 pub use ruxex_app_server_client::RemoteAppServerEndpoint;
-use ruxex_app_server_client::configured_app_server_runtime_from_config;
 use ruxex_app_server_client::provider_init_from_config_with_descriptor;
 use ruxex_app_server_protocol::AskForApproval;
 use ruxex_app_server_protocol::ConfigWarningNotification;
@@ -63,6 +62,7 @@ use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::config_types::AltScreenMode;
 use ruxex_protocol::config_types::SandboxMode;
 pub use ruxex_provider_auth::ProviderCredentialResolverRegistry;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_rollout::StateDbHandle;
 use ruxex_rollout::state_db;
 use ruxex_state::log_db;
@@ -253,6 +253,13 @@ const AUTO_CONNECT_DAEMON_CONNECT_TIMEOUT: std::time::Duration =
 pub use ruxex_app_server_daemon::HOST_APP_SERVER_DAEMON_MODE_ARG as APP_SERVER_DAEMON_MODE_ARG;
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
+
+fn default_provider_factory() -> ProviderRuntimeFactory {
+    (
+        AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareModelProvider>,
+        CloudflareModelProvider::provider_descriptor(),
+    )
+}
 
 #[allow(clippy::too_many_arguments)]
 async fn start_embedded_app_server(
@@ -669,20 +676,13 @@ where
             range: None,
         })
         .collect();
-    let runtime = if let Some(provider_factory) = provider_factory {
-        let init = provider_init_from_config_with_descriptor(&config, false, &provider_factory.1)
-            .await
-            .map_err(|err| {
-                color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
-            })?;
-        (provider_factory.0)(init)
-    } else {
-        configured_app_server_runtime_from_config(&config, false)
-            .await
-            .map_err(|err| {
-                color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
-            })?
-    };
+    let provider_factory = provider_factory.unwrap_or_else(default_provider_factory);
+    let init = provider_init_from_config_with_descriptor(&config, false, &provider_factory.1)
+        .await
+        .map_err(|err| {
+            color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
+        })?;
+    let runtime = (provider_factory.0)(init);
     let client = start_client(InProcessClientStartArgs {
         arg0_paths,
         config: Arc::new(config),

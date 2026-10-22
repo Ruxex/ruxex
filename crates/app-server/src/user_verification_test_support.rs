@@ -30,7 +30,7 @@ use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
 use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_protocol::protocol::SessionSource;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use serde_json::json;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;
@@ -140,7 +140,7 @@ impl Harness {
         let provider = Arc::new(BlockingProvider::default());
         let factory_provider = Arc::clone(&provider);
         let model_provider =
-            create_model_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
+            create_responses_provider(config.model_provider.clone(), Some(Arc::clone(&auth)));
         let service = Arc::new(Service {
             model_provider: Arc::clone(&model_provider),
             provider: Arc::new(move |_| factory_provider.clone()),

@@ -3,8 +3,9 @@
 
 use super::*;
 use ruxex_app_server_client::AppServerRuntime;
-use ruxex_app_server_client::configured_app_server_runtime_from_config;
 use ruxex_app_server_client::provider_init_from_config_with_descriptor;
+use ruxex_model_provider::ModelProviderFactory;
+use ruxex_providers::CloudflareModelProvider;
 
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
@@ -17,13 +18,14 @@ pub(super) async fn fork_source(
     strict_config: bool,
     provider_factory: Option<ProviderRuntimeFactory>,
 ) -> anyhow::Result<std::path::PathBuf> {
-    let runtime = if let Some(provider_factory) = provider_factory {
-        let init =
-            provider_init_from_config_with_descriptor(config, true, &provider_factory.1).await?;
-        (provider_factory.0)(init)
-    } else {
-        configured_app_server_runtime_from_config(config, true).await?
-    };
+    let provider_factory = provider_factory.unwrap_or((
+        ruxex_app_server_client::AppServerRuntimeBuilder::build_from_provider_factory::<
+            CloudflareModelProvider,
+        >,
+        CloudflareModelProvider::provider_descriptor(),
+    ));
+    let init = provider_init_from_config_with_descriptor(config, true, &provider_factory.1).await?;
+    let runtime = (provider_factory.0)(init);
     let state_db = ruxex_core::init_state_db(config).await;
     let environment_manager = EnvironmentManager::from_ruxex_home(
         config.ruxex_home.clone(),

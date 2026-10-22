@@ -13,7 +13,7 @@ doctest = false
 workspace = true
 
 [dependencies]
-ruxex-app-server = { workspace = true }
+ruxex-app-server = { workspace = true, default-features = false }
 ruxex-app-server-protocol = { workspace = true }
 ruxex-arg0 = { workspace = true }
 ruxex-config = { workspace = true }
@@ -34,6 +34,9 @@ tracing = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
+ruxex-http-client = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
+ruxex-providers = { workspace = true }
 pretty_assertions = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

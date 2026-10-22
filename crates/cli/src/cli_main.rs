@@ -3,7 +3,6 @@ use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
 use clap_complete::generate;
-use ruxex_app_server::runtime::configured_app_server_runtime_from_config;
 use ruxex_app_server_daemon::BootstrapOptions as AppServerBootstrapOptions;
 use ruxex_app_server_daemon::LifecycleCommand as AppServerLifecycleCommand;
 use ruxex_arg0::Arg0DispatchPaths;
@@ -71,6 +70,7 @@ use ruxex_home::RuxexHomeUserInstructionsProvider;
 use ruxex_models_manager::manager::RefreshStrategy;
 use ruxex_protocol::protocol::AskForApproval;
 use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_terminal_detection::TerminalName;
 
 /// Ruxex CLI
@@ -785,6 +785,15 @@ type ProviderRuntimeFactory = (
     ProviderDescriptor,
 );
 
+fn default_provider_factory() -> ProviderRuntimeFactory {
+    (
+        ruxex_app_server::AppServerRuntimeBuilder::build_from_provider_factory::<
+            CloudflareModelProvider,
+        >,
+        CloudflareModelProvider::provider_descriptor(),
+    )
+}
+
 /// Runs the complete Ruxex CLI using the provider type and TUI brand selected by the host.
 ///
 /// The provider type is compiled into the host and reconstructed in any
@@ -892,6 +901,9 @@ async fn run_cli_with_product_identity(
         mut interactive,
         subcommand,
     } = MultitoolCli::parse();
+    // The CLI owns the built-in provider choice. The App Server only accepts an
+    // already-selected provider factory and never constructs one from config.
+    let provider_factory = Some(provider_factory.unwrap_or_else(default_provider_factory));
     reject_removed_top_level_command(&subcommand, &interactive)?;
     reject_unsupported_worktree_for_subcommand(interactive.shared.worktree, &subcommand)?;
     // Fold --enable/--disable into config overrides so they flow to all subcommands.
@@ -1108,7 +1120,7 @@ async fn run_cli_with_product_identity(
                         managed_daemon,
                         ..Default::default()
                     };
-                    let exit = if let Some(provider_factory) = provider_factory.clone() {
+                    let exit =
                         ruxex_app_server::run_main_with_transport_options_and_provider_factory(
                             arg0_paths.clone(),
                             root_config_overrides,
@@ -1119,23 +1131,11 @@ async fn run_cli_with_product_identity(
                             ruxex_protocol::protocol::SessionSource::VSCode,
                             auth,
                             runtime_options,
-                            provider_factory,
+                            provider_factory
+                                .clone()
+                                .expect("CLI provider factory is initialized above"),
                         )
-                        .await?
-                    } else {
-                        ruxex_app_server::run_main_with_transport_options(
-                            arg0_paths.clone(),
-                            root_config_overrides,
-                            LoaderOverrides::default(),
-                            strict_config,
-                            metrics_default_enabled,
-                            transport,
-                            ruxex_protocol::protocol::SessionSource::VSCode,
-                            auth,
-                            runtime_options,
-                        )
-                        .await?
-                    };
+                        .await?;
                     if exit == ruxex_app_server::AppServerExit::Forced {
                         // Runtime teardown can wait forever for blocked rollout I/O.
                         std::process::exit(0);
@@ -1360,10 +1360,22 @@ async fn run_cli_with_product_identity(
             );
             match login_cli.action {
                 LoginSubcommand::Status => {
-                    run_login_status(login_cli.config_overrides).await;
+                    run_login_status(
+                        login_cli.config_overrides,
+                        provider_factory
+                            .clone()
+                            .expect("CLI provider factory is initialized above"),
+                    )
+                    .await;
                 }
                 LoginSubcommand::Delete => {
-                    run_login_delete(login_cli.config_overrides).await;
+                    run_login_delete(
+                        login_cli.config_overrides,
+                        provider_factory
+                            .clone()
+                            .expect("CLI provider factory is initialized above"),
+                    )
+                    .await;
                 }
             }
         }
@@ -1377,7 +1389,13 @@ async fn run_cli_with_product_identity(
                 &mut logout_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            run_logout(logout_cli.config_overrides).await;
+            run_logout(
+                logout_cli.config_overrides,
+                provider_factory
+                    .clone()
+                    .expect("CLI provider factory is initialized above"),
+            )
+            .await;
         }
         Some(Subcommand::Completion(completion_cli)) => {
             reject_remote_mode_for_subcommand(
@@ -1398,6 +1416,9 @@ async fn run_cli_with_product_identity(
                 root_config_overrides.clone(),
                 &interactive,
                 &arg0_paths,
+                provider_factory
+                    .clone()
+                    .expect("CLI provider factory is initialized above"),
             )
             .await?;
         }
@@ -1855,17 +1876,14 @@ async fn runtime_for_provider(
     enable_api_key_env: bool,
     provider_factory: Option<ProviderRuntimeFactory>,
 ) -> anyhow::Result<ruxex_app_server::AppServerRuntime> {
-    if let Some(provider_factory) = provider_factory {
-        let init = ruxex_app_server::runtime::provider_init_from_config_with_descriptor(
-            config,
-            enable_api_key_env,
-            &provider_factory.1,
-        )
-        .await?;
-        Ok((provider_factory.0)(init))
-    } else {
-        configured_app_server_runtime_from_config(config, enable_api_key_env).await
-    }
+    let provider_factory = provider_factory.unwrap_or_else(default_provider_factory);
+    let init = ruxex_app_server::runtime::provider_init_from_config_with_descriptor(
+        config,
+        enable_api_key_env,
+        &provider_factory.1,
+    )
+    .await?;
+    Ok((provider_factory.0)(init))
 }
 
 /// Prepend root-level overrides so they have lower precedence than

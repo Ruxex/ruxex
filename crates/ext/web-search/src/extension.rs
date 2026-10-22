@@ -168,7 +168,7 @@ mod tests {
     use ruxex_extension_api::ToolName;
     use ruxex_login::RuxexAuth;
     use ruxex_model_provider_info::ModelProviderInfo;
-    use ruxex_providers::create_model_provider;
+    use ruxex_providers::create_responses_provider;
 
     use super::Config;
     use super::CredentialManager;
@@ -207,7 +207,7 @@ mod tests {
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         let credential_manager =
             CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key("dummy"));
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             ModelProviderInfo {
                 supports_standalone_web_search: true,
                 ..ModelProviderInfo::default()

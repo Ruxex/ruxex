@@ -13,8 +13,9 @@ pub use cloudflare::create_cloudflare_provider;
 pub use cloudflare_auth::CloudflareCredentialResolver;
 pub use cloudflare_auth::CloudflareCredentials;
 pub use cloudflare_auth::create_cloudflare_credential_resolver;
-pub use provider::create_model_provider;
-pub use provider::create_model_provider_with_http_client_factory;
+pub use provider::ResponsesModelProvider;
+pub use provider::create_responses_provider;
+pub use provider::create_responses_provider_with_http_client_factory;
 pub use ruxex_model_provider::SharedModelProvider;
 pub use ruxex_model_provider_info::ModelProviderInfo;
 
@@ -42,7 +43,7 @@ mod tests {
     use ruxex_model_provider::UsageRequest;
     use ruxex_model_provider_info::ModelProviderInfo;
 
-    use super::create_model_provider;
+    use super::create_responses_provider;
 
     #[derive(Debug)]
     struct ExternalProvider;
@@ -129,7 +130,7 @@ mod tests {
     #[test]
     fn built_in_provider_factory_is_composed_by_this_crate() {
         let provider =
-            create_model_provider(ModelProviderInfo::create_responses_provider(None), None);
+            create_responses_provider(ModelProviderInfo::create_responses_provider(None), None);
 
         assert_eq!(provider.descriptor().provider_kind, "Responses provider");
     }

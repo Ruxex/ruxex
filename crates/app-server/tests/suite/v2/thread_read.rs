@@ -9,6 +9,7 @@ use app_test_support::test_absolute_path;
 use app_test_support::to_response;
 use ruxex_app_server::in_process;
 use ruxex_app_server::in_process::InProcessStartArgs;
+use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server_protocol::ClientInfo;
 use ruxex_app_server_protocol::ClientRequest;
 use ruxex_app_server_protocol::DeprecationNoticeNotification;
@@ -55,6 +56,8 @@ use ruxex_config::LoaderOverrides;
 use ruxex_core::ARCHIVED_SESSIONS_SUBDIR;
 use ruxex_core::config::ConfigBuilder;
 use ruxex_exec_server::EnvironmentManager;
+use ruxex_http_client::HttpClientFactory;
+use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_protocol::items::AgentMessageContent;
 use ruxex_protocol::items::AgentMessageItem;
 use ruxex_protocol::items::TurnItem as CoreTurnItem;
@@ -70,6 +73,8 @@ use ruxex_protocol::protocol::TurnStartedEvent;
 use ruxex_protocol::protocol::UserMessageEvent;
 use ruxex_protocol::user_input::ByteRange;
 use ruxex_protocol::user_input::TextElement;
+use ruxex_model_provider_info::ModelProviderInfo;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_rollout::RolloutItem;
 use ruxex_thread_store::AppendThreadItemsParams;
 use ruxex_thread_store::CreateThreadParams;
@@ -97,6 +102,16 @@ use uuid::Uuid;
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(25);
 #[cfg(not(windows))]
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+fn test_runtime() -> ruxex_app_server::AppServerRuntime {
+    AppServerRuntimeBuilder::new(Arc::new(CloudflareModelProvider::new(
+        Some("cloudflare".to_string()),
+        ModelProviderInfo::create_cloudflare_provider(),
+        None,
+        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+    )))
+    .build()
+}
 
 #[tokio::test]
 async fn thread_read_returns_summary_without_turns() -> Result<()> {
@@ -844,7 +859,7 @@ async fn thread_turns_list_reads_store_history_without_rollout_path() -> Result<
         config_warnings: Vec::new(),
         session_source: SessionSource::Cli.into(),
         enable_api_key_env: false,
-        runtime: None,
+        runtime: Some(test_runtime()),
         product_identity: ruxex_utils_home_dir::ProductIdentity::ruxex(),
         initialize: InitializeParams {
             client_info: ClientInfo {
@@ -915,7 +930,7 @@ async fn thread_read_loaded_include_turns_reads_store_history_without_rollout_pa
         config_warnings: Vec::new(),
         session_source: SessionSource::Cli.into(),
         enable_api_key_env: false,
-        runtime: None,
+        runtime: Some(test_runtime()),
         product_identity: ruxex_utils_home_dir::ProductIdentity::ruxex(),
         initialize: InitializeParams {
             client_info: ClientInfo {
@@ -1024,7 +1039,7 @@ async fn thread_list_includes_store_thread_without_rollout_path() -> Result<()> 
         config_warnings: Vec::new(),
         session_source: SessionSource::Cli.into(),
         enable_api_key_env: false,
-        runtime: None,
+        runtime: Some(test_runtime()),
         product_identity: ruxex_utils_home_dir::ProductIdentity::ruxex(),
         initialize: InitializeParams {
             client_info: ClientInfo {

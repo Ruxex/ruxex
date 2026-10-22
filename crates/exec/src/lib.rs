@@ -53,6 +53,7 @@ pub use exec_events::TurnStartedEvent;
 pub use exec_events::Usage;
 pub use exec_events::WebSearchItem;
 use ruxex_app_server_client::AppServerRuntime;
+use ruxex_app_server_client::AppServerRuntimeBuilder;
 use ruxex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
 use ruxex_app_server_client::EnvironmentManager;
 use ruxex_app_server_client::ExecServerRuntimePaths;
@@ -61,7 +62,6 @@ use ruxex_app_server_client::InProcessClientStartArgs;
 use ruxex_app_server_client::InProcessServerEvent;
 use ruxex_app_server_client::ProviderInit;
 use ruxex_app_server_client::TypedRequestError;
-use ruxex_app_server_client::configured_app_server_runtime_from_config;
 use ruxex_app_server_client::provider_init_from_config_with_descriptor;
 use ruxex_app_server_protocol::ClientRequest;
 use ruxex_app_server_protocol::ConfigWarningNotification;
@@ -121,6 +121,7 @@ use ruxex_history::RolloutLine;
 use ruxex_login::default_client::set_default_client_residency_requirement;
 use ruxex_login::default_client::set_default_originator;
 use ruxex_login::enforce_login_restrictions;
+use ruxex_model_provider::ModelProviderFactory;
 use ruxex_model_provider::ProviderDescriptor;
 use ruxex_otel::set_parent_from_context;
 use ruxex_otel::traceparent_context_from_env;
@@ -135,6 +136,7 @@ use ruxex_protocol::protocol::ReviewTarget;
 use ruxex_protocol::protocol::SessionConfiguredEvent;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_protocol::user_input::UserInput;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_rollout::find_thread_meta_by_name_str;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_absolute_path::canonicalize_existing_preserving_symlinks;
@@ -596,13 +598,13 @@ async fn run_main_with_runtime_factory(
     let local_runtime_paths = local_runtime_paths.with_allowed_symlinked_ruxex_home(
         ruxex_config::allowed_symlinked_ruxex_home(&config.config_layer_stack, &config.ruxex_home),
     );
-    let runtime = if let Some(provider_factory) = provider_factory {
-        let init =
-            provider_init_from_config_with_descriptor(&config, true, &provider_factory.1).await?;
-        (provider_factory.0)(init)
-    } else {
-        configured_app_server_runtime_from_config(&config, true).await?
-    };
+    let provider_factory = provider_factory.unwrap_or((
+        AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareModelProvider>,
+        CloudflareModelProvider::provider_descriptor(),
+    ));
+    let init =
+        provider_init_from_config_with_descriptor(&config, true, &provider_factory.1).await?;
+    let runtime = (provider_factory.0)(init);
     let state_db = ruxex_core::init_state_db(&config).await;
     let environment_manager = if run_loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(Some(local_runtime_paths), config.http_client_factory())

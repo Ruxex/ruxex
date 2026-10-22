@@ -53,6 +53,7 @@ ruxex-models-manager = { workspace = true }
 ruxex-otel = { workspace = true }
 ruxex-plugin = { workspace = true }
 ruxex-protocol = { workspace = true }
+ruxex-providers = { workspace = true }
 futures = { workspace = true }
 ruxex-rollout = { workspace = true }
 ruxex-sandboxing = { workspace = true }

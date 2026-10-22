@@ -33,7 +33,7 @@ use ruxex_protocol::models::ResponseInputItem;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_protocol::protocol::SubAgentSource;
 use ruxex_protocol::protocol::TruncationPolicy;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use serde_json::json;
 use tempfile::TempDir;
 use wiremock::Mock;
@@ -84,7 +84,7 @@ async fn installed_extension_exposes_and_invokes_history_notes_tools() -> TestRe
     );
     let credential_manager =
         CredentialManager::from_auth_for_testing(RuxexAuth::Headers(AuthHeaders::new(headers)));
-    let provider = create_model_provider(
+    let provider = create_responses_provider(
         config.model_provider.clone(),
         Some(Arc::clone(&credential_manager)),
     );
@@ -385,7 +385,7 @@ async fn history_notes_require_an_responses_provider_and_ruxex_backend_auth() ->
         config.model_provider = provider;
         let mut builder = ExtensionRegistryBuilder::<Config>::new();
         let credential_manager = CredentialManager::from_auth_for_testing(auth);
-        let model_provider = create_model_provider(
+        let model_provider = create_responses_provider(
             config.model_provider.clone(),
             Some(Arc::clone(&credential_manager)),
         );

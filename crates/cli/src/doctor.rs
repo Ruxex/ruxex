@@ -29,7 +29,6 @@ use anyhow::Context;
 use clap::Parser;
 use http::Method;
 use ruxex_api::is_azure_responses_provider;
-use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server::runtime::mount_provider_home_for_config;
 use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_config::types::McpServerConfig;
@@ -54,6 +53,7 @@ use ruxex_login::default_client::create_client_without_request_logging;
 use ruxex_login::default_client::default_headers;
 use ruxex_login::load_auth_dot_json;
 use ruxex_model_provider::ProviderError;
+use ruxex_model_provider::ProviderInit;
 use ruxex_model_provider::ProviderStreamConnectRequest;
 use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::protocol::AskForApproval;
@@ -303,8 +303,16 @@ pub async fn run_doctor(
     root_config_overrides: CliConfigOverrides,
     interactive: &TuiCli,
     arg0_paths: &Arg0DispatchPaths,
+    provider_factory: crate::ProviderRuntimeFactory,
 ) -> anyhow::Result<()> {
-    let report = build_report(&command, root_config_overrides, interactive, arg0_paths).await;
+    let report = build_report(
+        &command,
+        root_config_overrides,
+        interactive,
+        arg0_paths,
+        provider_factory,
+    )
+    .await;
 
     if command.json {
         println!(
@@ -330,6 +338,7 @@ async fn build_report(
     root_config_overrides: CliConfigOverrides,
     interactive: &TuiCli,
     arg0_paths: &Arg0DispatchPaths,
+    provider_factory: crate::ProviderRuntimeFactory,
 ) -> DoctorReport {
     let progress = doctor_progress(command.json);
     let mut checks = Vec::new();
@@ -423,7 +432,7 @@ async fn build_report(
                 run_async_check(
                     "websocket",
                     progress.clone(),
-                    websocket_reachability_check(config, credential_manager),
+                    websocket_reachability_check(config, credential_manager, provider_factory),
                 ),
                 run_async_check("MCP", progress.clone(), mcp_check(config)),
                 async {
@@ -1990,6 +1999,7 @@ fn is_rollout_file(path: &Path) -> bool {
 async fn websocket_reachability_check(
     config: &Config,
     credential_manager: Option<Arc<CredentialManager>>,
+    provider_factory: crate::ProviderRuntimeFactory,
 ) -> DoctorCheck {
     let provider = &config.model_provider;
     let mut details = vec![
@@ -2015,13 +2025,18 @@ async fn websocket_reachability_check(
         provider.websocket_connect_timeout().as_millis()
     ));
 
-    let http_client_factory = config.http_client_factory();
-    let runtime_provider = AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
-        provider.clone(),
+    let Some(credential_manager) = credential_manager else {
+        return websocket_probe_warning(
+            "Responses WebSocket auth could not be resolved",
+            details,
+            "credential manager is unavailable".to_string(),
+        );
+    };
+    let runtime_provider = (provider_factory.0)(ProviderInit {
+        provider_info: provider.clone(),
         credential_manager,
-        http_client_factory.clone(),
-    )
-    .build()
+        http_client_factory: config.http_client_factory(),
+    })
     .provider();
     let snapshot = match runtime_provider.request_snapshot().await {
         Ok(snapshot) => snapshot,

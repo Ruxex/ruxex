@@ -37,6 +37,7 @@ ruxex-model-provider = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
 ruxex-otel = { workspace = true }
 ruxex-protocol = { workspace = true }
+ruxex-providers = { workspace = true }
 ruxex-rollout = { workspace = true }
 ruxex-utils-absolute-path = { workspace = true }
 ruxex-utils-cli = { workspace = true }

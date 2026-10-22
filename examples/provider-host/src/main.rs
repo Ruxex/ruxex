@@ -39,12 +39,10 @@ fn test_provider_runtime(init: ProviderInit) -> AppServerRuntime {
             .expect("RUXEX_TEST_PROVIDER_INFO must be set for the test provider host"),
     )
     .expect("RUXEX_TEST_PROVIDER_INFO must contain a ModelProviderInfo JSON object");
-    AppServerRuntimeBuilder::from_provider_info_with_http_client_factory(
+    AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareProvider>(ProviderInit {
         provider_info,
-        Some(init.credential_manager),
-        init.http_client_factory,
-    )
-    .build()
+        ..init
+    })
 }
 
 fn test_provider_factory() -> ruxex_cli::ProviderRuntimeFactory {

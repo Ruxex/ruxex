@@ -6,11 +6,12 @@ use ruxex_app_server::AppServerRuntimeOptions;
 use ruxex_app_server::AppServerTransport;
 use ruxex_app_server::AppServerWebsocketAuthArgs;
 use ruxex_app_server::PluginStartupTasks;
-use ruxex_app_server::run_main_with_transport_options;
+use ruxex_app_server::run_main_with_transport_options_and_provider;
 use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_arg0::arg0_dispatch_or_else;
 use ruxex_config::LoaderOverrides;
 use ruxex_protocol::protocol::SessionSource;
+use ruxex_providers::CloudflareModelProvider;
 use ruxex_utils_cli::CliConfigOverrides;
 
 #[cfg(all(
@@ -99,7 +100,7 @@ fn main() -> anyhow::Result<()> {
         if disable_plugin_startup_tasks_for_tests {
             runtime_options.plugin_startup_tasks = PluginStartupTasks::Skip;
         }
-        let exit = run_main_with_transport_options(
+        let exit = run_main_with_transport_options_and_provider::<CloudflareModelProvider>(
             arg0_paths,
             config_overrides,
             loader_overrides,

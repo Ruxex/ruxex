@@ -29,7 +29,6 @@ use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
-use crate::runtime::configured_app_server_runtime;
 use crate::runtime::mount_provider_home_for_runtime_with_marker;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
@@ -133,7 +132,6 @@ pub use crate::code_mode_host::AppServerCodeModeHostArgs;
 pub use crate::code_mode_host::CodeModeHostTransport;
 pub use crate::error_code::INPUT_TOO_LARGE_ERROR_CODE;
 pub use crate::error_code::INVALID_PARAMS_ERROR_CODE;
-pub use crate::runtime::provider_init_from_config;
 pub use crate::runtime::{AppServerRuntime, AppServerRuntimeBuilder};
 pub use crate::transport::AppServerTransport;
 pub use crate::transport::app_server_control_socket_path;
@@ -409,28 +407,6 @@ fn log_format_from_env() -> LogFormat {
     LogFormat::from_env_value(value.as_deref())
 }
 
-pub async fn run_main(
-    arg0_paths: Arg0DispatchPaths,
-    cli_config_overrides: CliConfigOverrides,
-    loader_overrides: LoaderOverrides,
-    strict_config: bool,
-    default_metrics_enabled: bool,
-) -> IoResult<()> {
-    run_main_with_transport_options(
-        arg0_paths,
-        cli_config_overrides,
-        loader_overrides,
-        strict_config,
-        default_metrics_enabled,
-        AppServerTransport::Stdio,
-        SessionSource::VSCode,
-        AppServerWebsocketAuthSettings::default(),
-        AppServerRuntimeOptions::default(),
-    )
-    .await
-    .map(|_| ())
-}
-
 /// Reports whether shutdown finished or the managed daemon must exit without waiting for I/O.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppServerExit {
@@ -464,34 +440,6 @@ impl Default for AppServerRuntimeOptions {
             managed_daemon: false,
         }
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-pub async fn run_main_with_transport_options(
-    arg0_paths: Arg0DispatchPaths,
-    cli_config_overrides: CliConfigOverrides,
-    loader_overrides: LoaderOverrides,
-    strict_config: bool,
-    default_metrics_enabled: bool,
-    transport: AppServerTransport,
-    session_source: SessionSource,
-    auth: AppServerWebsocketAuthSettings,
-    runtime_options: AppServerRuntimeOptions,
-) -> IoResult<AppServerExit> {
-    run_main_with_transport_options_and_optional_runtime(
-        arg0_paths,
-        cli_config_overrides,
-        loader_overrides,
-        strict_config,
-        default_metrics_enabled,
-        transport,
-        session_source,
-        auth,
-        runtime_options,
-        None,
-        None,
-    )
-    .await
 }
 
 /// Starts the daemon transport using a host-injected AppServer runtime.
@@ -695,11 +643,12 @@ async fn run_main_with_transport_options_and_optional_runtime(
             (runtime, None)
         }
         None => {
-            let descriptor = provider_factory
-                .as_ref()
-                .map(|(_, descriptor)| descriptor)
-                .cloned()
-                .unwrap_or_else(|| AppServerRuntimeBuilder::descriptor_for(&config.model_provider));
+            let Some((factory, descriptor)) = provider_factory else {
+                return Err(std::io::Error::new(
+                    ErrorKind::InvalidInput,
+                    "App Server startup requires an injected provider factory",
+                ));
+            };
             mount_provider_home_with_marker(
                 &config.ruxex_home,
                 runtime_options.product_identity.home_marker_file(),
@@ -715,21 +664,11 @@ async fn run_main_with_transport_options_and_optional_runtime(
                 CredentialManager::shared_from_config(&config, /*enable_api_key_env*/ false)
                     .await
                     .map_err(std::io::Error::other)?;
-            let runtime = provider_factory
-                .map(|(factory, _)| {
-                    factory(ProviderInit {
-                        provider_info: config.model_provider.clone(),
-                        credential_manager: Arc::clone(&credential_manager),
-                        http_client_factory: config.http_client_factory(),
-                    })
-                })
-                .unwrap_or_else(|| {
-                    configured_app_server_runtime(
-                        config.model_provider.clone(),
-                        Arc::clone(&credential_manager),
-                        config.http_client_factory(),
-                    )
-                });
+            let runtime = factory(ProviderInit {
+                provider_info: config.model_provider.clone(),
+                credential_manager: Arc::clone(&credential_manager),
+                http_client_factory: config.http_client_factory(),
+            });
             (runtime, Some(credential_manager))
         }
     };

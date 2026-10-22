@@ -22,7 +22,7 @@ use ruxex_model_provider::SharedModelProvider;
 use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_models_manager::manager::SharedModelsManager;
 use ruxex_models_manager::manager::build_models_manager;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 pub use ruxex_utils_absolute_path::test_support::PathBufExt;
 pub use ruxex_utils_absolute_path::test_support::PathExt;
@@ -100,7 +100,7 @@ pub fn model_provider_from_info(
     provider_info: ModelProviderInfo,
     credential_manager: Arc<ruxex_login::CredentialManager>,
 ) -> SharedModelProvider {
-    create_model_provider(provider_info, Some(credential_manager))
+    create_responses_provider(provider_info, Some(credential_manager))
 }
 
 pub fn thread_manager_with_model_provider_info(

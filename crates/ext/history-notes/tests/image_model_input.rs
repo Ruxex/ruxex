@@ -14,7 +14,7 @@ use ruxex_login::AuthHeaders;
 use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use serde_json::json;
 use wiremock::Mock;
 use wiremock::ResponseTemplate;
@@ -60,7 +60,7 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
     .await;
     let auth = RuxexAuth::Headers(AuthHeaders::new(HeaderMap::new()));
     let credential_manager = CredentialManager::from_auth_for_testing(auth.clone());
-    let provider = create_model_provider(
+    let provider = create_responses_provider(
         ModelProviderInfo::create_responses_provider(Some(format!("{}/v1", server.uri()))),
         Some(Arc::clone(&credential_manager)),
     );

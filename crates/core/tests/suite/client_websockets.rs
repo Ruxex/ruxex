@@ -58,7 +58,7 @@ use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_protocol::protocol::W3cTraceContext;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use ruxex_rollout_trace::ConversationPart;
 use ruxex_rollout_trace::InferenceTraceContext;
 use ruxex_rollout_trace::RawTraceEventPayload;
@@ -2790,7 +2790,7 @@ async fn websocket_harness_with_provider_options_and_auth(
     let effort = None;
     let summary = ReasoningSummary::Auto;
     let client = ModelClient::new_with_provider(
-        create_model_provider(provider.clone(), client_credential_manager),
+        create_responses_provider(provider.clone(), client_credential_manager),
         thread_id,
         SessionSource::Exec,
         "test_originator".to_string(),

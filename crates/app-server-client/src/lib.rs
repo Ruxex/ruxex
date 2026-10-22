@@ -36,10 +36,8 @@ pub use ruxex_app_server::in_process::InProcessServerEvent;
 use ruxex_app_server::in_process::InProcessStartArgs;
 use ruxex_app_server::in_process::LogDbLayer;
 pub use ruxex_app_server::in_process::StateDbHandle;
-pub use ruxex_app_server::runtime::configured_app_server_runtime_from_config;
 pub use ruxex_app_server::runtime::mount_provider_home_for_config;
 pub use ruxex_app_server::runtime::mount_provider_home_for_config_with_marker;
-pub use ruxex_app_server::runtime::provider_init_from_config;
 pub use ruxex_app_server::runtime::provider_init_from_config_with_descriptor;
 use ruxex_app_server_protocol::AppServerIdentity;
 use ruxex_app_server_protocol::ClientInfo;
@@ -932,9 +930,16 @@ mod tests {
     async fn in_process_client_home_mount_prefers_injected_runtime() {
         let ruxex_home = TempDir::new().expect("temporary provider home");
         let config = build_test_config_for_ruxex_home(ruxex_home.path()).await;
-        let mut provider_info = config.model_provider.clone();
-        provider_info.id = Some("injected-provider".to_string());
-        let runtime = AppServerRuntimeBuilder::from_provider_info(provider_info, None).build();
+        let runtime =
+            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
+                Some("injected-provider".to_string()),
+                ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+                None,
+                ruxex_http_client::HttpClientFactory::new(
+                    ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
+                ),
+            )))
+            .build();
 
         let _identity =
             mount_provider_home_for_startup(&config, Some(&runtime), &ProductIdentity::ruxex())
@@ -977,6 +982,16 @@ mod tests {
         let state_db = init_state_db(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
+        let runtime =
+            AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
+                Some("cloudflare".to_string()),
+                ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+                None,
+                ruxex_http_client::HttpClientFactory::new(
+                    ruxex_http_client::OutboundProxyPolicy::ReqwestDefault,
+                ),
+            )))
+            .build();
         let client = InProcessAppServerClient::start(InProcessClientStartArgs {
             arg0_paths: Arg0DispatchPaths::default(),
             config,
@@ -989,7 +1004,7 @@ mod tests {
             config_warnings: Vec::new(),
             session_source,
             enable_api_key_env: false,
-            runtime: None,
+            runtime: Some(runtime),
             product_identity: ProductIdentity::ruxex(),
             client_name: "ruxex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),

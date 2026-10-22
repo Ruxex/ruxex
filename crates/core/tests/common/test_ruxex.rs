@@ -57,7 +57,7 @@ use ruxex_protocol::protocol::ThreadSettingsOverrides;
 use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use ruxex_protocol::protocol::TurnEnvironmentSelections;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use ruxex_thread_store::ThreadStore;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
@@ -603,7 +603,7 @@ impl TestRuxexBuilder {
             auth.clone(),
             config.ruxex_home.to_path_buf(),
         );
-        let provider = create_model_provider(
+        let provider = create_responses_provider(
             config.model_provider.clone(),
             Some(credential_manager.clone()),
         );

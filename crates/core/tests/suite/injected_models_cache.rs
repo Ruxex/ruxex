@@ -40,7 +40,7 @@ use ruxex_protocol::model_types::ModelVisibility;
 use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::ThreadSettingsOverrides;
 use ruxex_protocol::user_input::UserInput;
-use ruxex_providers::create_model_provider;
+use ruxex_providers::create_responses_provider;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::sync::oneshot;
@@ -309,7 +309,7 @@ async fn account_switch_during_cache_store_preserves_new_catalog_for_next_turn()
         stored_entries: Mutex::new(Vec::new()),
         store_gate: Mutex::new(None),
     });
-    let provider = create_model_provider(provider_info.clone(), Some(auth.clone()));
+    let provider = create_responses_provider(provider_info.clone(), Some(auth.clone()));
     let manager = build_models_manager_with_cache(
         cache.clone(),
         Arc::new(ProviderModelCatalogSource::new(provider.clone())),

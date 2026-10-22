@@ -64,7 +64,6 @@ use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
 use crate::runtime::AppServerRuntime;
-use crate::runtime::configured_app_server_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
@@ -451,17 +450,17 @@ async fn run_outbound_router(
 
 async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClientHandle> {
     args.config.auth_config().validate()?;
-    let mount_result = match args.runtime.as_ref() {
-        Some(runtime) => crate::runtime::mount_provider_home_for_runtime_with_marker(
-            &args.config,
-            runtime,
-            args.product_identity.home_marker_file(),
-        ),
-        None => crate::runtime::mount_provider_home_for_config_with_marker(
-            &args.config,
-            args.product_identity.home_marker_file(),
-        ),
-    };
+    let runtime = args.runtime.as_ref().ok_or_else(|| {
+        IoError::new(
+            ErrorKind::InvalidInput,
+            "in-process App Server startup requires an injected provider runtime",
+        )
+    })?;
+    let mount_result = crate::runtime::mount_provider_home_for_runtime_with_marker(
+        &args.config,
+        runtime,
+        args.product_identity.home_marker_file(),
+    );
     mount_result.map_err(|err| {
         IoError::new(
             ErrorKind::InvalidData,
@@ -470,23 +469,10 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
     })?;
     let channel_capacity = args.channel_capacity.max(1);
     let installation_id = resolve_installation_id(&args.config.ruxex_home).await?;
-    let (runtime, credential_manager) = match args.runtime {
-        Some(runtime) => (runtime, None),
-        None => {
-            let credential_manager = CredentialManager::shared_from_config(
-                args.config.as_ref(),
-                args.enable_api_key_env,
-            )
-            .await
-            .map_err(IoError::other)?;
-            let runtime = configured_app_server_runtime(
-                args.config.model_provider.clone(),
-                Arc::clone(&credential_manager),
-                args.config.http_client_factory(),
-            );
-            (runtime, Some(credential_manager))
-        }
-    };
+    let runtime = args
+        .runtime
+        .expect("runtime presence was checked before mounting provider home");
+    let credential_manager: Option<Arc<CredentialManager>> = None;
     let (client_tx, mut client_rx) = mpsc::channel::<InProcessClientMessage>(channel_capacity);
     let (event_tx, event_rx) = mpsc::channel::<InProcessServerEvent>(channel_capacity);
 
@@ -866,9 +852,20 @@ mod tests {
     use ruxex_app_server_protocol::TurnItemsView;
     use ruxex_app_server_protocol::TurnStatus;
     use ruxex_core::config::ConfigBuilder;
-    use ruxex_model_provider_info::ModelProviderInfo;
+    use ruxex_http_client::HttpClientFactory;
+    use ruxex_http_client::OutboundProxyPolicy;
     use std::path::Path;
     use tempfile::TempDir;
+
+    fn test_runtime(provider_id: &str) -> AppServerRuntime {
+        AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::CloudflareModelProvider::new(
+            Some(provider_id.to_string()),
+            ruxex_model_provider_info::ModelProviderInfo::create_cloudflare_provider(),
+            None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        )))
+        .build()
+    }
 
     async fn load_test_config(ruxex_home: &Path) -> Config {
         match ConfigBuilder::default()
@@ -915,7 +912,7 @@ mod tests {
             config_warnings: Vec::new(),
             session_source,
             enable_api_key_env: false,
-            runtime: None,
+            runtime: Some(test_runtime("cloudflare")),
             product_identity: ProductIdentity::ruxex(),
             initialize: InitializeParams {
                 client_info: ClientInfo {
@@ -943,9 +940,7 @@ mod tests {
         let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");
-        let runtime =
-            AppServerRuntimeBuilder::from_provider_info(config.model_provider.clone(), None)
-                .build();
+        let runtime = test_runtime("cloudflare");
         let expected_provider = runtime.provider_descriptor().provider_kind.clone();
         let client = InProcessAppServerBuilder::new(InProcessStartArgs {
             arg0_paths: Arg0DispatchPaths::default(),
@@ -992,15 +987,11 @@ mod tests {
     async fn injected_provider_remains_authoritative_during_initialize() {
         let ruxex_home = TempDir::new().expect("temp dir");
         let config = Arc::new(load_test_config(ruxex_home.path()).await);
-        let injected_provider = ModelProviderInfo {
-            id: Some("injected-provider".to_string()),
-            ..ModelProviderInfo::default()
-        };
+        let runtime = test_runtime("injected-provider");
         assert_ne!(
             AppServerRuntimeBuilder::descriptor_for(&config.model_provider),
-            AppServerRuntimeBuilder::descriptor_for(&injected_provider)
+            runtime.provider_descriptor()
         );
-        let runtime = AppServerRuntimeBuilder::from_provider_info(injected_provider, None).build();
         crate::runtime::mount_provider_home_for_runtime(&config, &runtime)
             .expect("injected provider home should mount");
         let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
