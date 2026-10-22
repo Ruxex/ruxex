@@ -22,6 +22,8 @@ pub use ruxex_model_provider::ModelProviderFactory;
 pub use ruxex_model_provider::ProviderInit;
 pub use ruxex_model_provider::SharedModelProvider;
 #[cfg(feature = "tui")]
+pub use ruxex_tui::DEFAULT_TUI_STATUS_LINE_ITEMS;
+#[cfg(feature = "tui")]
 pub use ruxex_tui::TuiBrandProfile;
 pub use ruxex_utils_home_dir::ProductIdentity;
 

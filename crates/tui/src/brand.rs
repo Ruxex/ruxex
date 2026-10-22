@@ -19,6 +19,10 @@ pub(crate) const SIDE_PROMPT_PLACEHOLDER: &str = "Ask a side question...";
 pub(crate) const STARTUP_GUIDE_INTRO: &str =
     "  To get started, describe a task or try one of these commands:";
 
+/// The status-line item IDs used by the default Ruxex TUI profile.
+pub const DEFAULT_TUI_STATUS_LINE_ITEMS: &[&str] =
+    &["model-with-reasoning", "current-dir", "thread-name"];
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TuiNamedColor {
     Black,
@@ -138,7 +142,7 @@ pub struct TuiTheme {
 /// Optional branding surfaces owned by the TUI.
 ///
 /// Implementors may provide only the surfaces they want to customize. A `None` value omits that
-/// surface from the relevant UI instead of falling back to Ruxex copy.
+/// surface from the relevant UI, except where the method documents a Ruxex default.
 pub trait TuiBrandProfile: Send + Sync {
     fn product_name(&self) -> Option<&str> {
         None
@@ -169,6 +173,13 @@ pub trait TuiBrandProfile: Send + Sync {
     }
 
     fn version_label(&self) -> Option<String> {
+        None
+    }
+
+    /// Returns the default `/statusline` item IDs when `tui.status_line` is unset.
+    ///
+    /// Returning `None` preserves the default Ruxex status-line item ordering.
+    fn default_status_line_items(&self) -> Option<&[&str]> {
         None
     }
 
@@ -212,6 +223,10 @@ impl TuiBrandProfile for DefaultTuiBrandProfile {
     fn version_label(&self) -> Option<String> {
         Some(format!("v{RUXEX_CLI_VERSION}"))
     }
+
+    fn default_status_line_items(&self) -> Option<&[&str]> {
+        Some(DEFAULT_TUI_STATUS_LINE_ITEMS)
+    }
 }
 
 pub fn default_tui_brand_profile() -> Arc<dyn TuiBrandProfile> {
@@ -248,6 +263,29 @@ mod tests {
         assert!(profile.prompt_placeholder().is_none());
         assert!(profile.version_label().is_none());
         assert!(profile.visual_theme().is_none());
+    }
+
+    #[test]
+    fn brand_profile_can_supply_default_status_line_items() {
+        struct StatusLineProfile;
+
+        const ITEMS: &[&str] = &["model", "hostname"];
+
+        impl TuiBrandProfile for StatusLineProfile {
+            fn default_status_line_items(&self) -> Option<&[&str]> {
+                Some(ITEMS)
+            }
+        }
+
+        assert_eq!(StatusLineProfile.default_status_line_items(), Some(ITEMS));
+    }
+
+    #[test]
+    fn default_brand_profile_uses_default_status_line_items() {
+        assert_eq!(
+            DefaultTuiBrandProfile.default_status_line_items(),
+            Some(DEFAULT_TUI_STATUS_LINE_ITEMS)
+        );
     }
 
     #[test]

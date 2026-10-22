@@ -6,6 +6,7 @@
 use super::*;
 use crate::bottom_pane::status_line_from_segments;
 use crate::branch_summary;
+use crate::brand::DEFAULT_TUI_STATUS_LINE_ITEMS;
 use crate::chatwidget::limit_label_for_window;
 use crate::chatwidget::rate_limits::get_limits_duration;
 use crate::legacy_core::config::Config;
@@ -429,16 +430,10 @@ impl ChatWidget {
     }
 
     pub(super) fn configured_status_line_items(&self) -> Vec<String> {
-        self.local_settings
-            .tui
-            .status_line
-            .clone()
-            .unwrap_or_else(|| {
-                DEFAULT_STATUS_LINE_ITEMS
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect()
-            })
+        configured_status_line_items(
+            self.local_settings.tui.status_line.clone(),
+            self.brand_profile.as_ref(),
+        )
     }
 
     /// Parses configured terminal-title ids into known items and collects unknown ids.
@@ -961,6 +956,63 @@ impl ChatWidget {
         let mut truncated = head.graphemes(true).take(max_chars - 3).collect::<String>();
         truncated.push_str("...");
         truncated
+    }
+}
+
+fn configured_status_line_items(
+    configured: Option<Vec<String>>,
+    brand_profile: &dyn crate::brand::TuiBrandProfile,
+) -> Vec<String> {
+    configured.unwrap_or_else(|| {
+        brand_profile
+            .default_status_line_items()
+            .unwrap_or(DEFAULT_TUI_STATUS_LINE_ITEMS)
+            .iter()
+            .map(ToString::to_string)
+            .collect()
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct StatusLineBrandProfile;
+    struct SparseProfile;
+
+    const STATUS_LINE_BRAND_DEFAULTS: &[&str] = &["model", "hostname"];
+
+    impl crate::brand::TuiBrandProfile for StatusLineBrandProfile {
+        fn default_status_line_items(&self) -> Option<&[&str]> {
+            Some(STATUS_LINE_BRAND_DEFAULTS)
+        }
+    }
+
+    impl crate::brand::TuiBrandProfile for SparseProfile {}
+
+    #[test]
+    fn configured_status_line_items_prioritize_explicit_config() {
+        let profile = StatusLineBrandProfile;
+
+        assert_eq!(
+            configured_status_line_items(None, &profile),
+            vec!["model", "hostname"]
+        );
+        assert_eq!(
+            configured_status_line_items(Some(vec!["current-dir".to_string()]), &profile),
+            vec!["current-dir"]
+        );
+    }
+
+    #[test]
+    fn configured_status_line_items_fall_back_to_ruxex_defaults() {
+        assert_eq!(
+            configured_status_line_items(None, &SparseProfile),
+            DEFAULT_TUI_STATUS_LINE_ITEMS
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+        );
     }
 }
 

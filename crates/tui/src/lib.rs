@@ -122,8 +122,8 @@ mod daybreak;
 mod permission_discovery;
 mod worktree_browser;
 pub use brand::{
-    DefaultTuiBrandProfile, TuiBrandProfile, TuiColor, TuiColors, TuiNamedColor, TuiSymbols,
-    TuiTheme, default_tui_brand_profile,
+    DEFAULT_TUI_STATUS_LINE_ITEMS, DefaultTuiBrandProfile, TuiBrandProfile, TuiColor, TuiColors,
+    TuiNamedColor, TuiSymbols, TuiTheme, default_tui_brand_profile,
 };
 pub use custom_terminal::Terminal;
 mod assistant_directives;
