@@ -19,6 +19,18 @@ async fn load_cli_credential_manager(
     Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }
 
+fn format_login_status(provider_descriptor: &ProviderDescriptor, authenticated: bool) -> String {
+    let provider_id = &provider_descriptor.provider_kind;
+    format!(
+        "{provider_id}: {}",
+        if authenticated {
+            "authenticated"
+        } else {
+            "not authenticated"
+        }
+    )
+}
+
 fn provider_from_factory(
     config: &Config,
     credential_manager: Arc<CredentialManager>,
@@ -37,6 +49,7 @@ pub async fn run_login_status(
     provider_factory: crate::ProviderRuntimeFactory,
 ) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
+    let provider_descriptor = provider_factory.1.clone();
     let manager = match load_cli_credential_manager(&config, &provider_factory.1).await {
         Ok(manager) => manager,
         Err(err) => {
@@ -47,13 +60,8 @@ pub async fn run_login_status(
     let provider = provider_from_factory(&config, manager, provider_factory);
     let authenticated = provider.auth_state().status == ProviderAuthStatus::Authenticated;
     eprintln!(
-        "{}: {}",
-        config.model_provider_id,
-        if authenticated {
-            "authenticated"
-        } else {
-            "not authenticated"
-        }
+        "{}",
+        format_login_status(&provider_descriptor, authenticated)
     );
     std::process::exit(if authenticated { 0 } else { 1 });
 }
@@ -155,8 +163,18 @@ fn safe_format_key(key: &str) -> String {
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
+    use ruxex_model_provider::ProviderDescriptor;
 
+    use super::format_login_status;
     use super::safe_format_key;
+
+    #[test]
+    fn login_status_uses_the_injected_provider_identity() {
+        assert_eq!(
+            format_login_status(&ProviderDescriptor::new("custom-provider", "1"), false,),
+            "custom-provider: not authenticated"
+        );
+    }
 
     #[test]
     fn formats_long_key() {
