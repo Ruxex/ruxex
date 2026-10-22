@@ -110,10 +110,12 @@ pub mod provider {
         pub use ruxex_protocol::account::ProviderAuthStatus;
         pub use ruxex_protocol::config_types::ReasoningSummary;
         pub use ruxex_protocol::config_types::Verbosity;
+        pub use ruxex_protocol::model_types::InputModality;
         pub use ruxex_protocol::model_types::ModelCatalog;
         pub use ruxex_protocol::model_types::ModelInfo;
         pub use ruxex_protocol::model_types::ModelVisibility;
         pub use ruxex_protocol::model_types::ReasoningEffort;
+        pub use ruxex_protocol::model_types::default_input_modalities;
         pub use ruxex_protocol::models::ResponseItem;
         pub use ruxex_protocol::protocol::ModelVerification;
         pub use ruxex_protocol::protocol::RateLimitSnapshot;

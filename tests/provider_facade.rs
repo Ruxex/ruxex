@@ -3,9 +3,9 @@ use std::sync::Arc;
 use ruxex::provider::auth::CredentialManager;
 use ruxex::provider::config::{ModelProviderInfo, WireApi};
 use ruxex::provider::protocol::{
-    ModelCatalog, ModelVerification, ModelVisibility, ProviderAccount, ProviderAuthStatus,
-    RateLimitSnapshot, ReasoningEffort, ReasoningSummary, ResponseItem, ResponseUsageMetadata,
-    SessionSource, TokenUsage,
+    InputModality, ModelCatalog, ModelVerification, ModelVisibility, ProviderAccount,
+    ProviderAuthStatus, RateLimitSnapshot, ReasoningEffort, ReasoningSummary, ResponseItem,
+    ResponseUsageMetadata, SessionSource, TokenUsage, default_input_modalities,
 };
 use ruxex::provider::transport::{
     ClientRouteClass, HttpClientFactory, HttpTransport, ReqwestTransport,
@@ -59,6 +59,11 @@ fn provider_facade_exposes_the_provider_author_surface() {
 
     let _: Option<ResponseItem> = None;
     let _: Option<ModelCatalog> = None;
+    let _: Option<InputModality> = None;
+    assert_eq!(
+        default_input_modalities(),
+        vec![InputModality::Text, InputModality::Image]
+    );
     let _: Option<ModelVisibility> = None;
     let _ = [
         ModelVisibility::List,
