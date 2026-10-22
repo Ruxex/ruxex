@@ -33,6 +33,38 @@ use uuid::Uuid;
 const STRUCTURED_TURN_TIMEOUT: Duration = Duration::from_secs(/*secs*/ 30);
 const STRUCTURED_RESPONSE_MAX_BYTES: usize = 8 * 1024;
 
+fn temporary_structured_config() -> std::collections::HashMap<String, Value> {
+    std::collections::HashMap::from([
+        ("features.code_mode".to_string(), false.into()),
+        ("features.code_mode_only".to_string(), false.into()),
+        ("features.context_management".to_string(), false.into()),
+        ("features.current_time_reminder".to_string(), false.into()),
+        ("features.deferred_executor".to_string(), false.into()),
+        ("features.goals".to_string(), false.into()),
+        ("features.hooks".to_string(), false.into()),
+        ("features.multi_agent".to_string(), false.into()),
+        ("features.plugins".to_string(), false.into()),
+        (
+            "features.request_permissions_tool".to_string(),
+            false.into(),
+        ),
+        ("features.shell_snapshot".to_string(), false.into()),
+        ("features.shell_tool".to_string(), false.into()),
+        ("features.standalone_web_search".to_string(), false.into()),
+        ("features.token_budget".to_string(), false.into()),
+        ("features.unified_exec".to_string(), false.into()),
+        ("features.view_image".to_string(), false.into()),
+        ("orchestrator.skills.enabled".to_string(), false.into()),
+        ("skills.include_instructions".to_string(), false.into()),
+        (
+            "tools.experimental_request_user_input.enabled".to_string(),
+            false.into(),
+        ),
+        ("tools.update_plan.enabled".to_string(), false.into()),
+        ("web_search".to_string(), "disabled".into()),
+    ])
+}
+
 /// Preserve the visible thread's permissions and external-tool isolation.
 pub(crate) struct TemporaryStructuredThreadOptions {
     pub(crate) model: String,
@@ -57,36 +89,7 @@ pub(crate) async fn start_temporary_thread(
     } = options;
     let custom_permission_profile =
         active_permission_profile.filter(|profile| !profile.starts_with(':'));
-    let mut config = std::collections::HashMap::from([
-        ("features.code_mode".to_string(), false.into()),
-        ("features.code_mode_only".to_string(), false.into()),
-        ("features.context_management".to_string(), false.into()),
-        ("features.current_time_reminder".to_string(), false.into()),
-        ("features.deferred_executor".to_string(), false.into()),
-        ("features.goals".to_string(), false.into()),
-        ("features.hooks".to_string(), false.into()),
-        ("features.multi_agent".to_string(), false.into()),
-        ("features.multi_agent_v2".to_string(), false.into()),
-        ("features.plugins".to_string(), false.into()),
-        (
-            "features.request_permissions_tool".to_string(),
-            false.into(),
-        ),
-        ("features.shell_snapshot".to_string(), false.into()),
-        ("features.shell_tool".to_string(), false.into()),
-        ("features.standalone_web_search".to_string(), false.into()),
-        ("features.token_budget".to_string(), false.into()),
-        ("features.unified_exec".to_string(), false.into()),
-        ("features.view_image".to_string(), false.into()),
-        ("orchestrator.skills.enabled".to_string(), false.into()),
-        ("skills.include_instructions".to_string(), false.into()),
-        (
-            "tools.experimental_request_user_input.enabled".to_string(),
-            false.into(),
-        ),
-        ("tools.update_plan.enabled".to_string(), false.into()),
-        ("web_search".to_string(), "disabled".into()),
-    ]);
+    let mut config = temporary_structured_config();
     let response: ThreadStartResponse = tokio::time::timeout(STRUCTURED_TURN_TIMEOUT, async {
         // Fail closed if the remote-effective MCP configuration cannot be read.
         let effective_config: ConfigReadResponse = request_handle
@@ -321,4 +324,14 @@ pub(crate) async fn run_temporary_structured_turn(
     unsubscribe_temporary_thread(&request_handle, thread_id).await;
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn temporary_structured_config_does_not_override_multi_agent_v2() {
+        let config = super::temporary_structured_config();
+
+        assert!(!config.contains_key("features.multi_agent_v2"));
+    }
 }
