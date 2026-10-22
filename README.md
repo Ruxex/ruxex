@@ -58,7 +58,7 @@ default integration features:
 [dependencies]
 ruxex = {
     git = "https://github.com/Ruxex/ruxex.git",
-    tag = "v0.2.0",
+    tag = "v0.3.0",
     default-features = false,
     features = ["app-server"]
 }

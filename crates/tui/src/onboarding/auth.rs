@@ -517,15 +517,34 @@ impl AuthModeWidget {
         let sign_in_state = self.sign_in_state.clone();
         let error = self.error.clone();
         let request_frame = self.request_frame.clone();
+        let request_handle = self.app_server_request_handle.clone();
+        let auth_login_allowed = self.is_api_login_allowed();
         tokio::spawn(async move {
             let mut flow = flow;
             let result = flow.submit(value).await.map(|step| (flow, step));
             match result {
-                Ok((flow, CredentialStep::Complete)) => {
-                    *sign_in_state.write().unwrap() = SignInState::ResolverStep(
-                        ResolverInputState::new(flow, CredentialStep::Complete),
-                    );
-                }
+                Ok((flow, CredentialStep::Complete)) => match finish_resolver_flow(flow) {
+                    Ok((api_key, credentials)) if auth_login_allowed => {
+                        *error.write().unwrap() = None;
+                        save_api_key_request(
+                            request_handle,
+                            sign_in_state,
+                            error,
+                            request_frame.clone(),
+                            api_key,
+                            credentials,
+                        )
+                        .await;
+                    }
+                    Ok(_) => {
+                        *sign_in_state.write().unwrap() = SignInState::ResolverUnavailable;
+                        *error.write().unwrap() = Some(API_KEY_DISABLED_MESSAGE.to_string());
+                    }
+                    Err(message) => {
+                        *sign_in_state.write().unwrap() = SignInState::ResolverUnavailable;
+                        *error.write().unwrap() = Some(message);
+                    }
+                },
                 Ok((flow, step)) => {
                     *error.write().unwrap() = None;
                     *sign_in_state.write().unwrap() =
@@ -551,17 +570,7 @@ impl AuthModeWidget {
         let Some(flow) = state.flow else {
             return None;
         };
-        Some(flow.finish().map_or_else(
-            |err| Err(format!("Failed to complete credentials: {err}")),
-            |mut credentials| {
-                credentials
-                    .remove("api_key")
-                    .map(|api_key| Ok((api_key, credentials)))
-                    .unwrap_or_else(|| {
-                        Err("Resolved credentials did not contain an API key".to_string())
-                    })
-            },
-        ))
+        Some(finish_resolver_flow(flow))
     }
 
     fn save_api_key(&mut self, api_key: String, credentials: BTreeMap<String, String>) {
@@ -570,34 +579,63 @@ impl AuthModeWidget {
             return;
         }
         self.set_error(/*message*/ None);
-        let request_handle = self.app_server_request_handle.clone();
-        let sign_in_state = self.sign_in_state.clone();
-        let error = self.error.clone();
         let request_frame = self.request_frame.clone();
-        tokio::spawn(async move {
-            match request_handle
-                .request_typed::<LoginAccountResponse>(ClientRequest::LoginAccount {
-                    request_id: onboarding_request_id(),
-                    params: LoginAccountParams::ApiKey {
-                        api_key: api_key.clone(),
-                        credentials,
-                    },
-                })
-                .await
-            {
-                Ok(LoginAccountResponse::ApiKey {}) => {
-                    *error.write().unwrap() = None;
-                    *sign_in_state.write().unwrap() = SignInState::ApiKeyConfigured;
-                }
-                Err(err) => {
-                    *error.write().unwrap() = Some(format!("Failed to save API key: {err}"));
-                    *sign_in_state.write().unwrap() = SignInState::ResolverUnavailable;
-                }
-            }
-            request_frame.schedule_frame();
-        });
+        tokio::spawn(save_api_key_request(
+            self.app_server_request_handle.clone(),
+            self.sign_in_state.clone(),
+            self.error.clone(),
+            request_frame.clone(),
+            api_key,
+            credentials,
+        ));
         self.request_frame.schedule_frame();
     }
+}
+
+fn finish_resolver_flow(
+    flow: Box<dyn ErasedCredentialFlow>,
+) -> Result<(String, BTreeMap<String, String>), String> {
+    flow.finish().map_or_else(
+        |err| Err(format!("Failed to complete credentials: {err}")),
+        |mut credentials| {
+            credentials
+                .remove("api_key")
+                .map(|api_key| Ok((api_key, credentials)))
+                .unwrap_or_else(|| {
+                    Err("Resolved credentials did not contain an API key".to_string())
+                })
+        },
+    )
+}
+
+async fn save_api_key_request(
+    request_handle: AppServerRequestHandle,
+    sign_in_state: Arc<RwLock<SignInState>>,
+    error: Arc<RwLock<Option<String>>>,
+    request_frame: FrameRequester,
+    api_key: String,
+    credentials: BTreeMap<String, String>,
+) {
+    match request_handle
+        .request_typed::<LoginAccountResponse>(ClientRequest::LoginAccount {
+            request_id: onboarding_request_id(),
+            params: LoginAccountParams::ApiKey {
+                api_key,
+                credentials,
+            },
+        })
+        .await
+    {
+        Ok(LoginAccountResponse::ApiKey {}) => {
+            *error.write().unwrap() = None;
+            *sign_in_state.write().unwrap() = SignInState::ApiKeyConfigured;
+        }
+        Err(err) => {
+            *error.write().unwrap() = Some(format!("Failed to save API key: {err}"));
+            *sign_in_state.write().unwrap() = SignInState::ResolverUnavailable;
+        }
+    }
+    request_frame.schedule_frame();
 }
 
 impl StepStateProvider for AuthModeWidget {
@@ -623,5 +661,50 @@ impl WidgetRef for AuthModeWidget {
                 self.render_api_key_configured(area, buf);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_model_provider::ProviderFuture;
+    use ruxex_model_provider::ProviderResult;
+
+    struct CompletedFlow;
+
+    impl ErasedCredentialFlow for CompletedFlow {
+        fn current_step(&self) -> CredentialStep {
+            CredentialStep::Complete
+        }
+
+        fn submit(
+            &mut self,
+            _value: CredentialValue,
+        ) -> ProviderFuture<'_, ProviderResult<CredentialStep>> {
+            Box::pin(async { Ok(CredentialStep::Complete) })
+        }
+
+        fn finish(self: Box<Self>) -> ProviderResult<BTreeMap<String, String>> {
+            Ok(BTreeMap::from([
+                ("api_key".to_string(), "secret".to_string()),
+                ("account".to_string(), "example".to_string()),
+            ]))
+        }
+    }
+
+    #[tokio::test]
+    async fn completed_credential_flow_finishes_without_an_extra_confirmation() {
+        let mut flow: Box<dyn ErasedCredentialFlow> = Box::new(CompletedFlow);
+        assert_eq!(
+            flow.submit(CredentialValue::text(String::new()))
+                .await
+                .expect("credential flow should complete"),
+            CredentialStep::Complete
+        );
+        let credentials = finish_resolver_flow(flow)
+            .expect("completed credential flow should produce credentials");
+
+        assert_eq!(credentials.0, "secret");
+        assert_eq!(credentials.1["account"], "example");
     }
 }

@@ -143,15 +143,14 @@ pub fn create_tools_json_for_chat_completions_api(
 
             let map = tool.as_object_mut()?;
             let name = map
-                .get("name")
-                .and_then(Value::as_str)
-                .unwrap_or_default()
-                .to_string();
+                .remove("name")
+                .unwrap_or_else(|| Value::String(String::new()));
             map.remove("type");
+            let mut function = std::mem::take(map);
+            function.insert("name".to_string(), name);
             Some(json!({
                 "type": "function",
-                "name": name,
-                "function": map,
+                "function": function,
             }))
         })
         .collect())

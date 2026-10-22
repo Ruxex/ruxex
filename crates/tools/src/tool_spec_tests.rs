@@ -149,6 +149,28 @@ fn create_tools_json_for_responses_api_includes_top_level_name() {
 }
 
 #[test]
+fn create_tools_json_for_chat_completions_api_nests_function_name() {
+    assert_eq!(
+        create_tools_json_for_chat_completions_api(&[ToolSpec::Function(responses_lite_function(
+            "demo"
+        ),)])
+        .expect("serialize chat tools"),
+        vec![json!({
+            "type": "function",
+            "function": {
+                "name": "demo",
+                "description": "demo tool",
+                "strict": false,
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                },
+            },
+        })]
+    );
+}
+
+#[test]
 fn strip_tool_strict_fields_omits_tool_fields_but_preserves_schema_properties() {
     let mut tools = create_tools_json_for_responses_api(&[
         ToolSpec::Function(ResponsesApiTool {
