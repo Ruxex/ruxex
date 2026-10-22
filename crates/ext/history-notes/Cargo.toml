@@ -17,7 +17,6 @@ ruxex-core = { workspace = true }
 ruxex-extension-api = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
-ruxex-providers = { workspace = true }
 ruxex-protocol = { workspace = true }
 ruxex-tools = { workspace = true }
 ruxex-utils-output-truncation = { workspace = true }
@@ -27,6 +26,7 @@ serde_json = { workspace = true }
 [dev-dependencies]
 ruxex-config = { workspace = true }
 ruxex-model-provider-info = { workspace = true }
+ruxex-providers = { workspace = true }
 core_test_support = { workspace = true }
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
