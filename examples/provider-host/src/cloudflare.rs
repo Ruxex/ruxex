@@ -238,6 +238,7 @@ impl ModelProvider for CloudflareProvider {
     fn capabilities(&self) -> ProviderCapabilities {
         ProviderCapabilities {
             api_key_model_discovery: true,
+            web_search: false,
             supports_tool_strict_mode: self.info.supports_tool_strict_mode,
             websocket: false,
             usage: false,

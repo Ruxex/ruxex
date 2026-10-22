@@ -64,6 +64,7 @@ use futures::future::BoxFuture;
 use ruxex_extension_api::ExtensionData;
 use ruxex_features::Feature;
 use ruxex_features::SleepToolMode;
+use ruxex_model_provider::ProviderCapabilities;
 use ruxex_model_provider::ProviderRequestFormat;
 use ruxex_prompts::ResolvedModelMessages;
 use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
@@ -451,7 +452,7 @@ pub(crate) fn finalize_tool_router(
         &registry,
         &code_mode_tool_names,
         hosted_specs,
-    );
+    )?;
     let tool_namespaces_info = include_tool_namespaces_info
         .then(|| {
             collect_tool_namespaces_info(&registry, &code_mode_tool_names, &model_visible_specs)
@@ -509,7 +510,7 @@ fn build_model_visible_specs(
     registry: &ToolRegistry,
     code_mode_tool_names: &BTreeMap<String, ToolName>,
     hosted_specs: Vec<ToolSpec>,
-) -> Vec<ToolSpec> {
+) -> RuxexResult<Vec<ToolSpec>> {
     let mut specs = Vec::new();
     for tool in registry.entries() {
         let exposure = tool.exposure;
@@ -534,6 +535,7 @@ fn build_model_visible_specs(
     }
     specs.extend(hosted_specs);
 
+    let specs = filter_tool_specs_for_request_format(turn_context.provider.request_format(), specs);
     let specs = merge_into_namespaces(specs);
     if namespace_tools_enabled(turn_context)
         && !matches!(
@@ -541,14 +543,29 @@ fn build_model_visible_specs(
             ProviderRequestFormat::Chat
         )
     {
-        specs
+        Ok(specs)
     } else {
         flatten_namespaced_specs_for_legacy_provider(specs)
     }
 }
 
-fn flatten_namespaced_specs_for_legacy_provider(specs: Vec<ToolSpec>) -> Vec<ToolSpec> {
-    specs
+fn filter_tool_specs_for_request_format(
+    request_format: ProviderRequestFormat,
+    specs: Vec<ToolSpec>,
+) -> Vec<ToolSpec> {
+    match request_format {
+        ProviderRequestFormat::Responses => specs,
+        ProviderRequestFormat::Chat => specs
+            .into_iter()
+            .filter(|spec| matches!(spec, ToolSpec::Function(_) | ToolSpec::Namespace(_)))
+            .collect(),
+    }
+}
+
+fn flatten_namespaced_specs_for_legacy_provider(
+    specs: Vec<ToolSpec>,
+) -> RuxexResult<Vec<ToolSpec>> {
+    let flattened = specs
         .into_iter()
         .flat_map(|spec| match spec {
             ToolSpec::Namespace(namespace) => namespace
@@ -566,7 +583,21 @@ fn flatten_namespaced_specs_for_legacy_provider(specs: Vec<ToolSpec>) -> Vec<Too
                 .collect(),
             spec => vec![spec],
         })
-        .collect()
+        .collect::<Vec<_>>();
+
+    let mut names = HashSet::new();
+    for spec in &flattened {
+        if !names.insert(spec.name()) {
+            return Err(RuxexErrorDetails::ToolCollision(format!(
+                "{}.{}",
+                DEFAULT_FUNCTION_NAMESPACE,
+                spec.name()
+            ))
+            .into());
+        }
+    }
+
+    Ok(flattened)
 }
 
 fn spec_for_model_request(
@@ -601,7 +632,12 @@ fn hosted_model_tool_specs(
     registered_extension_tool_names: &[ToolName],
 ) -> Vec<ToolSpec> {
     // Responses Lite accepts schemas for client-executed tools, not hosted Responses tools.
-    if model_info.use_responses_lite {
+    if model_info.use_responses_lite
+        || matches!(
+            turn_context.provider.request_format(),
+            ProviderRequestFormat::Chat
+        )
+    {
         return Vec::new();
     }
 
@@ -627,7 +663,12 @@ fn hosted_model_tool_specs(
 }
 
 pub(crate) fn search_tool_enabled(turn_context: &TurnContext, model_info: &ModelInfo) -> bool {
-    model_info.supports_search_tool && namespace_tools_enabled(turn_context)
+    model_info.supports_search_tool
+        && !matches!(
+            turn_context.provider.request_format(),
+            ProviderRequestFormat::Chat
+        )
+        && namespace_tools_enabled(turn_context)
 }
 
 fn namespace_tools_enabled(turn_context: &TurnContext) -> bool {
@@ -934,14 +975,23 @@ fn add_core_tool_sources(context: &CoreToolPlanContext<'_>, registry: &mut ToolR
 }
 
 fn standalone_web_search_enabled(turn_context: &TurnContext, model_info: &ModelInfo) -> bool {
-    namespace_tools_enabled(turn_context)
-        && turn_context.provider.capabilities().web_search
-        && (model_info.use_responses_lite
-            || turn_context
-                .config
-                .features
-                .get()
-                .enabled(Feature::StandaloneWebSearch))
+    standalone_web_search_allowed(
+        turn_context.provider.capabilities(),
+        model_info.use_responses_lite,
+        turn_context
+            .config
+            .features
+            .get()
+            .enabled(Feature::StandaloneWebSearch),
+    )
+}
+
+fn standalone_web_search_allowed(
+    capabilities: ProviderCapabilities,
+    use_responses_lite: bool,
+    standalone_feature_enabled: bool,
+) -> bool {
+    capabilities.standalone_web_search && (use_responses_lite || standalone_feature_enabled)
 }
 
 fn tool_environment_mode(environments: &TurnEnvironmentSnapshot) -> ToolEnvironmentMode {
@@ -1433,11 +1483,83 @@ mod tests {
                 description: "Demo tools".to_string(),
                 tools: vec![ResponsesApiNamespaceTool::Function(function_tool("lookup"))],
             },
-        )]);
+        )])
+        .expect("flattened tool names should be unique");
 
         assert!(matches!(
             specs.as_slice(),
             [ToolSpec::Function(tool)] if tool.name == "mcp__demo__lookup"
         ));
+    }
+
+    #[test]
+    fn legacy_provider_specs_reject_flattened_name_collisions() {
+        let error = flatten_namespaced_specs_for_legacy_provider(vec![
+            ToolSpec::Namespace(ResponsesApiNamespace {
+                name: "foo".to_string(),
+                description: "Foo tools".to_string(),
+                tools: vec![ResponsesApiNamespaceTool::Function(function_tool("bar"))],
+            }),
+            ToolSpec::Namespace(ResponsesApiNamespace {
+                name: "fo".to_string(),
+                description: "Fo tools".to_string(),
+                tools: vec![ResponsesApiNamespaceTool::Function(function_tool("obar"))],
+            }),
+        ])
+        .expect_err("flattened name collisions must be rejected");
+
+        assert!(matches!(
+            error.details(),
+            RuxexErrorDetails::ToolCollision(name) if name == "functions.foobar"
+        ));
+    }
+
+    #[test]
+    fn chat_model_visible_specs_exclude_responses_only_tools() {
+        let specs = filter_tool_specs_for_request_format(
+            ProviderRequestFormat::Chat,
+            vec![
+                ToolSpec::Function(function_tool("lookup")),
+                ToolSpec::Namespace(ResponsesApiNamespace {
+                    name: "mcp__demo__".to_string(),
+                    description: "Demo tools".to_string(),
+                    tools: Vec::new(),
+                }),
+                ToolSpec::ToolSearch {
+                    execution: "client".to_string(),
+                    description: "Search for tools".to_string(),
+                    parameters: JsonSchema::object(BTreeMap::new(), None, None),
+                },
+                ToolSpec::WebSearch {
+                    external_web_access: Some(true),
+                    indexed_web_access: None,
+                    filters: None,
+                    user_location: None,
+                    search_context_size: None,
+                    search_content_types: None,
+                },
+            ],
+        );
+
+        assert_eq!(specs.len(), 2);
+        assert!(matches!(specs[0], ToolSpec::Function(_)));
+        assert!(matches!(specs[1], ToolSpec::Namespace(_)));
+    }
+
+    #[test]
+    fn standalone_web_search_uses_its_own_provider_capability() {
+        let capabilities = ProviderCapabilities {
+            standalone_web_search: true,
+            web_search: false,
+            ..ProviderCapabilities::default()
+        };
+        assert!(standalone_web_search_allowed(capabilities, false, true));
+
+        let capabilities = ProviderCapabilities {
+            standalone_web_search: false,
+            web_search: true,
+            ..ProviderCapabilities::default()
+        };
+        assert!(!standalone_web_search_allowed(capabilities, false, true));
     }
 }

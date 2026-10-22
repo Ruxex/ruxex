@@ -138,7 +138,16 @@ pub fn create_tools_json_for_chat_completions_api(
         .into_iter()
         .filter_map(|mut tool| {
             if tool.get("type") != Some(&Value::String("function".to_string())) {
-                return None;
+                let tool_type = tool
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("unknown");
+                return Some(Err(serde_json::Error::io(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!(
+                        "tool type `{tool_type}` is not supported by Chat Completions; filter it before serialization"
+                    ),
+                ))));
             }
 
             let map = tool.as_object_mut()?;
@@ -148,12 +157,12 @@ pub fn create_tools_json_for_chat_completions_api(
             map.remove("type");
             let mut function = std::mem::take(map);
             function.insert("name".to_string(), name);
-            Some(json!({
+            Some(Ok(json!({
                 "type": "function",
                 "function": function,
-            }))
+            })))
         })
-        .collect())
+        .collect::<Result<Vec<_>, _>>()?)
 }
 
 pub fn create_tools_json_for_responses_lite(

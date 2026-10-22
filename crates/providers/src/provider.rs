@@ -1279,6 +1279,9 @@ macro_rules! impl_model_provider_for_runtime {
 
             fn capabilities(&self) -> ProviderCapabilities {
                 let mut capabilities = ProviderRuntime::capabilities(self);
+                if matches!(ProviderRuntime::wire_api(self), ProviderWireApi::Chat) {
+                    capabilities.web_search = false;
+                }
                 capabilities.api_key_model_discovery = capabilities.api_key_model_discovery
                     || ProviderRuntime::api_key_model_discovery_enabled_by_default(self)
                     || ProviderRuntime::info(self).env_key.is_some();
@@ -1750,6 +1753,20 @@ mod tests {
         );
 
         assert!(matches!(provider.api(), ProviderApi::Chat(_)));
+    }
+
+    #[test]
+    fn configured_chat_provider_does_not_advertise_hosted_web_search() {
+        let provider = ResponsesModelProvider::new(
+            ModelProviderInfo {
+                wire_api: WireApi::Chat,
+                ..ModelProviderInfo::create_responses_provider(None)
+            },
+            /*credential_manager*/ None,
+            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        );
+
+        assert!(!ruxex_model_provider::ModelProvider::capabilities(&provider).web_search);
     }
 
     #[test]

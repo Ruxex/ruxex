@@ -171,6 +171,42 @@ fn create_tools_json_for_chat_completions_api_nests_function_name() {
 }
 
 #[test]
+fn create_tools_json_for_chat_completions_api_rejects_responses_only_tools() {
+    let result = create_tools_json_for_chat_completions_api(&[
+        ToolSpec::ToolSearch {
+            execution: "client".to_string(),
+            description: "Search for tools".to_string(),
+            parameters: JsonSchema::object(BTreeMap::new(), None, None),
+        },
+        ToolSpec::WebSearch {
+            external_web_access: Some(true),
+            indexed_web_access: None,
+            filters: None,
+            user_location: None,
+            search_context_size: None,
+            search_content_types: None,
+        },
+        ToolSpec::Freeform(FreeformTool {
+            name: "apply_patch".to_string(),
+            description: "Edit files".to_string(),
+            defer_loading: None,
+            format: FreeformToolFormat {
+                r#type: "grammar".to_string(),
+                syntax: "lark".to_string(),
+                definition: "start: /.+/".to_string(),
+            },
+        }),
+    ]);
+
+    let error = result.expect_err("Chat must reject Responses-only tool specs");
+    assert!(
+        error
+            .to_string()
+            .contains("not supported by Chat Completions")
+    );
+}
+
+#[test]
 fn strip_tool_strict_fields_omits_tool_fields_but_preserves_schema_properties() {
     let mut tools = create_tools_json_for_responses_api(&[
         ToolSpec::Function(ResponsesApiTool {
