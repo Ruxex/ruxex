@@ -9925,11 +9925,14 @@ dependencies = [
  "ruxex-app-server",
  "ruxex-arg0",
  "ruxex-cli",
+ "ruxex-login",
  "ruxex-model-provider",
  "ruxex-model-provider-info",
+ "ruxex-models-manager",
  "ruxex-providers",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

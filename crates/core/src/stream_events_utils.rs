@@ -15,7 +15,6 @@ use crate::session::session::Session;
 use crate::session::step_context::StepContext;
 use crate::tools::call_trace;
 use crate::tools::parallel::ToolCallRuntime;
-use crate::tools::router::ToolRouter;
 use futures::Future;
 use ruxex_protocol::error::Result;
 use ruxex_protocol::error::RuxexErr;
@@ -198,7 +197,7 @@ pub(crate) async fn handle_output_item_done(
     let mut output = OutputItemResult::default();
     let plan_mode = ctx.step_context.turn.mode() == ModeKind::Plan;
 
-    match ToolRouter::build_tool_call(item.clone()) {
+    match ctx.step_context.tool_router.build_tool_call(item.clone()) {
         // The model emitted a tool call; log it, persist the item immediately, and queue the tool execution.
         Ok(Some(call)) => {
             call_trace::received(

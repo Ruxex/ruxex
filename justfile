@@ -27,6 +27,11 @@ alias c := run
 run *args: prepare-rusty-v8
     RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} run -p ruxex-provider-host-example -- "$@"
 
+# Run the opt-in fixed-response dummy provider host.
+[unix]
+run-dummy *args: prepare-rusty-v8
+    RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} run -p ruxex-provider-host-example --features dummy-provider -- "$@"
+
 # Analyze the configured production binaries with Hawk and save the JSON report.
 [unix]
 hawk: prepare-rusty-v8

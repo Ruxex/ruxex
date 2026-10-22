@@ -7,6 +7,7 @@ use crate::session::turn_context::TurnContext;
 use crate::tools::context::SharedTurnDiffTracker;
 use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
+use crate::tools::flat_tool_name;
 #[cfg(test)]
 use crate::tools::handlers::ToolSearchHandlerCache;
 use crate::tools::registry::AnyToolResult;
@@ -228,7 +229,10 @@ impl ToolRouter {
     }
 
     #[instrument(level = "trace", skip_all, err)]
-    pub fn build_tool_call(item: ResponseItem) -> Result<Option<ToolCall>, FunctionCallError> {
+    pub fn build_tool_call(
+        &self,
+        item: ResponseItem,
+    ) -> Result<Option<ToolCall>, FunctionCallError> {
         match item {
             ResponseItem::FunctionCall {
                 name,
@@ -238,7 +242,7 @@ impl ToolRouter {
                 call_id,
                 ..
             } => {
-                let tool_name = ToolName::new(namespace, name).with_default_namespace();
+                let tool_name = self.resolve_model_tool_name(ToolName::new(namespace, name));
                 Ok(Some(ToolCall {
                     tool_name,
                     call_id,
@@ -273,13 +277,30 @@ impl ToolRouter {
                 call_id,
                 ..
             } => Ok(Some(ToolCall {
-                tool_name: ToolName::new(namespace, name).with_default_namespace(),
+                tool_name: self.resolve_model_tool_name(ToolName::new(namespace, name)),
                 call_id,
                 payload: ToolPayload::Custom { input },
                 encrypted_function_args: None,
             })),
             _ => Ok(None),
         }
+    }
+
+    fn resolve_model_tool_name(&self, model_name: ToolName) -> ToolName {
+        let model_name = model_name.with_default_namespace();
+        if self.registry.tool(&model_name).is_some() {
+            return model_name;
+        }
+
+        if !model_name.is_default_namespace() {
+            return model_name;
+        }
+
+        self.registry
+            .entries()
+            .map(|tool| tool.runtime.tool_name().with_default_namespace())
+            .find(|tool_name| flat_tool_name(tool_name) == model_name.name)
+            .unwrap_or(model_name)
     }
 
     #[allow(dead_code)]
@@ -364,5 +385,39 @@ impl ToolRouter {
         self.registry
             .dispatch_any_with_terminal_outcome(invocation, terminal_outcome_reached)
             .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tools::handlers::CurrentTimeHandler;
+
+    #[test]
+    fn resolves_flattened_namespaced_model_tool_calls() {
+        let router = ToolRouter::from_parts(
+            ToolRegistry::with_handler_for_test(Arc::new(CurrentTimeHandler)),
+            Vec::new(),
+            ToolMode::Direct,
+            BTreeMap::new(),
+            None,
+            &[],
+        );
+        let item = ResponseItem::FunctionCall {
+            id: None,
+            name: "clockcurr_time".to_string(),
+            namespace: None,
+            arguments: "{}".to_string(),
+            encrypted_function_args: None,
+            call_id: "call-1".to_string(),
+            internal_chat_message_metadata_passthrough: None,
+        };
+
+        let call = router
+            .build_tool_call(item)
+            .expect("tool call should parse")
+            .expect("function call should create a tool call");
+
+        assert_eq!(call.tool_name, ToolName::namespaced("clock", "curr_time"));
     }
 }

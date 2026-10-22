@@ -7,6 +7,7 @@ use crate::session::turn_context::TurnContext;
 use crate::tools::code_mode::execute_spec::create_code_mode_tool;
 use crate::tools::context::ToolInvocation;
 use crate::tools::effective_tool_mode;
+use crate::tools::flat_tool_name;
 use crate::tools::handlers::ApplyPatchHandler;
 use crate::tools::handlers::CodeModeExecuteHandler;
 use crate::tools::handlers::CodeModeWaitHandler;
@@ -63,6 +64,7 @@ use futures::future::BoxFuture;
 use ruxex_extension_api::ExtensionData;
 use ruxex_features::Feature;
 use ruxex_features::SleepToolMode;
+use ruxex_model_provider::ProviderRequestFormat;
 use ruxex_prompts::ResolvedModelMessages;
 use ruxex_protocol::DEFAULT_FUNCTION_NAMESPACE;
 use ruxex_protocol::config_types::WebSearchMode;
@@ -532,10 +534,37 @@ fn build_model_visible_specs(
     }
     specs.extend(hosted_specs);
 
-    merge_into_namespaces(specs)
+    let specs = merge_into_namespaces(specs);
+    if namespace_tools_enabled(turn_context)
+        && !matches!(
+            turn_context.provider.request_format(),
+            ProviderRequestFormat::Chat
+        )
+    {
+        specs
+    } else {
+        flatten_namespaced_specs_for_legacy_provider(specs)
+    }
+}
+
+fn flatten_namespaced_specs_for_legacy_provider(specs: Vec<ToolSpec>) -> Vec<ToolSpec> {
+    specs
         .into_iter()
-        .filter(|spec| {
-            namespace_tools_enabled(turn_context) || !matches!(spec, ToolSpec::Namespace(_))
+        .flat_map(|spec| match spec {
+            ToolSpec::Namespace(namespace) => namespace
+                .tools
+                .into_iter()
+                .filter_map(|tool| match tool {
+                    ResponsesApiNamespaceTool::Function(mut function) => {
+                        function.name =
+                            flat_tool_name(&ToolName::namespaced(&namespace.name, function.name))
+                                .into_owned();
+                        Some(ToolSpec::Function(function))
+                    }
+                    ResponsesApiNamespaceTool::Custom(_) => None,
+                })
+                .collect(),
+            spec => vec![spec],
         })
         .collect()
 }
@@ -1377,4 +1406,38 @@ fn code_mode_namespace_name<'a>(
         .as_ref()
         .and_then(|namespace| namespace_descriptions.get(namespace))
         .map(|namespace_description| namespace_description.name.as_str())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_tools::JsonSchema;
+    use ruxex_tools::ResponsesApiTool;
+
+    fn function_tool(name: &str) -> ResponsesApiTool {
+        ResponsesApiTool {
+            name: name.to_string(),
+            description: format!("{name} description"),
+            strict: false,
+            defer_loading: None,
+            parameters: JsonSchema::object(BTreeMap::new(), None, None),
+            output_schema: None,
+        }
+    }
+
+    #[test]
+    fn legacy_provider_specs_flatten_namespaced_tools() {
+        let specs = flatten_namespaced_specs_for_legacy_provider(vec![ToolSpec::Namespace(
+            ResponsesApiNamespace {
+                name: "mcp__demo__".to_string(),
+                description: "Demo tools".to_string(),
+                tools: vec![ResponsesApiNamespaceTool::Function(function_tool("lookup"))],
+            },
+        )]);
+
+        assert!(matches!(
+            specs.as_slice(),
+            [ToolSpec::Function(tool)] if tool.name == "mcp__demo__lookup"
+        ));
+    }
 }
