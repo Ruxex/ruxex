@@ -755,6 +755,7 @@ impl App {
         event: TuiEvent,
     ) -> Result<AppRunControl> {
         if self.reconnect.offline
+            && self.overlay.is_none()
             && let TuiEvent::Key(key) = &event
             && matches!(key.kind, KeyEventKind::Press | KeyEventKind::Repeat)
             && key.modifiers.contains(KeyModifiers::CONTROL)
@@ -794,6 +795,7 @@ impl App {
         };
 
         if self.reconnect.offline
+            && self.overlay.is_none()
             && let TuiEvent::Key(key) = &event
         {
             if self.reconnect.presentation == reconnect::ReconnectPresentation::Overview {
