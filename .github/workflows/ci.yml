@@ -182,31 +182,6 @@ jobs:
           - runtime
         include:
           - group: core-1
-            filter: >-
-              package(ruxex-api) |
-              package(ruxex-config) |
-              package(ruxex-config-schema) |
-              package(ruxex-core) |
-              package(ruxex-core-api) |
-              package(ruxex-core-plugins) |
-              package(ruxex-model-provider) |
-              package(ruxex-model-provider-info) |
-              package(ruxex-models-manager) |
-              package(ruxex-protocol) |
-              package(ruxex-provider-host-example) |
-              package(ruxex-providers) |
-              package(core_test_support) |
-              package(ruxex-agent-graph-store) |
-              package(ruxex-agent-roles) |
-              package(ruxex-attachment-store) |
-              package(ruxex-context-fragments) |
-              package(ruxex-history) |
-              package(ruxex-message-history) |
-              package(ruxex-prompts) |
-              package(ruxex-rollout) |
-              package(ruxex-rollout-trace) |
-              package(ruxex-state) |
-              package(ruxex-thread-store)
             package_args: >-
               --package ruxex-api
               --package ruxex-config
@@ -233,17 +208,6 @@ jobs:
               --package ruxex-state
               --package ruxex-thread-store
           - group: app-1
-            filter: >-
-              package(app_test_support) |
-              package(ruxex-app-server) |
-              package(ruxex-app-server-client) |
-              package(ruxex-app-server-daemon) |
-              package(ruxex-app-server-protocol) |
-              package(ruxex-app-server-protocol-noop-macros) |
-              package(ruxex-app-server-test-client) |
-              package(ruxex-app-server-transport) |
-              package(ruxex-cli) |
-              package(ruxex-code-mode-host)
             package_args: >-
               --package app_test_support
               --package ruxex-app-server
@@ -256,32 +220,10 @@ jobs:
               --package ruxex-cli
               --package ruxex-code-mode-host
           - group: app-2-tui
-            filter: >-
-              package(ruxex-provider-host-example) |
-              package(ruxex-tui)
             package_args: >-
               --package ruxex-provider-host-example
               --package ruxex-tui
           - group: app-2
-            filter: >-
-              package(ruxex-provider-host-example) |
-              package(ruxex-agent-extension) |
-              package(ruxex-code-mode) |
-              package(ruxex-code-mode-protocol) |
-              package(ruxex-code-mode-runtime) |
-              package(ruxex-extension-api) |
-              package(ruxex-extension-items) |
-              package(ruxex-goal-extension) |
-              package(ruxex-history-notes-extension) |
-              package(ruxex-mcp) |
-              package(ruxex-mcp-extension) |
-              package(ruxex-plugin) |
-              package(ruxex-queue-extension) |
-              package(ruxex-rmcp-client) |
-              package(ruxex-skills) |
-              package(ruxex-skills-extension) |
-              package(ruxex-tools) |
-              package(ruxex-web-search-extension)
             package_args: >-
               --package ruxex-provider-host-example
               --package ruxex-agent-extension
@@ -302,39 +244,6 @@ jobs:
               --package ruxex-tools
               --package ruxex-web-search-extension
           - group: runtime
-            filter: >-
-              not (
-                package(ruxex-core*) |
-                package(ruxex-config*) |
-                package(ruxex-state) |
-                package(ruxex-history) |
-                package(ruxex-thread-store) |
-                package(ruxex-message-history) |
-                package(ruxex-model*) |
-                package(ruxex-providers) |
-                package(ruxex-protocol) |
-                package(ruxex-api) |
-                package(ruxex-context-fragments) |
-                package(ruxex-prompts) |
-                package(ruxex-rollout*) |
-                package(core_test_support) |
-                package(ruxex-agent-graph-store) |
-                package(ruxex-agent-roles) |
-                package(ruxex-attachment-store) |
-                package(ruxex-provider-host-example) |
-                package(ruxex-app-server*) |
-                package(ruxex-cli) |
-                package(ruxex-tui) |
-                package(ruxex-code-mode*) |
-                package(ruxex-plugin) |
-                package(ruxex-skills*) |
-                package(ruxex-tools) |
-                package(ruxex-extension*) |
-                package(ruxex-*-extension) |
-                package(ruxex-mcp) |
-                package(ruxex-rmcp-client) |
-                package(app_test_support)
-              )
             package_args: >-
               --workspace
               --exclude app_test_support
@@ -459,13 +368,11 @@ jobs:
 
       - name: Build nextest archive
         env:
-          NEXTEST_FILTERSET: ${{ matrix.filter }}
           NEXTEST_PACKAGE_ARGS: ${{ matrix.package_args }}
         run: |
           mkdir -p "$RUNNER_TEMP/ruxex-nextest"
           just test-archive \
             "$RUNNER_TEMP/ruxex-nextest/ruxex-nextest-${{ matrix.os }}-${{ matrix.group }}.tar.zst" \
-            "$NEXTEST_FILTERSET" \
             $NEXTEST_PACKAGE_ARGS
 
       - name: Report disk usage
