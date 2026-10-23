@@ -23,6 +23,7 @@ use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 
 pub const DUMMY_PROVIDER_ID: &str = "dummy";
 pub const FIXED_CHAT_ANSWER: &str = "This is a fixed response from the dummy provider.";
+const DUMMY_MODEL_CATALOG_IDENTITY: &str = "dummy:fixed-v1";
 const DUMMY_HOME_ENV: &str = "RUXEX_DUMMY_HOME";
 const FIXED_TOOL_ANSWER: &str =
     "The example tool result was received. This is a fixed tool integration response.";
@@ -86,6 +87,10 @@ impl ModelProvider for DummyProvider {
         Self::provider_descriptor()
     }
 
+    fn model_catalog_identity(&self) -> ProviderResult<String> {
+        Ok(DUMMY_MODEL_CATALOG_IDENTITY.to_string())
+    }
+
     fn request_format(&self) -> ruxex::provider::ProviderRequestFormat {
         ruxex::provider::ProviderRequestFormat::Chat
     }
@@ -146,7 +151,7 @@ impl ModelProvider for DummyProvider {
                 catalog: ModelCatalog {
                     models: fixed_models(),
                 },
-                identity: format!("{DUMMY_PROVIDER_ID}:fixed-v1"),
+                identity: DUMMY_MODEL_CATALOG_IDENTITY.to_string(),
                 etag: Some("dummy-fixed-v1".to_string()),
             })
         })
@@ -913,6 +918,25 @@ mod tests {
             models
                 .iter()
                 .all(|model| model.visibility == ruxex::provider::protocol::ModelVisibility::List)
+        );
+    }
+
+    #[test]
+    fn model_catalog_identity_matches_list_models() {
+        let provider = DummyProvider {
+            credential_manager: ruxex_login::CredentialManager::from_auth_for_testing(
+                ruxex_login::RuxexAuth::from_api_key("dummy-key"),
+            ),
+        };
+        let catalog =
+            futures::executor::block_on(provider.list_models(ListModelsRequest::new("test")))
+                .expect("dummy model catalog should be available");
+
+        assert_eq!(
+            provider
+                .model_catalog_identity()
+                .expect("dummy model identity should be available"),
+            catalog.identity
         );
     }
 
