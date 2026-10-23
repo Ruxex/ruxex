@@ -3,7 +3,7 @@ mod cloudflare;
 #[cfg(not(feature = "dummy-provider"))]
 mod cloudflare_auth;
 #[cfg(feature = "dummy-provider")]
-mod dummy_provider;
+use ruxex_provider_host_example::dummy_provider;
 
 #[cfg(not(feature = "dummy-provider"))]
 use cloudflare::CloudflareProvider;

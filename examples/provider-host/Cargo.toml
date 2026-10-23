@@ -13,6 +13,10 @@ dummy-provider = ["dep:ruxex-login", "dep:ruxex-models-manager"]
 name = "ruxex-provider-host-example"
 path = "src/main.rs"
 
+[lib]
+name = "ruxex_provider_host_example"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 futures = { workspace = true }
