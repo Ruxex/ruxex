@@ -2,10 +2,13 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use futures::stream;
 use ruxex::provider::auth::{CredentialManager, ProviderAuth};
-use ruxex::provider::protocol::{ModelCatalog, ModelInfo, ProviderAccount, ProviderAuthStatus};
+use ruxex::provider::protocol::{
+    ModelCatalog, ModelInfo, ProviderAccount, ProviderAuthStatus, ResponseItem,
+};
 use ruxex::provider::{
     ChatRequest, ListModelsRequest, ModelProvider, ModelProviderFactory, ProviderAccountState,
     ProviderAuthEnvironment, ProviderCapabilities, ProviderChatEvent, ProviderConnectionKey,
@@ -19,8 +22,38 @@ use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
 
 pub const DUMMY_PROVIDER_ID: &str = "dummy";
-pub const FIXED_CHAT_ANSWER: &str = "これはダミーProviderの固定応答です。";
+pub const FIXED_CHAT_ANSWER: &str = "This is a fixed response from the dummy provider.";
 const DUMMY_HOME_ENV: &str = "RUXEX_DUMMY_HOME";
+const FIXED_TOOL_ANSWER: &str =
+    "The example tool result was received. This is a fixed tool integration response.";
+const FIXED_COMMAND_ANSWER: &str =
+    "The command result was received. This is a fixed command integration response.";
+const FIXED_MCP_ANSWER: &str =
+    "The MCP tool result was received. This is a fixed MCP integration response.";
+const FIXED_MCP_UNAVAILABLE: &str = "The Example Provider MCP tool is unavailable.";
+const FIXED_COMMAND: &str = "printf 'example-provider command output\\n'";
+const FIXED_SLOW_COMMAND: &str = "sleep 3; printf 'example-provider delayed command output\\n'";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DummyScenario {
+    Basic,
+    Tool,
+    Command,
+    Mcp,
+    Multi,
+    Error,
+    RateLimit,
+    Disconnect,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct ScenarioSelection {
+    scenario: DummyScenario,
+    slow: bool,
+    stream: bool,
+    multi_turn: usize,
+    continuation: bool,
+}
 
 #[derive(Clone, Debug)]
 pub struct DummyProvider {
@@ -62,7 +95,7 @@ impl ModelProvider for DummyProvider {
             api_key_model_discovery: true,
             web_search: false,
             external_web_access: false,
-            namespace_tools: false,
+            namespace_tools: true,
             ..ProviderCapabilities::default()
         }
     }
@@ -76,13 +109,31 @@ impl ModelProvider for DummyProvider {
 
     fn chat(
         &self,
-        _request: ChatRequest,
+        request: ChatRequest,
     ) -> ProviderFuture<'_, ProviderResult<ruxex::provider::ProviderChatStream>> {
         Box::pin(async move {
             if !self.is_authenticated() {
                 return Err(ProviderError::Unauthenticated);
             }
-            Ok(fixed_chat_stream())
+
+            let selection = select_scenario(&request.input)?;
+            match selection.scenario {
+                DummyScenario::Error => Err(ProviderError::Transient(
+                    "example provider transient error".to_string(),
+                )),
+                DummyScenario::RateLimit => Err(ProviderError::RateLimited {
+                    retry_after_seconds: Some(3),
+                }),
+                DummyScenario::Mcp
+                    if !selection.continuation && !has_example_mcp_tool(&request.tools) =>
+                {
+                    Ok(text_chat_stream(selection, FIXED_MCP_UNAVAILABLE))
+                }
+                _ => Ok(scenario_chat_stream(
+                    selection,
+                    has_example_mcp_tool(&request.tools),
+                )),
+            }
         })
     }
 
@@ -225,22 +276,373 @@ fn fixed_models() -> Vec<ModelInfo> {
         .collect()
 }
 
-fn fixed_chat_stream() -> ruxex::provider::ProviderChatStream {
-    Box::pin(stream::iter([
+fn scenario_chat_stream(
+    selection: ScenarioSelection,
+    has_mcp_tool: bool,
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    let call_id = format!(
+        "example-{}-call-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    let mut events = vec![
         Ok(ProviderChatEvent::Created {
-            response_id: Some("dummy-response".to_string()),
+            response_id: Some(response_id.clone()),
         }),
         Ok(ProviderChatEvent::ServerModel("A".to_string())),
-        Ok(ProviderChatEvent::OutputTextDelta(
-            FIXED_CHAT_ANSWER.to_string(),
-        )),
-        Ok(ProviderChatEvent::Completed {
-            response_id: "dummy-response".to_string(),
-            token_usage: None,
-            usage_metadata: None,
-            end_turn: Some(true),
+    ];
+
+    let final_text = match selection.scenario {
+        DummyScenario::Basic => Some(FIXED_CHAT_ANSWER),
+        DummyScenario::Tool if selection.continuation => Some(FIXED_TOOL_ANSWER),
+        DummyScenario::Command if selection.continuation => Some(FIXED_COMMAND_ANSWER),
+        DummyScenario::Mcp if selection.continuation => Some(FIXED_MCP_ANSWER),
+        DummyScenario::Mcp if !has_mcp_tool => Some(FIXED_MCP_UNAVAILABLE),
+        DummyScenario::Multi => Some(match selection.multi_turn {
+            1 => "This is turn 1 of the multi-turn test.",
+            2 => "This is turn 2 of the multi-turn test.",
+            _ => "This is the completion turn of the multi-turn test.",
         }),
-    ]))
+        DummyScenario::Disconnect => {
+            events.push(Ok(ProviderChatEvent::OutputTextDelta(
+                "This response is intentionally interrupted.".to_string(),
+            )));
+            events.push(Err(ProviderError::Transport(
+                "example provider disconnected after partial output".to_string(),
+            )));
+            return event_stream(events, selection.slow);
+        }
+        DummyScenario::Tool => {
+            events.push(Ok(ProviderChatEvent::OutputItemDone(example_tool_call(
+                call_id,
+            ))));
+            return complete_stream(events, response_id, false, selection.slow);
+        }
+        DummyScenario::Command => {
+            events.push(Ok(ProviderChatEvent::OutputItemDone(example_command_call(
+                call_id,
+                selection.slow,
+            ))));
+            return complete_stream(events, response_id, false, selection.slow);
+        }
+        DummyScenario::Mcp => {
+            events.push(Ok(ProviderChatEvent::OutputItemDone(example_mcp_call(
+                call_id,
+            ))));
+            return complete_stream(events, response_id, false, selection.slow);
+        }
+        DummyScenario::Error | DummyScenario::RateLimit => None,
+    };
+
+    if let Some(text) = final_text {
+        let chunks = if selection.stream {
+            stream_text_chunks(text)
+        } else {
+            vec![text]
+        };
+        events.extend(
+            chunks
+                .into_iter()
+                .map(|chunk| Ok(ProviderChatEvent::OutputTextDelta(chunk.to_string()))),
+        );
+    }
+
+    complete_stream(events, response_id, true, selection.slow)
+}
+
+fn text_chat_stream(
+    selection: ScenarioSelection,
+    text: &str,
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    let mut events = vec![
+        Ok(ProviderChatEvent::Created {
+            response_id: Some(response_id.clone()),
+        }),
+        Ok(ProviderChatEvent::ServerModel("A".to_string())),
+    ];
+    let chunks = if selection.stream {
+        stream_text_chunks(text)
+    } else {
+        vec![text]
+    };
+    events.extend(
+        chunks
+            .into_iter()
+            .map(|chunk| Ok(ProviderChatEvent::OutputTextDelta(chunk.to_string()))),
+    );
+    complete_stream(events, response_id, true, selection.slow)
+}
+
+fn complete_stream(
+    mut events: Vec<ProviderResult<ProviderChatEvent>>,
+    response_id: String,
+    end_turn: bool,
+    slow: bool,
+) -> ruxex::provider::ProviderChatStream {
+    events.push(Ok(ProviderChatEvent::Completed {
+        response_id,
+        token_usage: None,
+        usage_metadata: None,
+        end_turn: Some(end_turn),
+    }));
+    event_stream(events, slow)
+}
+
+fn event_stream(
+    events: Vec<ProviderResult<ProviderChatEvent>>,
+    slow: bool,
+) -> ruxex::provider::ProviderChatStream {
+    if !slow {
+        return Box::pin(stream::iter(events));
+    }
+
+    Box::pin(stream::unfold(
+        (events.into_iter(), true),
+        |(mut events, first)| async move {
+            let event = events.next()?;
+            tokio::time::sleep(if first {
+                Duration::from_secs(2)
+            } else {
+                Duration::from_millis(500)
+            })
+            .await;
+            Some((event, (events, false)))
+        },
+    ))
+}
+
+fn example_tool_call(call_id: String) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "example_tool".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({"input": "fixed-example-input"}).to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_command_call(call_id: String, slow: bool) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "exec_command".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({
+            "cmd": if slow { FIXED_SLOW_COMMAND } else { FIXED_COMMAND }
+        })
+        .to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_mcp_call(call_id: String) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "echo".to_string(),
+        namespace: Some("example".to_string()),
+        arguments: serde_json::json!({"text": "fixed-mcp-input"}).to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn stream_text_chunks(text: &str) -> Vec<&str> {
+    match text {
+        FIXED_CHAT_ANSWER => vec!["This is a ", "fixed response from the ", "dummy provider."],
+        _ => vec![text],
+    }
+}
+
+fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> {
+    if let Some(scenario) = continuation_scenario(input) {
+        return Ok(ScenarioSelection {
+            scenario,
+            slow: false,
+            stream: false,
+            multi_turn: 1,
+            continuation: true,
+        });
+    }
+
+    let latest_user_text = latest_user_text(input).unwrap_or_default();
+    if let Some(marker) = explicit_scenario(&latest_user_text) {
+        let mut selection = marker?;
+        if selection.scenario == DummyScenario::Multi {
+            selection.multi_turn = multi_turn_count(input);
+        }
+        return Ok(selection);
+    }
+
+    let lower = latest_user_text.to_ascii_lowercase();
+    let scenario = if lower.contains("mcp") {
+        DummyScenario::Mcp
+    } else if lower.contains("command") || lower.contains("exec") {
+        DummyScenario::Command
+    } else if lower.contains("tool") {
+        DummyScenario::Tool
+    } else if lower.contains("multi") {
+        DummyScenario::Multi
+    } else if lower.contains("rate-limit") {
+        DummyScenario::RateLimit
+    } else if lower.contains("disconnect") {
+        DummyScenario::Disconnect
+    } else if lower.contains("error") {
+        DummyScenario::Error
+    } else if input.iter().any(|item| {
+        user_message_text(item).is_some_and(|text| text.to_ascii_lowercase().contains("multi"))
+    }) && multi_turn_count(input) <= 3
+    {
+        DummyScenario::Multi
+    } else {
+        DummyScenario::Basic
+    };
+
+    let multi_turn = (scenario == DummyScenario::Multi)
+        .then(|| multi_turn_count(input))
+        .unwrap_or(1);
+
+    Ok(ScenarioSelection {
+        scenario,
+        slow: lower.contains("slow") || lower.contains("delay"),
+        stream: lower.contains("stream"),
+        multi_turn,
+        continuation: false,
+    })
+}
+
+fn explicit_scenario(text: &str) -> Option<ProviderResult<ScenarioSelection>> {
+    let start = text.find("[[example:")?;
+    let end = text[start..].find("]]").map(|offset| start + offset)?;
+    let parts: Vec<_> = text[start + "[[example:".len()..end].split(':').collect();
+    let scenario = match parts.first().copied() {
+        Some("basic") => DummyScenario::Basic,
+        Some("tool") => DummyScenario::Tool,
+        Some("command") => DummyScenario::Command,
+        Some("mcp") => DummyScenario::Mcp,
+        Some("multi") => DummyScenario::Multi,
+        Some("error") => DummyScenario::Error,
+        Some("rate-limit") => DummyScenario::RateLimit,
+        Some("disconnect") => DummyScenario::Disconnect,
+        Some(name) => {
+            return Some(Err(ProviderError::InvalidRequest(format!(
+                "unknown example scenario: {name}"
+            ))));
+        }
+        None => {
+            return Some(Err(ProviderError::InvalidRequest(
+                "empty example scenario".to_string(),
+            )));
+        }
+    };
+    let invalid_modifier = parts
+        .iter()
+        .skip(1)
+        .any(|modifier| !matches!(*modifier, "slow" | "stream"));
+    if invalid_modifier || parts.len() > 2 {
+        return Some(Err(ProviderError::InvalidRequest(
+            "unsupported example scenario modifier".to_string(),
+        )));
+    }
+    Some(Ok(ScenarioSelection {
+        scenario,
+        slow: parts.contains(&"slow"),
+        stream: parts.contains(&"stream"),
+        multi_turn: 1,
+        continuation: false,
+    }))
+}
+
+fn latest_user_text(input: &[ResponseItem]) -> Option<String> {
+    input.iter().rev().find_map(user_message_text)
+}
+
+fn multi_turn_count(input: &[ResponseItem]) -> usize {
+    input
+        .iter()
+        .filter(|item| user_message_text(item).is_some())
+        .count()
+        .max(1)
+}
+
+fn user_message_text(item: &ResponseItem) -> Option<String> {
+    let ResponseItem::Message { role, content, .. } = item else {
+        return None;
+    };
+    if role != "user" {
+        return None;
+    }
+    let value = serde_json::to_value(content).ok()?;
+    let text = value
+        .as_array()?
+        .iter()
+        .filter_map(|item| item.get("text").and_then(serde_json::Value::as_str))
+        .collect::<Vec<_>>()
+        .join(" ");
+    Some(text)
+}
+
+fn continuation_scenario(input: &[ResponseItem]) -> Option<DummyScenario> {
+    for item in input.iter().rev() {
+        match item {
+            ResponseItem::FunctionCallOutput { call_id, .. } => {
+                return call_id.as_deref().and_then(scenario_from_call_id);
+            }
+            ResponseItem::CustomToolCallOutput { call_id, .. } => {
+                return scenario_from_call_id(call_id);
+            }
+            ResponseItem::Message { .. } => return None,
+            _ => {}
+        }
+    }
+    None
+}
+
+fn scenario_from_call_id(call_id: &str) -> Option<DummyScenario> {
+    if call_id.starts_with("example-tool-call-") {
+        Some(DummyScenario::Tool)
+    } else if call_id.starts_with("example-command-call-") {
+        Some(DummyScenario::Command)
+    } else if call_id.starts_with("example-mcp-call-") {
+        Some(DummyScenario::Mcp)
+    } else {
+        None
+    }
+}
+
+fn has_example_mcp_tool(tools: &[serde_json::Value]) -> bool {
+    tools.iter().any(|tool| {
+        let text = tool.to_string().to_ascii_lowercase();
+        text.contains("example") && text.contains("echo")
+    })
+}
+
+impl DummyScenario {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Basic => "basic",
+            Self::Tool => "tool",
+            Self::Command => "command",
+            Self::Mcp => "mcp",
+            Self::Multi => "multi",
+            Self::Error => "error",
+            Self::RateLimit => "rate-limit",
+            Self::Disconnect => "disconnect",
+        }
+    }
 }
 
 pub fn provider_factory() -> ruxex_cli::ProviderRuntimeFactory {
@@ -294,6 +696,197 @@ pub async fn run(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
 mod tests {
     use super::*;
     use futures::StreamExt;
+    use ruxex::provider::protocol::ResponseItem;
+
+    fn user_message(text: &str) -> ResponseItem {
+        serde_json::from_value(serde_json::json!({
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": text}],
+        }))
+        .expect("valid user message")
+    }
+
+    #[test]
+    fn selects_explicit_command_slow_scenario() {
+        let selection = select_scenario(&[user_message("[[example:command:slow]]")])
+            .expect("scenario should be valid");
+
+        assert_eq!(selection.scenario, DummyScenario::Command);
+        assert!(selection.slow);
+    }
+
+    #[test]
+    fn selects_keyword_scenario_and_modifier() {
+        let selection = select_scenario(&[user_message("please run a command slowly")])
+            .expect("scenario should be valid");
+
+        assert_eq!(selection.scenario, DummyScenario::Command);
+        assert!(selection.slow);
+    }
+
+    #[test]
+    fn tool_output_continues_the_matching_scenario() {
+        let input = vec![
+            user_message("tool"),
+            ResponseItem::FunctionCallOutput {
+                id: None,
+                call_id: Some("example-tool-call-1".to_string()),
+                name: Some("example_tool".to_string()),
+                namespace: None,
+                output: serde_json::from_value(serde_json::json!("fixed tool output"))
+                    .expect("valid function output"),
+                internal_chat_message_metadata_passthrough: None,
+            },
+        ];
+
+        assert_eq!(continuation_scenario(&input), Some(DummyScenario::Tool));
+    }
+
+    #[test]
+    fn a_new_user_turn_does_not_reuse_an_old_tool_continuation() {
+        let input = vec![
+            user_message("tool"),
+            ResponseItem::FunctionCallOutput {
+                id: None,
+                call_id: Some("example-tool-call-1".to_string()),
+                name: Some("example_tool".to_string()),
+                namespace: None,
+                output: serde_json::from_value(serde_json::json!("fixed tool output"))
+                    .expect("valid function output"),
+                internal_chat_message_metadata_passthrough: None,
+            },
+            user_message("hello again"),
+        ];
+
+        assert_eq!(continuation_scenario(&input), None);
+        assert_eq!(
+            select_scenario(&input)
+                .expect("scenario should be valid")
+                .scenario,
+            DummyScenario::Basic
+        );
+    }
+
+    #[test]
+    fn multi_scenario_is_inherited_by_a_follow_up_user_turn() {
+        let input = vec![user_message("multi"), user_message("continue")];
+        let selection = select_scenario(&input).expect("scenario should be valid");
+
+        assert_eq!(selection.scenario, DummyScenario::Multi);
+        assert_eq!(selection.multi_turn, 2);
+    }
+
+    #[test]
+    fn explicit_multi_scenario_counts_the_current_conversation_turn() {
+        let input = vec![
+            user_message("[[example:multi]]"),
+            user_message("continue"),
+            user_message("[[example:multi]] next"),
+        ];
+        let selection = select_scenario(&input).expect("scenario should be valid");
+
+        assert_eq!(selection.scenario, DummyScenario::Multi);
+        assert_eq!(selection.multi_turn, 3);
+    }
+
+    #[test]
+    fn multi_scenario_returns_to_basic_after_three_turns() {
+        let input = vec![
+            user_message("multi"),
+            user_message("continue"),
+            user_message("continue"),
+            user_message("after completion"),
+        ];
+        let selection = select_scenario(&input).expect("scenario should be valid");
+
+        assert_eq!(selection.scenario, DummyScenario::Basic);
+    }
+
+    #[test]
+    fn tool_scenario_emits_a_fixed_function_call_before_completion() {
+        let events = futures::executor::block_on(
+            scenario_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Tool,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                true,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                call_id,
+                ..
+            })) if name == "example_tool"
+                && arguments.contains("fixed-example-input")
+                && call_id == "example-tool-call-1"
+        )));
+        assert!(matches!(
+            events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(false),
+                ..
+            }))
+        ));
+    }
+
+    #[test]
+    fn command_scenario_emits_the_fixed_command() {
+        let events = futures::executor::block_on(
+            scenario_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Command,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                true,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                ..
+            })) if name == "exec_command"
+                && arguments.contains("example-provider command output")
+        )));
+    }
+
+    #[test]
+    fn mcp_scenario_without_the_fixture_tool_returns_a_fixed_message() {
+        let events = futures::executor::block_on(
+            text_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Mcp,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                FIXED_MCP_UNAVAILABLE,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text)) if text == FIXED_MCP_UNAVAILABLE
+        )));
+    }
 
     #[test]
     fn exposes_three_fixed_models() {
@@ -310,7 +903,19 @@ mod tests {
 
     #[test]
     fn returns_one_fixed_chat_answer() {
-        let events = futures::executor::block_on(fixed_chat_stream().collect::<Vec<_>>());
+        let events = futures::executor::block_on(
+            text_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Basic,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                FIXED_CHAT_ANSWER,
+            )
+            .collect::<Vec<_>>(),
+        );
 
         assert!(events.iter().any(|event| {
             matches!(
@@ -323,6 +928,29 @@ mod tests {
             events.last(),
             Some(Ok(ruxex::provider::ProviderChatEvent::Completed { .. }))
         ));
+    }
+
+    #[test]
+    fn fixed_chat_answer_is_in_english() {
+        let events = futures::executor::block_on(
+            text_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Basic,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                FIXED_CHAT_ANSWER,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "This is a fixed response from the dummy provider."
+        )));
     }
 
     #[test]
