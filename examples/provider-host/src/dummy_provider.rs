@@ -272,7 +272,11 @@ fn validate_api_key(api_key: &str) -> ProviderResult<String> {
 fn fixed_models() -> Vec<ModelInfo> {
     ["A", "B", "C"]
         .into_iter()
-        .map(ruxex_models_manager::model_info::model_info_template_from_slug)
+        .map(|slug| {
+            let mut model = ruxex_models_manager::model_info::model_info_template_from_slug(slug);
+            model.visibility = ruxex::provider::protocol::ModelVisibility::List;
+            model
+        })
         .collect()
 }
 
@@ -898,6 +902,17 @@ mod tests {
                 .map(|model| model.slug.as_str())
                 .collect::<Vec<_>>(),
             ["A", "B", "C"]
+        );
+    }
+
+    #[test]
+    fn fixed_models_are_visible_in_the_model_picker() {
+        let models = fixed_models();
+
+        assert!(
+            models
+                .iter()
+                .all(|model| model.visibility == ruxex::provider::protocol::ModelVisibility::List)
         );
     }
 
