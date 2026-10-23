@@ -29,7 +29,6 @@ use anyhow::Context;
 use clap::Parser;
 use http::Method;
 use ruxex_api::is_azure_responses_provider;
-use ruxex_app_server::runtime::mount_provider_home_for_config;
 use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_config::types::McpServerConfig;
 use ruxex_config::types::McpServerTransportConfig;
@@ -52,9 +51,12 @@ use ruxex_login::RUXEX_API_KEY_ENV_VAR;
 use ruxex_login::default_client::create_client_without_request_logging;
 use ruxex_login::default_client::default_headers;
 use ruxex_login::load_auth_dot_json;
+use ruxex_model_provider::ProviderDescriptor;
 use ruxex_model_provider::ProviderError;
 use ruxex_model_provider::ProviderInit;
+use ruxex_model_provider::ProviderRequestFormat;
 use ruxex_model_provider::ProviderStreamConnectRequest;
+use ruxex_model_provider::mount_provider_home_with_marker;
 use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::protocol::AskForApproval;
 use ruxex_terminal_detection::Multiplexer;
@@ -369,16 +371,19 @@ async fn build_report(
     }));
     match &config_result {
         Ok(config) => {
-            let credential_manager_result = match mount_provider_home_for_config(config) {
-                Ok(_) => {
-                    CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true)
+            let credential_manager_result =
+                match mount_provider_home_for_doctor(config, &provider_factory.1) {
+                    Ok(_) => {
+                        CredentialManager::shared_from_config(
+                            config, /*enable_api_key_env*/ true,
+                        )
                         .await
                         .map_err(|err| err.to_string())
-                }
-                Err(err) => Err(format!("failed to mount provider data root: {err}")),
-            };
+                    }
+                    Err(err) => Err(format!("failed to mount provider data root: {err}")),
+                };
             let credential_manager = credential_manager_result.as_ref().ok().cloned();
-            let reachability_plan = provider_reachability_plan(config);
+            let reachability_plan = provider_reachability_plan(config, &provider_factory.1);
             #[cfg(target_os = "macos")]
             let reachability_url = reachability_plan
                 .endpoints
@@ -401,7 +406,7 @@ async fn build_report(
             ) = tokio::join!(
                 async {
                     run_sync_check("config", progress.clone(), || {
-                        config_check(config).detail(format!(
+                        config_check(config, &provider_factory.1).detail(format!(
                             "configuration load ms: {}",
                             config_duration.as_millis()
                         ))
@@ -432,7 +437,11 @@ async fn build_report(
                 run_async_check(
                     "websocket",
                     progress.clone(),
-                    websocket_reachability_check(config, credential_manager, provider_factory),
+                    websocket_reachability_check(
+                        config,
+                        credential_manager,
+                        provider_factory.clone(),
+                    ),
                 ),
                 run_async_check("MCP", progress.clone(), mcp_check(config)),
                 async {
@@ -1044,7 +1053,7 @@ fn ruxex_path_entries() -> Vec<String> {
         .collect()
 }
 
-fn config_check(config: &Config) -> DoctorCheck {
+fn config_check(config: &Config, provider_descriptor: &ProviderDescriptor) -> DoctorCheck {
     let mut details = Vec::new();
     details
         .push("configuration scope: invocation config, including cloud-managed policy".to_string());
@@ -1055,7 +1064,10 @@ fn config_check(config: &Config) -> DoctorCheck {
         "model: {}",
         config.model.as_deref().unwrap_or("<default>")
     ));
-    details.push(format!("model provider: {}", config.model_provider_id));
+    details.push(format!(
+        "model provider: {}",
+        provider_descriptor.provider_kind
+    ));
     details.push(format!("log dir: {}", config.log_dir.display()));
     details.push(format!(
         "sqlite home: {}",
@@ -2002,42 +2014,78 @@ async fn websocket_reachability_check(
     provider_factory: crate::ProviderRuntimeFactory,
 ) -> DoctorCheck {
     let provider = &config.model_provider;
+    let runtime_provider = credential_manager.as_ref().map(|credential_manager| {
+        (provider_factory.0)(ProviderInit {
+            provider_info: provider.clone(),
+            credential_manager: Arc::clone(credential_manager),
+            http_client_factory: config.http_client_factory(),
+        })
+        .provider()
+    });
+    let request_format = runtime_provider
+        .as_ref()
+        .map(|provider| provider.request_format())
+        .unwrap_or_else(|| {
+            if provider.is_responses_provider() {
+                ProviderRequestFormat::Responses
+            } else {
+                ProviderRequestFormat::Chat
+            }
+        });
+    let is_responses = request_format == ProviderRequestFormat::Responses;
+    let request_format_name = match request_format {
+        ProviderRequestFormat::Responses => "responses",
+        ProviderRequestFormat::Chat => "chat",
+    };
     let mut details = vec![
-        format!("model provider: {}", config.model_provider_id),
-        format!("provider name: {}", provider.name),
-        format!("wire API: {}", provider.wire_api),
-        format!("supports websockets: {}", provider.supports_websockets),
+        format!("model provider: {}", provider_factory.1.provider_kind),
+        format!(
+            "provider name: {}",
+            if provider_factory.1.provider_kind == "responses" {
+                provider.name.as_str()
+            } else {
+                "provider-owned"
+            }
+        ),
+        format!("wire API: {request_format_name}"),
+        format!(
+            "supports websockets: {}",
+            is_responses && provider.supports_websockets
+        ),
     ];
     push_proxy_env_details(&mut details);
 
-    if !provider.supports_websockets {
+    if !is_responses || !provider.supports_websockets {
         return DoctorCheck::new(
             "network.websocket_reachability",
             "websocket",
             CheckStatus::Ok,
-            "Responses WebSocket is not enabled for the configured provider",
+            if is_responses {
+                "Responses WebSocket is not enabled for the configured provider"
+            } else {
+                "Provider WebSocket is not enabled for the configured provider"
+            },
         )
         .details(details);
     }
 
     details.push(format!(
         "connect timeout: {} ms",
-        provider.websocket_connect_timeout().as_millis()
+        runtime_provider
+            .as_ref()
+            .map(|provider| provider.websocket_connect_timeout())
+            .unwrap_or_else(|| provider.websocket_connect_timeout())
+            .as_millis()
     ));
 
-    let Some(credential_manager) = credential_manager else {
+    let Some(_credential_manager) = credential_manager else {
         return websocket_probe_warning(
             "Responses WebSocket auth could not be resolved",
             details,
             "credential manager is unavailable".to_string(),
         );
     };
-    let runtime_provider = (provider_factory.0)(ProviderInit {
-        provider_info: provider.clone(),
-        credential_manager,
-        http_client_factory: config.http_client_factory(),
-    })
-    .provider();
+    let runtime_provider = runtime_provider.expect("runtime provider exists with credentials");
     let snapshot = match runtime_provider.request_snapshot().await {
         Ok(snapshot) => snapshot,
         Err(err) => {
@@ -2070,7 +2118,7 @@ async fn websocket_reachability_check(
         }
     };
     match tokio::time::timeout(
-        provider.websocket_connect_timeout(),
+        runtime_provider.websocket_connect_timeout(),
         stream_session.preconnect(ProviderStreamConnectRequest {
             session_id: None,
             thread_id: None,
@@ -2158,6 +2206,17 @@ fn fallback_state_check() -> DoctorCheck {
     }
 }
 
+fn mount_provider_home_for_doctor(
+    config: &Config,
+    provider_descriptor: &ProviderDescriptor,
+) -> Result<ruxex_model_provider::ProviderHomeMarker, ruxex_model_provider::ProviderHomeError> {
+    mount_provider_home_with_marker(
+        &config.ruxex_home,
+        ruxex_model_provider::PROVIDER_HOME_MARKER_FILE,
+        provider_descriptor,
+    )
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct ReachabilityPlan {
     description: String,
@@ -2186,7 +2245,21 @@ impl ProviderAuthReachabilityMode {
     }
 }
 
-fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
+fn provider_reachability_plan(
+    config: &Config,
+    provider_descriptor: &ProviderDescriptor,
+) -> ReachabilityPlan {
+    if provider_descriptor.provider_kind != "responses" {
+        return ReachabilityPlan {
+            description: format!(
+                "{} provider-owned reachability",
+                provider_descriptor.provider_kind
+            ),
+            endpoints: Vec::new(),
+            http_client_factory: config.http_client_factory(),
+        };
+    }
+
     let query_params = config.model_provider.query_params.as_ref().map(|params| {
         params
             .iter()
@@ -2206,12 +2279,18 @@ fn provider_reachability_plan(config: &Config) -> ReachabilityPlan {
         env_var_present,
         stored_auth.as_ref(),
     );
+    let inference_path = if config.model_provider.is_responses_provider() {
+        "responses"
+    } else {
+        "chat/completions"
+    };
     let mut plan = provider_reachability_plan_from_parts(
         mode,
         &config.model_provider_id,
         &config.model_provider.name,
         config.model_provider.base_url.as_deref(),
         query_params.as_ref(),
+        inference_path,
     );
     plan.http_client_factory = config.http_client_factory();
     plan
@@ -2224,6 +2303,7 @@ fn default_reachability_plan() -> ReachabilityPlan {
         "provider",
         /*provider_base_url*/ None,
         /*provider_query_params*/ None,
+        "responses",
     )
 }
 
@@ -2252,6 +2332,7 @@ fn provider_reachability_plan_from_parts(
     provider_name: &str,
     provider_base_url: Option<&str>,
     provider_query_params: Option<&HashMap<String, String>>,
+    inference_path: &str,
 ) -> ReachabilityPlan {
     let provider_route_probe_url = provider_base_url
         .or_else(|| {
@@ -2265,7 +2346,7 @@ fn provider_reachability_plan_from_parts(
         label: format!("{provider_id} API"),
         url: provider_url_for_path(
             provider_base_url.unwrap_or("https://api.example.com/v1"),
-            "responses",
+            inference_path,
             provider_query_params,
         ),
         required: true,

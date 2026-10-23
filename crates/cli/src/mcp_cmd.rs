@@ -531,7 +531,7 @@ async fn run_remove(
     if removed {
         println!("Removed global MCP server '{name}'.");
     } else {
-        println!("No MCP server named '{name}' found.");
+        bail!("No MCP server named '{name}' found.");
     }
 
     Ok(())
@@ -1129,5 +1129,68 @@ fn format_mcp_status(config: &McpServerConfig) -> String {
         format!("disabled: {reason}")
     } else {
         "disabled".to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_app_server::AppServerRuntime;
+    use ruxex_app_server::AppServerRuntimeBuilder;
+    use ruxex_model_provider::ModelProviderFactory;
+    use ruxex_model_provider::ProviderInit;
+    use ruxex_providers::ResponsesModelProvider;
+    use std::ffi::OsString;
+    use std::sync::Mutex;
+
+    static RUXEX_HOME_LOCK: Mutex<()> = Mutex::new(());
+
+    fn responses_runtime(init: ProviderInit) -> AppServerRuntime {
+        AppServerRuntimeBuilder::build_from_provider_factory::<ResponsesModelProvider>(init)
+    }
+
+    struct RuxexHomeGuard {
+        previous: Option<OsString>,
+    }
+
+    impl RuxexHomeGuard {
+        fn new(path: &std::path::Path) -> Self {
+            let previous = std::env::var_os("RUXEX_HOME");
+            unsafe { std::env::set_var("RUXEX_HOME", path) };
+            Self { previous }
+        }
+    }
+
+    impl Drop for RuxexHomeGuard {
+        fn drop(&mut self) {
+            match self.previous.take() {
+                Some(value) => unsafe { std::env::set_var("RUXEX_HOME", value) },
+                None => unsafe { std::env::remove_var("RUXEX_HOME") },
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn remove_missing_mcp_server_returns_an_error() {
+        let _lock = RUXEX_HOME_LOCK.lock().expect("RUXEX_HOME lock");
+        let home = tempfile::tempdir().expect("temporary RUXEX_HOME");
+        let _home_guard = RuxexHomeGuard::new(home.path());
+        let provider_factory = (
+            responses_runtime as fn(ProviderInit) -> AppServerRuntime,
+            ResponsesModelProvider::provider_descriptor(),
+        );
+
+        let error = run_remove(
+            &CliConfigOverrides::default(),
+            RemoveArgs {
+                name: "missing".to_string(),
+            },
+            &provider_factory,
+            &ProductIdentity::ruxex(),
+        )
+        .await
+        .expect_err("removing a missing MCP server should fail");
+
+        assert_eq!(error.to_string(), "No MCP server named 'missing' found.");
     }
 }
