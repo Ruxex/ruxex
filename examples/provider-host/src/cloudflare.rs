@@ -580,6 +580,10 @@ fn decode_cloudflare_models(body: &[u8], page: usize) -> ProviderResult<DecodedC
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ruxex::provider::config::WireApi;
+    use ruxex::provider::transport::OutboundProxyPolicy;
+    use ruxex_model_provider_contract_tests::{ChatContractConfig, assert_provider_chat_contract};
+    use ruxex_protocol::models::{ContentItem, ResponseItem};
 
     #[test]
     fn cloudflare_chat_base_url_uses_the_account_id() {
@@ -614,5 +618,76 @@ mod tests {
             models[0].description.as_deref(),
             Some("Llama 3.1 8B instruct")
         );
+    }
+
+    #[tokio::test]
+    #[ignore = "requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID"]
+    async fn cloudflare_live_chat_satisfies_the_shared_contract() {
+        let token = std::env::var(CLOUDFLARE_API_TOKEN_ENV_VAR)
+            .expect("CLOUDFLARE_API_TOKEN must be set for the live contract test");
+        let _account_id = std::env::var(CLOUDFLARE_ACCOUNT_ID_ENV_VAR)
+            .expect("CLOUDFLARE_ACCOUNT_ID must be set for the live contract test");
+        let model = std::env::var("RUXEX_TEST_MODEL")
+            .unwrap_or_else(|_| "@cf/meta/llama-3.1-8b-instruct".to_string());
+        let provider_info = ModelProviderInfo {
+            name: "cloudflare-live-contract-test".to_string(),
+            wire_api: WireApi::Chat,
+            ..ModelProviderInfo::default()
+        };
+        let provider = CloudflareProvider::new(ruxex::provider::ProviderInit {
+            provider_info,
+            credential_manager: CredentialManager::from_auth_for_testing(RuxexAuth::from_api_key(
+                &token,
+            )),
+            http_client_factory: HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
+        });
+        let request = ChatRequest {
+            model,
+            instructions: "Answer briefly.".to_string(),
+            input: vec![ResponseItem::Message {
+                id: None,
+                role: "user".to_string(),
+                content: vec![ContentItem::InputText {
+                    text: "Reply with the word ready.".to_string(),
+                }],
+                phase: None,
+                internal_chat_message_metadata_passthrough: None,
+            }],
+            tools: vec![],
+            metadata: BTreeMap::new(),
+            conversation_id: None,
+            session_source: None,
+            tool_choice: "auto".to_string(),
+            parallel_tool_calls: true,
+            reasoning: None,
+            store: false,
+            stream: true,
+            stream_options: None,
+            include: vec![],
+            service_tier: None,
+            prompt_cache_key: None,
+            text: None,
+            client_metadata: None,
+            access_programs: None,
+            transport: ruxex::provider::ChatTransportOptions {
+                session_id: None,
+                thread_id: None,
+                extra_headers: BTreeMap::new(),
+                compression: ruxex::provider::ProviderRequestCompression::None,
+                turn_state: None,
+                connection_key: None,
+                credential_snapshot: None,
+            },
+        };
+
+        let report = assert_provider_chat_contract(
+            &provider,
+            request,
+            &ChatContractConfig::default().with_live_timeout(std::time::Duration::from_secs(60)),
+        )
+        .await
+        .expect("Cloudflare live chat should satisfy the shared contract");
+
+        assert!(!report.assistant_text.trim().is_empty());
     }
 }

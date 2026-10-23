@@ -20,6 +20,7 @@ use ruxex_app_server::{AppServerRuntime, AppServerRuntimeBuilder};
 use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_protocol::models::ContentItem;
 
 pub const DUMMY_PROVIDER_ID: &str = "dummy";
 pub const FIXED_CHAT_ANSWER: &str = "This is a fixed response from the dummy provider.";
@@ -318,6 +319,9 @@ fn scenario_chat_stream(
             _ => "This is the completion turn of the multi-turn test.",
         }),
         DummyScenario::Disconnect => {
+            events.push(Ok(ProviderChatEvent::OutputItemAdded(
+                assistant_message_item(None),
+            )));
             events.push(Ok(ProviderChatEvent::OutputTextDelta(
                 "This response is intentionally interrupted.".to_string(),
             )));
@@ -349,6 +353,9 @@ fn scenario_chat_stream(
     };
 
     if let Some(text) = final_text {
+        events.push(Ok(ProviderChatEvent::OutputItemAdded(
+            assistant_message_item(None),
+        )));
         let chunks = if selection.stream {
             stream_text_chunks(text)
         } else {
@@ -359,6 +366,9 @@ fn scenario_chat_stream(
                 .into_iter()
                 .map(|chunk| Ok(ProviderChatEvent::OutputTextDelta(chunk.to_string()))),
         );
+        events.push(Ok(ProviderChatEvent::OutputItemDone(
+            assistant_message_item(Some(text)),
+        )));
     }
 
     complete_stream(events, response_id, true, selection.slow)
@@ -378,6 +388,9 @@ fn text_chat_stream(
             response_id: Some(response_id.clone()),
         }),
         Ok(ProviderChatEvent::ServerModel("A".to_string())),
+        Ok(ProviderChatEvent::OutputItemAdded(assistant_message_item(
+            None,
+        ))),
     ];
     let chunks = if selection.stream {
         stream_text_chunks(text)
@@ -389,7 +402,26 @@ fn text_chat_stream(
             .into_iter()
             .map(|chunk| Ok(ProviderChatEvent::OutputTextDelta(chunk.to_string()))),
     );
+    events.push(Ok(ProviderChatEvent::OutputItemDone(
+        assistant_message_item(Some(text)),
+    )));
     complete_stream(events, response_id, true, selection.slow)
+}
+
+fn assistant_message_item(text: Option<&str>) -> ResponseItem {
+    ResponseItem::Message {
+        id: None,
+        role: "assistant".to_string(),
+        content: text
+            .map(|text| {
+                vec![ContentItem::OutputText {
+                    text: text.to_string(),
+                }]
+            })
+            .unwrap_or_default(),
+        phase: None,
+        internal_chat_message_metadata_passthrough: None,
+    }
 }
 
 fn complete_stream(
@@ -706,6 +738,10 @@ mod tests {
     use super::*;
     use futures::StreamExt;
     use ruxex::provider::protocol::ResponseItem;
+    use ruxex::provider::{ChatTransportOptions, ProviderRequestCompression};
+    use ruxex_model_provider_contract_tests::{
+        ChatContractConfig, assert_provider_chat_contract, validate_chat_events,
+    };
 
     fn user_message(text: &str) -> ResponseItem {
         serde_json::from_value(serde_json::json!({
@@ -943,7 +979,7 @@ mod tests {
     #[test]
     fn returns_one_fixed_chat_answer() {
         let events = futures::executor::block_on(
-            text_chat_stream(
+            scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Basic,
                     slow: false,
@@ -951,11 +987,41 @@ mod tests {
                     multi_turn: 1,
                     continuation: false,
                 },
-                FIXED_CHAT_ANSWER,
+                true,
             )
             .collect::<Vec<_>>(),
         );
 
+        let output_item_added = events.iter().position(|event| {
+            matches!(
+                event,
+                Ok(ProviderChatEvent::OutputItemAdded(ResponseItem::Message {
+                    role,
+                    ..
+                })) if role == "assistant"
+            )
+        });
+        let output_text_delta = events.iter().position(|event| {
+            matches!(event, Ok(ProviderChatEvent::OutputTextDelta(text)) if text == FIXED_CHAT_ANSWER)
+        });
+        let output_item_done = events.iter().position(|event| {
+            matches!(
+                event,
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::Message {
+                    role,
+                    ..
+                })) if role == "assistant"
+            )
+        });
+
+        assert!(
+            output_item_added.expect("basic chat should start an assistant item")
+                < output_text_delta.expect("basic chat should emit text")
+        );
+        assert!(
+            output_text_delta.expect("basic chat should emit text")
+                < output_item_done.expect("basic chat should complete an assistant item")
+        );
         assert!(events.iter().any(|event| {
             matches!(
                 event,
@@ -967,6 +1033,97 @@ mod tests {
             events.last(),
             Some(Ok(ruxex::provider::ProviderChatEvent::Completed { .. }))
         ));
+    }
+
+    #[test]
+    fn basic_scenario_satisfies_the_shared_chat_contract() {
+        let events = futures::executor::block_on(
+            scenario_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Basic,
+                    slow: false,
+                    stream: true,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                false,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        let report = validate_chat_events(events, &ChatContractConfig::default())
+            .expect("basic scenario should satisfy the shared chat contract");
+        assert_eq!(report.assistant_text, FIXED_CHAT_ANSWER);
+    }
+
+    #[tokio::test]
+    async fn provider_chat_satisfies_the_shared_live_contract() {
+        let provider = DummyProvider {
+            credential_manager: CredentialManager::from_auth_for_testing(
+                ruxex_login::RuxexAuth::from_api_key("dummy-key"),
+            ),
+        };
+        let report = assert_provider_chat_contract(
+            &provider,
+            ChatRequest {
+                model: "A".to_string(),
+                instructions: "Answer briefly.".to_string(),
+                input: vec![user_message("hello")],
+                tools: Vec::new(),
+                metadata: BTreeMap::new(),
+                conversation_id: None,
+                session_source: None,
+                tool_choice: "auto".to_string(),
+                parallel_tool_calls: true,
+                reasoning: None,
+                store: false,
+                stream: true,
+                stream_options: None,
+                include: Vec::new(),
+                service_tier: None,
+                prompt_cache_key: None,
+                text: None,
+                client_metadata: None,
+                access_programs: None,
+                transport: ChatTransportOptions {
+                    session_id: None,
+                    thread_id: None,
+                    extra_headers: BTreeMap::new(),
+                    compression: ProviderRequestCompression::None,
+                    turn_state: None,
+                    connection_key: None,
+                    credential_snapshot: None,
+                },
+            },
+            &ChatContractConfig::default(),
+        )
+        .await
+        .expect("dummy provider chat should satisfy the shared live contract");
+
+        assert_eq!(report.assistant_text, FIXED_CHAT_ANSWER);
+    }
+
+    #[test]
+    fn standalone_tool_item_satisfies_the_shared_chat_contract() {
+        let events = futures::executor::block_on(
+            scenario_chat_stream(
+                ScenarioSelection {
+                    scenario: DummyScenario::Tool,
+                    slow: false,
+                    stream: false,
+                    multi_turn: 1,
+                    continuation: false,
+                },
+                false,
+            )
+            .collect::<Vec<_>>(),
+        );
+
+        validate_chat_events(
+            events,
+            &ChatContractConfig::default().without_required_text(),
+        )
+        .expect("standalone tool item should satisfy the shared chat contract");
     }
 
     #[test]

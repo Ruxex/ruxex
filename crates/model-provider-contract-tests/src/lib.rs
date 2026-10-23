@@ -4,11 +4,20 @@
 //! HTTP payloads, credentials, and successful authenticated requests remain the
 //! responsibility of the provider implementation.
 
+use std::collections::BTreeSet;
 use std::fmt;
+
+mod chat;
+
+pub use chat::{
+    ChatContractConfig, ChatContractError, ChatContractReport, OutputItemKind,
+    assert_provider_chat_contract, validate_chat_events,
+};
 
 use ruxex_model_provider::{
     ChatRequest, ListModelsRequest, ModelProvider, ModelProviderFactory, ProviderCapabilities,
-    ProviderDescriptor, ProviderError, ProviderInit, ProviderResult, ProviderUsage, UsageRequest,
+    ProviderDescriptor, ProviderError, ProviderInit, ProviderModelCatalog, ProviderResult,
+    ProviderUsage, UsageRequest,
 };
 use thiserror::Error;
 
@@ -122,6 +131,8 @@ pub enum ProviderContractError {
         expected: Option<String>,
         actual: String,
     },
+    #[error("invalid model catalog: {reason}")]
+    InvalidModelCatalog { reason: String },
     #[error("request snapshot failed: {error}")]
     RequestSnapshotFailed { error: ProviderError },
     #[error("request snapshot provider kind mismatch: expected {expected}, actual {actual}")]
@@ -233,7 +244,7 @@ pub async fn assert_model_provider_contract<P: ModelProvider + ?Sized>(
     {
         return Err(ProviderContractError::ModelCatalogIdentityMismatch {
             expected: Some(expected.clone()),
-            actual: identity,
+            actual: identity.clone(),
         });
     }
 
@@ -259,14 +270,13 @@ pub async fn assert_model_provider_contract<P: ModelProvider + ?Sized>(
     }
 
     if let Some(probe) = &config.list_models {
-        assert_operation(
-            "list_models",
-            probe.expected,
-            provider
-                .list_models(probe.request.clone())
-                .await
-                .map(|_| ()),
-        )?;
+        let result = provider.list_models(probe.request.clone()).await;
+        match result {
+            Ok(catalog) if probe.expected == OperationExpectation::Supported => {
+                assert_model_catalog_contract(&catalog, &identity)?;
+            }
+            result => assert_operation("list_models", probe.expected, result.map(|_| ()))?,
+        }
     }
     if let Some(probe) = &config.chat {
         assert_operation(
@@ -293,6 +303,47 @@ fn validate_descriptor(descriptor: &ProviderDescriptor) -> Result<(), ProviderCo
             field: "provider_protocol_version",
         });
     }
+    Ok(())
+}
+
+/// Checks the stable identity and basic uniqueness invariants of a provider model catalog.
+pub fn assert_model_catalog_contract(
+    catalog: &ProviderModelCatalog,
+    expected_identity: &str,
+) -> Result<(), ProviderContractError> {
+    if catalog.identity.is_empty() {
+        return Err(ProviderContractError::InvalidModelCatalog {
+            reason: "catalog identity must not be empty".to_string(),
+        });
+    }
+    if catalog.identity != expected_identity {
+        return Err(ProviderContractError::InvalidModelCatalog {
+            reason: format!(
+                "catalog identity {:?} does not match provider identity {:?}",
+                catalog.identity, expected_identity
+            ),
+        });
+    }
+
+    let mut slugs = BTreeSet::new();
+    for model in &catalog.catalog.models {
+        if model.slug.is_empty() {
+            return Err(ProviderContractError::InvalidModelCatalog {
+                reason: "model slug must not be empty".to_string(),
+            });
+        }
+        if model.display_name.is_empty() {
+            return Err(ProviderContractError::InvalidModelCatalog {
+                reason: format!("model {:?} display name must not be empty", model.slug),
+            });
+        }
+        if !slugs.insert(model.slug.clone()) {
+            return Err(ProviderContractError::InvalidModelCatalog {
+                reason: format!("model slug {:?} is duplicated", model.slug),
+            });
+        }
+    }
+
     Ok(())
 }
 
@@ -366,7 +417,9 @@ mod tests {
         ProviderModelCatalog, ProviderRequestSnapshot, ProviderResult, ProviderUsage, UsageRequest,
     };
     use ruxex_model_provider_info::ModelProviderInfo;
+    use ruxex_models_manager::model_info::model_info_template_from_slug;
     use ruxex_protocol::account::ProviderAuthStatus;
+    use ruxex_protocol::model_types::ModelCatalog;
 
     use super::*;
 
@@ -386,6 +439,7 @@ mod tests {
         account_provider_id: String,
         capabilities: ProviderCapabilities,
         catalog_identity: String,
+        model_catalog: Option<ProviderModelCatalog>,
     }
 
     impl FakeProvider {
@@ -396,6 +450,7 @@ mod tests {
                 account_provider_id: "test-provider".to_string(),
                 capabilities: ProviderCapabilities::default(),
                 catalog_identity: "test-catalog".to_string(),
+                model_catalog: None,
             }
         }
     }
@@ -420,7 +475,8 @@ mod tests {
             &self,
             _request: ListModelsRequest,
         ) -> ProviderFuture<'_, ProviderResult<ProviderModelCatalog>> {
-            Box::pin(async { Err(ProviderError::Unsupported) })
+            let catalog = self.model_catalog.clone();
+            Box::pin(async move { catalog.ok_or(ProviderError::Unsupported) })
         }
 
         fn request_snapshot(&self) -> ProviderFuture<'_, ProviderResult<ProviderRequestSnapshot>> {
@@ -604,5 +660,91 @@ mod tests {
         assert_model_provider_contract(&FakeProvider::valid(), &config)
             .await
             .expect("neutral unsupported usage should satisfy an unsupported probe");
+    }
+
+    #[tokio::test]
+    async fn supported_model_catalog_probe_validates_the_returned_catalog() {
+        let mut provider = FakeProvider::valid();
+        let mut catalog = model_catalog(&["model-a", "model-b"]);
+        catalog.identity = "test-catalog".to_string();
+        provider.model_catalog = Some(catalog);
+        let config = config().with_list_models(
+            ListModelsRequest::new("contract-test"),
+            OperationExpectation::Supported,
+        );
+
+        assert_model_provider_contract(&provider, &config)
+            .await
+            .expect("supported model catalog should be validated successfully");
+    }
+
+    fn model_catalog(slugs: &[&str]) -> ProviderModelCatalog {
+        ProviderModelCatalog {
+            catalog: ModelCatalog {
+                models: slugs
+                    .iter()
+                    .map(|slug| model_info_template_from_slug(slug))
+                    .collect(),
+            },
+            identity: "catalog-v1".to_string(),
+            etag: None,
+        }
+    }
+
+    #[test]
+    fn valid_model_catalog_satisfies_catalog_contract() {
+        assert_model_catalog_contract(&model_catalog(&["model-a", "model-b"]), "catalog-v1")
+            .expect("valid model catalog should satisfy the contract");
+    }
+
+    #[test]
+    fn model_catalog_identity_must_match_provider_identity() {
+        let error = assert_model_catalog_contract(&model_catalog(&["model-a"]), "catalog-v2")
+            .expect_err("catalog identity mismatch should fail");
+
+        assert!(matches!(
+            error,
+            ProviderContractError::InvalidModelCatalog { .. }
+        ));
+    }
+
+    #[test]
+    fn model_catalog_rejects_duplicate_model_slugs() {
+        let error =
+            assert_model_catalog_contract(&model_catalog(&["model-a", "model-a"]), "catalog-v1")
+                .expect_err("duplicate model slugs should fail");
+
+        assert!(matches!(
+            error,
+            ProviderContractError::InvalidModelCatalog { .. }
+        ));
+    }
+
+    #[test]
+    fn model_catalog_rejects_empty_model_metadata() {
+        let mut catalog = model_catalog(&["model-a"]);
+        catalog.catalog.models[0].display_name.clear();
+
+        let error = assert_model_catalog_contract(&catalog, "catalog-v1")
+            .expect_err("empty model metadata should fail");
+
+        assert!(matches!(
+            error,
+            ProviderContractError::InvalidModelCatalog { .. }
+        ));
+    }
+
+    #[test]
+    fn model_catalog_rejects_empty_model_slugs() {
+        let mut catalog = model_catalog(&["model-a"]);
+        catalog.catalog.models[0].slug.clear();
+
+        let error = assert_model_catalog_contract(&catalog, "catalog-v1")
+            .expect_err("empty model slugs should fail");
+
+        assert!(matches!(
+            error,
+            ProviderContractError::InvalidModelCatalog { .. }
+        ));
     }
 }
