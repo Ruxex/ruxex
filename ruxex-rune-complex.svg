@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Ruxex original rune glyph</title>
+  <desc id="desc">An original asymmetric rune glyph with a single spine and three structured branches.</desc>
+
+  <defs>
+    <linearGradient id="rune" x1="76" y1="44" x2="174" y2="208" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C9D7DC"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="90" y1="112" x2="161" y2="133" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CEBFF"/>
+      <stop offset="1" stop-color="#00A9D8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="44" fill="#091522"/>
+
+  <!-- The glyph is built from one slightly leaning spine and three related branches. -->
+  <path d="M91 43 88 207" fill="none" stroke="url(#rune)" stroke-width="15" stroke-linecap="butt"/>
+
+  <!-- Upper chamber: a closed angular form attached to the spine. -->
+  <path d="M91 61 139 45 169 73 149 101 91 113"
+        fill="none" stroke="url(#rune)" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter"/>
+
+  <!-- Middle branch: shorter and lighter, establishing the glyph's asymmetry. -->
+  <path d="M90 113 126 132 160 119"
+        fill="none" stroke="url(#accent)" stroke-width="10" stroke-linecap="butt" stroke-linejoin="miter"/>
+
+  <!-- Lower foot: the longest terminal, bending back toward the spine. -->
+  <path d="M89 159 125 176 171 160 153 202 89 207"
+        fill="none" stroke="url(#rune)" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter"/>
+
+  <!-- A small cut at the upper-left gives the character a distinctive reading direction. -->
+  <path d="M91 43 75 54 91 66Z" fill="#00A9D8"/>
+</svg>

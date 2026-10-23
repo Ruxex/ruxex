@@ -158,17 +158,12 @@ pub(crate) fn configured_provider_descriptor(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ruxex_http_client::HttpClientFactory;
-    use ruxex_http_client::OutboundProxyPolicy;
     use ruxex_model_provider::SharedModelProvider;
 
     fn test_provider_with_id(provider_id: &str) -> SharedModelProvider {
-        Arc::new(ruxex_providers::ResponsesModelProvider::new(
-            Some(provider_id.to_string()),
-            ModelProviderInfo::create_responses_provider(None),
-            None,
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        ))
+        let mut provider_info = ModelProviderInfo::create_responses_provider(None);
+        provider_info.id = Some(provider_id.to_string());
+        ruxex_providers::create_responses_provider(provider_info, None)
     }
 
     fn test_provider() -> SharedModelProvider {

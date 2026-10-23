@@ -455,8 +455,7 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2.62.49
         with:
-          tool: nextest
-          version: 0.9.103
+          tool: nextest@0.9.103
 
       - name: Build nextest archive
         env:
@@ -623,8 +622,7 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2.62.49
         with:
-          tool: nextest
-          version: 0.9.103
+          tool: nextest@0.9.103
 
       - name: Download nextest archive
         uses: actions/download-artifact@v4.3.0

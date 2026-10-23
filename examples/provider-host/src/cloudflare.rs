@@ -560,6 +560,7 @@ fn decode_cloudflare_models(body: &[u8], page: usize) -> ProviderResult<DecodedC
                 .iter()
                 .find_map(|field| model.get(*field).and_then(Value::as_str))?;
             let mut info = ruxex::catalog::model_info_template_from_slug(slug);
+            info.visibility = ruxex::provider::protocol::ModelVisibility::List;
             info.description = model
                 .get("description")
                 .and_then(Value::as_str)
@@ -605,6 +606,10 @@ mod tests {
 
         assert_eq!(models.len(), 1);
         assert_eq!(models[0].slug, "@cf/meta/llama-3.1-8b-instruct");
+        assert_eq!(
+            models[0].visibility,
+            ruxex::provider::protocol::ModelVisibility::List
+        );
         assert_eq!(
             models[0].description.as_deref(),
             Some("Llama 3.1 8B instruct")

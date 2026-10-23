@@ -852,18 +852,17 @@ mod tests {
     use ruxex_app_server_protocol::TurnItemsView;
     use ruxex_app_server_protocol::TurnStatus;
     use ruxex_core::config::ConfigBuilder;
-    use ruxex_http_client::HttpClientFactory;
-    use ruxex_http_client::OutboundProxyPolicy;
     use std::path::Path;
     use tempfile::TempDir;
 
     fn test_runtime(provider_id: &str) -> AppServerRuntime {
-        AppServerRuntimeBuilder::new(Arc::new(ruxex_providers::ResponsesModelProvider::new(
-            Some(provider_id.to_string()),
-            ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(None),
+        let mut provider_info =
+            ruxex_model_provider_info::ModelProviderInfo::create_responses_provider(None);
+        provider_info.id = Some(provider_id.to_string());
+        AppServerRuntimeBuilder::new(ruxex_providers::create_responses_provider(
+            provider_info,
             None,
-            HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-        )))
+        ))
         .build()
     }
 

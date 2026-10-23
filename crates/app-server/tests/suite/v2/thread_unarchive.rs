@@ -35,10 +35,7 @@ use ruxex_core::config::ConfigBuilder;
 use ruxex_core::find_archived_thread_path_by_id_str;
 use ruxex_core::find_thread_path_by_id_str;
 use ruxex_exec_server::EnvironmentManager;
-use ruxex_http_client::HttpClientFactory;
-use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_model_provider_info::ModelProviderInfo;
-use ruxex_providers::ResponsesModelProvider;
 use ruxex_protocol::ThreadId;
 use ruxex_protocol::models::BaseInstructions;
 use ruxex_protocol::protocol::SessionSource;
@@ -65,12 +62,10 @@ use uuid::Uuid;
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
 fn test_runtime() -> ruxex_app_server::AppServerRuntime {
-    AppServerRuntimeBuilder::new(Arc::new(ResponsesModelProvider::new(
-        Some("responses".to_string()),
+    AppServerRuntimeBuilder::new(ruxex_providers::create_responses_provider(
         ModelProviderInfo::create_responses_provider(None),
         None,
-        HttpClientFactory::new(OutboundProxyPolicy::ReqwestDefault),
-    )))
+    ))
     .build()
 }
 
