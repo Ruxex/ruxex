@@ -18,6 +18,10 @@ pub trait ToolOutput: Send {
 
     fn success_for_logging(&self) -> bool;
 
+    /// Finalizes output using the completed handler duration reported in tool-call logs.
+    /// Implementations must not measure time here.
+    fn set_handler_duration_ms(&mut self, _handler_duration_ms: u64) {}
+
     /// Overrides history's fallback token limit after tool-specific truncation.
     /// Include any serialization allowance; history uses this limit unchanged.
     fn fallback_token_limit_override(&self) -> Option<usize> {
@@ -67,6 +71,10 @@ where
 
     fn success_for_logging(&self) -> bool {
         (**self).success_for_logging()
+    }
+
+    fn set_handler_duration_ms(&mut self, handler_duration_ms: u64) {
+        (**self).set_handler_duration_ms(handler_duration_ms);
     }
 
     fn fallback_token_limit_override(&self) -> Option<usize> {

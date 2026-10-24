@@ -974,6 +974,10 @@ const DEFAULT_CODE_MODE_EXEC_YIELD_TIME_MS: u64 = 30_000;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CodeModeConfig {
     pub default_exec_yield_time_ms: u64,
+    /// Show handler duration, code-mode host duration, and harness overhead
+    /// in each code-mode cell response.
+    /// Experimental: this option and the response format may change or be removed.
+    pub experimental_show_cell_overhead: bool,
     pub excluded_tool_namespaces: Vec<String>,
     pub direct_only_tool_namespaces: Vec<String>,
     /// Keep code mode fail-closed when the standalone host is unavailable.
@@ -984,6 +988,7 @@ impl Default for CodeModeConfig {
     fn default() -> Self {
         Self {
             default_exec_yield_time_ms: DEFAULT_CODE_MODE_EXEC_YIELD_TIME_MS,
+            experimental_show_cell_overhead: false,
             excluded_tool_namespaces: Vec::new(),
             direct_only_tool_namespaces: Vec::new(),
             disable_in_process_fallback: false,
@@ -2354,6 +2359,9 @@ fn resolve_code_mode_config(config_toml: &ConfigToml) -> CodeModeConfig {
         default_exec_yield_time_ms: base
             .and_then(|config| config.default_exec_yield_time_ms)
             .unwrap_or(DEFAULT_CODE_MODE_EXEC_YIELD_TIME_MS),
+        experimental_show_cell_overhead: base
+            .and_then(|config| config.experimental_show_cell_overhead)
+            .unwrap_or_default(),
         excluded_tool_namespaces: base
             .and_then(|config| config.excluded_tool_namespaces.as_ref())
             .cloned()
@@ -4296,6 +4304,7 @@ mod tests {
         let mut feature_configs = FeaturesToml::default();
         feature_configs.code_mode = Some(FeatureToml::Config(CodeModeConfigToml {
             default_exec_yield_time_ms: Some(123),
+            experimental_show_cell_overhead: Some(true),
             excluded_tool_namespaces: Some(vec!["alpha".to_string()]),
             direct_only_tool_namespaces: Some(vec!["beta".to_string()]),
             ..Default::default()
@@ -4304,6 +4313,7 @@ mod tests {
 
         let code_mode = resolve_code_mode_config(&config);
         assert_eq!(code_mode.default_exec_yield_time_ms, 123);
+        assert!(code_mode.experimental_show_cell_overhead);
         assert_eq!(code_mode.excluded_tool_namespaces, ["alpha"]);
         assert_eq!(code_mode.direct_only_tool_namespaces, ["beta"]);
 

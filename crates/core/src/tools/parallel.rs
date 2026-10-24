@@ -32,7 +32,7 @@ use ruxex_protocol::models::ResponseInputItem;
 use ruxex_protocol::models::ToolResultMetadata;
 
 struct ToolCallTimingGuard {
-    started_at: Instant,
+    started_at: Option<Instant>,
     execution_started_at: Arc<OnceLock<Instant>>,
     conversation_id: String,
     turn_id: String,
@@ -130,8 +130,14 @@ impl ToolCallRuntime {
         let lock = Arc::clone(&self.parallel_execution);
         let invocation_cancellation_token = cancellation_token.clone();
         let started = Instant::now();
-        let tool_call_timing_guard =
-            ToolCallTimingGuard::capture(started, &session.thread_id, &turn.sub_id, &call, &source);
+        let mut tool_call_timing_guard = ToolCallTimingGuard::capture(
+            started,
+            &session.thread_id,
+            &turn.sub_id,
+            &call,
+            &source,
+            turn.config.code_mode.experimental_show_cell_overhead,
+        );
         let execution_started_at = tool_call_timing_guard
             .as_ref()
             .map(|timing| Arc::clone(&timing.execution_started_at));
@@ -213,8 +219,7 @@ impl ToolCallRuntime {
         ));
 
         async move {
-            let _tool_call_timing_guard = tool_call_timing_guard;
-            tokio::select! {
+            let mut result = tokio::select! {
                 res = &mut dispatch_handle => res.map_err(Self::tool_task_join_error)?,
                 _ = cancellation_token.cancelled() => {
                     if terminal_outcome_reached.load(Ordering::Acquire) || dispatch_handle.is_finished() {
@@ -247,7 +252,15 @@ impl ToolCallRuntime {
                         Ok(response)
                     }
                 },
+            };
+            if let Some(handler_duration_ms) = tool_call_timing_guard
+                .as_mut()
+                .and_then(ToolCallTimingGuard::finish)
+                && let Ok(result) = &mut result
+            {
+                result.result.set_handler_duration_ms(handler_duration_ms);
             }
+            result
         }
         .in_current_span()
     }
@@ -312,6 +325,7 @@ impl ToolCallTimingGuard {
         turn_id: &str,
         call: &ToolCall,
         source: &ToolCallSource,
+        experimental_show_cell_overhead: bool,
     ) -> Option<Self> {
         // Code-mode calls are nested within a direct code-mode tool call whose
         // timing already includes them. Suppress nested guards so consumers do
@@ -319,13 +333,13 @@ impl ToolCallTimingGuard {
         if !matches!(
             source,
             ToolCallSource::Direct | ToolCallSource::DirectPlaintextMessage
-        ) || !tracing::enabled!(tracing::Level::INFO)
+        ) || (!experimental_show_cell_overhead && !tracing::enabled!(tracing::Level::INFO))
         {
             return None;
         }
 
         Some(Self {
-            started_at,
+            started_at: Some(started_at),
             execution_started_at: Arc::new(OnceLock::new()),
             conversation_id: conversation_id.to_string(),
             turn_id: turn_id.to_string(),
@@ -335,8 +349,10 @@ impl ToolCallTimingGuard {
     }
 }
 
-impl Drop for ToolCallTimingGuard {
-    fn drop(&mut self) {
+impl ToolCallTimingGuard {
+    /// Log call timing once and return the handler duration in milliseconds.
+    fn finish(&mut self) -> Option<u64> {
+        let started_at = self.started_at.take()?;
         let completed_at = Instant::now();
         // Snapshot once so a concurrently-starting dispatch cannot make one
         // event internally inconsistent.
@@ -346,12 +362,10 @@ impl Drop for ToolCallTimingGuard {
             .copied()
             .filter(|execution_started_at| *execution_started_at <= completed_at);
         let duration_ms = |duration: std::time::Duration| u64::try_from(duration.as_millis()).ok();
-        let total_duration_ms = duration_ms(completed_at.duration_since(self.started_at));
+        let total_duration_ms = duration_ms(completed_at.duration_since(started_at));
         let dispatch_duration_ms = execution_started_at.map_or_else(
             || total_duration_ms,
-            |execution_started_at| {
-                duration_ms(execution_started_at.duration_since(self.started_at))
-            },
+            |execution_started_at| duration_ms(execution_started_at.duration_since(started_at)),
         );
         let handler_duration_ms = execution_started_at.map_or(Some(0), |execution_started_at| {
             duration_ms(completed_at.duration_since(execution_started_at))
@@ -388,5 +402,12 @@ impl Drop for ToolCallTimingGuard {
                 );
             }
         }
+        handler_duration_ms
+    }
+}
+
+impl Drop for ToolCallTimingGuard {
+    fn drop(&mut self) {
+        let _ = self.finish();
     }
 }
