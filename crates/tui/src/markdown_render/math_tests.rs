@@ -42,6 +42,18 @@ fn unicode_math_preserves_markdown_contexts() {
 }
 
 #[test]
+fn unicode_math_preserves_safe_accents_and_symbols() {
+    assert_eq!(
+        plain(
+            r"Accents: $\hat{x}_1 + \bar{y}^2 + \vec{v} + \dot{z} + \ddot{q}$.
+Symbols: $\hbar + \iint f + \leftrightarrow + \supseteq + \nexists x$.",
+            /*width*/ 80,
+        ),
+        "Accents: x̂₁ + ȳ² + v⃗ + ż + q̈.\nSymbols: ℏ + ∬ f + ↔ + ⊇ + ∄ x.",
+    );
+}
+
+#[test]
 fn unicode_math_bounds_and_unsupported_input() {
     for source in [
         r"\unknown{x}",
