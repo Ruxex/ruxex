@@ -12,6 +12,13 @@ use tempfile::NamedTempFile;
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
 
+fn app_server_mock_binary() -> std::path::PathBuf {
+    std::env::var_os("NEXTEST_BIN_EXE_ruxex-app-server-mock")
+        .or_else(|| std::env::var_os("NEXTEST_BIN_EXE_ruxex_app_server_mock"))
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from(env!("CARGO_BIN_EXE_ruxex-app-server-mock")))
+}
+
 fn request(id: i64, method: &str) -> JSONRPCMessage {
     JSONRPCMessage::Request(JSONRPCRequest {
         id: RequestId::Integer(id),
@@ -118,7 +125,7 @@ fn scenario_fixtures_can_be_loaded_for_a_child_process() {
     )
     .expect("write scenario");
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_ruxex-app-server-mock"))
+    let mut child = Command::new(app_server_mock_binary())
         .arg("--scenario")
         .arg(scenario.path())
         .stdin(Stdio::piped())
@@ -212,7 +219,7 @@ async fn websocket_mode_serves_the_existing_tauri_client_transport() {
 
 #[test]
 fn binary_serves_one_json_rpc_response_per_stdio_request() {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_ruxex-app-server-mock"))
+    let mut child = Command::new(app_server_mock_binary())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
