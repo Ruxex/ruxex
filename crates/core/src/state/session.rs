@@ -99,7 +99,6 @@ pub(crate) struct SessionState {
     pub(crate) current_time_reminder: CurrentTimeReminderState,
     pub(crate) pending_session_start_sources: VecDeque<ruxex_hooks::SessionStartSource>,
     granted_permissions_by_environment_id: HashMap<String, AdditionalPermissionProfile>,
-    next_turn_is_first: bool,
 }
 
 impl SessionState {
@@ -138,7 +137,6 @@ impl SessionState {
             current_time_reminder: CurrentTimeReminderState::default(),
             pending_session_start_sources: VecDeque::new(),
             granted_permissions_by_environment_id: HashMap::new(),
-            next_turn_is_first: true,
         }
     }
 
@@ -159,16 +157,6 @@ impl SessionState {
         previous_turn_settings: Option<PreviousTurnSettings>,
     ) {
         self.previous_turn_settings = previous_turn_settings;
-    }
-
-    pub(crate) fn set_next_turn_is_first(&mut self, value: bool) {
-        self.next_turn_is_first = value;
-    }
-
-    pub(crate) fn take_next_turn_is_first(&mut self) -> bool {
-        let is_first_turn = self.next_turn_is_first;
-        self.next_turn_is_first = false;
-        is_first_turn
     }
 
     pub(crate) fn clone_history(&self) -> ContextManager {

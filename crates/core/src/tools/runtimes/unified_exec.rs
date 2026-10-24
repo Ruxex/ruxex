@@ -43,7 +43,6 @@ use ruxex_protocol::models::AdditionalPermissionProfile;
 use ruxex_sandboxing::SandboxCommand;
 use ruxex_sandboxing::SandboxablePreference;
 use ruxex_sandboxing::policy_transforms::merge_permission_profiles;
-use ruxex_tools::UnifiedExecShellMode;
 use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::io;
@@ -90,7 +89,6 @@ pub struct UnifiedExecApprovalKey {
 /// unified-exec side while delegating process startup to the manager.
 pub struct UnifiedExecRuntime<'a> {
     manager: &'a UnifiedExecProcessManager,
-    shell_mode: UnifiedExecShellMode,
 }
 
 pub(crate) struct UnifiedExecAttempt {
@@ -134,11 +132,8 @@ fn build_unified_exec_sandbox_command(
 
 impl<'a> UnifiedExecRuntime<'a> {
     /// Creates a runtime bound to the shared unified-exec process manager.
-    pub fn new(manager: &'a UnifiedExecProcessManager, shell_mode: UnifiedExecShellMode) -> Self {
-        Self {
-            manager,
-            shell_mode,
-        }
+    pub fn new(manager: &'a UnifiedExecProcessManager) -> Self {
+        Self { manager }
     }
 }
 
@@ -643,7 +638,7 @@ mod tests {
     #[tokio::test]
     async fn approval_key_includes_environment_id() {
         let manager = UnifiedExecProcessManager::default();
-        let runtime = UnifiedExecRuntime::new(&manager, UnifiedExecShellMode::Direct);
+        let runtime = UnifiedExecRuntime::new(&manager);
         let mut request = test_request(
             SandboxPermissions::UseDefault,
             ExecApprovalRequirement::Skip {
@@ -674,7 +669,7 @@ mod tests {
         let sandbox_cwd = AbsolutePathBuf::try_from(sandbox_dir.path().to_path_buf())
             .expect("absolute sandbox temp dir");
         let manager = UnifiedExecProcessManager::default();
-        let runtime = UnifiedExecRuntime::new(&manager, UnifiedExecShellMode::Direct);
+        let runtime = UnifiedExecRuntime::new(&manager);
         let request = UnifiedExecRequest {
             command: vec!["pwd".to_string()],
             shell_type: ShellType::Sh,

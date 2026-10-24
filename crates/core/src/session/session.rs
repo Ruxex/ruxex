@@ -1274,11 +1274,7 @@ impl Session {
                     .is_some_and(crate::config::NetworkProxySpec::credential_broker_enabled);
             let prefer_executor_shell_snapshots = config.features.enabled(Feature::ShellSnapshotV2)
                 && config.features.enabled(Feature::ShellTool)
-                && config.features.enabled(Feature::UnifiedExec)
-                && matches!(
-                    ruxex_tools::UnifiedExecShellMode::for_session(config.features.get(),),
-                    ruxex_tools::UnifiedExecShellMode::Direct
-                );
+                && config.features.enabled(Feature::UnifiedExec);
             let use_executor_shell_snapshots =
                 prefer_executor_shell_snapshots && !credential_broker_active;
             let shell_snapshot = if config.features.enabled(Feature::ShellSnapshot)

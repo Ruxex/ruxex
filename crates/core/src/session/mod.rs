@@ -196,7 +196,6 @@ use crate::context_manager::ContextManager;
 use crate::context_manager::HistoryReplacement;
 use crate::ruxex_thread::RuxexThreadSettingsOverrides;
 use crate::ruxex_thread::ThreadConfigSnapshot;
-use crate::thread_rollout_truncation::initial_history_has_prior_user_turns;
 use ruxex_config::CONFIG_TOML_FILE;
 use ruxex_config::ConfigLayerSource;
 use ruxex_config::types::McpServerConfig;
@@ -340,7 +339,6 @@ use ruxex_protocol::turn_input::TurnInputSubmission;
 use ruxex_protocol::turn_input::TurnStartOptions;
 use ruxex_protocol::user_input::UserInput;
 use ruxex_skills_extension::HostSkillsService;
-use ruxex_tools::UnifiedExecShellMode;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 
 /// Queue and lifecycle endpoints for a running [`Session`].
@@ -1360,11 +1358,6 @@ impl Session {
                 ),
             )
         };
-        let has_prior_user_turns = initial_history_has_prior_user_turns(&conversation_history);
-        {
-            let mut state = self.state.lock().await;
-            state.set_next_turn_is_first(!has_prior_user_turns);
-        }
         match conversation_history {
             InitialHistory::New | InitialHistory::Cleared => {
                 // Defer initial context insertion until the first real turn starts so

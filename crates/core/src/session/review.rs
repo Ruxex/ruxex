@@ -26,8 +26,6 @@ pub(super) async fn spawn_review_thread(
     let _ = review_features.disable(Feature::WebSearchCached);
     let _ = review_features.disable(Feature::Goals);
     let review_web_search_mode = WebSearchMode::Disabled;
-    let unified_exec_shell_mode = UnifiedExecShellMode::for_session(review_features.get());
-
     let review_prompt = resolved.prompt.clone();
     let model_info = (**parent_turn_context.model_info()).clone();
     let mut selected = parent_turn_context.initial_settings.selected().clone();
@@ -117,7 +115,6 @@ pub(super) async fn spawn_review_thread(
         originator: parent_turn_context.originator.clone(),
         environments: parent_turn_context.environments.clone(),
         available_models,
-        unified_exec_shell_mode,
         current_date: parent_turn_context.current_date.clone(),
         timezone: parent_turn_context.timezone.clone(),
         app_server_client_name: parent_turn_context.app_server_client_name.clone(),

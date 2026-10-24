@@ -825,12 +825,6 @@ fn feature_enabled_from_effective_config(
         .unwrap_or_else(|| feature.default_enabled())
 }
 
-fn approval_policy_from_effective_config(
-    effective_config: &ConfigReadResponse,
-) -> Option<AskForApproval> {
-    effective_config.config.approval_policy
-}
-
 fn sandbox_mode_from_effective_config(
     effective_config: &ConfigReadResponse,
 ) -> Option<AppServerSandboxMode> {

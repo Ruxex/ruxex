@@ -32,7 +32,6 @@ use rand::Rng;
 use rand::rng;
 use ruxex_network_proxy::NetworkProxy;
 use ruxex_protocol::models::AdditionalPermissionProfile;
-use ruxex_tools::UnifiedExecShellMode;
 use ruxex_utils_output_truncation::TruncationPolicy;
 use ruxex_utils_path_uri::PathUri;
 use tokio::sync::Mutex;
@@ -117,7 +116,6 @@ pub(crate) struct ExecCommandRequest {
     pub cwd: PathUri,
     pub sandbox_cwd: PathUri,
     pub turn_environment: TurnEnvironment,
-    pub shell_mode: UnifiedExecShellMode,
     pub network: Option<NetworkProxy>,
     pub tty: bool,
     pub sandbox_permissions: SandboxPermissions,

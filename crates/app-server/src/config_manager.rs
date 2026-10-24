@@ -7,12 +7,8 @@ use ruxex_core::config::Config;
 use ruxex_core::config::ConfigBuilder;
 use ruxex_core::config::ConfigOverrides;
 use ruxex_exec_server::LOCAL_FS;
-use ruxex_features::feature_for_key;
-use ruxex_login::default_client::set_default_client_residency_requirement;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_json_to_toml::json_to_toml;
-use std::collections::BTreeMap;
-use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -20,14 +16,12 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use toml::Value as TomlValue;
 use tracing::instrument;
-use tracing::warn;
 
 /// Shared app-server entry point for loading effective Ruxex configuration.
 #[derive(Clone)]
 pub(crate) struct ConfigManager {
     ruxex_home: PathBuf,
     cli_overrides: Arc<RwLock<Vec<(String, TomlValue)>>>,
-    runtime_feature_enablement: Arc<RwLock<BTreeMap<String, bool>>>,
     loader_overrides: LoaderOverrides,
     strict_config: bool,
     arg0_paths: Arg0DispatchPaths,
@@ -46,7 +40,6 @@ impl ConfigManager {
         Self {
             ruxex_home,
             cli_overrides: Arc::new(RwLock::new(cli_overrides)),
-            runtime_feature_enablement: Arc::new(RwLock::new(BTreeMap::new())),
             loader_overrides,
             strict_config,
             arg0_paths,
@@ -67,28 +60,6 @@ impl ConfigManager {
             .read()
             .map(|guard| guard.clone())
             .unwrap_or_default()
-    }
-
-    pub(crate) fn extend_runtime_feature_enablement<I>(&self, enablement: I) -> Result<(), ()>
-    where
-        I: IntoIterator<Item = (String, bool)>,
-    {
-        let mut runtime_feature_enablement =
-            self.runtime_feature_enablement.write().map_err(|_| ())?;
-        runtime_feature_enablement.extend(enablement);
-        Ok(())
-    }
-
-    pub(crate) async fn sync_default_client_residency_requirement(&self) {
-        match self.load_latest_config(/*fallback_cwd*/ None).await {
-            Ok(config) => {
-                set_default_client_residency_requirement(config.enforce_residency.value());
-            }
-            Err(err) => warn!(
-                error = %err,
-                "failed to sync default client residency requirement after auth refresh"
-            ),
-        }
     }
 
     pub(crate) async fn load_latest_config(
@@ -124,7 +95,6 @@ impl ConfigManager {
             &refreshed_config,
         )
         .await?;
-        self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
         Ok(config)
     }
@@ -139,7 +109,6 @@ impl ConfigManager {
             .fallback_cwd(Some(self.ruxex_home.clone()))
             .build()
             .await?;
-        self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
         Ok(config)
     }
@@ -247,7 +216,6 @@ impl ConfigManager {
             .thread_config_loader(Arc::clone(&self.thread_config_loader))
             .build()
             .await?;
-        self.apply_runtime_feature_enablement(&mut config);
         self.apply_arg0_paths(&mut config);
         Ok(config)
     }
@@ -277,60 +245,8 @@ impl ConfigManager {
         .await
     }
 
-    fn apply_runtime_feature_enablement(&self, config: &mut Config) {
-        apply_runtime_feature_enablement(config, &self.current_runtime_feature_enablement());
-    }
-
-    fn current_runtime_feature_enablement(&self) -> BTreeMap<String, bool> {
-        self.runtime_feature_enablement
-            .read()
-            .map(|guard| guard.clone())
-            .unwrap_or_default()
-    }
-
     fn apply_arg0_paths(&self, config: &mut Config) {
         config.ruxex_self_exe = self.arg0_paths.ruxex_self_exe.clone();
         config.ruxex_linux_sandbox_exe = self.arg0_paths.ruxex_linux_sandbox_exe.clone();
-    }
-}
-
-pub(crate) fn protected_feature_keys(config_layer_stack: &ConfigLayerStack) -> BTreeSet<String> {
-    let mut protected_features = config_layer_stack
-        .effective_config()
-        .get("features")
-        .and_then(toml::Value::as_table)
-        .map(|features| features.keys().cloned().collect::<BTreeSet<_>>())
-        .unwrap_or_default();
-
-    if let Some(feature_requirements) = config_layer_stack
-        .requirements_toml()
-        .feature_requirements
-        .as_ref()
-    {
-        protected_features.extend(feature_requirements.entries.keys().cloned());
-    }
-
-    protected_features
-}
-
-pub(crate) fn apply_runtime_feature_enablement(
-    config: &mut Config,
-    runtime_feature_enablement: &BTreeMap<String, bool>,
-) {
-    let protected_features = protected_feature_keys(&config.config_layer_stack);
-    for (name, enabled) in runtime_feature_enablement {
-        if protected_features.contains(name) {
-            continue;
-        }
-        let Some(feature) = feature_for_key(name) else {
-            continue;
-        };
-        if let Err(err) = config.features.set_enabled(feature, *enabled) {
-            warn!(
-                feature = name,
-                error = %err,
-                "failed to apply runtime feature enablement"
-            );
-        }
     }
 }

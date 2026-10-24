@@ -1389,7 +1389,7 @@ impl UnifiedExecProcessManager {
         };
         let shell_snapshot = shell_snapshot_request(request, &cwd, context);
         let mut orchestrator = ToolOrchestrator::new();
-        let mut runtime = UnifiedExecRuntime::new(self, request.shell_mode.clone());
+        let mut runtime = UnifiedExecRuntime::new(self);
         let session_shell = context.session.user_shell();
         let configured_shell = request
             .turn_environment

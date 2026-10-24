@@ -40,7 +40,6 @@ const MODEL_KEY: &str = "model";
 const RUXEX_VERSION_KEY: &str = "ruxex_version";
 const REASONING_EFFORT_KEY: &str = "reasoning_effort";
 const USER_INPUT_REQUESTED_DURING_TURN_KEY: &str = "user_input_requested_during_turn";
-const WORKSPACE_KIND_KEY: &str = "workspace_kind";
 
 /// Captured execution settings shared by Responses and MCP metadata.
 pub(crate) struct ExecutionMetadata<'a> {
@@ -289,14 +288,6 @@ impl TurnMetadataState {
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner) =
             filter_extra_metadata(responses_api_metadata);
-    }
-
-    pub(crate) fn workspace_kind(&self) -> Option<String> {
-        self.responsesapi_client_metadata
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(WORKSPACE_KIND_KEY)
-            .cloned()
     }
 
     fn responses_metadata_template(&self) -> RuxexResponsesMetadata {

@@ -41,11 +41,6 @@ pub(crate) type ClientRequestResult = std::result::Result<Result, JSONRPCErrorEr
 static IN_FLIGHT_REQUESTS: Gauge = Gauge::new("app.requests.in_flight");
 static PENDING_SERVER_REQUESTS: Gauge = Gauge::new("app.server_requests.pending");
 
-#[path = "account_notifications.rs"]
-mod account_notifications;
-#[allow(unused_imports)]
-pub(crate) use account_notifications::AccountNotification;
-
 #[path = "user_verification_auth.rs"]
 mod user_verification_auth;
 

@@ -7,9 +7,7 @@ use crate::tools::context::ToolOutput;
 use crate::tools::context::ToolPayload;
 use crate::tools::hook_names::HookToolName;
 use crate::tools::registry::PostToolUsePayload;
-use ruxex_exec_server::Environment;
 use ruxex_protocol::models::AdditionalPermissionProfile;
-use ruxex_tools::UnifiedExecShellMode;
 use serde::Deserialize;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -96,7 +94,6 @@ fn post_unified_exec_tool_use_payload(
 pub(crate) fn get_command(
     args: &ExecCommandArgs,
     session_shell: Arc<Shell>,
-    shell_mode: &UnifiedExecShellMode,
     allow_login_shell: bool,
 ) -> Result<ResolvedCommand, String> {
     let use_login_shell = match args.login {
@@ -109,7 +106,6 @@ pub(crate) fn get_command(
         None => allow_login_shell,
     };
 
-    let _ = shell_mode;
     let model_shell = args
         .shell
         .as_ref()
@@ -119,15 +115,4 @@ pub(crate) fn get_command(
         command: shell.derive_exec_args(&args.cmd, use_login_shell),
         shell_type: shell.shell_type,
     })
-}
-
-pub(crate) fn shell_mode_for_environment(
-    turn_shell_mode: &UnifiedExecShellMode,
-    environment: &Environment,
-) -> UnifiedExecShellMode {
-    if environment.is_remote() {
-        UnifiedExecShellMode::Direct
-    } else {
-        turn_shell_mode.clone()
-    }
 }

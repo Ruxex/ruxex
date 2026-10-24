@@ -113,12 +113,6 @@ where
     decision
 }
 
-#[derive(Clone, Debug, Default)]
-pub(crate) struct ApprovalRequestReasons {
-    pub(crate) approval: Option<String>,
-    pub(crate) retry: Option<String>,
-}
-
 pub(crate) use super::approvals::ApprovalAction;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

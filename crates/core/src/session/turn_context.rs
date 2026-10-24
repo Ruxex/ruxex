@@ -308,7 +308,6 @@ pub struct TurnContext {
     pub(crate) multi_agent_version: MultiAgentVersion,
     pub(crate) network: Option<NetworkProxy>,
     pub(crate) available_models: Vec<ModelPreset>,
-    pub(crate) unified_exec_shell_mode: UnifiedExecShellMode,
     pub(crate) final_output_json_schema: Option<Value>,
     pub(crate) dynamic_tools: Vec<DynamicToolSpec>,
     pub(crate) turn_metadata_state: Arc<TurnMetadataState>,
@@ -561,7 +560,6 @@ impl TurnContext {
             multi_agent_version: self.multi_agent_version,
             network: self.network.clone(),
             available_models,
-            unified_exec_shell_mode: self.unified_exec_shell_mode.clone(),
             final_output_json_schema: self.final_output_json_schema.clone(),
             dynamic_tools: self.dynamic_tools.clone(),
             turn_metadata_state: self.turn_metadata_state.clone(),
@@ -771,9 +769,6 @@ impl Session {
         let session_telemetry_for_context = step_settings.telemetry(session_telemetry);
         let session_source = session_configuration.session_source.clone();
         let available_models = models_manager.try_list_models().unwrap_or_default();
-        let unified_exec_shell_mode =
-            UnifiedExecShellMode::for_session(per_turn_config.features.get());
-
         let mut per_turn_config = per_turn_config;
         let configured_token_budget = per_turn_config.token_budget.clone();
         let use_model_token_budget_defaults =
@@ -836,7 +831,6 @@ impl Session {
             multi_agent_version,
             network,
             available_models,
-            unified_exec_shell_mode,
             final_output_json_schema: None,
             dynamic_tools: session_configuration.dynamic_tools.clone(),
             turn_metadata_state,

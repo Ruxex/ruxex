@@ -10,7 +10,6 @@ use ruxex_protocol::protocol::AskForApproval;
 use ruxex_sandboxing::SandboxManager;
 use ruxex_sandboxing::SandboxablePreference;
 use ruxex_tools::ToolName;
-use ruxex_tools::UnifiedExecShellMode;
 use ruxex_utils_path_uri::PathUri;
 use tokio_util::task::AbortOnDropHandle;
 use uuid::Uuid;
@@ -55,10 +54,6 @@ impl Session {
                 .network
                 .as_ref()
                 .is_some_and(NetworkProxySpec::enabled)
-            || !matches!(
-                step_context.turn.unified_exec_shell_mode,
-                UnifiedExecShellMode::Direct
-            )
         {
             return None;
         }
@@ -169,7 +164,6 @@ pub(super) fn shell_snapshot_request(
     if !context.session.features().enabled(Feature::ShellSnapshotV2)
         || !request.turn_environment.shell_snapshot_v2_supported
         || request.turn_environment.selection.cwd != *cwd
-        || !matches!(request.shell_mode, UnifiedExecShellMode::Direct)
         || !matches!(
             request.shell_type,
             ShellType::Bash | ShellType::Zsh | ShellType::Sh

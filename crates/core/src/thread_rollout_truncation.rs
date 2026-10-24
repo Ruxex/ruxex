@@ -7,7 +7,6 @@ use crate::context_manager::is_user_turn_boundary;
 use crate::event_mapping;
 use ruxex_app_server_protocol::TurnStatus;
 use ruxex_app_server_protocol::build_turns_from_rollout_items;
-use ruxex_history::InitialHistory;
 use ruxex_history::RolloutItem;
 use ruxex_protocol::error::Result as RuxexResult;
 use ruxex_protocol::error::RuxexErr;
@@ -15,18 +14,6 @@ use ruxex_protocol::items::TurnItem;
 use ruxex_protocol::models::ResponseItem;
 use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::InterAgentCommunication;
-
-pub(crate) fn initial_history_has_prior_user_turns(conversation_history: &InitialHistory) -> bool {
-    conversation_history.scan_rollout_items(rollout_item_is_user_turn_boundary)
-}
-
-fn rollout_item_is_user_turn_boundary(item: &RolloutItem) -> bool {
-    match item {
-        RolloutItem::ResponseItem(item) => is_user_turn_boundary(item),
-        RolloutItem::InterAgentCommunication(_) => true,
-        _ => false,
-    }
-}
 
 /// Return the indices of user message boundaries in a rollout.
 ///

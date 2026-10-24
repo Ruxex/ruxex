@@ -13,17 +13,6 @@ pub fn request_user_input_available_modes(features: &Features) -> Vec<ModeKind> 
         .collect()
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum UnifiedExecShellMode {
-    Direct,
-}
-
-impl UnifiedExecShellMode {
-    pub fn for_session(_features: &Features) -> Self {
-        Self::Direct
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToolEnvironmentMode {
     None,
