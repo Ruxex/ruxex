@@ -1392,8 +1392,8 @@ pub enum NonSteerableTurnKind {
 }
 
 /// Ruxex errors that we expose to clients.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "snake_case")]
+#[derive(Clone, Debug, PartialEq, Eq, JsonSchema, TS)]
+#[schemars(rename_all = "snake_case")]
 #[ts(rename_all = "snake_case")]
 pub enum RuxexErrorInfo {
     ContextWindowExceeded,
@@ -1454,6 +1454,74 @@ impl RuxexErrorInfo {
             | Self::ResponseTooManyFailedAttempts { .. }
             | Self::Other => true,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(
+    remote = "RuxexErrorInfo",
+    rename = "RuxexErrorInfo",
+    rename_all = "snake_case"
+)]
+enum RuxexErrorInfoWire {
+    ContextWindowExceeded,
+    SessionBudgetExceeded,
+    UsageLimitExceeded,
+    RateLimitExceeded,
+    ServerOverloaded,
+    CyberPolicy,
+    MisalignmentPolicyViolation,
+    HttpConnectionFailed {
+        http_status_code: Option<u16>,
+    },
+    ResponseStreamConnectionFailed {
+        http_status_code: Option<u16>,
+    },
+    InternalServerError,
+    Unauthorized,
+    BadRequest,
+    SandboxError,
+    ResponseStreamDisconnected {
+        http_status_code: Option<u16>,
+    },
+    ResponseTooManyFailedAttempts {
+        http_status_code: Option<u16>,
+    },
+    ActiveTurnNotSteerable {
+        turn_kind: NonSteerableTurnKind,
+    },
+    ThreadRollbackFailed,
+    #[serde(other)]
+    Other,
+}
+
+impl Serialize for RuxexErrorInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        RuxexErrorInfoWire::serialize(self, serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for RuxexErrorInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        if let Value::Object(fields) = &value
+            && fields.len() == 1
+            && let Some(kind) = fields.keys().next()
+            && kind != "other"
+            && matches!(
+                RuxexErrorInfoWire::deserialize(Value::String(kind.clone())),
+                Ok(Self::Other)
+            )
+        {
+            return Ok(Self::Other);
+        }
+        RuxexErrorInfoWire::deserialize(value).map_err(D::Error::custom)
     }
 }
 
@@ -5365,6 +5433,21 @@ mod tests {
             ruxex_error_info: Some(RuxexErrorInfo::Other),
         };
         assert!(event.affects_turn_status());
+    }
+
+    #[test]
+    fn unknown_error_info_classifications_are_preserved_as_other() {
+        let string_form: RuxexErrorInfo = serde_json::from_value(json!("future_error")).unwrap();
+        assert_eq!(string_form, RuxexErrorInfo::Other);
+
+        let object_form: RuxexErrorInfo =
+            serde_json::from_value(json!({"future_error": {"detail": "new payload"}})).unwrap();
+        assert_eq!(object_form, RuxexErrorInfo::Other);
+
+        let malformed_known: Result<RuxexErrorInfo, _> = serde_json::from_value(json!({
+            "active_turn_not_steerable": {"turn_kind": "future_turn_kind"}
+        }));
+        assert!(malformed_known.is_err());
     }
 
     #[test]

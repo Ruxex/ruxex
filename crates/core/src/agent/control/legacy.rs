@@ -2,7 +2,7 @@ use super::*;
 use ruxex_protocol::error::RuxexErrorDetails;
 use ruxex_thread_store::PersistContext;
 
-impl AgentControl {
+impl LocalAgentControl {
     /// Submit a shutdown request for a live agent without marking it explicitly closed in
     /// persisted spawn-edge state.
     pub(crate) async fn shutdown_live_agent(&self, agent_id: ThreadId) -> RuxexResult<String> {

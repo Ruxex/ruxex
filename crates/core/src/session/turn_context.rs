@@ -941,6 +941,13 @@ impl Session {
         git_enrichment_policy: GitEnrichmentPolicy,
     ) -> Arc<TurnContext> {
         let turn_environments = self.services.turn_environments.snapshot().await;
+        self.services
+            .models_manager
+            .refresh_after_auth_change(
+                self.build_effective_session_config(&session_configuration)
+                    .http_client_factory(),
+            )
+            .await;
         let primary_turn_environment = turn_environments.primary();
         // TODO(anp): Migrate per-turn config and legacy TurnContext cwd consumers to PathUri so
         // a foreign primary environment does not fall back to the session's host cwd.

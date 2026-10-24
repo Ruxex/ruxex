@@ -232,7 +232,7 @@ impl HistoryCell for ThreadRecapHistoryCell {
         if let Some(action) = &self.next_action {
             body.extend(prefix_lines(
                 raw_lines_from_source(action),
-                "Next: ".bold().cyan(),
+                "Next: ".bold(),
                 "".into(),
             ));
         }
@@ -265,7 +265,7 @@ impl HistoryCell for ThreadRecapHistoryCell {
             push_owned_lines(&wrapped, &mut lines);
             options.initial_indent = options.subsequent_indent.clone();
         }
-        lines
+        lines.into_iter().map(Line::dim).collect()
     }
 
     fn raw_lines(&self) -> Vec<Line<'static>> {
@@ -275,5 +275,63 @@ impl HistoryCell for ThreadRecapHistoryCell {
             lines.extend(raw_lines_from_source(&format!("Next: {action}")));
         }
         lines
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use ratatui::style::Modifier;
+
+    #[test]
+    fn recap_display_lines_dim_all_content_and_keep_next_label_uncolored() {
+        let cell = ThreadRecapHistoryCell::new("Finished the parser.".to_string())
+            .with_next_action(Some("Run focused tests.".to_string()));
+        let lines = cell.display_lines(/*width*/ 48);
+
+        assert!(lines.iter().all(|line| {
+            line.style
+                .add_modifier
+                .contains(Modifier::ITALIC | Modifier::DIM)
+        }));
+        assert_eq!(
+            lines
+                .iter()
+                .flat_map(|line| &line.spans)
+                .find(|span| span.content == "Next: "),
+            Some(&"Next: ".bold().italic())
+        );
+    }
+
+    #[test]
+    fn recap_display_buffer_preserves_wrapping_and_dimmed_styles() {
+        let cell =
+            ThreadRecapHistoryCell::new("Finished the parser.\nTwelve tests pass.".to_string())
+                .with_next_action(Some(
+                    "Run focused tests and check the empty-input case.".to_string(),
+                ));
+        let lines = cell.display_lines(/*width*/ 48);
+        let area = Rect::new(
+            /*x*/ 0,
+            /*y*/ 0,
+            /*width*/ 48,
+            lines.len() as u16,
+        );
+        let mut buffer = Buffer::empty(area);
+        Paragraph::new(lines).render(area, &mut buffer);
+        let rendered = (0..area.height)
+            .map(|y| {
+                (0..area.width)
+                    .map(|x| buffer[(x, y)].symbol())
+                    .collect::<String>()
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        assert!(rendered.contains("Recap:"));
+        assert!(rendered.contains("Next:"));
+        assert!(rendered.contains("Run focused tests"));
+        assert!(rendered.contains("empty-input"));
     }
 }

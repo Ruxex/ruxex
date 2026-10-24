@@ -5,6 +5,9 @@ mod macos;
 mod managed_requirements;
 mod project_discovery;
 #[cfg(test)]
+#[path = "projectless_directory_tests.rs"]
+mod projectless_directory_tests;
+#[cfg(test)]
 mod tests;
 
 use self::layer_io::LoadedConfigLayers;
@@ -162,6 +165,7 @@ pub async fn load_config_layers_state(
     let ignore_project_config = overrides.ignore_project_config;
     let ignore_user_and_project_exec_policy_rules =
         overrides.ignore_user_and_project_exec_policy_rules;
+    let mut is_projectless = false;
     let (config_requirements_toml, loaded_config_layers, requirements_layers) =
         managed_requirements::load_requirements_from_sources(
             fs,
@@ -329,6 +333,9 @@ pub async fn load_config_layers_state(
             strict_config,
         )
         .await?;
+        is_projectless = !project_trust_context.has_project_root_marker
+            && project_trust_context.checkout_root.is_none()
+            && project_layers.layers.is_empty();
         layers.extend(project_layers.layers);
         startup_warnings.extend(project_layers.startup_warnings);
     }
@@ -387,12 +394,13 @@ pub async fn load_config_layers_state(
         return Err(err);
     }
 
-    let config_layer_stack = ConfigLayerStack::new(
+    let mut config_layer_stack = ConfigLayerStack::new(
         layers,
         config_requirements_toml.clone().try_into()?,
         config_requirements_toml.into_toml(),
     )?
     .with_user_and_project_exec_policy_rules_ignored(ignore_user_and_project_exec_policy_rules);
+    config_layer_stack.is_projectless = is_projectless;
     startup_warnings.extend(ignored_config_warning(
         &config_layer_stack,
         &requirements_layers,
@@ -710,6 +718,7 @@ fn apply_credential_broker_requirements(
 
 struct ProjectTrustContext {
     project_root: AbsolutePathBuf,
+    has_project_root_marker: bool,
     project_root_key: String,
     project_root_lookup_keys: Vec<String>,
     checkout_root: Option<AbsolutePathBuf>,
@@ -960,7 +969,9 @@ async fn project_trust_context(
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))?
     };
 
-    let project_root = find_project_root(fs, cwd, project_root_markers).await?;
+    let discovered_root = discover_project_root(fs, cwd, project_root_markers).await?;
+    let has_project_root_marker = discovered_root.is_some();
+    let project_root = discovered_root.unwrap_or_else(|| cwd.clone());
     let projects = project_trust_config.projects.unwrap_or_default();
 
     let project_root_lookup_keys = normalized_project_trust_keys(project_root.as_path());
@@ -1025,6 +1036,7 @@ async fn project_trust_context(
 
     Ok(ProjectTrustContext {
         project_root,
+        has_project_root_marker,
         project_root_key,
         project_root_lookup_keys,
         checkout_root,
@@ -1168,8 +1180,18 @@ pub async fn find_project_root(
     cwd: &AbsolutePathBuf,
     project_root_markers: &[String],
 ) -> io::Result<AbsolutePathBuf> {
+    Ok(discover_project_root(fs, cwd, project_root_markers)
+        .await?
+        .unwrap_or_else(|| cwd.clone()))
+}
+
+async fn discover_project_root(
+    fs: &dyn ExecutorFileSystem,
+    cwd: &AbsolutePathBuf,
+    project_root_markers: &[String],
+) -> io::Result<Option<AbsolutePathBuf>> {
     if project_root_markers.is_empty() {
-        return Ok(cwd.clone());
+        return Ok(None);
     }
 
     for ancestor in cwd.ancestors() {
@@ -1195,10 +1217,10 @@ pub async fn find_project_root(
             {
                 continue;
             }
-            return Ok(ancestor);
+            return Ok(Some(ancestor));
         }
     }
-    Ok(cwd.clone())
+    Ok(None)
 }
 
 async fn find_git_checkout_root(

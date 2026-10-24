@@ -1,12 +1,12 @@
-use crate::agent::AgentControl;
+use crate::agent::LocalAgentControl;
 use pretty_assertions::assert_eq;
 use ruxex_protocol::error::RuxexErrorDetails;
 use ruxex_protocol::protocol::MultiAgentVersion;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_protocol::protocol::SubAgentSource;
 
-fn control_with_limit(max_threads: usize) -> AgentControl {
-    let control = AgentControl::default();
+fn control_with_limit(max_threads: usize) -> LocalAgentControl {
+    let control = LocalAgentControl::default();
     control.agent_execution_limiter.initialize(max_threads);
     control
 }

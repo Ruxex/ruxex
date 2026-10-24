@@ -8599,6 +8599,7 @@ name = "ruxex-async-utils"
 version = "0.4.9"
 dependencies = [
  "pretty_assertions",
+ "rand 0.9.3",
  "tokio",
  "tokio-util",
 ]

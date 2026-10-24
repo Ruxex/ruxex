@@ -1,4 +1,4 @@
-use super::AgentControl;
+use super::LocalAgentControl;
 use crate::ruxex_thread::RuxexThread;
 use ruxex_protocol::error::Result as RuxexResult;
 use ruxex_protocol::error::RuxexErr;
@@ -26,7 +26,7 @@ impl Drop for AgentExecutionGuard {
     }
 }
 
-impl AgentControl {
+impl LocalAgentControl {
     pub(crate) async fn ensure_execution_capacity_for_turn_start(
         &self,
         thread: &RuxexThread,

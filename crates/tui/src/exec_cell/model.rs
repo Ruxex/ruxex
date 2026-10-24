@@ -10,6 +10,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 use super::live_output::LiveCommandOutput;
+use crate::history_cell::HistoryCell;
 use itertools::Either;
 use ruxex_app_server_protocol::CommandExecutionSource as ExecCommandSource;
 use ruxex_protocol::parse_command::ParsedCommand;
@@ -75,6 +76,8 @@ pub(crate) struct ExecCall {
 #[derive(Debug)]
 pub(crate) struct ExecCell {
     pub(crate) calls: Vec<ExecCall>,
+    /// Transcript-only reasoning, paired with the number of calls preceding it.
+    pub(crate) reasoning: Vec<(usize, Box<dyn HistoryCell>)>,
     animations_enabled: bool,
 }
 
@@ -82,6 +85,7 @@ impl ExecCell {
     pub(crate) fn new(call: ExecCall, animations_enabled: bool) -> Self {
         Self {
             calls: vec![call],
+            reasoning: Vec::new(),
             animations_enabled,
         }
     }
@@ -133,14 +137,7 @@ impl ExecCell {
     }
 
     pub(crate) fn should_flush(&self) -> bool {
-        if self.calls.iter().any(|call| {
-            call.output
-                .as_ref()
-                .is_some_and(|output| output.exit_code != 0)
-        }) {
-            return !self.is_active();
-        }
-
+        // Exploration stays open for adjacent calls, including after a failed read/list/search.
         !self.is_exploring_cell() && self.calls.iter().all(|c| c.duration.is_some())
     }
 

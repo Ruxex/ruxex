@@ -123,6 +123,15 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
     /// Static catalogs ignore this setting.
     fn set_api_key_model_discovery_enabled(&self, _enabled: bool) {}
 
+    /// Best-effort refresh when the in-memory catalog belongs to different credentials.
+    /// Static catalogs need no refresh. Failures leave the existing cache/default fallback.
+    fn refresh_after_auth_change(
+        &self,
+        _http_client_factory: HttpClientFactory,
+    ) -> ModelsManagerFuture<'_, ()> {
+        Box::pin(std::future::ready(()))
+    }
+
     /// List all available models, refreshing according to the specified strategy.
     ///
     /// Returns model presets sorted by priority and filtered by auth mode and visibility.
@@ -413,6 +422,35 @@ impl ModelsManager for RemoteModelsManager {
     fn set_api_key_model_discovery_enabled(&self, enabled: bool) {
         self.api_key_model_discovery_enabled
             .store(enabled, Ordering::SeqCst);
+    }
+
+    fn refresh_after_auth_change(
+        &self,
+        http_client_factory: HttpClientFactory,
+    ) -> ModelsManagerFuture<'_, ()> {
+        Box::pin(async move {
+            let refresh = async {
+                if !self.should_refresh_models().await {
+                    return Ok(());
+                }
+                let identity = self.catalog_source.identity();
+                let current_identity = self.remote_models.read().await.identity.clone();
+                if identity.is_some() && current_identity == identity {
+                    return Ok(());
+                }
+                self.refresh_available_models(
+                    RefreshStrategy::OnlineIfUncached,
+                    &http_client_factory,
+                )
+                .await
+            };
+            if !matches!(
+                tokio::time::timeout(Duration::from_secs(/*secs*/ 5), refresh).await,
+                Ok(Ok(()))
+            ) {
+                tracing::warn!("model catalog refresh after auth change failed or timed out");
+            }
+        })
     }
 
     fn raw_model_catalog(
