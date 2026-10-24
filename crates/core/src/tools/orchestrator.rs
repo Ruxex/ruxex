@@ -145,16 +145,6 @@ impl ToolOrchestrator {
         );
         let sandbox_config = environment.config();
         let owner_network_policy = sandbox_config.network_policy.is_some();
-        if owner_network_policy
-            && tool
-                .sandbox_permissions(req)
-                .requires_escalated_permissions()
-        {
-            return Err(ToolError::Rejected(
-                "attachment-owned network policy cannot be bypassed by sandbox escalation"
-                    .to_string(),
-            ));
-        }
         let workspace_roots = environment.workspace_roots();
         let executor_managed_process_sandbox = tool.uses_executor_managed_process_sandbox(req);
         let permission_profile = environment.permission_profile();
@@ -203,8 +193,7 @@ impl ToolOrchestrator {
         }
 
         // 2) First attempt under the selected sandbox.
-        let unsandboxed_allowed =
-            !owner_network_policy && unsandboxed_execution_allowed(&file_system_sandbox_policy);
+        let unsandboxed_allowed = unsandboxed_execution_allowed(&file_system_sandbox_policy);
         let sandbox_override = if unsandboxed_allowed {
             sandbox_override_for_first_attempt(
                 tool.sandbox_permissions(req),
@@ -215,9 +204,8 @@ impl ToolOrchestrator {
             SandboxOverride::NoOverride
         };
         let network_approval_spec = tool.network_approval_spec(req, tool_ctx);
-        // An explicit owner proxy requirement permits filtered egress, like an enabled
-        // controller proxy. Traffic-only owner policies stay offline unless command
-        // permissions grant networking.
+        // Preserve the policy baseline even when approved escalation skips the execution proxy.
+        // Retained terminals must still know that their launch bypassed network restrictions.
         let managed_network_active = if owner_network_policy {
             turn_ctx
                 .config
@@ -225,17 +213,17 @@ impl ToolOrchestrator {
                 .network
                 .as_ref()
                 .is_some_and(NetworkProxySpec::enabled)
-                || sandbox_config
-                    .network_policy
-                    .as_ref()
-                    .is_some_and(|policy| policy.requires_proxy)
-                || network_approval_spec.as_ref().is_some_and(|spec| {
-                    effective_network_sandbox_policy(
+                || (network_approval_spec.is_some()
+                    || tool
+                        .sandbox_permissions(req)
+                        .requires_escalated_permissions())
+                    && effective_network_sandbox_policy(
                         permission_profile.network_sandbox_policy(),
-                        spec.trigger.additional_permissions.as_ref(),
+                        network_approval_spec
+                            .as_ref()
+                            .and_then(|spec| spec.trigger.additional_permissions.as_ref()),
                     )
                     .is_enabled()
-                })
         } else {
             turn_ctx.network.is_some()
         };
