@@ -50,6 +50,8 @@ use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 use two_face::theme::EmbeddedThemeName;
 
+use super::model_themes;
+
 #[path = "highlight_streaming.rs"]
 mod streaming;
 
@@ -132,8 +134,7 @@ pub(crate) fn validate_theme_name(name: Option<&str>, ruxex_home: Option<&Path>)
     let custom_theme_path_display = ruxex_home
         .map(|home| custom_theme_path(name, home).display().to_string())
         .unwrap_or_else(|| format!("$RUXEX_HOME/themes/{name}.tmTheme"));
-    // Bundled themes always resolve.
-    if parse_theme_name(name).is_some() {
+    if resolve_theme_by_name(name, ruxex_home).is_some() {
         return None;
     }
     // Custom themes must parse successfully; an unreadable/invalid file should
@@ -232,14 +233,7 @@ fn resolve_theme_with_override(name: Option<&str>, ruxex_home: Option<&Path>) ->
 
     // Honor user-configured theme if valid.
     if let Some(name) = name {
-        // 1. Try bundled theme by kebab-case name.
-        if let Some(theme_name) = parse_theme_name(name) {
-            return ts.get(theme_name).clone();
-        }
-        // 2. Try loading {RUXEX_HOME}/themes/{name}.tmTheme from disk.
-        if let Some(home) = ruxex_home
-            && let Some(theme) = load_custom_theme(name, home)
-        {
+        if let Some(theme) = resolve_theme_by_name(name, ruxex_home) {
             return theme;
         }
         tracing::debug!("Theme \"{name}\" not recognized; using default theme");
@@ -375,12 +369,8 @@ pub(crate) fn foreground_style_for_scopes_with_theme(
 pub(crate) fn configured_theme_name() -> String {
     // Explicit user override?
     if let Some(Some(name)) = THEME_OVERRIDE.get() {
-        if parse_theme_name(name).is_some() {
-            return name.clone();
-        }
-        if let Some(Some(home)) = RUXEX_HOME.get()
-            && load_custom_theme(name, home).is_some()
-        {
+        let home = RUXEX_HOME.get().and_then(|home| home.as_deref());
+        if resolve_theme_by_name(name, home).is_some() {
             return name.clone();
         }
     }
@@ -401,7 +391,7 @@ pub(crate) fn resolve_theme_by_name(name: &str, ruxex_home: Option<&Path>) -> Op
     {
         return Some(theme);
     }
-    None
+    model_themes::resolve(name)
 }
 
 /// A theme available in the picker, either bundled or loaded from a custom
@@ -444,6 +434,17 @@ pub(crate) fn list_available_themes(ruxex_home: Option<&Path>) -> Vec<ThemeEntry
                     }
                 }
             }
+        }
+    }
+
+    for (name, _) in model_themes::THEMES {
+        if !entries.iter().any(|entry| entry.name == *name)
+            && resolve_theme_by_name(name, ruxex_home).is_some()
+        {
+            entries.push(ThemeEntry {
+                name: (*name).to_string(),
+                is_custom: ruxex_home.is_some_and(|home| custom_theme_path(name, home).exists()),
+            });
         }
     }
 

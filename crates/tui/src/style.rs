@@ -58,6 +58,17 @@ pub(crate) fn table_separator_style() -> Style {
 
 /// Returns the shared accent style for active or selected TUI controls.
 pub(crate) fn accent_style() -> Style {
+    if matches!(
+        effective_stdout_color_level(),
+        StdoutColorLevel::TrueColor | StdoutColorLevel::Ansi256
+    ) && let Some(mut style) =
+        crate::render::highlight::foreground_style_for_scopes(&["codex.accent"])
+    {
+        if let Some(Color::Rgb(r, g, b)) = style.fg {
+            style = style.fg(best_color((r, g, b)));
+        }
+        return style.bold();
+    }
     accent_style_for(default_bg())
 }
 
