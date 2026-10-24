@@ -109,6 +109,21 @@ pub struct ThreadHistoryTurnChange {
     pub duration_ms: Option<i64>,
 }
 
+impl From<ThreadHistoryTurnChange> for Turn {
+    fn from(value: ThreadHistoryTurnChange) -> Self {
+        Self {
+            id: value.turn_id,
+            items: Vec::new(),
+            items_view: TurnItemsView::NotLoaded,
+            status: value.status,
+            error: value.error,
+            started_at: value.started_at,
+            completed_at: value.completed_at,
+            duration_ms: value.duration_ms,
+        }
+    }
+}
+
 /// Incremental changes produced by opt-in `ThreadHistoryBuilder` handlers.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct ThreadHistoryChangeSet {
@@ -264,6 +279,14 @@ impl ThreadHistoryBuilder {
             .as_ref()
             .map(Turn::from)
             .or_else(|| self.turns.last().map(Turn::from))
+    }
+
+    /// Snapshots active turn metadata without cloning its items.
+    pub fn active_turn_metadata_snapshot(&self) -> Option<ThreadHistoryTurnChange> {
+        self.current_turn
+            .as_ref()
+            .or_else(|| self.turns.last())
+            .map(ThreadHistoryTurnChange::from_pending_turn)
     }
 
     /// Returns the id of the active turn without materializing its items.

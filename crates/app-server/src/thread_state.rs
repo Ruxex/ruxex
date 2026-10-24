@@ -3,6 +3,7 @@ use crate::outgoing_message::ConnectionRequestId;
 use ruxex_app_server_protocol::RequestId;
 use ruxex_app_server_protocol::ThreadGoal;
 use ruxex_app_server_protocol::ThreadHistoryBuilder;
+use ruxex_app_server_protocol::ThreadHistoryTurnChange;
 use ruxex_app_server_protocol::ThreadItem;
 use ruxex_app_server_protocol::ThreadSettings;
 use ruxex_app_server_protocol::Turn;
@@ -165,6 +166,10 @@ impl ThreadState {
 
     pub(crate) fn active_turn_snapshot(&self) -> Option<Turn> {
         self.current_turn_history.active_turn_snapshot()
+    }
+
+    pub(crate) fn active_turn_metadata_snapshot(&self) -> Option<ThreadHistoryTurnChange> {
+        self.current_turn_history.active_turn_metadata_snapshot()
     }
 
     pub(crate) fn register_shutdown_drain_waiter(&mut self) -> oneshot::Receiver<()> {
