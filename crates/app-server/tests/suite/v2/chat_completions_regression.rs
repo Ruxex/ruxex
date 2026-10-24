@@ -4,7 +4,7 @@ use app_test_support::create_mock_chat_completions_server_retry;
 use app_test_support::create_mock_chat_completions_server_sequence;
 use app_test_support::create_mock_chat_completions_server_sequence_unchecked;
 use app_test_support::create_mock_responses_server_retry;
-use app_test_support::create_mock_responses_server_sequence;
+use app_test_support::create_mock_responses_server_sequence_unchecked;
 use core_test_support::responses;
 use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server::in_process;
@@ -13,6 +13,7 @@ use ruxex_app_server::in_process::InProcessServerEvent;
 use ruxex_app_server::in_process::InProcessStartArgs;
 use ruxex_app_server_protocol::ClientInfo;
 use ruxex_app_server_protocol::ClientRequest;
+use ruxex_app_server_protocol::CurrentTimeReadResponse;
 use ruxex_app_server_protocol::DynamicToolCallOutputContentItem;
 use ruxex_app_server_protocol::DynamicToolCallResponse;
 use ruxex_app_server_protocol::DynamicToolCallStatus;
@@ -20,6 +21,7 @@ use ruxex_app_server_protocol::DynamicToolFunctionSpec;
 use ruxex_app_server_protocol::DynamicToolSpec;
 use ruxex_app_server_protocol::InitializeCapabilities;
 use ruxex_app_server_protocol::InitializeParams;
+use ruxex_app_server_protocol::PermissionsRequestApprovalResponse;
 use ruxex_app_server_protocol::RequestId;
 use ruxex_app_server_protocol::ServerNotification;
 use ruxex_app_server_protocol::ServerRequest;
@@ -41,6 +43,10 @@ use ruxex_core::config::ConfigBuilder;
 use ruxex_exec_server::EnvironmentManager;
 use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderHomeMarker;
 use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_model_provider_info::WireApi;
 use ruxex_protocol::config_types::CollaborationMode;
@@ -124,6 +130,26 @@ async fn chat_completions_regression_request_user_input_round_trip() -> Result<(
 #[tokio::test]
 async fn responses_regression_request_user_input_round_trip() -> Result<()> {
     run_request_user_input_regression(WireApi::Responses).await
+}
+
+#[tokio::test]
+async fn chat_completions_regression_request_permissions_round_trip() -> Result<()> {
+    run_request_permissions_regression(WireApi::Chat).await
+}
+
+#[tokio::test]
+async fn responses_regression_request_permissions_round_trip() -> Result<()> {
+    run_request_permissions_regression(WireApi::Responses).await
+}
+
+#[tokio::test]
+async fn chat_completions_regression_current_time_round_trip() -> Result<()> {
+    run_current_time_regression(WireApi::Chat).await
+}
+
+#[tokio::test]
+async fn responses_regression_current_time_round_trip() -> Result<()> {
+    run_current_time_regression(WireApi::Responses).await
 }
 
 async fn run_regression_round_trip(wire_api: WireApi) -> Result<()> {
@@ -617,8 +643,12 @@ async fn run_request_user_input_regression(wire_api: WireApi) -> Result<()> {
         WireApi::Responses => create_final_assistant_message_sse_response("Done")?,
     };
     let server = match wire_api {
-        WireApi::Chat => create_mock_chat_completions_server_sequence(vec![first, second]).await,
-        WireApi::Responses => create_mock_responses_server_sequence(vec![first, second]).await,
+        WireApi::Chat => {
+            create_mock_chat_completions_server_sequence_unchecked(vec![first, second]).await
+        }
+        WireApi::Responses => {
+            create_mock_responses_server_sequence_unchecked(vec![first, second]).await
+        }
     };
 
     let (mut app_server, _ruxex_home) = start_regression_app(wire_api, &server.uri()).await?;
@@ -724,6 +754,167 @@ async fn run_request_user_input_regression(wire_api: WireApi) -> Result<()> {
         })),
     }
 
+    Ok(())
+}
+
+async fn run_request_permissions_regression(wire_api: WireApi) -> Result<()> {
+    let call_id = "regression-request-permissions-call";
+    let first = match wire_api {
+        WireApi::Chat => chat_request_permissions_sse(call_id)?,
+        WireApi::Responses => responses::sse(vec![
+            responses::ev_response_created("resp-request-permissions-1"),
+            responses::ev_function_call(
+                call_id,
+                "request_permissions",
+                &json!({
+                    "reason": "Select a workspace root",
+                    "permissions": {
+                        "file_system": {"write": ["."]}
+                    }
+                })
+                .to_string(),
+            ),
+            responses::ev_completed("resp-request-permissions-1"),
+        ]),
+    };
+    let second = match wire_api {
+        WireApi::Chat => chat_assistant_sse("Permissions granted"),
+        WireApi::Responses => create_final_assistant_message_sse_response("Permissions granted")?,
+    };
+    let server = match wire_api {
+        WireApi::Chat => {
+            create_mock_chat_completions_server_sequence_unchecked(vec![first, second]).await
+        }
+        WireApi::Responses => {
+            create_mock_responses_server_sequence_unchecked(vec![first, second]).await
+        }
+    };
+    let (mut app_server, _ruxex_home) = start_regression_app_with_config(
+        wire_api,
+        &server.uri(),
+        0,
+        Some("approval_policy = \"on-request\"\n[features]\nrequest_permissions_tool = true\n"),
+    )
+    .await?;
+
+    let (thread_id, _turn_id) =
+        start_regression_turn(&mut app_server, "Grant workspace access").await?;
+    let completed = loop {
+        let event = app_server
+            .next_event()
+            .await
+            .ok_or_else(|| anyhow::anyhow!("in-process AppServer exited before completion"))?;
+        if let InProcessServerEvent::ServerRequest(request) = event {
+            let ServerRequest::PermissionsRequestApproval { request_id, params } = *request else {
+                continue;
+            };
+            assert_eq!(params.thread_id, thread_id);
+            assert_eq!(params.item_id, call_id);
+            assert_eq!(params.reason.as_deref(), Some("Select a workspace root"));
+            app_server.respond_to_server_request(
+                request_id,
+                serde_json::to_value(PermissionsRequestApprovalResponse {
+                    permissions: ruxex_app_server_protocol::GrantedPermissionProfile {
+                        network: None,
+                        file_system: None,
+                    },
+                    scope: ruxex_app_server_protocol::PermissionGrantScope::Turn,
+                })?,
+            )?;
+        } else if let InProcessServerEvent::ServerNotification(notification) = event
+            && let ServerNotification::TurnCompleted(completed) = *notification
+        {
+            break completed;
+        }
+    };
+    assert_eq!(completed.turn.status, TurnStatus::Completed);
+    app_server.shutdown().await?;
+
+    let requests = server
+        .received_requests()
+        .await
+        .expect("request permissions model requests should be recorded");
+    let expected_path = match wire_api {
+        WireApi::Chat => "/v1/chat/completions",
+        WireApi::Responses => "/v1/responses",
+    };
+    let model_requests = requests
+        .iter()
+        .filter(|request| request.url.path() == expected_path)
+        .collect::<Vec<_>>();
+    assert_eq!(model_requests.len(), 2);
+    let follow_up: serde_json::Value = model_requests[1]
+        .body_json()
+        .expect("request permissions follow-up should contain JSON");
+    assert!(follow_up.to_string().contains("request_permissions"));
+    Ok(())
+}
+
+async fn run_current_time_regression(wire_api: WireApi) -> Result<()> {
+    let first = match wire_api {
+        WireApi::Chat => chat_assistant_sse("Done"),
+        WireApi::Responses => create_final_assistant_message_sse_response("Done")?,
+    };
+    let server = match wire_api {
+        WireApi::Chat => create_mock_chat_completions_server_sequence(vec![first]).await,
+        WireApi::Responses => {
+            app_test_support::create_mock_responses_server_sequence(vec![first]).await
+        }
+    };
+    let (mut app_server, _ruxex_home) = start_regression_app_with_config(
+        wire_api,
+        &server.uri(),
+        0,
+        Some(
+            "[features.current_time_reminder]\nenabled = true\nreminder_interval_seconds = 1\nclock_source = \"external\"\n",
+        ),
+    )
+    .await?;
+
+    let (thread_id, _turn_id) = start_regression_turn(&mut app_server, "What time is it?").await?;
+    let completed = loop {
+        let event = app_server
+            .next_event()
+            .await
+            .ok_or_else(|| anyhow::anyhow!("in-process AppServer exited before completion"))?;
+        if let InProcessServerEvent::ServerRequest(request) = event {
+            let ServerRequest::CurrentTimeRead { request_id, params } = *request else {
+                continue;
+            };
+            assert_eq!(params.thread_id, thread_id);
+            app_server.respond_to_server_request(
+                request_id,
+                serde_json::to_value(CurrentTimeReadResponse {
+                    current_time_at: 1_781_717_655,
+                })?,
+            )?;
+        } else if let InProcessServerEvent::ServerNotification(notification) = event
+            && let ServerNotification::TurnCompleted(completed) = *notification
+        {
+            break completed;
+        }
+    };
+    assert_eq!(completed.turn.status, TurnStatus::Completed);
+    app_server.shutdown().await?;
+
+    let requests = server
+        .received_requests()
+        .await
+        .expect("current time model request should be recorded");
+    let expected_path = match wire_api {
+        WireApi::Chat => "/v1/chat/completions",
+        WireApi::Responses => "/v1/responses",
+    };
+    assert!(
+        requests
+            .iter()
+            .filter(|request| request.url.path() == expected_path)
+            .any(|request| {
+                request
+                    .body_json::<serde_json::Value>()
+                    .is_ok_and(|body| body.to_string().contains("current_time_reminder"))
+            })
+    );
     Ok(())
 }
 
@@ -858,6 +1049,49 @@ fn chat_request_user_input_sse(call_id: &str) -> Result<String> {
     ))
 }
 
+fn chat_request_permissions_sse(call_id: &str) -> Result<String> {
+    let arguments = serde_json::to_string(&json!({
+        "reason": "Select a workspace root",
+        "permissions": {"file_system": {"write": ["."]}}
+    }))?;
+    Ok(format!(
+        "{}data: [DONE]\n\n",
+        responses::sse(vec![
+            json!({
+                "type": "message",
+                "id": "chatcmpl-request-permissions-1",
+                "object": "chat.completion.chunk",
+                "created": 1,
+                "model": "mock-model",
+                "choices": [{
+                    "index": 0,
+                    "delta": {
+                        "role": "assistant",
+                        "tool_calls": [{
+                            "index": 0,
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": "request_permissions",
+                                "arguments": arguments,
+                            }
+                        }]
+                    },
+                    "finish_reason": null
+                }]
+            }),
+            json!({
+                "type": "message",
+                "id": "chatcmpl-request-permissions-1",
+                "object": "chat.completion.chunk",
+                "created": 1,
+                "model": "mock-model",
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]
+            }),
+        ])
+    ))
+}
+
 fn chat_assistant_sse(message: &str) -> String {
     format!(
         "{}data: [DONE]\n\n",
@@ -898,7 +1132,27 @@ async fn start_regression_app_with_retries(
     server_uri: &str,
     request_max_retries: u64,
 ) -> Result<(InProcessClientHandle, TempDir)> {
+    start_regression_app_with_config(wire_api, server_uri, request_max_retries, None).await
+}
+
+async fn start_regression_app_with_config(
+    wire_api: WireApi,
+    server_uri: &str,
+    request_max_retries: u64,
+    config_toml: Option<&str>,
+) -> Result<(InProcessClientHandle, TempDir)> {
     let ruxex_home = TempDir::new()?;
+    if let Some(config_toml) = config_toml {
+        std::fs::write(ruxex_home.path().join("config.toml"), config_toml)?;
+        let descriptor = ProviderDescriptor::new(
+            "mock_provider".to_string(),
+            CURRENT_PROVIDER_PROTOCOL_VERSION,
+        );
+        std::fs::write(
+            ruxex_home.path().join(PROVIDER_HOME_MARKER_FILE),
+            serde_json::to_vec_pretty(&ProviderHomeMarker::from(&descriptor))?,
+        )?;
+    }
     let loader_overrides = LoaderOverrides::without_managed_config_for_tests();
     let config = Arc::new(
         ConfigBuilder::default()

@@ -33,6 +33,12 @@ mod request_validation;
 #[path = "suite/v2/rollout_compress_tests.rs"]
 mod rollout_compress;
 #[rustfmt::skip]
+#[path = "suite/v2/server_diagnostics.rs"]
+mod server_diagnostics;
+#[rustfmt::skip]
+#[path = "suite/v2/session_end.rs"]
+mod session_end;
+#[rustfmt::skip]
 #[path = "suite/v2/thread_loaded_list.rs"]
 mod thread_loaded_list;
 #[rustfmt::skip]

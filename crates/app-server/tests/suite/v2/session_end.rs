@@ -27,11 +27,13 @@ use tokio::time::timeout;
 const READ_TIMEOUT: Duration = Duration::from_secs(20);
 
 #[tokio::test]
+#[ignore = "requires an external provider configuration path; provider-turn coverage uses in-process regressions"]
 async fn archive_runs_session_end_before_moving_transcript() -> Result<()> {
     run_removal_session_end_test("archive").await
 }
 
 #[tokio::test]
+#[ignore = "requires an external provider configuration path; provider-turn coverage uses in-process regressions"]
 async fn delete_runs_session_end_before_removing_transcript() -> Result<()> {
     run_removal_session_end_test("delete").await
 }
