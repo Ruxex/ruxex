@@ -12,6 +12,7 @@ use ruxex_attachment_store::UploadResult;
 use ruxex_core::TurnInputRequest;
 use ruxex_features::Feature;
 use ruxex_history::RolloutItem;
+use ruxex_protocol::items::TurnItem;
 use ruxex_protocol::config_types::CollaborationMode;
 use ruxex_protocol::config_types::ModeKind;
 use ruxex_protocol::config_types::Settings;
@@ -43,6 +44,7 @@ use core_test_support::test_ruxex::local_selections;
 use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::test_ruxex::turn_permission_fields;
 use core_test_support::wait_for_event;
+use core_test_support::wait_for_event_match;
 use image::GenericImageView;
 use image::ImageBuffer;
 use image::Rgba;
@@ -402,6 +404,103 @@ async fn file_image_passes_through_request_and_rollout() -> anyhow::Result<()> {
             internal_chat_message_metadata_passthrough: None,
         }
     );
+
+    Ok(())
+}
+
+/// Prepared uploads must be reflected in the live user message and durable history, not only in
+/// the request sent to the model.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn uploaded_image_file_id_is_preserved_in_user_message_history() -> anyhow::Result<()> {
+    skip_if_no_network!(Ok(()));
+
+    let server = start_mock_server().await;
+    let test = test_ruxex()
+        .with_image_store(Arc::new(RecordingFileAttachmentStore::default()))
+        .build_with_auto_env(&server)
+        .await?;
+    let image_path = test.cwd.path().join("display-image.png");
+    write_test_png(&image_path, [12, 34, 56, 255])?;
+    let image_url = data_url_from_bytes("image/png", &fs::read(&image_path)?);
+    let response_mock = responses::mount_sse_once(
+        &server,
+        sse(vec![
+            ev_response_created("resp-display"),
+            ev_completed("resp-display"),
+        ]),
+    )
+    .await;
+
+    let input = vec![
+        UserInput::Text {
+            text: "inspect this image".to_string(),
+            text_elements: Vec::new(),
+        },
+        UserInput::Image {
+            image: ImageReference::Inline { image_url },
+            detail: Some(ImageDetail::High),
+        },
+    ];
+    let mut expected_input = input.clone();
+    expected_input[1] = UserInput::Image {
+        image: ImageReference::File {
+            file_id: UPLOADED_FILE_ID.to_string(),
+        },
+        detail: Some(ImageDetail::High),
+    };
+    test.ruxex
+        .start_or_steer_turn(TurnInputRequest::user_input(input))
+        .await?;
+
+    let started = wait_for_event_match(&test.ruxex, |event| match event {
+        EventMsg::ItemStarted(event) => match &event.item {
+            TurnItem::UserMessage(item) => Some(item.clone()),
+            _ => None,
+        },
+        _ => None,
+    })
+    .await;
+    let completed = wait_for_event_match(&test.ruxex, |event| match event {
+        EventMsg::ItemCompleted(event) => match &event.item {
+            TurnItem::UserMessage(item) => Some(item.clone()),
+            _ => None,
+        },
+        _ => None,
+    })
+    .await;
+    assert_eq!(started.content, expected_input);
+    assert_eq!(completed.content, started.content);
+    wait_for_event(&test.ruxex, |event| {
+        matches!(event, EventMsg::TurnComplete(_))
+    })
+    .await;
+
+    assert!(response_mock.single_request().input().iter().any(|item| {
+        item.get("content")
+            .and_then(Value::as_array)
+            .is_some_and(|content| {
+                content.iter().any(|item| {
+                    item.get("file_id").and_then(Value::as_str) == Some(UPLOADED_FILE_ID)
+                })
+            })
+    }));
+
+    test.ruxex.shutdown_and_wait().await?;
+    let rollout_path = test.ruxex.rollout_path().expect("rollout path");
+    let rollout_text = read_rollout_text(&rollout_path).await?;
+    let actual = find_user_message_with_image(&rollout_text)
+        .expect("expected uploaded image in durable history");
+    assert!(matches!(
+        actual,
+        ResponseItem::Message { content, .. }
+            if content.iter().any(|item| matches!(
+                item,
+                ContentItem::InputImage {
+                    image: ImageReference::File { file_id },
+                    ..
+                } if file_id == UPLOADED_FILE_ID
+            ))
+    ));
 
     Ok(())
 }

@@ -1,6 +1,7 @@
 use super::TurnInput as PendingTurnInput;
 use super::session::Session;
 use super::turn_context::TurnContext;
+use crate::image_preparation::ImagePreparationMetadata;
 use ruxex_features::Feature;
 use ruxex_history::ResponseItemEnvelope;
 use ruxex_history::RuxexHarnessMetadata;
@@ -108,22 +109,12 @@ impl Session {
         ResponseItemEnvelope { item, metadata }
     }
 
-    pub(crate) async fn record_annotated_conversation_items(
+    pub(super) async fn prepare_annotated_conversation_items_for_history(
         &self,
         turn_context: &TurnContext,
         model_info: &ModelInfo,
         items: Vec<ResponseItemEnvelope>,
-    ) {
-        if items.iter().all(|item| item.metadata.is_none()) {
-            let items = items
-                .into_iter()
-                .map(ResponseItemEnvelope::into_item)
-                .collect::<Vec<_>>();
-            self.record_conversation_items(turn_context, model_info, &items)
-                .await;
-            return;
-        }
-
+    ) -> (Vec<ResponseItemEnvelope>, Vec<ImagePreparationMetadata>) {
         let mut annotated_items = Vec::with_capacity(items.len());
         let mut image_preparations = Vec::new();
         for envelope in items {
@@ -144,6 +135,18 @@ impl Session {
                 }
             }));
         }
+        (annotated_items, image_preparations)
+    }
+
+    pub(crate) async fn record_annotated_conversation_items(
+        &self,
+        turn_context: &TurnContext,
+        model_info: &ModelInfo,
+        items: Vec<ResponseItemEnvelope>,
+    ) {
+        let (annotated_items, image_preparations) = self
+            .prepare_annotated_conversation_items_for_history(turn_context, model_info, items)
+            .await;
         self.record_prepared_conversation_items(
             turn_context,
             model_info,
