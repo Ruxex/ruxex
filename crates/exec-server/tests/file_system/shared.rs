@@ -4,11 +4,14 @@ use futures::TryStreamExt;
 use pretty_assertions::assert_eq;
 use ruxex_exec_server::CopyOptions;
 use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::EnvironmentAccess;
+use ruxex_exec_server::EnvironmentAccessExt;
 #[cfg(unix)]
 use ruxex_exec_server::ExecServerRuntimePaths;
 use ruxex_exec_server::ExecutorFileSystem;
 use ruxex_exec_server::FILE_READ_CHUNK_SIZE;
 use ruxex_exec_server::FileMetadata;
+use ruxex_exec_server::FileSystemEnvironmentAccessor;
 use ruxex_exec_server::FileSystemSandboxContext;
 use ruxex_exec_server::LocalFileSystem;
 use ruxex_exec_server::ReadDirectoryEntry;
@@ -34,6 +37,7 @@ use ruxex_sandboxing::policy_transforms::effective_file_system_sandbox_policy;
 use ruxex_sandboxing::policy_transforms::effective_network_sandbox_policy;
 use ruxex_utils_path_uri::PathUri;
 use std::path::Path;
+use std::sync::Arc;
 use tempfile::TempDir;
 use test_case::test_case;
 
@@ -325,6 +329,53 @@ async fn file_system_read_file_text_returns_string(
         .with_context(|| format!("mode={implementation}"))?;
     assert_eq!(contents, "hello from trait");
 
+    let file_path = PathUri::from_host_native_path(file_path)?;
+    let accessor = FileSystemEnvironmentAccessor::unrestricted(&file_system);
+    let access: &dyn EnvironmentAccess = &accessor;
+    assert_eq!(
+        access
+            .read_file_text(&file_path, Default::default())
+            .await?,
+        contents
+    );
+
+    Ok(())
+}
+
+#[test_case(FileSystemImplementation::Local ; "local")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn environment_accessor_stream_outlives_permissions_snapshot(
+    implementation: FileSystemImplementation,
+) -> Result<()> {
+    let context = create_file_system_context(implementation).await?;
+    let tmp = TempDir::new()?;
+    let file = tmp.path().join("note.txt");
+    std::fs::write(&file, b"opened in the previous turn")?;
+    let cwd = PathUri::from_host_native_path(tmp.path())?;
+    let file = PathUri::from_host_native_path(file)?;
+    let sandbox = FileSystemSandboxContext::from_permission_profile(
+        PermissionProfile::read_only(),
+        cwd.clone(),
+    );
+
+    let (stream, key) = {
+        let access = FileSystemEnvironmentAccessor::new(&context.file_system, sandbox.clone());
+        (access.read_file_stream(&file).await?, access.cache_key())
+    };
+    let same = FileSystemEnvironmentAccessor::new(&context.file_system, sandbox.clone());
+    assert_eq!(key, same.cache_key());
+    let changed = FileSystemEnvironmentAccessor::new(
+        &context.file_system,
+        FileSystemSandboxContext::from_permission_profile(PermissionProfile::Disabled, cwd),
+    );
+    assert_ne!(key, changed.cache_key());
+    let other_file_system: Arc<dyn ExecutorFileSystem> = Arc::new(LocalFileSystem::unsandboxed());
+    let replacement = FileSystemEnvironmentAccessor::new(&other_file_system, sandbox);
+    assert_ne!(key, replacement.cache_key());
+    assert_eq!(
+        stream.try_collect::<Vec<_>>().await?.concat(),
+        b"opened in the previous turn"
+    );
     Ok(())
 }
 

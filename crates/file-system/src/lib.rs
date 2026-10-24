@@ -1,7 +1,12 @@
+mod environment_accessor;
 mod exec_permission_profile_serde;
 mod find_up;
 
 use bytes::Bytes;
+pub use environment_accessor::EnvironmentAccess;
+pub use environment_accessor::EnvironmentAccessExt;
+pub use environment_accessor::EnvironmentAccessKey;
+pub use environment_accessor::FileSystemEnvironmentAccessor;
 pub use find_up::FindUpErrorPolicy;
 pub use find_up::find_nearest_ancestor_with_markers;
 pub use find_up::find_nearest_native_ancestor_with_markers;
