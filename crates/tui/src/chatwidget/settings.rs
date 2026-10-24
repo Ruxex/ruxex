@@ -99,9 +99,6 @@ impl ChatWidget {
         if feature == Feature::MentionsV2 {
             self.sync_mentions_v2_enabled();
         }
-        if feature == Feature::PreventIdleSleep {
-            self.turn_lifecycle.set_prevent_idle_sleep(enabled);
-        }
         enabled
     }
 

@@ -539,11 +539,6 @@ impl Tui {
         &self.brand_profile
     }
 
-    /// Replace the branding used by TUI surfaces created after this call.
-    pub fn set_brand_profile(&mut self, brand_profile: Arc<dyn crate::brand::TuiBrandProfile>) {
-        self.brand_profile = brand_profile;
-    }
-
     /// Set whether overlays switch to the alternate screen or stay inline.
     pub fn set_alt_screen_enabled(&mut self, enabled: bool) {
         self.alt_screen_enabled = enabled;

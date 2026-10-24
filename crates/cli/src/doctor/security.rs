@@ -23,7 +23,7 @@ const MAX_PRODUCT_OUTPUT_BYTES: usize = 64 * 1024;
 
 pub(super) enum EndpointInspection {
     Complete(Vec<&'static str>),
-    Partial(Vec<&'static str>),
+    #[allow(dead_code)]
     Unavailable,
 }
 
@@ -32,9 +32,8 @@ pub(super) async fn check() -> DoctorCheck {
 }
 
 pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
-    let (products, visibility_incomplete) = match inspection {
-        EndpointInspection::Complete(products) => (products, false),
-        EndpointInspection::Partial(products) => (products, true),
+    let products = match inspection {
+        EndpointInspection::Complete(products) => products,
         EndpointInspection::Unavailable => {
             return DoctorCheck::new(
                 "security.endpoint",
@@ -73,9 +72,6 @@ pub(super) fn endpoint_check(inspection: EndpointInspection) -> DoctorCheck {
     .remediation(
         "ask your security administrator to verify Ruxex exclusions and required helper allowances",
     );
-    if visibility_incomplete {
-        check = check.detail("additional endpoint products: unavailable");
-    }
 
     for product in products {
         let remedy = match product {

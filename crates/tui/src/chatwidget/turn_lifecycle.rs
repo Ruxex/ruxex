@@ -55,12 +55,6 @@ impl TurnLifecycleState {
         self.rendered_completion_turn_ids.clear();
     }
 
-    pub(super) fn set_prevent_idle_sleep(&mut self, enabled: bool) {
-        self.sleep_inhibitor = SleepInhibitor::new(enabled);
-        self.sleep_inhibitor
-            .set_turn_running(self.agent_turn_running);
-    }
-
     pub(super) fn mark_budget_limited(&mut self, turn_id: String) {
         self.budget_limited_turn_ids.insert(turn_id);
     }

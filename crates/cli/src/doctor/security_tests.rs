@@ -157,16 +157,3 @@ fn endpoint_product_guidance_preserves_structured_json_contract() {
     assert_eq!(json["issues"].as_array().map(Vec::len), Some(1));
     assert!(json["issues"][0]["remedy"].is_string());
 }
-
-#[test]
-fn detected_products_preserve_partial_inspection_visibility() {
-    let check = endpoint_check(EndpointInspection::Partial(vec!["Microsoft Defender"]));
-
-    assert_eq!(check.status, CheckStatus::Warning);
-    assert!(
-        check
-            .details
-            .contains(&"additional endpoint products: unavailable".to_string())
-    );
-    assert_eq!(check.issues.len(), 1);
-}

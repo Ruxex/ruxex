@@ -506,6 +506,7 @@ pub(super) async fn request_plugin_list(
         .await
 }
 
+#[allow(dead_code)]
 pub(super) async fn request_plugin_list_for_kinds(
     request_handle: AppServerRequestHandle,
     cwd: PathBuf,

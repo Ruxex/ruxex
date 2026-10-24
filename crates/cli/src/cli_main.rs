@@ -1685,17 +1685,14 @@ async fn run_exec_server_command(
     let listen_url = cmd
         .listen
         .unwrap_or_else(|| ruxex_exec_server::DEFAULT_LISTEN_URL.to_string());
-    let run = exec_server_telemetry::run_until_shutdown(
-        ruxex_exec_server::run_main_with_telemetry(
+    let run =
+        exec_server_telemetry::run_until_shutdown(ruxex_exec_server::run_main_with_telemetry(
             &listen_url,
             runtime_paths,
             telemetry,
             http_client_factory,
             cmd.request_dispatch_mode,
-        ),
-        exec_server_telemetry::ParentLifetime::Independent,
-        exec_server_telemetry::ShutdownBehavior::Immediate,
-    );
+        ));
     run.await.map_err(anyhow::Error::from_boxed)
 }
 

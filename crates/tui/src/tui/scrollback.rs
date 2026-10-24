@@ -19,7 +19,6 @@ use std::io::Write;
 pub(super) enum ScrollbackStrategy {
     Standard,
     Zellij,
-    FullScreen,
 }
 
 impl ScrollbackStrategy {
@@ -36,7 +35,6 @@ impl ScrollbackStrategy {
         wrap_policy: HistoryLineWrapPolicy,
     ) -> InsertHistoryMode {
         match self {
-            Self::FullScreen => InsertHistoryMode::FullScreen,
             Self::Zellij if wrap_policy == HistoryLineWrapPolicy::Terminal => {
                 InsertHistoryMode::FullScreen
             }
@@ -76,10 +74,9 @@ impl ScrollbackStrategy {
                 queue!(writer, ResetScrollRegion, MoveTo(cursor.x, cursor.y))?;
                 Ok(())
             }
-            Self::FullScreen | Self::Standard => {
-                // Partial DEC scroll regions can discard rows instead of moving them into Windows
-                // Terminal's scrollback. Clear the stale composer, then scroll the entire screen.
-                // Also use this path for a single history row: DECSTBM requires two distinct rows.
+            Self::Standard => {
+                // Clear the stale composer, then scroll the entire screen. Also use this path for
+                // a single history row: DECSTBM requires two distinct rows.
                 terminal.clear_after_position(Position::new(/*x*/ 0, viewport_top))?;
                 let writer = terminal.backend_mut();
                 queue!(

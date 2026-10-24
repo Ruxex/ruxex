@@ -48,6 +48,7 @@ pub use ruxex_tools::ToolExposure;
 /// core-owned metadata for hooks, telemetry, tool search, and argument diffs.
 pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
     /// Whether this built-in control tool needs a structured tool-call event.
+    #[allow(dead_code)]
     fn is_builtin_control_tool(&self) -> bool {
         false
     }

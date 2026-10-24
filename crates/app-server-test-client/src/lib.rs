@@ -1224,6 +1224,7 @@ struct RuxexClient {
 #[derive(Debug, Clone, Copy)]
 enum CommandApprovalBehavior {
     AlwaysAccept,
+    #[allow(dead_code)]
     AbortOn(usize),
 }
 
