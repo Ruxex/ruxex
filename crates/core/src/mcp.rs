@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::config::Config;
-use crate::environment_selection::ThreadEnvironments;
 use ruxex_config::DEFAULT_MCP_SERVER_ENVIRONMENT_ID;
 use ruxex_config::McpServerConfig;
 use ruxex_core_plugins::PluginsManager;
@@ -39,10 +38,38 @@ pub(crate) struct McpRuntimeProjection {
 pub(crate) enum McpEnvironmentScope<'a> {
     /// Controller-level operations without an associated thread.
     HostOnly,
-    /// Initial thread selections before the live environment store exists.
-    Initial(&'a [TurnEnvironmentSelection]),
-    /// Current attachment state for an existing thread.
-    Live(&'a ThreadEnvironments),
+    /// Every thread selection captured for this operation, including unavailable ones.
+    Selected(&'a [TurnEnvironmentSelection]),
+}
+
+impl<'a> McpEnvironmentScope<'a> {
+    pub(crate) fn authority_for(&self, environment_id: &str) -> McpEnvironmentAuthority<'a> {
+        let Self::Selected(selections) = *self else {
+            return McpEnvironmentAuthority::Unrestricted;
+        };
+        let Some(selection) = selections
+            .iter()
+            .find(|selection| selection.environment_id == environment_id)
+        else {
+            return if environment_id == DEFAULT_MCP_SERVER_ENVIRONMENT_ID {
+                McpEnvironmentAuthority::Unrestricted
+            } else {
+                McpEnvironmentAuthority::SelectedPluginsOnly
+            };
+        };
+        match &selection.config {
+            EnvironmentConfigState::FromThread => McpEnvironmentAuthority::Unrestricted,
+            EnvironmentConfigState::Pending | EnvironmentConfigState::Failed(_) => {
+                McpEnvironmentAuthority::Unavailable
+            }
+            EnvironmentConfigState::Ready(config) => config
+                .mcp_policy
+                .as_ref()
+                .map_or(McpEnvironmentAuthority::Unrestricted, |policy| {
+                    McpEnvironmentAuthority::Restricted(policy)
+                }),
+        }
+    }
 }
 
 pub(crate) struct McpThreadIdentity<'a> {
@@ -248,38 +275,8 @@ impl McpManager {
                 } => catalog.remove_extension(name, contributor_id, contribution_order),
             }
         }
-        let selections = match environment_scope {
-            McpEnvironmentScope::HostOnly => None,
-            McpEnvironmentScope::Initial(selections) => Some(selections.to_vec()),
-            McpEnvironmentScope::Live(environments) => Some(environments.selections()),
-        };
         let catalog = catalog.build_with_environment_authority(|environment_id| {
-            let Some(selections) = selections.as_ref() else {
-                return McpEnvironmentAuthority::Unrestricted;
-            };
-            let Some(selection) = selections
-                .iter()
-                .find(|selection| selection.environment_id == environment_id)
-            else {
-                return if environment_id == DEFAULT_MCP_SERVER_ENVIRONMENT_ID {
-                    McpEnvironmentAuthority::Unrestricted
-                } else {
-                    McpEnvironmentAuthority::SelectedPluginsOnly
-                };
-            };
-
-            match &selection.config {
-                EnvironmentConfigState::FromThread => McpEnvironmentAuthority::Unrestricted,
-                EnvironmentConfigState::Pending | EnvironmentConfigState::Failed(_) => {
-                    McpEnvironmentAuthority::Unavailable
-                }
-                EnvironmentConfigState::Ready(config) => config
-                    .mcp_policy
-                    .as_ref()
-                    .map_or(McpEnvironmentAuthority::Unrestricted, |policy| {
-                        McpEnvironmentAuthority::Restricted(policy)
-                    }),
-            }
+            environment_scope.authority_for(environment_id)
         });
         for conflict in catalog.conflicts() {
             tracing::warn!(

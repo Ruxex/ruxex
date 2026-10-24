@@ -819,7 +819,9 @@ impl ThreadEnvironments {
         for environment in selected.iter() {
             if let EnvironmentConfigState::Failed(error) = &environment.selection.config {
                 environments.push(TurnEnvironmentState::Failed {
-                    selection: environment.selection.clone(),
+                    selection: environment
+                        .config_origin
+                        .into_input_selection(environment.selection.clone()),
                     error: error.clone(),
                 });
                 continue;
@@ -873,7 +875,7 @@ impl TurnEnvironmentState {
                 if matches!(selection.config, EnvironmentConfigState::Pending) {
                     let Some(config) = environment.installed_config else {
                         return Self::Failed {
-                            selection,
+                            selection: starting.config_origin.into_input_selection(selection),
                             error: "Environment configuration was not supplied.".to_string(),
                         };
                     };
@@ -902,7 +904,9 @@ impl TurnEnvironmentState {
                     "skipping failed turn environment: {err}"
                 );
                 Self::Failed {
-                    selection: starting.selection,
+                    selection: starting
+                        .config_origin
+                        .into_input_selection(starting.selection),
                     error: err.to_string(),
                 }
             }
@@ -1023,6 +1027,32 @@ impl TurnEnvironmentSnapshot {
     pub(crate) fn to_selections(&self) -> Vec<TurnEnvironmentSelection> {
         self.turn_environments()
             .map(TurnEnvironment::selection)
+            .collect()
+    }
+
+    /// Returns every captured selection, including environments still starting or unavailable.
+    pub(crate) fn all_selections(&self) -> Vec<TurnEnvironmentSelection> {
+        self.environments
+            .iter()
+            .map(|environment| match environment {
+                TurnEnvironmentState::Ready(environment) => environment.selection(),
+                TurnEnvironmentState::Starting(environment) => environment
+                    .config_origin
+                    .into_input_selection(environment.selection.clone()),
+                TurnEnvironmentState::Failed { selection, .. } => selection.clone(),
+            })
+            .collect()
+    }
+
+    /// Returns the exact handles for environments that are ready in this snapshot.
+    pub(crate) fn ready_environment_handles(&self) -> HashMap<String, Arc<Environment>> {
+        self.turn_environments()
+            .map(|environment| {
+                (
+                    environment.selection.environment_id.clone(),
+                    Arc::clone(&environment.environment),
+                )
+            })
             .collect()
     }
 

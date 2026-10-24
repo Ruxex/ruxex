@@ -360,16 +360,8 @@ impl Session {
             desired.local_process_cwd.clone(),
         )
         .with_selected_environments(
-            desired
-                .environments
-                .turn_environments()
-                .map(|environment| {
-                    (
-                        environment.selection.environment_id.clone(),
-                        Arc::clone(&environment.environment),
-                    )
-                })
-                .collect(),
+            desired.environments.all_selections().into(),
+            desired.environments.ready_environment_handles(),
         );
         McpRuntimeInput {
             startup_policy: if matches!(desired.session_source, SessionSource::SubAgent(_)) {

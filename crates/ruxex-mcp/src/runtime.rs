@@ -31,6 +31,7 @@ use ruxex_protocol::mcp::CallToolResult;
 use ruxex_protocol::mcp::ClientMcpExtensions;
 use ruxex_protocol::models::PermissionProfile;
 use ruxex_protocol::protocol::Event;
+use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use ruxex_rmcp_client::ElicitationResponse;
 use ruxex_rmcp_client::with_http_headers_helper;
 use ruxex_utils_path_uri::PathUri;
@@ -95,7 +96,8 @@ struct PublishedMcpRuntime {
     config: Option<Arc<McpConfig>>,
     plugins_available: bool,
     ready_selected_capability_roots: Vec<SelectedCapabilityRoot>,
-    selected_environments: HashMap<String, Arc<Environment>>,
+    environment_selections: Arc<[TurnEnvironmentSelection]>,
+    ready_environments: HashMap<String, Arc<Environment>>,
     cached_binding: Mutex<Option<CachedMcpBinding>>,
 }
 
@@ -165,7 +167,8 @@ impl McpRuntime {
                 config: None,
                 plugins_available: false,
                 ready_selected_capability_roots: Vec::new(),
-                selected_environments: HashMap::new(),
+                environment_selections: Arc::default(),
+                ready_environments: HashMap::new(),
                 cached_binding: Mutex::new(None),
             }),
             reconnect_pending: AtomicBool::new(false),
@@ -194,7 +197,8 @@ impl McpRuntime {
         let config = Arc::clone(&input.config);
         let plugins_available = input.plugins_available;
         let ready_selected_capability_roots = input.ready_selected_capability_roots.clone();
-        let selected_environments = input.runtime_context.selected_environments.clone();
+        let environment_selections = Arc::clone(&input.runtime_context.environment_selections);
+        let ready_environments = input.runtime_context.ready_environments.clone();
         let connections = Arc::new(
             McpConnectionSet::new(
                 previous,
@@ -209,7 +213,8 @@ impl McpRuntime {
             config: Some(config),
             plugins_available,
             ready_selected_capability_roots,
-            selected_environments,
+            environment_selections,
+            ready_environments,
             cached_binding: Mutex::new(None),
         }));
         let _ = publish.send(true);
@@ -359,17 +364,19 @@ impl McpRuntime {
         self.current.load().ready_selected_capability_roots.clone()
     }
 
-    /// Whether this publication uses the currently ready environment handles.
+    /// Whether this publication uses the same selections and currently ready environment handles.
     pub fn current_environments_match(
         &self,
-        environments: &HashMap<String, Arc<Environment>>,
+        selections: &[TurnEnvironmentSelection],
+        ready_environments: &HashMap<String, Arc<Environment>>,
     ) -> bool {
         let current = self.current.load();
         current.config.is_some()
-            && current.selected_environments.len() == environments.len()
-            && environments.iter().all(|(id, environment)| {
+            && current.environment_selections.as_ref() == selections
+            && current.ready_environments.len() == ready_environments.len()
+            && ready_environments.iter().all(|(id, environment)| {
                 current
-                    .selected_environments
+                    .ready_environments
                     .get(id)
                     .is_some_and(|published| Arc::ptr_eq(published, environment))
             })
@@ -491,7 +498,8 @@ pub struct SandboxState {
 #[derive(Clone)]
 pub struct McpRuntimeContext {
     environment_manager: Arc<EnvironmentManager>,
-    selected_environments: HashMap<String, Arc<Environment>>,
+    environment_selections: Arc<[TurnEnvironmentSelection]>,
+    ready_environments: HashMap<String, Arc<Environment>>,
     local_process_cwd: PathBuf,
     local_http_client: Arc<dyn HttpClient>,
 }
@@ -535,18 +543,21 @@ impl McpRuntimeContext {
         );
         Self {
             environment_manager,
-            selected_environments: HashMap::new(),
+            environment_selections: Arc::default(),
+            ready_environments: HashMap::new(),
             local_process_cwd,
             local_http_client,
         }
     }
 
-    /// Pins the concrete environment handles captured for this thread or model step.
+    /// Pins all captured selections and the concrete handles for environments already ready.
     pub fn with_selected_environments(
         mut self,
-        selected_environments: HashMap<String, Arc<Environment>>,
+        environment_selections: Arc<[TurnEnvironmentSelection]>,
+        ready_environments: HashMap<String, Arc<Environment>>,
     ) -> Self {
-        self.selected_environments = selected_environments;
+        self.environment_selections = environment_selections;
+        self.ready_environments = ready_environments;
         self
     }
 
@@ -567,7 +578,7 @@ impl McpRuntimeContext {
         // HTTP is the one current exception: it can use the ambient HTTP client
         // even when no local Environment is configured.
         if let Some(environment) = self
-            .selected_environments
+            .ready_environments
             .get(&config.environment_id)
             .cloned()
             .or_else(|| {

@@ -65,6 +65,7 @@ impl Session {
             )
         };
         let environments = self.services.turn_environments.snapshot().await;
+        let environment_selections = environments.all_selections();
         let selected_capability_roots = self
             .resolve_selected_capability_roots_for_step(&environments)
             .await;
@@ -88,7 +89,7 @@ impl Session {
                     session_source: &session_source,
                     originator: &originator,
                     disabled_plugin_ids: &disabled_plugin_ids,
-                    environments: McpEnvironmentScope::Live(&self.services.turn_environments),
+                    environments: McpEnvironmentScope::Selected(&environment_selections),
                 },
                 &ready_selected_capability_roots,
                 executor_capability_discovery.as_deref(),
@@ -107,15 +108,8 @@ impl Session {
             local_process_cwd,
         )
         .with_selected_environments(
-            environments
-                .turn_environments()
-                .map(|environment| {
-                    (
-                        environment.selection.environment_id.clone(),
-                        Arc::clone(&environment.environment),
-                    )
-                })
-                .collect(),
+            environment_selections.into(),
+            environments.ready_environment_handles(),
         );
         (mcp_config, runtime_context)
     }
@@ -136,20 +130,13 @@ impl Session {
         };
         loop {
             let environments = self.services.turn_environments.snapshot().await;
-            let ready_environments = environments
-                .turn_environments()
-                .map(|environment| {
-                    (
-                        environment.selection.environment_id.clone(),
-                        Arc::clone(&environment.environment),
-                    )
-                })
-                .collect();
+            let environment_selections = environments.all_selections();
+            let ready_environments = environments.ready_environment_handles();
             // Attachment resolution can finish after the owner's configuration callback.
             if !self
                 .services
                 .mcp_runtime
-                .current_environments_match(&ready_environments)
+                .current_environments_match(&environment_selections, &ready_environments)
             {
                 self.mark_mcp_runtime_dirty();
             }
@@ -184,7 +171,7 @@ impl Session {
                         session_source: &desired.session_source,
                         originator: &desired.originator,
                         disabled_plugin_ids: &desired.disabled_plugin_ids,
-                        environments: McpEnvironmentScope::Live(&self.services.turn_environments),
+                        environments: McpEnvironmentScope::Selected(&environment_selections),
                     },
                     &ready_selected_capability_roots,
                     executor_capability_discovery.as_deref(),
@@ -540,6 +527,7 @@ impl Session {
             .mcp_runtime
             .current_ready_selected_capability_roots();
         let environments = self.services.turn_environments.snapshot().await;
+        let environment_selections = environments.all_selections();
         let executor_capability_discovery = self
             .executor_capability_discovery_for_step(
                 refresh_config,
@@ -558,7 +546,7 @@ impl Session {
                     session_source: &turn_context.session_source,
                     originator: &turn_context.originator,
                     disabled_plugin_ids: &disabled_plugin_ids,
-                    environments: McpEnvironmentScope::Live(&self.services.turn_environments),
+                    environments: McpEnvironmentScope::Selected(&environment_selections),
                 },
                 &ready_selected_capability_roots,
                 executor_capability_discovery.as_deref(),

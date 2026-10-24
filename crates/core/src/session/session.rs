@@ -1046,7 +1046,7 @@ impl Session {
                         session_source: &mcp_session_source,
                         originator: &mcp_originator,
                         disabled_plugin_ids: &mcp_disabled_plugin_ids,
-                        environments: McpEnvironmentScope::Initial(environment_selections),
+                        environments: McpEnvironmentScope::Selected(&environment_selections),
                     },
                     /*ready_selected_capability_roots*/ &[],
                     /*executor_capability_discovery*/ None,
