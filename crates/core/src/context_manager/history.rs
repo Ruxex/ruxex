@@ -1082,7 +1082,7 @@ mod tests {
         ];
         history.record_items(items.iter(), TruncationPolicy::Tokens(32));
         assert_eq!(history.raw_items().len(), 1);
-        assert_eq!(history.history_version(), 0);
+        assert_eq!(history.history_version, 0);
 
         let prompt = history.for_prompt(&[]);
         let [ResponseItem::Message { role, content, .. }] = prompt.as_slice() else {
@@ -1106,7 +1106,7 @@ mod tests {
             message("assistant", "answer"),
             message("user", "second"),
         ]);
-        assert_eq!(history.history_version(), 1);
+        assert_eq!(history.history_version, 1);
         assert_eq!(history.reset_version, 1);
 
         history.drop_last_n_user_turns(1);
@@ -1117,7 +1117,7 @@ mod tests {
         history.remove_first_item();
         assert_eq!(history.raw_items().len(), 2);
         history.replace_annotated(Vec::new());
-        assert_eq!(history.history_version(), 3);
+        assert_eq!(history.history_version, 3);
         assert_eq!(history.reset_version, 3);
     }
 }

@@ -63,6 +63,7 @@ fn base_instruction_override_is_literal_and_preserves_catalog_messages() {
         tools: Some(ToolMessages {
             send_user_message_async: Some(ToolMessage {
                 description: Some(async_message_description.to_string()),
+                ..Default::default()
             }),
             multi_agent: Some(MultiAgentToolMessages {
                 spawn_agent: Some(ToolMessage {

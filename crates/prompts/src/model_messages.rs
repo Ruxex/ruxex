@@ -155,6 +155,24 @@ impl<'a> ResolvedModelMessages<'a> {
         tool.as_ref()?.description.as_deref()
     }
 
+    /// Selects a V2 tool's complete parameter schema; parsing belongs to the tool consumer.
+    pub fn multi_agent_tool_parameters_override(&self, tool_name: &str) -> Option<&'a str> {
+        let tools = self
+            .catalog_messages
+            .and_then(|messages| messages.tools.as_ref())
+            .and_then(|tools| tools.multi_agent.as_ref())?;
+        let tool = match tool_name {
+            "spawn_agent" => &tools.spawn_agent,
+            "send_message" => &tools.send_message,
+            "followup_task" => &tools.followup_task,
+            "wait_agent" => &tools.wait_agent,
+            "interrupt_agent" => &tools.interrupt_agent,
+            "list_agents" => &tools.list_agents,
+            _ => return None,
+        };
+        tool.as_ref()?.parameters.as_deref()
+    }
+
     /// Resolves persistent-mode instructions without deciding whether the mode is active.
     pub fn persistent_instructions(&self) -> &'a str {
         self.catalog_messages

@@ -1,16 +1,17 @@
-//! Applies model-catalog description and namespace overrides to Multi-Agent V2 tools.
-//! Execution and parameter schemas remain delegated to the underlying runtime.
+//! Applies model-catalog description, parameter, and namespace overrides to Multi-Agent V2 tools.
 
 use crate::session::session::Session;
 use crate::tools::context::ToolInvocation;
 use crate::tools::registry::CoreToolRuntime;
 use futures::future::BoxFuture;
+use ruxex_tools::JsonSchema;
 use ruxex_tools::ResponsesApiNamespace;
 use ruxex_tools::ResponsesApiNamespaceTool;
 use ruxex_tools::ToolExecutor;
 use ruxex_tools::ToolName;
 use ruxex_tools::ToolSearchInfo;
 use ruxex_tools::ToolSpec;
+use serde_json::Value;
 use std::sync::Arc;
 
 const MULTI_AGENT_V2_NAMESPACE_DESCRIPTION: &str = "Tools for spawning and managing sub-agents.";
@@ -19,8 +20,37 @@ pub(super) fn multi_agent_v2_handler(
     handler: impl CoreToolRuntime + 'static,
     namespace: Option<&str>,
     description_override: Option<&str>,
+    parameters_override: Option<&str>,
 ) -> Arc<dyn CoreToolRuntime> {
-    if namespace.is_none() && description_override.is_none() {
+    let parameters_override = parameters_override.map(|parameters| -> Result<JsonSchema, &str> {
+        let parameters: Value =
+            serde_json::from_str(parameters).map_err(|_| "schema is not valid JSON")?;
+        if !parameters.is_object() || parameters["type"] != "object" {
+            return Err("schema must declare an object type");
+        }
+        let mut parameters: JsonSchema = serde_json::from_value(parameters)
+            .map_err(|_| "schema uses unsupported JSON Schema structures")?;
+        if let ToolSpec::Function(tool) = handler.spec()
+            && let Some(properties) = tool.parameters.properties
+        {
+            for (name, schema) in properties {
+                if schema.encrypted == Some(true) {
+                    let property = parameters
+                        .properties
+                        .as_mut()
+                        .and_then(|properties| properties.get_mut(&name))
+                        .ok_or("schema omits an encrypted parameter")?;
+                    property.encrypted = Some(true);
+                }
+            }
+        }
+        Ok(parameters)
+    });
+    if let Some(Err(reason)) = &parameters_override {
+        tracing::warn!(tool = %handler.tool_name(), reason, "Invalid catalog tool parameters; using bundled parameters");
+    }
+    let parameters_override = parameters_override.and_then(Result::ok);
+    if namespace.is_none() && description_override.is_none() && parameters_override.is_none() {
         return Arc::new(handler);
     }
 
@@ -28,6 +58,7 @@ pub(super) fn multi_agent_v2_handler(
         handler: Arc::new(handler),
         namespace: namespace.map(str::to_owned),
         description_override: description_override.map(str::to_owned),
+        parameters_override,
     })
 }
 
@@ -35,6 +66,7 @@ struct MultiAgentV2ToolOverrides {
     handler: Arc<dyn CoreToolRuntime>,
     namespace: Option<String>,
     description_override: Option<String>,
+    parameters_override: Option<JsonSchema>,
 }
 
 impl ToolExecutor<ToolInvocation> for MultiAgentV2ToolOverrides {
@@ -52,6 +84,11 @@ impl ToolExecutor<ToolInvocation> for MultiAgentV2ToolOverrides {
             && let Some(description) = &self.description_override
         {
             tool.description.clone_from(description);
+        }
+        if let ToolSpec::Function(tool) = &mut spec
+            && let Some(parameters) = &self.parameters_override
+        {
+            tool.parameters.clone_from(parameters);
         }
 
         match (&self.namespace, spec) {

@@ -69,6 +69,7 @@ fn model_catalog_tool_messages(model_name: &str) -> ToolMessages {
     let description = |tool_name: &str| {
         Some(ToolMessage {
             description: Some(format!("{tool_name} description for {model_name}.")),
+            ..Default::default()
         })
     };
     ToolMessages {
