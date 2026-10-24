@@ -77,6 +77,12 @@ test-cargo *args: prepare-rusty-v8
 app-server-e2e: prepare-rusty-v8
     RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --package ruxex-app-server --test app_server_e2e --test regression
 
+# Build the provider-owned host required by PTY tests, then run the TUI integration suite.
+[unix]
+tui-e2e: prepare-rusty-v8
+    RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} build --package ruxex-provider-host-example
+    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --package ruxex-tui --test all --test preview_cli
+
 # Build a portable nextest archive for CI test groups. Package selection
 # arguments determine which test binaries are included.
 [unix]
