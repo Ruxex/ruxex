@@ -8,6 +8,7 @@ use ruxex_app_server_protocol::ThreadItem;
 use ruxex_app_server_protocol::ThreadSettings;
 use ruxex_app_server_protocol::Turn;
 use ruxex_app_server_protocol::TurnError;
+use ruxex_app_server_protocol::TurnItemsView;
 use ruxex_core::RuxexThread;
 use ruxex_core::ThreadConfigSnapshot;
 use ruxex_file_watcher::WatchRegistration;
@@ -166,6 +167,14 @@ impl ThreadState {
 
     pub(crate) fn active_turn_snapshot(&self) -> Option<Turn> {
         self.current_turn_history.active_turn_snapshot()
+    }
+
+    pub(crate) fn active_turn_snapshot_with_items_view(
+        &self,
+        items_view: TurnItemsView,
+    ) -> Option<Turn> {
+        self.current_turn_history
+            .active_turn_snapshot_with_items_view(items_view)
     }
 
     pub(crate) fn active_turn_metadata_snapshot(&self) -> Option<ThreadHistoryTurnChange> {

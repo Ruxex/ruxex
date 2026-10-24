@@ -275,10 +275,15 @@ impl ThreadHistoryBuilder {
     }
 
     pub fn active_turn_snapshot(&self) -> Option<Turn> {
+        self.active_turn_snapshot_with_items_view(TurnItemsView::Full)
+    }
+
+    /// Snapshots the active or last finished turn, copying only the requested items.
+    pub fn active_turn_snapshot_with_items_view(&self, items_view: TurnItemsView) -> Option<Turn> {
         self.current_turn
             .as_ref()
-            .map(Turn::from)
-            .or_else(|| self.turns.last().map(Turn::from))
+            .or_else(|| self.turns.last())
+            .map(|turn| turn.snapshot(items_view))
     }
 
     /// Snapshots active turn metadata without cloning its items.
@@ -1647,6 +1652,19 @@ impl PendingTurn {
         self.started_at = started_at;
         self
     }
+
+    fn snapshot(&self, items_view: TurnItemsView) -> Turn {
+        Turn {
+            id: self.id.clone(),
+            items: items_view.project_items(&self.items),
+            items_view,
+            error: self.error.clone(),
+            status: self.status.clone(),
+            started_at: self.started_at,
+            completed_at: self.completed_at,
+            duration_ms: self.duration_ms,
+        }
+    }
 }
 
 impl From<PendingTurn> for Turn {
@@ -1666,16 +1684,7 @@ impl From<PendingTurn> for Turn {
 
 impl From<&PendingTurn> for Turn {
     fn from(value: &PendingTurn) -> Self {
-        Self {
-            id: value.id.clone(),
-            items: value.items.clone(),
-            items_view: TurnItemsView::Full,
-            error: value.error.clone(),
-            status: value.status.clone(),
-            started_at: value.started_at,
-            completed_at: value.completed_at,
-            duration_ms: value.duration_ms,
-        }
+        value.snapshot(TurnItemsView::Full)
     }
 }
 
