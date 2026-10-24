@@ -1051,6 +1051,10 @@ pub(crate) fn create_seatbelt_command_args_with_profile(
             "(deny file-read* file-write* (subpath {directory}))\n\
              (deny network-outbound (remote unix-socket (subpath {directory})))"
         ));
+        // These fcntls mutate files through read-only descriptors, bypassing
+        // file-write* and file-ioctl. Even deny-default needs this explicit deny.
+        // F_MAKECOMPRESSED = 80, F_TRANSFEREXTENTS = 110.
+        policy_sections.push("(deny system-fcntl (fcntl-command 80 110))".to_string());
     }
     if file_system_sandbox_policy.has_full_disk_read_access() {
         policy_sections.push(MACOS_SEATBELT_PREFERENCES_POLICY.to_string());

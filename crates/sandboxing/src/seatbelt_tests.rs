@@ -69,6 +69,39 @@ fn seatbelt_policy_arg(args: &[String]) -> &str {
         .expect("seatbelt args should include policy text")
 }
 
+#[test]
+fn restricted_seatbelt_policy_denies_mutating_fcntls() {
+    let restricted = FileSystemSandboxPolicy::restricted(Vec::new());
+    let args = create_seatbelt_command_args(CreateSeatbeltCommandArgsParams {
+        command: vec!["/bin/true".to_string()],
+        file_system_sandbox_policy: &restricted,
+        network_sandbox_policy: NetworkSandboxPolicy::Restricted,
+        sandbox_policy_cwd: Path::new("/tmp"),
+        enforce_managed_network: false,
+        managed_network: None,
+        environment_id: None,
+        network: None,
+        extra_allow_unix_sockets: &[],
+    })
+    .expect("restricted seatbelt policy should be generated");
+    assert!(seatbelt_policy_arg(&args).contains("(deny system-fcntl (fcntl-command 80 110))"));
+
+    let unrestricted = FileSystemSandboxPolicy::unrestricted();
+    let args = create_seatbelt_command_args(CreateSeatbeltCommandArgsParams {
+        command: vec!["/bin/true".to_string()],
+        file_system_sandbox_policy: &unrestricted,
+        network_sandbox_policy: NetworkSandboxPolicy::Restricted,
+        sandbox_policy_cwd: Path::new("/tmp"),
+        enforce_managed_network: false,
+        managed_network: None,
+        environment_id: None,
+        network: None,
+        extra_allow_unix_sockets: &[],
+    })
+    .expect("unrestricted seatbelt policy should be generated");
+    assert!(!seatbelt_policy_arg(&args).contains("(deny system-fcntl (fcntl-command 80 110))"));
+}
+
 #[cfg(unix)]
 fn restricted_write_policy(paths: &[&Path]) -> FileSystemSandboxPolicy {
     let mut entries = vec![FileSystemSandboxEntry::new(
