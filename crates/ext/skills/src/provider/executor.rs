@@ -3,8 +3,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use futures::StreamExt;
+use ruxex_exec_server::EnvironmentAccess;
 use ruxex_exec_server::EnvironmentManager;
-use ruxex_exec_server::FileSystemSandboxContext;
+use ruxex_exec_server::FileSystemEnvironmentAccessor;
 use ruxex_extension_api::SelectedPluginSnapshot;
 use ruxex_protocol::capabilities::CapabilityRootLocation;
 use ruxex_protocol::protocol::Product;
@@ -112,12 +113,10 @@ impl SkillProvider for ExecutorSkillProvider {
                     ));
                     continue;
                 };
-                let outcome = load_environment_skills_from_root(
-                    file_system.as_ref(),
-                    path,
-                    self.restriction_product,
-                )
-                .await;
+                let access = FileSystemEnvironmentAccessor::unrestricted(&file_system);
+                let outcome =
+                    load_environment_skills_from_root(&access, path, self.restriction_product)
+                        .await;
                 catalog.warnings.extend(outcome.warnings);
                 for skill in outcome.skills {
                     catalog.push_entry(catalog_entry_from_skill(
@@ -184,13 +183,12 @@ impl SkillProvider for ExecutorSkillProvider {
                     "executor skill resource references unavailable environment `{environment_id}`"
                 )));
             };
-            let contents = read_bounded_text(
-                file_system.as_ref(),
-                resource_path,
-                request.resource.as_str(),
-                request.sandbox.as_ref(),
-            )
-            .await?;
+            let access = match request.sandbox.clone() {
+                Some(sandbox) => FileSystemEnvironmentAccessor::new(&file_system, sandbox),
+                None => FileSystemEnvironmentAccessor::unrestricted(&file_system),
+            };
+            let contents =
+                read_bounded_text(&access, resource_path, request.resource.as_str()).await?;
 
             Ok(SkillReadResult {
                 resource: request.resource,
@@ -320,10 +318,9 @@ fn normalized_environment_path(path: &PathUri) -> String {
 }
 
 async fn read_bounded_text(
-    file_system: &dyn ruxex_exec_server::ExecutorFileSystem,
+    file_system: &dyn EnvironmentAccess,
     path: &PathUri,
     resource: &str,
-    sandbox: Option<&FileSystemSandboxContext>,
 ) -> Result<String, SkillProviderError> {
     let read_error = |err| {
         SkillProviderError::new(format!(
@@ -331,7 +328,7 @@ async fn read_bounded_text(
         ))
     };
     let mut stream = file_system
-        .read_file_stream(path, sandbox)
+        .read_file_stream(path)
         .await
         .map_err(&read_error)?;
     let mut contents = Vec::new();

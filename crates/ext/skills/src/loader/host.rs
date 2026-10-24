@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures::StreamExt;
+use ruxex_exec_server::EnvironmentAccess;
+use ruxex_exec_server::EnvironmentAccessExt;
 use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::FileSystemEnvironmentAccessor;
 use ruxex_exec_server::GetMetadataOptions;
 use ruxex_exec_server::ReadFileOptions;
 use ruxex_protocol::protocol::SkillScope;
@@ -128,8 +131,8 @@ struct ResolvedDiscoveredSkill {
 
 pub(crate) async fn load_host_skill_root(root: HostSkillRoot) -> HostSkillRootSnapshot {
     let is_agent_plugin = root.discovery_mode() == SkillDiscoveryMode::DirectChildren;
-    let canonical_root =
-        canonicalize_for_skill_identity(root.file_system.as_ref(), &root.path).await;
+    let access = FileSystemEnvironmentAccessor::unrestricted(&root.file_system);
+    let canonical_root = canonicalize_for_skill_identity(&access, &root.path).await;
     let (skills, skill_discovery_path_by_path, errors) =
         load_skills_under_root(&root, &canonical_root).await;
     HostSkillRootSnapshot {
@@ -150,7 +153,10 @@ async fn load_skills_under_root(
     Arc<HashMap<AbsolutePathBuf, AbsolutePathBuf>>,
     Vec<SkillError>,
 ) {
-    let file_system = skill_root.file_system.as_ref();
+    // Host skill roots currently carry only an executor filesystem. Keep their historical
+    // unrestricted behavior until host roots carry an environment-bound accessor.
+    let access = FileSystemEnvironmentAccessor::unrestricted(&skill_root.file_system);
+    let file_system: &dyn EnvironmentAccess = &access;
     let plugin_identity = skill_root.plugin_identity();
     let plugin_root = match skill_root.plugin_root() {
         Some(plugin_root) => Some(canonicalize_for_skill_identity(file_system, plugin_root).await),
@@ -187,10 +193,7 @@ async fn load_skills_under_root(
     let resolved_plugin_root = plugin_root.as_ref();
     let resolved_skills = futures::stream::iter(skills)
         .map(|skill| async move {
-            let path_uri = match file_system
-                .canonicalize(&skill.path, /*sandbox*/ None)
-                .await
-            {
+            let path_uri = match file_system.canonicalize(&skill.path).await {
                 Ok(path) => path,
                 Err(error) if discovery_mode == SkillDiscoveryMode::DirectChildren => {
                     error!(
@@ -222,11 +225,7 @@ async fn load_skills_under_root(
                     return None;
                 }
                 match file_system
-                    .get_metadata(
-                        &path_uri,
-                        GetMetadataOptions::default(),
-                        /*sandbox*/ None,
-                    )
+                    .get_metadata(&path_uri, GetMetadataOptions::default())
                     .await
                 {
                     Ok(metadata) if metadata.is_file => {}
@@ -338,7 +337,7 @@ async fn load_skills_under_root(
 }
 
 async fn parse_skill_file(
-    file_system: &dyn ExecutorFileSystem,
+    file_system: &dyn EnvironmentAccess,
     skill: &DiscoveredSkill,
     path: &AbsolutePathBuf,
     path_uri: &PathUri,
@@ -357,7 +356,7 @@ async fn parse_skill_file(
     }
     .unwrap_or(SkillMetadataDiscovery::Absent);
     let (contents, loaded_metadata) = tokio::join!(
-        file_system.read_file_text(path_uri, ReadFileOptions::default(), /*sandbox*/ None,),
+        file_system.read_file_text(path_uri, ReadFileOptions::default()),
         load_host_skill_metadata(file_system, path, &metadata, plugin_root),
     );
     let contents = contents.map_err(|error| format!("failed to read file: {error}"))?;
@@ -400,12 +399,12 @@ fn default_skill_name(path: &AbsolutePathBuf) -> String {
 }
 
 async fn canonicalize_for_skill_identity(
-    file_system: &dyn ExecutorFileSystem,
+    file_system: &dyn EnvironmentAccess,
     path: &AbsolutePathBuf,
 ) -> AbsolutePathBuf {
     let path_uri = PathUri::from_abs_path(path);
     file_system
-        .canonicalize(&path_uri, /*sandbox*/ None)
+        .canonicalize(&path_uri)
         .await
         .and_then(|path| path.to_abs_path())
         .unwrap_or_else(|_| path.clone())

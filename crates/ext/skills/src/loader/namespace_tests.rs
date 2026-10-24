@@ -5,6 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use pretty_assertions::assert_eq;
+use ruxex_exec_server::FileSystemEnvironmentAccessor;
 use ruxex_exec_server::LOCAL_FS;
 #[cfg(unix)]
 use ruxex_protocol::protocol::SkillScope;
@@ -50,7 +51,7 @@ async fn namespaces_for(
     let root = canonical_uri(root);
     namespace_roots.insert(root.clone());
     let resolver = SkillNamespaceResolver::discover(
-        LOCAL_FS.as_ref(),
+        &FileSystemEnvironmentAccessor::unrestricted(&LOCAL_FS),
         &root,
         skill_paths,
         plugin_roots,

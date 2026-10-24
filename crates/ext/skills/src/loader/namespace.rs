@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use futures::StreamExt;
-use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::EnvironmentAccess;
 use ruxex_utils_path_uri::PathUri;
 use ruxex_utils_plugins::plugin_namespace_for_root_uri;
 
@@ -37,7 +37,7 @@ impl SkillNamespaceResolver {
     }
 
     pub(crate) async fn discover(
-        fs: &dyn ExecutorFileSystem,
+        fs: &dyn EnvironmentAccess,
         root: &PathUri,
         skill_paths: &[PathUri],
         plugin_roots: HashSet<PathUri>,

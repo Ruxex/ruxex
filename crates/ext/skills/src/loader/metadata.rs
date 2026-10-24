@@ -1,6 +1,7 @@
 use std::io;
 
-use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_exec_server::EnvironmentAccess;
+use ruxex_exec_server::EnvironmentAccessExt;
 use ruxex_exec_server::GetMetadataOptions;
 use ruxex_exec_server::ReadFileOptions;
 use ruxex_protocol::protocol::Product;
@@ -75,7 +76,7 @@ struct DependencyOAuth {
 }
 
 pub(super) async fn load_host_skill_metadata(
-    file_system: &dyn ExecutorFileSystem,
+    file_system: &dyn EnvironmentAccess,
     skill_path: &AbsolutePathBuf,
     metadata: &SkillMetadataDiscovery,
     plugin_root: Option<&AbsolutePathBuf>,
@@ -89,7 +90,7 @@ pub(super) async fn load_host_skill_metadata(
         SkillMetadataDiscovery::Absent => return LoadedSkillMetadata::default(),
         SkillMetadataDiscovery::Probe(path) => {
             match file_system
-                .get_metadata(path, GetMetadataOptions::default(), /*sandbox*/ None)
+                .get_metadata(path, GetMetadataOptions::default())
                 .await
             {
                 Ok(metadata) if metadata.is_file => {}
@@ -110,11 +111,7 @@ pub(super) async fn load_host_skill_metadata(
     };
 
     let contents = match file_system
-        .read_file_text(
-            metadata_path,
-            ReadFileOptions::default(),
-            /*sandbox*/ None,
-        )
+        .read_file_text(metadata_path, ReadFileOptions::default())
         .await
     {
         Ok(contents) => contents,

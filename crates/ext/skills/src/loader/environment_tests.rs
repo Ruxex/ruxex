@@ -3,6 +3,7 @@ use std::fs;
 use pretty_assertions::assert_eq;
 use ruxex_exec_server::CapabilityRootDiscoverRequest;
 use ruxex_exec_server::CapabilityRootsDiscoverParams;
+use ruxex_exec_server::FileSystemEnvironmentAccessor;
 use ruxex_exec_server::LOCAL_FS;
 use ruxex_exec_server::discover_capability_roots;
 use ruxex_protocol::protocol::Product;
@@ -50,8 +51,12 @@ policy:
     .expect("metadata");
 
     let root_uri = PathUri::from_host_native_path(root.path()).expect("root URI");
-    let outcome =
-        load_environment_skills_from_root(LOCAL_FS.as_ref(), &root_uri, Some(Product::Codex)).await;
+    let outcome = load_environment_skills_from_root(
+        &FileSystemEnvironmentAccessor::unrestricted(&LOCAL_FS),
+        &root_uri,
+        Some(Product::Codex),
+    )
+    .await;
 
     assert_eq!(
         outcome.skills,
@@ -77,9 +82,12 @@ policy:
             }),
         }]
     );
-    let filtered =
-        load_environment_skills_from_root(LOCAL_FS.as_ref(), &root_uri, Some(Product::Unknown))
-            .await;
+    let filtered = load_environment_skills_from_root(
+        &FileSystemEnvironmentAccessor::unrestricted(&LOCAL_FS),
+        &root_uri,
+        Some(Product::Unknown),
+    )
+    .await;
     assert!(filtered.skills.is_empty());
 }
 
@@ -113,7 +121,7 @@ async fn executor_bundle_parser_matches_direct_environment_loader() {
 
     let root_uri = PathUri::from_host_native_path(root.path()).expect("root URI");
     let existing = load_environment_skills_from_root(
-        LOCAL_FS.as_ref(),
+        &FileSystemEnvironmentAccessor::unrestricted(&LOCAL_FS),
         &root_uri,
         /*restriction_product*/ None,
     )
@@ -181,7 +189,7 @@ async fn executor_bundle_preserves_parent_namespace_and_manifest_precedence() {
 
     let root_uri = PathUri::from_host_native_path(&skills_root).expect("skills root URI");
     let existing = load_environment_skills_from_root(
-        LOCAL_FS.as_ref(),
+        &FileSystemEnvironmentAccessor::unrestricted(&LOCAL_FS),
         &root_uri,
         /*restriction_product*/ None,
     )
