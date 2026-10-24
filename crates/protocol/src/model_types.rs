@@ -28,6 +28,7 @@ use ts_rs::TS;
 
 use crate::config_types::ReasoningSummary;
 use crate::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use crate::config_types::ServiceTier;
 use crate::config_types::Verbosity;
 use crate::protocol::MultiAgentVersion;
 
@@ -792,9 +793,11 @@ impl From<ModelInfo> for ModelPreset {
 
 impl ModelInfo {
     pub fn supports_service_tier(&self, service_tier: &str) -> bool {
-        self.service_tiers
-            .iter()
-            .any(|tier| tier.id == service_tier)
+        service_tier == ServiceTier::Flex.request_value()
+            || self
+                .service_tiers
+                .iter()
+                .any(|tier| tier.id == service_tier)
     }
 
     pub fn service_tier_for_request(&self, service_tier: Option<String>) -> Option<String> {
@@ -1614,5 +1617,18 @@ mod tests {
             None
         );
         assert_eq!(model.service_tier_for_request(/*service_tier*/ None), None);
+    }
+
+    #[test]
+    fn service_tier_for_request_preserves_flex_without_catalog_support() {
+        let model = ModelInfo {
+            service_tiers: Vec::new(),
+            ..test_model(/*spec*/ None)
+        };
+
+        assert_eq!(
+            model.service_tier_for_request(Some("flex".to_string())),
+            Some("flex".to_string())
+        );
     }
 }

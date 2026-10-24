@@ -1,5 +1,6 @@
 use crate::legacy_core::config::Config;
 use ruxex_protocol::config_types::SERVICE_TIER_DEFAULT_REQUEST_VALUE;
+use ruxex_protocol::config_types::ServiceTier;
 use ruxex_protocol::model_types::ModelPreset;
 
 pub(crate) fn configured_service_tier(config: &Config) -> Option<String> {
@@ -45,8 +46,9 @@ pub(crate) fn service_tier_update_for_core(
 }
 
 pub(crate) fn model_supports_service_tier(model: &ModelPreset, service_tier: &str) -> bool {
-    model
-        .service_tiers
-        .iter()
-        .any(|tier| tier.id == service_tier)
+    service_tier == ServiceTier::Flex.request_value()
+        || model
+            .service_tiers
+            .iter()
+            .any(|tier| tier.id == service_tier)
 }
