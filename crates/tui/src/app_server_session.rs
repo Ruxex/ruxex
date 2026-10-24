@@ -164,6 +164,12 @@ enum ForkPresentation {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ForkConfigSource {
+    Local,
+    Session,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ThreadHistorySupport {
     Paginated,
     LegacyOnly,
@@ -308,6 +314,17 @@ pub(crate) struct AppServerSession {
 pub(crate) enum ThreadParamsMode {
     Embedded,
     Remote,
+}
+
+impl ThreadParamsMode {
+    fn workspace_roots_from_config(self, config: &Config) -> Option<Vec<AbsolutePathBuf>> {
+        match self {
+            Self::Embedded => Some(config.workspace_roots.clone()),
+            // Client paths are not authoritative for a remote app server. The server
+            // resolves its defaults or restores the saved roots, which the TUI then adopts.
+            Self::Remote => None,
+        }
+    }
 }
 
 /// Determines where model settings come from when resuming a thread.
@@ -781,6 +798,7 @@ impl AppServerSession {
             ForkPresentation::Regular,
             /*selected_profile*/ None,
             permission_mode,
+            ForkConfigSource::Local,
         )
         .await
     }
@@ -809,6 +827,7 @@ impl AppServerSession {
             ForkPresentation::Regular,
             selected_profile,
             ForkPermissionMode::InheritSaved,
+            ForkConfigSource::Session,
         )
         .await
     }
@@ -829,6 +848,7 @@ impl AppServerSession {
             ForkPresentation::SideConversation,
             /*selected_profile*/ None,
             ForkPermissionMode::InheritSaved,
+            ForkConfigSource::Session,
         )
         .await
     }
@@ -848,6 +868,7 @@ impl AppServerSession {
         presentation: ForkPresentation,
         selected_profile: Option<&PermissionProfileSelection>,
         permission_mode: ForkPermissionMode,
+        config_source: ForkConfigSource,
     ) -> Result<AppServerStartedThread> {
         let fork_parent = match presentation {
             ForkPresentation::Regular => self
@@ -880,6 +901,12 @@ impl AppServerSession {
                 self.remote_cwd_override.as_deref(),
             )
         };
+        if config_source == ForkConfigSource::Session {
+            // The active session has already adopted the server's roots. Preserve
+            // that server-provided selection when forking instead of re-reading
+            // client-local configuration.
+            params.runtime_workspace_roots = Some(config.workspace_roots.clone());
+        }
         if self.thread_params_mode() == ThreadParamsMode::Remote
             && permission_mode == ForkPermissionMode::InheritSaved
         {
@@ -1872,7 +1899,7 @@ pub(crate) fn thread_start_params_from_config(
         model: config.model.clone(),
         service_tier: service_tier_override_from_config(config),
         cwd: thread_cwd_from_config(config, thread_params_mode, remote_cwd_override),
-        runtime_workspace_roots: Some(config.workspace_roots.clone()),
+        runtime_workspace_roots: thread_params_mode.workspace_roots_from_config(config),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
         sandbox,
         permissions,
@@ -1934,7 +1961,7 @@ fn thread_resume_params_from_config(
         model,
         service_tier: service_tier_override_from_config(&config),
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
-        runtime_workspace_roots: Some(config.workspace_roots.clone()),
+        runtime_workspace_roots: thread_params_mode.workspace_roots_from_config(&config),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
         sandbox,
         permissions,
@@ -1975,7 +2002,7 @@ fn thread_fork_params_from_config(
         model: config.model.clone(),
         service_tier: service_tier_override_from_config(&config),
         cwd: thread_cwd_from_config(&config, thread_params_mode, remote_cwd_override),
-        runtime_workspace_roots: Some(config.workspace_roots.clone()),
+        runtime_workspace_roots: thread_params_mode.workspace_roots_from_config(&config),
         approval_policy: Some(config.permissions.approval_policy.value().into()),
         sandbox,
         permissions,
