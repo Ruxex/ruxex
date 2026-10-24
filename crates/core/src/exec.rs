@@ -183,16 +183,6 @@ impl ExecExpiration {
         }
     }
 
-    pub(crate) fn cancellation_token(&self) -> Option<CancellationToken> {
-        match self {
-            ExecExpiration::Timeout(_) | ExecExpiration::DefaultTimeout => None,
-            ExecExpiration::Cancellation(cancellation)
-            | ExecExpiration::TimeoutOrCancellation { cancellation, .. } => {
-                Some(cancellation.clone())
-            }
-        }
-    }
-
     pub(crate) fn with_cancellation(self, cancellation: CancellationToken) -> Self {
         match self {
             ExecExpiration::Timeout(timeout) => ExecExpiration::TimeoutOrCancellation {

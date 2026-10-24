@@ -5,7 +5,6 @@ use super::session::SessionConfiguration;
 use super::step_settings::ResolvedStepSettings;
 use super::step_settings::StepSettingsConstraints;
 use super::step_settings::StepSettingsUpdate;
-use super::turn_context::TurnContext;
 use crate::config::ConstraintResult;
 use ruxex_protocol::protocol::TurnSettingsUpdate;
 use ruxex_protocol::protocol::TurnSettingsUpdateOutcome;
@@ -74,7 +73,7 @@ impl Session {
         // settings rules. The task can progress, finish, or be cancelled while
         // preparation awaits; no publication locks are held here.
         let prepared = self
-            .prepare_step_settings_activation(&turn_context, &current, &update)
+            .prepare_step_settings_activation(&current, &update)
             .await;
         let active = self.active_turn.lock().await;
         let Some(task) = active.as_ref().and_then(|active| active.task.as_ref()) else {
@@ -99,11 +98,7 @@ impl Session {
         // and active_turn; no asynchronous preparation runs under these locks.
         let state = self.state.lock().await;
         if let Err(reason) = self
-            .validate_active_step_settings(
-                &turn_context,
-                &destination,
-                &state.session_configuration,
-            )
+            .validate_active_step_settings(&destination, &state.session_configuration)
             .map_err(|error| error.to_string())
         {
             return TurnSettingsUpdateOutcome::Rejected { reason };
@@ -118,7 +113,6 @@ impl Session {
 
     async fn prepare_step_settings_activation(
         &self,
-        turn_context: &TurnContext,
         current: &ResolvedStepSettings,
         update: &StepSettingsUpdate,
     ) -> Result<ResolvedStepSettings, String> {
@@ -133,9 +127,6 @@ impl Session {
         };
         let constraints = StepSettingsConstraints {
             requirements: &requirements,
-            has_full_disk_write_access: turn_context
-                .file_system_sandbox_policy()
-                .has_full_disk_write_access(),
         };
         current
             .apply_update(
@@ -153,7 +144,6 @@ impl Session {
     /// once all execution consumers read their captured `StepContext`.
     fn validate_active_step_settings(
         &self,
-        turn_context: &TurnContext,
         settings: &ResolvedStepSettings,
         configuration: &SessionConfiguration,
     ) -> ConstraintResult<()> {
@@ -161,11 +151,6 @@ impl Session {
             .original_config_do_not_use
             .config_layer_stack
             .requirements();
-        settings.revalidate(&StepSettingsConstraints {
-            requirements,
-            has_full_disk_write_access: turn_context
-                .file_system_sandbox_policy()
-                .has_full_disk_write_access(),
-        })
+        settings.revalidate(&StepSettingsConstraints { requirements })
     }
 }

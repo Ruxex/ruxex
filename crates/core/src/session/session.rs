@@ -346,23 +346,16 @@ impl SessionConfiguration {
         environments: &[TurnEnvironmentSelection],
     ) -> ConstraintResult<()> {
         self.step_settings
-            .validate(&self.step_settings_constraints(environments))?;
+            .validate(&self.step_settings_constraints())?;
         super::environment::validate_environment_selections(environments)
     }
 
-    pub(super) fn step_settings_constraints(
-        &self,
-        environments: &[TurnEnvironmentSelection],
-    ) -> StepSettingsConstraints<'_> {
-        let permission_profile = self.effective_permission_profile(environments);
+    pub(super) fn step_settings_constraints(&self) -> StepSettingsConstraints<'_> {
         StepSettingsConstraints {
             requirements: self
                 .original_config_do_not_use
                 .config_layer_stack
                 .requirements(),
-            has_full_disk_write_access: permission_profile
-                .file_system_sandbox_policy()
-                .has_full_disk_write_access(),
         }
     }
 
@@ -514,7 +507,7 @@ impl SessionConfiguration {
         // selections must be complete before deriving their validation constraints.
         next_configuration.step_settings = Arc::new(self.step_settings.apply(
             &updates.step_settings,
-            &next_configuration.step_settings_constraints(next_environments),
+            &next_configuration.step_settings_constraints(),
         )?);
         Ok(next_configuration)
     }

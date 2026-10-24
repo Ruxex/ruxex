@@ -191,7 +191,6 @@ pub(crate) struct StepSettingsUpdate {
 /// environment already admitted for that execution.
 pub(crate) struct StepSettingsConstraints<'a> {
     pub(crate) requirements: &'a ConfigRequirements,
-    pub(crate) has_full_disk_write_access: bool,
 }
 
 impl StepSettings {
@@ -280,7 +279,6 @@ mod tests {
         let requirements = ConfigRequirements::default();
         let constraints = StepSettingsConstraints {
             requirements: &requirements,
-            has_full_disk_write_access: false,
         };
         let update = StepSettingsUpdate {
             effort: Some(Some(ReasoningEffort::High)),

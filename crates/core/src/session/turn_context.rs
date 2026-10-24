@@ -435,10 +435,6 @@ impl TurnContext {
         self.permission_profile().file_system_sandbox_policy()
     }
 
-    pub(crate) fn network_sandbox_policy(&self) -> NetworkSandboxPolicy {
-        self.permission_profile().network_sandbox_policy()
-    }
-
     pub(crate) fn sandbox_policy(&self) -> SandboxPolicy {
         #[allow(deprecated)]
         ruxex_sandboxing::compatibility_sandbox_policy_for_permission_profile(
