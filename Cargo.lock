@@ -243,6 +243,7 @@ dependencies = [
  "ruxex-features",
  "ruxex-login",
  "ruxex-model-provider",
+ "ruxex-model-provider-info",
  "ruxex-protocol",
  "ruxex-utils-cargo-bin",
  "serde",

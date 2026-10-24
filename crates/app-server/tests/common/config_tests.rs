@@ -1,4 +1,5 @@
 use super::*;
+use ruxex_model_provider_info::WireApi;
 use tempfile::TempDir;
 
 #[test]
@@ -63,4 +64,17 @@ fn mock_responses_writer_preserves_provider_auth_and_feature_overrides() {
     ] {
         assert!(config.contains(expected), "config is missing {expected}");
     }
+}
+
+#[test]
+fn mock_provider_config_can_select_chat_completions() {
+    let home = TempDir::new().expect("temporary RUXEX_HOME");
+    MockResponsesConfig::new("http://127.0.0.1:1234")
+        .with_wire_api(WireApi::Chat)
+        .write(home.path())
+        .expect("write mock Chat Completions config");
+
+    let config =
+        std::fs::read_to_string(home.path().join("config.toml")).expect("read config.toml");
+    assert!(config.contains("wire_api = \"chat\""));
 }

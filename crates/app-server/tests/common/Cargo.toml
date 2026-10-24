@@ -21,6 +21,7 @@ ruxex-core = { workspace = true }
 ruxex-features = { workspace = true }
 ruxex-login = { workspace = true }
 ruxex-model-provider = { workspace = true }
+ruxex-model-provider-info = { workspace = true }
 ruxex-protocol = { workspace = true }
 ruxex-utils-cargo-bin = { workspace = true }
 serde = { workspace = true }
