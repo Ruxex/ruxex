@@ -7,6 +7,7 @@ use crate::session::SessionSettingsUpdate;
 use crate::session::new_submission_id;
 use crate::session::session::Session;
 use crate::session::step_settings::StepSettingsUpdate;
+use crate::thread_startup_metadata::ThreadStartupMetadata;
 use rmcp::model::ReadResourceRequestParams;
 use ruxex_diagnostics::Gauge;
 use ruxex_diagnostics::GaugeGuard;
@@ -152,6 +153,7 @@ pub struct RuxexThread {
     // Registration source controls live access and lifecycle hooks.
     pub(crate) session_source: SessionSource,
     session_configured: SessionConfiguredEvent,
+    startup_metadata: ThreadStartupMetadata,
     rollout_path: Option<PathBuf>,
     out_of_band_elicitations: Mutex<OutOfBandElicitations>,
     _diagnostics_guard: GaugeGuard,
@@ -185,6 +187,7 @@ impl RuxexThread {
             session,
             io,
             session_source,
+            startup_metadata: ThreadStartupMetadata::from(&session_configured),
             session_configured,
             rollout_path,
             out_of_band_elicitations: Mutex::new(OutOfBandElicitations::default()),
@@ -670,6 +673,11 @@ impl RuxexThread {
 
     pub fn session_configured(&self) -> SessionConfiguredEvent {
         self.session_configured.clone()
+    }
+
+    /// Returns startup metadata without replay history.
+    pub fn startup_metadata(&self) -> &ThreadStartupMetadata {
+        &self.startup_metadata
     }
 
     pub(crate) fn is_running(&self) -> bool {

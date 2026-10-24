@@ -2014,7 +2014,9 @@ impl ThreadManagerState {
                     }
                     return Ok(NewThread {
                         thread_id: resumed.conversation_id,
-                        session_configured: thread.session_configured(),
+                        session_configured: thread
+                            .startup_metadata()
+                            .to_session_configured_event(initial_history.get_event_msgs()),
                         thread,
                     });
                 }
