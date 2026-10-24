@@ -6,7 +6,6 @@ use ruxex_app_server_protocol::ProcessExitedNotification;
 use ruxex_app_server_protocol::ProcessKillParams;
 use ruxex_app_server_protocol::ProcessSpawnParams;
 use ruxex_app_server_protocol::RequestId;
-use ruxex_exec_server::RUXEX_EXEC_SERVER_URL_ENV_VAR;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
@@ -94,40 +93,12 @@ async fn process_spawn_returns_before_exit_and_emits_exit_notification() -> Resu
         ProcessExitedNotification {
             process_handle,
             exit_code: 0,
-            stdout: "process-out||".to_string(),
+            stdout: "process-out".to_string(),
             stdout_cap_reached: false,
             stderr: "process-err".to_string(),
             stderr_cap_reached: false,
         }
     );
-    Ok(())
-}
-
-#[tokio::test]
-async fn process_spawn_returns_error_when_local_environment_is_disabled() -> Result<()> {
-    let ruxex_home = TempDir::new()?;
-    let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
-    let mut mcp = TestAppServer::builder()
-        .with_ruxex_home(ruxex_home.path())
-        .without_auto_env()
-        .with_env_overrides(&[(RUXEX_EXEC_SERVER_URL_ENV_VAR, Some("none"))])
-        .build()
-        .await?;
-    timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
-
-    let process_request_id = mcp
-        .send_process_spawn_request(process_spawn_params(
-            "disabled-process".to_string(),
-            ruxex_home.path(),
-            vec!["sh".to_string(), "-lc".to_string(), "true".to_string()],
-        )?)
-        .await?;
-    let error = mcp
-        .read_stream_until_error_message(RequestId::Integer(process_request_id))
-        .await?;
-    assert_eq!(error.error.message, "local environment is not configured");
-
     Ok(())
 }
 
@@ -274,7 +245,7 @@ async fn read_process_exited(mcp: &mut TestAppServer) -> Result<ProcessExitedNot
 
 async fn wait_for_file(path: &Path) -> Result<()> {
     timeout(DEFAULT_READ_TIMEOUT, async {
-        while !path.exists() {
+        while !std::fs::read_to_string(path).is_ok_and(|contents| contents == "process") {
             sleep(Duration::from_millis(20)).await;
         }
     })

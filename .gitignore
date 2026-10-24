@@ -60,7 +60,9 @@ apply_patch/
 
 # local planning state
 /.codex/
-/docs/
+/docs/*
+!/docs/upstream-audit/
+!/docs/upstream-audit/**
 .superpowers/
 
 # coverage

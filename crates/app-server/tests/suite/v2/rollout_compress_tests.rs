@@ -35,6 +35,7 @@ async fn rollout_compress_runs_after_startup_with_compression_disabled() -> Resu
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",
+        None,
     )?;
     let path = rollout_path(ruxex_home.path(), filename_ts, &thread_id);
     let original = std::fs::read_to_string(&path)?;

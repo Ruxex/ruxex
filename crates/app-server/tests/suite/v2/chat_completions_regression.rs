@@ -1,8 +1,10 @@
 use anyhow::Result;
+use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_chat_completions_server_retry;
 use app_test_support::create_mock_chat_completions_server_sequence;
 use app_test_support::create_mock_chat_completions_server_sequence_unchecked;
 use app_test_support::create_mock_responses_server_retry;
+use app_test_support::create_mock_responses_server_sequence;
 use core_test_support::responses;
 use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_app_server::in_process;
@@ -41,6 +43,9 @@ use ruxex_login::CredentialManager;
 use ruxex_login::RuxexAuth;
 use ruxex_model_provider_info::ModelProviderInfo;
 use ruxex_model_provider_info::WireApi;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_utils_home_dir::ProductIdentity;
 use serde_json::json;
@@ -109,6 +114,16 @@ async fn chat_completions_regression_retries_provider_failure() -> Result<()> {
 #[tokio::test]
 async fn responses_regression_retries_provider_failure() -> Result<()> {
     run_retry_regression(WireApi::Responses).await
+}
+
+#[tokio::test]
+async fn chat_completions_regression_request_user_input_round_trip() -> Result<()> {
+    run_request_user_input_regression(WireApi::Chat).await
+}
+
+#[tokio::test]
+async fn responses_regression_request_user_input_round_trip() -> Result<()> {
+    run_request_user_input_regression(WireApi::Responses).await
 }
 
 async fn run_regression_round_trip(wire_api: WireApi) -> Result<()> {
@@ -569,6 +584,149 @@ async fn run_retry_regression(wire_api: WireApi) -> Result<()> {
     Ok(())
 }
 
+async fn run_request_user_input_regression(wire_api: WireApi) -> Result<()> {
+    let call_id = "regression-request-user-input-call";
+    let first = match wire_api {
+        WireApi::Chat => chat_request_user_input_sse(call_id)?,
+        WireApi::Responses => responses::sse(vec![
+            responses::ev_response_created("resp-request-user-input-1"),
+            responses::ev_function_call(
+                call_id,
+                "request_user_input",
+                &json!({
+                    "questions": [{
+                        "id": "confirm_path",
+                        "header": "Confirm",
+                        "question": "Proceed with the plan?",
+                        "options": [{
+                            "label": "Yes (Recommended)",
+                            "description": "Continue the current plan."
+                        }, {
+                            "label": "No",
+                            "description": "Stop and revisit the approach."
+                        }]
+                    }]
+                })
+                .to_string(),
+            ),
+            responses::ev_completed("resp-request-user-input-1"),
+        ]),
+    };
+    let second = match wire_api {
+        WireApi::Chat => chat_assistant_sse("Done"),
+        WireApi::Responses => create_final_assistant_message_sse_response("Done")?,
+    };
+    let server = match wire_api {
+        WireApi::Chat => create_mock_chat_completions_server_sequence(vec![first, second]).await,
+        WireApi::Responses => create_mock_responses_server_sequence(vec![first, second]).await,
+    };
+
+    let (mut app_server, _ruxex_home) = start_regression_app(wire_api, &server.uri()).await?;
+    let thread_response = app_server
+        .request(ClientRequest::ThreadStart {
+            request_id: RequestId::Integer(1),
+            params: ThreadStartParams {
+                model: Some("mock-model".to_string()),
+                ..Default::default()
+            },
+        })
+        .await?
+        .map_err(|error| anyhow::anyhow!("thread/start failed: {}", error.message))?;
+    let thread: ThreadStartResponse = serde_json::from_value(thread_response)?;
+    let turn_response = app_server
+        .request(ClientRequest::TurnStart {
+            request_id: RequestId::Integer(2),
+            params: TurnStartParams {
+                thread_id: thread.thread.id.clone(),
+                input: vec![V2UserInput::Text {
+                    text: "Ask me a question".to_string(),
+                    text_elements: Vec::new(),
+                }],
+                model: Some("mock-model".to_string()),
+                collaboration_mode: Some(CollaborationMode {
+                    mode: ModeKind::Plan,
+                    settings: Settings {
+                        model: "mock-model".to_string(),
+                        reasoning_effort: None,
+                        developer_instructions: None,
+                    },
+                }),
+                ..Default::default()
+            },
+        })
+        .await?
+        .map_err(|error| anyhow::anyhow!("turn/start failed: {}", error.message))?;
+    let turn: TurnStartResponse = serde_json::from_value(turn_response)?;
+
+    let completed = loop {
+        let event = app_server
+            .next_event()
+            .await
+            .ok_or_else(|| anyhow::anyhow!("in-process AppServer exited before completion"))?;
+        if let InProcessServerEvent::ServerRequest(request) = event {
+            let ServerRequest::ToolRequestUserInput { request_id, params } = *request else {
+                continue;
+            };
+            assert_eq!(params.thread_id, thread.thread.id);
+            assert_eq!(params.turn_id, turn.turn.id);
+            assert_eq!(params.item_id, call_id);
+            assert_eq!(params.questions.len(), 1);
+            app_server.respond_to_server_request(
+                request_id,
+                json!({
+                    "answers": {
+                        "confirm_path": {"answers": ["yes"]}
+                    }
+                }),
+            )?;
+        } else if let InProcessServerEvent::ServerNotification(notification) = event
+            && let ServerNotification::TurnCompleted(completed) = *notification
+        {
+            break completed;
+        }
+    };
+
+    assert_eq!(completed.turn.status, TurnStatus::Completed);
+    app_server.shutdown().await?;
+
+    let requests = server
+        .received_requests()
+        .await
+        .expect("request user input model requests should be recorded");
+    let expected_path = match wire_api {
+        WireApi::Chat => "/v1/chat/completions",
+        WireApi::Responses => "/v1/responses",
+    };
+    assert_eq!(
+        requests
+            .iter()
+            .filter(|request| request.url.path() == expected_path)
+            .count(),
+        2
+    );
+    let model_requests = requests
+        .iter()
+        .filter(|request| request.url.path() == expected_path)
+        .collect::<Vec<_>>();
+    let follow_up: serde_json::Value = model_requests[1]
+        .body_json()
+        .expect("request user input follow-up should contain JSON");
+    match wire_api {
+        WireApi::Chat => assert!(follow_up["messages"].as_array().is_some_and(|messages| {
+            messages.iter().any(|message| {
+                message["role"] == "tool" && message["content"].to_string().contains("yes")
+            })
+        })),
+        WireApi::Responses => assert!(follow_up["input"].as_array().is_some_and(|items| {
+            items.iter().any(|item| {
+                item["type"] == "function_call_output" && item["output"].to_string().contains("yes")
+            })
+        })),
+    }
+
+    Ok(())
+}
+
 async fn wait_for_turn_completed(
     app_server: &mut InProcessClientHandle,
 ) -> Result<(TurnCompletedNotification, Option<String>)> {
@@ -638,6 +796,59 @@ fn chat_tool_call_sse(call_id: &str) -> Result<String> {
             json!({
                 "type": "message",
                 "id": "chatcmpl-tool-1",
+                "object": "chat.completion.chunk",
+                "created": 1,
+                "model": "mock-model",
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]
+            }),
+        ])
+    ))
+}
+
+fn chat_request_user_input_sse(call_id: &str) -> Result<String> {
+    let arguments = serde_json::to_string(&json!({
+        "questions": [{
+            "id": "confirm_path",
+            "header": "Confirm",
+            "question": "Proceed with the plan?",
+            "options": [{
+                "label": "Yes (Recommended)",
+                "description": "Continue the current plan."
+            }, {
+                "label": "No",
+                "description": "Stop and revisit the approach."
+            }]
+        }]
+    }))?;
+    Ok(format!(
+        "{}data: [DONE]\n\n",
+        responses::sse(vec![
+            json!({
+                "type": "message",
+                "id": "chatcmpl-request-user-input-1",
+                "object": "chat.completion.chunk",
+                "created": 1,
+                "model": "mock-model",
+                "choices": [{
+                    "index": 0,
+                    "delta": {
+                        "role": "assistant",
+                        "tool_calls": [{
+                            "index": 0,
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": "request_user_input",
+                                "arguments": arguments,
+                            }
+                        }]
+                    },
+                    "finish_reason": null
+                }]
+            }),
+            json!({
+                "type": "message",
+                "id": "chatcmpl-request-user-input-1",
                 "object": "chat.completion.chunk",
                 "created": 1,
                 "model": "mock-model",

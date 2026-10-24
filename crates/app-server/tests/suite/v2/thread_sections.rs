@@ -192,12 +192,14 @@ async fn deleting_custom_sections_unassigns_active_and_archived_members() -> Res
         "2025-01-06T08-00-00",
         "2025-01-06T08:00:00Z",
         "First thread",
+        None,
     )?;
     let archived_thread = create_fake_rollout(
         ruxex_home.path(),
         "2025-01-06T09-00-00",
         "2025-01-06T09:00:00Z",
         "Archived thread",
+        None,
     )?;
     let mut server = TestAppServer::builder()
         .with_ruxex_home(ruxex_home.path())

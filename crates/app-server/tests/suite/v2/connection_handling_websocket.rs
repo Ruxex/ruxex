@@ -23,6 +23,10 @@ use ruxex_core::config::set_project_trust_level;
 use ruxex_http_client::HttpClient;
 use ruxex_http_client::HttpClientBuilder;
 use ruxex_http_client::HttpResponse;
+use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
+use ruxex_model_provider::ProviderDescriptor;
+use ruxex_model_provider::ProviderHomeMarker;
+use ruxex_model_provider::PROVIDER_HOME_MARKER_FILE;
 use ruxex_protocol::config_types::TrustLevel;
 use futures::SinkExt;
 use futures::StreamExt;
@@ -495,6 +499,13 @@ pub(super) async fn spawn_websocket_server_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<(Child, SocketAddr)> {
+    let descriptor = ProviderDescriptor::new("responses", CURRENT_PROVIDER_PROTOCOL_VERSION);
+    let marker = ProviderHomeMarker::from(&descriptor);
+    std::fs::write(
+        ruxex_home.join(PROVIDER_HOME_MARKER_FILE),
+        serde_json::to_vec_pretty(&marker)?,
+    )?;
+
     let program = ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
@@ -632,6 +643,13 @@ async fn run_websocket_server_to_completion_with_args(
     listen_url: &str,
     extra_args: &[String],
 ) -> Result<std::process::Output> {
+    let descriptor = ProviderDescriptor::new("responses", CURRENT_PROVIDER_PROTOCOL_VERSION);
+    let marker = ProviderHomeMarker::from(&descriptor);
+    std::fs::write(
+        ruxex_home.join(PROVIDER_HOME_MARKER_FILE),
+        serde_json::to_vec_pretty(&marker)?,
+    )?;
+
     let program = ruxex_utils_cargo_bin::cargo_bin("ruxex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
@@ -837,6 +855,7 @@ pub(super) async fn read_response_for_id(
     }
 }
 
+#[allow(dead_code)]
 pub(super) async fn read_notification_for_method(
     stream: &mut WsClient,
     method: &str,
@@ -851,6 +870,7 @@ pub(super) async fn read_notification_for_method(
     }
 }
 
+#[allow(dead_code)]
 pub(super) async fn read_response_and_notification_for_method(
     stream: &mut WsClient,
     id: i64,

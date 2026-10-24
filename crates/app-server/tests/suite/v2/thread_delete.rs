@@ -40,6 +40,7 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
         "2025-01-01T00-00-00",
         "2025-01-01T00:00:00Z",
         "owned",
+        None,
     )?;
     let mut owner = TestAppServer::builder()
         .with_ruxex_home(ruxex_home.path())
@@ -264,6 +265,7 @@ fn create_delete_test_rollout(ruxex_home: &Path, minute: u8, preview: &str) -> R
         &format!("2025-01-01T00-{minute:02}-00"),
         &format!("2025-01-01T00:{minute:02}:00Z"),
         preview,
+        None,
     )
 }
 

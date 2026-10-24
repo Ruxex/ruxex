@@ -72,15 +72,10 @@ test *args: prepare-rusty-v8
 test-cargo *args: prepare-rusty-v8
     RUST_MIN_STACK={{ rust_min_stack }} RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} test "$@"
 
-# Run AppServer-level regression tests that exercise stable provider flows.
-[unix]
-regression: prepare-rusty-v8
-    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --package ruxex-app-server --test regression -E 'test(/regression/)'
-
-# Run the provider-independent AppServer integration suite.
+# Run the AppServer integration suites, including provider-wire regressions.
 [unix]
 app-server-e2e: prepare-rusty-v8
-    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --package ruxex-app-server --test app_server_e2e
+    RUST_MIN_STACK={{ rust_min_stack }} NEXTEST_PROFILE=local RUSTY_V8_MIRROR={{ rusty_v8_mirror }} {{ cargo_runner }} nextest run --no-fail-fast --package ruxex-app-server --test app_server_e2e --test regression
 
 # Build a portable nextest archive for CI test groups. Package selection
 # arguments determine which test binaries are included.
