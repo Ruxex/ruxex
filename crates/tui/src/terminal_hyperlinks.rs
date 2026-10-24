@@ -15,7 +15,6 @@ use ratatui::buffer::Buffer;
 use ratatui::buffer::CellDiffOption;
 use ratatui::buffer::CellWidth;
 use ratatui::layout::Rect;
-use ratatui::style::Color;
 use ratatui::style::Modifier;
 use ratatui::text::Line;
 use ratatui::text::Span;
@@ -254,10 +253,6 @@ pub(crate) fn adaptive_wrap_hyperlink_lines(
         ));
     }
     out
-}
-
-pub(crate) fn annotate_web_urls(lines: Vec<Line<'static>>) -> Vec<HyperlinkLine> {
-    lines.into_iter().map(annotate_web_urls_in_line).collect()
 }
 
 pub(crate) fn annotate_web_urls_in_line(line: Line<'static>) -> HyperlinkLine {
@@ -651,12 +646,6 @@ pub(crate) fn mark_buffer_hyperlinks(
         }
         logical_row += rendered_height;
     }
-}
-
-pub(crate) fn mark_url_hyperlink(buf: &mut Buffer, area: Rect, destination: &str) {
-    mark_matching_cells(buf, area, destination, |cell| {
-        cell.fg == Color::Cyan && cell.modifier.contains(Modifier::UNDERLINED)
-    });
 }
 
 pub(crate) fn mark_underlined_hyperlink(buf: &mut Buffer, area: Rect, destination: &str) {

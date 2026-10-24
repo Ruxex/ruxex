@@ -354,22 +354,6 @@ impl ChatWidget {
         true
     }
 
-    pub(super) fn on_cyber_policy_error(&mut self) {
-        self.input_queue.submit_pending_steers_after_interrupt = false;
-        self.finalize_turn();
-        let notice = self
-            .cyber_policy_notice
-            .get()
-            .copied()
-            .unwrap_or_default()
-            .for_model(self.current_model());
-        self.add_to_history(history_cell::new_cyber_policy_error_event(notice));
-        self.request_redraw();
-
-        // After an error ends the turn, try sending the next queued input.
-        self.maybe_send_next_queued_input();
-    }
-
     pub(super) fn on_rate_limit_error(&mut self, error_kind: RateLimitErrorKind, message: String) {
         // on_error can drain queued input, before the asynchronous recovery read completes.
         self.input_queue.rate_limit_recovery_pending = self.has_managed_account;
@@ -417,11 +401,6 @@ impl ChatWidget {
             .as_ref()
             .is_some_and(|info| self.handle_app_server_steer_rejected_error(info))
         {
-        } else if ruxex_error_info
-            .as_ref()
-            .is_some_and(is_app_server_cyber_policy_error)
-        {
-            self.on_cyber_policy_error();
         } else if is_safety_access_block_message(&message)
             || serde_json::from_str::<serde_json::Value>(&message).is_ok_and(|response| {
                 response["error"]["code"].as_str() == Some("bio_policy")

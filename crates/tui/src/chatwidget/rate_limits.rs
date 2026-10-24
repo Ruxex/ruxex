@@ -1,6 +1,8 @@
 //! Rate-limit warning, prompt, and notice surfaces, plus quota-aware account refresh cadence.
 
 use super::*;
+use crate::status::rate_limit_snapshot_display_for_limit;
+use chrono::Local;
 use ruxex_app_server_protocol::RuxexErrorInfo as AppServerRuxexErrorInfo;
 use ruxex_protocol::protocol::DEFAULT_RATE_LIMIT_ID;
 
@@ -159,84 +161,23 @@ pub(super) fn app_server_rate_limit_error_kind(
     }
 }
 
-pub(super) fn is_app_server_cyber_policy_error(info: &AppServerRuxexErrorInfo) -> bool {
-    matches!(info, AppServerRuxexErrorInfo::CyberPolicy)
-}
-
-#[derive(Clone, Copy)]
-enum RateLimitSnapshotSource {
-    AccountUsage,
-    RollingUpdate,
-}
-
 fn has_usable_workspace_credits(credits: &CreditsSnapshot) -> bool {
     credits.unlimited || credits.has_credits
 }
 
 impl ChatWidget {
-    /// Poll more often near exhaustion for managed providers, independently of experiments.
-    pub(crate) fn rate_limit_refresh_interval(&self) -> Option<std::time::Duration> {
-        if !self.should_prefetch_rate_limits() {
-            return None;
-        }
-        // Ignore unrelated model buckets; watch ordinary usage and the selected model's bucket.
-        let used_percent = self
-            .rate_limit_snapshots_by_limit_id
-            .iter()
-            .filter(|(limit_id, snapshot)| {
-                limit_id.as_str() == DEFAULT_RATE_LIMIT_ID
-                    || snapshot.limit_name == self.current_model()
-            })
-            .flat_map(|(_, snapshot)| snapshot.primary.iter().chain(snapshot.secondary.iter()))
-            .map(|window| window.used_percent)
-            .filter(|percent| percent.is_finite())
-            .max_by(f64::total_cmp)
-            .unwrap_or_default();
-        let seconds = if used_percent >= 99.0 {
-            5
-        } else if used_percent >= 90.0 {
-            15
-        } else if used_percent >= 75.0 {
-            30
-        } else {
-            60
-        };
-        Some(std::time::Duration::from_secs(seconds))
-    }
-
-    pub(crate) fn hold_rate_limit_recovery(&mut self) -> bool {
-        std::mem::replace(&mut self.input_queue.rate_limit_recovery_pending, true)
-    }
-
-    pub(crate) fn finish_rate_limit_recovery(&mut self) {
-        if std::mem::take(&mut self.input_queue.rate_limit_recovery_pending) {
-            self.submit_initial_user_message_if_pending();
-            self.maybe_send_next_queued_input();
-        }
-    }
-
-    pub(crate) fn on_rate_limit_snapshot(&mut self, snapshot: Option<RateLimitSnapshot>) {
-        self.on_rate_limit_snapshot_from(snapshot, RateLimitSnapshotSource::AccountUsage);
-    }
-
     pub(crate) fn on_rolling_rate_limit_snapshot(&mut self, snapshot: RateLimitSnapshot) {
-        // Rolling app-server notifications are sparse. Preserve metadata learned from the full read.
-        self.on_rate_limit_snapshot_from(Some(snapshot), RateLimitSnapshotSource::RollingUpdate);
+        // Rolling app-server notifications are sparse. Preserve metadata learned from prior updates.
+        self.on_rate_limit_snapshot_from(Some(snapshot));
     }
 
-    fn on_rate_limit_snapshot_from(
-        &mut self,
-        snapshot: Option<RateLimitSnapshot>,
-        source: RateLimitSnapshotSource,
-    ) {
+    fn on_rate_limit_snapshot_from(&mut self, snapshot: Option<RateLimitSnapshot>) {
         if let Some(mut snapshot) = snapshot {
             let limit_id = snapshot
                 .limit_id
                 .clone()
                 .unwrap_or_else(|| DEFAULT_RATE_LIMIT_ID.to_string());
-            if matches!(source, RateLimitSnapshotSource::RollingUpdate)
-                && snapshot.credits.is_none()
-            {
+            if snapshot.credits.is_none() {
                 snapshot.credits = self
                     .rate_limit_snapshots_by_limit_id
                     .get(&limit_id)
@@ -250,15 +191,10 @@ impl ChatWidget {
             self.plan_type = snapshot.plan_type.or(self.plan_type);
 
             let is_default_limit = limit_id.eq_ignore_ascii_case(DEFAULT_RATE_LIMIT_ID);
-            if is_default_limit
-                && (matches!(source, RateLimitSnapshotSource::AccountUsage)
-                    || snapshot.spend_control_reached.is_some())
-            {
+            if is_default_limit && snapshot.spend_control_reached.is_some() {
                 self.ruxex_spend_control_reached = snapshot.spend_control_reached;
             }
-            if (is_default_limit && matches!(source, RateLimitSnapshotSource::AccountUsage))
-                || snapshot.rate_limit_reached_type.is_some()
-            {
+            if snapshot.rate_limit_reached_type.is_some() {
                 self.ruxex_rate_limit_reached_type = snapshot.rate_limit_reached_type;
             }
             let workspace_limit_reached = self.ruxex_spend_control_reached == Some(true)
@@ -335,18 +271,14 @@ impl ChatWidget {
                 self.rate_limit_switch_prompt = RateLimitSwitchPromptState::Pending;
             }
 
-            // /wham/usage identifies ordinary and additional model limits separately. Streamed
-            // updates still drive warnings/recovery above, but must not overwrite status data.
-            if matches!(source, RateLimitSnapshotSource::AccountUsage) {
-                let limit_label = snapshot
-                    .limit_name
-                    .clone()
-                    .unwrap_or_else(|| limit_id.clone());
-                let display =
-                    rate_limit_snapshot_display_for_limit(&snapshot, limit_label, Local::now());
-                self.rate_limit_snapshots_by_limit_id
-                    .insert(limit_id, display);
-            }
+            let limit_label = snapshot
+                .limit_name
+                .clone()
+                .unwrap_or_else(|| limit_id.clone());
+            let display =
+                rate_limit_snapshot_display_for_limit(&snapshot, limit_label, Local::now());
+            self.rate_limit_snapshots_by_limit_id
+                .insert(limit_id, display);
 
             if !warnings.is_empty() {
                 for warning in warnings {

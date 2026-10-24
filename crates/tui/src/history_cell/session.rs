@@ -1,7 +1,6 @@
 //! Session headers, onboarding guidance, and transcript cards.
 
 use super::*;
-use crate::brand::DefaultTuiBrandProfile;
 use crate::brand::TuiBrandProfile;
 use crate::line_truncation::line_width;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
@@ -122,34 +121,6 @@ impl HistoryCell for SessionInfoCell {
     fn raw_lines(&self) -> Vec<Line<'static>> {
         self.0.raw_lines()
     }
-}
-
-#[expect(
-    clippy::too_many_arguments,
-    reason = "keep local preferences separate while the legacy Config parameter is still required"
-)]
-pub(crate) fn new_session_info(
-    config: &Config,
-    local_settings: &crate::local_settings::LocalSettings,
-    requested_model: &str,
-    session: &ThreadSessionState,
-    is_first_event: bool,
-    tooltip_override: Option<String>,
-    auth_plan: Option<PlanType>,
-    provider_name: &str,
-) -> SessionInfoCell {
-    let default_brand_profile = DefaultTuiBrandProfile;
-    new_session_info_with_brand(
-        config,
-        local_settings,
-        requested_model,
-        session,
-        is_first_event,
-        tooltip_override,
-        auth_plan,
-        provider_name,
-        &default_brand_profile,
-    )
 }
 
 #[expect(

@@ -32,7 +32,6 @@ pub(crate) enum ReviewDecision {
         network_policy_amendment: NetworkPolicyAmendment,
     },
     Denied,
-    TimedOut,
     Abort,
 }
 
@@ -181,34 +180,6 @@ pub fn new_approval_decision_cell(
                     actor.subject().into(),
                     "did not approve".bold(),
                     " ruxex network access to ".into(),
-                    Span::from(target).dim(),
-                ],
-            ),
-        },
-        TimedOut => match subject {
-            ApprovalDecisionSubject::Command(command) => {
-                let summary = if let Some(snippet) = non_empty_exec_snippet(&command) {
-                    vec![
-                        "Review ".into(),
-                        "timed out".bold(),
-                        " before ruxex could run ".into(),
-                        Span::from(snippet).dim(),
-                    ]
-                } else {
-                    vec![
-                        "Review ".into(),
-                        "timed out".bold(),
-                        " before this request could be approved".into(),
-                    ]
-                };
-                ("✗ ".red(), summary)
-            }
-            ApprovalDecisionSubject::NetworkAccess { target } => (
-                "✗ ".red(),
-                vec![
-                    "Review ".into(),
-                    "timed out".bold(),
-                    " before ruxex could access ".into(),
                     Span::from(target).dim(),
                 ],
             ),

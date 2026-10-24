@@ -73,35 +73,6 @@ impl App {
         }
     }
 
-    pub(super) fn finish_thread_usage_refresh(
-        &mut self,
-        tui: &mut tui::Tui,
-        thread_id: ThreadId,
-        request_id: u64,
-        result: std::result::Result<crate::chatwidget::ThreadUsageOutcome, String>,
-    ) -> Result<()> {
-        let may_update_status = match &result {
-            Ok(crate::chatwidget::ThreadUsageOutcome::Available(usage)) => {
-                usage.thread_id == thread_id.to_string()
-            }
-            Ok(crate::chatwidget::ThreadUsageOutcome::Disabled) => true,
-            Err(_) => false,
-        };
-        if !self
-            .chat_widget
-            .finish_thread_usage_refresh(thread_id, request_id, result)
-            || !may_update_status
-        {
-            return Ok(());
-        }
-
-        if self.overlay.is_some() || self.initial_history_replay_buffer.is_some() {
-            self.pending_thread_usage_history_refresh = true;
-            return Ok(());
-        }
-        self.refresh_thread_usage_history_tail(tui)
-    }
-
     pub(crate) fn refresh_thread_usage_history_tail(&mut self, tui: &mut tui::Tui) -> Result<()> {
         let Some(status_history) = self.last_thread_usage_status_cell.as_ref() else {
             self.pending_thread_usage_history_refresh = false;
@@ -186,22 +157,7 @@ impl App {
         Ok(())
     }
 
-    pub(super) fn pending_usage_output_insertion_blocked(&self) -> bool {
-        self.chat_widget.usage_history_insertion_blocked()
-            || self
-                .transcript_cells
-                .last()
-                .is_some_and(|cell| cell.as_any().is::<history_cell::AgentMessageCell>())
-    }
-
     fn insert_pending_usage_output(&mut self, _tui: &mut tui::Tui) {}
-
-    pub(super) fn insert_pending_usage_output_if_ready(&mut self, tui: &mut tui::Tui) {
-        if self.pending_usage_output_insertion_blocked() {
-            return;
-        }
-        self.insert_pending_usage_output(tui);
-    }
 
     pub(super) fn insert_pending_usage_output_after_stream_shutdown(&mut self, tui: &mut tui::Tui) {
         if self.chat_widget.usage_history_insertion_blocked() {

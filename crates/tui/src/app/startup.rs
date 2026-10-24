@@ -912,14 +912,6 @@ See the Ruxex keymap documentation for supported actions and examples."
             "tui startup initial frame scheduled"
         );
         app.refresh_startup_skills(&app_server);
-        if has_managed_account {
-            crate::daybreak::prefetch_notice(
-                &app.config,
-                &app_server,
-                app.chat_widget.cyber_policy_notice.clone(),
-            );
-        }
-
         let mut listen_for_app_server_events = true;
         let mut reconnect = None;
         let mut waiting_for_initial_session_configured = wait_for_initial_session_configured;

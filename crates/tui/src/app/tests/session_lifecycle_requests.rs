@@ -2317,7 +2317,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
     );
     initial_cells.insert(
         /*index*/ 0,
-        Arc::new(crate::history_cell::new_session_info(
+        Arc::new(crate::history_cell::new_session_info_with_brand(
             &app.config,
             &app.local_settings,
             started.session.model.as_str(),
@@ -2326,6 +2326,7 @@ async fn underfilled_scrollback_fetches_older_pages_without_opening_the_transcri
             Some("This is a test announcement".to_string()),
             /*auth_plan*/ None,
             "Provider",
+            &crate::brand::DefaultTuiBrandProfile,
         )),
     );
     app.enqueue_primary_thread_session(started.session, started.turns)

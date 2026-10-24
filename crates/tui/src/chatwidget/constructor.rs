@@ -91,7 +91,6 @@ impl ChatWidget {
             current_terminal_info,
         );
         let mut widget = Self {
-            cyber_policy_notice: Default::default(),
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
             ruxex_op_target,
@@ -137,15 +136,6 @@ impl ChatWidget {
             token_usage_pending: false,
             rate_limit_snapshots_by_limit_id: BTreeMap::new(),
             refreshing_status_outputs: Vec::new(),
-            next_status_refresh_request_id: 0,
-            pending_rate_limit_reset_request_id: None,
-            pending_rate_limit_reset_idempotency_key: None,
-            rate_limit_reset_picker_request_id: None,
-            pending_rate_limit_reset_hint_request_id: None,
-            pending_usage_menu_rate_limit_request_id: None,
-            pending_rate_limit_reset_hint: None,
-            available_rate_limit_reset_credits: None,
-            next_rate_limit_reset_request_id: 0,
             plan_type: initial_plan_type,
             ruxex_rate_limit_reached_type: None,
             ruxex_spend_control_reached: None,

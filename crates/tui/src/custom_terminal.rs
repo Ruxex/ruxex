@@ -1079,7 +1079,11 @@ mod tests {
                 ])
                 .wrap(Wrap { trim: false })
                 .render(area, frame.buffer_mut());
-                crate::terminal_hyperlinks::mark_url_hyperlink(frame.buffer_mut(), area, &auth_url);
+                crate::terminal_hyperlinks::mark_underlined_hyperlink(
+                    frame.buffer_mut(),
+                    area,
+                    &auth_url,
+                );
             })
             .expect("draw");
 

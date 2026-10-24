@@ -118,7 +118,6 @@ mod collaboration_modes;
 mod color;
 mod config_update;
 pub(crate) mod custom_terminal;
-mod daybreak;
 mod permission_discovery;
 mod worktree_browser;
 pub use brand::{

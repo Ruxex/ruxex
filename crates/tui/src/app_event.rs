@@ -919,9 +919,6 @@ pub(crate) enum AppEvent {
         effort: Option<ReasoningEffort>,
     },
 
-    /// Open the full model picker (non-auto models).
-    OpenAllModelsPopup,
-
     /// Open the confirmation prompt before enabling full access mode.
     OpenFullAccessConfirmation {
         preset: ApprovalPreset,
@@ -943,11 +940,6 @@ pub(crate) enum AppEvent {
 
     /// Select a named permission profile, optionally applying built-in mode settings too.
     SelectPermissionProfile(PermissionProfileSelection),
-
-    /// Update feature flags and persist them to the top-level config.
-    UpdateFeatureFlags {
-        updates: Vec<(Feature, bool)>,
-    },
 
     /// Save an enable prompt on the app server without changing the current thread.
     EnableFeatureForNewThreads(Feature),

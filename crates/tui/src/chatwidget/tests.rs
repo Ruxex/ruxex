@@ -217,8 +217,6 @@ mod plan_mode;
 #[path = "tests/plugin_catalog_tests.rs"]
 mod plugin_catalog;
 mod popups_and_settings;
-#[path = "tests/rate_limit_recovery_tests.rs"]
-mod rate_limit_recovery_tests;
 #[path = "tests/reasoning_status_tests.rs"]
 mod reasoning_status_tests;
 mod review_mode;
@@ -229,7 +227,6 @@ mod slash_commands;
 #[path = "tests/sparkle_submission_tests.rs"]
 mod sparkle_submission_tests;
 mod status_and_layout;
-mod status_command_tests;
 mod status_surface_previews;
 mod terminal_title;
 mod usage;

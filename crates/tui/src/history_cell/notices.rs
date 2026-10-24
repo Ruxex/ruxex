@@ -46,37 +46,6 @@ pub(crate) fn new_safety_access_block_event() -> SafetyAccessBlockCell {
     }
 }
 
-pub(crate) fn new_cyber_policy_error_event(
-    notice: crate::daybreak::Notice,
-) -> SafetyAccessBlockCell {
-    use crate::daybreak::Notice;
-    let (body, actions): (_, &'static [(&str, &str)]) = match notice {
-        Notice::Apply => (
-            "We take extra care with some cybersecurity requests. If you’re doing authorized security work, apply for Daybreak to get broader access.",
-            &[
-                ("Learn more", SAFETY_ACCESS_BLOCK_LEARN_MORE_URL),
-                (
-                    "Apply for Daybreak",
-                    "https://provider.com/form/enterprise-trusted-access-for-cyber/",
-                ),
-            ],
-        ),
-        Notice::Astra => (
-            "Daybreak isn’t available for Astra. Some cybersecurity requests may still be limited.",
-            &[("Learn more", SAFETY_ACCESS_BLOCK_LEARN_MORE_URL)],
-        ),
-        Notice::Limited => (
-            "We take extra care with some cybersecurity requests.",
-            &[("Learn more", SAFETY_ACCESS_BLOCK_LEARN_MORE_URL)],
-        ),
-    };
-    SafetyAccessBlockCell {
-        title: "This content can’t be shown",
-        body,
-        actions,
-    }
-}
-
 impl HistoryCell for SafetyAccessBlockCell {
     fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
         visible_lines(self.display_hyperlink_lines(width))

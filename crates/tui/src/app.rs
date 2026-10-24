@@ -92,6 +92,7 @@ use ruxex_app_server_client::TypedRequestError;
 use ruxex_app_server_protocol::AskForApproval;
 use ruxex_app_server_protocol::ClientRequest;
 use ruxex_app_server_protocol::ConfigBatchWriteParams;
+#[cfg(test)]
 use ruxex_app_server_protocol::ConfigReadResponse;
 use ruxex_app_server_protocol::ConfigValueWriteParams;
 use ruxex_app_server_protocol::ConfigWriteResponse;
@@ -113,7 +114,6 @@ use ruxex_app_server_protocol::PluginReadResponse;
 use ruxex_app_server_protocol::PluginUninstallParams;
 use ruxex_app_server_protocol::PluginUninstallResponse;
 use ruxex_app_server_protocol::RuxexErrorInfo as AppServerRuxexErrorInfo;
-use ruxex_app_server_protocol::SandboxMode as AppServerSandboxMode;
 use ruxex_app_server_protocol::ServerNotification;
 use ruxex_app_server_protocol::ServerRequest;
 use ruxex_app_server_protocol::SkillErrorInfo;
@@ -131,6 +131,7 @@ use ruxex_config::LoaderOverrides;
 use ruxex_config::types::ModelAvailabilityNuxConfig;
 use ruxex_exec_server::EnvironmentManager;
 use ruxex_features::Feature;
+#[cfg(test)]
 use ruxex_features::FeaturesToml;
 use ruxex_otel::SessionTelemetry;
 use ruxex_protocol::ThreadId;

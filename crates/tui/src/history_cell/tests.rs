@@ -325,7 +325,9 @@ fn composite_cell_preserves_child_web_links() {
     let destination = "https://example.com/usage";
     let cell = CompositeHistoryCell::new(vec![
         Box::new(PlainHistoryCell::new(vec![Line::from("/status")])),
-        Box::new(WebHyperlinkHistoryCell::new(vec![Line::from(destination)])),
+        Box::new(WebHyperlinkHistoryCell::new_hyperlink_lines(vec![
+            crate::terminal_hyperlinks::annotate_web_urls_in_line(Line::from(destination)),
+        ])),
     ]);
 
     let lines = cell.display_hyperlink_lines(/*width*/ 80);
@@ -506,7 +508,7 @@ fn final_message_separator_includes_worked_label_after_one_minute() {
 #[tokio::test]
 async fn session_info_uses_availability_nux_tooltip_override() {
     let config = test_config().await;
-    let cell = new_session_info(
+    let cell = new_session_info_with_brand(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
         "example-model",
@@ -515,6 +517,7 @@ async fn session_info_uses_availability_nux_tooltip_override() {
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
         "Provider",
+        &crate::brand::DefaultTuiBrandProfile,
     );
 
     let rendered = render_transcript(&cell).join("\n");
@@ -531,7 +534,7 @@ async fn session_info_uses_availability_nux_tooltip_override() {
 #[tokio::test]
 async fn session_info_first_event_suppresses_tooltips_and_nux() {
     let config = test_config().await;
-    let cell = new_session_info(
+    let cell = new_session_info_with_brand(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
         "example-model",
@@ -540,6 +543,7 @@ async fn session_info_first_event_suppresses_tooltips_and_nux() {
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
         "Provider",
+        &crate::brand::DefaultTuiBrandProfile,
     );
 
     let rendered = render_transcript(&cell).join("\n");
@@ -551,7 +555,7 @@ async fn session_info_first_event_suppresses_tooltips_and_nux() {
 async fn session_info_hides_tooltips_when_disabled() {
     let mut config = test_config().await;
     config.show_tooltips = false;
-    let cell = new_session_info(
+    let cell = new_session_info_with_brand(
         &config,
         &crate::local_settings::LocalSettings::from(&config),
         "example-model",
@@ -560,6 +564,7 @@ async fn session_info_hides_tooltips_when_disabled() {
         Some("Model just became available".to_string()),
         Some(PlanType::Free),
         "Provider",
+        &crate::brand::DefaultTuiBrandProfile,
     );
 
     let rendered = render_transcript(&cell).join("\n");

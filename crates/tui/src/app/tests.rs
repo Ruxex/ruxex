@@ -1,7 +1,5 @@
 //! App-level orchestration tests for the TUI.
 
-#[path = "tests/daybreak_tests.rs"]
-mod daybreak_tests;
 #[path = "tests/advanced_reasoning_tests.rs"]
 mod advanced_reasoning_tests;
 #[path = "tests/agents_navigation_tests.rs"]
@@ -77,7 +75,6 @@ use crate::history_cell::AgentMessageCell;
 use crate::history_cell::HistoryCell;
 use crate::history_cell::PlainHistoryCell;
 use crate::history_cell::UserHistoryCell;
-use crate::history_cell::new_session_info;
 use crate::multi_agents::AgentPickerThreadEntry;
 use crate::multi_agents::SubAgentActivityDisplay;
 use assert_matches::assert_matches;
@@ -4598,7 +4595,7 @@ async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
             network_proxy: None,
             rollout_path: Some(PathBuf::new()),
         };
-        Arc::new(new_session_info(
+        Arc::new(new_session_info_with_brand(
             app.chat_widget.config_ref(),
             &app.local_settings,
             app.chat_widget.current_model(),
@@ -4607,6 +4604,7 @@ async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
             /*tooltip_override*/ None,
             /*auth_plan*/ None,
             "Provider",
+            &crate::brand::DefaultTuiBrandProfile,
         )) as Arc<dyn HistoryCell>
     };
 
@@ -5705,7 +5703,7 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             network_proxy: None,
             rollout_path: Some(PathBuf::new()),
         };
-        Arc::new(new_session_info(
+        Arc::new(new_session_info_with_brand(
             app.chat_widget.config_ref(),
             &app.local_settings,
             app.chat_widget.current_model(),
@@ -5714,6 +5712,7 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             /*tooltip_override*/ None,
             /*auth_plan*/ None,
             "Provider",
+            &crate::brand::DefaultTuiBrandProfile,
         )) as Arc<dyn HistoryCell>
     };
 

@@ -318,18 +318,6 @@ impl McpServerElicitationFormRequest {
             fields,
         })
     }
-
-    pub(crate) fn thread_id(&self) -> ThreadId {
-        self.thread_id
-    }
-
-    pub(crate) fn server_name(&self) -> &str {
-        self.server_name.as_str()
-    }
-
-    pub(crate) fn request_id(&self) -> &AppServerRequestId {
-        &self.request_id
-    }
 }
 
 fn approval_supports_persist_mode(meta: Option<&Value>, expected_mode: &str) -> bool {

@@ -273,7 +273,6 @@ impl App {
                 self.environment_manager.as_ref(),
             ),
         );
-        self.chat_widget.cyber_policy_notice = Default::default();
         self.chat_widget.remote_connection =
             crate::status::remote_connection::remote_connection_status_value(
                 &self.app_server_target,
@@ -448,13 +447,6 @@ impl App {
         if server_context_changed {
             tracing::info!(
                 "AppServer identity changed during reconnect; adopted a fresh server context"
-            );
-        }
-        if self.chat_widget.has_managed_account() {
-            crate::daybreak::prefetch_notice(
-                &self.config,
-                app_server,
-                self.chat_widget.cyber_policy_notice.clone(),
             );
         }
         self.chat_widget.add_info_message(

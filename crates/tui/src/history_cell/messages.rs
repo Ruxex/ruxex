@@ -499,18 +499,7 @@ impl AgentMarkdownCell {
             spoken_artifacts: false,
         }
     }
-
-    pub(crate) fn new_spoken(markdown_source: String, cwd: &Path) -> Self {
-        let mut cell = Self::new_with_inline_visualizations(
-            markdown_source,
-            cwd,
-            /*inline_visualization_context*/ None,
-        );
-        cell.spoken_artifacts = true;
-        cell
-    }
 }
-
 fn normalize_whitespace_only_hyperlink_lines(mut lines: Vec<HyperlinkLine>) -> Vec<HyperlinkLine> {
     for line in &mut lines {
         if line
@@ -649,12 +638,6 @@ pub(crate) fn new_user_prompt(
         remote_image_urls,
         spoken: false,
     }
-}
-
-pub(crate) fn new_spoken_user_prompt(message: String) -> UserHistoryCell {
-    let mut cell = new_user_prompt(message, Vec::new(), Vec::new(), Vec::new());
-    cell.spoken = true;
-    cell
 }
 
 /// Retain a completed reasoning block in the expanded transcript only.

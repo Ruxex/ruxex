@@ -433,8 +433,7 @@ impl Session {
             Arc::clone(&active_turn.turn_state)
         };
 
-        let (input, start_options) =
-            self.input_queue.get_pending_input(&self.active_turn).await;
+        let (input, start_options) = self.input_queue.get_pending_input(&self.active_turn).await;
         let turn_context = self
             .new_turn_with_default_settings(
                 sub_id,

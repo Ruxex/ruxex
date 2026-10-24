@@ -1417,9 +1417,6 @@ impl App {
                 self.chat_widget
                     .open_plan_reasoning_scope_prompt(model, effort);
             }
-            AppEvent::OpenAllModelsPopup => {
-                self.chat_widget.open_all_models_popup();
-            }
             AppEvent::OpenFullAccessConfirmation {
                 preset,
                 return_to_permissions,
@@ -1600,9 +1597,6 @@ impl App {
             AppEvent::EnableFeatureForNewThreads(feature) => {
                 self.enable_feature_for_new_threads(tui, app_server, feature)
                     .await;
-            }
-            AppEvent::UpdateFeatureFlags { updates } => {
-                self.update_feature_flags(app_server, updates).await;
             }
             AppEvent::UpdateRateLimitSwitchPromptHidden(hidden) => {
                 self.chat_widget.set_rate_limit_switch_prompt_hidden(hidden);

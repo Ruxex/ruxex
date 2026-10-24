@@ -19,7 +19,7 @@ fn insert_splash(app: &mut App, tui: &mut tui::Tui) {
     let session = test_thread_session(ThreadId::new(), app.config.cwd.to_path_buf());
     app.insert_history_cell(
         tui,
-        Box::new(history_cell::new_session_info(
+        Box::new(history_cell::new_session_info_with_brand(
             &app.config,
             &app.local_settings,
             "model-test",
@@ -28,6 +28,7 @@ fn insert_splash(app: &mut App, tui: &mut tui::Tui) {
             /*tooltip_override*/ None,
             /*auth_plan*/ None,
             "Provider",
+            &crate::brand::DefaultTuiBrandProfile,
         )),
     );
 }

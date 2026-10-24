@@ -69,6 +69,7 @@ impl ChatWidget {
         self.config.permissions.network = network;
     }
 
+    #[cfg(test)]
     pub(crate) fn set_feature_enabled(&mut self, feature: Feature, enabled: bool) -> bool {
         if let Err(err) = self.config.features.set_enabled(feature, enabled) {
             tracing::warn!(

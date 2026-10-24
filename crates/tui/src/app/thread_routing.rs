@@ -122,16 +122,6 @@ impl App {
         store.note_outbound_op(op);
     }
 
-    pub(super) async fn note_active_thread_outbound_op(&mut self, op: &AppCommand) {
-        if !ThreadEventStore::op_can_change_pending_replay_state(op) {
-            return;
-        }
-        let Some(thread_id) = self.active_thread_id else {
-            return;
-        };
-        self.note_thread_outbound_op(thread_id, op).await;
-    }
-
     pub(super) async fn active_turn_id_for_thread(&self, thread_id: ThreadId) -> Option<String> {
         let channel = self.thread_event_channels.get(&thread_id)?;
         let store = channel.store.lock().await;

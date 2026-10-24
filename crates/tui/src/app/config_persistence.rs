@@ -439,6 +439,7 @@ impl App {
         }
     }
 
+    #[cfg(test)]
     pub(super) async fn read_effective_config_after_overridden_write(
         &mut self,
         app_server: &mut AppServerSession,
@@ -572,6 +573,7 @@ impl App {
         Some(permission_profile)
     }
 
+    #[cfg(test)]
     pub(super) async fn update_feature_flags(
         &mut self,
         app_server: &mut AppServerSession,
@@ -786,6 +788,7 @@ impl App {
         }
     }
 
+    #[cfg(test)]
     fn sync_feature_state_from_effective_config(
         &mut self,
         effective_config: &ConfigReadResponse,
@@ -810,6 +813,7 @@ pub(super) fn overridden_write_message(write_response: &ConfigWriteResponse) -> 
         .unwrap_or("the effective config is overridden by a higher-priority layer")
 }
 
+#[cfg(test)]
 fn feature_enabled_from_effective_config(
     effective_config: &ConfigReadResponse,
     feature: Feature,
@@ -825,12 +829,7 @@ fn feature_enabled_from_effective_config(
         .unwrap_or_else(|| feature.default_enabled())
 }
 
-fn sandbox_mode_from_effective_config(
-    effective_config: &ConfigReadResponse,
-) -> Option<AppServerSandboxMode> {
-    effective_config.config.sandbox_mode
-}
-
+#[cfg(test)]
 fn features_toml_from_json(value: &serde_json::Value) -> Option<FeaturesToml> {
     serde_json::from_value(value.clone()).ok()
 }

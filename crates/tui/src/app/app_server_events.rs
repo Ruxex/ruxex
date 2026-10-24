@@ -203,7 +203,6 @@ impl App {
             }
             ServerNotification::AccountUpdated(notification) => {
                 self.repaint_agents_overview();
-                self.chat_widget.cyber_policy_notice = Default::default();
                 // Deferred terminal writes must never carry the previous account's billing into
                 // the newly authenticated identity, even when both accounts share one thread.
                 self.last_thread_usage_status_cell = None;
@@ -218,13 +217,6 @@ impl App {
                     false,
                     has_ruxex_backend_auth,
                 );
-                if self.chat_widget.has_managed_account() {
-                    crate::daybreak::prefetch_notice(
-                        &self.config,
-                        app_server_client,
-                        self.chat_widget.cyber_policy_notice.clone(),
-                    );
-                }
                 return;
             }
             ServerNotification::AccountLoginCompleted(notification) if notification.success => {

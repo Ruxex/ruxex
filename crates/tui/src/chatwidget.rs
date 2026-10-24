@@ -69,7 +69,6 @@ use crate::status::StatusAccountDisplay;
 use crate::status::StatusHistoryHandle;
 use crate::status::format_directory_display;
 use crate::status::format_tokens_compact;
-use crate::status::rate_limit_snapshot_display_for_limit;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_title::SetTerminalTitleResult;
 use crate::terminal_title::clear_terminal_title;
@@ -163,7 +162,6 @@ use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::debug;
-use tracing::warn;
 
 const DEFAULT_MODEL_DISPLAY_NAME: &str = "loading";
 const TRUSTED_ACCESS_FOR_CYBER_VERIFICATION_WARNING: &str = "Your conversations have multiple flags for possible cybersecurity risk. Responses may take longer because extra safety checks are on. To get authorized for security work, follow your provider's trusted-access process.";
@@ -363,7 +361,6 @@ use self::rate_limits::RateLimitSwitchPromptState;
 use self::rate_limits::RateLimitWarningState;
 use self::rate_limits::app_server_rate_limit_error_kind;
 pub(crate) use self::rate_limits::fallback_limit_label;
-use self::rate_limits::is_app_server_cyber_policy_error;
 mod recap;
 pub(crate) use self::rate_limits::limit_label_for_window;
 mod completion;
@@ -389,7 +386,6 @@ mod streaming;
 use self::status_surfaces::CachedProjectRootName;
 mod thread_title_status;
 mod thread_usage;
-pub(crate) use self::thread_usage::ThreadUsageOutcome;
 mod tool_lifecycle;
 mod tool_requests;
 mod transcript;
@@ -499,7 +495,6 @@ pub(crate) enum ExternalEditorState {
 /// (which view gets Ctrl+C), while `ChatWidget` owns process-level decisions such as interrupting
 /// active work, arming the double-press quit shortcut, and requesting shutdown-first exit.
 pub(crate) struct ChatWidget {
-    pub(crate) cyber_policy_notice: crate::daybreak::NoticeCache,
     app_event_tx: AppEventSender,
     ruxex_op_target: RuxexOpTarget,
     bottom_pane: BottomPane,
@@ -540,15 +535,6 @@ pub(crate) struct ChatWidget {
     // Status and polling use account usage reads; response streams may identify meters differently.
     rate_limit_snapshots_by_limit_id: BTreeMap<String, RateLimitSnapshotDisplay>,
     refreshing_status_outputs: Vec<(u64, StatusHistoryHandle)>,
-    next_status_refresh_request_id: u64,
-    pending_rate_limit_reset_request_id: Option<u64>,
-    pending_rate_limit_reset_idempotency_key: Option<String>,
-    rate_limit_reset_picker_request_id: Option<u64>,
-    pending_rate_limit_reset_hint_request_id: Option<u64>,
-    pending_usage_menu_rate_limit_request_id: Option<u64>,
-    pending_rate_limit_reset_hint: Option<PlainHistoryCell>,
-    available_rate_limit_reset_credits: Option<i64>,
-    next_rate_limit_reset_request_id: u64,
     plan_type: Option<PlanType>,
     ruxex_rate_limit_reached_type: Option<RateLimitReachedType>,
     ruxex_spend_control_reached: Option<bool>,
@@ -1383,11 +1369,6 @@ impl ChatWidget {
     pub(crate) fn add_error_message(&mut self, message: String) {
         self.add_to_history(history_cell::new_error_event(message));
         self.request_redraw();
-    }
-
-    fn add_app_server_stub_message(&mut self, feature: &str) {
-        warn!(feature, "stubbed unsupported TUI feature");
-        self.add_error_message(format!("{feature}: {TUI_STUB_MESSAGE}"));
     }
 
     /// Begin the asynchronous MCP inventory flow: show a loading spinner and

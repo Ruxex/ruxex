@@ -10,23 +10,11 @@ use super::ThreadId;
 use crate::status::StatusHistoryHandle;
 use ruxex_app_server_protocol::ThreadUsage;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum ThreadUsageOutcome {
-    Available(ThreadUsage),
-    Disabled,
-}
-
 const THREAD_USAGE_SETTLEMENT_DELAYS: [Duration; 3] = [
     Duration::from_secs(/*secs*/ 15),
     Duration::from_secs(/*secs*/ 60),
     Duration::from_secs(/*secs*/ 120),
 ];
-const THREAD_USAGE_RETRY_DELAYS: [Duration; 3] = [
-    Duration::from_secs(/*secs*/ 5),
-    Duration::from_secs(/*secs*/ 15),
-    Duration::from_secs(/*secs*/ 60),
-];
-
 #[derive(Debug, Default)]
 struct SelectedThreadUsage {
     credits: bool,
@@ -176,152 +164,6 @@ impl ChatWidget {
         self.thread_usage.settlement_refresh_due_at = None;
     }
 
-    pub(crate) fn finish_thread_usage_refresh(
-        &mut self,
-        thread_id: ThreadId,
-        request_id: u64,
-        result: Result<ThreadUsageOutcome, String>,
-    ) -> bool {
-        if self.thread_id != Some(thread_id)
-            || self.thread_usage.thread_id != Some(thread_id)
-            || self.thread_usage.pending_request_id != Some(request_id)
-        {
-            return false;
-        }
-
-        self.thread_usage.pending_request_id = None;
-        let mut usage_updated = false;
-        self.thread_usage.status_requested = false;
-        let post_turn_request = self.thread_usage.settlement_request_id == Some(request_id);
-        match result {
-            Ok(ThreadUsageOutcome::Disabled) => {
-                self.thread_usage.feature_disabled = true;
-                self.thread_usage.estimate = None;
-                usage_updated = true;
-                self.thread_usage.retry_due_at = None;
-                self.thread_usage.settlement_refresh_due_at = None;
-                self.thread_usage.settlement_baseline_credits_micros = None;
-                self.thread_usage.settlement_baseline_usd_micros = None;
-                self.thread_usage.settlement_request_id = None;
-            }
-            Ok(ThreadUsageOutcome::Available(usage))
-                if usage.thread_id != thread_id.to_string() =>
-            {
-                tracing::warn!(
-                    requested_thread_id = %thread_id,
-                    returned_thread_id = %usage.thread_id,
-                    "thread usage response referred to another thread"
-                );
-                self.schedule_thread_usage_retry();
-            }
-            Ok(ThreadUsageOutcome::Available(mut usage)) => {
-                usage_updated = true;
-                self.thread_usage.retry_attempts = 0;
-                self.thread_usage.retry_due_at = None;
-                let previous_positive_credits_micros = self
-                    .thread_usage
-                    .estimate
-                    .as_ref()
-                    .map(|estimate| estimate.estimated_usage_credits_micros)
-                    .filter(|micros| *micros > 0);
-                let transient_zero_credits = usage.estimated_usage_credits_micros == 0
-                    && previous_positive_credits_micros.is_some();
-                if let Some(previous_positive_credits_micros) = previous_positive_credits_micros
-                    && transient_zero_credits
-                {
-                    usage.estimated_usage_credits_micros = previous_positive_credits_micros;
-                }
-                let previous_positive_usd_micros = self
-                    .thread_usage
-                    .estimate
-                    .as_ref()
-                    .and_then(|estimate| estimate.estimated_usage_usd_micros)
-                    .filter(|micros| *micros > 0);
-                let transient_zero_cost = usage.estimated_usage_usd_micros == Some(0)
-                    && previous_positive_usd_micros.is_some();
-                if let Some(previous_positive_usd_micros) = previous_positive_usd_micros
-                    && transient_zero_cost
-                {
-                    usage.estimated_usage_usd_micros = Some(previous_positive_usd_micros);
-                }
-                if (transient_zero_credits || transient_zero_cost)
-                    && usage.groups.is_empty()
-                    && let Some(previous_usage) = self.thread_usage.estimate.as_ref()
-                {
-                    usage.groups.clone_from(&previous_usage.groups);
-                }
-                let estimated_credits_micros = usage.estimated_usage_credits_micros;
-                let estimated_usd_micros = usage.estimated_usage_usd_micros;
-                self.thread_usage.estimate = Some(usage);
-                if let Some(baseline) = self.thread_usage.settlement_baseline_credits_micros {
-                    if !post_turn_request {
-                        self.thread_usage.settlement_baseline_credits_micros =
-                            Some(baseline.max(estimated_credits_micros));
-                        self.thread_usage.settlement_baseline_usd_micros = match (
-                            self.thread_usage.settlement_baseline_usd_micros,
-                            estimated_usd_micros,
-                        ) {
-                            (Some(previous), Some(current)) => Some(previous.max(current)),
-                            (previous, current) => previous.or(current),
-                        };
-                    } else {
-                        let mut selected = self.selected_thread_usage();
-                        if !self.thread_usage.status_history_handles.is_empty() {
-                            selected.credits = true;
-                            selected.estimated_cost |=
-                                self.thread_usage.settlement_baseline_usd_micros.is_some()
-                                    || estimated_usd_micros.is_some();
-                        }
-                        let credits_settled =
-                            !selected.credits || estimated_credits_micros > baseline;
-                        let cost_settled = !selected.estimated_cost
-                            || estimated_usd_micros.is_some_and(|current| {
-                                self.thread_usage
-                                    .settlement_baseline_usd_micros
-                                    .map_or(current > 0, |previous| current > previous)
-                            });
-                        if credits_settled && cost_settled {
-                            self.thread_usage.settlement_baseline_credits_micros = None;
-                            self.thread_usage.settlement_baseline_usd_micros = None;
-                            self.thread_usage.settlement_request_id = None;
-                            self.thread_usage.settlement_refresh_due_at = None;
-                        } else if self.thread_usage.settlement_refresh_due_at.is_none() {
-                            self.schedule_next_thread_usage_settlement();
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                tracing::debug!(error = %err, "failed to fetch estimated thread usage");
-                self.schedule_thread_usage_retry();
-            }
-        }
-        if usage_updated && !self.thread_usage.status_history_handles.is_empty() {
-            for handle in &self.thread_usage.status_history_handles {
-                handle.set_thread_usage(self.thread_usage.estimate.clone());
-            }
-            if self
-                .thread_usage
-                .settlement_baseline_credits_micros
-                .is_none()
-            {
-                self.thread_usage.status_history_handles.clear();
-            }
-        }
-        if self
-            .thread_usage
-            .settlement_baseline_credits_micros
-            .is_some()
-            && self.thread_usage.settlement_request_id.is_none()
-            && self.thread_usage_is_selected()
-        {
-            self.request_thread_usage();
-        }
-        self.refresh_status_line();
-        self.request_redraw();
-        true
-    }
-
     pub(super) fn estimated_thread_usage(&self) -> Option<&ThreadUsage> {
         self.thread_usage.estimate.as_ref()
     }
@@ -380,22 +222,6 @@ impl ChatWidget {
         };
         self.thread_usage.settlement_attempts += 1;
         self.thread_usage.settlement_refresh_due_at = Some(Instant::now() + delay);
-        self.frame_requester.schedule_frame_in(delay);
-    }
-
-    fn schedule_thread_usage_retry(&mut self) {
-        if !self.thread_usage_is_selected() {
-            return;
-        }
-
-        let Some(delay) = THREAD_USAGE_RETRY_DELAYS
-            .get(self.thread_usage.retry_attempts)
-            .copied()
-        else {
-            return;
-        };
-        self.thread_usage.retry_attempts += 1;
-        self.thread_usage.retry_due_at = Some(Instant::now() + delay);
         self.frame_requester.schedule_frame_in(delay);
     }
 }
