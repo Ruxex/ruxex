@@ -846,7 +846,30 @@ async fn run_request_permissions_regression(wire_api: WireApi) -> Result<()> {
     let follow_up: serde_json::Value = model_requests[1]
         .body_json()
         .expect("request permissions follow-up should contain JSON");
-    assert!(follow_up.to_string().contains("request_permissions"));
+    let permission_output = match wire_api {
+        WireApi::Chat => follow_up["messages"]
+            .as_array()
+            .and_then(|messages| {
+                messages.iter().find(|message| {
+                    message["role"] == "tool"
+                        && message["content"].to_string().contains("permissions")
+                })
+            })
+            .map(|message| message["content"].to_string())
+            .expect("Chat follow-up should contain the permission response"),
+        WireApi::Responses => follow_up["input"]
+            .as_array()
+            .and_then(|items| {
+                items.iter().find(|item| {
+                    item["type"] == "function_call_output"
+                        && item["output"].to_string().contains("permissions")
+                })
+            })
+            .map(|item| item["output"].to_string())
+            .expect("Responses follow-up should contain the permission response"),
+    };
+    assert!(permission_output.contains("permissions"));
+    assert!(permission_output.contains("scope"));
     Ok(())
 }
 
