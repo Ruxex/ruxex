@@ -41,7 +41,6 @@ pub(crate) enum ImagePreparationMode {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ImageDetailSetting {
-    Auto,
     Low,
     High,
     Original,

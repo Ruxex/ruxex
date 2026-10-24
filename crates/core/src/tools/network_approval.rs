@@ -1,7 +1,6 @@
 use crate::config::NetworkProxySpec;
 use crate::environment_selection::TurnEnvironmentSnapshot;
 use crate::network_policy_decision::denied_network_policy_message;
-use crate::sandboxing::SandboxPermissions;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
 use crate::session::turn_context::TurnEnvironment;
@@ -56,13 +55,8 @@ const ABANDONED_NETWORK_APPROVAL_MESSAGE: &str =
 #[derive(Clone, Debug)]
 pub(crate) struct NetworkApprovalTrigger {
     pub call_id: String,
-    pub tool_name: String,
-    pub command: String,
     pub cwd: PathUri,
-    pub sandbox_permissions: SandboxPermissions,
     pub additional_permissions: Option<AdditionalPermissionProfile>,
-    pub justification: Option<String>,
-    pub tty: Option<bool>,
 }
 
 #[derive(Debug)]
@@ -404,20 +398,6 @@ impl Default for NetworkApprovalService {
 }
 
 impl NetworkApprovalService {
-    /// Replace the target session's approval cache with the source session's
-    /// currently approved hosts.
-    #[expect(
-        clippy::await_holding_invalid_type,
-        reason = "the approval snapshot must not interleave with a session policy commit"
-    )]
-    pub(crate) async fn sync_session_approved_hosts_to(&self, other: &Self) {
-        let _commit_guard = self.session_policy_commit_lock.lock().await;
-        let approved_hosts = self.session_approved_hosts.lock().await.clone();
-        let mut other_approved_hosts = other.session_approved_hosts.lock().await;
-        other_approved_hosts.clear();
-        other_approved_hosts.extend(approved_hosts.iter().cloned());
-    }
-
     async fn register_call(&self, call: ActiveNetworkApprovalCall) {
         let mut calls = self
             .calls
@@ -809,7 +789,6 @@ impl NetworkApprovalService {
         };
         let approval_context = ApprovalContext {
             review_context,
-            cancellation_token: None,
             call_id: approval_call_id,
             tool_name: telemetry_tool_name.clone(),
             approval_reason: Some(prompt_reason),

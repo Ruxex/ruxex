@@ -14,7 +14,6 @@ use crate::session::turn_context::TurnEnvironment;
 use crate::shell::ShellType;
 use crate::shell_snapshot::ShellSnapshotSandbox;
 use crate::shell_snapshot::snapshot_read_permissions;
-use crate::tools::flat_tool_name;
 use crate::tools::network_approval::NetworkApprovalSpec;
 use crate::tools::network_approval::NetworkApprovalTrigger;
 use crate::tools::runtimes::RuntimePathPrepends;
@@ -49,11 +48,7 @@ use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
-use std::time::Duration;
 use tokio_util::sync::CancellationToken;
-
-// Allow 5s for review cleanup and 5s for controller processing after review.
-const REMOTE_NETWORK_POLICY_DECISION_MARGIN: Duration = Duration::from_secs(10);
 
 /// Request payload used by the unified-exec runtime after approvals and
 /// sandbox preferences have been resolved for the current turn.
@@ -74,8 +69,6 @@ pub struct UnifiedExecRequest {
     pub tty: bool,
     pub sandbox_permissions: SandboxPermissions,
     pub additional_permissions: Option<AdditionalPermissionProfile>,
-    #[cfg(unix)]
-    pub additional_permissions_preapproved: bool,
     pub justification: Option<String>,
     pub exec_approval_requirement: ExecApprovalRequirement,
 }
@@ -232,13 +225,8 @@ impl<'a> ToolRuntime<UnifiedExecRequest, UnifiedExecAttempt> for UnifiedExecRunt
             tool_name: ctx.tool_name.clone(),
             trigger: NetworkApprovalTrigger {
                 call_id: ctx.call_id.clone(),
-                tool_name: flat_tool_name(&ctx.tool_name).into_owned(),
-                command: req.command.join(" "),
                 cwd: req.cwd.clone(),
-                sandbox_permissions: req.sandbox_permissions,
                 additional_permissions: req.additional_permissions.clone(),
-                justification: req.justification.clone(),
-                tty: Some(req.tty),
             },
             command: req.hook_command.clone(),
             environment_id: req.turn_environment.selection.environment_id.clone(),
@@ -703,8 +691,6 @@ mod tests {
             tty: false,
             sandbox_permissions: SandboxPermissions::UseDefault,
             additional_permissions: None,
-            #[cfg(unix)]
-            additional_permissions_preapproved: false,
             justification: None,
             exec_approval_requirement: ExecApprovalRequirement::Skip {
                 bypass_sandbox: false,
@@ -740,8 +726,6 @@ mod tests {
             tty: false,
             sandbox_permissions,
             additional_permissions: None,
-            #[cfg(unix)]
-            additional_permissions_preapproved: false,
             justification: None,
             exec_approval_requirement,
         }

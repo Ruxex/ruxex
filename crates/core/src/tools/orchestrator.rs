@@ -188,7 +188,6 @@ impl ToolOrchestrator {
                     })?;
                 let approval_ctx = ApprovalContext {
                     review_context: ApprovalReviewContext::from(&tool_ctx.step_context),
-                    cancellation_token: Some(tool_ctx.cancellation_token.clone()),
                     call_id: tool_ctx.call_id.clone(),
                     tool_name: tool_ctx.tool_name.clone(),
                     approval_reason: reason.clone(),
@@ -393,7 +392,6 @@ impl ToolOrchestrator {
                         })?;
                     let approval_ctx = ApprovalContext {
                         review_context: ApprovalReviewContext::from(&tool_ctx.step_context),
-                        cancellation_token: Some(tool_ctx.cancellation_token.clone()),
                         call_id: tool_ctx.call_id.clone(),
                         tool_name: tool_ctx.tool_name.clone(),
                         approval_reason,

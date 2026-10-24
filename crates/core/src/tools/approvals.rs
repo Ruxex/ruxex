@@ -28,14 +28,12 @@ use ruxex_protocol::protocol::AskForApproval;
 use ruxex_protocol::protocol::FileChange;
 use ruxex_protocol::protocol::NetworkPolicyRuleAction;
 use ruxex_protocol::protocol::ReviewDecision;
-use ruxex_protocol::request_permissions::RequestPermissionProfile;
 use ruxex_tools::ToolName;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio_util::sync::CancellationToken;
 use tracing::error;
 
 #[derive(Clone)]
@@ -107,7 +105,6 @@ impl ApprovalReviewContext {
 #[derive(Clone)]
 pub(crate) struct ApprovalContext {
     pub(crate) review_context: ApprovalReviewContext,
-    pub(crate) cancellation_token: Option<CancellationToken>,
     pub(crate) call_id: String,
     pub(crate) tool_name: ToolName,
     pub(crate) approval_reason: Option<String>,
@@ -140,17 +137,6 @@ pub(crate) enum ApprovalAction {
         cwd: PathUri,
         tty: bool,
         sandbox_permissions: SandboxPermissions,
-        additional_permissions: Option<AdditionalPermissionProfile>,
-    },
-    #[cfg(unix)]
-    Execve {
-        id: String,
-        approval_id: String,
-        environment_id: String,
-        program: AbsolutePathBuf,
-        argv: Vec<String>,
-        command: Vec<String>,
-        cwd: AbsolutePathBuf,
         additional_permissions: Option<AdditionalPermissionProfile>,
     },
     ApplyPatch {
@@ -196,12 +182,6 @@ pub(crate) enum ApprovalAction {
         command: Vec<String>,
         cwd: AbsolutePathBuf,
     },
-    RequestPermissions {
-        id: String,
-        turn_id: String,
-        reason: Option<String>,
-        permissions: RequestPermissionProfile,
-    },
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, serde::Serialize)]
@@ -243,11 +223,6 @@ impl ApprovalAction {
                     "additional_permissions": additional_permissions,
                 }),
             },
-            #[cfg(unix)]
-            Self::Execve { command, .. } => PermissionRequestPayload::bash(
-                ruxex_shell_command::parse_command::shlex_join(command),
-                /*description*/ None,
-            ),
             Self::ApplyPatch { patch, .. } => PermissionRequestPayload {
                 tool_name: HookToolName::apply_patch(),
                 tool_input: serde_json::json!({ "command": patch }),
@@ -270,17 +245,6 @@ impl ApprovalAction {
                 hook_command.clone(),
                 Some(format!("network-access {target}")),
             ),
-            Self::RequestPermissions {
-                reason,
-                permissions,
-                ..
-            } => PermissionRequestPayload {
-                tool_name: HookToolName::new("request_permissions"),
-                tool_input: serde_json::json!({
-                    "reason": reason,
-                    "permissions": permissions,
-                }),
-            },
         }
     }
 
@@ -303,12 +267,9 @@ impl ApprovalAction {
                 sandbox_permissions: *sandbox_permissions,
                 additional_permissions: additional_permissions.clone(),
             })],
-            #[cfg(unix)]
-            Self::Execve { .. } => Vec::new(),
-            Self::McpToolCall { .. }
-            | Self::NetworkAccess { .. }
-            | Self::RequestPermissions { .. }
-            | Self::WriteStdin { .. } => Vec::new(),
+            Self::McpToolCall { .. } | Self::NetworkAccess { .. } | Self::WriteStdin { .. } => {
+                Vec::new()
+            }
             Self::ApplyPatch {
                 environment_id,
                 files,
@@ -387,8 +348,6 @@ impl Session {
         let is_mcp_tool_call = matches!(&action, ApprovalAction::McpToolCall { .. });
         let is_network_approval = matches!(&action, ApprovalAction::NetworkAccess { .. });
         let permission_request_run_id = match &action {
-            #[cfg(unix)]
-            ApprovalAction::Execve { approval_id, .. } => approval_id.clone(),
             ApprovalAction::NetworkAccess { hook_run_id, .. } => hook_run_id.clone(),
             _ if ctx.retry_reason.is_some() => format!("{}:retry", ctx.call_id),
             _ => ctx.call_id.clone(),
@@ -526,33 +485,6 @@ impl Session {
                 )
                 .await
             }
-            #[cfg(unix)]
-            ApprovalAction::Execve {
-                approval_id,
-                environment_id,
-                command,
-                cwd,
-                additional_permissions,
-                ..
-            } => {
-                self.request_command_approval(
-                    ctx.review_context.turn(),
-                    ExecApprovalKind::Command,
-                    ctx.review_context.model_context(),
-                    ctx.call_id.clone(),
-                    Some(approval_id.clone()),
-                    Some(environment_id.clone()),
-                    command.clone(),
-                    cwd.clone().into(),
-                    /*reason*/ None,
-                    /*network_approval_context*/ None,
-                    /*proposed_execpolicy_amendment*/ None,
-                    additional_permissions.clone(),
-                    Some(vec![ReviewDecision::Approved, ReviewDecision::Abort]),
-                    /*plugin_attribution_override*/ None,
-                )
-                .await
-            }
             ApprovalAction::ApplyPatch {
                 changes,
                 permissions_preapproved,
@@ -625,9 +557,6 @@ impl Session {
                     /*plugin_attribution_override*/ None,
                 )
                 .await
-            }
-            ApprovalAction::RequestPermissions { .. } => {
-                unreachable!("permission requests are handled by the session event flow")
             }
         }
     }

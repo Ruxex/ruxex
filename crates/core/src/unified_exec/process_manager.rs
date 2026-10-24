@@ -932,7 +932,6 @@ impl UnifiedExecProcessManager {
             }
             let approval_context = ApprovalContext {
                 review_context: ApprovalReviewContext::from(&context.step_context),
-                cancellation_token: Some(context.cancellation_token.clone()),
                 call_id: context.call_id.clone(),
                 tool_name: ToolName::plain("write_stdin"),
                 approval_reason: Some(approval_reason),
@@ -1441,8 +1440,6 @@ impl UnifiedExecProcessManager {
             tty: request.tty,
             sandbox_permissions: request.sandbox_permissions,
             additional_permissions: request.additional_permissions.clone(),
-            #[cfg(unix)]
-            additional_permissions_preapproved: request.additional_permissions_preapproved,
             justification: request.justification.clone(),
             exec_approval_requirement,
         };

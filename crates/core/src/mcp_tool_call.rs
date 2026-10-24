@@ -68,7 +68,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::sync::Arc;
-use tokio_util::sync::CancellationToken;
 use toml_edit::value;
 use tracing::Instrument;
 use tracing::Span;
@@ -99,7 +98,6 @@ const MCP_TOOL_CALL_EVENT_RESULT_MAX_BYTES: usize = DEFAULT_OUTPUT_BYTES_CAP;
 pub(crate) async fn handle_mcp_tool_call(
     sess: Arc<Session>,
     step_context: &Arc<StepContext>,
-    cancellation_token: &CancellationToken,
     call_id: String,
     originating_call: Option<ToolCallOrigin>,
     tool_info: &ToolInfo,
@@ -176,7 +174,6 @@ pub(crate) async fn handle_mcp_tool_call(
     if let Some(decision) = maybe_request_mcp_tool_approval(
         &sess,
         step_context,
-        cancellation_token,
         &call_id,
         &invocation,
         &invocation_tool_name,
@@ -856,19 +853,6 @@ impl Session {
         registry.insert(key, Arc::downgrade(&metadata));
         metadata
     }
-
-    pub(crate) fn mcp_tool_approval_metadata(
-        &self,
-        server: &str,
-        call_id: &str,
-    ) -> Option<(Option<McpInvocation>, McpToolApprovalMetadata)> {
-        self.mcp_tool_approval_metadata
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(&(server.to_string(), call_id.to_string()))
-            .and_then(std::sync::Weak::upgrade)
-            .map(|metadata| (*metadata).clone())
-    }
 }
 
 const MCP_TOOL_OUTPUT_TEMPLATE_META_KEY: &str = "ruxex/outputTemplate";
@@ -1083,7 +1067,6 @@ fn mcp_tool_approval_prompt_options(
 async fn maybe_request_mcp_tool_approval(
     sess: &Arc<Session>,
     step_context: &Arc<StepContext>,
-    cancellation_token: &CancellationToken,
     call_id: &str,
     invocation: &McpInvocation,
     invocation_tool_name: &ToolName,
@@ -1141,7 +1124,6 @@ async fn maybe_request_mcp_tool_approval(
     };
     let approval_context = ApprovalContext {
         review_context: ApprovalReviewContext::from(step_context),
-        cancellation_token: Some(cancellation_token.clone()),
         call_id: call_id.to_string(),
         tool_name: invocation_tool_name.clone(),
         approval_reason: None,

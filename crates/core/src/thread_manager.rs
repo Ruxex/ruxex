@@ -830,10 +830,6 @@ impl ThreadManager {
         Ok(())
     }
 
-    pub(crate) fn git_root_discovery(&self) -> Arc<GitRootDiscovery> {
-        Arc::clone(&self.state.git_root_discovery)
-    }
-
     pub fn get_models_manager(&self) -> SharedModelsManager {
         self.state.models_manager.clone()
     }
