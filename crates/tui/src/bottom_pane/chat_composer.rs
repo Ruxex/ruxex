@@ -3299,8 +3299,11 @@ impl ChatComposer {
             return Some(InputResult::None);
         }
         self.stage_slash_command_history(&command);
-        self.draft.textarea.set_text_clearing_elements("");
-        self.draft.is_bash_mode = false;
+        if !matches!(command, SlashCommandItem::Builtin(cmd) if cmd.requires_dispatch_validation())
+        {
+            self.draft.textarea.set_text_clearing_elements("");
+            self.draft.is_bash_mode = false;
+        }
         Some(match command {
             SlashCommandItem::Builtin(cmd) => InputResult::Command(cmd),
             SlashCommandItem::ServiceTier(command) => InputResult::ServiceTierCommand(command),
@@ -3363,7 +3366,10 @@ impl ChatComposer {
     }
 
     fn reject_slash_command_if_unavailable(&self, command: &SlashCommandItem) -> bool {
-        if !self.is_task_running || command.available_during_task() {
+        if !self.is_task_running
+            || command.available_during_task()
+            || matches!(command, SlashCommandItem::Builtin(cmd) if cmd.requires_dispatch_validation())
+        {
             return false;
         }
         let message = format!(

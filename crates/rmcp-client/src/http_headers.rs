@@ -23,10 +23,8 @@ use ruxex_exec_server::HttpRedirectPolicy;
 use ruxex_exec_server::HttpRequestParams;
 use ruxex_exec_server::HttpRequestResponse;
 use ruxex_exec_server::HttpResponseBodyStream;
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(unix)]
 use ruxex_utils_pty::process_group::kill_process_group;
-#[cfg(target_os = "macos")]
-use ruxex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
 use serde::Deserialize;
 use serde::de::MapAccess;
 use serde::de::Visitor;

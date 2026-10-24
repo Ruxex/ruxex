@@ -222,7 +222,7 @@ fn signal_process_group_with_member_fallback(
     }
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, not(target_os = "macos")))]
 /// Send SIGTERM to a specific process group ID (best-effort).
 ///
 /// Returns `Ok(true)` when SIGTERM was delivered to an existing group and
@@ -232,8 +232,8 @@ pub fn terminate_process_group(process_group_id: u32) -> io::Result<bool> {
 }
 
 #[cfg(target_os = "macos")]
-/// Retry a denied SIGTERM against the exact group's individual members.
-pub fn terminate_process_group_with_member_fallback(process_group_id: u32) -> io::Result<bool> {
+/// Send SIGTERM to a specific process group, retrying denied signals against its members.
+pub fn terminate_process_group(process_group_id: u32) -> io::Result<bool> {
     signal_process_group_with_member_fallback(
         process_group_id,
         libc::SIGTERM,
@@ -260,15 +260,15 @@ pub fn interrupt_process_group(_process_group_id: u32) -> io::Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, not(target_os = "macos")))]
 /// Kill a specific process group ID (best-effort).
 pub fn kill_process_group(process_group_id: u32) -> io::Result<()> {
     signal_process_group_id(process_group_id as libc::pid_t, libc::SIGKILL).map(|_| ())
 }
 
 #[cfg(target_os = "macos")]
-/// Retry a denied SIGKILL against the exact group's individual members.
-pub fn kill_process_group_with_member_fallback(process_group_id: u32) -> io::Result<()> {
+/// Kill a specific process group, retrying denied signals against its members (best-effort).
+pub fn kill_process_group(process_group_id: u32) -> io::Result<()> {
     signal_process_group_with_member_fallback(
         process_group_id,
         libc::SIGKILL,

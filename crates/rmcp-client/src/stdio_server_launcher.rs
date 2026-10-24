@@ -42,14 +42,10 @@ use ruxex_exec_server::ExecProcess;
 use ruxex_protocol::config_types::ShellEnvironmentPolicyInherit;
 use ruxex_utils_path_uri::LegacyAppPathString;
 use ruxex_utils_path_uri::PathUri;
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(unix)]
 use ruxex_utils_pty::process_group::kill_process_group;
-#[cfg(target_os = "macos")]
-use ruxex_utils_pty::process_group::kill_process_group_with_member_fallback as kill_process_group;
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(unix)]
 use ruxex_utils_pty::process_group::terminate_process_group;
-#[cfg(target_os = "macos")]
-use ruxex_utils_pty::process_group::terminate_process_group_with_member_fallback as terminate_process_group;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::BufReader;
 use tokio::process::Command;

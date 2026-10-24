@@ -216,6 +216,11 @@ impl SlashCommand {
         }
     }
 
+    /// Whether dispatch needs thread state to validate the command before consuming its draft.
+    pub(crate) fn requires_dispatch_validation(self) -> bool {
+        matches!(self, SlashCommand::Review)
+    }
+
     fn is_visible(self) -> bool {
         match self {
             SlashCommand::Copy => !cfg!(target_os = "android"),
