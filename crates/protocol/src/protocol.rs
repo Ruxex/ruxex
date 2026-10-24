@@ -54,7 +54,6 @@ use crate::plan_tool::UpdatePlanArgs;
 use crate::request_permissions::RequestPermissionsEvent;
 use crate::request_permissions::RequestPermissionsResponse;
 use crate::request_user_input::RequestUserInputResponse;
-use crate::turn_input::CyberAccessProgram;
 use crate::turn_input::SuspendTurnOutcome;
 use crate::turn_input::TurnInputMode;
 use crate::turn_input::TurnInputRequest;
@@ -2816,8 +2815,6 @@ pub struct TurnContextItem {
     /// Legacy effective model-visible mode retained to deserialize older rollouts.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub multi_agent_mode: Option<MultiAgentMode>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cyber_access_program: Option<CyberAccessProgram>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub effort: Option<ReasoningEffortConfig>,
     // Compatibility-only field written with a default value so older Codex
@@ -5658,7 +5655,6 @@ mod tests {
             collaboration_mode: None,
             multi_agent_version: None,
             multi_agent_mode: None,
-            cyber_access_program: None,
             effort: None,
             summary: ReasoningSummaryConfig::Auto,
         };

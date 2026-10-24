@@ -23,7 +23,6 @@ mod connection_handling_websocket_unix;
 #[cfg(unix)]
 mod curated_mcp_sync;
 mod current_time;
-mod cyber_access_program;
 mod daemon_update_recovery;
 mod dynamic_tools;
 mod environment_add;

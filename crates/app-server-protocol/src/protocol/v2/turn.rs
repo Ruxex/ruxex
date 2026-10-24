@@ -13,7 +13,6 @@ use ruxex_protocol::models::ImageDetail;
 use ruxex_protocol::models::ImageReference as CoreImageReference;
 use ruxex_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
 use ruxex_protocol::plan_tool::StepStatus as CorePlanStepStatus;
-use ruxex_protocol::turn_input::CyberAccessProgram as CoreCyberAccessProgram;
 use ruxex_protocol::user_input::ByteRange as CoreByteRange;
 use ruxex_protocol::user_input::TextElement as CoreTextElement;
 use ruxex_protocol::user_input::UserInput as CoreUserInput;
@@ -113,38 +112,6 @@ pub enum AdditionalContextKind {
 pub struct AdditionalContextEntry {
     pub value: String,
     pub kind: AdditionalContextKind,
-}
-
-/// Requested cyber treatment for a provider-authorized Ruxex turn.
-/// Authorization and model-tier restrictions remain server-owned.
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, JsonSchema, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(rename_all = "camelCase")]
-#[ts(export_to = "v2/")]
-pub enum CyberAccessProgram {
-    Standard,
-    DaybreakBlue,
-    DaybreakRed,
-}
-
-impl From<CyberAccessProgram> for CoreCyberAccessProgram {
-    fn from(value: CyberAccessProgram) -> Self {
-        match value {
-            CyberAccessProgram::Standard => Self::Standard,
-            CyberAccessProgram::DaybreakBlue => Self::DaybreakBlue,
-            CyberAccessProgram::DaybreakRed => Self::DaybreakRed,
-        }
-    }
-}
-
-impl From<CoreCyberAccessProgram> for CyberAccessProgram {
-    fn from(value: CoreCyberAccessProgram) -> Self {
-        match value {
-            CoreCyberAccessProgram::Standard => Self::Standard,
-            CoreCyberAccessProgram::DaybreakBlue => Self::DaybreakBlue,
-            CoreCyberAccessProgram::DaybreakRed => Self::DaybreakRed,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -262,12 +229,6 @@ pub struct TurnStartParams {
     #[experimental("turn/start.multiAgentMode")]
     #[ts(optional = nullable)]
     pub multi_agent_mode: Option<MultiAgentMode>,
-
-    /// EXPERIMENTAL - Request a workspace-authorized cyber program for this
-    /// turn. Omission preserves automatic behavior. This does not grant access.
-    #[experimental("turn/start.cyberAccessProgram")]
-    #[ts(optional = nullable)]
-    pub cyber_access_program: Option<CyberAccessProgram>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

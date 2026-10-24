@@ -94,7 +94,6 @@ impl ThreadRequestProcessor {
                 turn_trigger: Some("daemon_recovery".to_string()),
                 final_output_json_schema: saved.output_schema,
                 service_tier: saved.service_tier,
-                cyber_access_program: saved.cyber_access_program,
                 root_turn_id: previous_context.root_turn_id.clone(),
                 ..Default::default()
             },

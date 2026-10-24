@@ -281,7 +281,6 @@ fn responses_request_properties_match(
         prompt_cache_key: previous_prompt_cache_key,
         text: previous_text,
         client_metadata: _,
-        access_programs: _,
         transport: _,
     } = previous;
     let ruxex_model_provider::ChatRequest {
@@ -303,7 +302,6 @@ fn responses_request_properties_match(
         prompt_cache_key: current_prompt_cache_key,
         text: current_text,
         client_metadata: _,
-        access_programs: _,
         transport: _,
     } = current;
 
@@ -714,7 +712,6 @@ impl ModelClient {
             prompt_cache_key,
             text,
             client_metadata: Some(responses_metadata.client_metadata().into_iter().collect()),
-            access_programs: None,
             transport: ruxex_model_provider::ChatTransportOptions {
                 session_id: None,
                 thread_id: None,
@@ -1124,7 +1121,6 @@ impl ModelClientSession {
             prompt_cache_key: None,
             text: None,
             client_metadata: None,
-            access_programs: None,
             transport: ruxex_model_provider::ChatTransportOptions {
                 session_id: None,
                 thread_id: None,

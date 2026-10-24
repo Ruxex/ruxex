@@ -125,7 +125,6 @@ impl AgentControl {
                 parent_turn_id,
                 root_turn_id: turn.turn_metadata_state.root_turn_id(),
                 turn_trigger: turn.turn_metadata_state.current_turn_trigger(),
-                cyber_access_program: turn.cyber_access_program,
                 ..Default::default()
             },
         )

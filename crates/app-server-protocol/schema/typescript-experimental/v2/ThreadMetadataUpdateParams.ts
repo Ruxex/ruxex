@@ -17,7 +17,6 @@ projectId?: string | null,
 gitInfo?: ThreadMetadataGitInfoUpdateParams | null,
 /**
  * Save the client's Daybreak choice for this persistent thread.
- * Omitted or null leaves it unchanged. This does not select a turn's
- * `cyberAccessProgram` or grant access.
+ * Omitted or null leaves it unchanged.
  */
 daybreakEnabled?: boolean | null, };

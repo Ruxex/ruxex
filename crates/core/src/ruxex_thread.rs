@@ -366,7 +366,6 @@ impl RuxexThread {
             turn_id,
             thread_settings,
             trace,
-            cyber_access_program,
         } = request;
         let root_turn_id = self
             .session
@@ -375,7 +374,6 @@ impl RuxexThread {
             .filter(|context| context.turn_id.as_deref() == Some(turn_id.as_str()))
             .and_then(|context| context.root_turn_id);
         let start_options = TurnStartOptions {
-            cyber_access_program,
             root_turn_id,
             ..Default::default()
         };

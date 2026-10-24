@@ -67,7 +67,6 @@ enum PluginLoadScope<'a> {
         plugin_skill_snapshots: Option<&'a SkillRootSnapshots<PluginSkillRoot>>,
         skill_root_loader: &'a dyn SkillRootLoader<PluginSkillRoot>,
     },
-    HooksOnly,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -506,7 +505,6 @@ async fn load_plugin(
             )
             .await;
         }
-        PluginLoadScope::HooksOnly => {}
     }
     let (hook_sources, hook_load_warnings) =
         if loaded_manifest.format == PluginManifestFormat::AgentPlugin {

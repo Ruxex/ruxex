@@ -9,7 +9,6 @@ use ruxex_protocol::protocol::ModelVerification;
 use ruxex_protocol::protocol::RateLimitSnapshot;
 use ruxex_protocol::protocol::TokenUsage;
 use ruxex_protocol::protocol::W3cTraceContext;
-use ruxex_protocol::turn_input::CyberAccessProgram;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -23,24 +22,6 @@ use tokio::sync::mpsc;
 
 pub const WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY: &str = "ws_request_header_traceparent";
 pub const WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY: &str = "ws_request_header_tracestate";
-
-/// Explicit per-request access selection using the Responses API wire values.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
-pub struct AccessPrograms {
-    cyber: &'static str,
-}
-
-impl From<CyberAccessProgram> for AccessPrograms {
-    fn from(program: CyberAccessProgram) -> Self {
-        Self {
-            cyber: match program {
-                CyberAccessProgram::Standard => "standard",
-                CyberAccessProgram::DaybreakBlue => "daybreak_blue",
-                CyberAccessProgram::DaybreakRed => "daybreak_red",
-            },
-        }
-    }
-}
 
 /// The latest server response ID received in this turn, shared with tool-review extensions.
 #[derive(Clone, Debug)]
@@ -248,8 +229,6 @@ pub struct ResponsesApiRequest {
     pub text: Option<TextControls>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_metadata: Option<HashMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub access_programs: Option<AccessPrograms>,
 }
 
 impl<'a> From<&'a ResponsesApiRequest> for ResponseCreateWsRequest<'a> {
@@ -272,7 +251,6 @@ impl<'a> From<&'a ResponsesApiRequest> for ResponseCreateWsRequest<'a> {
             text: request.text.as_ref(),
             generate: None,
             client_metadata: request.client_metadata.clone(),
-            access_programs: request.access_programs,
         }
     }
 }
@@ -305,8 +283,6 @@ pub struct ResponseCreateWsRequest<'a> {
     pub generate: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_metadata: Option<HashMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub access_programs: Option<AccessPrograms>,
 }
 
 pub fn response_create_client_metadata(

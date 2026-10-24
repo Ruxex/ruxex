@@ -43,7 +43,6 @@ impl Session {
                                 .to_string()
                         }),
                 ),
-                cyber_access_program: context.cyber_access_program,
                 ..Default::default()
             },
             environment,

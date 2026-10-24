@@ -51,8 +51,7 @@ threadSource?: ThreadSource | null,
 projectId?: string | null,
 /**
  * Initial Daybreak choice for this persistent thread. Omitted or null
- * leaves it unset. This does not select a turn's `cyberAccessProgram`
- * or grant access. Not supported for ephemeral threads.
+ * leaves it unset. Not supported for ephemeral threads.
  */
 daybreakEnabled?: boolean | null,
 /**

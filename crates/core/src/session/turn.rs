@@ -1173,7 +1173,6 @@ pub(crate) fn build_prompt(
         base_instructions,
         output_schema: turn_context.final_output_json_schema.clone(),
         output_schema_strict: true,
-        cyber_access_program: turn_context.cyber_access_program,
     }
 }
 

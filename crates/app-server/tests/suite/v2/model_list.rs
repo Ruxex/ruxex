@@ -170,7 +170,6 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
             })
             .collect(),
         default_service_tier: preset.default_service_tier.clone(),
-        available_access_programs: preset.available_access_programs.clone().map(Into::into),
         is_default: preset.is_default,
     }
 }
@@ -259,23 +258,19 @@ async fn list_models_uses_remote_catalog_as_source_of_truth(
 ) -> Result<()> {
     let server = MockServer::start().await;
     let remote_models = [
-        (
-            json!("2030-01-01T00:00:00Z"),
-            json!({ "cyber": ["standard", "daybreak_blue"] }),
-        ),
-        (json!(null), json!({ "cyber": ["daybreak_red"] })),
-        (json!(null), json!({ "cyber": [] })),
-        (json!(null), json!(null)),
+        json!("2030-01-01T00:00:00Z"),
+        json!(null),
+        json!(null),
+        json!(null),
     ]
     .into_iter()
     .enumerate()
-    .map(|(priority, (retirement_at, access_programs))| {
+    .map(|(priority, retirement_at)| {
         serde_json::from_value::<ModelInfo>(json!({
             "slug": format!("remote-only-{priority}"),
             "display_name": "Remote Only",
             "description": "Remote-only model for app-server model/list coverage",
             "model_specialty": MODEL_SPECIALTY_CYBER,
-            "available_access_programs": access_programs,
             "default_reasoning_level": "max",
             "supported_reasoning_levels": [
                 {"effort": "max", "description": "Maximum"},
@@ -372,20 +367,6 @@ api_key_model_discovery = true
     assert_eq!(
         response.result["data"][1]["upgradeInfo"]["retirementAt"],
         serde_json::Value::Null
-    );
-    assert_eq!(
-        response.result["data"]
-            .as_array()
-            .expect("model/list data should be an array")
-            .iter()
-            .map(|model| model["availableAccessPrograms"].clone())
-            .collect::<Vec<_>>(),
-        vec![
-            json!({ "cyber": ["standard", "daybreakBlue"] }),
-            json!({ "cyber": ["daybreakRed"] }),
-            json!({ "cyber": [] }),
-            json!(null),
-        ]
     );
     let ModelListResponse {
         data: items,

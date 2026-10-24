@@ -316,10 +316,6 @@ impl ContextManager {
         Arc::unwrap_or_clone(self.items)
     }
 
-    pub(crate) fn history_version(&self) -> u64 {
-        self.history_version
-    }
-
     // Estimate token usage using byte-based heuristics from the truncation helpers.
     // This is a coarse lower bound, not a tokenizer-accurate count.
     pub(crate) fn estimate_token_count(&self, turn_context: &TurnContext) -> Option<i64> {
@@ -544,12 +540,6 @@ impl ContextManager {
                 .saturating_add(self.get_non_last_reasoning_items_tokens())
                 .saturating_add(items_after_last_model_generated_tokens)
         }
-    }
-
-    pub(crate) fn estimated_tokens_after_last_model_generated_item(&self) -> i64 {
-        self.items_after_last_model_generated_item()
-            .map(estimate_item_token_count)
-            .fold(0i64, i64::saturating_add)
     }
 
     /// This function enforces a couple of invariants on the in-memory history:

@@ -604,7 +604,6 @@ async fn remote_models_remote_model_uses_unified_exec() -> Result<()> {
         additional_speed_tiers: Vec::new(),
         service_tiers: Vec::new(),
         default_service_tier: None,
-        available_access_programs: None,
         upgrade: None,
         model_messages: None,
         include_skills_usage_instructions: false,
@@ -877,7 +876,6 @@ async fn remote_models_apply_legacy_instructions(auth: RuxexAuth) -> Result<()> 
         additional_speed_tiers: Vec::new(),
         service_tiers: Vec::new(),
         default_service_tier: None,
-        available_access_programs: None,
         upgrade: None,
         model_messages: Some(ModelMessages {
             instructions_template: Some(remote_instructions.to_string()),
@@ -1455,7 +1453,6 @@ fn test_remote_model_with_policy(
         additional_speed_tiers: Vec::new(),
         service_tiers: Vec::new(),
         default_service_tier: None,
-        available_access_programs: None,
         upgrade: None,
         model_messages: None,
         include_skills_usage_instructions: false,

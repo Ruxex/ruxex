@@ -28,7 +28,6 @@ use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::InterAgentCommunication;
 use ruxex_protocol::protocol::Op;
 use ruxex_protocol::protocol::ThreadSettingsOverrides;
-use ruxex_protocol::turn_input::CyberAccessProgram;
 use ruxex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
@@ -531,10 +530,7 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
                 text: "wait for the worker".to_string(),
                 text_elements: Vec::new(),
             }])
-            .on_start(TurnStartOptions {
-                cyber_access_program: Some(CyberAccessProgram::Standard),
-                ..Default::default()
-            }),
+            .on_start(TurnStartOptions::default()),
         )
         .await
         .expect("start initial turn");
@@ -542,14 +538,6 @@ async fn queue_only_agent_mail_wakes_sleeping_root_with_previous_turn_context() 
     enqueue_queue_only_agent_mail(&ruxex, CHILD_MESSAGE).await;
     wait_for_turn_complete(&ruxex).await;
 
-    assert_eq!(
-        requests
-            .requests()
-            .iter()
-            .map(|request| request.body_json()["access_programs"].clone())
-            .collect::<Vec<_>>(),
-        vec![json!({"cyber": "standard"}); 2],
-    );
     let history = ruxex
         .load_history(/*include_archived*/ true)
         .await

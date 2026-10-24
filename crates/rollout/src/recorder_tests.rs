@@ -1536,7 +1536,6 @@ async fn resume_candidate_matches_cwd_reads_latest_turn_context() -> std::io::Re
             collaboration_mode: None,
             multi_agent_version: None,
             multi_agent_mode: None,
-            cyber_access_program: None,
             effort: None,
             summary: ruxex_protocol::config_types::ReasoningSummary::Auto,
         }),

@@ -244,7 +244,6 @@ pub(crate) use self::input_queue::InputQueueActivity;
 pub(crate) use self::input_queue::TurnInput;
 pub(crate) use self::input_queue::TurnInputQueue;
 use self::review::spawn_review_thread;
-use self::session::AppServerClientMetadata;
 use self::session::Session;
 use self::session::SessionConfiguration;
 use self::session::SessionSettingsCommit;
@@ -1031,17 +1030,6 @@ async fn thread_title_from_thread_store(
 }
 
 impl Session {
-    pub(crate) async fn app_server_client_metadata(&self) -> AppServerClientMetadata {
-        let state = self.state.lock().await;
-        AppServerClientMetadata {
-            client_name: state.session_configuration.app_server_client_name.clone(),
-            client_version: state
-                .session_configuration
-                .app_server_client_version
-                .clone(),
-        }
-    }
-
     fn managed_network_proxy_active_for_permission_profile(
         permission_profile: &PermissionProfile,
     ) -> bool {
@@ -1303,13 +1291,6 @@ impl Session {
     pub(crate) async fn auto_compact_window_snapshot(&self) -> AutoCompactWindowSnapshot {
         let state = self.state.lock().await;
         state.auto_compact_window_snapshot()
-    }
-
-    pub(crate) async fn estimated_tokens_after_last_model_generated_item(&self) -> i64 {
-        let state = self.state.lock().await;
-        state
-            .history
-            .estimated_tokens_after_last_model_generated_item()
     }
 
     pub(crate) async fn total_token_usage(&self) -> Option<TokenUsage> {
@@ -3935,15 +3916,6 @@ impl Session {
     pub(crate) async fn clone_history(&self) -> ContextManager {
         let state = self.state.lock().await;
         state.clone_history()
-    }
-
-    /// Captures the history lifetime without exposing mutable session state.
-    pub(crate) async fn history_reset(&self) -> (u64, CancellationToken) {
-        let state = self.state.lock().await;
-        (
-            state.history.reset_version,
-            state.history_reset.child_token(),
-        )
     }
 
     pub(crate) async fn conversation_history_snapshot(

@@ -433,23 +433,13 @@ impl Session {
             Arc::clone(&active_turn.turn_state)
         };
 
-        let (input, mut start_options) =
+        let (input, start_options) =
             self.input_queue.get_pending_input(&self.active_turn).await;
-        if !input.iter().any(
-            |item| matches!(item, TurnInput::InterAgentCommunication(mail) if mail.trigger_turn),
-        ) {
-            // Queue-only mail wakes durable sleep without selecting a new task's settings.
-            start_options.cyber_access_program = self
-                .reference_context_item()
-                .await
-                .and_then(|context| context.cyber_access_program);
-        }
         let turn_context = self
             .new_turn_with_default_settings(
                 sub_id,
                 NewTurnContextOptions {
                     final_output_json_schema: start_options.final_output_json_schema,
-                    cyber_access_program: start_options.cyber_access_program,
                 },
             )
             .await;

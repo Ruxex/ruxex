@@ -442,7 +442,6 @@ pub struct ChatRequest {
     pub prompt_cache_key: Option<String>,
     pub text: Option<ProviderTextControls>,
     pub client_metadata: Option<BTreeMap<String, String>>,
-    pub access_programs: Option<Value>,
     #[serde(skip)]
     pub transport: ChatTransportOptions,
 }

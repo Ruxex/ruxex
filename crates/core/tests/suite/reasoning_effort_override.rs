@@ -139,7 +139,6 @@ async fn reasoning_effort_override_recovery_reuses_trusted_tail_update() -> anyh
                 turn_id: turn_id.clone(),
                 thread_settings: Default::default(),
                 trace: None,
-                cyber_access_program: None,
             })
             .await?,
         StartIfIdleSubmission::Started { turn_id },

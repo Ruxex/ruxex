@@ -92,10 +92,6 @@ impl ResolvedStepSettings {
         &self.selected.collaboration_mode
     }
 
-    pub(super) fn constrained_approval_policy(&self) -> &Constrained<AskForApproval> {
-        &self.selected.approval_policy
-    }
-
     /// Applies sparse edits to the retained selection, preserving pinned metadata
     /// unless the model selection changes, then resolves request values.
     pub(super) async fn apply_update(

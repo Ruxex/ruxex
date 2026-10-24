@@ -10,9 +10,7 @@ use pretty_assertions::assert_eq;
 use ruxex_http_client::HttpClientFactory;
 use ruxex_http_client::OutboundProxyPolicy;
 use ruxex_protocol::error::RuxexErr;
-use ruxex_protocol::model_types::ModelAccessPrograms;
 use ruxex_protocol::model_types::ModelCatalog;
-use ruxex_protocol::turn_input::CyberAccessProgram;
 use serde_json::json;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -700,72 +698,6 @@ async fn refresh_available_models_uses_cache_when_fresh() {
         1,
         "cache hit should avoid a second model fetch"
     );
-}
-
-#[tokio::test]
-async fn online_refresh_updates_access_programs_with_unchanged_etag() {
-    let ruxex_home = tempdir().expect("temp dir");
-    let granted_model = ModelInfo {
-        available_access_programs: Some(ModelAccessPrograms {
-            cyber: vec![
-                CyberAccessProgram::Standard,
-                CyberAccessProgram::DaybreakBlue,
-            ],
-        }),
-        ..remote_model("access-programs", "Access Programs", /*priority*/ 0)
-    };
-    let revoked_model = ModelInfo {
-        available_access_programs: Some(ModelAccessPrograms { cyber: Vec::new() }),
-        ..granted_model.clone()
-    };
-    let responses = vec![vec![granted_model.clone()], vec![revoked_model.clone()]];
-    let endpoint = Arc::new(TestModelCatalogSource {
-        has_command_auth: false,
-        uses_managed_auth: true,
-        has_api_key_auth: false,
-        responses: Mutex::new(responses.into()),
-        etag: Some("stable-catalog-etag".to_string()),
-        fetch_count: AtomicUsize::new(0),
-        observed_proxy_policy: Mutex::new(None),
-    });
-    let manager = provider_manager_for_tests(ruxex_home.path().to_path_buf(), endpoint.clone());
-
-    // Caller-specific access can change without changing the catalog ETag.
-    for model in [granted_model, revoked_model] {
-        let mut expected = ModelPreset::from(model.clone());
-        expected.is_default = true;
-        assert_eq!(
-            manager
-                .list_models(RefreshStrategy::Online, DEFAULT_HTTP_CLIENT_FACTORY)
-                .await,
-            vec![expected.clone()]
-        );
-        assert_eq!(manager.get_remote_models().await, vec![model]);
-        assert_eq!(
-            manager.remote_models.read().await.etag.as_deref(),
-            Some("stable-catalog-etag")
-        );
-
-        // A new manager must read the latest access metadata from the disk cache.
-        let cache_endpoint = TestModelCatalogSource::new(Vec::new());
-        let cache_manager =
-            provider_manager_for_tests(ruxex_home.path().to_path_buf(), cache_endpoint.clone());
-        assert_eq!(
-            cache_manager
-                .list_models(
-                    RefreshStrategy::OnlineIfUncached,
-                    DEFAULT_HTTP_CLIENT_FACTORY
-                )
-                .await,
-            vec![expected]
-        );
-        assert_eq!(cache_endpoint.fetch_count(), 0);
-        assert_eq!(
-            cache_manager.remote_models.read().await.etag.as_deref(),
-            Some("stable-catalog-etag")
-        );
-    }
-    assert_eq!(endpoint.fetch_count(), 2);
 }
 
 #[tokio::test]

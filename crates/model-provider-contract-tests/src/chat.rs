@@ -342,7 +342,6 @@ mod tests {
             prompt_cache_key: None,
             text: None,
             client_metadata: None,
-            access_programs: None,
             transport: ChatTransportOptions {
                 session_id: None,
                 thread_id: None,

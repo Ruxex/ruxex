@@ -82,7 +82,6 @@ export type { ContextCompactedNotification } from "./ContextCompactedNotificatio
 export type { CreditsSnapshot } from "./CreditsSnapshot";
 export type { CurrentTimeReadParams } from "./CurrentTimeReadParams";
 export type { CurrentTimeReadResponse } from "./CurrentTimeReadResponse";
-export type { CyberAccessProgram } from "./CyberAccessProgram";
 export type { DeprecationNoticeNotification } from "./DeprecationNoticeNotification";
 export type { DesktopOnboardingEntrypoint } from "./DesktopOnboardingEntrypoint";
 export type { DynamicToolCallOutputContentItem } from "./DynamicToolCallOutputContentItem";
@@ -226,7 +225,6 @@ export type { MetricsConfig } from "./MetricsConfig";
 export type { MisalignmentErrorDetails } from "./MisalignmentErrorDetails";
 export type { MisalignmentSteer } from "./MisalignmentSteer";
 export type { Model } from "./Model";
-export type { ModelAccessPrograms } from "./ModelAccessPrograms";
 export type { ModelAvailabilityNux } from "./ModelAvailabilityNux";
 export type { ModelListParams } from "./ModelListParams";
 export type { ModelListResponse } from "./ModelListResponse";

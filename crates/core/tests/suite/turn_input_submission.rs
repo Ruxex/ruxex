@@ -476,7 +476,6 @@ async fn recover_turn_if_idle_preserves_id_and_resumes_plan_mode() {
                 ..Default::default()
             },
             trace: None,
-            cyber_access_program: None,
         })
         .await
         .expect("recovered turn should start");

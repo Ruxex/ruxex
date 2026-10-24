@@ -557,9 +557,6 @@ enabled = true
         test_skill_root_loader().as_ref(),
     )
     .await;
-    let hooks_only =
-        load_plugins_from_layer_stack_with_scope(&stack, &store, PluginLoadScope::HooksOnly).await;
-
     let validation_state = |plugins: &[LoadedPlugin<McpServerConfig>]| {
         plugins
             .iter()
@@ -575,8 +572,6 @@ enabled = true
             })
             .collect::<Vec<_>>()
     };
-    assert_eq!(validation_state(&hooks_only), validation_state(&full));
-
     let full_valid = full
         .iter()
         .find(|plugin| plugin.config_name == "valid@test")

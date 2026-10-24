@@ -52,7 +52,6 @@ use ruxex_protocol::protocol::SubAgentSource;
 use ruxex_protocol::protocol::ThreadHistoryMode;
 use ruxex_protocol::protocol::ThreadSource;
 use ruxex_protocol::protocol::TurnEnvironmentSelection;
-use ruxex_protocol::turn_input::CyberAccessProgram;
 use ruxex_protocol::user_input::UserInput;
 use ruxex_thread_store::LoadThreadHistoryParams;
 use ruxex_thread_store::ReadThreadParams;
@@ -103,7 +102,6 @@ pub(crate) struct SpawnAgentOptions {
     pub(crate) root_turn_id: Option<String>,
     pub(crate) environments: Option<Vec<TurnEnvironmentSelection>>,
     pub(crate) multi_agent_v2_usage_hints: Option<ResolvedMultiAgentV2UsageHints>,
-    pub(crate) cyber_access_program: Option<CyberAccessProgram>,
 }
 
 #[derive(Clone, Debug)]

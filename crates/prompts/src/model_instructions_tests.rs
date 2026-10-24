@@ -21,7 +21,6 @@ fn test_model(model_messages: Option<ModelMessages>) -> ModelInfo {
         additional_speed_tiers: vec![],
         service_tiers: vec![],
         default_service_tier: None,
-        available_access_programs: None,
         availability_nux: None,
         upgrade: None,
         model_messages,

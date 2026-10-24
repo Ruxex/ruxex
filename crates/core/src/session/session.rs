@@ -577,11 +577,6 @@ pub(crate) struct SessionSettingsUpdate {
     pub(crate) disabled_plugin_ids: Option<Vec<String>>,
 }
 
-pub(crate) struct AppServerClientMetadata {
-    pub(crate) client_name: Option<String>,
-    pub(crate) client_version: Option<String>,
-}
-
 async fn warm_plugins_and_skills_for_session_init(
     config: Arc<Config>,
     plugins_manager: Arc<PluginsManager>,

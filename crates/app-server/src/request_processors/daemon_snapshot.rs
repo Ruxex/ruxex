@@ -44,7 +44,6 @@ impl ThreadRequestProcessor {
                             turn_id,
                             output_schema: options.final_output_json_schema,
                             service_tier: options.service_tier,
-                            cyber_access_program: options.cyber_access_program,
                             local_environment: Some((&environment).into()),
                         },
                     );

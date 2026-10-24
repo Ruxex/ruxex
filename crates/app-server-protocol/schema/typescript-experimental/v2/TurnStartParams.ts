@@ -9,7 +9,6 @@ import type { ReasoningSummary } from "../ReasoningSummary";
 import type { JsonValue } from "../serde_json/JsonValue";
 import type { AdditionalContextEntry } from "./AdditionalContextEntry";
 import type { AskForApproval } from "./AskForApproval";
-import type { CyberAccessProgram } from "./CyberAccessProgram";
 import type { SandboxPolicy } from "./SandboxPolicy";
 import type { TurnEnvironmentParams } from "./TurnEnvironmentParams";
 import type { TurnToolOutput } from "./TurnToolOutput";
@@ -110,9 +109,4 @@ collaborationMode?: CollaborationMode | null,
 /**
  * @deprecated Ignored. Use `effort: "ultra"` for proactive multi-agent behavior.
  */
-multiAgentMode?: MultiAgentMode | null,
-/**
- * EXPERIMENTAL - Request a workspace-authorized cyber program for this
- * turn. Omission preserves automatic behavior. This does not grant access.
- */
-cyberAccessProgram?: CyberAccessProgram | null, };
+multiAgentMode?: MultiAgentMode | null, };

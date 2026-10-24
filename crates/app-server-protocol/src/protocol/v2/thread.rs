@@ -119,8 +119,7 @@ pub struct ThreadStartParams {
     #[ts(optional = nullable)]
     pub project_id: Option<String>,
     /// Initial Daybreak choice for this persistent thread. Omitted or null
-    /// leaves it unset. This does not select a turn's `cyberAccessProgram`
-    /// or grant access. Not supported for ephemeral threads.
+    /// leaves it unset. Not supported for ephemeral threads.
     #[experimental("thread/start.daybreakEnabled")]
     #[ts(optional = nullable)]
     pub daybreak_enabled: Option<bool>,
@@ -967,8 +966,7 @@ pub struct ThreadMetadataUpdateParams {
     #[ts(optional = nullable)]
     pub git_info: Option<ThreadMetadataGitInfoUpdateParams>,
     /// Save the client's Daybreak choice for this persistent thread.
-    /// Omitted or null leaves it unchanged. This does not select a turn's
-    /// `cyberAccessProgram` or grant access.
+    /// Omitted or null leaves it unchanged.
     #[experimental("thread/metadata/update.daybreakEnabled")]
     #[ts(optional = nullable)]
     pub daybreak_enabled: Option<bool>,

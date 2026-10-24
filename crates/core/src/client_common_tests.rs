@@ -120,7 +120,6 @@ fn chat_request(
         prompt_cache_key: None,
         text,
         client_metadata: None,
-        access_programs: None,
         transport: ruxex_model_provider::ChatTransportOptions {
             session_id: None,
             thread_id: None,

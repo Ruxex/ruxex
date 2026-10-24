@@ -625,15 +625,6 @@
         }
       ]
     },
-    "CyberAccessProgram": {
-      "description": "Requested cyber treatment for a provider-authorized Ruxex turn. Authorization and model-tier restrictions remain server-owned.",
-      "enum": [
-        "standard",
-        "daybreakBlue",
-        "daybreakRed"
-      ],
-      "type": "string"
-    },
     "DynamicToolNamespaceTool": {
       "oneOf": [
         {

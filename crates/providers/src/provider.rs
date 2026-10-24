@@ -274,8 +274,6 @@ struct ResponsesPayload {
     text: Option<ruxex_model_provider::ProviderTextControls>,
     #[serde(skip_serializing_if = "Option::is_none")]
     client_metadata: Option<BTreeMap<String, String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    access_programs: Option<Value>,
 }
 
 impl From<&ruxex_model_provider::ChatRequest> for ResponsesPayload {
@@ -296,7 +294,6 @@ impl From<&ruxex_model_provider::ChatRequest> for ResponsesPayload {
             prompt_cache_key: request.prompt_cache_key.clone(),
             text: request.text.clone(),
             client_metadata: request.client_metadata.clone(),
-            access_programs: request.access_programs.clone(),
         }
     }
 }

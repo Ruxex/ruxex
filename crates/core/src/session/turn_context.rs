@@ -33,7 +33,6 @@ use ruxex_protocol::protocol::ErrorEvent;
 use ruxex_protocol::protocol::MultiAgentVersion;
 use ruxex_protocol::protocol::ThreadHistoryMode;
 use ruxex_protocol::protocol::TurnEnvironmentSelection;
-use ruxex_protocol::turn_input::CyberAccessProgram;
 use ruxex_sandboxing::policy_transforms::effective_permission_profile;
 use ruxex_skills_extension::HostSkillsSnapshot;
 use ruxex_skills_extension::SkillLoadOutcome;
@@ -267,7 +266,6 @@ impl std::fmt::Debug for TurnEnvironment {
 #[derive(Default)]
 pub(crate) struct NewTurnContextOptions {
     pub(crate) final_output_json_schema: Option<Value>,
-    pub(crate) cyber_access_program: Option<CyberAccessProgram>,
 }
 
 /// The context needed for a single turn of the thread.
@@ -319,8 +317,6 @@ pub struct TurnContext {
     pub(crate) terminal_error: Arc<Mutex<Option<ErrorEvent>>>,
     pub(crate) server_model_warning_emitted: AtomicBool,
     pub(crate) model_verification_emitted: AtomicBool,
-    /// Effective cyber treatment for this turn, including any child-agent inheritance.
-    pub(crate) cyber_access_program: Option<CyberAccessProgram>,
 }
 
 enum TurnMultiAgentRuntime {
@@ -582,7 +578,6 @@ impl TurnContext {
             model_verification_emitted: AtomicBool::new(
                 self.model_verification_emitted.load(Ordering::Relaxed),
             ),
-            cyber_access_program: self.cyber_access_program,
         }
     }
 
@@ -655,7 +650,6 @@ impl TurnContext {
             collaboration_mode: Some(self.collaboration_mode()),
             multi_agent_version: Some(self.multi_agent_version),
             multi_agent_mode: None,
-            cyber_access_program: self.cyber_access_program,
             effort: self.reasoning_effort().cloned(),
             summary: self.reasoning_summary(),
         }
@@ -855,7 +849,6 @@ impl Session {
             terminal_error: Arc::new(Mutex::new(None)),
             server_model_warning_emitted: AtomicBool::new(false),
             model_verification_emitted: AtomicBool::new(false),
-            cyber_access_program: None,
         }
     }
 
@@ -1057,7 +1050,6 @@ impl Session {
         turn_context.code_mode_available = self.services.code_mode_service.is_available();
         turn_context.extension_data.insert(trusted_plugin_roots);
         turn_context.final_output_json_schema = options.final_output_json_schema;
-        turn_context.cyber_access_program = options.cyber_access_program;
         let turn_context = Arc::new(turn_context);
         if git_enrichment_policy == GitEnrichmentPolicy::Fresh
             && turn_context

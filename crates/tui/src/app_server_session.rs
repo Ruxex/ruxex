@@ -1248,7 +1248,6 @@ impl AppServerSession {
                     output_schema,
                     collaboration_mode,
                     multi_agent_mode: None,
-                    cyber_access_program: None,
                 },
             })
             .await
@@ -1627,7 +1626,6 @@ fn model_preset_from_api_model(model: ApiModel) -> ModelPreset {
             })
             .collect(),
         default_service_tier: model.default_service_tier,
-        available_access_programs: model.available_access_programs.map(Into::into),
         is_default: model.is_default,
         upgrade,
         show_in_picker: !model.hidden,
