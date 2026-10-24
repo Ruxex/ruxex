@@ -2,6 +2,7 @@
 
 use super::*;
 use pretty_assertions::assert_eq;
+use ruxex_config::NetworkConstraints;
 use ruxex_config::RequirementSource;
 
 #[test]
@@ -72,7 +73,7 @@ allow_local_binding = false
 }
 
 #[test]
-fn attachment_projection_rejects_unsupported_restrictions_and_invalid_policy() {
+fn attachment_projection_rejects_unsupported_restrictions_and_defers_policy_validation() {
     for raw in [
         "mode = 'full'",
         "mode = 'limited'",
@@ -85,15 +86,56 @@ methods = ['GET']
 path_prefixes = ['/']
 action = ['redact']
 "#,
-        "[unix_sockets]\n'relative.sock' = 'allow'",
-        "[unix_sockets]\n'relative.sock' = 'deny'",
-        "[domains]\n'[' = 'allow'",
     ] {
         let network: NetworkToml = toml::from_str(raw).unwrap();
         assert_eq!(
             project_environment_profile_network(Some(network)),
             Err(EnvironmentNetworkConfigError),
             "{raw}"
+        );
+    }
+
+    for raw in [
+        "[unix_sockets]\n'relative.sock' = 'allow'",
+        "[unix_sockets]\n'~/allowed.sock' = 'allow'",
+        "[unix_sockets]\n\"/tmp/\\u0000allowed.sock\" = 'allow'",
+        "[domains]\n'[' = 'allow'",
+    ] {
+        let network: NetworkToml = toml::from_str(raw).unwrap();
+        let projected = project_environment_profile_network(Some(network.clone()))
+            .unwrap()
+            .unwrap();
+        assert_eq!(projected, network);
+        let configured_proxy = projected.to_network_proxy_config();
+        let policy = EnvironmentNetworkPolicy::from_config(
+            &configured_proxy,
+            /*managed_allowed_domains_only*/ false,
+        );
+        assert_eq!(
+            validate_environment_network_policy(&policy, &PermissionProfile::read_only()),
+            Err(EnvironmentNetworkConfigError),
+            "{raw}"
+        );
+
+        let policy = PreparedNetworkConfig { configured_proxy }
+            .build_environment_policy(
+                Some(Sourced::new(
+                    NetworkConstraints {
+                        enabled: Some(true),
+                        managed_allowed_domains_only: Some(true),
+                        unix_sockets: Some(Default::default()),
+                        ..Default::default()
+                    },
+                    RequirementSource::Unknown,
+                )),
+                &PermissionProfile::read_only(),
+                /*has_selected_policy*/ true,
+            )
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            validate_environment_network_policy(&policy, &PermissionProfile::read_only()),
+            Ok(())
         );
     }
 }

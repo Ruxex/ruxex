@@ -15,8 +15,6 @@ use ruxex_features::FeatureToml;
 use ruxex_features::FeaturesToml;
 use ruxex_network_proxy::EnvironmentNetworkPolicy;
 use ruxex_network_proxy::NetworkProxyConfig;
-use ruxex_network_proxy::NetworkProxyConstraints;
-use ruxex_network_proxy::build_config_state;
 use ruxex_protocol::models::PermissionProfile;
 
 use super::NetworkProxySpec;
@@ -46,22 +44,9 @@ pub fn project_environment_profile_network(
         allow_local_binding: network.allow_local_binding,
         ..Default::default()
     };
-    let invalid_socket = network.unix_sockets.as_ref().is_some_and(|sockets| {
-        sockets
-            .entries
-            .keys()
-            .any(|path| !path.starts_with('/') || path.contains('\0'))
-    });
-    if network != supported || invalid_socket {
+    if network != supported {
         return Err(EnvironmentNetworkConfigError);
     }
-    // MITM and credential settings have been excluded. This only validates
-    // patterns and lexical socket paths; it does not discover executor files.
-    build_config_state(
-        network.to_network_proxy_config(),
-        NetworkProxyConstraints::default(),
-    )
-    .map_err(|_| EnvironmentNetworkConfigError)?;
     Ok(Some(network))
 }
 
@@ -71,6 +56,14 @@ pub fn validate_environment_network_policy(
     policy: &EnvironmentNetworkPolicy,
     permission_profile: &PermissionProfile,
 ) -> Result<(), EnvironmentNetworkConfigError> {
+    if policy.unix_sockets.as_ref().is_some_and(|sockets| {
+        sockets
+            .entries
+            .keys()
+            .any(|path| !path.starts_with('/') || path.contains('\0'))
+    }) {
+        return Err(EnvironmentNetworkConfigError);
+    }
     NetworkProxySpec::for_environment(
         /*controller*/ None,
         policy,
