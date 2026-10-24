@@ -91,16 +91,34 @@ Ruxex-relevant parts may be manually adapted.
 5. Is it an internal refactoring of retained functionality?
    - A behavior-preserving refactoring that improves correctness or maintenance
      may be `Import proactively` after compatibility is confirmed.
+   - Trait extraction, interface factoring, and internal ownership or module
+     refactoring should generally be followed when they preserve behavior and
+     support later upstream changes. If a later upstream commit depends on the
+     extracted trait or interface, audit the structural changes as one related
+     sequence instead of leaving the base refactor behind and recreating it in
+     each follow-up.
    - A refactoring that changes Ruxex's provider boundary, naming, runtime
-     model, or public behavior is `User review required`.
-6. Does it change the behavior, API, configuration, output, or interaction of
-   functionality that Ruxex retains?
+     model, permission/security semantics, wire format, or public behavior is
+     `User review required`.
+6. Is it a relatively safe, localized, additive change to retained
+   functionality?
+   - It may be `Import proactively` when it stays within an existing Ruxex
+     boundary, does not alter provider/runtime ownership or security semantics,
+     preserves existing behavior through a safe fallback, and can be covered
+     by focused unit and E2E tests.
+   - Examples include bounded display-only expansions and additive mappings
+     whose unsupported or ambiguous inputs remain unchanged.
+   - If the change is not clearly low-risk, continue to the review criteria
+     below.
+7. Does it change the behavior, API, configuration, output, or interaction of
+   functionality that Ruxex retains without meeting the relatively-safe
+   exception above?
    - Yes: `User review required`, even when the upstream change is described as
      an improvement rather than a new feature.
-7. Does it introduce functionality that does not exist in Ruxex?
+8. Does it introduce functionality that does not exist in Ruxex?
    - Yes: `User review required`. Upstream presence alone is not a reason to
      import a new feature.
-8. Is the Ruxex impact or compatibility unclear?
+9. Is the Ruxex impact or compatibility unclear?
    - Yes: `User review required`. Record the specific uncertainty instead of
      silently importing the change.
 
@@ -109,7 +127,8 @@ Ruxex-relevant parts may be manually adapted.
 - The update concerns a feature that Ruxex still retains.
 - The update introduces a completely new feature for Ruxex.
 - The update changes a retained feature's behavior, API, configuration, output,
-  or interaction.
+  or interaction and does not meet the relatively-safe exception in the
+  decision flow.
 - The update is a major or otherwise compatibility-sensitive dependency or
   member-crate change.
 - The update changes Ruxex's provider boundary, runtime model, or public
@@ -129,6 +148,12 @@ Do not reflect either category until the user has decided.
   functionality and can be adapted to Ruxex's architecture.
 - A behavior-preserving internal refactoring improves correctness or
   maintainability without crossing Ruxex's architectural boundaries.
+- A behavior-preserving trait extraction, interface factoring, or internal
+  module/ownership refactoring keeps Ruxex structurally aligned with retained
+  upstream follow-ups, especially when later commits depend on that shape.
+- A localized, additive change to retained functionality is safe to adapt,
+  preserves unsupported or ambiguous inputs through a fallback, and is covered
+  by focused unit and E2E tests.
 
 Apply these changes manually, adapting them to Ruxex names, structure, and
 boundaries.
