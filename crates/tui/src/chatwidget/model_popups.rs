@@ -53,7 +53,9 @@ impl ChatWidget {
         let subtitle = subtitle.to_string();
         let mut header = ColumnRenderable::new();
         header.push(Line::from(title.bold()));
-        header.push(Line::from(subtitle.dim()));
+        if !subtitle.is_empty() {
+            header.push(Line::from(subtitle.dim()));
+        }
         Box::new(header)
     }
 
@@ -92,6 +94,7 @@ impl ChatWidget {
         }
 
         let mut items: Vec<SelectionItem> = Vec::new();
+        let mut model_ids = Vec::new();
         for preset in presets.into_iter() {
             let description =
                 (!preset.description.is_empty()).then_some(preset.description.to_string());
@@ -110,8 +113,9 @@ impl ChatWidget {
                     model: preset_for_event,
                 });
             })];
+            model_ids.push(preset.model.clone());
             items.push(SelectionItem {
-                name: preset.model.clone(),
+                name: preset.display_name.clone(),
                 description,
                 is_current,
                 is_default: preset.is_default,
@@ -125,17 +129,17 @@ impl ChatWidget {
             });
         }
 
-        let header = self.model_menu_header(
-            "Select Model and Effort",
-            "Access legacy models by running ruxex -m <model_name> or in your config.toml",
+        let header = self.model_menu_header("Select Model and Effort", "");
+        self.show_model_selection_view(
+            model_ids,
+            SelectionViewParams {
+                view_id: Some(view_id),
+                footer_hint: Some(self.bottom_pane.standard_popup_hint_line()),
+                items,
+                header,
+                ..Default::default()
+            },
         );
-        self.show_model_selection_view(SelectionViewParams {
-            view_id: Some(view_id),
-            footer_hint: Some(self.bottom_pane.standard_popup_hint_line()),
-            items,
-            header,
-            ..Default::default()
-        });
     }
 
     fn model_selection_actions(

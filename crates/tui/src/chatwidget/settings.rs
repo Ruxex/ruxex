@@ -524,7 +524,7 @@ impl ChatWidget {
         if model.is_empty() {
             DEFAULT_MODEL_DISPLAY_NAME
         } else {
-            model
+            self.model_catalog.display_name(model)
         }
     }
 
