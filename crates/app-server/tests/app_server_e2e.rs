@@ -4,49 +4,49 @@
 // surface directly. Provider-wire-format cases live in `regression.rs` and are
 // included by the aggregate `just app-server-e2e` recipe.
 #[rustfmt::skip]
-#[path = "suite/v2/collaboration_mode_list.rs"]
+#[path = "suite/ruxex/collaboration_mode_list.rs"]
 mod collaboration_mode_list;
 #[rustfmt::skip]
-#[path = "suite/v2/connection_handling_websocket.rs"]
+#[path = "suite/ruxex/connection_handling_websocket.rs"]
 mod connection_handling_websocket;
 #[cfg(unix)]
 #[rustfmt::skip]
-#[path = "suite/v2/command_exec.rs"]
+#[path = "suite/ruxex/command_exec.rs"]
 mod command_exec;
 #[rustfmt::skip]
-#[path = "suite/v2/experimental_api.rs"]
+#[path = "suite/ruxex/experimental_api.rs"]
 mod experimental_api;
 #[rustfmt::skip]
-#[path = "suite/v2/fs.rs"]
+#[path = "suite/ruxex/fs.rs"]
 mod fs;
 #[cfg(unix)]
 #[rustfmt::skip]
-#[path = "suite/v2/process_exec.rs"]
+#[path = "suite/ruxex/process_exec.rs"]
 mod process_exec;
 #[rustfmt::skip]
-#[path = "suite/v2/permission_profile_list.rs"]
+#[path = "suite/ruxex/permission_profile_list.rs"]
 mod permission_profile_list;
 #[rustfmt::skip]
-#[path = "suite/v2/request_validation.rs"]
+#[path = "suite/ruxex/request_validation.rs"]
 mod request_validation;
 #[rustfmt::skip]
-#[path = "suite/v2/rollout_compress_tests.rs"]
+#[path = "suite/ruxex/rollout_compress_tests.rs"]
 mod rollout_compress;
 #[rustfmt::skip]
-#[path = "suite/v2/server_diagnostics.rs"]
+#[path = "suite/ruxex/server_diagnostics.rs"]
 mod server_diagnostics;
 #[rustfmt::skip]
-#[path = "suite/v2/session_end.rs"]
+#[path = "suite/ruxex/session_end.rs"]
 mod session_end;
 #[rustfmt::skip]
-#[path = "suite/v2/thread_loaded_list.rs"]
+#[path = "suite/ruxex/thread_loaded_list.rs"]
 mod thread_loaded_list;
 #[rustfmt::skip]
-#[path = "suite/v2/thread_delete.rs"]
+#[path = "suite/ruxex/thread_delete.rs"]
 mod thread_delete;
 #[rustfmt::skip]
-#[path = "suite/v2/thread_sections.rs"]
+#[path = "suite/ruxex/thread_sections.rs"]
 mod thread_sections;
 #[rustfmt::skip]
-#[path = "suite/v2/user_verification.rs"]
+#[path = "suite/ruxex/user_verification.rs"]
 mod user_verification;
