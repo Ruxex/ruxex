@@ -14,3 +14,4 @@ verbatim; adapt only retained behavior when a Ruxex-native boundary is needed.
 | --- | --- | --- | --- | --- |
 | `e416eadf7f99...`, `c46aa58a7baa...` | — | agent/runtime unit + E2E | Waiting for reconciliation | Rollout budget and resume ownership; inspect Ruxex control flow first |
 | `73bbb654b3b9...` | — | multi-agent E2E | Waiting for reconciliation | Shared spawning; adapt only if retained by Ruxex |
+| `c026e7a622ecae45f0af1939729e7baab9d1637b` — Expose a backend-independent agent control contract (#46547) | — | audit only | Deferred | Ruxex has no alternate agent backend or retained App Server contract requiring this public abstraction; re-audit when a concrete backend boundary or consumer exists. Do not port upstream `AgentControl` verbatim. |

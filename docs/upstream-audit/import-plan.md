@@ -13,8 +13,8 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | Decision | Count |
 | --- | ---: |
-| `Import proactively` | 910 |
-| `Deferred` | 337 |
+| `Import proactively` | 909 |
+| `Deferred` | 338 |
 | `User review required` | 30 |
 | `Do not import` | 350 |
 
@@ -22,7 +22,7 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2026-09-19–2026-09-23 | 341 | 165 | 114 | 0 | 62 |
+| 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
 | 2026-09-24–2026-09-30 | 352 | 217 | 56 | 3 | 77 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
@@ -394,7 +394,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | Date | Upstream commit | Subject | Decision |
 | --- | --- | --- | --- |
 | 2026-09-19 | [`7a15548c6a5a`](./2026-09-19.md#7a15548c6a5a54c5af9dcb4b5e9cd89387cd89f0) | Move child completion routing into the agent controller (#46552) | `Import proactively` |
-| 2026-09-19 | [`c026e7a622ec`](./2026-09-19.md#c026e7a622ecae45f0af1939729e7baab9d1637b) | Expose a backend-independent agent control contract (#46547) | `Import proactively` |
+| 2026-09-19 | [`c026e7a622ec`](./2026-09-19.md#c026e7a622ecae45f0af1939729e7baab9d1637b) | Expose a backend-independent agent control contract (#46547) | `Deferred` |
 | 2026-09-20 | [`e29eceb75131`](./2026-09-20.md#e29eceb7513163ba1f600d0b87f6751ec9323d24) | Preserve streamed answers when subagents finish (#46867) | `Import proactively` |
 | 2026-09-21 | [`3938a27c1dd6`](./2026-09-21.md#3938a27c1dd635eff02a624f6d64799639aeb714) | Route agent delivery through captured send requests (#46994) | `Import proactively` |
 | 2026-09-21 | [`48f897e4ce94`](./2026-09-21.md#48f897e4ce94152818ce0563b3a8aac3a70ce9b8) | Expand agent message board tool integration coverage (#46989) | `Import proactively` |
