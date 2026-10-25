@@ -3,6 +3,7 @@
 use ruxex_utils_path as path_utils;
 use std::cmp::Reverse;
 use std::ffi::OsStr;
+use std::fmt;
 use std::io;
 use std::num::NonZero;
 use std::ops::ControlFlow;
@@ -1270,6 +1271,35 @@ fn event_msg_preview(event: &EventMsg) -> Option<String> {
 
 /// Read the SessionMetaLine from the head of a rollout file for reuse by
 /// callers that need the session metadata (e.g. to derive a cwd for config).
+///
+/// Metadata failures retain their original I/O details for callers while exposing only a bounded
+/// reason from `Debug`, so compression diagnostics cannot accidentally log paths or contents.
+pub(crate) struct MetadataReadError {
+    pub(crate) reason: &'static str,
+    error: io::Error,
+}
+
+impl fmt::Debug for MetadataReadError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("MetadataReadError")
+            .field("reason", &self.reason)
+            .finish_non_exhaustive()
+    }
+}
+
+impl fmt::Display for MetadataReadError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.error.fmt(formatter)
+    }
+}
+
+impl std::error::Error for MetadataReadError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error)
+    }
+}
+
 pub async fn read_session_meta_line(path: &Path) -> io::Result<SessionMetaLine> {
     let mut lines = compression::open_rollout_line_reader(path).await?;
     while let Some(line) = lines.next_line().await? {
@@ -1279,17 +1309,28 @@ pub async fn read_session_meta_line(path: &Path) -> io::Result<SessionMetaLine> 
         }
         let Ok(rollout_line) = crate::parse_rollout_line(trimmed) else {
             if let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed) {
-                crate::recorder::reject_unknown_thread_history_mode(&value)?;
+                crate::recorder::reject_unknown_thread_history_mode(&value).map_err(|error| {
+                    io::Error::new(
+                        error.kind(),
+                        MetadataReadError {
+                            reason: "invalid_history_mode",
+                            error,
+                        },
+                    )
+                })?;
             }
             continue;
         };
         match rollout_line.item {
             RolloutItem::SessionMeta(session_meta_line) => return Ok(session_meta_line),
             RolloutItem::ResponseItem(_) | RolloutItem::InterAgentCommunication(_) => {
-                return Err(io::Error::other(format!(
-                    "rollout at {} does not start with session metadata",
-                    path.display()
-                )));
+                return Err(io::Error::other(MetadataReadError {
+                    reason: "response_before_metadata",
+                    error: io::Error::other(format!(
+                        "rollout at {} does not start with session metadata",
+                        path.display()
+                    )),
+                }));
             }
             RolloutItem::InterAgentCommunicationMetadata { .. }
             | RolloutItem::Compacted(_)
@@ -1301,10 +1342,10 @@ pub async fn read_session_meta_line(path: &Path) -> io::Result<SessionMetaLine> 
             | RolloutItem::EventMsg(_) => {}
         }
     }
-    Err(io::Error::other(format!(
-        "rollout at {} is empty",
-        path.display()
-    )))
+    Err(io::Error::other(MetadataReadError {
+        reason: "missing_metadata",
+        error: io::Error::other(format!("rollout at {} is empty", path.display())),
+    }))
 }
 
 async fn file_modified_time(path: &Path) -> io::Result<Option<OffsetDateTime>> {
