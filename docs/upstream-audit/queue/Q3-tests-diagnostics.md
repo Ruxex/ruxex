@@ -13,4 +13,4 @@ Ruxex targets.
 
 | Upstream commit(s) | Ruxex commit | Tests/checks | Status | Notes |
 | --- | --- | --- | --- | --- |
-| To be selected from `import-plan.md` | — | — | Ready per subsystem | Add Ruxex-specific boundaries when upstream tests do not apply directly |
+| `5e96aabd68dc6194f5ad928cb7f5d0bc71b72df9` — UTF-8 token truncation boundaries | Pending | `ruxex-utils-string` focused nextest | In progress | Ruxex already had the behavior; retain the upstream regression coverage as a Ruxex utility test |

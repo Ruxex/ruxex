@@ -13,4 +13,4 @@ commits are never cherry-picked.
 
 | Upstream commit(s) | Ruxex commit | Tests/checks | Status | Notes |
 | --- | --- | --- | --- | --- |
-| To be selected from `import-plan.md` | — | — | Ready per item | Record retained path and Ruxex-specific applicability |
+| `5e96aabd68dc6194f5ad928cb7f5d0bc71b72df9` — Avoid full-string scans in token-budget truncation (#49712) | N/A | Boundary regression test passes before production changes | No production adaptation required | Ruxex already preserves the tested UTF-8 behavior. The remaining upstream difference is an unobserved performance optimization, so no production change is justified under the test-first rule. |
