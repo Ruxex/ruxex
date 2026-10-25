@@ -17,7 +17,7 @@ This overview is a generated and manually curated planning ledger for the audite
 | `Import proactively` | 909 | Candidate for manual adaptation; not necessarily immediate. |
 | `Deferred` | 338 | Known feature outside the current adoption gate. |
 | `User review required` | 30 | Blocked until the explicit Ruxex decision is made. |
-| `Do not import` | 349 | Excluded from Ruxex implementation. |
+| `Do not import` | 350 | Excluded from Ruxex implementation. |
 
 ## Planning classification
 
@@ -32,7 +32,7 @@ The following classification is for implementation planning only. It is derived 
 | `Behavioral alignment` | 322 | Reconstruct as a feature or protocol-compatible bundle across upstream commits. |
 | `Feature candidate (deferred)` | 338 | Hold until the adoption trigger is met and re-audit if necessary. |
 | `Review-gated change` | 30 | Hold for user decision, then require the relevant protocol, persistence, or security E2E coverage. |
-| `Excluded` | 349 | Do not implement. |
+| `Excluded` | 350 | Do not implement. |
 
 ## Executable import queue
 
@@ -78,7 +78,7 @@ The bundle index is the execution map. A bundle may span multiple UTC ledgers an
 
 | Bundle | Members | Proactive | Deferred | Review | Excluded | Current handling |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| `B02` — App Server, thread history, and lifecycle | 465 | 248 | 80 | 14 | 123 | Split out review-gated members; retain bundle order |
+| `B02` — App Server, thread history, and lifecycle | 465 | 248 | 80 | 14 | 124 | Split out review-gated members; retain bundle order |
 | `B03` — Agents, forks, and message-board runtime | 99 | 44 | 39 | 2 | 14 | Split out review-gated members; retain bundle order |
 | `B04` — MCP, plugins, skills, and tool metadata | 146 | 103 | 26 | 1 | 16 | Split out review-gated members; retain bundle order |
 | `B05` — Provider, Responses, and model behavior | 74 | 44 | 16 | 1 | 13 | Split out review-gated members; retain bundle order |

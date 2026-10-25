@@ -16,14 +16,14 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 | `Import proactively` | 909 |
 | `Deferred` | 338 |
 | `User review required` | 30 |
-| `Do not import` | 349 |
+| `Do not import` | 350 |
 
 ## Batch totals
 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
-| 2026-09-24–2026-09-30 | 352 | 218 | 55 | 3 | 76 |
+| 2026-09-24–2026-09-30 | 352 | 218 | 55 | 3 | 77 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
 | 2026-10-15–2026-10-21 | 238 | 140 | 52 | 6 | 40 |
@@ -36,7 +36,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 ### B02 — App Server, thread history, and lifecycle
 
 - Status: `Waiting for user decision`
-- Members: 342
+- Members: 341
 - Proactive: 248; Deferred: 80; Review: 14
 - Implementation order: adapt or add tests first, manually adapt production code to Ruxex, run affected unit tests and relevant E2E tests, then record the Ruxex commit.
 
@@ -170,7 +170,6 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-30 | [`9ef9cb1d9fc6`](./2026-09-30.md#9ef9cb1d9fc6013f6c1994346e0ee93ad9e6f986) | Complete turn abort callbacks before emitting terminal events (#49475) | `Import proactively` |
 | 2026-09-30 | [`d1c4e3c3e695`](./2026-09-30.md#d1c4e3c3e695f8f1f430f459e20c57a511f770a5) | Keep compressed rollout snippet searches on one blocking worker (#49692) | `Import proactively` |
 | 2026-09-30 | [`d7b0d4aa6631`](./2026-09-30.md#d7b0d4aa663172876871b605d53283bc0120882b) | Return authoritative replay history when resuming a thread (#49599) | `Import proactively` |
-| 2026-09-30 | [`d8f69ea8bc99`](./2026-09-30.md#d8f69ea8bc998a33c19a08176cfc22fd4352c592) | Preserve bootstrap discovery across authentication changes (#49432) | `Import proactively` |
 | 2026-09-30 | [`de020167989f`](./2026-09-30.md#de020167989fde4937204a064ea2fedd54f3c931) | Persist explicit user goal edits in model history (#49598) | `User review required` |
 | 2026-09-30 | [`ecc205edacf5`](./2026-09-30.md#ecc205edacf57be9a9e1556cc4fd1f5244a94d42) | Move thread history projection into one blocking task (#49693) | `Import proactively` |
 | 2026-09-30 | [`eefe0ce1a8e3`](./2026-09-30.md#eefe0ce1a8e39788a4de7ef5bafd47e51339610b) | Bind the app-server time provider to a local variable (#49411) | `Import proactively` |
