@@ -71,7 +71,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`ac985376787f`](./2026-09-21.md#ac985376787fcf69a9dcd4ef43c4eb1752f230d0) | Track cumulative MCP attribution across requests and thread history (#47081) | `Deferred` |
 | 2026-09-21 | [`b4b30dd5eb99`](./2026-09-21.md#b4b30dd5eb9994ddc51f915ecd74e9a8c1d93248) | Centralize JSON-RPC response serialization through payloads (#47089) | `Import proactively` |
 | 2026-09-21 | [`d583e73c4d12`](./2026-09-21.md#d583e73c4d1204f1e9f654ef87065e9f0dd07ac7) | Fetch local message board thread summaries in one query (#47055) | `Do not import` |
-| 2026-09-21 | [`e51aacad602d`](./2026-09-21.md#e51aacad602dec4108db0d2f62bb7f40c6ced56c) | Include attributed previews in agent message board notifications (#47075) | `Deferred` |
+| 2026-09-21 | [`e51aacad602d`](./2026-09-21.md#e51aacad602dec4108db0d2f62bb7f40c6ced56c) | Include attributed previews in agent message board notifications (#47075) | `Do not import` |
 | 2026-09-21 | [`f3037cafd32b`](./2026-09-21.md#f3037cafd32b2097dae718eb86bcc9182dc0a5d1) | Refresh host-supplied cloud skills at turn startup (#47074) | `Deferred` |
 | 2026-09-22 | [`04fc75adbe67`](./2026-09-22.md#04fc75adbe67a612a1cb0fc469533f24b24fa499) | Add conditional turn interruption that preserves pending input (#47340) | `Import proactively` |
 | 2026-09-22 | [`2c2a42e65de0`](./2026-09-22.md#2c2a42e65de077c5518ea5b4c3999633ef6a12fc) | Restrict MCP OAuth authorization endpoints to HTTP(S) (#47326) | `Import proactively` |
