@@ -68,14 +68,22 @@ async fn backup_replaces_blocking_sqlite_home_file() -> std::io::Result<()> {
 }
 
 #[test]
-fn sqlite_error_detail_classifies_corruption_and_lock_errors() {
-    assert!(sqlite_error_detail_is_corruption("file is not a database"));
-    assert!(sqlite_error_detail_is_corruption(
-        "error returned from database: (code: 11) database disk image is malformed"
-    ));
-    assert!(!sqlite_error_detail_is_corruption("database is locked"));
+fn sqlite_error_detail_classifies_lock_errors() {
     assert!(sqlite_error_detail_is_lock("database is locked"));
     assert!(sqlite_error_detail_is_lock("database is busy"));
+}
+
+#[test]
+fn sqlite_corruption_classification_uses_wrapped_result_codes() {
+    assert!(is_sqlite_corruption_error(&anyhow::Error::new(
+        libsqlite3_sys::Error::new(11),
+    )));
+    assert!(is_sqlite_corruption_error(&anyhow::Error::new(
+        libsqlite3_sys::Error::new(26),
+    )));
+    assert!(!is_sqlite_corruption_error(&anyhow::Error::new(
+        libsqlite3_sys::Error::new(5),
+    )));
 }
 
 #[tokio::test]
