@@ -30,13 +30,13 @@ impl FileHandleManager {
         if handles.contains_key(&handle_id) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("file handle `{handle_id}` already exists"),
+                format!("file read handle `{handle_id}` already exists"),
             ));
         }
         if handles.len() >= MAX_OPEN_FILES {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("at most {MAX_OPEN_FILES} file handles may be open per connection"),
+                format!("at most {MAX_OPEN_FILES} file reads may be open per connection"),
             ));
         }
         handles.insert(handle_id.clone(), file);
