@@ -1,28 +1,6 @@
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Result;
-use ruxex_core::StartIfIdleSubmission;
-use ruxex_core::TurnInput;
-use ruxex_core::TurnInputRequest;
-use ruxex_core::config::Config;
-use ruxex_exec_server::CreateDirectoryOptions;
-use ruxex_exec_server::ExecutorFileSystem;
-use ruxex_extension_api::ExtensionFuture;
-use ruxex_extension_api::ExtensionRegistryBuilder;
-use ruxex_extension_api::SkillInvocationContributor;
-use ruxex_extension_api::SkillInvocationInput;
-use ruxex_extension_api::SkillInvocationKind;
-use ruxex_protocol::config_types::CollaborationMode;
-use ruxex_protocol::config_types::ModeKind;
-use ruxex_protocol::config_types::Settings;
-use ruxex_protocol::models::PermissionProfile;
-use ruxex_protocol::protocol::AskForApproval;
-use ruxex_protocol::protocol::ThreadSettingsOverrides;
-use ruxex_protocol::user_input::UserInput;
-use ruxex_skills_extension::SkillsExtensionConfig;
-use ruxex_skills_extension::install;
-use ruxex_utils_absolute_path::AbsolutePathBuf;
-use ruxex_utils_path_uri::PathUri;
 use core_test_support::create_directory_symlink;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -37,8 +15,36 @@ use core_test_support::test_ruxex::local_selections;
 use core_test_support::test_ruxex::test_ruxex;
 use core_test_support::test_ruxex::turn_permission_fields;
 use pretty_assertions::assert_eq;
+use ruxex_core::StartIfIdleSubmission;
+use ruxex_core::TurnInput;
+use ruxex_core::TurnInputRequest;
+use ruxex_core::config::Config;
+use ruxex_exec_server::CreateDirectoryOptions;
+use ruxex_exec_server::ExecutorFileSystem;
+use ruxex_extension_api::ExtensionFuture;
+use ruxex_extension_api::ExtensionRegistryBuilder;
+use ruxex_extension_api::SkillInvocationContributor;
+use ruxex_extension_api::SkillInvocationInput;
+use ruxex_extension_api::SkillInvocationKind;
+use ruxex_protocol::config_types::CollaborationMode;
+use ruxex_protocol::config_types::ModeKind;
+use ruxex_protocol::config_types::Settings;
+use ruxex_protocol::models::ContentItem;
+use ruxex_protocol::models::PermissionProfile;
+use ruxex_protocol::models::ResponseItem;
+use ruxex_protocol::protocol::AskForApproval;
+use ruxex_protocol::protocol::EventMsg;
+use ruxex_protocol::protocol::ThreadSettingsOverrides;
+use ruxex_protocol::user_input::UserInput;
+use ruxex_skills_extension::SkillsExtensionConfig;
+use ruxex_skills_extension::install;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use ruxex_utils_path_uri::PathUri;
 use std::sync::Arc;
 use std::sync::Mutex;
+use tracing::Level;
+use tracing_subscriber::fmt::format::FmtSpan;
+use tracing_test::internal::MockWriter;
 
 #[derive(Default)]
 struct SkillInvocationRecorder(Mutex<Vec<(String, SkillInvocationKind)>>);
@@ -186,6 +192,122 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
             skill_path.display().to_string(),
             SkillInvocationKind::Explicit
         )],
+    );
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn history_injection_skips_skill_discovery_after_initial_context() -> Result<()> {
+    skip_if_wine_exec!(
+        Ok(()),
+        "skill paths require matching host and executor path conventions"
+    );
+    skip_if_no_network!(Ok(()));
+
+    const SKILL_BODY: &str = "Instructions from the real demo skill.";
+    const FIRST_INSTRUCTIONS: &str = "First injected developer instructions.";
+    const SECOND_INSTRUCTIONS: &str = "Second injected developer instructions.";
+
+    let buffer: &'static Mutex<Vec<u8>> = Box::leak(Box::new(Mutex::new(Vec::new())));
+    let subscriber = tracing_subscriber::fmt()
+        .with_ansi(false)
+        .with_max_level(Level::TRACE)
+        .with_span_events(FmtSpan::NEW)
+        .with_writer(MockWriter::new(buffer))
+        .finish();
+    let _guard = tracing::subscriber::set_default(subscriber);
+    let take_logs = || {
+        String::from_utf8(std::mem::take(&mut *buffer.lock().unwrap()))
+            .expect("test logs should be valid UTF-8")
+    };
+
+    let server = start_mock_server().await;
+    let mut builder = test_ruxex().with_workspace_setup(|cwd, fs| async move {
+        write_repo_skill(cwd, fs, "demo", "demo skill", SKILL_BODY).await
+    });
+    let test = builder.build_with_auto_env(&server).await?;
+    let developer_message = |text: &str| ResponseItem::Message {
+        id: None,
+        role: "developer".to_string(),
+        content: vec![ContentItem::InputText {
+            text: text.to_string(),
+        }],
+        phase: None,
+        internal_chat_message_metadata_passthrough: None,
+    };
+
+    // A fresh thread still needs full initial context before its first injected item.
+    buffer.lock().unwrap().clear();
+    test.ruxex
+        .inject_response_items_for_turn(vec![developer_message(FIRST_INSTRUCTIONS)])
+        .await?;
+    let logs = take_logs();
+    assert!(
+        logs.contains("skills_for_config"),
+        "initial injection must discover skills: {logs}"
+    );
+
+    test.ruxex
+        .inject_response_items_for_turn(vec![developer_message(SECOND_INSTRUCTIONS)])
+        .await?;
+    let logs = take_logs();
+    assert!(
+        logs.contains("persist_rollout_items"),
+        "initialized-history injection must still record the item: {logs}"
+    );
+    assert!(
+        !logs.contains("skills_for_config"),
+        "initialized-history injection must skip skill discovery: {logs}"
+    );
+
+    let mock = mount_sse_once(&server, sse(vec![ev_completed("skill-response")])).await;
+    let skill_path = test
+        .config
+        .cwd
+        .join(".agents/skills/demo/SKILL.md")
+        .canonicalize()
+        .unwrap_or_else(|_| test.config.cwd.join(".agents/skills/demo/SKILL.md"))
+        .to_path_buf();
+    test.ruxex
+        .start_or_steer_turn(TurnInputRequest::user_input(vec![
+            UserInput::Text {
+                text: "please use $demo".to_string(),
+                text_elements: Vec::new(),
+            },
+            UserInput::Skill {
+                name: "demo".to_string(),
+                path: skill_path,
+            },
+        ]))
+        .await?;
+    core_test_support::wait_for_event(test.ruxex.as_ref(), |event| {
+        matches!(event, EventMsg::TurnComplete(_))
+    })
+    .await;
+    let logs = take_logs();
+    assert!(
+        logs.contains("skills_for_config"),
+        "the real turn must still discover skills: {logs}"
+    );
+
+    let request = mock.single_request();
+    let developer_texts = request.message_input_texts("developer");
+    let injected_texts = developer_texts
+        .iter()
+        .map(String::as_str)
+        .filter(|text| *text == FIRST_INSTRUCTIONS || *text == SECOND_INSTRUCTIONS)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        injected_texts,
+        vec![FIRST_INSTRUCTIONS, SECOND_INSTRUCTIONS]
+    );
+    let user_texts = request.message_input_texts("user");
+    assert!(
+        user_texts
+            .iter()
+            .any(|text| text.contains("<skill>\n<name>demo</name>") && text.contains(SKILL_BODY)),
+        "the real skill body must reach the model: {user_texts:?}"
     );
 
     Ok(())
