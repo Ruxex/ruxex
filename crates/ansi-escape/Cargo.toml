@@ -7,7 +7,6 @@ license.workspace = true
 [lib]
 name = "ruxex_ansi_escape"
 path = "src/lib.rs"
-test = false
 doctest = false
 
 [lints]
@@ -18,3 +17,7 @@ ansi-to-tui = { workspace = true }
 ratatui = { workspace = true }
 ratatui-core-upstream = { workspace = true }
 tracing = { workspace = true, features = ["log"] }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tracing-subscriber = { workspace = true }

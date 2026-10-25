@@ -34,7 +34,11 @@ pub fn ansi_escape_line(s: &str) -> Line<'static> {
         [] => "".into(),
         [only] => only.clone(),
         [first, rest @ ..] => {
-            tracing::warn!("ansi_escape_line: expected a single line, got {first:?} and {rest:?}");
+            tracing::warn!(
+                input_bytes = s.len(),
+                line_count = rest.len() + 1,
+                "ansi_escape_line: expected a single line"
+            );
             first.clone()
         }
     }
@@ -131,3 +135,7 @@ fn convert_color(color: upstream_core::style::Color) -> Color {
 fn convert_modifier(modifier: upstream_core::style::Modifier) -> Modifier {
     Modifier::from_bits_retain(modifier.bits())
 }
+
+#[cfg(test)]
+#[path = "ansi_escape_tests.rs"]
+mod tests;

@@ -8248,9 +8248,11 @@ name = "ruxex-ansi-escape"
 version = "0.4.9"
 dependencies = [
  "ansi-to-tui",
+ "pretty_assertions",
  "ratatui-core",
  "ruxex-ratatui",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
