@@ -65,6 +65,7 @@ use tokio::sync::watch;
 use tracing::warn;
 use uuid::Uuid;
 
+pub(crate) use self::completion::AgentTurnOutcome;
 pub(crate) use self::delivery::AgentMessage;
 pub(crate) use self::delivery::MessageDeliveryError;
 pub(crate) use self::delivery::MessageDeliveryMode;
@@ -74,6 +75,7 @@ pub(crate) use self::interrupt::AgentInterruptError;
 pub(crate) use self::interrupt::AgentInterruptOutcome;
 use self::residency::V2Residency;
 
+mod completion;
 mod delivery;
 mod execution;
 mod interrupt;
