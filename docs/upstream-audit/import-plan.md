@@ -1247,7 +1247,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-29 | [`bd4204efc24a`](./2026-09-29.md#bd4204efc24a888c6671681f5cd41fbf9377c163) | Compile hook matchers during discovery (#49379) | `Import proactively` |
 | 2026-09-29 | [`cf12c86dc569`](./2026-09-29.md#cf12c86dc569e383c419e821046a8e59b4c8614a) | Simplify configuration fingerprint canonicalization (#49295) | `Import proactively` |
 | 2026-09-30 | [`16a7c0f0ebc6`](./2026-09-30.md#16a7c0f0ebc6e366b3ecee183d21e02b5a100b7b) | Filter graceful shutdown guard and trigger traces from SQLite logs (#49414) | `Import proactively` |
-| 2026-09-30 | [`17e5a4dbcb41`](./2026-09-30.md#17e5a4dbcb4106955dad3e6a661459c77193ea1d) | Upgrade the argument comment lint toolchain and Dylint (#49706) | `Import proactively` |
+| 2026-09-30 | [`17e5a4dbcb41`](./2026-09-30.md#17e5a4dbcb4106955dad3e6a661459c77193ea1d) | Upgrade the argument comment lint toolchain and Dylint (#49706) | `Do not import` |
 | 2026-09-30 | [`1fc8d548077f`](./2026-09-30.md#1fc8d548077fc72c4e3d048a78173af07385217f) | Make the strict network approval test independent of request order (#49595) | `Import proactively` |
 | 2026-09-30 | [`5e96aabd68dc`](./2026-09-30.md#5e96aabd68dc6194f5ad928cb7f5d0bc71b72df9) | Avoid full-string scans in token-budget truncation (#49712) | `Import proactively` |
 | 2026-09-30 | [`8ea2c0e0d4bc`](./2026-09-30.md#8ea2c0e0d4bc1261258eb532b5a9d616147b6571) | Prune diagnostic logs periodically by age and database size (#49425) | `Import proactively` |
