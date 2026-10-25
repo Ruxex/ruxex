@@ -1172,7 +1172,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`3627bb91b2f1`](./2026-09-21.md#3627bb91b2f14f47c1a415412ec2f1e132e50647) | Avoid building a host SQLite driver for SQLx macros (#47084) | `Import proactively` |
 | 2026-09-21 | [`4d160ea71ddd`](./2026-09-21.md#4d160ea71dddc8e3b7e780b1aa159e79baaa535f) | Index channel posts by timestamp for latest-message lookups (#46979) | `Import proactively` |
 | 2026-09-21 | [`51d221a9b77a`](./2026-09-21.md#51d221a9b77ad4810608f148e90231f0e48b5c82) | Stop redundant message-board reads when limits reach one (#47064) | `Do not import` |
-| 2026-09-21 | [`62ea6d41e85d`](./2026-09-21.md#62ea6d41e85d0c75181f2794d0f2dc40e55fce3c) | Serialize environment updates and cancel removed pending attachments (#47077) | `Import proactively` |
+| 2026-09-21 | [`62ea6d41e85d`](./2026-09-21.md#62ea6d41e85d0c75181f2794d0f2dc40e55fce3c) | Serialize environment updates and cancel removed pending attachments (#47077) | `Implemented` |
 | 2026-09-21 | [`ffbd30aeb71a`](./2026-09-21.md#ffbd30aeb71a669045a70e5ff74ed4aa116f79af) | Canonicalize the workspace trust key in the doctor config test (#46981) | `Import proactively` |
 | 2026-09-22 | [`0160eb3497bc`](./2026-09-22.md#0160eb3497bc2640c461c7cc5af65836491ded8e) | Preserve explicit message-board unsubscribes when posting (#47257) | `Import proactively` |
 | 2026-09-22 | [`3b7a8520efde`](./2026-09-22.md#3b7a8520efdee155234919fcf1f44f05a303df68) | Identify failed SQLite databases in `codex doctor` output (#47330) | `Import proactively` |
