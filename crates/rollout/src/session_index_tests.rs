@@ -9,6 +9,7 @@ use ruxex_protocol::protocol::SessionMetaLine;
 use ruxex_protocol::protocol::SessionSource;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::sync::Arc;
 use tempfile::TempDir;
 fn write_index(path: &Path, lines: &[SessionIndexEntry]) -> std::io::Result<()> {
     let mut out = String::new();
@@ -374,6 +375,101 @@ async fn find_thread_names_by_ids_prefers_latest_entry() -> std::io::Result<()> 
     let found = find_thread_names_by_ids(temp.path(), &ids).await?;
     assert_eq!(found, expected);
     Ok(())
+}
+
+#[tokio::test]
+async fn removal_preserves_other_names_and_malformed_lines() -> std::io::Result<()> {
+    let temp = TempDir::new()?;
+    let removed_id = ThreadId::new();
+    let kept_id = ThreadId::new();
+    append_thread_name(temp.path(), removed_id, "old").await?;
+    append_thread_name(temp.path(), removed_id, "new").await?;
+    append_thread_name(temp.path(), kept_id, "kept").await?;
+    let path = session_index_path(temp.path());
+    std::fs::OpenOptions::new()
+        .append(true)
+        .open(&path)?
+        .write_all(b"malformed\n")?;
+
+    remove_thread_name_entries(temp.path(), removed_id).await?;
+
+    assert_eq!(
+        find_thread_names_by_ids(temp.path(), &HashSet::from([removed_id, kept_id])).await?,
+        HashMap::from([(kept_id, "kept".to_string())]),
+    );
+    assert!(
+        std::fs::read_to_string(path)?
+            .lines()
+            .any(|line| line == "malformed")
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn cancelled_index_update_holds_lock_until_worker_finishes() -> std::io::Result<()> {
+    let (reached_tx, reached_rx) = tokio::sync::oneshot::channel();
+    let (resume_tx, resume_rx) = std::sync::mpsc::channel();
+    let update = tokio::spawn(with_session_index_lock(&SESSION_INDEX_LOCK, move || {
+        let _ = reached_tx.send(());
+        let _ = resume_rx.recv();
+        Ok(())
+    }));
+    reached_rx.await.unwrap();
+    update.abort();
+    assert!(update.await.unwrap_err().is_cancelled());
+
+    let lock_is_held = SESSION_INDEX_LOCK.try_lock().is_err();
+    resume_tx.send(()).unwrap();
+    with_session_index_lock(&SESSION_INDEX_LOCK, || Ok(())).await?;
+    assert!(
+        lock_is_held,
+        "cancellation released the running worker's lock"
+    );
+    Ok(())
+}
+
+#[test]
+fn cancelled_queued_index_update_preserves_the_next_write() -> std::io::Result<()> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .max_blocking_threads(1)
+        .build()?;
+    runtime.block_on(async {
+        let home = TempDir::new()?;
+        let path = home.path().join("thread-name");
+        let lock = Arc::new(tokio::sync::Mutex::new(()));
+
+        let (reached_tx, reached_rx) = tokio::sync::oneshot::channel();
+        let (resume_tx, resume_rx) = std::sync::mpsc::channel::<()>();
+        let blocker = tokio::task::spawn_blocking(move || {
+            let _ = reached_tx.send(());
+            let _ = resume_rx.recv();
+        });
+        reached_rx.await.unwrap();
+
+        let queued_path = path.clone();
+        let mut update = Box::pin(with_session_index_lock(&lock, move || {
+            std::fs::write(queued_path, "obsolete")
+        }));
+        let state = std::future::poll_fn(|cx| {
+            std::task::Poll::Ready(std::future::Future::poll(update.as_mut(), cx))
+        })
+        .await;
+        assert!(state.is_pending());
+        assert!(lock.try_lock().is_err());
+        drop(update);
+        let queued_update_holds_lock = lock.try_lock().is_err();
+
+        drop(resume_tx);
+        blocker.await.unwrap();
+        let next_path = path.clone();
+        with_session_index_lock(&lock, move || std::fs::write(next_path, "latest")).await?;
+        assert_eq!(
+            (queued_update_holds_lock, std::fs::read_to_string(path)?),
+            (true, "latest".to_string())
+        );
+        Ok(())
+    })
 }
 
 #[test]
