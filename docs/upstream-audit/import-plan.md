@@ -60,7 +60,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`3ead67394691`](./2026-09-21.md#3ead67394691548e5c2f1be4cad649907f075e66) | Defer extension tool history materialization until first access (#47035) | `Import proactively` |
 | 2026-09-21 | [`3fd5160cd6c7`](./2026-09-21.md#3fd5160cd6c78f2051bb54359d53f09207171733) | Honor the configured product SKU in remote plugin requests (#47116) | `Deferred` |
 | 2026-09-21 | [`40eeb6e8a89e`](./2026-09-21.md#40eeb6e8a89ef421c25d4c40e06fa1d40ce66b4f) | Recover corrupt message-board storage during thread deletion (#47042) | `Do not import` |
-| 2026-09-21 | [`429afbcaa97a`](./2026-09-21.md#429afbcaa97a9397e59976afdc0c38a15db64956) | Extract per-thread enrichment into a dedicated async helper (#47083) | `Import proactively` |
+| 2026-09-21 | [`429afbcaa97a`](./2026-09-21.md#429afbcaa97a9397e59976afdc0c38a15db64956) | Extract per-thread enrichment into a dedicated async helper (#47083) | `Implemented` |
 | 2026-09-21 | [`4a8cfe6bb7a4`](./2026-09-21.md#4a8cfe6bb7a4ac90ca38f932627a214d7b10567b) | Pass thread IDs to attachment uploads (#47121) | `Import proactively` |
 | 2026-09-21 | [`6a601c00da85`](./2026-09-21.md#6a601c00da854de09253952aaf2222f17c7c02ef) | Preserve originating turn metadata for yielded skill calls (#47106) | `Import proactively` |
 | 2026-09-21 | [`73129716c28b`](./2026-09-21.md#73129716c28bd56d49a8b02544934dcc8a961dc2) | Delete persisted message boards with their root threads (#47029) | `Deferred` |
