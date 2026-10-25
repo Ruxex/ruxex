@@ -70,7 +70,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`a6fdb11eda99`](./2026-09-21.md#a6fdb11eda992b706c5e6a21ae5fd8c7376f8e06) | Preserve metadata in native user verification requests (#46952) | `Import proactively` |
 | 2026-09-21 | [`ac985376787f`](./2026-09-21.md#ac985376787fcf69a9dcd4ef43c4eb1752f230d0) | Track cumulative MCP attribution across requests and thread history (#47081) | `Deferred` |
 | 2026-09-21 | [`b4b30dd5eb99`](./2026-09-21.md#b4b30dd5eb9994ddc51f915ecd74e9a8c1d93248) | Centralize JSON-RPC response serialization through payloads (#47089) | `Import proactively` |
-| 2026-09-21 | [`d583e73c4d12`](./2026-09-21.md#d583e73c4d1204f1e9f654ef87065e9f0dd07ac7) | Fetch local message board thread summaries in one query (#47055) | `Deferred` |
+| 2026-09-21 | [`d583e73c4d12`](./2026-09-21.md#d583e73c4d1204f1e9f654ef87065e9f0dd07ac7) | Fetch local message board thread summaries in one query (#47055) | `Do not import` |
 | 2026-09-21 | [`e51aacad602d`](./2026-09-21.md#e51aacad602dec4108db0d2f62bb7f40c6ced56c) | Include attributed previews in agent message board notifications (#47075) | `Deferred` |
 | 2026-09-21 | [`f3037cafd32b`](./2026-09-21.md#f3037cafd32b2097dae718eb86bcc9182dc0a5d1) | Refresh host-supplied cloud skills at turn startup (#47074) | `Deferred` |
 | 2026-09-22 | [`04fc75adbe67`](./2026-09-22.md#04fc75adbe67a612a1cb0fc469533f24b24fa499) | Add conditional turn interruption that preserves pending input (#47340) | `Import proactively` |
@@ -405,8 +405,8 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`87bc50f9d423`](./2026-09-21.md#87bc50f9d423a62617addd5721f8bd7c54f26bc5) | Cache OS discovery for user agents and telemetry (#47038) | `Import proactively` |
 | 2026-09-21 | [`8f2c15c39871`](./2026-09-21.md#8f2c15c39871c0698cd76a22ae239d36f7e8c9b8) | Implement paginated queries for the local agent message board (#46978) | `Deferred` |
 | 2026-09-21 | [`abbdde95b593`](./2026-09-21.md#abbdde95b593594c4daa2677392dbfd1dd4ccb8b) | Add shared agent message-board extension interfaces (#46959) | `Deferred` |
-| 2026-09-21 | [`f484f7228d0f`](./2026-09-21.md#f484f7228d0f41df061ce246f379ad0c82dd0472) | Share SQLite pools across local agent message-board handles (#47049) | `Import proactively` |
-| 2026-09-21 | [`fe6455a4384d`](./2026-09-21.md#fe6455a4384d928f009e4e40459701604ea20b7e) | Add a partial index for agent message board root posts (#47063) | `Deferred` |
+| 2026-09-21 | [`f484f7228d0f`](./2026-09-21.md#f484f7228d0f41df061ce246f379ad0c82dd0472) | Share SQLite pools across local agent message-board handles (#47049) | `Do not import` |
+| 2026-09-21 | [`fe6455a4384d`](./2026-09-21.md#fe6455a4384d928f009e4e40459701604ea20b7e) | Add a partial index for agent message board root posts (#47063) | `Do not import` |
 | 2026-09-22 | [`16bb1b9d7e21`](./2026-09-22.md#16bb1b9d7e21f73d67f20aacc3a7c37d80cde352) | Implement `AgentControl` for `LocalAgentControl` (#47271) | `Import proactively` |
 | 2026-09-22 | [`2c087a0cc2ef`](./2026-09-22.md#2c087a0cc2ef1d731086a1d0cb0081bdd792cc4d) | Fix Escape navigation in read-only agent sessions (#47320) | `Import proactively` |
 | 2026-09-22 | [`5121aeff13aa`](./2026-09-22.md#5121aeff13aa6615081f9467c8051289201893fc) | Overlap subagent spawn persistence and clean up cancelled children (#47348) | `Import proactively` |
@@ -1168,10 +1168,10 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-19 | [`d5b29951aca5`](./2026-09-19.md#d5b29951aca5205bc8415120b56dd4bc295f5c83) | Centralize retry decisions and delays in `CodexErr` (#46540) | `Import proactively` |
 | 2026-09-20 | [`88ef37c64974`](./2026-09-20.md#88ef37c64974e1209411f6d449b0db942b3eb731) | Identify local background servers in `/status` (#46905) | `Deferred` |
 | 2026-09-21 | [`0ad18769ad8d`](./2026-09-21.md#0ad18769ad8dfb7a6cf16b1bdd26b6e5f8773f64) | Avoid exposing config values in `codex doctor` errors (#46962) | `Import proactively` |
-| 2026-09-21 | [`0e69d3bd9b12`](./2026-09-21.md#0e69d3bd9b1263dbe7a0c564e67fd4a7656dc1a5) | Batch message-board subscriber reads into one SQLite result (#47050) | `Import proactively` |
+| 2026-09-21 | [`0e69d3bd9b12`](./2026-09-21.md#0e69d3bd9b1263dbe7a0c564e67fd4a7656dc1a5) | Batch message-board subscriber reads into one SQLite result (#47050) | `Do not import` |
 | 2026-09-21 | [`3627bb91b2f1`](./2026-09-21.md#3627bb91b2f14f47c1a415412ec2f1e132e50647) | Avoid building a host SQLite driver for SQLx macros (#47084) | `Import proactively` |
 | 2026-09-21 | [`4d160ea71ddd`](./2026-09-21.md#4d160ea71dddc8e3b7e780b1aa159e79baaa535f) | Index channel posts by timestamp for latest-message lookups (#46979) | `Import proactively` |
-| 2026-09-21 | [`51d221a9b77a`](./2026-09-21.md#51d221a9b77ad4810608f148e90231f0e48b5c82) | Stop redundant message-board reads when limits reach one (#47064) | `Import proactively` |
+| 2026-09-21 | [`51d221a9b77a`](./2026-09-21.md#51d221a9b77ad4810608f148e90231f0e48b5c82) | Stop redundant message-board reads when limits reach one (#47064) | `Do not import` |
 | 2026-09-21 | [`62ea6d41e85d`](./2026-09-21.md#62ea6d41e85d0c75181f2794d0f2dc40e55fce3c) | Serialize environment updates and cancel removed pending attachments (#47077) | `Import proactively` |
 | 2026-09-21 | [`ffbd30aeb71a`](./2026-09-21.md#ffbd30aeb71a669045a70e5ff74ed4aa116f79af) | Canonicalize the workspace trust key in the doctor config test (#46981) | `Import proactively` |
 | 2026-09-22 | [`0160eb3497bc`](./2026-09-22.md#0160eb3497bc2640c461c7cc5af65836491ded8e) | Preserve explicit message-board unsubscribes when posting (#47257) | `Import proactively` |
