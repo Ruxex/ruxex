@@ -398,7 +398,7 @@ mod tests {
             .await
             .expect("history load");
         assert!(!history.items.is_empty());
-        store
+        let resumed_history = store
             .resume_thread(ResumeThreadParams {
                 thread_id,
                 rollout_path: None,
@@ -408,6 +408,20 @@ mod tests {
             })
             .await
             .expect("resume should succeed");
+        assert_eq!(
+            serde_json::to_value(resumed_history.as_ref()).expect("serialize resumed history"),
+            serde_json::to_value(
+                store
+                    .load_history(LoadThreadHistoryParams {
+                        thread_id,
+                        include_archived: false,
+                    })
+                    .await
+                    .expect("authoritative history should load")
+                    .items,
+            )
+            .expect("serialize stored history")
+        );
         store
             .create_thread(create_thread_params(
                 ThreadId::default(),
@@ -609,20 +623,33 @@ impl InMemoryThreadStore {
         Ok(())
     }
 
-    async fn resume_thread(&self, params: ResumeThreadParams) -> ThreadStoreResult<()> {
+    async fn resume_thread(
+        &self,
+        params: ResumeThreadParams,
+    ) -> ThreadStoreResult<Arc<Vec<RolloutItem>>> {
         let mut state = self.state.lock().await;
         state.calls.resume_thread += 1;
         if let Some(history) = params.history {
-            state
-                .histories
-                .insert(params.thread_id, Arc::unwrap_or_clone(history));
+            if matches!(
+                history.first(),
+                Some(RolloutItem::SessionMeta(meta)) if meta.meta.id == params.thread_id
+            ) {
+                state
+                    .histories
+                    .entry(params.thread_id)
+                    .or_insert_with(|| Arc::unwrap_or_clone(history));
+            } else {
+                state
+                    .histories
+                    .insert(params.thread_id, Arc::unwrap_or_clone(history));
+            }
         } else {
             state.histories.entry(params.thread_id).or_default();
         }
         if let Some(rollout_path) = params.rollout_path {
             state.rollout_paths.insert(rollout_path, params.thread_id);
         }
-        Ok(())
+        Ok(Arc::new(state.histories[&params.thread_id].clone()))
     }
 
     async fn append_items(&self, params: AppendThreadItemsParams) -> ThreadStoreResult<()> {
@@ -886,7 +913,10 @@ impl ThreadStore for InMemoryThreadStore {
         Box::pin(InMemoryThreadStore::create_thread(self, params))
     }
 
-    fn resume_thread(&self, params: ResumeThreadParams) -> ThreadStoreFuture<'_, ()> {
+    fn resume_thread(
+        &self,
+        params: ResumeThreadParams,
+    ) -> ThreadStoreFuture<'_, Arc<Vec<RolloutItem>>> {
         Box::pin(InMemoryThreadStore::resume_thread(self, params))
     }
 

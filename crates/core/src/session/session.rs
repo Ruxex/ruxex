@@ -923,7 +923,7 @@ impl Session {
         // - load history metadata (skipped for subagents)
         let thread_persistence_fut = async {
             if config.ephemeral {
-                Ok::<_, anyhow::Error>((None, LiveThreadInitGuard::new(/*live_thread*/ None)))
+                Ok::<_, anyhow::Error>((None, LiveThreadInitGuard::new(/*live_thread*/ None), None))
             } else {
                 let mut local_guard = LiveThreadInitGuard::default();
                 let mut managed_guard = match &startup {
@@ -931,6 +931,7 @@ impl Session {
                     None => None,
                 };
                 let guard = managed_guard.as_deref_mut().unwrap_or(&mut local_guard);
+                let mut resume_history = None;
                 let live_thread = match &initial_history {
                     InitialHistory::New | InitialHistory::Cleared | InitialHistory::Forked(_) => {
                         let params = CreateThreadParams {
@@ -990,16 +991,25 @@ impl Session {
                                 cwd: Some(config.cwd.to_path_buf()),
                             },
                         };
-                        guard
-                            .acquire(LiveThread::resume(
-                                Arc::clone(&thread_store),
-                                session_configuration.history_mode,
-                                params,
-                            ))
-                            .await?
+                        let (history_tx, history_rx) = tokio::sync::oneshot::channel();
+                        let thread_store_for_resume = Arc::clone(&thread_store);
+                        let live_thread = guard
+                            .acquire(async move {
+                                let (live_thread, history) = LiveThread::resume(
+                                    thread_store_for_resume,
+                                    session_configuration.history_mode,
+                                    params,
+                                )
+                                .await?;
+                                let _ = history_tx.send(history);
+                                Ok(live_thread)
+                            })
+                            .await?;
+                        resume_history = Some(history_rx.await?);
+                        live_thread
                     }
                 };
-                Ok((Some(live_thread), local_guard))
+                Ok((Some(live_thread), local_guard, resume_history))
             }
         }
         .instrument(info_span!(
@@ -1063,10 +1073,16 @@ impl Session {
         let (thread_persistence_result, state_db_ctx, mcp_projection) =
             tokio::join!(thread_persistence_fut, state_db_fut, auth_and_mcp_fut);
 
-        let (live_thread, mut live_thread_init) = thread_persistence_result.map_err(|e| {
-            error!("failed to initialize thread persistence: {e:#}");
-            e
-        })?;
+        let (live_thread, mut live_thread_init, resume_history) = thread_persistence_result
+            .map_err(|e| {
+                error!("failed to initialize thread persistence: {e:#}");
+                e
+            })?;
+        if let Some(history) = resume_history
+            && let InitialHistory::Resumed(resumed) = &mut initial_history
+        {
+            resumed.history = history;
+        }
         let session_result: anyhow::Result<Arc<Self>> = async {
             let rollout_path = if let Some(live_thread) = live_thread.as_ref() {
                 live_thread.local_rollout_path().await?
