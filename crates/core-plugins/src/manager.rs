@@ -187,6 +187,7 @@ pub struct PluginDetail {
     pub enabled: bool,
     pub skills: Vec<SkillMetadata>,
     pub disabled_skill_paths: HashSet<AbsolutePathBuf>,
+    pub onboarding_skill: Option<AbsolutePathBuf>,
     pub hooks: Vec<PluginHookSummary>,
     pub mcp_server_names: Vec<String>,
 }
@@ -1033,6 +1034,7 @@ impl PluginsManager {
             enabled: plugin.enabled,
             skills: resolved_skills.skills,
             disabled_skill_paths: resolved_skills.disabled_skill_paths,
+            onboarding_skill: manifest.paths.onboarding_skill,
             hooks,
             mcp_server_names,
         })

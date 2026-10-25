@@ -423,6 +423,7 @@ fn resolved_plugin(
             keywords: Vec::new(),
             paths: PluginManifestPaths {
                 skills: Vec::new(),
+                onboarding_skill: None,
                 mcp_servers,
                 hooks: None,
             },

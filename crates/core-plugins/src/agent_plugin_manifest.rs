@@ -5,6 +5,7 @@ use super::RawPluginManifestPaths;
 use super::UriPluginManifest;
 use super::compatibility_json_error;
 use super::parse_legacy_plugin_manifest_uri;
+use super::resolve_onboarding_skill;
 use super::resolve_raw_plugin_manifest;
 use ruxex_utils_path_uri::PathUri;
 use ruxex_utils_plugins::AGENT_PLUGIN_SCHEMA_PREFIX;
@@ -14,6 +15,7 @@ use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
 const AGENT_PLUGIN_EXTENSION_NAMESPACE: &str = "com.codex";
+const COMPATIBLE_PLUGIN_EXTENSION_NAMESPACE: &str = "com.openai";
 const AGENT_PLUGIN_FIELDS: &[&str] = &[
     "$schema",
     "name",
@@ -85,23 +87,43 @@ pub(super) fn parse_agent_plugin_manifest_uri(
         tracing::warn!(path = %manifest_path, "ignoring non-object Agent Plugins `extensions` field");
         object.remove("extensions");
     }
-    let agent_plugin_extension = object
+    let agent_plugin_extension_value = object
         .get("extensions")
         .and_then(JsonValue::as_object)
-        .and_then(|extensions| extensions.get(AGENT_PLUGIN_EXTENSION_NAMESPACE))
+        .and_then(|extensions| {
+            extensions
+                .get(AGENT_PLUGIN_EXTENSION_NAMESPACE)
+                .or_else(|| extensions.get(COMPATIBLE_PLUGIN_EXTENSION_NAMESPACE))
+        });
+    let agent_plugin_extension = agent_plugin_extension_value
         .and_then(|extension| {
             if extension.is_object() {
                 Some(serde_json::to_string(extension))
             } else {
                 tracing::warn!(
                     path = %manifest_path,
-                    namespace = AGENT_PLUGIN_EXTENSION_NAMESPACE,
+                    namespace = "com.codex or com.openai",
                     "ignoring non-object Agent Plugins extension"
                 );
                 None
             }
         })
         .transpose()?;
+    let onboarding_skill = object
+        .get("extensions")
+        .and_then(JsonValue::as_object)
+        .and_then(|extensions| {
+            extensions
+                .get(AGENT_PLUGIN_EXTENSION_NAMESPACE)
+                .or_else(|| extensions.get(COMPATIBLE_PLUGIN_EXTENSION_NAMESPACE))
+        })
+        .map(|extension| {
+            resolve_onboarding_skill(
+                plugin_root,
+                &serde_json::json!({ AGENT_PLUGIN_EXTENSION_NAMESPACE: extension }),
+            )
+        })
+        .unwrap_or_default();
     for field in [
         "version",
         "description",
@@ -185,6 +207,7 @@ pub(super) fn parse_agent_plugin_manifest_uri(
             manifest_path,
             extension_contents,
         )?;
+        resolved.paths.onboarding_skill = onboarding_skill;
     } else if let Some((overlay_path, overlay_contents)) = overlay {
         apply_agent_plugin_extension(&mut resolved, plugin_root, overlay_path, overlay_contents)?;
     }
@@ -204,6 +227,7 @@ fn apply_agent_plugin_extension(
 ) -> Result<(), serde_json::Error> {
     let extension = parse_legacy_plugin_manifest_uri(plugin_root, source_path, contents)?;
     resolved.paths.hooks = extension.paths.hooks;
+    resolved.paths.onboarding_skill = extension.paths.onboarding_skill;
     if extension.interface.is_some() {
         resolved.interface = extension.interface;
     }

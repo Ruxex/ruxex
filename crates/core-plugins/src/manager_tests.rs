@@ -948,6 +948,7 @@ async fn load_plugin_skills_dedupes_overlapping_manifest_roots() {
                 plugin_root.join("skills/edk"),
                 plugin_root.join("skills/abc"),
             ],
+            onboarding_skill: None,
             mcp_servers: None,
             hooks: None,
         },

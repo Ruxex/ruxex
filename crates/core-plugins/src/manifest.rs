@@ -62,6 +62,8 @@ struct RawPluginManifest {
     hooks: Option<RawPluginManifestHooks>,
     #[serde(default)]
     interface: Option<RawPluginManifestInterface>,
+    #[serde(default)]
+    extensions: JsonValue,
 }
 
 #[derive(Deserialize)]
@@ -293,6 +295,7 @@ fn resolve_raw_plugin_manifest(
         mcp_servers,
         hooks,
         interface,
+        extensions,
     } = raw;
     let name = plugin_root
         .basename()
@@ -385,11 +388,27 @@ fn resolve_raw_plugin_manifest(
         keywords,
         paths: ruxex_plugin::manifest::PluginManifestPaths {
             skills: resolve_manifest_paths(plugin_root, "skills", skills.as_ref()),
+            onboarding_skill: resolve_onboarding_skill(plugin_root, &extensions),
             mcp_servers: resolve_manifest_mcp_servers(plugin_root, mcp_servers),
             hooks: resolve_manifest_hooks(plugin_root, hooks),
         },
         interface,
     })
+}
+
+fn resolve_onboarding_skill(plugin_root: &PathUri, extensions: &JsonValue) -> Option<PathUri> {
+    ["com.codex", "com.openai"]
+        .into_iter()
+        .find_map(|namespace| {
+            let path = extensions
+                .get(namespace)
+                .and_then(|extension| extension.get("onboardingSkill"))
+                .and_then(JsonValue::as_str)?;
+            // Accept both the current relative-path spelling and the legacy spelling without
+            // `./`, while still applying the normal plugin-root containment checks.
+            let path = format!("./{}", path.strip_prefix("./").unwrap_or(path));
+            resolve_manifest_path(plugin_root, "extensions[...].onboardingSkill", Some(&path))
+        })
 }
 
 fn compatibility_json_error(message: impl Into<String>) -> serde_json::Error {
@@ -827,6 +846,38 @@ mod tests {
     }
 
     #[test]
+    fn plugin_manifest_resolves_declared_onboarding_skill() {
+        let tmp = tempdir().expect("tempdir");
+        let plugin_root = tmp.path().join("demo-plugin");
+        fs::create_dir_all(plugin_root.join("skills/onboarding")).expect("create skill dir");
+        fs::create_dir_all(plugin_root.join(".ruxex-plugin")).expect("create manifest dir");
+        fs::write(
+            plugin_root.join(".ruxex-plugin/plugin.json"),
+            r#"{
+  "name": "demo-plugin",
+  "extensions": {
+    "com.codex": {
+      "onboardingSkill": "skills/onboarding/SKILL.md"
+    }
+  }
+}"#,
+        )
+        .expect("write manifest");
+
+        let manifest = load_manifest(&plugin_root);
+
+        assert_eq!(
+            manifest.paths.onboarding_skill,
+            Some(
+                AbsolutePathBuf::from_absolute_path_checked(
+                    plugin_root.join("skills/onboarding/SKILL.md"),
+                )
+                .expect("absolute onboarding skill path")
+            )
+        );
+    }
+
+    #[test]
     fn plugin_manifest_uses_alternate_discoverable_path() {
         let tmp = tempdir().expect("tempdir");
         let plugin_root = tmp.path().join("demo-plugin");
@@ -973,6 +1024,7 @@ mod tests {
                 keywords: Vec::new(),
                 paths: PluginManifestPaths {
                     skills: vec![plugin_root.join("skills").expect("skills URI")],
+                    onboarding_skill: None,
                     mcp_servers: Some(PluginManifestMcpServers::Path(
                         plugin_root.join(".mcp.json").expect("MCP URI"),
                     )),

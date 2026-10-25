@@ -14,6 +14,7 @@ use ruxex_app_server_protocol::PluginSource;
 use ruxex_app_server_protocol::PluginSummary;
 use ruxex_app_server_protocol::PluginUninstallParams;
 use ruxex_app_server_protocol::PluginUninstallResponse;
+use ruxex_app_server_protocol::SkillSummary;
 use ruxex_core::ThreadManager;
 use ruxex_core::config::Config;
 use ruxex_core_plugins::ConfiguredMarketplace;
@@ -22,11 +23,41 @@ use ruxex_core_plugins::PluginInstallRequest;
 use ruxex_core_plugins::PluginMarketplaceContext;
 use ruxex_core_plugins::PluginReadRequest;
 use ruxex_core_plugins::marketplace::MarketplacePluginSource;
+use ruxex_utils_absolute_path::AbsolutePathBuf;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 mod local;
 mod reconcile;
 mod search;
+
+fn plugin_skills_to_api(
+    skills: &[ruxex_skills::SkillMetadata],
+    disabled_skill_paths: &HashSet<AbsolutePathBuf>,
+) -> Vec<SkillSummary> {
+    skills
+        .iter()
+        .map(|skill| SkillSummary {
+            name: skill.name.clone(),
+            description: skill.description.clone(),
+            short_description: skill.short_description.clone(),
+            interface: skill.interface.clone().map(|interface| {
+                ruxex_app_server_protocol::SkillInterface {
+                    display_name: interface.display_name,
+                    short_description: interface.short_description,
+                    icon_small: interface.icon_small,
+                    icon_large: interface.icon_large,
+                    icon_small_url: None,
+                    icon_large_url: None,
+                    brand_color: interface.brand_color,
+                    default_prompt: interface.default_prompt,
+                }
+            }),
+            path: Some(skill.path_to_skills_md.clone()),
+            enabled: !disabled_skill_paths.contains(&skill.path_to_skills_md),
+        })
+        .collect()
+}
 
 #[derive(Clone)]
 pub(crate) struct PluginRequestProcessor {
@@ -272,6 +303,17 @@ fn plugin_to_summary(plugin: ConfiguredMarketplacePlugin) -> PluginSummary {
 }
 
 fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> PluginDetail {
+    let skills = plugin_skills_to_api(&outcome.plugin.skills, &outcome.plugin.disabled_skill_paths);
+    let onboarding_skill = if outcome.plugin.enabled {
+        outcome.plugin.onboarding_skill.as_ref().and_then(|path| {
+            skills
+                .iter()
+                .find(|skill| skill.enabled && skill.path.as_ref() == Some(path))
+                .cloned()
+        })
+    } else {
+        None
+    };
     let summary = PluginSummary {
         id: outcome.plugin.id.clone(),
         local_version: outcome.plugin.local_version.clone(),
@@ -312,7 +354,8 @@ fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> Plugi
         marketplace_path: outcome.marketplace_path,
         summary,
         description: outcome.plugin.description,
-        skills: Vec::new(),
+        skills,
+        onboarding_skill,
         hooks: Vec::new(),
         mcp_servers: outcome.plugin.mcp_server_names,
         scheduled_tasks: None,
