@@ -313,15 +313,17 @@ fn map_api_error_to_provider_error(error: ApiError) -> ruxex_model_provider::Pro
         ApiError::InvalidRequest { message } => {
             ruxex_model_provider::ProviderError::InvalidRequest(message)
         }
-        ApiError::RateLimitExceeded { delay, .. } => {
-            ruxex_model_provider::ProviderError::RateLimited {
-                retry_after_seconds: delay.map(|delay| delay.as_secs()),
-            }
-        }
+        ApiError::RateLimitExceeded {
+            delay, retry_after, ..
+        } => ruxex_model_provider::ProviderError::RateLimited {
+            retry_after_seconds: retry_after
+                .map(|retry_after| retry_after.remaining_delay().as_secs())
+                .or_else(|| delay.map(|delay| delay.as_secs())),
+        },
         ApiError::Retryable { message, .. } => {
             ruxex_model_provider::ProviderError::Transient(message_or_default(message))
         }
-        ApiError::ServerOverloaded => {
+        ApiError::ServerOverloaded { .. } => {
             ruxex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(error) => map_transport_error_to_provider_error(error),
@@ -366,15 +368,17 @@ fn classify_api_error(error: &ApiError) -> ruxex_model_provider::ProviderError {
         ApiError::InvalidRequest { message } => {
             ruxex_model_provider::ProviderError::InvalidRequest(message.clone())
         }
-        ApiError::RateLimitExceeded { delay, .. } => {
-            ruxex_model_provider::ProviderError::RateLimited {
-                retry_after_seconds: delay.map(|delay| delay.as_secs()),
-            }
-        }
+        ApiError::RateLimitExceeded {
+            delay, retry_after, ..
+        } => ruxex_model_provider::ProviderError::RateLimited {
+            retry_after_seconds: retry_after
+                .map(|retry_after| retry_after.remaining_delay().as_secs())
+                .or_else(|| delay.map(|delay| delay.as_secs())),
+        },
         ApiError::Retryable { message, .. } => {
             ruxex_model_provider::ProviderError::Transient(message_or_default(message.clone()))
         }
-        ApiError::ServerOverloaded => {
+        ApiError::ServerOverloaded { .. } => {
             ruxex_model_provider::ProviderError::Transient("server overloaded".to_string())
         }
         ApiError::Transport(TransportError::Timeout) => {

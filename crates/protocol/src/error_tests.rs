@@ -4,6 +4,7 @@ use http::Response as RawHttpResponse;
 use http::StatusCode;
 use pretty_assertions::assert_eq;
 use ruxex_http_client::HttpResponse;
+use ruxex_http_client::RetryAfter;
 use std::time::Duration;
 
 #[test]
@@ -76,6 +77,18 @@ fn server_overloaded_maps_to_protocol() {
         err.to_ruxex_protocol_error(),
         RuxexErrorInfo::ServerOverloaded
     );
+}
+
+#[tokio::test(start_paused = true)]
+async fn server_overload_uses_retry_advice_without_becoming_unconditionally_retryable() {
+    let advice = RetryAfter::from_delay(Duration::from_secs(10)).expect("retry advice");
+    let err = RuxexErr::ServerOverloaded.with_retry_after(advice);
+
+    assert!(!err.is_retryable());
+    assert_eq!(err.retry_after(), Some(advice));
+    assert_eq!(err.retry_delay(), Some(Duration::from_secs(10)));
+    tokio::time::advance(Duration::from_secs(4)).await;
+    assert_eq!(err.retry_delay(), Some(Duration::from_secs(6)));
 }
 
 #[test]

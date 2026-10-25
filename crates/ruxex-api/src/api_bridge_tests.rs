@@ -1,10 +1,14 @@
 use super::*;
 use pretty_assertions::assert_eq;
+use ruxex_http_client::RetryAfter;
 use ruxex_protocol::protocol::RuxexErrorInfo;
 
 #[test]
 fn map_api_error_maps_server_overloaded() {
-    let err = map_api_error(ApiError::ServerOverloaded);
+    let err = map_api_error(ApiError::ServerOverloaded {
+        delay: None,
+        retry_after: None,
+    });
     assert!(matches!(err.details(), RuxexErrorDetails::ServerOverloaded));
 }
 
@@ -16,6 +20,7 @@ fn map_api_error_preserves_retry_delay() {
             ApiError::Retryable {
                 message: "retry later".to_string(),
                 delay: Some(retry_delay),
+                retry_after: None,
             },
             RuxexErrorInfo::Other,
             "stream disconnected before completion: retry later",
@@ -24,6 +29,7 @@ fn map_api_error_preserves_retry_delay() {
             ApiError::RateLimitExceeded {
                 message: "retry later".to_string(),
                 delay: Some(retry_delay),
+                retry_after: None,
             },
             RuxexErrorInfo::RateLimitExceeded,
             "rate limit exceeded: retry later",
@@ -73,6 +79,25 @@ fn map_api_error_distinguishes_capacity_from_slow_down() {
             (expected, retryable)
         );
     }
+}
+
+#[tokio::test(start_paused = true)]
+async fn map_api_error_preserves_http_retry_advice_for_overload() {
+    let mut headers = HeaderMap::new();
+    headers.insert("Retry-After", http::HeaderValue::from_static("10"));
+    let err = map_api_error(ApiError::Transport(TransportError::Http {
+        status: http::StatusCode::SERVICE_UNAVAILABLE,
+        url: None,
+        headers: Some(headers),
+        body: Some(serde_json::json!({"error": {"code": "server_is_overloaded"}}).to_string()),
+    }));
+
+    assert!(matches!(err.details(), RuxexErrorDetails::ServerOverloaded));
+    assert_eq!(
+        err.retry_after().map(RetryAfter::remaining_delay),
+        Some(std::time::Duration::from_secs(10))
+    );
+    assert_eq!(err.retry_delay(), Some(std::time::Duration::from_secs(10)));
 }
 
 #[test]

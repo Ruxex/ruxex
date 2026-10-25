@@ -9471,6 +9471,7 @@ dependencies = [
  "bytes",
  "futures",
  "http",
+ "httpdate",
  "native-tls",
  "opentelemetry",
  "opentelemetry_sdk",

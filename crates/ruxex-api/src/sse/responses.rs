@@ -10,6 +10,7 @@ use eventsource_stream::Eventsource;
 use futures::StreamExt;
 use ruxex_client::ByteStream;
 use ruxex_client::StreamResponse;
+use ruxex_http_client::RetryAfter;
 use ruxex_protocol::ResponseUsageMetadata;
 use ruxex_protocol::models::ResponseItem;
 use ruxex_protocol::protocol::MisalignmentErrorDetails;
@@ -60,6 +61,7 @@ pub fn spawn_response_stream(
         .map(str::to_string);
     let safety_buffering_treatment =
         treatment_from_headers(&stream_response.headers).unwrap_or_default();
+    let retry_after = RetryAfter::from_headers(&stream_response.headers);
     if let Some(turn_state) = turn_state.as_ref()
         && let Some(header_value) = stream_response
             .headers
@@ -90,6 +92,7 @@ pub fn spawn_response_stream(
             idle_timeout,
             telemetry,
             safety_buffering_treatment,
+            retry_after,
         )
         .await;
     });
@@ -418,6 +421,7 @@ pub fn process_responses_event(
                                 .message
                                 .unwrap_or_else(|| "Rate limit exceeded".to_string()),
                             delay: None,
+                            retry_after: None,
                         };
                     } else if is_cyber_policy_error(&error) {
                         let message = cyber_policy_message(error.message);
@@ -443,15 +447,26 @@ pub fn process_responses_event(
                             .unwrap_or_else(|| "Invalid request.".to_string());
                         response_error = ApiError::InvalidRequest { message };
                     } else if is_server_overloaded_error(&error) {
-                        response_error = ApiError::ServerOverloaded;
+                        response_error = ApiError::ServerOverloaded {
+                            delay: None,
+                            retry_after: None,
+                        };
                     } else {
                         let delay = try_parse_retry_after(&error);
                         let message = error.message.unwrap_or_default();
                         response_error = match error.code.as_deref() {
                             Some("rate_limit_exceeded" | "slow_down") => {
-                                ApiError::RateLimitExceeded { message, delay }
+                                ApiError::RateLimitExceeded {
+                                    message,
+                                    delay,
+                                    retry_after: delay.and_then(RetryAfter::from_delay),
+                                }
                             }
-                            _ => ApiError::Retryable { message, delay },
+                            _ => ApiError::Retryable {
+                                message,
+                                retry_after: delay.and_then(RetryAfter::from_delay),
+                                delay,
+                            },
                         };
                     }
                 }
@@ -554,6 +569,7 @@ pub async fn process_sse(
         idle_timeout,
         telemetry,
         SafetyBufferingTreatment::default(),
+        None,
     )
     .await;
 }
@@ -564,6 +580,7 @@ async fn process_sse_with_treatment(
     idle_timeout: Duration,
     telemetry: Option<Arc<dyn SseTelemetry>>,
     safety_buffering_treatment: SafetyBufferingTreatment,
+    retry_after: Option<RetryAfter>,
 ) {
     let mut stream = stream.eventsource();
     let mut response_error: Option<ApiError> = None;
@@ -660,9 +677,46 @@ async fn process_sse_with_treatment(
             }
             Ok(None) => {}
             Err(error) => {
-                response_error = Some(error.into_api_error());
+                response_error = Some(with_stream_retry_advice(
+                    error.into_api_error(),
+                    retry_after,
+                ));
             }
         };
+    }
+}
+
+fn with_stream_retry_advice(error: ApiError, retry_after: Option<RetryAfter>) -> ApiError {
+    let Some(retry_after) = retry_after else {
+        return error;
+    };
+    match error {
+        ApiError::ServerOverloaded {
+            delay: existing_delay,
+            retry_after: None,
+        } => ApiError::ServerOverloaded {
+            delay: existing_delay,
+            retry_after: Some(retry_after),
+        },
+        ApiError::RateLimitExceeded {
+            message,
+            delay: existing_delay,
+            retry_after: None,
+        } => ApiError::RateLimitExceeded {
+            message,
+            delay: existing_delay,
+            retry_after: Some(retry_after),
+        },
+        ApiError::Retryable {
+            message,
+            delay: existing_delay,
+            retry_after: None,
+        } => ApiError::Retryable {
+            message,
+            delay: existing_delay,
+            retry_after: Some(retry_after),
+        },
+        other => other,
     }
 }
 
@@ -1093,7 +1147,7 @@ mod tests {
         assert_eq!(events.len(), 1);
 
         match &events[0] {
-            Err(ApiError::RateLimitExceeded { message, delay }) => {
+            Err(ApiError::RateLimitExceeded { message, delay, .. }) => {
                 assert_eq!(
                     message,
                     "Rate limit reached for example-model-1 in organization org-AAA on tokens per min (TPM): Limit 30000, Used 22999, Requested 12528. Please try again in 11.054s. Visit https://platform.provider.com/account/rate-limits to learn more."
@@ -1102,6 +1156,28 @@ mod tests {
             }
             other => panic!("unexpected rate-limit event: {other:?}"),
         }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn stream_retry_advice_preserves_absolute_deadline() {
+        let retry_after = RetryAfter::from_delay(Duration::from_secs(10)).expect("retry advice");
+        let error = with_stream_retry_advice(
+            ApiError::ServerOverloaded {
+                delay: None,
+                retry_after: None,
+            },
+            Some(retry_after),
+        );
+
+        let ApiError::ServerOverloaded {
+            delay,
+            retry_after: actual,
+        } = error
+        else {
+            panic!("expected server overload");
+        };
+        assert_eq!(delay, None);
+        assert_eq!(actual, Some(retry_after));
     }
 
     #[tokio::test]
@@ -1127,6 +1203,7 @@ mod tests {
                         Err(ApiError::RateLimitExceeded {
                             message: actual,
                             delay,
+                            ..
                         }),
                     ],
                 )
@@ -1136,6 +1213,7 @@ mod tests {
                         Err(ApiError::Retryable {
                             message: actual,
                             delay,
+                            ..
                         }),
                     ],
                 ) => {

@@ -1,6 +1,7 @@
 use crate::TransportError;
 use crate::error::ApiError;
 use http::HeaderMap;
+use ruxex_http_client::RetryAfter;
 use ruxex_protocol::error::ConnectionFailedError;
 use ruxex_protocol::error::RetryLimitReachedError;
 use ruxex_protocol::error::RuxexErr;
@@ -10,17 +11,25 @@ use ruxex_protocol::protocol::MisalignmentErrorDetails;
 use serde_json::Value;
 
 pub fn map_api_error(err: ApiError) -> RuxexErr {
-    match err {
+    let retry_after = match &err {
+        ApiError::Retryable { retry_after, .. }
+        | ApiError::RateLimitExceeded { retry_after, .. }
+        | ApiError::ServerOverloaded { retry_after, .. } => *retry_after,
+        ApiError::Transport(transport) => transport.retry_after(),
+        _ => None,
+    };
+
+    let mapped = match err {
         ApiError::ContextWindowExceeded => RuxexErr::ContextWindowExceeded,
         ApiError::QuotaExceeded => RuxexErr::QuotaExceeded,
-        ApiError::Retryable { message, delay } => {
+        ApiError::Retryable { message, delay, .. } => {
             let error = RuxexErr::Stream(message);
             match delay {
                 Some(delay) => error.with_retry_delay(delay),
                 None => error,
             }
         }
-        ApiError::RateLimitExceeded { message, delay } => {
+        ApiError::RateLimitExceeded { message, delay, .. } => {
             let error = RuxexErr::new(RuxexErrorDetails::RateLimitExceeded(message));
             match delay {
                 Some(delay) => error.with_retry_delay(delay),
@@ -28,7 +37,7 @@ pub fn map_api_error(err: ApiError) -> RuxexErr {
             }
         }
         ApiError::Stream(msg) => RuxexErr::Stream(msg),
-        ApiError::ServerOverloaded => RuxexErr::ServerOverloaded,
+        ApiError::ServerOverloaded { .. } => RuxexErr::ServerOverloaded,
         ApiError::Api { status, message } => {
             let user_message = api_error_user_message(status, &message);
             RuxexErr::UnexpectedStatus(UnexpectedResponseError {
@@ -65,15 +74,20 @@ pub fn map_api_error(err: ApiError) -> RuxexErr {
                     && let Some(error) = value.get("error")
                 {
                     match error.get("code").and_then(Value::as_str) {
-                        Some("server_is_overloaded") => return RuxexErr::ServerOverloaded,
+                        Some("server_is_overloaded") => {
+                            return attach_retry_after(RuxexErr::ServerOverloaded, retry_after);
+                        }
                         Some("slow_down") => {
-                            return RuxexErr::new(RuxexErrorDetails::RateLimitExceeded(
-                                error
-                                    .get("message")
-                                    .and_then(Value::as_str)
-                                    .unwrap_or_default()
-                                    .to_owned(),
-                            ));
+                            return attach_retry_after(
+                                RuxexErr::new(RuxexErrorDetails::RateLimitExceeded(
+                                    error
+                                        .get("message")
+                                        .and_then(Value::as_str)
+                                        .unwrap_or_default()
+                                        .to_owned(),
+                                )),
+                                retry_after,
+                            );
                         }
                         _ => {}
                     }
@@ -181,6 +195,15 @@ pub fn map_api_error(err: ApiError) -> RuxexErr {
             }
         },
         ApiError::RateLimit(msg) => RuxexErr::Stream(msg),
+    };
+
+    attach_retry_after(mapped, retry_after)
+}
+
+fn attach_retry_after(error: RuxexErr, retry_after: Option<RetryAfter>) -> RuxexErr {
+    match retry_after {
+        Some(retry_after) => error.with_retry_after(retry_after),
+        None => error,
     }
 }
 

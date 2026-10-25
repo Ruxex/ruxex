@@ -87,6 +87,11 @@ pub(crate) async fn handle_retryable_response_stream_error(
             turn_context.model_info(),
         )
     {
+        // Switching transports must not bypass a server-provided retry deadline. The advice is
+        // retained on the mapped error so time spent in the WebSocket path is accounted for.
+        if let Some(retry_after) = err.retry_after() {
+            tokio::time::sleep_until(retry_after.deadline()).await;
+        }
         sess.send_event(
             turn_context,
             EventMsg::Warning(WarningEvent {
