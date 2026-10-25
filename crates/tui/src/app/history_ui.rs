@@ -20,6 +20,20 @@ pub(super) struct ThreadUsageStatusHistory {
 
 impl App {
     pub(super) fn insert_history_cell(&mut self, tui: &mut tui::Tui, cell: Box<dyn HistoryCell>) {
+        // Global deprecations can be delivered again by hidden threads. Scope deduplication to
+        // retained history so clearing or rebuilding a transcript can show the notice again.
+        if let Some(notice) = cell
+            .as_any()
+            .downcast_ref::<history_cell::DeprecationNoticeCell>()
+            && self.transcript_cells.iter().any(|existing| {
+                existing
+                    .as_any()
+                    .downcast_ref::<history_cell::DeprecationNoticeCell>()
+                    == Some(notice)
+            })
+        {
+            return;
+        }
         if let Some(warnings) = cell
             .as_any()
             .downcast_ref::<history_cell::StartupWarningsCell>()
