@@ -6,10 +6,29 @@
 //! other databases keep their data.
 
 use std::borrow::Cow;
+use std::cell::RefCell;
+use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
 const BACKUP_DIR_NAME: &str = "db-backups";
+
+tokio::task_local! {
+    static RECOVERY_BACKUPS: RefCell<Vec<RuntimeDbBackup>>;
+}
+
+/// Collect backups made while initializing runtime databases in this task.
+pub async fn collect_runtime_db_backups<T>(
+    startup: impl Future<Output = T>,
+) -> (T, Vec<RuntimeDbBackup>) {
+    RECOVERY_BACKUPS
+        .scope(RefCell::new(Vec::new()), async {
+            let result = startup.await;
+            let backups = RECOVERY_BACKUPS.with(std::cell::RefCell::take);
+            (result, backups)
+        })
+        .await
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RuntimeDbBackup {
@@ -77,7 +96,7 @@ pub async fn backup_runtime_db_for_fresh_start(
             db_path.display()
         ))
     })?;
-    match tokio::fs::metadata(sqlite_home).await {
+    let backups = match tokio::fs::metadata(sqlite_home).await {
         Ok(metadata) if metadata.is_dir() => backup_runtime_db_files(db_path).await,
         Ok(_) => backup_blocking_sqlite_home(sqlite_home).await,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
@@ -88,7 +107,9 @@ pub async fn backup_runtime_db_for_fresh_start(
             )))
         }
         Err(err) => Err(err),
-    }
+    }?;
+    let _ = RECOVERY_BACKUPS.try_with(|report| report.borrow_mut().extend(backups.iter().cloned()));
+    Ok(backups)
 }
 
 pub fn runtime_db_path_for_corruption_error(err: &anyhow::Error) -> Option<PathBuf> {

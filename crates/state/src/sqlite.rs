@@ -25,11 +25,22 @@ use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
 
+mod validation;
+use validation::QuickCheckOutcome;
+use validation::SqliteQuickCheckManager;
+
+const DEFAULT_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 const LOGS_DB_FILENAME: &str = "logs_2.sqlite";
 const GOALS_DB_FILENAME: &str = "goals_1.sqlite";
 const QUEUE_DB_FILENAME: &str = "queue_1.sqlite";
 const STATE_DB_FILENAME: &str = "state_5.sqlite";
 const THREAD_HISTORY_DB_FILENAME: &str = "thread_history_1.sqlite";
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum RecoveryMode {
+    BackupAndRebuild,
+    Unavailable,
+}
 
 #[derive(Clone, Copy)]
 struct RuntimeDbSpec {
@@ -38,6 +49,7 @@ struct RuntimeDbSpec {
     kind: DbKind,
     open_phase: &'static str,
     migrate_phase: &'static str,
+    recovery: RecoveryMode,
 }
 
 impl RuntimeDbSpec {
@@ -52,6 +64,7 @@ const STATE_DB: RuntimeDbSpec = RuntimeDbSpec {
     kind: DbKind::State,
     open_phase: "open_state",
     migrate_phase: "migrate_state",
+    recovery: RecoveryMode::BackupAndRebuild,
 };
 
 const LOGS_DB: RuntimeDbSpec = RuntimeDbSpec {
@@ -60,6 +73,7 @@ const LOGS_DB: RuntimeDbSpec = RuntimeDbSpec {
     kind: DbKind::Logs,
     open_phase: "open_logs",
     migrate_phase: "migrate_logs",
+    recovery: RecoveryMode::BackupAndRebuild,
 };
 
 const GOALS_DB: RuntimeDbSpec = RuntimeDbSpec {
@@ -68,6 +82,7 @@ const GOALS_DB: RuntimeDbSpec = RuntimeDbSpec {
     kind: DbKind::Goals,
     open_phase: "open_goals",
     migrate_phase: "migrate_goals",
+    recovery: RecoveryMode::BackupAndRebuild,
 };
 
 const QUEUE_DB: RuntimeDbSpec = RuntimeDbSpec {
@@ -76,6 +91,7 @@ const QUEUE_DB: RuntimeDbSpec = RuntimeDbSpec {
     kind: DbKind::Queue,
     open_phase: "open_queue",
     migrate_phase: "migrate_queue",
+    recovery: RecoveryMode::BackupAndRebuild,
 };
 
 const THREAD_HISTORY_DB: RuntimeDbSpec = RuntimeDbSpec {
@@ -84,6 +100,7 @@ const THREAD_HISTORY_DB: RuntimeDbSpec = RuntimeDbSpec {
     kind: DbKind::ThreadHistory,
     open_phase: "open_thread_history",
     migrate_phase: "migrate_thread_history",
+    recovery: RecoveryMode::Unavailable,
 };
 
 const RUNTIME_DBS: [RuntimeDbSpec; 5] = [STATE_DB, LOGS_DB, GOALS_DB, QUEUE_DB, THREAD_HISTORY_DB];
@@ -95,14 +112,26 @@ pub struct RuntimeDbPath {
 }
 
 /// Resolved configuration shared by all Ruxex SQLite connections.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct SqliteConfig {
     sqlite_home: AbsolutePathBuf,
+    quick_check_manager: SqliteQuickCheckManager,
 }
+
+impl PartialEq for SqliteConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.sqlite_home == other.sqlite_home
+    }
+}
+
+impl Eq for SqliteConfig {}
 
 impl SqliteConfig {
     pub fn from_sqlite_home(sqlite_home: AbsolutePathBuf) -> Self {
-        Self { sqlite_home }
+        Self {
+            sqlite_home,
+            quick_check_manager: SqliteQuickCheckManager::new(),
+        }
     }
 
     pub fn new_for_testing(sqlite_home: AbsolutePathBuf) -> Self {
@@ -206,7 +235,7 @@ impl SqliteConfig {
         let path = spec.path(self.home());
         let started = Instant::now();
         let pool_result = self
-            .open_read_write_pool(&path)
+            .open_read_write_pool_with_spec(&path, Some(spec))
             .await
             .map_err(anyhow::Error::from);
         telemetry::record_init_result(
@@ -238,19 +267,43 @@ impl SqliteConfig {
     }
 
     /// Open a writable Ruxex SQLite database, creating it if necessary.
-    pub async fn open_read_write_pool(&self, path: &Path) -> Result<SqlitePool, Error> {
+    pub async fn open_read_write_pool(&self, path: &Path) -> anyhow::Result<SqlitePool> {
+        self.open_read_write_pool_with_spec(path, None).await
+    }
+
+    async fn open_read_write_pool_with_spec(
+        &self,
+        path: &Path,
+        recover_spec: Option<RuntimeDbSpec>,
+    ) -> anyhow::Result<SqlitePool> {
+        let recovery = recover_spec.map_or(RecoveryMode::Unavailable, |spec| spec.recovery);
         let options = SqliteConnectOptions::new()
             .filename(path)
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal)
             .synchronous(SqliteSynchronous::Normal)
             .auto_vacuum(SqliteAutoVacuum::Incremental)
-            .busy_timeout(Duration::from_secs(5))
+            .busy_timeout(DEFAULT_BUSY_TIMEOUT)
             .log_statements(LevelFilter::Off);
-        SqlitePoolOptions::new()
+        let pool = SqlitePoolOptions::new()
             .max_connections(5)
-            .connect_with(options)
-            .await
+            .connect_with(options.clone())
+            .await?;
+        let outcome = self
+            .quick_check_manager
+            .quick_check_once(&pool, path, Duration::from_millis(100))
+            .await?;
+        if outcome == QuickCheckOutcome::CorruptedNeedsFixed
+            && recovery == RecoveryMode::BackupAndRebuild
+        {
+            pool.close().await;
+            crate::backup_runtime_db_for_fresh_start(path).await?;
+            return Ok(SqlitePoolOptions::new()
+                .max_connections(5)
+                .connect_with(options)
+                .await?);
+        }
+        Ok(pool)
     }
 
     /// Open an existing Ruxex SQLite database without creating or modifying it.
