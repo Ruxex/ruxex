@@ -24,6 +24,20 @@ in progress. Even if its commits have already been audited, record them only
 after the UTC day has ended. Multiple commits on one date belong in the same
 file, in chronological order.
 
+### Seven-day audit batches
+
+The audit work is processed in batches of seven completed UTC dates. The
+per-date ledger remains the source of truth for each commit, but a seven-day
+batch is the unit for producing the user-facing classification and import
+summary. Do not start a batch that includes the current UTC date while that
+date is still in progress. A final batch may contain fewer than seven dates
+when it reaches the latest completed upstream date.
+
+The seven-day boundary is an audit boundary, not an implementation boundary.
+Changes from different batches may belong to the same logical import bundle.
+After each batch, update the cross-commit import plan described below instead
+of assuming that every `Import proactively` entry is ready to implement.
+
 ### Mechanical skeleton generation
 
 The upstream commit hash, exact committer timestamp, complete commit message,
@@ -76,6 +90,60 @@ decision when needed, tests adapted or added, test-first check, manual
 production adaptation, verification (including E2E), commit, then ledger
 update. Do not mark an entry as manually reflected or fill in its Ruxex-side
 commit until the required tests pass.
+
+## Cross-commit import reconstruction
+
+Audit decisions are made per commit or independently evaluated part of a mixed
+commit, but implementation is planned across commits. Maintain
+`docs/upstream-audit/import-plan.md` as the intermediate plan that reconstructs
+logical Ruxex import bundles from the audit ledgers. A bundle may span multiple
+upstream commits, UTC dates, and seven-day audit batches.
+
+Maintain `docs/upstream-audit/import-overview.md` alongside it as the
+cross-bundle overview ledger. The overview separates individual bug fixes,
+dependencies, structural refactors, retained behavior bundles, deferred
+features, review-gated changes, and excluded scope. It is a planning view, not
+a replacement for the per-date ledgers or the detailed import plan, and its
+planning classifications must not overwrite the original audit decisions.
+
+Maintain one implementation ledger per executable queue in
+`docs/upstream-audit/queue/`. The queue ledgers are the source of truth for
+cross-commit implementation status, grouping, required tests, resulting Ruxex
+commits, and waiting reasons. A queue ledger may reference many per-date
+ledgers, but it must never replace their verbatim upstream hash and message
+records.
+
+The import plan should be regenerated or updated from the audit ledgers after
+each seven-day batch and must retain the upstream hash, date, and complete
+commit message for every included change. It should record at least:
+
+- a stable Bundle ID and the included upstream commits;
+- the reconstructed logical scope and why the commits belong together;
+- prerequisites and ordering constraints, including later upstream commits;
+- the Ruxex area and required unit, integration, and E2E coverage;
+- the current implementation state and the reason for waiting when it is not
+  ready; and
+- the resulting Ruxex commit after manual adaptation, once verification passes.
+
+`Import proactively` is an adoption recommendation, not an instruction to
+implement immediately. The import plan must distinguish at least these states:
+
+- `Ready` — prerequisites and required test coverage are available;
+- `Waiting for prerequisite` — an earlier retained refactor or dependency is
+  not yet adapted;
+- `Waiting for upstream series` — the change is incomplete without related
+  commits that have not yet been audited or grouped;
+- `Waiting for Ruxex E2E` — the behavior needs Ruxex-specific regression
+  coverage before implementation;
+- `Waiting for user decision` — the audit rules require an explicit decision;
+- `Implemented` — the bundle was manually adapted and verified; and
+- `Do not import` — the reconstructed bundle is outside Ruxex's scope.
+
+Do not split a bundle merely because its commits fall on different audit dates.
+When implementing a bundle, adapt the tests first, add Ruxex-specific tests as
+needed, manually adapt the production code, run the required unit and E2E
+checks, and then record the resulting Ruxex commit in both the import plan and
+the relevant ledger entries.
 
 ## Decision criteria
 
