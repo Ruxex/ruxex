@@ -357,9 +357,10 @@ async fn init_state_db_for_app_server_target_with_provider_factory_and_identity(
             state_db::try_init(config).await.map(Some).map_err(|err| {
                 let database_path = ruxex_state::runtime_db_path_for_corruption_error(&err)
                     .unwrap_or_else(|| config.sqlite_config().state_db_path());
-                std::io::Error::other(LocalStateDbStartupError::new(
+                std::io::Error::other(LocalStateDbStartupError::new_with_corruption(
                     database_path,
                     format!("{err:#}"),
+                    ruxex_state::is_sqlite_corruption_error(&err),
                 ))
             })
         }
