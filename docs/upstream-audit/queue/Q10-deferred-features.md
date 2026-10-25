@@ -14,3 +14,4 @@ the current adoption gate.
 | --- | --- | --- | --- | --- |
 | To be selected from `import-plan.md` | — | — | Deferred | Record the exact future default/protocol or product trigger |
 | `2cc65cdd4c7c167f0c7252fcb5165d649c16aca0` — Enable analytics by default for daemon-launched app servers (#49426) | `N/A` | No implementation; audit comparison completed | Deferred | Re-audit if Ruxex intentionally enables daemon metrics by default or the behavior becomes an App Server wire-contract change |
+| `15fd656ddb55bd82a208fb9f00681880523f5260` — Discover and validate MCP authorization servers before ID-JAG exchange (#49478) | `N/A` | No implementation; retained trusted-metadata exchange remains unchanged | Deferred | Re-audit when Ruxex enables `ema_auth` as an active path, adopts the discovery contract, or records an explicit security exception to the adoption gate |
