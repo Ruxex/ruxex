@@ -656,7 +656,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-29 | [`8d48f71922dc`](./2026-09-29.md#8d48f71922dcb8b8cb17a9aef63b4a610538a617) | Hide reasoning summary settings in `/status` for server connections (#49145) | `Import proactively` |
 | 2026-09-29 | [`a9118edae8b7`](./2026-09-29.md#a9118edae8b77bf23b7182fd071a7b6251898bed) | Move content-filter guidance into the shared Responses retry handler (#49130) | `Import proactively` |
 | 2026-09-29 | [`ff3c82c8a9d0`](./2026-09-29.md#ff3c82c8a9d0195f2cc92f6ac0492fd972d7acdd) | Preserve server reasoning summary and verbosity settings in the TUI (#49144) | `Import proactively` |
-| 2026-09-30 | [`6ba4bf9e647c`](./2026-09-30.md#6ba4bf9e647cf8bc17eb9005af5ca9498bd7e654) | Honor server retry advice across Responses retries and fallback (#49441) | `Import proactively` |
+| 2026-09-30 | [`6ba4bf9e647c`](./2026-09-30.md#6ba4bf9e647cf8bc17eb9005af5ca9498bd7e654) | Honor server retry advice across Responses retries and fallback (#49441) | `Import proactively` — implemented as `868b63a80` |
 | 2026-09-30 | [`ed0cc1a4ab30`](./2026-09-30.md#ed0cc1a4ab30e1e83f1214e7a368c55b83fd089d) | Serialize Responses routing fields before large inputs (#49675) | `Import proactively` |
 | 2026-10-01 | [`08e2b58b07b8`](./2026-10-01.md#08e2b58b07b8a423d6577b66fb7756e980b53dbf) | Clarify service tier default save errors in the TUI (#49835) | `Import proactively` |
 | 2026-10-01 | [`9d53dd91b5b5`](./2026-10-01.md#9d53dd91b5b5411dbfa8366fe7fd352ab3b1ddec) | Prevent shared instruction providers from delegating to themselves (#50093) | `Import proactively` |
