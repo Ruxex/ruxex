@@ -28,6 +28,7 @@ use ruxex_protocol::protocol::EventMsg;
 use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::Platform;
 use tokio::sync::mpsc;
 use tokio_util::task::AbortOnDropHandle;
 use tracing::Instrument;
@@ -141,7 +142,7 @@ struct ResolvedEnvironment {
     environment: Arc<Environment>,
     shell: Option<Shell>,
     user_home_dir: Option<PathUri>,
-    executor_platform_os: Option<String>,
+    executor_platform: Platform,
     temporary_directories: Option<Vec<PathUri>>,
     shell_snapshot: ShellSnapshotTask,
     shell_snapshot_builder: ShellSnapshot,
@@ -272,7 +273,7 @@ impl ThreadEnvironments {
                         environment: environment.environment,
                         shell: environment.shell,
                         user_home_dir: environment.user_home_dir,
-                        executor_platform_os: environment.executor_platform_os,
+                        executor_platform: environment.executor_platform,
                         temporary_directories: environment.temporary_directories,
                         shell_snapshot: inherited_snapshot,
                         shell_snapshot_builder: shell_snapshot.clone(),
@@ -743,11 +744,11 @@ impl ThreadEnvironments {
         };
         // Resolve the attachment only after both prerequisites are ready.
         let ((), installed_config) = tokio::try_join!(connection_ready, configuration_ready)?;
-        let executor_platform_os;
+        let executor_platform;
         let (shell, user_home_dir, temporary_dirs, snapshot_v2) = if environment.is_remote() {
             match environment.info().await {
                 Ok(info) => {
-                    executor_platform_os = info.platform_os;
+                    executor_platform = Platform::from_platform_os(info.platform_os.as_deref());
                     let user_home_dir = info.user_home_dir;
                     let temporary_directories = info.temporary_directories;
                     let shell_snapshot_v2_supported = info.capabilities.shell_snapshot_v2;
@@ -768,13 +769,13 @@ impl ThreadEnvironments {
                     )
                 }
                 Err(err) => {
-                    executor_platform_os = None;
+                    executor_platform = Platform::Unknown;
                     tracing::warn!("failed to get info for environment `{environment_id}`: {err}");
                     (None, None, None, false)
                 }
             }
         } else {
-            executor_platform_os = Some(std::env::consts::OS.to_string());
+            executor_platform = Platform::native();
             (
                 Some(local_shell),
                 PathUri::from_host_native_path("~").ok(),
@@ -795,7 +796,7 @@ impl ThreadEnvironments {
             environment,
             shell,
             user_home_dir,
-            executor_platform_os,
+            executor_platform,
             temporary_directories: temporary_dirs,
             shell_snapshot: task,
             shell_snapshot_builder,
@@ -887,7 +888,7 @@ impl TurnEnvironmentState {
                     environment.environment,
                     environment.shell,
                 );
-                turn_environment.executor_platform_os = environment.executor_platform_os;
+                turn_environment.executor_platform = environment.executor_platform;
                 turn_environment.shell_snapshot = environment.shell_snapshot;
                 turn_environment.shell_snapshot_builder =
                     Some(Box::new(environment.shell_snapshot_builder));

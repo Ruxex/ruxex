@@ -37,6 +37,7 @@ use ruxex_sandboxing::policy_transforms::effective_permission_profile;
 use ruxex_skills_extension::HostSkillsSnapshot;
 use ruxex_skills_extension::SkillLoadOutcome;
 use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::Platform;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
@@ -64,8 +65,8 @@ pub(crate) struct TurnEnvironment {
     /// Cached from the selected executor; `None` means it did not report them.
     pub(crate) temporary_directories: Option<Vec<PathUri>>,
     pub(crate) shell: Option<shell::Shell>,
-    /// OS reported by the selected executor; `None` for legacy executors.
-    pub(crate) executor_platform_os: Option<String>,
+    /// Normalized platform reported by the selected executor.
+    pub(crate) executor_platform: Platform,
     pub(crate) shell_snapshot: ShellSnapshotTask,
     pub(crate) shell_snapshot_builder: Option<Box<ShellSnapshot>>,
     pub(crate) shell_snapshot_cache: ShellSnapshotCache,
@@ -87,7 +88,7 @@ impl TurnEnvironment {
             user_home_dir: None,
             temporary_directories: None,
             shell,
-            executor_platform_os: None,
+            executor_platform: Platform::Unknown,
             shell_snapshot: futures::future::ready(None).boxed().shared(),
             shell_snapshot_builder: None,
             shell_snapshot_cache: Arc::default(),
@@ -255,7 +256,7 @@ impl std::fmt::Debug for TurnEnvironment {
             .field("user_home_dir", &self.user_home_dir)
             .field("temporary_directories", &self.temporary_directories)
             .field("shell", &self.shell)
-            .field("executor_platform_os", &self.executor_platform_os)
+            .field("executor_platform", &self.executor_platform)
             .field("config", self.config())
             .field("config_origin", &self.config_origin)
             .finish_non_exhaustive()

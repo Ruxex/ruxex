@@ -87,6 +87,7 @@ use ruxex_shell_command::is_dangerous_command::DangerousCommandPlatform;
 use ruxex_tools::ToolName;
 use ruxex_utils_output_truncation::approx_tokens_from_byte_count;
 use ruxex_utils_path_uri::PathUri;
+use ruxex_utils_path_uri::Platform;
 
 const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("NO_COLOR", "1"),
@@ -1396,11 +1397,11 @@ impl UnifiedExecProcessManager {
             .shell
             .as_ref()
             .unwrap_or(session_shell.as_ref());
-        // Legacy executors omit the platform; unknown values retain the POSIX rules.
-        let command_platform = match request.turn_environment.executor_platform_os.as_deref() {
-            Some("linux" | "macos") => DangerousCommandPlatform::Posix,
-            Some(_) => DangerousCommandPlatform::Posix,
-            None => DangerousCommandPlatform::host(),
+        // Legacy and unsupported executor platforms retain Ruxex's POSIX rules.
+        let command_platform = match request.turn_environment.executor_platform {
+            Platform::Linux | Platform::Macos | Platform::Windows | Platform::Unknown => {
+                DangerousCommandPlatform::Posix
+            }
         };
         let exec_approval_requirement = context
             .session
