@@ -30,6 +30,7 @@ use clap::Parser;
 use http::Method;
 use ruxex_api::is_azure_responses_provider;
 use ruxex_arg0::Arg0DispatchPaths;
+use ruxex_config::ConfigLoadError;
 use ruxex_config::types::McpServerConfig;
 use ruxex_config::types::McpServerTransportConfig;
 use ruxex_core::config::Config;
@@ -519,7 +520,7 @@ async fn build_report(
                             CheckStatus::Fail,
                             "config could not be loaded",
                         )
-                        .detail(err.to_string())
+                        .details(safe_config_load_details(&err))
                         .remediation("Fix the reported config error, then rerun ruxex doctor.")
                     })
                 },
@@ -2756,4 +2757,95 @@ fn should_enable_color(
         && term != Some("dumb")
         && stdout_is_tty
         && stream_supports_color
+}
+
+fn safe_config_load_details(err: &anyhow::Error) -> Vec<String> {
+    let config_error = err.chain().find_map(|cause| {
+        cause.downcast_ref::<ConfigLoadError>().or_else(|| {
+            cause
+                .downcast_ref::<std::io::Error>()?
+                .get_ref()?
+                .downcast_ref::<ConfigLoadError>()
+        })
+    });
+
+    if let Some(error) = config_error {
+        let error = error.config_error();
+        return vec![
+            "error: invalid configuration".to_string(),
+            format!("file: {}", error.path.display()),
+            format!("line: {}", error.range.start.line),
+            format!("column: {}", error.range.start.column),
+        ];
+    }
+
+    if let Some(error) = err
+        .chain()
+        .find_map(|cause| cause.downcast_ref::<std::io::Error>())
+    {
+        return vec![format!("error: {}", error.kind())];
+    }
+
+    vec!["error: configuration load failed".to_string()]
+}
+
+#[cfg(test)]
+mod config_error_tests {
+    use super::safe_config_load_details;
+    use ruxex_config::ConfigError;
+    use ruxex_config::ConfigLoadError;
+    use ruxex_config::TextPosition;
+    use ruxex_config::TextRange;
+    use std::path::PathBuf;
+
+    #[test]
+    fn config_load_details_exclude_raw_values() {
+        let error = ConfigLoadError::new(
+            ConfigError::new(
+                PathBuf::from("/tmp/config.toml"),
+                TextRange {
+                    start: TextPosition { line: 3, column: 7 },
+                    end: TextPosition {
+                        line: 3,
+                        column: 22,
+                    },
+                },
+                "invalid value: secret-token",
+            ),
+            None,
+        );
+
+        assert_eq!(
+            safe_config_load_details(&anyhow::Error::new(error)),
+            vec![
+                "error: invalid configuration".to_string(),
+                "file: /tmp/config.toml".to_string(),
+                "line: 3".to_string(),
+                "column: 7".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn config_load_details_reduce_io_errors_to_kind() {
+        let error = anyhow::Error::new(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "secret config contents",
+        ));
+
+        assert_eq!(
+            safe_config_load_details(&error),
+            vec!["error: permission denied".to_string()]
+        );
+    }
+
+    #[test]
+    fn config_load_details_use_generic_fallback_for_unknown_errors() {
+        let error = anyhow::anyhow!("secret config contents");
+
+        assert_eq!(
+            safe_config_load_details(&error),
+            vec!["error: configuration load failed".to_string()]
+        );
+    }
 }
