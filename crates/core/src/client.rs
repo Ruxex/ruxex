@@ -597,6 +597,15 @@ impl ModelClient {
         }
     }
 
+    pub(crate) fn reasoning_effort_override_enabled(&self, model_info: &ModelInfo) -> bool {
+        self.state.reasoning_effort_override_enabled
+            && model_info.supports_reasoning_effort_updates
+            && matches!(
+                self.state.provider.request_format(),
+                ProviderRequestFormat::Responses
+            )
+    }
+
     pub(crate) fn build_responses_request(
         &self,
         prompt: &Prompt,
@@ -607,8 +616,8 @@ impl ModelClient {
         responses_metadata: &RuxexResponsesMetadata,
     ) -> Result<ruxex_model_provider::ChatRequest> {
         let mut input = prompt.get_formatted_input_for_request(model_info);
-        if !self.state.reasoning_effort_override_enabled {
-            // Disabling overrides must also recover threads with saved updates.
+        if !self.reasoning_effort_override_enabled(model_info) {
+            // Unsupported models and disabled overrides must also recover saved history.
             // Filter only the request copy; persisted history remains unchanged.
             input.retain(|item| !matches!(item, ResponseItem::ConfigurationUpdate { .. }));
         }

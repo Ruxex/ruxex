@@ -1035,6 +1035,7 @@ async fn reasoning_effort_override_remote_v2_compaction_resets_pinned_effort(
         .with_auth(RuxexAuth::from_api_key("test-api-key"))
         .with_model_info_override("legacy-model", |model| {
             model.use_responses_lite = true;
+            model.supports_reasoning_effort_updates = true;
         })
         .with_config(move |config| {
             config.model_provider.stream_max_retries = Some(0);
@@ -2849,6 +2850,7 @@ async fn pre_sampling_compact_falls_back_after_previous_model_invalid_request_on
         model_info_with_context_window("legacy-model", /*context_window*/ 273_000);
     previous_model_info.slug = previous_model_family.to_string();
     previous_model_info.use_responses_lite = true;
+    previous_model_info.supports_reasoning_effort_updates = true;
     let mut next_model_info =
         model_info_with_context_window("legacy-model", /*context_window*/ 125_000);
     next_model_info.slug = next_model.to_string();

@@ -34,6 +34,7 @@ fn override_builder() -> TestRuxexBuilder {
     test_ruxex()
         .with_model_info_override("legacy-model", |model| {
             model.use_responses_lite = true;
+            model.supports_reasoning_effort_updates = true;
         })
         .with_config(|config| {
             config
@@ -224,9 +225,12 @@ async fn reasoning_effort_override_persistent_transitions(
     Ok(())
 }
 
+#[test_case(true; "responses lite")]
+#[test_case(false; "ordinary responses")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
--> anyhow::Result<()> {
+async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change(
+    use_responses_lite: bool,
+) -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
     let server = responses::start_mock_server().await;
     let mut mocks = Vec::new();
@@ -236,7 +240,12 @@ async fn reasoning_effort_override_preserves_prefix_and_only_appends_on_change()
                 .await,
         );
     }
-    let test = override_builder().build_with_auto_env(&server).await?;
+    let test = override_builder()
+        .with_model_info_override("legacy-model", move |model| {
+            model.use_responses_lite = use_responses_lite;
+        })
+        .build_with_auto_env(&server)
+        .await?;
     test.submit_text_turn("first message").await?;
     submit_thread_settings(
         &test.ruxex,
@@ -592,12 +601,12 @@ async fn reasoning_effort_override_websocket_appends_then_replays_after_reconnec
 enum OverrideUnavailable {
     FeatureDisabled,
     NonproviderProvider,
-    ResponsesLiteDisabled,
+    ModelCapabilityMissing,
 }
 
 #[test_case(OverrideUnavailable::FeatureDisabled; "feature disabled")]
 #[test_case(OverrideUnavailable::NonproviderProvider; "unsupported provider")]
-#[test_case(OverrideUnavailable::ResponsesLiteDisabled; "responses lite disabled")]
+#[test_case(OverrideUnavailable::ModelCapabilityMissing; "model capability missing")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn reasoning_effort_override_unavailable_uses_request_effort(
     unavailable: OverrideUnavailable,
@@ -624,8 +633,10 @@ async fn reasoning_effort_override_unavailable_uses_request_effort(
         OverrideUnavailable::NonproviderProvider => override_builder().with_config(|config| {
             config.model_provider.name = "unsupported provider".into();
         }),
-        OverrideUnavailable::ResponsesLiteDisabled => override_builder()
-            .with_model_info_override("legacy-model", |model| model.use_responses_lite = false),
+        OverrideUnavailable::ModelCapabilityMissing => override_builder().with_model_info_override(
+            "legacy-model",
+            |model| model.supports_reasoning_effort_updates = false,
+        ),
     };
     let test = builder.build_with_auto_env(&server).await?;
     test.submit_text_turn("first").await?;
@@ -757,6 +768,7 @@ async fn reasoning_effort_override_model_switch_reestablishes_selected_effort(
         .with_model_info_override("example-model", |model| {
             model.comp_hash = None;
             model.use_responses_lite = true;
+            model.supports_reasoning_effort_updates = true;
         })
         .with_model("legacy-model")
         .build_with_auto_env(&server)
@@ -902,6 +914,7 @@ async fn reasoning_effort_override_compaction_fallback_uses_each_models_effort()
         .with_model_info_override("example-model-2", |model| {
             model.comp_hash = Some("fallback".to_string());
             model.use_responses_lite = true;
+            model.supports_reasoning_effort_updates = true;
         })
         .with_model("legacy-model")
         .with_config(move |config| {

@@ -45,6 +45,7 @@ fn test_model(model_messages: Option<ModelMessages>) -> ModelInfo {
         supports_search_tool: false,
         supports_experimental_context: false,
         use_responses_lite: false,
+        supports_reasoning_effort_updates: false,
         node_repl_disabled: false,
         model_specialty: None,
         tool_mode: None,
