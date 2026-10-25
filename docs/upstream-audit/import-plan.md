@@ -402,7 +402,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`695ab0a0b427`](./2026-09-21.md#695ab0a0b427350bdef49a7e24555893807567f6) | Add collaboration tools for the agent message board (#46985) | `Deferred` |
 | 2026-09-21 | [`774d64258260`](./2026-09-21.md#774d64258260f94628cc9fc55cfabd59a668571c) | Populate the agents overview from background tool responses (#46946) | `Deferred` |
 | 2026-09-21 | [`7d99ee82d743`](./2026-09-21.md#7d99ee82d74325cabf485ea1e2adbd0c2625ab19) | Add agent inspection without restoring unloaded runtimes (#47010) | `Deferred` |
-| 2026-09-21 | [`87bc50f9d423`](./2026-09-21.md#87bc50f9d423a62617addd5721f8bd7c54f26bc5) | Cache OS discovery for user agents and telemetry (#47038) | `Import proactively` |
+| 2026-09-21 | [`87bc50f9d423`](./2026-09-21.md#87bc50f9d423a62617addd5721f8bd7c54f26bc5) | Cache OS discovery for user agents and telemetry (#47038) | `Implemented` |
 | 2026-09-21 | [`8f2c15c39871`](./2026-09-21.md#8f2c15c39871c0698cd76a22ae239d36f7e8c9b8) | Implement paginated queries for the local agent message board (#46978) | `Deferred` |
 | 2026-09-21 | [`abbdde95b593`](./2026-09-21.md#abbdde95b593594c4daa2677392dbfd1dd4ccb8b) | Add shared agent message-board extension interfaces (#46959) | `Deferred` |
 | 2026-09-21 | [`f484f7228d0f`](./2026-09-21.md#f484f7228d0f41df061ce246f379ad0c82dd0472) | Share SQLite pools across local agent message-board handles (#47049) | `Do not import` |
