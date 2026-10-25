@@ -971,7 +971,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-20 | [`d4cb75357fd7`](./2026-09-20.md#d4cb75357fd7c547500cb64658bea28a9979e284) | Improve agent command center rows and page navigation (#46837) | `Deferred` |
 | 2026-09-20 | [`eef77aa21144`](./2026-09-20.md#eef77aa21144edcff79942c9f0ff98a8a527103b) | Add status filter tabs to the agent command center (#46839) | `Deferred` |
 | 2026-09-21 | [`023d81b057de`](./2026-09-21.md#023d81b057dec77fc5c6ffa0ec646d29bef10782) | Preserve required Windows runtime variables for filesystem helpers (#47108) | `Import proactively` |
-| 2026-09-21 | [`7cec3e110ce6`](./2026-09-21.md#7cec3e110ce6dc5c14704dfa06f6db9c23a530fc) | Mask daemon socket paths exposed through ancestor bind mounts (#47079) | `Import proactively` |
+| 2026-09-21 | [`7cec3e110ce6`](./2026-09-21.md#7cec3e110ce6dc5c14704dfa06f6db9c23a530fc) | Mask daemon socket paths exposed through ancestor bind mounts (#47079) | `Implemented` |
 | 2026-09-22 | [`517f51a6f710`](./2026-09-22.md#517f51a6f7101e2bda4c96cbd0605f8c55aba20b) | Extract exec-server CLI startup into a dedicated module (#47143) | `Import proactively` |
 | 2026-09-22 | [`54487a5b614b`](./2026-09-22.md#54487a5b614b798bb454122a777623336c6a9845) | Bound inbound exec-server requests across client transports (#47362) | `Import proactively` |
 | 2026-09-22 | [`c6ad6f33eb1f`](./2026-09-22.md#c6ad6f33eb1fba74f8aab266465b91249fe4ef3f) | Restrict Windows sandbox default object access to the logon session (#47361) | `Import proactively` |
