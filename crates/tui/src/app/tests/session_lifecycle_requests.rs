@@ -717,7 +717,7 @@ async fn delete_current_thread_navigates_only_after_success() -> Result<()> {
         let mut side_config = app.config.clone();
         side_config.ephemeral = true;
         let side = server
-            .fork_side_thread(&app.local_settings, side_config.clone(), thread_id)
+            .fork_side_thread(&app.local_settings, side_config.clone(), thread_id, None)
             .await?;
         let side_id = side.session.thread_id;
         app.side_threads
@@ -727,7 +727,7 @@ async fn delete_current_thread_navigates_only_after_success() -> Result<()> {
             side_config.cwd = side_config.cwd.join("failure");
             assert!(
                 server
-                    .fork_side_thread(&app.local_settings, side_config, thread_id)
+                    .fork_side_thread(&app.local_settings, side_config, thread_id, None)
                     .await
                     .is_err()
             );
@@ -2469,6 +2469,7 @@ async fn paginated_workflows_never_request_full_thread_history() -> Result<()> {
         &crate::local_settings::LocalSettings::from(&side_config),
         side_config,
         paginated_thread_id,
+        None,
     ))
     .await?;
 

@@ -751,6 +751,12 @@ impl AppServerSession {
         if history_support == ThreadHistorySupport::LegacyOnly {
             self.history_support = ThreadHistorySupport::LegacyOnly;
         }
+        let selected_permissions = selected_profile.map(|_| {
+            PermissionProfile::from_legacy_sandbox_policy_for_cwd(
+                &response.sandbox.to_core(),
+                response.cwd.as_path(),
+            )
+        });
         let mut started = started_thread_from_start_response(
             response,
             local_settings,
@@ -758,6 +764,9 @@ impl AppServerSession {
             self.thread_params_mode(),
         )
         .await?;
+        if let Some(permissions) = selected_permissions {
+            started.session.permission_profile = permissions;
+        }
         started.task_tools_available = task_tools_available;
         if task_tools_available {
             self.remember_task_tool_thread(started.session.thread_id);
@@ -837,6 +846,7 @@ impl AppServerSession {
         local_settings: &LocalSettings,
         config: Config,
         thread_id: ThreadId,
+        selected_profile: Option<&PermissionProfileSelection>,
     ) -> Result<AppServerStartedThread> {
         self.fork_thread_at_with_presentation(
             local_settings,
@@ -846,7 +856,7 @@ impl AppServerSession {
             /*before_turn_id*/ None,
             ForkGoalContinuation::StartIfIdle,
             ForkPresentation::SideConversation,
-            /*selected_profile*/ None,
+            selected_profile,
             ForkPermissionMode::InheritSaved,
             ForkConfigSource::Session,
         )
@@ -909,6 +919,7 @@ impl AppServerSession {
         }
         if self.thread_params_mode() == ThreadParamsMode::Remote
             && permission_mode == ForkPermissionMode::InheritSaved
+            && selected_profile.is_none()
         {
             params.approval_policy = None;
             params.sandbox = None;
@@ -972,6 +983,12 @@ impl AppServerSession {
                 "preserving the created fork after bounded history hydration failed"
             );
         }
+        let selected_permissions = selected_profile.map(|_| {
+            PermissionProfile::from_legacy_sandbox_policy_for_cwd(
+                &response.sandbox.to_core(),
+                response.cwd.as_path(),
+            )
+        });
         let mut started = started_thread_from_fork_response(
             response,
             local_settings,
@@ -979,6 +996,9 @@ impl AppServerSession {
             self.thread_params_mode(),
         )
         .await?;
+        if let Some(permissions) = selected_permissions {
+            started.session.permission_profile = permissions;
+        }
         started.session.fork_parent_title = fork_parent.and_then(|thread| thread.name);
         if self.task_tools_available(thread_id) {
             started.task_tools_available = true;

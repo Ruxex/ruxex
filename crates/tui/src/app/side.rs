@@ -628,14 +628,6 @@ impl App {
             self.chat_widget.add_error_message(message.to_string());
             return Ok(AppRunControl::Continue);
         }
-        if self.pending_server_profiles.contains_key(&parent_thread_id) {
-            self.restore_side_user_message(user_message.take());
-            self.sync_side_thread_ui();
-            self.chat_widget
-                .add_error_message("Wait for permissions to update before forking.".into());
-            return Ok(AppRunControl::Continue);
-        }
-
         if let Some((&side_thread_id, state)) = self.side_threads.iter().next()
             && (parent_thread_id != state.parent_thread_id
                 || !self.discard_side_thread(app_server, side_thread_id).await)
@@ -654,8 +646,14 @@ impl App {
             .await;
 
         let fork_config = self.side_fork_config();
+        let selected_profile = self.selected_server_profile(parent_thread_id);
         match app_server
-            .fork_side_thread(&self.local_settings, fork_config, parent_thread_id)
+            .fork_side_thread(
+                &self.local_settings,
+                fork_config,
+                parent_thread_id,
+                selected_profile.as_ref(),
+            )
             .await
         {
             Ok(forked) => {
@@ -711,6 +709,9 @@ impl App {
                     return Ok(AppRunControl::Continue);
                 }
                 if self.active_thread_id == Some(child_thread_id) {
+                    if selected_profile.is_some() {
+                        self.adopt_inherited_server_selection();
+                    }
                     if let Some(user_message) = user_message.take() {
                         let _ = self
                             .chat_widget

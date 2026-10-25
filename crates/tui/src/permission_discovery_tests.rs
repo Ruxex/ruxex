@@ -1,8 +1,11 @@
 use super::*;
+use crate::app_event::PermissionProfileSelection;
 use crate::legacy_core::config::ConfigBuilder;
 use futures::SinkExt;
 use futures::StreamExt;
 use pretty_assertions::assert_eq;
+use ruxex_app_server_protocol::AskForApproval;
+use ruxex_protocol::models::PermissionProfile;
 use serde_json::Value;
 use serde_json::json;
 use tokio_tungstenite::tungstenite::Message;
@@ -197,4 +200,83 @@ async fn discovery_preserves_config_scope_and_bounds_server_requests() {
             tokio::time::resume();
         }
     }
+}
+
+#[tokio::test]
+async fn explicit_permission_selection_uses_server_effective_profile() {
+    let server_home = tempfile::tempdir().unwrap();
+    std::fs::write(
+        server_home.path().join("config.toml"),
+        "default_permissions = \"server-only\"\n[permissions.server-only]\nextends = \":read-only\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        server_home.path().join("ruxex-home.json"),
+        serde_json::json!({
+            "formatVersion": 2,
+            "providerKind": "responses",
+            "providerProtocolVersion": "1",
+            "serverSignature": "test-server"
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let server_config = ConfigBuilder::default()
+        .ruxex_home(server_home.path().to_path_buf())
+        .build()
+        .await
+        .unwrap();
+    let client_home = tempfile::tempdir().unwrap();
+    std::fs::write(
+        client_home.path().join("config.toml"),
+        "default_permissions = \"server-only\"\n[permissions.server-only]\nextends = \":workspace\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        client_home.path().join("ruxex-home.json"),
+        serde_json::json!({
+            "formatVersion": 2,
+            "providerKind": "responses",
+            "providerProtocolVersion": "1",
+            "serverSignature": "test-client"
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let client_config = ConfigBuilder::default()
+        .ruxex_home(client_home.path().to_path_buf())
+        .build()
+        .await
+        .unwrap();
+    let selection = PermissionProfileSelection {
+        profile_id: "server-only".into(),
+        approval_policy: Some(AskForApproval::OnRequest),
+        display_label: "server-only".into(),
+    };
+    let mut server = crate::start_embedded_app_server_for_picker(&server_config)
+        .await
+        .unwrap();
+    let started = server
+        .start_thread_with_session_start_source(
+            &crate::local_settings::LocalSettings::from(&client_config),
+            &client_config,
+            None,
+            None,
+            Some(&selection),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        started.session.permission_profile,
+        PermissionProfile::read_only()
+    );
+    assert_eq!(
+        started
+            .session
+            .active_permission_profile
+            .as_ref()
+            .map(|profile| profile.id.as_str()),
+        Some("server-only")
+    );
+    server.shutdown().await.unwrap();
 }

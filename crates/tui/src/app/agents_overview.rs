@@ -51,6 +51,9 @@ pub(super) struct AgentsOverviewState {
         Arc<std::sync::Mutex<super::agents_overview_view::AgentsOverviewViewState>>,
     /// Explicit permission-profile choices for new-session carryover, retained across navigation.
     pub(super) selected_permission_profiles: HashMap<ThreadId, String>,
+    /// Accepted server selections whose settings notification has not arrived yet.
+    pub(super) requested_permission_profiles:
+        HashMap<ThreadId, crate::app_event::PermissionProfileSelection>,
     /// Keep new tasks subscribed and reusable until a first turn makes them resumable.
     pub(super) blank_sessions: HashMap<ThreadId, crate::app_server_session::AppServerStartedThread>,
     pub(super) input_states: HashMap<ThreadId, ThreadInputState>,

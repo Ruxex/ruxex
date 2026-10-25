@@ -68,6 +68,9 @@ impl App {
             }
             ServerNotification::ThreadArchived(_) | ServerNotification::ThreadDeleted(_) => {
                 self.agents_overview
+                    .requested_permission_profiles
+                    .remove(&thread_id);
+                self.agents_overview
                     .selected_permission_profiles
                     .remove(&thread_id);
                 self.agents_overview.activity.remove(&thread_id);
@@ -76,6 +79,9 @@ impl App {
                 self.agents_overview.refresh_thread_ids.remove(&thread_id);
             }
             ServerNotification::ThreadClosed(_) => {
+                self.agents_overview
+                    .requested_permission_profiles
+                    .remove(&thread_id);
                 self.agents_overview.activity.remove(&thread_id);
                 if let Some(thread) = thread {
                     thread.status = ThreadStatus::NotLoaded;
@@ -98,6 +104,10 @@ impl App {
             }
             ServerNotification::ThreadSettingsUpdated(settings) => {
                 if !self.pending_server_profiles.contains_key(&thread_id)
+                    && !self
+                        .agents_overview
+                        .requested_permission_profiles
+                        .contains_key(&thread_id)
                     && self
                         .agents_overview
                         .selected_permission_profiles

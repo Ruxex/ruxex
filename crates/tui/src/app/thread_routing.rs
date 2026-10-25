@@ -742,7 +742,12 @@ impl App {
                 }
                 if should_start_turn {
                     let config = self.chat_widget.config_ref();
-                    let selected_profile = self.pending_server_profiles.get(&thread_id);
+                    let selected_profile =
+                        self.pending_server_profiles.get(&thread_id).or_else(|| {
+                            self.agents_overview
+                                .requested_permission_profiles
+                                .get(&thread_id)
+                        });
                     let selected_active = selected_profile
                         .map(|profile| ActivePermissionProfile::new(profile.profile_id.clone()));
                     let confirmed_active = (self.app_server_target.thread_params_mode()
@@ -1024,21 +1029,25 @@ impl App {
         if let ServerNotification::ThreadSettingsUpdated(notification) = &notification {
             self.apply_thread_settings_to_cached_session(thread_id, &notification.thread_settings)
                 .await;
-            if self
-                .pending_server_profiles
-                .get(&thread_id)
-                .is_some_and(|selected| {
-                    notification
-                        .thread_settings
-                        .active_permission_profile
-                        .as_ref()
-                        .is_some_and(|active| active.id == selected.profile_id)
-                        && selected.approval_policy.is_none_or(|policy| {
-                            notification.thread_settings.approval_policy == policy
-                        })
-                })
-            {
+            let confirmed_profile = self.pending_server_profiles.get(&thread_id).or_else(|| {
+                self.agents_overview
+                    .requested_permission_profiles
+                    .get(&thread_id)
+            });
+            if confirmed_profile.is_some_and(|selected| {
+                notification
+                    .thread_settings
+                    .active_permission_profile
+                    .as_ref()
+                    .is_some_and(|active| active.id == selected.profile_id)
+                    && selected
+                        .approval_policy
+                        .is_none_or(|policy| notification.thread_settings.approval_policy == policy)
+            }) {
                 self.pending_server_profiles.remove(&thread_id);
+                self.agents_overview
+                    .requested_permission_profiles
+                    .remove(&thread_id);
                 permission_change_confirmed = true;
             }
         }
@@ -1121,32 +1130,8 @@ impl App {
             notification = None;
         }
         if permission_change_confirmed {
-            if self.chat_widget.thread_id() == Some(thread_id)
-                && let Some(profile) = self
-                    .chat_widget
-                    .config_ref()
-                    .permissions
-                    .active_permission_profile()
-                && profile.id.starts_with(':')
-            {
-                let config = self.chat_widget.config_ref();
-                let network = config
-                    .network_proxy_spec_for_active_permission_profile(
-                        &profile,
-                        config.permissions.permission_profile(),
-                    )
-                    .unwrap_or_else(|err| {
-                        tracing::warn!(%err, "failed to refresh local permission network settings");
-                        None
-                    });
-                self.chat_widget.set_permission_network(network);
-                self.config.permissions = self.chat_widget.config_ref().permissions.clone();
-                self.runtime_approval_policy_override =
-                    Some(RuntimeApprovalPolicyOverride::Explicit(
-                        self.config.permissions.approval_policy.value().into(),
-                    ));
-                self.runtime_permission_profile_override =
-                    Some(RuntimePermissionProfileOverride::from_config(&self.config));
+            if self.chat_widget.thread_id() == Some(thread_id) {
+                self.adopt_server_permissions();
             }
             self.app_event_tx.send(AppEvent::SettingsSelectionSettled);
         }

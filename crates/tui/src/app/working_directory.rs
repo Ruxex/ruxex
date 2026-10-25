@@ -23,6 +23,7 @@ pub(super) struct ManagedWorktreeAttach {
     keymap: RuntimeKeymap,
     cwd: AbsolutePathBuf,
     name_error: Option<String>,
+    selected_profile: Option<PermissionProfileSelection>,
 }
 
 /// A /cd request awaiting a fresh event-loop iteration.
@@ -160,6 +161,11 @@ impl App {
         let Some(thread_id) = self.chat_widget.thread_id() else {
             return;
         };
+        let selected_profile = self
+            .agents_overview
+            .requested_permission_profiles
+            .get(&thread_id)
+            .cloned();
         if self.pending_server_profiles.contains_key(&thread_id) {
             return self.working_directory_error(
                 "Wait for permissions to update before changing directories.",
@@ -167,6 +173,7 @@ impl App {
         }
         if self.app_server_target.thread_params_mode()
             == crate::app_server_session::ThreadParamsMode::Remote
+            && selected_profile.is_none()
             && self
                 .chat_widget
                 .config_ref()
@@ -229,7 +236,8 @@ impl App {
                 checkout.root.display()
             ));
         }
-        if let Some(profile) = self.runtime_permission_profile_override.as_ref()
+        if selected_profile.is_none()
+            && let Some(profile) = self.runtime_permission_profile_override.as_ref()
             && profile.active_permission_profile.is_some()
             && (!profile.matches_config(&config)
                 || config.permissions.profile_workspace_roots()
@@ -237,7 +245,8 @@ impl App {
         {
             return self.working_directory_error("Permission profile has different settings.");
         }
-        if let Some(profile) = self.runtime_permission_profile_override.as_ref()
+        if selected_profile.is_none()
+            && let Some(profile) = self.runtime_permission_profile_override.as_ref()
             && profile.turn_override == RuntimePermissionProfileTurnOverride::Preserve
             && profile.active_permission_profile.is_none()
             && !crate::app_server_session::permission_profile_is_safely_represented_by_sandbox_mode(
@@ -247,14 +256,17 @@ impl App {
         {
             return self.working_directory_error("Permission profile cannot be preserved by /cd.");
         }
-        self.apply_runtime_policy_overrides(&mut config, RuntimePolicyOverrideScope::All);
+        if selected_profile.is_none() {
+            self.apply_runtime_policy_overrides(&mut config, RuntimePolicyOverrideScope::All);
+        }
         let actual = config.permissions.approval_policy.value();
         let approval = self
             .runtime_approval_policy_override
             .map(RuntimeApprovalPolicyOverride::policy);
         let profile = self.runtime_permission_profile_override.as_ref();
-        if approval.is_some_and(|p| actual != p.to_core())
-            || profile.is_some_and(|profile| !profile.matches_config(&config))
+        if selected_profile.is_none()
+            && (approval.is_some_and(|p| actual != p.to_core())
+                || profile.is_some_and(|profile| !profile.matches_config(&config)))
         {
             return;
         }
@@ -334,7 +346,7 @@ impl App {
                     /*last_turn_id*/ None,
                     /*before_turn_id*/ None,
                     DeferUntilNextTurn,
-                    /*selected_profile*/ None,
+                    selected_profile.as_ref(),
                 )
                 .await
         } else {
@@ -344,7 +356,7 @@ impl App {
                     &config,
                     /*session_start_source*/ None,
                     /*remote_cwd_override*/ None,
-                    /*selected_profile*/ None,
+                    selected_profile.as_ref(),
                 )
                 .await
         };
@@ -353,11 +365,23 @@ impl App {
             Err(e) => return self.working_directory_error(format!("Failed to change: {e}")),
         };
         let session = &transitioned.session;
+        let permissions_match = if let Some(selected) = &selected_profile {
+            session
+                .active_permission_profile
+                .as_ref()
+                .is_some_and(|active| active.id == selected.profile_id)
+                && selected
+                    .approval_policy
+                    .is_none_or(|policy| session.approval_policy == policy)
+        } else {
+            session.approval_policy.to_core() == config.permissions.approval_policy.value()
+                && session.active_permission_profile
+                    == config.permissions.active_permission_profile()
+        };
         if session.thread_id == thread_id
             || crate::session_resume::cwds_differ(session.cwd.as_path(), cwd.as_path())
             || session.runtime_workspace_roots != config.workspace_roots
-            || session.approval_policy.to_core() != config.permissions.approval_policy.value()
-            || session.active_permission_profile != config.permissions.active_permission_profile()
+            || !permissions_match
         {
             if session.thread_id != thread_id {
                 let _ = app_server.thread_unsubscribe(session.thread_id).await;
@@ -417,6 +441,7 @@ impl App {
             keymap,
             cwd,
             name_error,
+            selected_profile,
         };
         if managed_worktree.is_some() {
             // Let the large synchronous ChatWidget constructor run on a fresh event-loop stack.
@@ -441,6 +466,7 @@ impl App {
             keymap,
             cwd,
             name_error,
+            selected_profile,
         } = attach;
         self.local_settings = local_settings;
         self.refresh_server_version_overview_notice(RUXEX_CLI_VERSION);
@@ -453,6 +479,9 @@ impl App {
         let (lineage, message) = (ThreadAttachPresentation::SessionLineage, None);
         if let Err(error) = attach_widget(self, tui, started, lineage, message).await {
             return self.working_directory_error(format!("Could not restore session: {error}"));
+        }
+        if selected_profile.is_some() {
+            self.adopt_inherited_server_selection();
         }
         if let Some(error) = name_error {
             self.chat_widget.add_error_message(error);

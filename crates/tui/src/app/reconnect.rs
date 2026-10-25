@@ -291,8 +291,13 @@ impl App {
         self.chat_widget
             .set_model_catalog(Arc::clone(&self.model_catalog));
         self.pending_app_server_requests.clear();
-        let pending_displayed_profile =
-            displayed.is_some_and(|id| self.pending_server_profiles.contains_key(&id));
+        let pending_displayed_profile = displayed.is_some_and(|id| {
+            self.pending_server_profiles.contains_key(&id)
+                || self
+                    .agents_overview
+                    .requested_permission_profiles
+                    .contains_key(&id)
+        });
         if pending_displayed_profile {
             self.runtime_approval_policy_override = None;
             self.runtime_permission_profile_override = None;
@@ -301,6 +306,9 @@ impl App {
         // tasks can be resumed from the server too; their old confirmations cannot arrive.
         if let Some(id) = displayed {
             self.pending_server_profiles.remove(&id);
+            self.agents_overview
+                .requested_permission_profiles
+                .remove(&id);
         }
         self.pending_primary_events.clear();
         self.pending_plugin_enabled_writes.clear();
