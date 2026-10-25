@@ -983,6 +983,7 @@ impl Session {
                     }
                     InitialHistory::Resumed(resumed_history) => {
                         let params = ResumeThreadParams {
+                            history_revision: resumed_history.history_revision.clone(),
                             thread_id: resumed_history.conversation_id,
                             rollout_path: resumed_history.rollout_path.clone(),
                             history: Some(resumed_history.history.clone()),

@@ -134,15 +134,14 @@ async fn load_agent_model_context(
     state: &ThreadManagerState,
     thread_id: ThreadId,
     _history_mode: ThreadHistoryMode,
-) -> RuxexResult<Option<Vec<RolloutItem>>> {
+) -> RuxexResult<Option<ruxex_thread_store::StoredModelContext>> {
     Ok(Some(
         state
             .load_latest_model_context(LoadThreadHistoryParams {
                 thread_id,
                 include_archived: true,
             })
-            .await?
-            .items,
+            .await?,
     ))
 }
 
@@ -345,8 +344,9 @@ impl LocalAgentControl {
             .await?
             .ok_or(RuxexErr::ThreadNotFound(thread_id))?;
         let initial_history = InitialHistory::Resumed(ResumedHistory {
+            history_revision: history.revision,
             conversation_id: thread_id,
-            history: Arc::new(history),
+            history: Arc::new(history.items),
             rollout_path: stored_thread.rollout_path,
         });
         if initial_history.get_multi_agent_version() != Some(MultiAgentVersion::V2) {
@@ -831,7 +831,8 @@ impl LocalAgentControl {
                     RuxexErr::Fatal(format!(
                         "parent thread history unavailable for fork: {parent_thread_id}"
                     ))
-                })?;
+                })?
+                .items;
 
         let selected_capability_roots = forked_rollout_items
             .iter()
@@ -1168,8 +1169,9 @@ impl LocalAgentControl {
             .await?
             .ok_or(RuxexErr::ThreadNotFound(thread_id))?;
         let initial_history = InitialHistory::Resumed(ResumedHistory {
+            history_revision: history.revision,
             conversation_id: thread_id,
-            history: Arc::new(history),
+            history: Arc::new(history.items),
             rollout_path: stored_thread.rollout_path,
         });
         let parent_thread_id = stored_thread.parent_thread_id;

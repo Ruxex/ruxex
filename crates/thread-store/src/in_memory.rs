@@ -325,6 +325,7 @@ mod tests {
             .expect("create legacy thread");
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: None,
@@ -400,6 +401,7 @@ mod tests {
         assert!(!history.items.is_empty());
         let resumed_history = store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: None,
                 history: None,
@@ -686,6 +688,7 @@ impl InMemoryThreadStore {
         Ok(StoredThreadHistory {
             thread_id: params.thread_id,
             items: items.clone(),
+            revision: None,
         })
     }
 
@@ -705,6 +708,7 @@ impl InMemoryThreadStore {
         Ok(StoredModelContext {
             thread_id: params.thread_id,
             items: items.clone(),
+            revision: None,
         })
     }
 
@@ -1084,6 +1088,7 @@ fn stored_thread_from_state(
     let history = include_history.then(|| StoredThreadHistory {
         thread_id,
         items: history_items.clone(),
+        revision: None,
     });
     let name = state.names.get(&thread_id).cloned().flatten();
     let metadata = state.metadata_updates.get(&thread_id);

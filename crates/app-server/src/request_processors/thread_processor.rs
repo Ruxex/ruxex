@@ -4323,6 +4323,7 @@ impl ThreadRequestProcessor {
                 .await
                 .map_err(thread_store_resume_read_error)?;
             let history = InitialHistory::Resumed(ResumedHistory {
+                history_revision: model_context.revision,
                 conversation_id: model_context.thread_id,
                 history: Arc::new(model_context.items),
                 rollout_path: stored_thread.rollout_path.clone(),
@@ -4417,18 +4418,15 @@ impl ThreadRequestProcessor {
         stored_thread: &mut StoredThread,
     ) -> Result<InitialHistory, JSONRPCErrorError> {
         let thread_id = stored_thread.thread_id;
-        let history = stored_thread
-            .history
-            .take()
-            .map(|history| history.items)
-            .ok_or_else(|| {
-                internal_error(format!(
-                    "thread {thread_id} did not include persisted history"
-                ))
-            })?;
+        let history = stored_thread.history.take().ok_or_else(|| {
+            internal_error(format!(
+                "thread {thread_id} did not include persisted history"
+            ))
+        })?;
         Ok(InitialHistory::Resumed(ResumedHistory {
+            history_revision: history.revision,
             conversation_id: thread_id,
-            history: Arc::new(history),
+            history: Arc::new(history.items),
             rollout_path: stored_thread.rollout_path.clone(),
         }))
     }
@@ -4764,6 +4762,7 @@ impl ThreadRequestProcessor {
         // The fork cutoff can remove the only TurnContext that records the selected version.
         // Recover it from the untrimmed source or live parent, independently of permission overrides.
         let source_multi_agent_version = InitialHistory::Resumed(ResumedHistory {
+            history_revision: None,
             conversation_id: source_thread_id,
             history: Arc::clone(latest_context.as_ref().unwrap_or(&source_history_items)),
             rollout_path: source_thread.rollout_path.clone(),
@@ -4887,6 +4886,7 @@ impl ThreadRequestProcessor {
                     ForkSnapshot::Interrupted,
                     fork_options,
                     InitialHistory::Resumed(ResumedHistory {
+                        history_revision: None,
                         conversation_id: source_thread_id,
                         history: history_items,
                         rollout_path: source_thread.rollout_path.clone(),

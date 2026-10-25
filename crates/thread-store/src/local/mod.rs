@@ -2,6 +2,7 @@ mod archive_thread;
 mod create_thread;
 mod delete_thread;
 mod helpers;
+mod history_revision;
 mod list_threads;
 mod live_writer;
 mod model_context;
@@ -954,6 +955,7 @@ mod tests {
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: Some(Arc::clone(&history)),
@@ -1245,6 +1247,7 @@ mod tests {
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1294,6 +1297,7 @@ mod tests {
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1454,6 +1458,7 @@ mod tests {
         let resumed_store = LocalThreadStore::new(config, /*state_db*/ None);
         resumed_store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: None,
                 history: None,
@@ -1503,6 +1508,7 @@ mod tests {
                 .await
                 .expect("load rollout path");
             let resume_params = ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1569,6 +1575,7 @@ mod tests {
             .expect("live rollout path");
         let err = store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1579,6 +1586,84 @@ mod tests {
             .expect_err("duplicate live resume should fail");
         assert!(matches!(err, ThreadStoreError::InvalidRequest { .. }));
         assert!(err.to_string().contains("already has a live local writer"));
+    }
+
+    #[tokio::test]
+    async fn resume_reuses_unchanged_and_refreshes_stale_history() {
+        let home = TempDir::new().expect("temp dir");
+        let config = test_config(home.path());
+        let uuid = uuid::Uuid::from_u128(409);
+        let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
+        let rollout_path = write_session_file_with_history_mode(
+            home.path(),
+            "2025-01-04T12-00-00",
+            uuid,
+            ThreadHistoryMode::Paginated,
+        )
+        .expect("session file");
+        let snapshot_store = LocalThreadStore::new(config.clone(), /*state_db*/ None);
+        let snapshot = snapshot_store
+            .load_history(LoadThreadHistoryParams {
+                thread_id,
+                include_archived: false,
+            })
+            .await
+            .expect("load history snapshot");
+        let revision = snapshot.revision.clone();
+        let history = Arc::new(snapshot.items);
+
+        let store = LocalThreadStore::new(config, /*state_db*/ None);
+        let resumed = store
+            .resume_thread(ResumeThreadParams {
+                history_revision: revision.clone(),
+                thread_id,
+                rollout_path: Some(rollout_path.clone()),
+                history: Some(Arc::clone(&history)),
+                include_archived: false,
+                metadata: thread_metadata(),
+            })
+            .await
+            .expect("resume unchanged snapshot");
+
+        assert!(Arc::ptr_eq(&resumed, &history));
+        store
+            .append_items(AppendThreadItemsParams {
+                thread_id,
+                items: vec![user_message_item("late resume edit")],
+            })
+            .await
+            .expect("append a late edit");
+        store
+            .flush_thread(thread_id)
+            .await
+            .expect("flush late edit");
+        store
+            .shutdown_thread(thread_id)
+            .await
+            .expect("shutdown resumed writer");
+
+        let resumed_store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
+        let refreshed = resumed_store
+            .resume_thread(ResumeThreadParams {
+                history_revision: revision,
+                thread_id,
+                rollout_path: Some(rollout_path),
+                history: Some(Arc::clone(&history)),
+                include_archived: false,
+                metadata: thread_metadata(),
+            })
+            .await
+            .expect("refresh stale history");
+        assert!(!Arc::ptr_eq(&refreshed, &history));
+        assert!(
+            refreshed
+                .iter()
+                .any(|item| contains_user_message(item, "late resume edit"))
+        );
+        resumed_store
+            .shutdown_thread(thread_id)
+            .await
+            .expect("shutdown refreshed writer");
     }
 
     #[tokio::test]
@@ -1598,6 +1683,7 @@ mod tests {
         .expect("session file");
         let err = store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: None,
@@ -1612,6 +1698,7 @@ mod tests {
 
         competing_store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1634,6 +1721,7 @@ mod tests {
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1682,6 +1770,7 @@ mod tests {
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: None,
@@ -1731,6 +1820,7 @@ mod tests {
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1904,6 +1994,7 @@ mod tests {
         assert!(!history.items.is_empty());
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,

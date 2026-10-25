@@ -4523,6 +4523,7 @@ mod tests {
         assert_eq!(
             resolve_multi_agent_version(
                 &InitialHistory::Resumed(ResumedHistory {
+                    history_revision: None,
                     conversation_id: ThreadId::new(),
                     history: Arc::new(Vec::new()),
                     rollout_path: Some(PathBuf::from("rollout.jsonl")),
