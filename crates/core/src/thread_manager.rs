@@ -1835,6 +1835,7 @@ impl ThreadManagerState {
         environments: Option<Vec<TurnEnvironmentSelection>>,
     ) -> RuxexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
+        let is_subagent_thread = matches!(thread_source, Some(ThreadSource::Subagent));
         let options = StartThreadOptions {
             history_mode,
             session_source: Some(session_source),
@@ -1845,6 +1846,10 @@ impl ThreadManagerState {
             ..StartThreadOptions::new(config)
         };
         let mut request = ThreadSpawnRequest::new(options, agent_control);
+        if is_subagent_thread {
+            eprintln!("marking subagent fork persistence deferred");
+            request.fork_persistence = ForkPersistence::CopiedDeferred;
+        }
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
@@ -1911,6 +1916,7 @@ impl ThreadManagerState {
         thread_extension_init: ExtensionDataInit,
     ) -> RuxexResult<NewThread> {
         let client_mcp_extensions = self.client_mcp_extensions_for_child(parent_thread_id).await;
+        let is_subagent_thread = matches!(thread_source, Some(ThreadSource::Subagent));
         let options = StartThreadOptions {
             initial_history,
             history_mode,
@@ -1922,6 +1928,10 @@ impl ThreadManagerState {
             ..StartThreadOptions::new(config)
         };
         let mut request = ThreadSpawnRequest::new(options, agent_control);
+        if is_subagent_thread {
+            eprintln!("marking subagent fork persistence deferred");
+            request.fork_persistence = ForkPersistence::CopiedDeferred;
+        }
         request.parent_thread_id = parent_thread_id;
         request.forked_from_thread_id = forked_from_thread_id;
         request.inherited_environments = inherited_environments;
