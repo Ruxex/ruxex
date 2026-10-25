@@ -13,8 +13,8 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | Decision | Count |
 | --- | ---: |
-| `Import proactively` | 909 |
-| `Deferred` | 338 |
+| `Import proactively` | 910 |
+| `Deferred` | 337 |
 | `User review required` | 30 |
 | `Do not import` | 350 |
 
@@ -22,7 +22,7 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
+| 2026-09-19–2026-09-23 | 341 | 165 | 114 | 0 | 62 |
 | 2026-09-24–2026-09-30 | 352 | 217 | 56 | 3 | 77 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
@@ -47,7 +47,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-19 | [`3bb0a530d1cd`](./2026-09-19.md#3bb0a530d1cdabe1bbd35b3f44d72f851f0a93f4) | Add system proxy fallback for login and startup requests (#46562) | `Import proactively` |
 | 2026-09-19 | [`78d4d983d338`](./2026-09-19.md#78d4d983d3380fa92aa17fbe9e4f9b737b6a5223) | Gate reasoning effort updates on explicit model support (#46530) | `Import proactively` |
 | 2026-09-19 | [`888be42a20c5`](./2026-09-19.md#888be42a20c5a727214d898c4e335ac2e27161af) | Support explicit provider model catalog URLs (#46561) | `Deferred` |
-| 2026-09-19 | [`98a8d4ea9cab`](./2026-09-19.md#98a8d4ea9cab33510c1577619a3c5fcf27baac98) | Advertise the control socket's WebSocket message size limit (#46548) | `Deferred` |
+| 2026-09-19 | [`98a8d4ea9cab`](./2026-09-19.md#98a8d4ea9cab33510c1577619a3c5fcf27baac98) | Advertise the control socket's WebSocket message size limit (#46548) | `Import proactively` |
 | 2026-09-19 | [`b948cfa88da3`](./2026-09-19.md#b948cfa88da330b338d6f49ede5d2e58fdedf62b) | Rename plugin MCP and app extension APIs (#46564) | `Deferred` |
 | 2026-09-19 | [`c6f5d9e9b5d9`](./2026-09-19.md#c6f5d9e9b5d9ab8085ad5d3a7e28717d3a6a19dc) | Return `LiveAgent` records from agent listing (#46553) | `Deferred` |
 | 2026-09-19 | [`cd2f9ca69239`](./2026-09-19.md#cd2f9ca692397e3092315f5b6d39273383e882c9) | Fix active-turn environment selection lookup (#46557) | `Import proactively` |
