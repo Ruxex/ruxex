@@ -14,16 +14,16 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 | Decision | Count |
 | --- | ---: |
 | `Import proactively` | 909 |
-| `Deferred` | 337 |
+| `Deferred` | 338 |
 | `User review required` | 30 |
-| `Do not import` | 350 |
+| `Do not import` | 349 |
 
 ## Batch totals
 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
-| 2026-09-24–2026-09-30 | 352 | 218 | 54 | 3 | 77 |
+| 2026-09-24–2026-09-30 | 352 | 218 | 55 | 3 | 76 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
 | 2026-10-15–2026-10-21 | 238 | 140 | 52 | 6 | 40 |
@@ -36,8 +36,8 @@ The status is conservative: any bundle containing a review item is waiting for u
 ### B02 — App Server, thread history, and lifecycle
 
 - Status: `Waiting for user decision`
-- Members: 341
-- Proactive: 248; Deferred: 79; Review: 14
+- Members: 342
+- Proactive: 248; Deferred: 80; Review: 14
 - Implementation order: adapt or add tests first, manually adapt production code to Ruxex, run affected unit tests and relevant E2E tests, then record the Ruxex commit.
 
 | Date | Upstream commit | Subject | Decision |
@@ -159,6 +159,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-29 | [`c2837d8ecefa`](./2026-09-29.md#c2837d8ecefacc1c1ad59039809ea42a3a976341) | Batch metadata reads when resolving thread names (#49305) | `Import proactively` |
 | 2026-09-29 | [`d5e6526362f6`](./2026-09-29.md#d5e6526362f6efa322ca091b61eda495f16ffb30) | Scan the session index backwards for batch thread name lookups (#49297) | `Import proactively` |
 | 2026-09-29 | [`f53f5a6fed66`](./2026-09-29.md#f53f5a6fed662bd6f352d08066925c871a061182) | Expose original error details to turn lifecycle contributors (#49138) | `Import proactively` |
+| 2026-09-30 | [`2cc65cdd4c7c`](./2026-09-30.md#2cc65cdd4c7c167f0c7252fcb5165d649c16aca0) | Enable analytics by default for daemon-launched app servers (#49426) | `Deferred` |
 | 2026-09-30 | [`3620b2caf8af`](./2026-09-30.md#3620b2caf8afecfcedd5c5c9520c0d239c880f26) | Detect SQLite corruption during startup and preserve recovery backups (#49701) | `Import proactively` |
 | 2026-09-30 | [`49be2c7ab029`](./2026-09-30.md#49be2c7ab029434dc9545cf85a7a41fd5d3beb1a) | Deliver remote message board notifications to active turns (#49686) | `Deferred` |
 | 2026-09-30 | [`4f699cd64227`](./2026-09-30.md#4f699cd64227f42ff1094b0d3704ff8c3d05c96d) | Move session index I/O off async runtime threads (#49708) | `Import proactively` |
