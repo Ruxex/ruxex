@@ -55,7 +55,6 @@ use ruxex_protocol::protocol::TurnEnvironmentSelection;
 use ruxex_protocol::user_input::UserInput;
 use ruxex_thread_store::LoadThreadHistoryParams;
 use ruxex_thread_store::ReadThreadParams;
-use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -111,12 +110,6 @@ pub(crate) struct LiveAgent {
     pub(crate) thread_id: ThreadId,
     pub(crate) metadata: AgentMetadata,
     pub(crate) status: AgentStatus,
-}
-
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub(crate) struct ListedAgent {
-    pub(crate) agent_name: String,
-    pub(crate) agent_status: AgentStatus,
 }
 
 /// Control-plane handle for multi-agent operations.
@@ -556,7 +549,7 @@ impl LocalAgentControl {
         &self,
         current_session_source: &SessionSource,
         path_prefix: Option<&str>,
-    ) -> RuxexResult<Vec<ListedAgent>> {
+    ) -> RuxexResult<Vec<LiveAgent>> {
         let state = self.upgrade()?;
         let resolved_prefix = path_prefix
             .map(|prefix| {
@@ -590,9 +583,14 @@ impl LocalAgentControl {
             && let Some(root_thread_id) = self.state.agent_id_for_path(&root_path)
             && let Ok(root_thread) = state.get_thread(root_thread_id).await
         {
-            agents.push(ListedAgent {
-                agent_name: root_path.to_string(),
-                agent_status: root_thread.agent_status().await,
+            agents.push(LiveAgent {
+                thread_id: root_thread_id,
+                metadata: AgentMetadata {
+                    agent_id: Some(root_thread_id),
+                    agent_path: Some(root_path),
+                    ..Default::default()
+                },
+                status: root_thread.agent_status().await,
             });
         }
 
@@ -610,14 +608,10 @@ impl LocalAgentControl {
             let Ok(thread) = state.get_thread(thread_id).await else {
                 continue;
             };
-            let agent_name = metadata
-                .agent_path
-                .as_ref()
-                .map(ToString::to_string)
-                .unwrap_or_else(|| thread_id.to_string());
-            agents.push(ListedAgent {
-                agent_name,
-                agent_status: thread.agent_status().await,
+            agents.push(LiveAgent {
+                thread_id,
+                metadata,
+                status: thread.agent_status().await,
             });
         }
 
