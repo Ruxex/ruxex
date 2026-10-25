@@ -528,7 +528,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-28 | [`bfdb1571780b`](./2026-09-28.md#bfdb1571780b326ce978696de12b1d81b5e978f2) | Reuse the HTTP connection pool for remote plugin requests (#49100) | `Import proactively` |
 | 2026-09-29 | [`13f580ef0908`](./2026-09-29.md#13f580ef090887bf0dfcdd366fa783ac553e273e) | Deduplicate cloud and executor skill listings before budgeting (#49127) | `Import proactively` |
 | 2026-09-29 | [`4773a132c351`](./2026-09-29.md#4773a132c3512cc9dcfff1e03bcf57bbbd490cf8) | Add `/mcp login <name>` to the TUI (#49290) | `Deferred` |
-| 2026-09-30 | [`bd5185820df8`](./2026-09-30.md#bd5185820df893016f51e34a7e7e19ebc8e7240b) | Compare tool call metadata in the recorder refresh test (#49408) | `Import proactively` |
+| 2026-09-30 | [`bd5185820df8`](./2026-09-30.md#bd5185820df893016f51e34a7e7e19ebc8e7240b) | Compare tool call metadata in the recorder refresh test (#49408) | `No production adaptation required` |
 | 2026-10-01 | [`8a400e7812b0`](./2026-10-01.md#8a400e7812b0c7488a2bf7963741dceb1aa2e693) | Cache the placeholder regex for MCP hook argument expansion (#49956) | `Import proactively` |
 | 2026-10-01 | [`9561a345310f`](./2026-10-01.md#9561a345310f74d4798d678109ccb4eb9d8cd984) | Keep plugin and skill snapshots scoped to each step (#50050) | `Import proactively` |
 | 2026-10-02 | [`7d3e696c4c12`](./2026-10-02.md#7d3e696c4c120d15ee51c5cfa10d74aa356c9e0f) | Preserve Windows environment variables for remote MCP servers (#50129) | `Import proactively` |
