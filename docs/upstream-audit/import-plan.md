@@ -23,7 +23,7 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
-| 2026-09-24–2026-09-30 | 352 | 218 | 55 | 3 | 77 |
+| 2026-09-24–2026-09-30 | 352 | 217 | 56 | 3 | 77 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
 | 2026-10-15–2026-10-21 | 238 | 140 | 52 | 6 | 40 |
@@ -824,7 +824,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-29 | [`d7f7fa410698`](./2026-09-29.md#d7f7fa410698fbbb75548cde553a4fbf43fc268e) | Remove the plus separator after Option symbols in TUI key hints (#49136) | `Import proactively` |
 | 2026-09-30 | [`0b43721d8d1f`](./2026-09-30.md#0b43721d8d1f734658e41bffe12a6ba6c9240abd) | Copy selected file paths as plain text in the TUI (#49564) | `Deferred` |
 | 2026-09-30 | [`596ae94fb00f`](./2026-09-30.md#596ae94fb00f8325d6bf835a9ebdc90baab4ad33) | Classify SQLite corruption using typed error codes (#49710) | `Import proactively` |
-| 2026-09-30 | [`60947e234156`](./2026-09-30.md#60947e234156ac12bdb7fba2477d3965f166bd34) | Add account security setup reminders to the TUI (#49715) | `Import proactively` |
+| 2026-09-30 | [`60947e234156`](./2026-09-30.md#60947e234156ac12bdb7fba2477d3965f166bd34) | Add account security setup reminders to the TUI (#49715) | `Deferred` |
 | 2026-09-30 | [`b588812e8cc8`](./2026-09-30.md#b588812e8cc82f88a3141ab6bcdf654cbb18361d) | Use server-authoritative permissions in the TUI (#49472) | `Import proactively` |
 | 2026-09-30 | [`d1d0e8955857`](./2026-09-30.md#d1d0e89558578f622b93702686963e67948fd84c) | Infer Windows UNC paths with forward and mixed slashes (#49424) | `Do not import` |
 | 2026-10-01 | [`1182834d1325`](./2026-10-01.md#1182834d1325c14878349ff8ca85d4d696a70ef7) | Remove browser-open success messages from the TUI (#49816) | `Import proactively` |

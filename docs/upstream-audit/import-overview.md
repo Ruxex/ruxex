@@ -14,8 +14,8 @@ This overview is a generated and manually curated planning ledger for the audite
 
 | Audit decision | Count | Planning meaning |
 | --- | ---: | --- |
-| `Import proactively` | 909 | Candidate for manual adaptation; not necessarily immediate. |
-| `Deferred` | 338 | Known feature outside the current adoption gate. |
+| `Import proactively` | 908 | Candidate for manual adaptation; not necessarily immediate. |
+| `Deferred` | 339 | Known feature outside the current adoption gate. |
 | `User review required` | 30 | Blocked until the explicit Ruxex decision is made. |
 | `Do not import` | 350 | Excluded from Ruxex implementation. |
 
