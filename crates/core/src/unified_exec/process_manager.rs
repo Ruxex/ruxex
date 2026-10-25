@@ -121,8 +121,23 @@ fn deterministic_process_ids_forced_for_tests() -> bool {
     FORCE_DETERMINISTIC_PROCESS_IDS.load(Ordering::Relaxed)
 }
 
-fn should_use_deterministic_process_ids() -> bool {
+pub(super) fn should_use_deterministic_process_ids() -> bool {
     cfg!(test) || deterministic_process_ids_forced_for_tests()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::UnifiedExecProcessManager;
+
+    #[tokio::test]
+    async fn deterministic_process_ids_are_not_reused_after_process_store_removal() {
+        let manager = UnifiedExecProcessManager::default();
+        let first = manager.allocate_process_id().await;
+        let _removed = manager.process_store.lock().await.remove(first);
+        let second = manager.allocate_process_id().await;
+
+        assert_eq!((first, second), (1000, 1001));
+    }
 }
 
 pub(super) fn apply_unified_exec_env(mut env: HashMap<String, String>) -> HashMap<String, String> {
