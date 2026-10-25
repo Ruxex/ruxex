@@ -9,6 +9,7 @@ use crate::protocol::RuxexErrorInfo;
 use crate::protocol::TruncationPolicy;
 use http::StatusCode;
 use ruxex_async_utils::CancelErr;
+use ruxex_async_utils::backoff;
 use ruxex_http_client::HttpError;
 use ruxex_http_client::RetryAfter;
 use ruxex_utils_string::truncate_middle_chars;
@@ -396,6 +397,22 @@ impl RuxexErr {
             #[cfg(target_os = "linux")]
             RuxexErrorDetails::LandlockRuleset(_) | RuxexErrorDetails::LandlockPathFd(_) => false,
         }
+    }
+
+    /// Returns the delay before the given retry attempt, or `None` for a terminal error.
+    ///
+    /// Server-provided retry advice takes precedence over the local delay and exponential
+    /// backoff. Callers enforce their own retry budgets.
+    pub fn retry_delay_for_attempt(&self, retry_count: u64) -> Option<Duration> {
+        if !self.is_retryable() {
+            return None;
+        }
+
+        if let Some(retry_after) = self.retry_after {
+            return Some(retry_after.remaining_delay());
+        }
+
+        Some(self.retry_delay.unwrap_or_else(|| backoff(retry_count)))
     }
 
     pub fn retry_delay(&self) -> Option<Duration> {

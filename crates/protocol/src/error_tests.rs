@@ -71,6 +71,25 @@ fn retryability_preserves_error_details_distinctions() {
 }
 
 #[test]
+fn retry_delay_for_attempt_uses_server_advice_or_backoff_and_rejects_terminal_errors() {
+    let error = RuxexErr::InternalServerError;
+    for (retry_count, expected_millis) in [(1, 180..220), (3, 720..880)] {
+        let delay = error
+            .retry_delay_for_attempt(retry_count)
+            .expect("retryable error");
+        assert!(expected_millis.contains(&delay.as_millis()));
+    }
+
+    let advice = RetryAfter::from_delay(Duration::ZERO).expect("retry advice");
+    let error = RuxexErr::InternalServerError.with_retry_after(advice);
+    assert_eq!(error.retry_delay_for_attempt(3), Some(Duration::ZERO));
+
+    let terminal = RuxexErr::ServerOverloaded.with_retry_after(advice);
+    assert_eq!(terminal.retry_delay_for_attempt(1), None);
+    assert_eq!(terminal.retry_after(), Some(advice));
+}
+
+#[test]
 fn server_overloaded_maps_to_protocol() {
     let err = RuxexErr::ServerOverloaded;
     assert_eq!(
