@@ -2075,6 +2075,7 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 2.0.117",
+ "unicode-xid",
 ]
 
 [[package]]
@@ -9875,6 +9876,7 @@ dependencies = [
  "anyhow",
  "chardetng",
  "chrono",
+ "derive_more 2.1.1",
  "encoding_rs",
  "gix-url",
  "globset",

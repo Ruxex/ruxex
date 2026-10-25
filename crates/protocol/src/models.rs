@@ -873,10 +873,11 @@ pub enum ResponseInputItem {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema, TS)]
+#[derive(derive_more::Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ContentItem {
     InputText {
+        #[debug("{:?} <{} bytes>", &text[..text.floor_char_boundary(/*index*/ 512)], text.len())]
         text: String,
     },
     InputImage {
@@ -2523,6 +2524,25 @@ mod tests {
         ];
 
         assert_eq!(plaintext_agent_message_content(&content), None);
+    }
+
+    #[test]
+    fn debug_output_bounds_user_text_payloads_at_utf8_boundaries() {
+        let text = format!("{}éSECRET", "x".repeat(511));
+        let content = ContentItem::InputText { text: text.clone() };
+        let input = crate::user_input::UserInput::Text {
+            text: text.clone(),
+            text_elements: Vec::new(),
+        };
+
+        for debug in [format!("{content:?}"), format!("{input:?}")] {
+            assert!(
+                debug.contains(&format!("<{} bytes>", text.len())),
+                "{debug}"
+            );
+            assert!(debug.contains(&format!("{:?}", "x".repeat(511))), "{debug}");
+            assert!(!debug.contains("SECRET"), "{debug}");
+        }
     }
 
     #[test]
