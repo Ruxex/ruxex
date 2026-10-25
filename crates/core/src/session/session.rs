@@ -78,7 +78,7 @@ pub(crate) struct Session {
     /// session.
     pub(super) features: ManagedFeatures,
     pub(super) isolation: ruxex_extension_api::SessionIsolation,
-    pub(crate) allowed_tools: Option<Arc<ruxex_extension_api::AllowedTools>>,
+    pub(crate) tool_policy: Arc<ruxex_extension_api::ToolPolicy>,
     pub(super) multi_agent_version: OnceLock<MultiAgentVersion>,
     /// Owns invalidation and serializes refreshes without blocking captured calls.
     pub(super) mcp_refresh: McpRefresh,
@@ -910,7 +910,9 @@ impl Session {
             .get::<ruxex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let allowed_tools = thread_extension_init.get::<ruxex_extension_api::AllowedTools>();
+        let tool_policy = thread_extension_init
+            .get::<ruxex_extension_api::ToolPolicy>()
+            .unwrap_or_else(|| Arc::new(ruxex_extension_api::ToolPolicy::default()));
         let mcp_thread_init = thread_extension_init.clone();
         let thread_extension_data = ruxex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),
@@ -1621,7 +1623,7 @@ impl Session {
                 managed_network_proxy_refresh_lock: Semaphore::new(/*permits*/ 1),
                 features: config.features.clone(),
                 isolation,
-                allowed_tools,
+                tool_policy,
                 multi_agent_version,
                 mcp_refresh: McpRefresh::new(),
                 mcp_tool_approval_metadata: Default::default(),
