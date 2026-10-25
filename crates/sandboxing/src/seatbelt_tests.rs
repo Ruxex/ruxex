@@ -1,6 +1,7 @@
 use super::CreateSeatbeltCommandArgsParams;
 use super::GlobMatch;
 use super::MACOS_PATH_TO_SEATBELT_EXECUTABLE;
+use super::MACOS_RESTRICTED_READ_ONLY_PLATFORM_DEFAULTS;
 use super::MACOS_SEATBELT_BASE_POLICY;
 use super::MacosSeatbeltProfile;
 use super::ProxyPolicyInputs;
@@ -214,6 +215,14 @@ fn base_policy_allows_kmp_registration_shm_read_create_and_unlink() {
     assert!(
         MACOS_SEATBELT_BASE_POLICY.contains(expected),
         "base policy must allow only KMP registration shm read/create/unlink:\n{MACOS_SEATBELT_BASE_POLICY}"
+    );
+}
+
+#[test]
+fn restricted_platform_defaults_do_not_grant_runningboard_ipc() {
+    assert!(
+        !MACOS_RESTRICTED_READ_ONLY_PLATFORM_DEFAULTS
+            .contains("(global-name \"com.apple.runningboard\")")
     );
 }
 
