@@ -2,7 +2,6 @@ use super::session::Session;
 use super::turn_context::TurnContext;
 use crate::context::ContextualUserFragment;
 use ruxex_protocol::error::Result as RuxexResult;
-use ruxex_protocol::error::RuxexErr;
 use ruxex_protocol::protocol::TokenUsage;
 
 pub(super) async fn maybe_record_reminder(
@@ -10,8 +9,8 @@ pub(super) async fn maybe_record_reminder(
     turn_context: &TurnContext,
     window_id: &str,
 ) {
-    let budget = sess.services.agent_control.rollout_budget();
-    let Some(reminder) = budget.pending_reminder(sess.thread_id(), window_id) else {
+    let agent_control = &sess.services.agent_control;
+    let Some(reminder) = agent_control.pending_budget_reminder(sess.thread_id(), window_id) else {
         return;
     };
     let response_item = ContextualUserFragment::into(crate::context::RolloutBudgetContext {
@@ -23,19 +22,13 @@ pub(super) async fn maybe_record_reminder(
         std::slice::from_ref(&response_item),
     )
     .await;
-    budget.mark_reminder_delivered(sess.thread_id(), window_id, reminder);
+    agent_control.mark_budget_reminder_delivered(sess.thread_id(), window_id, reminder);
 }
 
 impl Session {
     pub(crate) fn record_rollout_budget_usage(&self, usage: &TokenUsage) -> RuxexResult<()> {
-        if self
-            .services
+        self.services
             .agent_control
-            .rollout_budget()
-            .record_usage(usage)?
-        {
-            return Err(RuxexErr::SessionBudgetExceeded);
-        }
-        Ok(())
+            .record_rollout_budget_usage(usage)
     }
 }
