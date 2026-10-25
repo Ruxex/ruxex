@@ -61,6 +61,12 @@ pub(crate) async fn file_modified_time(path: &Path) -> io::Result<Option<time::O
         .map(time::OffsetDateTime::from))
 }
 
+pub(crate) fn existing_rollout_with_metadata_sync(
+    path: &Path,
+) -> Option<(PathBuf, std::fs::Metadata)> {
+    path::existing_rollout_with_metadata_sync(path)
+}
+
 /// Opens a rollout line reader that transparently handles plain `.jsonl` and `.jsonl.zst` files.
 ///
 /// If the requested path disappears during a representation transition, this briefly retries
@@ -1253,19 +1259,21 @@ mod path {
     ///
     /// Returning the metadata lets callers inspect the selected file without a second stat.
     pub(super) async fn existing_rollout_with_metadata(path: &Path) -> Option<(PathBuf, Metadata)> {
+        let path = path.to_path_buf();
+        tokio::task::spawn_blocking(move || existing_rollout_with_metadata_sync(&path))
+            .await
+            .ok()
+            .flatten()
+    }
+
+    /// Resolve a regular rollout path and its metadata without leaving the blocking worker.
+    pub(super) fn existing_rollout_with_metadata_sync(path: &Path) -> Option<(PathBuf, Metadata)> {
         let plain_path = plain_rollout_path(path);
-        if let Ok(metadata) = tokio::fs::metadata(plain_path.as_path()).await
-            && metadata.is_file()
-        {
-            return Some((plain_path, metadata));
-        }
-        let compressed_path = compressed_rollout_path(plain_path.as_path());
-        if let Ok(metadata) = tokio::fs::metadata(compressed_path.as_path()).await
-            && metadata.is_file()
-        {
-            return Some((compressed_path, metadata));
-        }
-        None
+        let compressed_path = compressed_rollout_path(&plain_path);
+        [plain_path, compressed_path].into_iter().find_map(|path| {
+            let metadata = std::fs::metadata(&path).ok()?;
+            metadata.is_file().then_some((path, metadata))
+        })
     }
 }
 

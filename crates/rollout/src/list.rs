@@ -125,6 +125,42 @@ const MAX_SCAN_FILES: usize = 10000;
 const HEAD_RECORD_LIMIT: usize = 10;
 const USER_EVENT_SCAN_LIMIT: usize = 200;
 
+/// Run filesystem enumeration on a blocking worker and stop it when the async waiter is dropped.
+async fn run_scan<T, F>(read: F) -> io::Result<T>
+where
+    T: Send + 'static,
+    F: FnOnce(&Scan) -> io::Result<T> + Send + 'static,
+{
+    let (stop, keep_running) = tokio::sync::oneshot::channel::<()>();
+    let result = tokio::task::spawn_blocking(move || {
+        let scan = Scan { stop };
+        scan.check_cancelled()?;
+        let result = read(&scan);
+        scan.check_cancelled()?;
+        result
+    })
+    .await
+    .map_err(io::Error::other)?;
+    drop(keep_running);
+    result
+}
+
+struct Scan {
+    stop: tokio::sync::oneshot::Sender<()>,
+}
+
+impl Scan {
+    fn check_cancelled(&self) -> io::Result<()> {
+        if self.stop.is_closed() {
+            return Err(io::Error::new(
+                io::ErrorKind::Interrupted,
+                "rollout scan cancelled",
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThreadSortKey {
     CreatedAt,
@@ -265,30 +301,6 @@ impl<'a> RolloutFileVisitor for FilesByCreatedAtVisitor<'a> {
         {
             self.items.push(item);
         }
-        ControlFlow::Continue(())
-    }
-}
-
-/// Collects lightweight file candidates (path + id + mtime).
-/// Sorting after mtime happens after all files are collected.
-struct FilesByUpdatedAtVisitor<'a> {
-    candidates: &'a mut Vec<ThreadCandidate>,
-}
-
-impl<'a> RolloutFileVisitor for FilesByUpdatedAtVisitor<'a> {
-    async fn visit(
-        &mut self,
-        _ts: OffsetDateTime,
-        id: Uuid,
-        path: PathBuf,
-        _scanned: usize,
-    ) -> ControlFlow<()> {
-        let updated_at = file_modified_time(&path).await.unwrap_or(None);
-        self.candidates.push(ThreadCandidate {
-            path,
-            id,
-            updated_at,
-        });
         ControlFlow::Continue(())
     }
 }
@@ -816,48 +828,31 @@ pub async fn read_thread_item_from_rollout(path: PathBuf) -> Option<ThreadItem> 
     .await
 }
 
-/// Collects immediate subdirectories of `parent`, parses their (string) names with `parse`,
-/// and returns them sorted descending by the parsed key.
 async fn collect_dirs_desc<T, F>(parent: &Path, parse: F) -> io::Result<Vec<(T, PathBuf)>>
 where
-    T: Ord + Copy,
-    F: Fn(&str) -> Option<T>,
+    T: Ord + Copy + Send + 'static,
+    F: Fn(&str) -> Option<T> + Send + 'static,
 {
-    let mut dir = tokio::fs::read_dir(parent).await?;
-    let mut vec: Vec<(T, PathBuf)> = Vec::new();
-    while let Some(entry) = dir.next_entry().await? {
-        if entry
-            .file_type()
-            .await
-            .map(|ft| ft.is_dir())
-            .unwrap_or(false)
-            && let Some(s) = entry.file_name().to_str()
-            && let Some(v) = parse(s)
-        {
-            vec.push((v, entry.path()));
-        }
-    }
-    vec.sort_by_key(|(v, _)| Reverse(*v));
-    Ok(vec)
+    let parent = parent.to_path_buf();
+    run_scan(move |scan| collect_dirs_desc_sync(&parent, parse, scan)).await
 }
 
-/// Collects files in a directory and parses them with `parse`.
-async fn collect_files<T, F>(parent: &Path, parse: F) -> io::Result<Vec<T>>
+fn collect_files<T, F>(parent: &Path, parse: F, scan: &Scan) -> io::Result<Vec<T>>
 where
-    F: Fn(&str, &Path) -> Option<T>,
+    F: FnMut(&str, &Path) -> Option<T>,
 {
-    let mut dir = tokio::fs::read_dir(parent).await?;
-    let mut collected: Vec<T> = Vec::new();
-    while let Some(entry) = dir.next_entry().await? {
-        if entry
-            .file_type()
-            .await
-            .map(|ft| ft.is_file())
-            .unwrap_or(false)
-            && let Some(s) = entry.file_name().to_str()
-            && let Some(v) = parse(s, &entry.path())
+    scan.check_cancelled()?;
+    let dir = std::fs::read_dir(parent)?;
+    let mut collected = Vec::new();
+    let mut parse = parse;
+    for entry in dir {
+        scan.check_cancelled()?;
+        let entry = entry?;
+        if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false)
+            && let Some(name) = entry.file_name().to_str()
+            && let Some(value) = parse(name, &entry.path())
         {
-            collected.push(v);
+            collected.push(value);
         }
     }
     Ok(collected)
@@ -867,18 +862,68 @@ async fn collect_flat_rollout_files(
     root: &Path,
     scanned_files: &mut usize,
 ) -> io::Result<Vec<(OffsetDateTime, Uuid, PathBuf)>> {
-    let mut dir = tokio::fs::read_dir(root).await?;
+    let root = root.to_path_buf();
+    let mut scanned = *scanned_files;
+    let (result, scanned) = run_scan(move |scan| {
+        let mut files = collect_flat_rollout_files_sync(&root, &mut scanned, scan)?;
+        scan.check_cancelled()?;
+        files.sort_by_key(|(ts, sid, _path)| (Reverse(*ts), Reverse(*sid)));
+        Ok((files, scanned))
+    })
+    .await?;
+    *scanned_files = scanned;
+    Ok(result)
+}
+
+async fn collect_rollout_day_files(
+    day_path: &Path,
+) -> io::Result<Vec<(OffsetDateTime, Uuid, PathBuf)>> {
+    let day_path = day_path.to_path_buf();
+    run_scan(move |scan| collect_rollout_day_files_sync(&day_path, scan)).await
+}
+
+fn collect_dirs_desc_sync<T, F>(
+    parent: &Path,
+    parse: F,
+    scan: &Scan,
+) -> io::Result<Vec<(T, PathBuf)>>
+where
+    T: Ord + Copy,
+    F: Fn(&str) -> Option<T>,
+{
+    scan.check_cancelled()?;
+    let dir = std::fs::read_dir(parent)?;
     let mut collected = Vec::new();
-    while let Some(entry) = dir.next_entry().await? {
+    for entry in dir {
+        scan.check_cancelled()?;
+        let entry = entry?;
+        if entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false)
+            && let Some(name) = entry.file_name().to_str()
+            && let Some(value) = parse(name)
+        {
+            collected.push((value, entry.path()));
+        }
+    }
+    scan.check_cancelled()?;
+    collected.sort_by_key(|(value, _)| Reverse(*value));
+    Ok(collected)
+}
+
+fn collect_flat_rollout_files_sync(
+    root: &Path,
+    scanned_files: &mut usize,
+    scan: &Scan,
+) -> io::Result<Vec<(OffsetDateTime, Uuid, PathBuf)>> {
+    scan.check_cancelled()?;
+    let dir = std::fs::read_dir(root)?;
+    let mut collected = Vec::new();
+    for entry in dir {
+        scan.check_cancelled()?;
+        let entry = entry?;
         if *scanned_files >= MAX_SCAN_FILES {
             break;
         }
-        if !entry
-            .file_type()
-            .await
-            .map(|ft| ft.is_file())
-            .unwrap_or(false)
-        {
+        if !entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
             continue;
         }
         let Some(rollout_file) = compression::RolloutFile::from_path(entry.path()) else {
@@ -894,20 +939,23 @@ async fn collect_flat_rollout_files(
         }
         collected.push((ts, id, rollout_file.into_path()));
     }
-    collected.sort_by_key(|(ts, sid, _path)| (Reverse(*ts), Reverse(*sid)));
     Ok(collected)
 }
 
-async fn collect_rollout_day_files(
+fn collect_rollout_day_files_sync(
     day_path: &Path,
+    scan: &Scan,
 ) -> io::Result<Vec<(OffsetDateTime, Uuid, PathBuf)>> {
-    let mut day_files = collect_files(day_path, |_name_str, path| {
-        let rollout_file = compression::RolloutFile::from_path(path.to_path_buf())?;
-        parse_timestamp_uuid_from_filename(rollout_file.plain_file_name())
-            .map(|(ts, id)| (ts, id, rollout_file.into_path()))
-    })
-    .await?;
-    // Stable ordering within the same second: (timestamp desc, uuid desc)
+    let mut day_files = collect_files(
+        day_path,
+        |_name, path| {
+            let rollout_file = compression::RolloutFile::from_path(path.to_path_buf())?;
+            parse_timestamp_uuid_from_filename(rollout_file.plain_file_name())
+                .map(|(ts, id)| (ts, id, rollout_file.into_path()))
+        },
+        scan,
+    )?;
+    scan.check_cancelled()?;
     day_files.sort_by_key(|(ts, sid, _path)| (Reverse(*ts), Reverse(*sid)));
     Ok(day_files)
 }
@@ -928,55 +976,82 @@ async fn collect_files_by_updated_at(
     root: &Path,
     scanned_files: &mut usize,
 ) -> io::Result<Vec<ThreadCandidate>> {
-    let mut candidates = Vec::new();
-    let mut visitor = FilesByUpdatedAtVisitor {
-        candidates: &mut candidates,
-    };
-    walk_rollout_files(root, scanned_files, &mut visitor).await?;
-
-    Ok(candidates)
+    let root = root.to_path_buf();
+    let mut scanned = *scanned_files;
+    let (result, scanned) = run_scan(move |scan| {
+        let result = (|| {
+            let mut candidates = Vec::new();
+            'outer: for (_, year_path) in
+                collect_dirs_desc_sync(&root, |s| s.parse::<u16>().ok(), scan)?
+            {
+                if scanned >= MAX_SCAN_FILES {
+                    break;
+                }
+                for (_, month_path) in
+                    collect_dirs_desc_sync(&year_path, |s| s.parse::<u8>().ok(), scan)?
+                {
+                    if scanned >= MAX_SCAN_FILES {
+                        break 'outer;
+                    }
+                    for (_, day_path) in
+                        collect_dirs_desc_sync(&month_path, |s| s.parse::<u8>().ok(), scan)?
+                    {
+                        if scanned >= MAX_SCAN_FILES {
+                            break 'outer;
+                        }
+                        for (_, id, path) in collect_rollout_day_files_sync(&day_path, scan)? {
+                            scan.check_cancelled()?;
+                            scanned += 1;
+                            if scanned > MAX_SCAN_FILES {
+                                break 'outer;
+                            }
+                            candidates.push(thread_candidate(path, id));
+                        }
+                    }
+                }
+            }
+            Ok(candidates)
+        })();
+        Ok((result, scanned))
+    })
+    .await?;
+    *scanned_files = scanned;
+    result
 }
 
 async fn collect_flat_files_by_updated_at(
     root: &Path,
     scanned_files: &mut usize,
 ) -> io::Result<Vec<ThreadCandidate>> {
-    let mut candidates = Vec::new();
-    let mut dir = tokio::fs::read_dir(root).await?;
-    while let Some(entry) = dir.next_entry().await? {
-        if *scanned_files >= MAX_SCAN_FILES {
-            break;
-        }
-        if !entry
-            .file_type()
-            .await
-            .map(|ft| ft.is_file())
-            .unwrap_or(false)
-        {
-            continue;
-        }
-        let Some(rollout_file) = compression::RolloutFile::from_path(entry.path()) else {
-            continue;
-        };
-        let Some((_ts, id)) = parse_timestamp_uuid_from_filename(rollout_file.plain_file_name())
-        else {
-            continue;
-        };
-        *scanned_files += 1;
-        if *scanned_files > MAX_SCAN_FILES {
-            break;
-        }
-        let updated_at = file_modified_time(rollout_file.path())
-            .await
-            .unwrap_or(None);
-        candidates.push(ThreadCandidate {
-            path: rollout_file.into_path(),
-            id,
-            updated_at,
+    let root = root.to_path_buf();
+    let mut scanned = *scanned_files;
+    let (result, scanned) = run_scan(move |scan| {
+        let result = collect_flat_rollout_files_sync(&root, &mut scanned, scan).and_then(|files| {
+            files
+                .into_iter()
+                .map(|(_, id, path)| {
+                    scan.check_cancelled()?;
+                    Ok(thread_candidate(path, id))
+                })
+                .collect()
         });
-    }
+        Ok((result, scanned))
+    })
+    .await?;
+    *scanned_files = scanned;
+    result
+}
 
-    Ok(candidates)
+fn thread_candidate(path: PathBuf, id: Uuid) -> ThreadCandidate {
+    let updated_at = compression::existing_rollout_with_metadata_sync(&path)
+        .and_then(|(_, metadata)| metadata.modified().ok())
+        .map(OffsetDateTime::from)
+        .and_then(truncate_to_millis);
+    ThreadCandidate {
+        path,
+        id,
+        updated_at,
+    }
 }
 
 async fn walk_rollout_files(
@@ -1548,3 +1623,7 @@ pub fn rollout_date_parts(file_name: &OsStr) -> Option<(String, String, String)>
     let day = date.get(8..10)?.to_string();
     Some((year, month, day))
 }
+
+#[cfg(test)]
+#[path = "list_files_tests.rs"]
+mod list_files_tests;
