@@ -388,6 +388,7 @@ async fn temporary_recap_threads_disable_remote_mcp_servers() -> Result<()> {
 
     let config = app.chat_widget.config_ref();
     let options = crate::temporary_structured_request::TemporaryStructuredThreadOptions {
+        thread_source: ruxex_app_server_protocol::ThreadSource::Feature("system".to_string()),
         model: app.chat_widget.current_model().to_string(),
         cwd: config.cwd.display().to_string(),
         active_permission_profile: config

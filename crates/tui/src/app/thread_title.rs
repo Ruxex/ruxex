@@ -15,6 +15,7 @@ use crate::temporary_structured_request::start_temporary_thread;
 use crate::temporary_structured_request::unsubscribe_temporary_thread;
 use ruxex_app_server_protocol::ServerNotification;
 use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSource;
 use ruxex_app_server_protocol::UserInput;
 use ruxex_protocol::ThreadId;
 use ruxex_protocol::model_types::ReasoningEffort;
@@ -88,6 +89,7 @@ impl App {
         let effort = None;
         let config = self.chat_widget.config_ref();
         let options = TemporaryStructuredThreadOptions {
+            thread_source: ThreadSource::Feature("thread_title".to_string()),
             model,
             cwd: config.cwd.display().to_string(),
             active_permission_profile: config

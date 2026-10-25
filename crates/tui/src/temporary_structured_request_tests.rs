@@ -6,6 +6,7 @@ use crate::test_support::PathBufExt;
 use ruxex_app_server_protocol::ItemCompletedNotification;
 use ruxex_app_server_protocol::ServerNotification;
 use ruxex_app_server_protocol::ThreadItem;
+use ruxex_app_server_protocol::ThreadSource;
 use ruxex_app_server_protocol::Turn;
 use ruxex_app_server_protocol::TurnCompletedNotification;
 use ruxex_app_server_protocol::TurnStatus;
@@ -73,6 +74,7 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
     let response = start_temporary_thread(
         &app_server.request_handle(),
         TemporaryStructuredThreadOptions {
+            thread_source: ThreadSource::Feature("thread_title".to_string()),
             model: "example-model-2".to_string(),
             cwd: config.cwd.display().to_string(),
             active_permission_profile: Some("title-restricted".to_string()),
@@ -80,6 +82,11 @@ async fn preserves_custom_permissions_and_disables_required_mcp_servers() -> col
         },
     )
     .await?;
+
+    assert_eq!(
+        response.thread.thread_source,
+        Some(ThreadSource::Feature("thread_title".to_string()))
+    );
 
     assert_eq!(
         (

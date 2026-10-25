@@ -17,6 +17,7 @@ use crate::temporary_structured_request::TemporaryStructuredThreadOptions;
 use crate::temporary_structured_request::run_temporary_structured_turn;
 use crate::temporary_structured_request::start_temporary_thread;
 use crate::temporary_structured_request::unsubscribe_temporary_thread;
+use ruxex_app_server_protocol::ThreadSource;
 use ruxex_app_server_protocol::Turn;
 use ruxex_app_server_protocol::TurnStatus;
 use ruxex_context_fragments::ContextualUserFragment;
@@ -222,6 +223,7 @@ impl App {
             config.cwd.display().to_string()
         };
         let options = TemporaryStructuredThreadOptions {
+            thread_source: ThreadSource::Feature("system".to_string()),
             model,
             cwd,
             active_permission_profile: config
