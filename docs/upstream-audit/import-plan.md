@@ -13,8 +13,8 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | Decision | Count |
 | --- | ---: |
-| `Import proactively` | 909 |
-| `Deferred` | 338 |
+| `Import proactively` | 910 |
+| `Deferred` | 337 |
 | `User review required` | 30 |
 | `Do not import` | 350 |
 
@@ -22,7 +22,7 @@ This is a generated intermediate plan reconstructed from the per-UTC-date audit 
 
 | UTC batch | Commits | Import | Deferred | Review | Do not import |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2026-09-19–2026-09-23 | 341 | 164 | 115 | 0 | 62 |
+| 2026-09-19–2026-09-23 | 341 | 165 | 114 | 0 | 62 |
 | 2026-09-24–2026-09-30 | 352 | 217 | 56 | 3 | 77 |
 | 2026-10-01–2026-10-07 | 335 | 173 | 55 | 11 | 96 |
 | 2026-10-08–2026-10-14 | 256 | 158 | 44 | 4 | 50 |
@@ -42,7 +42,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 
 | Date | Upstream commit | Subject | Decision |
 | --- | --- | --- | --- |
-| 2026-09-19 | [`05de93520542`](./2026-09-19.md#05de93520542d5d1a3f3af76ad446607a12d98fd) | Expose declared onboarding skills in plugin details (#46544) | `Deferred` |
+| 2026-09-19 | [`05de93520542`](./2026-09-19.md#05de93520542d5d1a3f3af76ad446607a12d98fd) | Expose declared onboarding skills in plugin details (#46544) | `Import proactively` |
 | 2026-09-19 | [`1537497e52f3`](./2026-09-19.md#1537497e52f3284253884472c3bd796ade5fc02b) | Allow compatible feature overrides when starting the shared daemon (#46529) | `Deferred` |
 | 2026-09-19 | [`3bb0a530d1cd`](./2026-09-19.md#3bb0a530d1cdabe1bbd35b3f44d72f851f0a93f4) | Add system proxy fallback for login and startup requests (#46562) | `Import proactively` |
 | 2026-09-19 | [`78d4d983d338`](./2026-09-19.md#78d4d983d3380fa92aa17fbe9e4f9b737b6a5223) | Gate reasoning effort updates on explicit model support (#46530) | `Import proactively` |
