@@ -41,6 +41,7 @@ use tracing::warn;
 mod backfill;
 mod goals;
 mod logs;
+mod logs_maintenance;
 mod projects;
 mod queued_items;
 mod recovery;
@@ -219,12 +220,7 @@ impl StateRuntime {
             thread_updated_at_millis: Arc::new(AtomicI64::new(thread_updated_at_millis)),
             thread_recency_at_millis: Arc::new(AtomicI64::new(thread_recency_at_millis)),
         });
-        if let Err(err) = runtime.run_logs_startup_maintenance().await {
-            warn!(
-                "failed to run startup maintenance for logs db at {}: {err}",
-                logs_path.display(),
-            );
-        }
+        runtime.start_periodic_logs_maintenance(std::time::Duration::from_secs(30 * 60));
         Ok(runtime)
     }
 
