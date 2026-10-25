@@ -23,6 +23,7 @@ ruxex-protocol = { workspace = true }
 ruxex-state = { workspace = true }
 ruxex-utils-absolute-path = { workspace = true }
 ruxex-utils-path = { workspace = true }
+memchr = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

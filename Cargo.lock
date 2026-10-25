@@ -10158,6 +10158,7 @@ version = "0.4.9"
 dependencies = [
  "anyhow",
  "chrono",
+ "memchr",
  "pretty_assertions",
  "regex",
  "ruxex-file-search",
