@@ -748,6 +748,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`bb054a2b03f1`](./2026-09-21.md#bb054a2b03f15787dcc2f9bd8ebfde713bc5b695) | Keep quota warnings visible in the TUI (#46912) | `Import proactively` |
 | 2026-09-21 | [`bf91058b81c5`](./2026-09-21.md#bf91058b81c50cc8488a26b67199493b5a6d3389) | Lowercase the retry hint for conversations open in another app (#47112) | `Import proactively` |
 | 2026-09-21 | [`c37b7307db57`](./2026-09-21.md#c37b7307db57ab8510af14426f739a23e8186679) | Format analytics credit usage with consistent decimal precision (#47086) | `Do not import` |
+| 2026-09-21 | [`09bb3d694223`](./2026-09-21.md#09bb3d694223ef8a11b1c3ff6e87042dc0c5dbbb) | Disable unused default dependency features (#47088) | `Implemented` |
 | 2026-09-21 | [`e8cd975a55a1`](./2026-09-21.md#e8cd975a55a1e28955195f1f69a9cb81a5e4898d) | Keep TUI hints immediately above the composer (#47096) | `Deferred` |
 | 2026-09-21 | [`ee2149a9b42f`](./2026-09-21.md#ee2149a9b42ff487910514d1236349efcd00a641) | Preserve transcript position when opening settings pickers (#46910) | `Import proactively` |
 | 2026-09-21 | [`f07aaf920b14`](./2026-09-21.md#f07aaf920b14d7a746e435add34b8bbd37da5da6) | Highlight selected newlines in the transcript view (#47068) | `Deferred` |
