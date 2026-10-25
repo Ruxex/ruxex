@@ -142,8 +142,11 @@ pub fn is_first_party_originator(originator_value: &str) -> bool {
 }
 
 pub fn get_user_agent() -> String {
+    // OS discovery can spawn subprocesses on Linux. Reuse it across requests,
+    // while continuing to read the mutable originator and suffix below.
+    static OS_INFO: LazyLock<os_info::Info> = LazyLock::new(os_info::get);
     let build_version = env!("CARGO_PKG_VERSION");
-    let os_info = os_info::get();
+    let os_info = &*OS_INFO;
     let originator = originator();
     let prefix = format!(
         "{}/{build_version} ({} {}; {}) {}",
@@ -303,6 +306,73 @@ pub fn default_headers() -> HeaderMap {
         headers.insert(RESIDENCY_HEADER_NAME, value);
     }
     headers
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn os_discovery_is_cached_without_freezing_user_agent_overrides() {
+        use std::os::unix::fs::PermissionsExt;
+
+        const PROBE_DIR: &str = "RUXEX_TEST_USER_AGENT_PROBE_DIR";
+        if std::env::var_os(PROBE_DIR).is_some() {
+            std::thread::scope(|scope| {
+                for _ in 0..8 {
+                    scope.spawn(|| {
+                        for _ in 0..4 {
+                            assert!(get_user_agent().contains("Ubuntu 99.7.3"));
+                        }
+                    });
+                }
+            });
+            set_default_originator("cached-os-test".to_string()).expect("set originator");
+            *USER_AGENT_SUFFIX.lock().expect("suffix lock") = Some("updated-client".to_string());
+            let user_agent = get_user_agent();
+            assert!(user_agent.starts_with("cached-os-test/"));
+            assert!(user_agent.ends_with(" (updated-client)"));
+            return;
+        }
+
+        let temporary = tempfile::tempdir().expect("probe directory");
+        for (program, output) in [
+            ("lsb_release", "Distributor ID: Ubuntu\nRelease: 99.7.3\n"),
+            ("getconf", "64\n"),
+        ] {
+            let script = temporary.path().join(program);
+            std::fs::write(
+                &script,
+                format!(
+                    "#!/bin/sh\nprintf '{program}\\n' >> \"${PROBE_DIR}/calls\"\nprintf '{output}'\\n"
+                ),
+            )
+            .expect("write probe");
+            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
+                .expect("make probe executable");
+        }
+        let output = std::process::Command::new(std::env::current_exe().expect("test executable"))
+            .args([
+                "--exact",
+                concat!(
+                    module_path!(),
+                    "::os_discovery_is_cached_without_freezing_user_agent_overrides"
+                )
+                .trim_start_matches("ruxex_login::"),
+                "--nocapture",
+            ])
+            .env(PROBE_DIR, temporary.path())
+            .env("PATH", temporary.path())
+            .env_remove(INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
+            .output()
+            .expect("run isolated user-agent test");
+        assert!(output.status.success(), "{output:?}");
+        let calls = std::fs::read_to_string(temporary.path().join("calls")).expect("probe calls");
+        let mut calls = calls.lines().collect::<Vec<_>>();
+        calls.sort_unstable();
+        assert_eq!(calls, vec!["getconf", "lsb_release"]);
+    }
 }
 
 fn is_sandboxed() -> bool {
