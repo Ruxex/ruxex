@@ -16,6 +16,7 @@ use std::os::unix::fs::OpenOptionsExt;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+mod blocking_reader;
 mod error_metrics;
 mod read_metrics;
 
@@ -295,9 +296,42 @@ impl RolloutLineReader {
         }
         result
     }
+
+    /// Scans lines on one blocking worker and stops at the first mapped result.
+    ///
+    /// Plain rollouts retain the async reader path. Compressed rollouts keep the
+    /// blocking reader and its metrics on one worker instead of scheduling one
+    /// blocking task per line.
+    pub(crate) async fn find_map<T: Send + 'static>(
+        mut self,
+        mut find: impl FnMut(&str) -> Option<T> + Send + 'static,
+    ) -> io::Result<Option<T>> {
+        let RolloutLineReaderInner::Blocking(Some(reader)) = self.inner else {
+            while let Some(line) = self.next_line().await? {
+                if let Some(found) = find(&line) {
+                    return Ok(Some(found));
+                }
+            }
+            return Ok(None);
+        };
+
+        blocking_reader::scan_lines(reader, self.metrics, move |lines| {
+            for line in lines {
+                if let Some(found) = find(&line?) {
+                    return Ok(Some(found));
+                }
+            }
+            Ok(None)
+        })
+        .await
+    }
 }
 
 type BlockingLineReader = std::io::Lines<std::io::BufReader<Box<dyn Read + Send>>>;
+
+#[cfg(test)]
+#[path = "compression/blocking_reader_tests.rs"]
+mod blocking_reader_tests;
 
 mod worker {
     use std::ffi::OsStr;
