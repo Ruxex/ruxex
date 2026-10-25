@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 use crate::Cli;
 use crate::app_server_session::AppServerSession;
+use crate::app_server_session::ThreadParamsMode;
 use crate::legacy_core::config::ConfigBuilder;
 use crate::legacy_core::config::ConfigOverrides;
 use crate::legacy_core::config::resolve_profile_v2_config_path;
@@ -244,6 +245,26 @@ pub(super) async fn start_app_server_for_session_command(
         launch_loader_overrides.user_config_profile = Some(profile_v2.clone());
     }
 
+    if let Some(endpoint) = explicit_remote_endpoint {
+        // Validate the caller's configuration, but leave authentication and execution
+        // to the selected server. In particular, do not initialize the caller's
+        // workload identity or local execution environment for a remote command.
+        launch_loader_overrides.ignore_login_requirements = true;
+        ConfigBuilder::default()
+            .ruxex_home(ruxex_home)
+            .cli_overrides(cli_kv_overrides)
+            .loader_overrides(launch_loader_overrides)
+            .strict_config(strict_config)
+            .build()
+            .await
+            .wrap_err("failed to load config.toml")?;
+        return Ok(AppServerSession::new(
+            super::connect_remote_app_server(endpoint).await?,
+            ThreadParamsMode::Remote,
+        )
+        .with_remote_cwd_override(cli.cwd.clone()));
+    }
+
     let reuse_implicit_local_daemon = !cli.no_daemon
         && super::daemon_startup::config_exclusion(
             &cli_kv_overrides,
@@ -333,4 +354,39 @@ pub(super) async fn start_app_server_for_session_command(
         AppServerSession::new(app_server, app_server_target.thread_params_mode())
             .with_remote_cwd_override(remote_cwd_override),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+    use ruxex_arg0::Arg0DispatchPaths;
+    use tempfile::TempDir;
+
+    #[tokio::test]
+    async fn remote_session_command_validates_config_before_connecting() -> color_eyre::Result<()> {
+        let temp_dir = TempDir::new()?;
+        std::fs::write(temp_dir.path().join("config.toml"), "model = [\n")?;
+        let error = start_app_server_for_session_command(
+            SessionArchiveCommandOptions {
+                cli: Cli::parse_from(["ruxex"]),
+                arg0_paths: Arg0DispatchPaths::default(),
+                explicit_remote_endpoint: Some(RemoteAppServerEndpoint::WebSocket {
+                    websocket_url: "ws://127.0.0.1:1".to_string(),
+                    auth_token: None,
+                }),
+                provider_factory: None,
+            },
+            temp_dir.path().to_path_buf(),
+        )
+        .await;
+        let error = error
+            .err()
+            .expect("invalid config must be rejected before remote connection");
+        assert!(
+            error.to_string().contains("failed to load config.toml"),
+            "unexpected error: {error:#}"
+        );
+        Ok(())
+    }
 }
