@@ -462,7 +462,7 @@ pub fn close_inherited_fds_except(preserved_fds: &[RawFd]) {
 
 // Other Unix platforms keep their existing fd cleanup.
 #[cfg(all(unix, not(target_os = "macos")))]
-pub(crate) fn close_inherited_fds_except(preserved_fds: &[RawFd]) {
+pub fn close_inherited_fds_except(preserved_fds: &[RawFd]) {
     if let Ok(dir) = std::fs::read_dir("/dev/fd") {
         let mut fds = Vec::new();
         for entry in dir {
