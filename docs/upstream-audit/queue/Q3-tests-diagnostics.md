@@ -13,4 +13,4 @@ Ruxex targets.
 
 | Upstream commit(s) | Ruxex commit | Tests/checks | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `5e96aabd68dc6194f5ad928cb7f5d0bc71b72df9` — UTF-8 token truncation boundaries | Pending | `ruxex-utils-string` focused nextest | In progress | Ruxex already had the behavior; retain the upstream regression coverage as a Ruxex utility test |
+| `5e96aabd68dc6194f5ad928cb7f5d0bc71b72df9` — UTF-8 token truncation boundaries | `f52d01b44` | `ruxex-utils-string` focused nextest; 19/19 passed | Implemented | Ruxex already had the behavior; retained the upstream regression coverage as a Ruxex utility test |
