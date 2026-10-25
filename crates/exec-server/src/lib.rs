@@ -11,7 +11,7 @@ mod environment_bootstrap;
 mod environment_config;
 mod environment_provider;
 mod environment_toml;
-mod file_read;
+mod file_handle;
 mod fs_helper;
 mod fs_helper_main;
 mod fs_sandbox;
