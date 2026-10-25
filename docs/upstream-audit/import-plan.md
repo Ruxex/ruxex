@@ -826,7 +826,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-30 | [`596ae94fb00f`](./2026-09-30.md#596ae94fb00f8325d6bf835a9ebdc90baab4ad33) | Classify SQLite corruption using typed error codes (#49710) | `Import proactively` |
 | 2026-09-30 | [`60947e234156`](./2026-09-30.md#60947e234156ac12bdb7fba2477d3965f166bd34) | Add account security setup reminders to the TUI (#49715) | `Import proactively` |
 | 2026-09-30 | [`b588812e8cc8`](./2026-09-30.md#b588812e8cc82f88a3141ab6bcdf654cbb18361d) | Use server-authoritative permissions in the TUI (#49472) | `Import proactively` |
-| 2026-09-30 | [`d1d0e8955857`](./2026-09-30.md#d1d0e89558578f622b93702686963e67948fd84c) | Infer Windows UNC paths with forward and mixed slashes (#49424) | `Import proactively` |
+| 2026-09-30 | [`d1d0e8955857`](./2026-09-30.md#d1d0e89558578f622b93702686963e67948fd84c) | Infer Windows UNC paths with forward and mixed slashes (#49424) | `Do not import` |
 | 2026-10-01 | [`1182834d1325`](./2026-10-01.md#1182834d1325c14878349ff8ca85d4d696a70ef7) | Remove browser-open success messages from the TUI (#49816) | `Import proactively` |
 | 2026-10-01 | [`1cc9917508ab`](./2026-10-01.md#1cc9917508ab791e0bf996e6ada8d91eb3edfe33) | Keep transcript Find expansion scoped to the current match (#50045) | `Import proactively` |
 | 2026-10-01 | [`2fde968de8bc`](./2026-10-01.md#2fde968de8bc9949f79d2f5565422f865b8f0fcc) | Preserve local launch permissions across TUI sessions and reconnects (#49809) | `Import proactively` |
