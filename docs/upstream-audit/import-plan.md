@@ -500,7 +500,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`5aa4939be4ed`](./2026-09-21.md#5aa4939be4ed6ae20f843a8f1b273bf6fb8ac23f) | Support model-catalog overrides for Code Mode tool messages (#47118) | `Deferred` |
 | 2026-09-21 | [`69759baefd3b`](./2026-09-21.md#69759baefd3ba349d430316a6ad91d2d0f629add) | Preserve foreign working directories in extension tool environments (#47129) | `Import proactively` |
 | 2026-09-21 | [`afe4249cfe6b`](./2026-09-21.md#afe4249cfe6bdf218ce8807a670fad122d2b60ed) | Restrict Unix local MCP servers to stdio descriptors (#47094) | `Implemented` |
-| 2026-09-21 | [`dd6eff395494`](./2026-09-21.md#dd6eff3954949d074ca45ee80da89499b955bf8e) | Share stored JSON payloads across code mode cells with `Arc` (#47036) | `Import proactively` |
+| 2026-09-21 | [`dd6eff395494`](./2026-09-21.md#dd6eff3954949d074ca45ee80da89499b955bf8e) | Share stored JSON payloads across code mode cells with `Arc` (#47036) | `Implemented` |
 | 2026-09-21 | [`ebc05da3bdb7`](./2026-09-21.md#ebc05da3bdb76f25861e7cb418bd06d28cadc609) | Decouple tool restrictions from session identity with `ToolPolicy` (#46999) | `Import proactively` |
 | 2026-09-22 | [`8edfca892d46`](./2026-09-22.md#8edfca892d46624a114a1e9a7095a8ed4e334232) | Reuse cloud skill catalogs across turns until invalidated (#47350) | `Deferred` |
 | 2026-09-22 | [`94174e44cbc5`](./2026-09-22.md#94174e44cbc54cece45f6052328ca0c2cd7a8a2a) | Preserve MCP request trace context across transport workers (#47212) | `Import proactively` |
