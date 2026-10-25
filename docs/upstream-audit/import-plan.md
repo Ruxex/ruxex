@@ -1169,7 +1169,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-20 | [`88ef37c64974`](./2026-09-20.md#88ef37c64974e1209411f6d449b0db942b3eb731) | Identify local background servers in `/status` (#46905) | `Deferred` |
 | 2026-09-21 | [`0ad18769ad8d`](./2026-09-21.md#0ad18769ad8dfb7a6cf16b1bdd26b6e5f8773f64) | Avoid exposing config values in `codex doctor` errors (#46962) | `Import proactively` |
 | 2026-09-21 | [`0e69d3bd9b12`](./2026-09-21.md#0e69d3bd9b1263dbe7a0c564e67fd4a7656dc1a5) | Batch message-board subscriber reads into one SQLite result (#47050) | `Do not import` |
-| 2026-09-21 | [`3627bb91b2f1`](./2026-09-21.md#3627bb91b2f14f47c1a415412ec2f1e132e50647) | Avoid building a host SQLite driver for SQLx macros (#47084) | `Import proactively` |
+| 2026-09-21 | [`3627bb91b2f1`](./2026-09-21.md#3627bb91b2f14f47c1a415412ec2f1e132e50647) | Avoid building a host SQLite driver for SQLx macros (#47084) | `Implemented` |
 | 2026-09-21 | [`4d160ea71ddd`](./2026-09-21.md#4d160ea71dddc8e3b7e780b1aa159e79baaa535f) | Index channel posts by timestamp for latest-message lookups (#46979) | `Import proactively` |
 | 2026-09-21 | [`51d221a9b77a`](./2026-09-21.md#51d221a9b77ad4810608f148e90231f0e48b5c82) | Stop redundant message-board reads when limits reach one (#47064) | `Do not import` |
 | 2026-09-21 | [`62ea6d41e85d`](./2026-09-21.md#62ea6d41e85d0c75181f2794d0f2dc40e55fce3c) | Serialize environment updates and cancel removed pending attachments (#47077) | `Implemented` |
