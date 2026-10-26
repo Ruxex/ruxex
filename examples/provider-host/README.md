@@ -24,8 +24,12 @@ as modifiers.
 
 ```text
 [[example:basic]]
+[[example:basic:stream]]
+[[example:basic:slow]]
 [[example:tool]]
 [[example:command]]
+[[example:command:ls]]
+[[example:command:sleep]]
 [[example:command:slow]]
 [[example:mcp]]
 [[example:multi]]
@@ -47,15 +51,21 @@ for scenario keywords. The current keyword priority is:
 
 The `slow` and `delay` keywords add delays to the response stream. The
 `stream` keyword splits the fixed basic response into multiple text deltas.
+`[[example:basic:slow]]` combines both behaviors. `[[example:command:slow]]`
+is retained as an alias for `[[example:command:sleep]]`.
 
 ### Scenario behavior
 
-- `basic` returns one fixed English response.
+- `basic` returns one fixed English response. The `stream` variant emits the
+  response in multiple text deltas, while the `slow` variant emits those same
+  deltas with delays between them.
 - `tool` returns a fixed `example_tool` function call. After the tool result
   is included in the next request, it returns a fixed English completion.
 - `command` returns a fixed `exec_command` call. The command is defined by
-  the provider and is never generated from user input. The `slow` modifier
-  uses a command that sleeps before printing its fixed output.
+  the provider and is never generated from user input. `command:ls` runs `ls`.
+  `command:sleep` runs `echo`, `sleep 3`, and `echo` in sequence so command
+  output can be observed before and after the delay. The `slow` marker is a
+  compatibility alias for `command:sleep` and also delays provider events.
 - `mcp` returns a fixed `example/echo` call when the fixture MCP tool is
   available. Otherwise it returns a fixed unavailable message.
 - `multi` returns a different fixed English response for each of three turns.

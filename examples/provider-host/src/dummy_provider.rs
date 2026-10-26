@@ -34,7 +34,9 @@ const FIXED_MCP_ANSWER: &str =
     "The MCP tool result was received. This is a fixed MCP integration response.";
 const FIXED_MCP_UNAVAILABLE: &str = "The Example Provider MCP tool is unavailable.";
 const FIXED_COMMAND: &str = "printf 'example-provider command output\\n'";
-const FIXED_SLOW_COMMAND: &str = "sleep 3; printf 'example-provider delayed command output\\n'";
+const FIXED_LS_COMMAND: &str = "ls";
+const FIXED_SLEEP_COMMAND: &str =
+    "echo 'example-provider before sleep'; sleep 3; echo 'example-provider after sleep'";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DummyScenario {
@@ -49,8 +51,16 @@ enum DummyScenario {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DummyCommandVariant {
+    Fixed,
+    List,
+    Sleep,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct ScenarioSelection {
     scenario: DummyScenario,
+    command_variant: DummyCommandVariant,
     slow: bool,
     stream: bool,
     multi_turn: usize,
@@ -339,6 +349,7 @@ fn scenario_chat_stream(
         DummyScenario::Command => {
             events.push(Ok(ProviderChatEvent::OutputItemDone(example_command_call(
                 call_id,
+                selection.command_variant,
                 selection.slow,
             ))));
             return complete_stream(events, response_id, false, selection.slow);
@@ -474,15 +485,27 @@ fn example_tool_call(call_id: String) -> ResponseItem {
     }
 }
 
-fn example_command_call(call_id: String, slow: bool) -> ResponseItem {
+fn example_command_call(
+    call_id: String,
+    command_variant: DummyCommandVariant,
+    slow: bool,
+) -> ResponseItem {
+    let command = match command_variant {
+        DummyCommandVariant::Fixed => {
+            if slow {
+                FIXED_SLEEP_COMMAND
+            } else {
+                FIXED_COMMAND
+            }
+        }
+        DummyCommandVariant::List => FIXED_LS_COMMAND,
+        DummyCommandVariant::Sleep => FIXED_SLEEP_COMMAND,
+    };
     ResponseItem::FunctionCall {
         id: None,
         name: "exec_command".to_string(),
         namespace: None,
-        arguments: serde_json::json!({
-            "cmd": if slow { FIXED_SLOW_COMMAND } else { FIXED_COMMAND }
-        })
-        .to_string(),
+        arguments: serde_json::json!({"cmd": command}).to_string(),
         encrypted_function_args: None,
         call_id,
         internal_chat_message_metadata_passthrough: None,
@@ -512,6 +535,7 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
     if let Some(scenario) = continuation_scenario(input) {
         return Ok(ScenarioSelection {
             scenario,
+            command_variant: DummyCommandVariant::Fixed,
             slow: false,
             stream: false,
             multi_turn: 1,
@@ -555,11 +579,24 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
     let multi_turn = (scenario == DummyScenario::Multi)
         .then(|| multi_turn_count(input))
         .unwrap_or(1);
+    let slow = lower.contains("slow") || lower.contains("delay");
+    let command_variant = if scenario == DummyScenario::Command {
+        if lower.split_whitespace().any(|word| word == "ls") {
+            DummyCommandVariant::List
+        } else if lower.contains("sleep") || slow {
+            DummyCommandVariant::Sleep
+        } else {
+            DummyCommandVariant::Fixed
+        }
+    } else {
+        DummyCommandVariant::Fixed
+    };
 
     Ok(ScenarioSelection {
         scenario,
-        slow: lower.contains("slow") || lower.contains("delay"),
-        stream: lower.contains("stream"),
+        command_variant,
+        slow,
+        stream: lower.contains("stream") || (scenario == DummyScenario::Basic && slow),
         multi_turn,
         continuation: false,
     })
@@ -589,19 +626,30 @@ fn explicit_scenario(text: &str) -> Option<ProviderResult<ScenarioSelection>> {
             )));
         }
     };
-    let invalid_modifier = parts
-        .iter()
-        .skip(1)
-        .any(|modifier| !matches!(*modifier, "slow" | "stream"));
+    let invalid_modifier = parts.iter().skip(1).any(|modifier| {
+        let valid = match scenario {
+            DummyScenario::Command => matches!(*modifier, "slow" | "ls" | "sleep"),
+            _ => matches!(*modifier, "slow" | "stream"),
+        };
+        !valid
+    });
     if invalid_modifier || parts.len() > 2 {
         return Some(Err(ProviderError::InvalidRequest(
             "unsupported example scenario modifier".to_string(),
         )));
     }
+    let modifier = parts.get(1).copied();
+    let slow = modifier == Some("slow");
+    let command_variant = match (scenario, modifier) {
+        (DummyScenario::Command, Some("ls")) => DummyCommandVariant::List,
+        (DummyScenario::Command, Some("sleep" | "slow")) => DummyCommandVariant::Sleep,
+        _ => DummyCommandVariant::Fixed,
+    };
     Some(Ok(ScenarioSelection {
         scenario,
-        slow: parts.contains(&"slow"),
-        stream: parts.contains(&"stream"),
+        command_variant,
+        slow,
+        stream: parts.contains(&"stream") || (scenario == DummyScenario::Basic && slow),
         multi_turn: 1,
         continuation: false,
     }))
@@ -752,13 +800,89 @@ mod tests {
         .expect("valid user message")
     }
 
-    #[test]
-    fn selects_explicit_command_slow_scenario() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn selects_explicit_command_slow_scenario() {
         let selection = select_scenario(&[user_message("[[example:command:slow]]")])
             .expect("scenario should be valid");
 
         assert_eq!(selection.scenario, DummyScenario::Command);
         assert!(selection.slow);
+
+        let events = scenario_chat_stream(selection, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                ..
+            })) if name == "exec_command"
+                && arguments.contains("echo 'example-provider before sleep'")
+                && arguments.contains("sleep 3")
+                && arguments.contains("echo 'example-provider after sleep'")
+        )));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn slow_basic_scenario_streams_the_fixed_response() {
+        let selection = select_scenario(&[user_message("[[example:basic:slow]]")])
+            .expect("scenario should be valid");
+
+        assert!(selection.slow);
+        assert!(selection.stream);
+
+        let events = scenario_chat_stream(selection, true)
+            .collect::<Vec<_>>()
+            .await;
+        let deltas = events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputTextDelta(text)) => Some(text.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            deltas,
+            vec!["This is a ", "fixed response from the ", "dummy provider."]
+        );
+    }
+
+    #[test]
+    fn ls_command_scenario_emits_ls() {
+        let selection = select_scenario(&[user_message("[[example:command:ls]]")])
+            .expect("scenario should be valid");
+        let events =
+            futures::executor::block_on(scenario_chat_stream(selection, true).collect::<Vec<_>>());
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                ..
+            })) if name == "exec_command" && arguments.contains("\"cmd\":\"ls\"")
+        )));
+    }
+
+    #[test]
+    fn sleep_command_scenario_emits_echo_sleep_echo() {
+        let selection = select_scenario(&[user_message("[[example:command:sleep]]")])
+            .expect("scenario should be valid");
+        let events =
+            futures::executor::block_on(scenario_chat_stream(selection, true).collect::<Vec<_>>());
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                ..
+            })) if name == "exec_command"
+                && arguments.contains("echo 'example-provider before sleep'")
+                && arguments.contains("sleep 3")
+                && arguments.contains("echo 'example-provider after sleep'")
+        )));
     }
 
     #[test]
@@ -854,6 +978,7 @@ mod tests {
             scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Tool,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
@@ -890,6 +1015,7 @@ mod tests {
             scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Command,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
@@ -917,6 +1043,7 @@ mod tests {
             text_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Mcp,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
@@ -982,6 +1109,7 @@ mod tests {
             scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Basic,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
@@ -1041,6 +1169,7 @@ mod tests {
             scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Basic,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: true,
                     multi_turn: 1,
@@ -1108,6 +1237,7 @@ mod tests {
             scenario_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Tool,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
@@ -1131,6 +1261,7 @@ mod tests {
             text_chat_stream(
                 ScenarioSelection {
                     scenario: DummyScenario::Basic,
+                    command_variant: DummyCommandVariant::Fixed,
                     slow: false,
                     stream: false,
                     multi_turn: 1,
