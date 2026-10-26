@@ -4,6 +4,7 @@ use app_test_support::TestAppServer;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use pretty_assertions::assert_eq;
 use ruxex_app_server_protocol::CommandExecOutputDeltaNotification;
 use ruxex_app_server_protocol::CommandExecOutputStream;
 use ruxex_app_server_protocol::CommandExecParams;
@@ -18,9 +19,12 @@ use ruxex_app_server_protocol::RequestId;
 use ruxex_app_server_protocol::SandboxPolicy;
 use ruxex_core::exec_env::RUXEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS_ENV_VAR;
 use ruxex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
-use pretty_assertions::assert_eq;
+#[cfg(target_os = "linux")]
+use ruxex_protocol::models::PermissionProfile;
 use std::collections::HashMap;
 use std::path::Path;
+#[cfg(target_os = "linux")]
+use std::sync::OnceLock;
 use tempfile::TempDir;
 use tokio::time::Duration;
 use tokio::time::Instant;
@@ -35,6 +39,26 @@ use super::connection_handling_websocket::read_jsonrpc_message;
 use super::connection_handling_websocket::send_initialize_request;
 use super::connection_handling_websocket::send_request;
 use super::connection_handling_websocket::spawn_websocket_server;
+
+fn sandbox_unavailable() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        static WARNING: OnceLock<Option<String>> = OnceLock::new();
+        return WARNING
+            .get_or_init(|| {
+                ruxex_sandboxing::system_bwrap_warning(
+                    &PermissionProfile::read_only(),
+                    &std::env::current_dir().expect("test cwd should exist"),
+                )
+            })
+            .is_some();
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
 
 #[tokio::test]
 async fn command_exec_without_streams_can_be_terminated() -> Result<()> {
@@ -88,6 +112,9 @@ async fn command_exec_without_streams_can_be_terminated() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_without_process_id_keeps_buffered_compatibility() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -136,6 +163,9 @@ async fn command_exec_without_process_id_keeps_buffered_compatibility() -> Resul
 #[tokio::test]
 async fn command_exec_env_overrides_merge_with_server_environment_and_support_unset() -> Result<()>
 {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -251,6 +281,9 @@ async fn assert_command_exec_apply_patch_rollout(
 
 #[tokio::test]
 async fn command_exec_accepts_permission_profile() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -298,6 +331,9 @@ async fn command_exec_accepts_permission_profile() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_permission_profile_starts_selected_network_proxy() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -349,6 +385,9 @@ async fn command_exec_permission_profile_starts_selected_network_proxy() -> Resu
 
 #[tokio::test]
 async fn command_exec_permission_profile_does_not_reuse_default_network_proxy() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -398,6 +437,9 @@ async fn command_exec_permission_profile_does_not_reuse_default_network_proxy() 
 #[cfg(unix)]
 #[tokio::test]
 async fn command_exec_permission_profile_project_roots_use_command_cwd() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     let command_dir = ruxex_home.path().join("command-cwd");
@@ -664,6 +706,9 @@ async fn command_exec_without_process_id_rejects_streaming() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_non_streaming_respects_output_cap() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -711,6 +756,9 @@ async fn command_exec_non_streaming_respects_output_cap() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_streaming_does_not_buffer_output() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -775,6 +823,9 @@ async fn command_exec_streaming_does_not_buffer_output() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_pipe_streams_output_and_accepts_write() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -851,6 +902,9 @@ async fn command_exec_pipe_streams_output_and_accepts_write() -> Result<()> {
 
 #[tokio::test]
 async fn command_exec_tty_implies_streaming_and_reports_pty_output() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -922,6 +976,9 @@ async fn command_exec_tty_implies_streaming_and_reports_pty_output() -> Result<(
 
 #[tokio::test]
 async fn command_exec_tty_supports_initial_size_and_resize() -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
@@ -1011,6 +1068,9 @@ async fn command_exec_tty_supports_initial_size_and_resize() -> Result<()> {
 #[tokio::test]
 async fn command_exec_process_ids_are_connection_scoped_and_disconnect_terminates_process()
 -> Result<()> {
+    if sandbox_unavailable() {
+        return Ok(());
+    }
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
