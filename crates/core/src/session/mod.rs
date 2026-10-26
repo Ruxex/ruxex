@@ -1472,7 +1472,6 @@ impl Session {
                         PersistContext::Standard
                     }
                 };
-                eprintln!("forked history persistence context: {:?}", persist_context);
                 self.ensure_rollout_materialized(persist_context).await;
 
                 // Flush after seeding history and any persisted rollout copy.

@@ -42,7 +42,6 @@ impl Drop for PendingSpawn {
         let Some(child) = self.child.take() else {
             return;
         };
-        eprintln!("pending spawn dropped for {child}");
         let state = Arc::clone(&self.state);
         let edge_write = self.edge_write.take();
         drop(tokio::spawn(async move {

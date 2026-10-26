@@ -690,7 +690,6 @@ impl LocalAgentControl {
         agent_metadata.agent_id = Some(new_thread.thread_id);
         let mut pending_spawn = PendingSpawn::new(Arc::clone(&state), new_thread.thread_id);
         let cancellation_token = options.cancellation_token.clone();
-        eprintln!("spawn cancellation token present: {}", cancellation_token.is_some());
 
         if let Some(SessionSource::SubAgent(
             _subagent_source @ SubAgentSource::ThreadSpawn {
@@ -729,7 +728,6 @@ impl LocalAgentControl {
         if let Some(cancellation_token) = cancellation_token {
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
-                    eprintln!("spawn cancellation observed");
                     return Err(RuxexErr::TurnAborted);
                 }
                 _ = wait_for_persistence_and_edge => {}

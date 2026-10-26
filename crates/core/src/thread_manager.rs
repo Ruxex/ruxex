@@ -1847,7 +1847,6 @@ impl ThreadManagerState {
         };
         let mut request = ThreadSpawnRequest::new(options, agent_control);
         if is_subagent_thread {
-            eprintln!("marking subagent fork persistence deferred");
             request.fork_persistence = ForkPersistence::CopiedDeferred;
         }
         request.parent_thread_id = parent_thread_id;
@@ -1929,7 +1928,6 @@ impl ThreadManagerState {
         };
         let mut request = ThreadSpawnRequest::new(options, agent_control);
         if is_subagent_thread {
-            eprintln!("marking subagent fork persistence deferred");
             request.fork_persistence = ForkPersistence::CopiedDeferred;
         }
         request.parent_thread_id = parent_thread_id;

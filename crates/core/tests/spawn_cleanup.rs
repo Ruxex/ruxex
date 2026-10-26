@@ -2,9 +2,9 @@
 
 use std::any::Any;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::sync::Mutex;
 use std::time::Duration;
 
 use anyhow::Context as _;
@@ -31,6 +31,7 @@ use ruxex_thread_store::PersistContext;
 use ruxex_thread_store::ReadThreadByRolloutPathParams;
 use ruxex_thread_store::ReadThreadParams;
 use ruxex_thread_store::ResumeThreadParams;
+use ruxex_thread_store::StoredModelContext;
 use ruxex_thread_store::StoredThread;
 use ruxex_thread_store::StoredThreadHistory;
 use ruxex_thread_store::ThreadPage;
@@ -73,6 +74,7 @@ impl ThreadStore for GatedCheckpointStore {
         fn append_items(params: AppendThreadItemsParams) -> ();
         fn discard_thread(thread_id: ThreadId) -> ();
         fn load_history(params: LoadThreadHistoryParams) -> StoredThreadHistory;
+        fn load_latest_model_context(params: LoadThreadHistoryParams) -> StoredModelContext;
         fn read_thread(params: ReadThreadParams) -> StoredThread;
         fn read_thread_by_rollout_path(params: ReadThreadByRolloutPathParams) -> StoredThread;
         fn list_threads(params: ListThreadsParams) -> ThreadPage;
@@ -113,8 +115,18 @@ impl ThreadStore for GatedCheckpointStore {
     }
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn cancelled_spawn_discards_provisional_child() -> Result<()> {
+#[test]
+fn cancelled_spawn_discards_provisional_child() -> Result<()> {
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .thread_stack_size(4 * 1024 * 1024)
+        .enable_all()
+        .build()
+        .context("build test runtime")?
+        .block_on(cancelled_spawn_discards_provisional_child_impl())
+}
+
+async fn cancelled_spawn_discards_provisional_child_impl() -> Result<()> {
     let server = responses::start_mock_server().await;
     let (checkpoints, mut checkpoint_requests) = mpsc::unbounded_channel();
     let contexts = Arc::new(Mutex::new(Vec::new()));
@@ -137,33 +149,21 @@ async fn cancelled_spawn_discards_provisional_child() -> Result<()> {
     let test = builder.build_with_auto_env(&server).await?;
     let _responses = responses::mount_sse_sequence(
         &server,
-        vec![
-            responses::sse(vec![
-                responses::ev_response_created("parent-spawn-response"),
-                responses::ev_function_call_with_namespace(
-                    "spawn-checkpoint",
-                    "multi_agent_v1",
-                    "spawn_agent",
-                    &serde_json::json!({
-                        "message": "child startup task",
-                        "task_name": "worker",
-                        "fork_context": true,
-                    })
-                    .to_string(),
-                ),
-                responses::ev_completed("parent-spawn"),
-            ]),
-            responses::sse(vec![
-                responses::ev_response_created("child-response"),
-                responses::ev_assistant_message("child-message", "child done"),
-                responses::ev_completed("child-response"),
-            ]),
-            responses::sse(vec![
-                responses::ev_response_created("parent-follow-up-response"),
-                responses::ev_assistant_message("parent-follow-up-message", "child started"),
-                responses::ev_completed("parent-follow-up-response"),
-            ]),
-        ],
+        vec![responses::sse(vec![
+            responses::ev_response_created("parent-spawn-response"),
+            responses::ev_function_call_with_namespace(
+                "spawn-checkpoint",
+                "multi_agent_v1",
+                "spawn_agent",
+                &serde_json::json!({
+                    "message": "child startup task",
+                    "task_name": "worker",
+                    "fork_context": true,
+                })
+                .to_string(),
+            ),
+            responses::ev_completed("parent-spawn"),
+        ])],
     )
     .await;
 
@@ -192,18 +192,17 @@ async fn cancelled_spawn_discards_provisional_child() -> Result<()> {
     })
     .await
     .context("waiting for child durability checkpoint")??;
-    eprintln!("checkpoint received for {}", checkpoint.thread_id);
     let child = test.thread_manager.get_thread(checkpoint.thread_id).await?;
     let state_db = ruxex_core::init_state_db(&test.config)
         .await
         .expect("state db should be enabled");
 
     test.ruxex.submit(Op::Interrupt).await?;
-    eprintln!("interrupt submitted");
     wait_for_event(&test.ruxex, |event| {
         matches!(event, EventMsg::TurnAborted(_))
     })
     .await;
+    let _ = checkpoint.complete.send(());
     timeout(Duration::from_secs(10), child.wait_until_terminated())
         .await
         .context("waiting for provisional child termination")?;

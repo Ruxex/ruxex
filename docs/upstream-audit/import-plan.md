@@ -409,7 +409,7 @@ The status is conservative: any bundle containing a review item is waiting for u
 | 2026-09-21 | [`fe6455a4384d`](./2026-09-21.md#fe6455a4384d928f009e4e40459701604ea20b7e) | Add a partial index for agent message board root posts (#47063) | `Do not import` |
 | 2026-09-22 | [`16bb1b9d7e21`](./2026-09-22.md#16bb1b9d7e21f73d67f20aacc3a7c37d80cde352) | Implement `AgentControl` for `LocalAgentControl` (#47271) | `Deferred` |
 | 2026-09-22 | [`2c087a0cc2ef`](./2026-09-22.md#2c087a0cc2ef1d731086a1d0cb0081bdd792cc4d) | Fix Escape navigation in read-only agent sessions (#47320) | `Implemented` |
-| 2026-09-22 | [`5121aeff13aa`](./2026-09-22.md#5121aeff13aa6615081f9467c8051289201893fc) | Overlap subagent spawn persistence and clean up cancelled children (#47348) | `In progress (WIP checkpoint: 76919295c)` |
+| 2026-09-22 | [`5121aeff13aa`](./2026-09-22.md#5121aeff13aa6615081f9467c8051289201893fc) | Overlap subagent spawn persistence and clean up cancelled children (#47348) | `Implemented in working tree (follow-up to 76919295c)` |
 | 2026-09-22 | [`5c07856e25b5`](./2026-09-22.md#5c07856e25b565c86c6266ff51edff58299fd4e6) | Separate local agent runtime state from controller handles (#47301) | `Import proactively` |
 | 2026-09-22 | [`78fdcd2311bf`](./2026-09-22.md#78fdcd2311bf979d4938cd8ba671fd8f04eb87c3) | Overlap agent metadata reads when resuming a V2 root (#47369) | `Import proactively` |
 | 2026-09-22 | [`89a7298aff55`](./2026-09-22.md#89a7298aff55db29f9cb2ad2430e3efe02b7a454) | Add regression coverage for message board unsubscribe persistence (#47281) | `Import proactively` |
