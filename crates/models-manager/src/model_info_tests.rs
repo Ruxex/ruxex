@@ -68,6 +68,7 @@ fn base_instruction_override_is_literal_and_preserves_catalog_messages() {
             multi_agent: Some(MultiAgentToolMessages {
                 spawn_agent: Some(ToolMessage {
                     description: Some("Catalog spawn description.".to_string()),
+                    ..Default::default()
                 }),
                 ..Default::default()
             }),
