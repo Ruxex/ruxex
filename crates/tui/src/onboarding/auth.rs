@@ -125,6 +125,17 @@ pub(crate) struct AuthModeWidget {
     pub provider_credential_resolver: Option<SharedProviderCredentialResolver>,
 }
 
+fn resolver_control_height(step: &CredentialStep) -> u16 {
+    match step {
+        CredentialStep::Input { .. } => 3,
+        CredentialStep::Select { options, .. } => {
+            let option_rows = options.len().min((u16::MAX - 2) as usize) as u16;
+            option_rows.saturating_add(2).max(3)
+        }
+        CredentialStep::Info { .. } | CredentialStep::Complete => 5,
+    }
+}
+
 impl AuthModeWidget {
     pub(crate) fn new(
         request_frame: FrameRequester,
@@ -242,12 +253,23 @@ impl AuthModeWidget {
     }
 
     fn render_resolver_step(&self, area: Rect, buf: &mut Buffer, state: &ResolverInputState) {
-        let [intro_area, input_area, footer_area] = Layout::vertical([
-            Constraint::Min(4),
-            Constraint::Length(5),
-            Constraint::Min(2),
-        ])
-        .areas(area);
+        let (intro_area, input_area, footer_area) =
+            if matches!(state.step, CredentialStep::Input { .. }) {
+                let [input_area, footer_area] = Layout::vertical([
+                    Constraint::Length(resolver_control_height(&state.step)),
+                    Constraint::Min(2),
+                ])
+                .areas(area);
+                (Rect::default(), input_area, footer_area)
+            } else {
+                let [intro_area, input_area, footer_area] = Layout::vertical([
+                    Constraint::Min(4),
+                    Constraint::Length(resolver_control_height(&state.step)),
+                    Constraint::Min(2),
+                ])
+                .areas(area);
+                (intro_area, input_area, footer_area)
+            };
         let mut footer_lines = vec![
             Line::from(vec![
                 "  Press ".dim(),
@@ -262,13 +284,6 @@ impl AuthModeWidget {
         ];
         match &state.step {
             CredentialStep::Input { label, secret, .. } => {
-                Paragraph::new(vec![
-                    Line::from(vec!["> ".into(), format!("Enter {label}").bold()]),
-                    "".into(),
-                    "  This value stays on this client until all credentials are complete.".into(),
-                ])
-                .wrap(Wrap { trim: false })
-                .render(intro_area, buf);
                 let displayed: Line = if state.value.is_empty() {
                     format!("Enter {label}").dim().into()
                 } else if *secret {
@@ -706,5 +721,28 @@ mod tests {
 
         assert_eq!(credentials.0, "secret");
         assert_eq!(credentials.1["account"], "example");
+    }
+
+    #[test]
+    fn resolver_controls_use_content_sized_heights() {
+        assert_eq!(
+            resolver_control_height(&CredentialStep::input("api_key", "API key", true)),
+            3
+        );
+        assert_eq!(
+            resolver_control_height(&CredentialStep::select(
+                "account",
+                "Account",
+                vec![
+                    ruxex_provider_auth::CredentialOption::new("one", "One"),
+                    ruxex_provider_auth::CredentialOption::new("two", "Two"),
+                ],
+            )),
+            4
+        );
+        assert_eq!(
+            resolver_control_height(&CredentialStep::select("account", "Account", Vec::new())),
+            3
+        );
     }
 }
