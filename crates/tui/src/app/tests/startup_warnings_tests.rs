@@ -42,6 +42,38 @@ fn drain_history(app: &mut App, tui: &mut tui::Tui, events: &mut UnboundedReceiv
 }
 
 #[tokio::test]
+async fn deprecation_notices_are_deduplicated_in_retained_history() -> Result<()> {
+    let (mut app, _events, _op_rx) = make_test_app_with_channels().await;
+    let mut tui = crate::tui::test_support::make_test_tui()?;
+
+    for (summary, details) in [
+        ("deprecated setting", Some("remove it")),
+        ("deprecated setting", Some("remove it")),
+        ("deprecated setting", Some("updated guidance")),
+    ] {
+        app.insert_history_cell(
+            &mut tui,
+            Box::new(crate::history_cell::new_deprecation_notice(
+                summary.to_string(),
+                details.map(str::to_string),
+            )),
+        );
+    }
+    assert_eq!(app.transcript_cells.len(), 2);
+
+    app.transcript_cells.clear();
+    app.insert_history_cell(
+        &mut tui,
+        Box::new(crate::history_cell::new_deprecation_notice(
+            "deprecated setting".to_string(),
+            Some("remove it".to_string()),
+        )),
+    );
+    assert_eq!(app.transcript_cells.len(), 1);
+    Ok(())
+}
+
+#[tokio::test]
 async fn startup_warnings_preserve_stream_repair_and_backtrack_selection() -> Result<()> {
     let mut app = crate::app::test_support::make_test_app().await;
     let mut tui = crate::tui::test_support::make_test_tui()?;

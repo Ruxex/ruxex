@@ -610,6 +610,7 @@ fn map_wrapped_websocket_error_event(
                 .clone()
                 .unwrap_or_else(|| fallback_message.to_string()),
             delay: None,
+            retry_after: None,
         });
     }
 
@@ -984,6 +985,9 @@ mod tests {
         expected_payload["generate"] = json!(false);
         let request_text =
             serialize_websocket_request(&request).expect("serialize websocket request");
+        assert!(request_text.starts_with(
+            r#"{"type":"response.create","model":"model-test","stream":true,"service_tier":"flex","instructions":"Use the available tools.","previous_response_id":"resp-1","input":["#
+        ));
         let wire_payload =
             serde_json::from_str::<Value>(&request_text).expect("parse websocket request");
 
@@ -1082,6 +1086,28 @@ mod tests {
     }
 
     #[test]
+    fn rejected_websocket_upgrade_preserves_retry_after_header() {
+        let response = http::Response::builder()
+            .status(StatusCode::SERVICE_UNAVAILABLE)
+            .header("Retry-After", "10")
+            .body(Some(b"overloaded".to_vec()))
+            .expect("build websocket rejection");
+        let api_error = map_ws_error(
+            WsError::Http(Box::new(response)),
+            &Url::parse("https://provider.example/v1/responses").expect("parse URL"),
+        );
+
+        let ApiError::Transport(transport) = api_error else {
+            panic!("expected transport error");
+        };
+        let retry_after = transport
+            .retry_after()
+            .expect("websocket rejection should preserve retry advice");
+        assert!(retry_after.remaining_delay() <= Duration::from_secs(10));
+        assert!(retry_after.remaining_delay() > Duration::ZERO);
+    }
+
+    #[test]
     fn parse_wrapped_websocket_error_event_with_connection_limit_maps_retryable() {
         let payload = json!({
             "type": "error",
@@ -1098,11 +1124,17 @@ mod tests {
             .expect("expected websocket error payload to be parsed");
         let api_error = map_wrapped_websocket_error_event(wrapped_error, payload)
             .expect("expected websocket error payload to map to ApiError");
-        let ApiError::Retryable { message, delay } = api_error else {
+        let ApiError::Retryable {
+            message,
+            delay,
+            retry_after,
+        } = api_error
+        else {
             panic!("expected ApiError::Retryable");
         };
         assert_eq!(message, WEBSOCKET_CONNECTION_LIMIT_REACHED_MESSAGE);
         assert_eq!(delay, None);
+        assert_eq!(retry_after, None);
     }
 
     #[test]

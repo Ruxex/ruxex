@@ -423,7 +423,7 @@ fn create_filesystem_args(
     options: BwrapOptions,
 ) -> Result<BwrapArgs> {
     let daemon_directory = ruxex_uds::prepare_shared_daemon_socket_directory()?;
-    crate::daemon_mounts::reject_daemon_mount_aliases(
+    let daemon_directories = crate::daemon_mounts::daemon_socket_mask_paths(
         &daemon_directory,
         options
             .mask_wslg_distro
@@ -572,14 +572,14 @@ fn create_filesystem_args(
                 args.push("--ro-bind".to_string());
                 args.push(path_to_string(&mount_root));
                 args.push(path_to_string(&mount_root));
-                append_daemon_socket_mask(&mut args, &mount_root, &daemon_directory)?;
+                append_daemon_socket_masks(&mut args, &mount_root, &daemon_directories)?;
             }
         }
 
         args
     };
     if args[0] == "--ro-bind" {
-        append_daemon_socket_mask(&mut args, Path::new("/"), &daemon_directory)?;
+        append_daemon_socket_masks(&mut args, Path::new("/"), &daemon_directories)?;
     }
     let mut bwrap_args = BwrapArgs {
         args,
@@ -638,7 +638,7 @@ fn create_filesystem_args(
         bwrap_args.args.push("--bind".to_string());
         bwrap_args.args.push(path_to_string(mount_root));
         bwrap_args.args.push(path_to_string(mount_root));
-        append_daemon_socket_mask(&mut bwrap_args.args, mount_root, &daemon_directory)?;
+        append_daemon_socket_masks(&mut bwrap_args.args, mount_root, &daemon_directories)?;
 
         let mut read_only_subpaths: Vec<PathBuf> = writable_root
             .read_only_subpaths
@@ -665,7 +665,12 @@ fn create_filesystem_args(
         );
         read_only_subpaths.sort_by_key(|path| path_depth(path));
         for subpath in read_only_subpaths {
-            append_read_only_subpath_args(&mut bwrap_args, &subpath, &allowed_write_paths)?;
+            append_read_only_subpath_args(
+                &mut bwrap_args,
+                &subpath,
+                &allowed_write_paths,
+                &daemon_directories,
+            )?;
         }
         // Protect the registry only where a writable bind exposes it. Apply
         // this before deny masks so a denied parent stays hidden, rather than
@@ -683,6 +688,7 @@ fn create_filesystem_args(
             bwrap_args.args.push("--ro-bind".to_string());
             bwrap_args.args.push(path_to_string(registry_mount));
             bwrap_args.args.push(path_to_string(registry_mount));
+            append_daemon_socket_masks(&mut bwrap_args.args, registry_mount, &daemon_directories)?;
         }
         let mut nested_unreadable_roots: Vec<PathBuf> = unreadable_roots
             .iter()
@@ -778,27 +784,32 @@ fn append_metadata_path_masks_for_writable_root(
 
 // Mask immediately after every bind that exposes the directory, before policy
 // deny masks can hide its parent. Use the mount destination for read-root aliases.
-fn append_daemon_socket_mask(
+fn append_daemon_socket_masks(
     args: &mut Vec<String>,
     mount_root: &Path,
-    daemon_directory: &Path,
+    daemon_directories: &BTreeSet<PathBuf>,
 ) -> Result<()> {
     let source = fs::canonicalize(mount_root)?;
-    if source.starts_with(daemon_directory) {
-        return Err(RuxexErr::Fatal(
-            "app-server socket directory cannot be a sandbox mount root".to_string(),
-        ));
-    }
-    if let Ok(relative) = daemon_directory.strip_prefix(source) {
-        let destination = path_to_string(&mount_root.join(relative));
-        args.extend([
-            "--perms".to_string(),
-            "000".to_string(),
-            "--tmpfs".to_string(),
-            destination.clone(),
-            "--remount-ro".to_string(),
-            destination,
-        ]);
+    for daemon_directory in daemon_directories {
+        if source.starts_with(daemon_directory) {
+            return Err(RuxexErr::Fatal(
+                "app-server socket directory cannot be a sandbox mount root".to_string(),
+            ));
+        }
+        if let Ok(relative) = daemon_directory.strip_prefix(&source) {
+            let destination = mount_root.join(relative);
+            let destination = destination.to_str().ok_or_else(|| {
+                RuxexErr::Fatal("app-server socket mask path must be valid UTF-8".to_string())
+            })?;
+            args.extend([
+                "--perms".to_string(),
+                "000".to_string(),
+                "--tmpfs".to_string(),
+                destination.to_string(),
+                "--remount-ro".to_string(),
+                destination.to_string(),
+            ]);
+        }
     }
     Ok(())
 }
@@ -1131,6 +1142,7 @@ fn append_read_only_subpath_args(
     bwrap_args: &mut BwrapArgs,
     subpath: &Path,
     allowed_write_paths: &[PathBuf],
+    daemon_directories: &BTreeSet<PathBuf>,
 ) -> Result<()> {
     if let Some(symlink) = first_writable_symlink_component_in_path(subpath, allowed_write_paths) {
         /*
@@ -1176,11 +1188,7 @@ fn append_read_only_subpath_args(
         bwrap_args.args.push("--ro-bind".to_string());
         bwrap_args.args.push(path_to_string(subpath));
         bwrap_args.args.push(path_to_string(subpath));
-        append_daemon_socket_mask(
-            &mut bwrap_args.args,
-            subpath,
-            &ruxex_uds::shared_daemon_socket_directory()?,
-        )?;
+        append_daemon_socket_masks(&mut bwrap_args.args, subpath, daemon_directories)?;
     }
     Ok(())
 }
@@ -2239,6 +2247,20 @@ mod tests {
                 "--remount-ro".to_string(),
                 "/dev/.aws".to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn non_utf8_daemon_socket_mask_path_is_rejected() {
+        let daemon_directory =
+            PathBuf::from(OsString::from_vec(b"/tmp/ruxex-daemon-\xff".to_vec()));
+        assert!(
+            append_daemon_socket_masks(
+                &mut Vec::new(),
+                Path::new("/"),
+                &BTreeSet::from([daemon_directory]),
+            )
+            .is_err()
         );
     }
 

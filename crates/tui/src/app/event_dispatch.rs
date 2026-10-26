@@ -382,19 +382,13 @@ impl App {
                 self.chat_widget
                     .add_plain_history_lines(vec!["/fork".magenta().into()]);
                 if let Some(thread_id) = self.chat_widget.thread_id() {
-                    if self.pending_server_profiles.contains_key(&thread_id) {
-                        self.chat_widget.add_error_message(
-                            "Wait for permissions to update before forking.".into(),
-                        );
-                        return Ok(AppRunControl::Continue);
-                    }
                     self.refresh_in_memory_config_from_disk_best_effort("forking the thread")
                         .await;
                     let mut fork_config = self.config.clone();
                     fork_config.model = Some(self.chat_widget.current_model().to_string());
                     fork_config.model_reasoning_effort =
                         self.chat_widget.current_reasoning_effort();
-                    let selected_profile = self.confirmed_server_profile(thread_id);
+                    let selected_profile = self.selected_server_profile(thread_id);
                     match app_server.fork_thread_at(
                         &self.local_settings,
                         fork_config,
@@ -405,6 +399,9 @@ impl App {
                         selected_profile.as_ref(),
                     ).await {
                         Ok(mut forked) => {
+                            if selected_profile.is_some() {
+                                self.adopt_inherited_server_selection();
+                            }
                             let name_error = if let Some(name) = name {
                                 match app_server
                                     .thread_set_name(forked.session.thread_id, name.clone())

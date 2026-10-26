@@ -26,6 +26,7 @@ use ruxex_client::TransportError;
 use ruxex_protocol::ResponseItemId;
 use ruxex_protocol::models::ContentItem;
 use ruxex_protocol::models::ResponseItem;
+use serde_json::Value;
 use serde_json::value::RawValue;
 
 fn assert_path_ends_with(requests: &[Request], suffix: &str) {
@@ -368,10 +369,65 @@ async fn responses_client_stream_request_preserves_item_ids() -> Result<()> {
         serde_json::from_slice(prepared.body.as_deref().expect("body should be JSON"))?;
     assert_eq!(body, expected);
     assert_eq!(body["input"][0]["id"], "msg_1");
+    assert_eq!(body.get("service_tier"), None);
     assert_eq!(
         prepared.headers.get(http::header::CONTENT_TYPE),
         Some(&HeaderValue::from_static("application/json"))
     );
+    Ok(())
+}
+
+#[tokio::test]
+async fn responses_client_stream_request_sends_routing_fields_ahead_of_large_input() -> Result<()> {
+    let state = RecordingState::default();
+    let transport = RecordingTransport::new(state.clone());
+    let client = ResponsesClient::new(transport, provider("provider"), Arc::new(NoAuth));
+    let large_input = "x".repeat(2 * 1024 * 1024);
+    let request = ResponsesApiRequest {
+        model: "model-test".into(),
+        instructions: "Say hi".into(),
+        input: vec![ResponseItem::Message {
+            id: None,
+            role: "user".into(),
+            content: vec![ContentItem::InputText { text: large_input }],
+            phase: None,
+            internal_chat_message_metadata_passthrough: None,
+        }],
+        tools: Some(empty_tools().into()),
+        tool_choice: "auto".into(),
+        parallel_tool_calls: false,
+        reasoning: None,
+        store: false,
+        stream: true,
+        stream_options: None,
+        include: Vec::new(),
+        service_tier: Some("priority".into()),
+        prompt_cache_key: None,
+        text: None,
+        client_metadata: None,
+    };
+    let expected = serde_json::to_value(&request)?;
+
+    let _stream = client
+        .stream_request(request, ResponsesOptions::default())
+        .await?;
+
+    let requests = state.take_stream_requests();
+    assert_eq!(requests.len(), 1);
+    let body = std::str::from_utf8(request_body_bytes(&requests[0]))?;
+    let input_position = body.find(r#""input":["#).expect("input should be present");
+    for routing_field in [r#""model":"#, r#""stream":"#, r#""service_tier":"#] {
+        assert!(
+            body.find(routing_field)
+                .is_some_and(|position| position < input_position),
+            "{routing_field} should precede input"
+        );
+    }
+    assert!(body.starts_with(
+        r#"{"model":"model-test","stream":true,"service_tier":"priority","instructions":"Say hi","input":[{"type":"message""#
+    ));
+    assert!(body.len() > 2 * 1024 * 1024);
+    assert_eq!(serde_json::from_str::<Value>(body)?, expected);
     Ok(())
 }
 

@@ -55,6 +55,7 @@ async fn handle_spawn_agent(
         step_context,
         payload,
         call_id,
+        cancellation_token,
         ..
     } = invocation;
     let turn = &step_context.turn;
@@ -125,6 +126,7 @@ async fn handle_spawn_agent(
             turn_trigger: turn.turn_metadata_state.current_turn_trigger(),
             environments: Some(step_context.environments.to_selections()),
             multi_agent_v2_usage_hints: None,
+            cancellation_token: Some(cancellation_token),
         },
     ))
     .await

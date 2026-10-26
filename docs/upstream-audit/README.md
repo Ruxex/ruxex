@@ -24,6 +24,20 @@ in progress. Even if its commits have already been audited, record them only
 after the UTC day has ended. Multiple commits on one date belong in the same
 file, in chronological order.
 
+### Seven-day audit batches
+
+The audit work is processed in batches of seven completed UTC dates. The
+per-date ledger remains the source of truth for each commit, but a seven-day
+batch is the unit for producing the user-facing classification and import
+summary. Do not start a batch that includes the current UTC date while that
+date is still in progress. A final batch may contain fewer than seven dates
+when it reaches the latest completed upstream date.
+
+The seven-day boundary is an audit boundary, not an implementation boundary.
+Changes from different batches may belong to the same logical import bundle.
+After each batch, update the cross-commit import plan described below instead
+of assuming that every `Import proactively` entry is ready to implement.
+
 ### Mechanical skeleton generation
 
 The upstream commit hash, exact committer timestamp, complete commit message,
@@ -46,11 +60,11 @@ date, avoids duplicate entries, and preserves existing audit notes.
    architecture.
 3. Write a Ruxex-oriented summary of the change.
 4. Make a provisional import decision and record the reason.
-5. After completing the audit for a UTC date, share a user-facing summary
-   before starting any adaptation. Group the results by decision label, include
-   counts and commit references, and summarize the planned imports. For mixed
-   commits, summarize each retained portion separately from the excluded
-   portion.
+5. After completing the audit for a UTC date or audit batch, share a user-facing
+   summary before starting any adaptation. Group the results by decision label,
+   include counts and commit references, summarize the planned imports, and
+   list the trigger for each `Deferred` group. For mixed commits, summarize
+   each retained portion separately from the excluded portion.
 6. If needed, ask the user to decide before importing.
 7. After approval, prepare the verification before adapting production code.
    First manually adapt the upstream tests that cover the retained behavior,
@@ -76,6 +90,60 @@ decision when needed, tests adapted or added, test-first check, manual
 production adaptation, verification (including E2E), commit, then ledger
 update. Do not mark an entry as manually reflected or fill in its Ruxex-side
 commit until the required tests pass.
+
+## Cross-commit import reconstruction
+
+Audit decisions are made per commit or independently evaluated part of a mixed
+commit, but implementation is planned across commits. Maintain
+`docs/upstream-audit/import-plan.md` as the intermediate plan that reconstructs
+logical Ruxex import bundles from the audit ledgers. A bundle may span multiple
+upstream commits, UTC dates, and seven-day audit batches.
+
+Maintain `docs/upstream-audit/import-overview.md` alongside it as the
+cross-bundle overview ledger. The overview separates individual bug fixes,
+dependencies, structural refactors, retained behavior bundles, deferred
+features, review-gated changes, and excluded scope. It is a planning view, not
+a replacement for the per-date ledgers or the detailed import plan, and its
+planning classifications must not overwrite the original audit decisions.
+
+Maintain one implementation ledger per executable queue in
+`docs/upstream-audit/queue/`. The queue ledgers are the source of truth for
+cross-commit implementation status, grouping, required tests, resulting Ruxex
+commits, and waiting reasons. A queue ledger may reference many per-date
+ledgers, but it must never replace their verbatim upstream hash and message
+records.
+
+The import plan should be regenerated or updated from the audit ledgers after
+each seven-day batch and must retain the upstream hash, date, and complete
+commit message for every included change. It should record at least:
+
+- a stable Bundle ID and the included upstream commits;
+- the reconstructed logical scope and why the commits belong together;
+- prerequisites and ordering constraints, including later upstream commits;
+- the Ruxex area and required unit, integration, and E2E coverage;
+- the current implementation state and the reason for waiting when it is not
+  ready; and
+- the resulting Ruxex commit after manual adaptation, once verification passes.
+
+`Import proactively` is an adoption recommendation, not an instruction to
+implement immediately. The import plan must distinguish at least these states:
+
+- `Ready` — prerequisites and required test coverage are available;
+- `Waiting for prerequisite` — an earlier retained refactor or dependency is
+  not yet adapted;
+- `Waiting for upstream series` — the change is incomplete without related
+  commits that have not yet been audited or grouped;
+- `Waiting for Ruxex E2E` — the behavior needs Ruxex-specific regression
+  coverage before implementation;
+- `Waiting for user decision` — the audit rules require an explicit decision;
+- `Implemented` — the bundle was manually adapted and verified; and
+- `Do not import` — the reconstructed bundle is outside Ruxex's scope.
+
+Do not split a bundle merely because its commits fall on different audit dates.
+When implementing a bundle, adapt the tests first, add Ruxex-specific tests as
+needed, manually adapt the production code, run the required unit and E2E
+checks, and then record the resulting Ruxex commit in both the import plan and
+the relevant ledger entries.
 
 ## Decision criteria
 
@@ -118,36 +186,53 @@ Ruxex-relevant parts may be manually adapted.
      evaluated by the review gate below.
 6. Does the change concern retained Ruxex functionality and remain within
    Ruxex's architecture?
-   - Yes: `Import proactively` is the default, including compatible behavior
-     improvements and localized feature extensions. The fact that the upstream
-     change is user-visible does not by itself require a review.
-   - Manually adapt the change to Ruxex names, structure, provider boundary,
-     and existing defaults. Preserve unsupported or ambiguous inputs through a
-     safe fallback where applicable.
-   - Cover the retained behavior with focused unit tests and the relevant E2E
-     tests before committing the adaptation.
-7. Does the change require a material Ruxex design decision?
-   - Yes: `User review required`. This is limited to changes that alter a
-     public API, persistent or wire format, configuration contract, default
-     user-visible behavior, security or permission semantics, provider/runtime
-     ownership, or an irreversible/destructive operation.
-   - A behavior change that is compatible with the retained Ruxex contract and
-     does not cross one of these gates remains `Import proactively`.
-8. Does it introduce functionality that does not exist in Ruxex?
-   - Yes: `User review required`, unless it is strictly internal test,
-     diagnostics, CI, or maintenance support with no new public capability.
-   - Upstream presence alone is not a reason to import a new public feature.
-9. Is the Ruxex impact or compatibility unclear?
+   - A bug fix is not enough by itself to establish that the code path is
+     retained; first apply rule 1.
+   - New functionality is not imported merely because it is compatible or
+     user-visible. If it is not eligible for the review gate below, mark it
+     `Deferred` and record the trigger that would cause a future re-audit.
+   - Manually adapt eligible changes to Ruxex names, structure, provider
+     boundary, and existing defaults. Preserve unsupported or ambiguous inputs
+     through a safe fallback where applicable.
+   - Cover every manually adapted behavior with focused unit tests and the
+     relevant E2E tests before committing the adaptation.
+7. Is this a new feature that is both enabled by default upstream and changes
+   the App Server protocol?
+   - Yes: `User review required`.
+   - For this rule, an App Server protocol change means a change to a public
+     App Server schema, JSON-RPC method, parameter, result, notification,
+     capability advertisement, authentication handshake, or other wire-level
+     contract. Internal runtime traits and TUI-only behavior do not qualify.
+   - Both conditions are required. A default-only TUI or configuration change,
+     or an opt-in protocol extension, is `Deferred` unless an exception below
+     applies.
+8. Does the change require a review outside the new-feature gate?
+   - Yes: `User review required` for an irreversible/destructive operation,
+     a security or permission semantic that cannot be treated as a bug fix, or
+     a compatibility-sensitive persistent/wire migration that requires a
+     Ruxex design choice.
+   - A normal configuration, default, public API, or user-visible change that
+     is not a default-on App Server feature is `Deferred`, not a review item.
+9. Does it introduce functionality that does not exist in Ruxex and fail the
+   review gate?
+   - Yes: `Deferred`. Record the capability and the exact trigger for
+     re-audit; do not ask the user to review it now.
+10. Is the Ruxex impact or compatibility unclear?
    - Yes: `User review required`. Record the specific uncertainty instead of
      silently importing the change.
 
+This policy applies to new and not-yet-decided audit entries. Completed
+historical audits retain their recorded decision unless they are explicitly
+re-audited under the updated policy.
+
 ### User review required
 
-- The update requires a material Ruxex design decision: a public API,
-  persistent or wire format, configuration contract, default user-visible
-  behavior, security or permission semantic, provider/runtime ownership, or an
-  irreversible/destructive operation changes.
-- The update introduces a completely new public capability for Ruxex.
+- The update introduces a new feature that is enabled by default and changes
+  the App Server protocol, schema, capability advertisement, authentication
+  handshake, or other App Server wire contract.
+- The update requires a review outside that gate because it changes a security
+  or permission semantic, performs an irreversible/destructive operation, or
+  requires a compatibility-sensitive persistent/wire migration.
 - The update is a major or otherwise compatibility-sensitive dependency or
   member-crate change.
 - The Ruxex impact or compatibility cannot be established.
@@ -168,9 +253,8 @@ Do not reflect either category until the user has decided.
 - A behavior-preserving trait extraction, interface factoring, or internal
   module/ownership refactoring keeps Ruxex structurally aligned with retained
   upstream follow-ups, especially when later commits depend on that shape.
-- A compatible behavior improvement or localized feature extension to retained
-  functionality stays within Ruxex's architecture and is covered by focused
-  unit and E2E tests.
+- A compatible behavior improvement that is not a new feature stays within
+  Ruxex's architecture and is covered by focused unit and E2E tests.
 
 Apply these changes manually, adapting them to Ruxex names, structure, and
 boundaries.
@@ -185,6 +269,18 @@ boundaries.
 Record which removed capability was identified and which part of the diff
 belongs to that capability.
 
+### Deferred
+
+- The update is a new feature but is not both default-on upstream and an App
+  Server protocol change.
+- The update is a default-only, opt-in, TUI-only, provider-specific, or other
+  user-visible feature that does not meet the review gate.
+
+Do not implement deferred changes. Record the reason and the trigger for
+re-audit, such as the feature becoming default-on or gaining an App Server
+protocol change. A deferred entry may later be reclassified without treating
+the original decision as a permanent rejection.
+
 ### Decision labels
 
 Use exactly one of these labels for each audited change or independently
@@ -193,11 +289,13 @@ evaluated part of a mixed commit:
 - `Import proactively`
 - `User review required`
 - `Do not import`
+- `Deferred` — a new feature that does not yet meet the review gate
 - `Not applicable` — the issue cannot occur in Ruxex or is already solved by a
   different Ruxex implementation.
 
 When the impact or compatibility is unclear, use `User review required` and
-record the specific uncertainty rather than using an unqualified `Hold` label.
+record the specific uncertainty. Use `Deferred` only when the feature is
+understood but intentionally outside the current adoption gate.
 
 ## Entry format
 
@@ -217,13 +315,14 @@ Each entry must contain at least the following fields:
 - Diff audit:
   - <audited change scope>
 - Ruxex summary: <summary of the change>
-- Provisional decision: `User review required` / `Import proactively` / `Do not import`
+- Provisional decision: `User review required` / `Import proactively` /
+  `Do not import` / `Deferred`
 - Reason: <reason based on Ruxex capabilities and policy>
 - Reflection status: <not imported / manually reflected>
 - Ruxex-side commit: `<manual Ruxex commit hash>`
 - Notes: <optional>
 ```
 
-For `Do not import` and `User review required` entries, use `N/A` for the
-Ruxex-side commit. When a change is manually reflected, record the resulting
-Ruxex commit hash.
+For `Do not import`, `Deferred`, and `User review required` entries, use `N/A`
+for the Ruxex-side commit. When a change is manually reflected, record the
+resulting Ruxex commit hash.

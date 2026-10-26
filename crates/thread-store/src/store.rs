@@ -1,8 +1,10 @@
 use ruxex_protocol::ThreadId;
 use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutItem;
 use std::any::Any;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 
 use crate::AddThreadAttachmentOutcome;
 use crate::AddThreadAttachmentParams;
@@ -66,6 +68,9 @@ pub type ThreadStoreFuture<'a, T> = Pin<Box<dyn Future<Output = ThreadStoreResul
 pub enum PersistContext {
     /// Standard persistence makes the thread and all queued items durable and readable.
     Standard,
+    /// Copied subagent history may be enqueued while spawn-edge persistence runs. The caller
+    /// must await standard persistence before acknowledging the child.
+    SubagentSpawn,
     /// A turn is about to begin sampling after its input has been recorded.
     TurnStart,
     /// Accepted user input is being recorded before an active turn's next sampling request.
@@ -79,7 +84,7 @@ impl PersistContext {
     pub fn allows_background_persistence(self) -> bool {
         match self {
             Self::Standard => false,
-            Self::TurnStart | Self::SteeredUserInput => true,
+            Self::SubagentSpawn | Self::TurnStart | Self::SteeredUserInput => true,
         }
     }
 }
@@ -132,8 +137,17 @@ pub trait ThreadStore: Any + Send + Sync {
         })
     }
 
-    /// Reopens an existing thread for live appends.
-    fn resume_thread(&self, params: ResumeThreadParams) -> ThreadStoreFuture<'_, ()>;
+    /// Reopens an existing thread for live appends and returns its authoritative replay context.
+    ///
+    /// Stored snapshots supplied by callers may predate writer acquisition. Implementations must
+    /// include writes committed before acquisition in the returned context. Explicitly supplied
+    /// histories without a canonical session header retain their import/override semantics.
+    /// Returned histories can share the caller's allocation when no refresh is needed.
+    /// On failure, implementations must release any writer acquired by this operation.
+    fn resume_thread(
+        &self,
+        params: ResumeThreadParams,
+    ) -> ThreadStoreFuture<'_, Arc<Vec<RolloutItem>>>;
 
     /// Appends raw rollout items to a live thread.
     ///
@@ -530,5 +544,15 @@ pub trait ThreadStore: Any + Send + Sync {
             }
             Ok(())
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PersistContext;
+
+    #[test]
+    fn subagent_spawn_persistence_can_run_in_background() {
+        assert!(PersistContext::SubagentSpawn.allows_background_persistence());
     }
 }

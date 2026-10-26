@@ -36,6 +36,20 @@ impl LocalThreadStore {
         self.resolve_rollout_lineage_with_representation(
             requested_thread_id,
             LineageRepresentation::Existing,
+            None,
+        )
+        .await
+    }
+
+    pub(super) async fn resolve_rollout_lineage_at_path(
+        &self,
+        requested_thread_id: ThreadId,
+        initial_path: PathBuf,
+    ) -> ThreadStoreResult<RolloutLineage> {
+        self.resolve_rollout_lineage_with_representation(
+            requested_thread_id,
+            LineageRepresentation::Existing,
+            Some(initial_path),
         )
         .await
     }
@@ -47,6 +61,7 @@ impl LocalThreadStore {
         self.resolve_rollout_lineage_with_representation(
             requested_thread_id,
             LineageRepresentation::PlainForReference,
+            None,
         )
         .await
     }
@@ -55,6 +70,7 @@ impl LocalThreadStore {
         &self,
         requested_thread_id: ThreadId,
         representation: LineageRepresentation,
+        mut initial_path: Option<PathBuf>,
     ) -> ThreadStoreResult<RolloutLineage> {
         let mut segments = Vec::new();
         let mut seen = HashSet::new();
@@ -69,14 +85,24 @@ impl LocalThreadStore {
                     Some(self.live_writer_locks.lock(coordination_id).await)
                 }
             };
-            let (rollout_id, rollout_path) = match next_rollout_id {
-                Some(rollout_id) => {
+            let (rollout_id, rollout_path) = match (next_rollout_id, initial_path.take()) {
+                (Some(rollout_id), _) => {
                     let rollout_path = resolve_rollout_path_by_id(self, rollout_id)
                         .await?
                         .ok_or_else(|| malformed_lineage(rollout_id, "missing source rollout"))?;
                     (rollout_id, rollout_path)
                 }
-                None => {
+                (None, Some(path)) => {
+                    let rollout_id = ruxex_rollout::rollout_id_from_path(path.as_path())
+                        .ok_or_else(|| {
+                            malformed_lineage(
+                                requested_thread_id,
+                                "initial rollout path has no canonical rollout id",
+                            )
+                        })?;
+                    (rollout_id, path)
+                }
+                (None, None) => {
                     let resolved = thread_rollout_resolver::resolve_current_including_archived(
                         self,
                         requested_thread_id,

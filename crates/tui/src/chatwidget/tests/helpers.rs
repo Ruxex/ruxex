@@ -1577,6 +1577,7 @@ pub(super) fn plugins_test_detail(
                 enabled: true,
             })
             .collect(),
+        onboarding_skill: None,
         hooks: hooks
             .iter()
             .enumerate()
@@ -1617,6 +1618,7 @@ pub(super) fn plugins_test_remote_detail(
         share_url: None,
         description: description.map(str::to_string),
         skills: Vec::new(),
+        onboarding_skill: None,
         hooks: Vec::new(),
         apps: Vec::new(),
         app_templates: Vec::new(),

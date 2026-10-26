@@ -16,6 +16,7 @@ use std::os::unix::fs::OpenOptionsExt;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+mod blocking_reader;
 mod error_metrics;
 mod read_metrics;
 
@@ -59,6 +60,12 @@ pub(crate) async fn file_modified_time(path: &Path) -> io::Result<Option<time::O
         .await
         .and_then(|(_, metadata)| metadata.modified().ok())
         .map(time::OffsetDateTime::from))
+}
+
+pub(crate) fn existing_rollout_with_metadata_sync(
+    path: &Path,
+) -> Option<(PathBuf, std::fs::Metadata)> {
+    path::existing_rollout_with_metadata_sync(path)
 }
 
 /// Opens a rollout line reader that transparently handles plain `.jsonl` and `.jsonl.zst` files.
@@ -289,9 +296,42 @@ impl RolloutLineReader {
         }
         result
     }
+
+    /// Scans lines on one blocking worker and stops at the first mapped result.
+    ///
+    /// Plain rollouts retain the async reader path. Compressed rollouts keep the
+    /// blocking reader and its metrics on one worker instead of scheduling one
+    /// blocking task per line.
+    pub(crate) async fn find_map<T: Send + 'static>(
+        mut self,
+        mut find: impl FnMut(&str) -> Option<T> + Send + 'static,
+    ) -> io::Result<Option<T>> {
+        let RolloutLineReaderInner::Blocking(Some(reader)) = self.inner else {
+            while let Some(line) = self.next_line().await? {
+                if let Some(found) = find(&line) {
+                    return Ok(Some(found));
+                }
+            }
+            return Ok(None);
+        };
+
+        blocking_reader::scan_lines(reader, self.metrics, move |lines| {
+            for line in lines {
+                if let Some(found) = find(&line?) {
+                    return Ok(Some(found));
+                }
+            }
+            Ok(None)
+        })
+        .await
+    }
 }
 
 type BlockingLineReader = std::io::Lines<std::io::BufReader<Box<dyn Read + Send>>>;
+
+#[cfg(test)]
+#[path = "compression/blocking_reader_tests.rs"]
+mod blocking_reader_tests;
 
 mod worker {
     use std::ffi::OsStr;
@@ -330,6 +370,7 @@ mod worker {
     const WORKER_MAX_RUNTIME: Duration = Duration::from_secs(5 * 60 * 60);
     const RUN_MARKER_FILE_NAME: &str = "rollout-compression.lock";
     const MAX_CONCURRENT_COMPRESSION_JOBS: usize = 2;
+    const MAX_METADATA_WARNINGS_PER_RUN: usize = 5;
 
     #[derive(Default)]
     struct CompressionStats {
@@ -338,6 +379,7 @@ mod worker {
         skipped: usize,
         failed: usize,
         scan_errors: bool,
+        metadata_read_failures: usize,
         cleanup_errors: bool,
         time_budget_exhausted: bool,
     }
@@ -487,8 +529,12 @@ mod worker {
             }
         };
         info!(
+            metadata_read_failures = stats.metadata_read_failures,
             "rollout compression worker finished: scanned={}, compressed={}, skipped={}, failed={}",
-            stats.scanned, stats.compressed, stats.skipped, stats.failed
+            stats.scanned,
+            stats.compressed,
+            stats.skipped,
+            stats.failed
         );
         // Keep the existing completed outcome: it means the pass returned, not
         // that every directory was scanned or every file was compressed.
@@ -614,17 +660,53 @@ mod worker {
                     continue;
                 }
                 let path = rollout_file.into_path();
-                if crate::rollout_id_from_path(path.as_path()).is_none() {
+                let Some(rollout_id) = crate::rollout_id_from_path(path.as_path()) else {
                     stats.scan_errors = true;
                     stats.skipped = stats.skipped.saturating_add(1);
                     metrics::file(trigger, "skipped_unreadable_meta");
                     continue;
-                }
+                };
                 let thread_id = match crate::read_session_meta_line(path.as_path()).await {
                     Ok(metadata) => metadata.meta.id,
                     Err(err) => {
                         stats.scan_errors = true;
-                        FailureMetric::Scan(trigger).record("read_metadata", &err);
+                        let reason = err
+                            .get_ref()
+                            .and_then(|error| {
+                                error.downcast_ref::<crate::list::MetadataReadError>()
+                            })
+                            .map_or("io", |error| error.reason);
+                        let error_kind = super::error_metrics::error_kind(&err);
+                        metrics::counter(
+                            "ruxex.rollout_compression.scan",
+                            &[
+                                ("outcome", "failed"),
+                                ("stage", "read_metadata"),
+                                ("error_kind", error_kind),
+                                ("trigger", trigger.tag()),
+                                ("reason", reason),
+                            ],
+                        );
+                        stats.metadata_read_failures =
+                            stats.metadata_read_failures.saturating_add(1);
+                        if stats.metadata_read_failures <= MAX_METADATA_WARNINGS_PER_RUN {
+                            let metadata = tokio::fs::metadata(&path).await.ok();
+                            let file_size_bytes = metadata.as_ref().map(std::fs::Metadata::len);
+                            let mtime_age_seconds = metadata
+                                .and_then(|metadata| metadata.modified().ok())
+                                .and_then(|modified| modified.elapsed().ok())
+                                .map(|age| age.as_secs());
+                            // Only bounded labels and parsed IDs, never paths or error messages.
+                            warn!(
+                                trigger = trigger.tag(),
+                                %rollout_id,
+                                reason,
+                                error_kind,
+                                file_size_bytes,
+                                mtime_age_seconds,
+                                "skipping rollout compression because session metadata could not be read"
+                            );
+                        }
                         stats.skipped = stats.skipped.saturating_add(1);
                         metrics::file(trigger, "skipped_unreadable_meta");
                         continue;
@@ -1253,19 +1335,21 @@ mod path {
     ///
     /// Returning the metadata lets callers inspect the selected file without a second stat.
     pub(super) async fn existing_rollout_with_metadata(path: &Path) -> Option<(PathBuf, Metadata)> {
+        let path = path.to_path_buf();
+        tokio::task::spawn_blocking(move || existing_rollout_with_metadata_sync(&path))
+            .await
+            .ok()
+            .flatten()
+    }
+
+    /// Resolve a regular rollout path and its metadata without leaving the blocking worker.
+    pub(super) fn existing_rollout_with_metadata_sync(path: &Path) -> Option<(PathBuf, Metadata)> {
         let plain_path = plain_rollout_path(path);
-        if let Ok(metadata) = tokio::fs::metadata(plain_path.as_path()).await
-            && metadata.is_file()
-        {
-            return Some((plain_path, metadata));
-        }
-        let compressed_path = compressed_rollout_path(plain_path.as_path());
-        if let Ok(metadata) = tokio::fs::metadata(compressed_path.as_path()).await
-            && metadata.is_file()
-        {
-            return Some((compressed_path, metadata));
-        }
-        None
+        let compressed_path = compressed_rollout_path(&plain_path);
+        [plain_path, compressed_path].into_iter().find_map(|path| {
+            let metadata = std::fs::metadata(&path).ok()?;
+            metadata.is_file().then_some((path, metadata))
+        })
     }
 }
 

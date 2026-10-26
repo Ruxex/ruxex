@@ -188,11 +188,14 @@ impl NativeChild {
             cvt_errno(libc::sigemptyset(&mut defaults))?;
             cvt_errno(libc::sigaddset(&mut defaults, libc::SIGPIPE))?;
             cvt(libc::posix_spawnattr_setsigdefault(&mut attrs.0, &defaults))?;
-            // Match Command's descriptor inheritance: honor FD_CLOEXEC rather
-            // than introducing a different policy with CLOEXEC_DEFAULT.
+            // Local MCP servers use only the three descriptors installed above.
+            // CLOEXEC_DEFAULT closes unrelated inheritable descriptors while
+            // preserving the explicit stdio file actions.
             cvt(libc::posix_spawnattr_setflags(
                 &mut attrs.0,
-                (libc::POSIX_SPAWN_SETPGROUP | libc::POSIX_SPAWN_SETSIGDEF) as _,
+                (libc::POSIX_SPAWN_CLOEXEC_DEFAULT
+                    | libc::POSIX_SPAWN_SETPGROUP
+                    | libc::POSIX_SPAWN_SETSIGDEF) as _,
             ))?;
             let mut spawn = |executable: &CString| {
                 libc::posix_spawn(

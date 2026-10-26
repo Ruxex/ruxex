@@ -18,6 +18,16 @@ pub(super) use macos::LocalChild;
 pub(super) use tokio::process::Child as LocalChild;
 
 pub(super) fn spawn(mut command: Command) -> io::Result<LocalChild> {
+    #[cfg(unix)]
+    // SAFETY: The hook only closes inheritable descriptors in the child after
+    // Tokio has installed the explicit stdio pipes. CLOEXEC descriptors remain
+    // available to std::process for reporting exec failures.
+    unsafe {
+        command.pre_exec(|| {
+            ruxex_utils_pty::pty::close_inherited_fds_except(&[]);
+            Ok(())
+        });
+    }
     command
         .kill_on_drop(true)
         .stdin(Stdio::piped())

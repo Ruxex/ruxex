@@ -4111,6 +4111,59 @@ fn plugin_availability_deserializes_enabled_alias() {
 }
 
 #[test]
+fn plugin_detail_onboarding_skill_is_optional_and_round_trips() {
+    let skill = json!({
+        "name": "getting-started",
+        "description": "A getting started skill",
+        "shortDescription": null,
+        "interface": null,
+        "path": absolute_path_string("plugins/demo/skills/getting-started/SKILL.md"),
+        "enabled": true,
+    });
+    let mut value = json!({
+        "marketplaceName": "local",
+        "marketplacePath": null,
+        "summary": {
+            "id": "demo@local",
+            "localVersion": null,
+            "name": "demo",
+            "source": {
+                "type": "local",
+                "path": absolute_path_string("plugins/demo"),
+            },
+            "installed": true,
+            "enabled": true,
+            "installPolicy": "AVAILABLE",
+            "installPolicySource": null,
+            "mustShowInstallationInterstitial": null,
+            "authPolicy": "ON_USE",
+            "availability": "AVAILABLE",
+            "interface": null,
+            "keywords": [],
+        },
+        "description": null,
+        "skills": [skill.clone()],
+        "hooks": [],
+        "mcpServers": [],
+        "scheduledTasks": null,
+    });
+
+    let mut detail: PluginDetail = serde_json::from_value(value.clone())
+        .expect("missing onboardingSkill should remain backward compatible");
+    assert_eq!(detail.onboarding_skill, None);
+
+    value["onboardingSkill"] = skill;
+    detail = serde_json::from_value(value).expect("onboardingSkill should deserialize");
+    assert_eq!(
+        detail
+            .onboarding_skill
+            .as_ref()
+            .map(|skill| skill.name.as_str()),
+        Some("getting-started")
+    );
+}
+
+#[test]
 fn plugin_uninstall_params_serialization_omits_force_remote_sync() {
     assert_eq!(
         serde_json::to_value(PluginUninstallParams {

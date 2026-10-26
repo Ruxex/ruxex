@@ -43,6 +43,7 @@ fn age(path: &Path) -> TestResult<()> {
 
 fn resume(thread_id: ThreadId, path: &Path, home: &Path) -> ResumeThreadParams {
     ResumeThreadParams {
+        history_revision: None,
         thread_id,
         rollout_path: Some(path.to_path_buf()),
         history: None,

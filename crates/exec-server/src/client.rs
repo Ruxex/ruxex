@@ -691,11 +691,25 @@ impl ExecServerClient {
     // TODO: Remove after app-server migrates off this call.
     pub async fn force_environment_info(&self) -> Result<EnvironmentInfo, ExecServerError> {
         let rpc_client = self.rpc_client().await?;
-        self.map_rpc_call_result(
-            rpc_client
-                .call_with_timeout(ENVIRONMENT_INFO_METHOD, &(), ENVIRONMENT_INFO_TIMEOUT)
-                .await,
+        // Bound sending as well as receiving: a stuck transport can fill the outbound queue.
+        let result = timeout(
+            ENVIRONMENT_INFO_TIMEOUT,
+            rpc_client.call(ENVIRONMENT_INFO_METHOD, &()),
         )
+        .await;
+        match result {
+            Ok(result) => self.map_rpc_call_result(result),
+            Err(_) => {
+                let error = ExecServerError::from(RpcCallError::TimedOut {
+                    method: ENVIRONMENT_INFO_METHOD.to_string(),
+                    timeout: ENVIRONMENT_INFO_TIMEOUT,
+                });
+                // Retire only the connection we probed; recovery ignores a stale client.
+                rpc_client.close_transport().await;
+                self.inner.request_recovery(rpc_client, error.to_string());
+                Err(error)
+            }
+        }
     }
 
     pub async fn read_environment_config(
@@ -1716,6 +1730,7 @@ mod tests {
     use tracing_subscriber::filter::filter_fn;
     use tracing_subscriber::prelude::*;
 
+    use super::ENVIRONMENT_INFO_TIMEOUT;
     use super::ExecServerClient;
     use super::ExecServerClientConnectOptions;
     use super::LazyRemoteExecServerClient;
@@ -1907,6 +1922,84 @@ mod tests {
         .expect("stdio client should connect");
 
         assert_eq!(client.session_id().as_deref(), Some("stdio-test"));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn environment_info_timeout_retires_transport_for_recovery() {
+        let (client_stdin, server_reader) = duplex(1 << 20);
+        let (mut server_writer, client_stdout) = duplex(1 << 20);
+        let (request_seen_tx, request_seen_rx) = oneshot::channel();
+        let (release_server_tx, release_server_rx) = oneshot::channel();
+        let server = tokio::spawn(async move {
+            let mut lines = BufReader::new(server_reader).lines();
+            let initialize = read_jsonrpc_line(&mut lines).await;
+            let request = match initialize {
+                JSONRPCMessage::Request(request) if request.method == INITIALIZE_METHOD => request,
+                other => panic!("expected initialize request, got {other:?}"),
+            };
+            write_jsonrpc_line(
+                &mut server_writer,
+                JSONRPCMessage::Response(JSONRPCResponse {
+                    id: request.id,
+                    result: serde_json::to_value(InitializeResponse {
+                        session_id: "environment-timeout".to_string(),
+                        environment_info: None,
+                    })
+                    .expect("initialize response should serialize"),
+                }),
+            )
+            .await;
+            match read_jsonrpc_line(&mut lines).await {
+                JSONRPCMessage::Notification(notification)
+                    if notification.method == INITIALIZED_METHOD => {}
+                other => panic!("expected initialized notification, got {other:?}"),
+            }
+            match read_jsonrpc_line(&mut lines).await {
+                JSONRPCMessage::Request(request) if request.method == "environment/info" => {}
+                other => panic!("expected environment info request, got {other:?}"),
+            }
+            request_seen_tx
+                .send(())
+                .expect("request observer should stay open");
+            let _ = release_server_rx.await;
+        });
+
+        let client = ExecServerClient::connect(
+            JsonRpcConnection::from_stdio(
+                client_stdout,
+                client_stdin,
+                "environment-timeout-client".to_string(),
+            ),
+            ExecServerClientConnectOptions::default(),
+        )
+        .await
+        .expect("client should connect");
+
+        let probe_client = client.clone();
+        let environment_info = probe_client.force_environment_info();
+        tokio::pin!(environment_info);
+        assert!(futures::poll!(environment_info.as_mut()).is_pending());
+        request_seen_rx
+            .await
+            .expect("environment info request should arrive");
+
+        tokio::time::advance(ENVIRONMENT_INFO_TIMEOUT).await;
+        let error = environment_info
+            .await
+            .expect_err("unanswered environment info should time out");
+        assert!(error.to_string().contains("timed out"));
+
+        tokio::task::yield_now().await;
+        assert!(matches!(
+            client.readiness_result(),
+            Some(Err(super::ExecServerError::Disconnected(_)))
+        ));
+
+        drop(client);
+        release_server_tx
+            .send(())
+            .expect("server release should stay open");
+        server.await.expect("server task should finish");
     }
 
     #[tokio::test]

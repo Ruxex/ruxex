@@ -162,11 +162,11 @@ async fn cancelled_wait_can_still_kill_and_reap_child() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn descriptor_inheritance_matches_command() -> anyhow::Result<()> {
+async fn descriptor_inheritance_is_isolated_from_command() -> anyhow::Result<()> {
     let root = tempfile::tempdir()?;
     symlink("/bin/sh", root.path().join("shell"))?;
     let file = fs::File::open("/dev/null")?;
-    for (operation, expected) in [
+    for (operation, command_expected) in [
         (libc::F_DUPFD, "inherited"),
         (libc::F_DUPFD_CLOEXEC, "closed"),
     ] {
@@ -190,8 +190,8 @@ async fn descriptor_inheritance_matches_command() -> anyhow::Result<()> {
         let mut output = String::new();
         stdout.read_to_string(&mut output).await?;
         assert!(child.wait().await?.success());
-        assert_eq!(output, expected);
-        assert_eq!(command.output()?.stdout, output.as_bytes());
+        assert_eq!(output, "closed");
+        assert_eq!(command.output()?.stdout, command_expected.as_bytes());
     }
     Ok(())
 }

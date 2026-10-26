@@ -801,6 +801,13 @@ impl App {
         {
             if self.reconnect.presentation == reconnect::ReconnectPresentation::Overview {
                 self.chat_widget.handle_disconnected_view_key(*key);
+            } else if key.kind == KeyEventKind::Press
+                && key.code == KeyCode::Esc
+                && key.modifiers == KeyModifiers::NONE
+                && self.chat_widget.is_external_writer_view()
+                && self.chat_widget.no_modal_or_popup_active()
+            {
+                self.open_agents_overview(app_server);
             } else {
                 self.chat_widget.handle_disconnected_key(*key);
             }

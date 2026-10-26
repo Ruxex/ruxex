@@ -2,6 +2,7 @@ mod archive_thread;
 mod create_thread;
 mod delete_thread;
 mod helpers;
+mod history_revision;
 mod list_threads;
 mod live_writer;
 mod model_context;
@@ -37,6 +38,7 @@ mod test_support;
 
 use ruxex_protocol::ThreadId;
 use ruxex_protocol::protocol::ThreadHistoryMode;
+use ruxex_rollout::RolloutItem;
 use ruxex_rollout::RolloutRecorder;
 use ruxex_rollout::StateDbHandle;
 use ruxex_rollout::WriterLockCoordinator;
@@ -489,7 +491,10 @@ impl ThreadStore for LocalThreadStore {
         })
     }
 
-    fn resume_thread(&self, params: ResumeThreadParams) -> ThreadStoreFuture<'_, ()> {
+    fn resume_thread(
+        &self,
+        params: ResumeThreadParams,
+    ) -> ThreadStoreFuture<'_, Arc<Vec<RolloutItem>>> {
         Box::pin(async move { live_writer::resume_thread(self, params).await })
     }
 
@@ -500,8 +505,11 @@ impl ThreadStore for LocalThreadStore {
     fn persist_thread(
         &self,
         thread_id: ThreadId,
-        _context: PersistContext,
+        context: PersistContext,
     ) -> ThreadStoreFuture<'_, ()> {
+        if context == PersistContext::SubagentSpawn {
+            return Box::pin(async { Ok(()) });
+        }
         Box::pin(async move { live_writer::persist_thread(self, thread_id).await })
     }
 
@@ -923,7 +931,9 @@ mod tests {
             uuid,
             ThreadHistoryMode::Paginated,
         )
-        .expect("paginated session file");
+        .expect("paginated session file")
+        .canonicalize()
+        .expect("canonical paginated session file");
         let stale_rollout_path = home.path().join("stale-rollout.jsonl");
         tokio::fs::write(&stale_rollout_path, "malformed session metadata\n")
             .await
@@ -945,13 +955,15 @@ mod tests {
             .await
             .expect("update stale sqlite rollout path");
 
-        let resumed = LiveThread::resume(
+        let history = Arc::new(vec![user_message_item("bounded suffix")]);
+        let (resumed, supplied_history) = LiveThread::resume(
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
-                history: Some(Arc::new(vec![user_message_item("bounded suffix")])),
+                history: Some(Arc::clone(&history)),
                 include_archived: false,
                 metadata: ThreadPersistenceMetadata {
                     cwd: Some(home.path().to_path_buf()),
@@ -960,6 +972,7 @@ mod tests {
         )
         .await
         .expect("resume paginated thread from its requested rollout");
+        assert!(Arc::ptr_eq(&supplied_history, &history));
         assert_eq!(
             resumed.local_rollout_path().await.expect("live rollout"),
             Some(rollout_path)
@@ -1235,10 +1248,11 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path =
             write_session_file(home.path(), "2025-01-03T17-00-00", uuid).expect("session file");
-        let live_thread = LiveThread::resume(
+        let (live_thread, _history) = LiveThread::resume(
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1284,10 +1298,11 @@ mod tests {
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path = write_session_file(external_home.path(), "2025-01-03T17-30-00", uuid)
             .expect("external session file");
-        let live_thread = LiveThread::resume(
+        let (live_thread, _history) = LiveThread::resume(
             store,
             ThreadHistoryMode::Paginated,
             ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1448,6 +1463,7 @@ mod tests {
         let resumed_store = LocalThreadStore::new(config, /*state_db*/ None);
         resumed_store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: None,
                 history: None,
@@ -1497,6 +1513,7 @@ mod tests {
                 .await
                 .expect("load rollout path");
             let resume_params = ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1563,6 +1580,7 @@ mod tests {
             .expect("live rollout path");
         let err = store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1573,6 +1591,84 @@ mod tests {
             .expect_err("duplicate live resume should fail");
         assert!(matches!(err, ThreadStoreError::InvalidRequest { .. }));
         assert!(err.to_string().contains("already has a live local writer"));
+    }
+
+    #[tokio::test]
+    async fn resume_reuses_unchanged_and_refreshes_stale_history() {
+        let home = TempDir::new().expect("temp dir");
+        let config = test_config(home.path());
+        let uuid = uuid::Uuid::from_u128(409);
+        let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
+        let rollout_path = write_session_file_with_history_mode(
+            home.path(),
+            "2025-01-04T12-00-00",
+            uuid,
+            ThreadHistoryMode::Paginated,
+        )
+        .expect("session file");
+        let snapshot_store = LocalThreadStore::new(config.clone(), /*state_db*/ None);
+        let snapshot = snapshot_store
+            .load_history(LoadThreadHistoryParams {
+                thread_id,
+                include_archived: false,
+            })
+            .await
+            .expect("load history snapshot");
+        let revision = snapshot.revision.clone();
+        let history = Arc::new(snapshot.items);
+
+        let store = LocalThreadStore::new(config, /*state_db*/ None);
+        let resumed = store
+            .resume_thread(ResumeThreadParams {
+                history_revision: revision.clone(),
+                thread_id,
+                rollout_path: Some(rollout_path.clone()),
+                history: Some(Arc::clone(&history)),
+                include_archived: false,
+                metadata: thread_metadata(),
+            })
+            .await
+            .expect("resume unchanged snapshot");
+
+        assert!(Arc::ptr_eq(&resumed, &history));
+        store
+            .append_items(AppendThreadItemsParams {
+                thread_id,
+                items: vec![user_message_item("late resume edit")],
+            })
+            .await
+            .expect("append a late edit");
+        store
+            .flush_thread(thread_id)
+            .await
+            .expect("flush late edit");
+        store
+            .shutdown_thread(thread_id)
+            .await
+            .expect("shutdown resumed writer");
+
+        let resumed_store = LocalThreadStore::new(test_config(home.path()), /*state_db*/ None);
+        let refreshed = resumed_store
+            .resume_thread(ResumeThreadParams {
+                history_revision: revision,
+                thread_id,
+                rollout_path: Some(rollout_path),
+                history: Some(Arc::clone(&history)),
+                include_archived: false,
+                metadata: thread_metadata(),
+            })
+            .await
+            .expect("refresh stale history");
+        assert!(!Arc::ptr_eq(&refreshed, &history));
+        assert!(
+            refreshed
+                .iter()
+                .any(|item| contains_user_message(item, "late resume edit"))
+        );
+        resumed_store
+            .shutdown_thread(thread_id)
+            .await
+            .expect("shutdown refreshed writer");
     }
 
     #[tokio::test]
@@ -1592,6 +1688,7 @@ mod tests {
         .expect("session file");
         let err = store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: None,
@@ -1606,6 +1703,7 @@ mod tests {
 
         competing_store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1628,6 +1726,7 @@ mod tests {
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1672,10 +1771,13 @@ mod tests {
         let uuid = uuid::Uuid::from_u128(406);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path = write_session_file(external_home.path(), "2025-01-04T11-00-00", uuid)
-            .expect("external session file");
+            .expect("external session file")
+            .canonicalize()
+            .expect("canonical external session file");
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path.clone()),
                 history: None,
@@ -1725,6 +1827,7 @@ mod tests {
 
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,
@@ -1898,6 +2001,7 @@ mod tests {
         assert!(!history.items.is_empty());
         store
             .resume_thread(ResumeThreadParams {
+                history_revision: None,
                 thread_id,
                 rollout_path: Some(rollout_path),
                 history: None,

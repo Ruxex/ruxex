@@ -51,6 +51,9 @@ pub(super) struct AgentsOverviewState {
         Arc<std::sync::Mutex<super::agents_overview_view::AgentsOverviewViewState>>,
     /// Explicit permission-profile choices for new-session carryover, retained across navigation.
     pub(super) selected_permission_profiles: HashMap<ThreadId, String>,
+    /// Accepted server selections whose settings notification has not arrived yet.
+    pub(super) requested_permission_profiles:
+        HashMap<ThreadId, crate::app_event::PermissionProfileSelection>,
     /// Keep new tasks subscribed and reusable until a first turn makes them resumable.
     pub(super) blank_sessions: HashMap<ThreadId, crate::app_server_session::AppServerStartedThread>,
     pub(super) input_states: HashMap<ThreadId, ThreadInputState>,
@@ -115,7 +118,22 @@ impl App {
         let view = self.agents_overview_view(threads, /*selected_thread_id*/ None);
         self.agents_overview.visible_thread_ids = view.thread_ids();
         self.chat_widget.show_bottom_pane_view(Box::new(view));
-        self.refresh_agents_overview_threads(app_server);
+        if self.reconnect.offline {
+            self.reconnect.presentation = reconnect::ReconnectPresentation::Overview;
+            let mut state = self
+                .agents_overview
+                .view_state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            state.refresh_failed = false;
+            state.connection_notice = Some(if self.reconnect.failed {
+                "Reconnect failed — agent list is stale; relaunch to retry"
+            } else {
+                "Reconnecting — agent list is stale"
+            });
+        } else {
+            self.refresh_agents_overview_threads(app_server);
+        }
     }
 
     pub(super) fn apply_agents_overview_thread_refresh(

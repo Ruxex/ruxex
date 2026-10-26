@@ -9,13 +9,19 @@ use std::path::PathBuf;
 pub struct LocalStateDbStartupError {
     database_path: PathBuf,
     detail: String,
+    corruption: bool,
 }
 
 impl LocalStateDbStartupError {
     pub fn new(database_path: PathBuf, detail: String) -> Self {
+        Self::new_with_corruption(database_path, detail, false)
+    }
+
+    pub fn new_with_corruption(database_path: PathBuf, detail: String, corruption: bool) -> Self {
         Self {
             database_path,
             detail,
+            corruption,
         }
     }
 
@@ -25,5 +31,9 @@ impl LocalStateDbStartupError {
 
     pub fn detail(&self) -> &str {
         self.detail.as_str()
+    }
+
+    pub fn is_corruption(&self) -> bool {
+        self.corruption
     }
 }

@@ -2,12 +2,15 @@ use super::super::ForkGoalContinuation;
 use super::super::ForkPermissionMode;
 use super::super::ResumeModelSettings;
 use super::super::ThreadParamsMode;
+use crate::app_event::PermissionProfileSelection;
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::ConfigBuilder;
 use app_test_support::create_fake_paginated_rollout;
 use app_test_support::create_fake_rollout;
+use ruxex_app_server_protocol::AskForApproval;
 use ruxex_app_server_protocol::ThreadHistoryMode;
 use ruxex_protocol::ThreadId;
+use ruxex_protocol::models::PermissionProfile;
 use color_eyre::eyre::Result;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -18,6 +21,56 @@ async fn build_config(temp_dir: &TempDir) -> Config {
         .build()
         .await
         .expect("config should build")
+}
+
+#[tokio::test]
+async fn explicit_permission_selection_uses_server_effective_profile() -> Result<()> {
+    let server_home = tempfile::tempdir()?;
+    std::fs::write(
+        server_home.path().join("config.toml"),
+        "default_permissions = \"server-only\"\n[permissions.server-only]\nextends = \":read-only\"\n",
+    )?;
+    let server_config = ConfigBuilder::default()
+        .ruxex_home(server_home.path().to_path_buf())
+        .build()
+        .await?;
+
+    let client_home = tempfile::tempdir()?;
+    std::fs::write(
+        client_home.path().join("config.toml"),
+        "default_permissions = \"server-only\"\n[permissions.server-only]\nextends = \":workspace\"\n",
+    )?;
+    let client_config = ConfigBuilder::default()
+        .ruxex_home(client_home.path().to_path_buf())
+        .build()
+        .await?;
+    let selection = PermissionProfileSelection {
+        profile_id: "server-only".into(),
+        approval_policy: Some(AskForApproval::OnRequest),
+        display_label: "server-only".into(),
+    };
+
+    let mut server = crate::start_embedded_app_server_for_picker(&server_config).await?;
+    let started = server
+        .start_thread_with_session_start_source(
+            &crate::local_settings::LocalSettings::from(&client_config),
+            &client_config,
+            None,
+            None,
+            Some(&selection),
+        )
+        .await?;
+    assert_eq!(started.session.permission_profile, PermissionProfile::read_only());
+    assert_eq!(
+        started
+            .session
+            .active_permission_profile
+            .as_ref()
+            .map(|profile| profile.id.as_str()),
+        Some("server-only")
+    );
+    server.shutdown().await?;
+    Ok(())
 }
 
 #[tokio::test]
@@ -159,7 +212,7 @@ async fn remote_resume_restores_saved_server_profile_without_permission_override
         ruxex_protocol::config_types::ApprovalsReviewer::AutoReview
     );
     let side = server
-        .fork_side_thread(&local_settings, client_config, thread_id)
+        .fork_side_thread(&local_settings, client_config, thread_id, None)
         .await?;
     assert_eq!(
         side.session.active_permission_profile.unwrap().id,

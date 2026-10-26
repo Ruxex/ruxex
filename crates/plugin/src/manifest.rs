@@ -18,6 +18,7 @@ pub struct PluginManifest<Resource> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PluginManifestPaths<Resource> {
     pub skills: Vec<Resource>,
+    pub onboarding_skill: Option<Resource>,
     pub mcp_servers: Option<PluginManifestMcpServers<Resource>>,
     pub hooks: Option<PluginManifestHooks<Resource>>,
 }
@@ -104,6 +105,7 @@ impl<Resource> PluginManifest<Resource> {
         } = self;
         let PluginManifestPaths {
             skills,
+            onboarding_skill,
             mcp_servers,
             hooks,
         } = paths;
@@ -179,6 +181,7 @@ impl<Resource> PluginManifest<Resource> {
                     .into_iter()
                     .map(&mut map)
                     .collect::<Result<Vec<_>, _>>()?,
+                onboarding_skill: onboarding_skill.map(&mut map).transpose()?,
                 mcp_servers,
                 hooks,
             },

@@ -5,7 +5,6 @@ use std::time::Duration;
 use crate::client::ModelClientSession;
 use crate::session::session::Session;
 use crate::session::turn_context::TurnContext;
-use crate::util::backoff;
 use ruxex_client::RetryOperation;
 use ruxex_features::Feature;
 use ruxex_protocol::error::RuxexErr;
@@ -39,9 +38,9 @@ impl Default for ResponsesStreamRetryState {
     }
 }
 
-/// Handles a retryable stream error and returns `Ok(())` when the caller should
-/// retry the request loop.
-pub(crate) async fn handle_retryable_response_stream_error(
+/// Returns `Ok(())` when the caller should retry the request loop, or the original error when
+/// it is terminal or the retry budget is exhausted.
+pub(crate) async fn handle_response_stream_error(
     retry_state: &mut ResponsesStreamRetryState,
     max_retries: u64,
     err: RuxexErr,
@@ -53,6 +52,10 @@ pub(crate) async fn handle_retryable_response_stream_error(
     let operation = match request {
         ResponsesStreamRequest::Sampling => RetryOperation::Sampling,
         ResponsesStreamRequest::RemoteCompactionV2 => RetryOperation::RemoteCompactionV2,
+    };
+    let retry_count = retry_state.retries.saturating_add(1);
+    let Some(delay) = err.retry_delay_for_attempt(retry_count) else {
+        return Err(err);
     };
 
     if turn_context
@@ -87,6 +90,11 @@ pub(crate) async fn handle_retryable_response_stream_error(
             turn_context.model_info(),
         )
     {
+        // Switching transports must not bypass a server-provided retry deadline. The advice is
+        // retained on the mapped error so time spent in the WebSocket path is accounted for.
+        if let Some(retry_after) = err.retry_after() {
+            tokio::time::sleep_until(retry_after.deadline()).await;
+        }
         sess.send_event(
             turn_context,
             EventMsg::Warning(WarningEvent {
@@ -99,9 +107,7 @@ pub(crate) async fn handle_retryable_response_stream_error(
     }
 
     if retry_state.retries < max_retries {
-        retry_state.retries += 1;
-        let retry_count = retry_state.retries;
-        let delay = err.retry_delay().unwrap_or_else(|| backoff(retry_count));
+        retry_state.retries = retry_count;
         log_retry(request, turn_context, &err, retry_count, max_retries, delay);
 
         // In release builds, hide the first websocket retry notification to reduce noisy

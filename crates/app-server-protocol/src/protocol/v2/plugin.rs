@@ -514,6 +514,9 @@ pub struct PluginDetail {
     pub summary: PluginSummary,
     pub description: Option<String>,
     pub skills: Vec<SkillSummary>,
+    /// The declared onboarding skill, when the plugin and visible skill are enabled.
+    #[serde(default)]
+    pub onboarding_skill: Option<SkillSummary>,
     pub hooks: Vec<PluginHookSummary>,
     pub mcp_servers: Vec<String>,
     pub scheduled_tasks: Option<Vec<ScheduledTaskSummary>>,

@@ -17,12 +17,12 @@ pub(crate) fn is_locked(detail: &str) -> bool {
     ruxex_state::sqlite_error_detail_is_lock(detail)
 }
 
-pub(crate) fn is_corruption(detail: &str) -> bool {
-    ruxex_state::sqlite_error_detail_is_corruption(detail)
+pub(crate) fn is_corruption(startup_error: &LocalStateDbStartupError) -> bool {
+    startup_error.is_corruption()
 }
 
 pub(crate) fn is_auto_backup_recoverable(startup_error: &LocalStateDbStartupError) -> bool {
-    is_corruption(startup_error.detail()) || sqlite_home_is_blocking_file(startup_error)
+    is_corruption(startup_error) || sqlite_home_is_blocking_file(startup_error)
 }
 
 fn sqlite_home_is_blocking_file(startup_error: &LocalStateDbStartupError) -> bool {
@@ -100,6 +100,17 @@ mod tests {
     use ruxex_utils_absolute_path::test_support::PathExt;
     use std::path::PathBuf;
     use tempfile::TempDir;
+
+    #[test]
+    fn corruption_classification_survives_the_tui_startup_error_boundary() {
+        let startup_error = LocalStateDbStartupError::new_with_corruption(
+            PathBuf::from("/tmp/state.sqlite"),
+            "database detail".to_string(),
+            true,
+        );
+
+        assert!(is_corruption(&startup_error));
+    }
 
     #[tokio::test]
     async fn backup_backs_up_only_failed_database_file() -> std::io::Result<()> {

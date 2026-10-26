@@ -78,7 +78,7 @@ pub(crate) struct Session {
     /// session.
     pub(super) features: ManagedFeatures,
     pub(super) isolation: ruxex_extension_api::SessionIsolation,
-    pub(crate) allowed_tools: Option<Arc<ruxex_extension_api::AllowedTools>>,
+    pub(crate) tool_policy: Arc<ruxex_extension_api::ToolPolicy>,
     pub(super) multi_agent_version: OnceLock<MultiAgentVersion>,
     /// Owns invalidation and serializes refreshes without blocking captured calls.
     pub(super) mcp_refresh: McpRefresh,
@@ -764,7 +764,7 @@ impl Session {
             ForkPersistence::Referenced { history_base, .. } => {
                 history_base.map(|position| position.end_ordinal_exclusive)
             }
-            ForkPersistence::Copied => match &initial_history {
+            ForkPersistence::Copied | ForkPersistence::CopiedDeferred => match &initial_history {
                 InitialHistory::Resumed(resumed) => {
                     // Both local and CCA thread stores place the resumed thread's
                     // canonical SessionMeta first. Never inspect inherited metadata:
@@ -910,7 +910,9 @@ impl Session {
             .get::<ruxex_extension_api::SessionIsolation>()
             .map(|policy| *policy)
             .unwrap_or_default();
-        let allowed_tools = thread_extension_init.get::<ruxex_extension_api::AllowedTools>();
+        let tool_policy = thread_extension_init
+            .get::<ruxex_extension_api::ToolPolicy>()
+            .unwrap_or_else(|| Arc::new(ruxex_extension_api::ToolPolicy::default()));
         let mcp_thread_init = thread_extension_init.clone();
         let thread_extension_data = ruxex_extension_api::ExtensionData::new_with_init(
             thread_id.to_string(),
@@ -923,7 +925,7 @@ impl Session {
         // - load history metadata (skipped for subagents)
         let thread_persistence_fut = async {
             if config.ephemeral {
-                Ok::<_, anyhow::Error>((None, LiveThreadInitGuard::new(/*live_thread*/ None)))
+                Ok::<_, anyhow::Error>((None, LiveThreadInitGuard::new(/*live_thread*/ None), None))
             } else {
                 let mut local_guard = LiveThreadInitGuard::default();
                 let mut managed_guard = match &startup {
@@ -931,6 +933,7 @@ impl Session {
                     None => None,
                 };
                 let guard = managed_guard.as_deref_mut().unwrap_or(&mut local_guard);
+                let mut resume_history = None;
                 let live_thread = match &initial_history {
                     InitialHistory::New | InitialHistory::Cleared | InitialHistory::Forked(_) => {
                         let params = CreateThreadParams {
@@ -951,7 +954,7 @@ impl Session {
                             multi_agent_version: initial_multi_agent_version,
                             history_mode: session_configuration.history_mode,
                             history_base: match &fork_persistence {
-                                ForkPersistence::Copied => None,
+                                ForkPersistence::Copied | ForkPersistence::CopiedDeferred => None,
                                 ForkPersistence::Referenced { history_base, .. } => *history_base,
                             },
                             subagent_history_start_ordinal: None,
@@ -964,7 +967,10 @@ impl Session {
                             },
                         };
                         if is_paginated_subagent
-                            && matches!(&fork_persistence, ForkPersistence::Copied)
+                            && matches!(
+                                &fork_persistence,
+                                ForkPersistence::Copied | ForkPersistence::CopiedDeferred
+                            )
                             && let InitialHistory::Forked(items) = &initial_history
                         {
                             LiveThread::create_with_inherited_model_context(
@@ -982,6 +988,7 @@ impl Session {
                     }
                     InitialHistory::Resumed(resumed_history) => {
                         let params = ResumeThreadParams {
+                            history_revision: resumed_history.history_revision.clone(),
                             thread_id: resumed_history.conversation_id,
                             rollout_path: resumed_history.rollout_path.clone(),
                             history: Some(resumed_history.history.clone()),
@@ -990,16 +997,25 @@ impl Session {
                                 cwd: Some(config.cwd.to_path_buf()),
                             },
                         };
-                        guard
-                            .acquire(LiveThread::resume(
-                                Arc::clone(&thread_store),
-                                session_configuration.history_mode,
-                                params,
-                            ))
-                            .await?
+                        let (history_tx, history_rx) = tokio::sync::oneshot::channel();
+                        let thread_store_for_resume = Arc::clone(&thread_store);
+                        let live_thread = guard
+                            .acquire(async move {
+                                let (live_thread, history) = LiveThread::resume(
+                                    thread_store_for_resume,
+                                    session_configuration.history_mode,
+                                    params,
+                                )
+                                .await?;
+                                let _ = history_tx.send(history);
+                                Ok(live_thread)
+                            })
+                            .await?;
+                        resume_history = Some(history_rx.await?);
+                        live_thread
                     }
                 };
-                Ok((Some(live_thread), local_guard))
+                Ok((Some(live_thread), local_guard, resume_history))
             }
         }
         .instrument(info_span!(
@@ -1063,10 +1079,16 @@ impl Session {
         let (thread_persistence_result, state_db_ctx, mcp_projection) =
             tokio::join!(thread_persistence_fut, state_db_fut, auth_and_mcp_fut);
 
-        let (live_thread, mut live_thread_init) = thread_persistence_result.map_err(|e| {
-            error!("failed to initialize thread persistence: {e:#}");
-            e
-        })?;
+        let (live_thread, mut live_thread_init, resume_history) = thread_persistence_result
+            .map_err(|e| {
+                error!("failed to initialize thread persistence: {e:#}");
+                e
+            })?;
+        if let Some(history) = resume_history
+            && let InitialHistory::Resumed(resumed) = &mut initial_history
+        {
+            resumed.history = history;
+        }
         let session_result: anyhow::Result<Arc<Self>> = async {
             let rollout_path = if let Some(live_thread) = live_thread.as_ref() {
                 live_thread.local_rollout_path().await?
@@ -1507,6 +1529,15 @@ impl Session {
                 crate::state::ExecutedToolCalls::new(&config.features, &initial_history);
             let ruxex_responses_headers =
                 thread_extension_data.get::<crate::RuxexResponsesHeaders>();
+            // Ephemeral title requests use their selected request-level effort even when
+            // managed settings enable reasoning-effort overrides.
+            let title_request = config.ephemeral
+                && matches!(
+                    session_configuration.thread_source.as_ref(),
+                    Some(ThreadSource::Feature(feature)) if feature == "thread_title"
+                );
+            let reasoning_effort_override_enabled =
+                config.features.enabled(Feature::ReasoningEffortOverride) && !title_request;
             let services = SessionServices {
                 // Start with an empty connection set. The initialized set is
                 // published after SessionConfigured so MCP events follow it.
@@ -1555,7 +1586,7 @@ impl Session {
                     session_configuration.originator.clone(),
                     config.model_verbosity,
                     config.features.enabled(Feature::ContentItemKinds),
-                    config.features.enabled(Feature::ReasoningEffortOverride),
+                    reasoning_effort_override_enabled,
                     config.features.enabled(Feature::EnableRequestCompression),
                     config.features.enabled(Feature::RuntimeMetrics),
                     Self::build_model_client_beta_features_header(config.as_ref()),
@@ -1595,7 +1626,7 @@ impl Session {
                 managed_network_proxy_refresh_lock: Semaphore::new(/*permits*/ 1),
                 features: config.features.clone(),
                 isolation,
-                allowed_tools,
+                tool_policy,
                 multi_agent_version,
                 mcp_refresh: McpRefresh::new(),
                 mcp_tool_approval_metadata: Default::default(),

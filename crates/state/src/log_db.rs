@@ -70,6 +70,8 @@ pub fn default_filter() -> Targets {
         .with_target("ruxex_otel.log_only", LevelFilter::OFF)
         .with_target("ruxex_otel.trace_safe", LevelFilter::OFF)
         .with_target("rmcp", LevelFilter::INFO)
+        .with_target("tokio_graceful::guard", LevelFilter::DEBUG)
+        .with_target("tokio_graceful::trigger", LevelFilter::DEBUG)
         .with_target("ruxex_api::responses_websocket_timing", LevelFilter::OFF)
         .with_target("ruxex_core::post_sampling_token_estimate", LevelFilter::OFF)
         // Full model request bodies and streamed response payloads overwhelm the

@@ -67,6 +67,7 @@ fn temporary_structured_config() -> std::collections::HashMap<String, Value> {
 
 /// Preserve the visible thread's permissions and external-tool isolation.
 pub(crate) struct TemporaryStructuredThreadOptions {
+    pub(crate) thread_source: ThreadSource,
     pub(crate) model: String,
     pub(crate) cwd: String,
     pub(crate) active_permission_profile: Option<String>,
@@ -82,6 +83,7 @@ pub(crate) async fn start_temporary_thread(
     options: TemporaryStructuredThreadOptions,
 ) -> color_eyre::Result<ThreadStartResponse> {
     let TemporaryStructuredThreadOptions {
+        thread_source,
         model,
         cwd,
         active_permission_profile,
@@ -135,7 +137,7 @@ pub(crate) async fn start_temporary_thread(
                     permissions: custom_permission_profile.clone(),
                     runtime_workspace_roots: Some(Vec::new()),
                     ephemeral: Some(true),
-                    thread_source: Some(ThreadSource::Feature("system".to_string())),
+                    thread_source: Some(thread_source),
                     environments: Some(Vec::new()),
                     dynamic_tools: Some(Vec::new()),
                     selected_capability_roots: Some(Vec::new()),

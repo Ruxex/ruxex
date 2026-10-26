@@ -1,6 +1,7 @@
 use crate::rate_limits::RateLimitError;
 use http::StatusCode;
 use ruxex_client::TransportError;
+use ruxex_http_client::RetryAfter;
 use ruxex_protocol::protocol::MisalignmentErrorDetails;
 use std::time::Duration;
 use thiserror::Error;
@@ -21,11 +22,13 @@ pub enum ApiError {
     Retryable {
         message: String,
         delay: Option<Duration>,
+        retry_after: Option<RetryAfter>,
     },
     #[error("rate limit exceeded: {message}")]
     RateLimitExceeded {
         message: String,
         delay: Option<Duration>,
+        retry_after: Option<RetryAfter>,
     },
     #[error("rate limit: {0}")]
     RateLimit(String),
@@ -39,7 +42,10 @@ pub enum ApiError {
         misalignment: Option<MisalignmentErrorDetails>,
     },
     #[error("server overloaded")]
-    ServerOverloaded,
+    ServerOverloaded {
+        delay: Option<Duration>,
+        retry_after: Option<RetryAfter>,
+    },
 }
 
 impl From<RateLimitError> for ApiError {

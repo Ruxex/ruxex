@@ -9,7 +9,9 @@ use crate::protocol::RuxexErrorInfo;
 use crate::protocol::TruncationPolicy;
 use http::StatusCode;
 use ruxex_async_utils::CancelErr;
+use ruxex_async_utils::backoff;
 use ruxex_http_client::HttpError;
+use ruxex_http_client::RetryAfter;
 use ruxex_utils_string::truncate_middle_chars;
 use ruxex_utils_string::truncate_middle_with_token_budget;
 use serde_json;
@@ -63,6 +65,7 @@ pub enum SandboxErr {
 pub struct RuxexErr {
     details: RuxexErrorDetails,
     retry_delay: Option<Duration>,
+    retry_after: Option<RetryAfter>,
 }
 
 /// The semantic category and diagnostic payload for a [`RuxexErr`].
@@ -212,6 +215,7 @@ impl From<RuxexErrorDetails> for RuxexErr {
         Self {
             details,
             retry_delay: None,
+            retry_after: None,
         }
     }
 }
@@ -276,6 +280,7 @@ macro_rules! ruxex_err_unit_constructors {
             pub const $variant: Self = Self {
                 details: RuxexErrorDetails::$variant,
                 retry_delay: None,
+                retry_after: None,
             };
         )*
     };
@@ -394,12 +399,48 @@ impl RuxexErr {
         }
     }
 
+    /// Returns the delay before the given retry attempt, or `None` for a terminal error.
+    ///
+    /// Server-provided retry advice takes precedence over the local delay and exponential
+    /// backoff. Callers enforce their own retry budgets.
+    pub fn retry_delay_for_attempt(&self, retry_count: u64) -> Option<Duration> {
+        if !self.is_retryable() {
+            return None;
+        }
+
+        if let Some(retry_after) = self.retry_after {
+            return Some(retry_after.remaining_delay());
+        }
+
+        Some(self.retry_delay.unwrap_or_else(|| backoff(retry_count)))
+    }
+
     pub fn retry_delay(&self) -> Option<Duration> {
+        let can_use_server_advice = self.is_retryable()
+            || matches!(
+                self.details(),
+                RuxexErrorDetails::ServerOverloaded | RuxexErrorDetails::RetryLimit(_)
+            );
+        if can_use_server_advice && let Some(retry_after) = self.retry_after {
+            return Some(retry_after.remaining_delay());
+        }
+
         self.retry_delay
     }
 
     pub fn with_retry_delay(mut self, retry_delay: Duration) -> Self {
         self.retry_delay = Some(retry_delay);
+        self
+    }
+
+    /// Returns server retry advice captured when the upstream error was received.
+    pub fn retry_after(&self) -> Option<RetryAfter> {
+        self.retry_after
+    }
+
+    /// Retains an upstream retry deadline while an error crosses layers.
+    pub fn with_retry_after(mut self, retry_after: RetryAfter) -> Self {
+        self.retry_after = Some(retry_after);
         self
     }
 

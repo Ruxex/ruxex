@@ -520,7 +520,11 @@ impl App {
         thread_id: ThreadId,
     ) -> Result<()> {
         let pending_profile_on_unavailable_thread = self.thread_unavailable(thread_id)
-            && self.pending_server_profiles.contains_key(&thread_id);
+            && (self.pending_server_profiles.contains_key(&thread_id)
+                || self
+                    .agents_overview
+                    .requested_permission_profiles
+                    .contains_key(&thread_id));
         let cached_session = if self.thread_unavailable(thread_id) {
             self.thread_event_channels[&thread_id]
                 .store
@@ -631,6 +635,9 @@ impl App {
         }
         if pending_profile_on_unavailable_thread && !is_replay_only && session_verified {
             self.pending_server_profiles.remove(&thread_id);
+            self.agents_overview
+                .requested_permission_profiles
+                .remove(&thread_id);
         }
         // Refreshing can merge restored turns into the store, so recap progress must be read only
         // after the refresh while the activated thread channel is still retained.
@@ -772,6 +779,7 @@ impl App {
         self.abort_all_thread_event_listeners();
         self.thread_event_channels.clear();
         self.pending_server_profiles.clear();
+        self.agents_overview.requested_permission_profiles.clear();
         self.agents_overview.activity.clear();
         self.agent_navigation.clear();
         self.side_threads.clear();

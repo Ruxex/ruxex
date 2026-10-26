@@ -50,6 +50,38 @@ async fn load_rollout_items_reads_compressed_rollout() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn compressed_line_reader_find_map_stops_at_first_match() -> anyhow::Result<()> {
+    let home = TempDir::new()?;
+    let uuid = Uuid::from_u128(25);
+    let thread_id = ThreadId::from_string(&uuid.to_string())?;
+    let path = rollout_path(home.path(), "2025-01-03T12-00-00", uuid);
+    write_rollout(&path, thread_id, "first needle")?;
+    append_rollout_item_to_path(
+        &path,
+        &RolloutItem::EventMsg(EventMsg::UserMessage(UserMessageEvent {
+            message: "second needle".to_string(),
+            ..Default::default()
+        })),
+    )
+    .await?;
+    compress_now(&path)?;
+
+    let reader = open_rollout_line_reader(&path).await?;
+    let calls = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let seen = calls.clone();
+    let found = reader
+        .find_map(move |line| {
+            seen.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            line.contains("first needle").then_some(line.to_string())
+        })
+        .await?;
+
+    assert!(found.is_some());
+    assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 2);
+    Ok(())
+}
+
+#[tokio::test]
 async fn read_session_meta_line_stops_before_invalid_utf8_tail() -> anyhow::Result<()> {
     let home = TempDir::new()?;
     let uuid = Uuid::from_u128(16);

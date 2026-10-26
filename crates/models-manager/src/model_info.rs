@@ -94,6 +94,7 @@ pub fn model_info_template_from_slug(slug: &str) -> ModelInfo {
         supports_search_tool: false,
         supports_experimental_context: false,
         use_responses_lite: false,
+        supports_reasoning_effort_updates: false,
         node_repl_disabled: false,
         model_specialty: None,
         tool_mode: None,
