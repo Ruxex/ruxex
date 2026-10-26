@@ -931,7 +931,9 @@ mod tests {
             uuid,
             ThreadHistoryMode::Paginated,
         )
-        .expect("paginated session file");
+        .expect("paginated session file")
+        .canonicalize()
+        .expect("canonical paginated session file");
         let stale_rollout_path = home.path().join("stale-rollout.jsonl");
         tokio::fs::write(&stale_rollout_path, "malformed session metadata\n")
             .await
@@ -1769,7 +1771,9 @@ mod tests {
         let uuid = uuid::Uuid::from_u128(406);
         let thread_id = ThreadId::from_string(&uuid.to_string()).expect("valid thread id");
         let rollout_path = write_session_file(external_home.path(), "2025-01-04T11-00-00", uuid)
-            .expect("external session file");
+            .expect("external session file")
+            .canonicalize()
+            .expect("canonical external session file");
 
         store
             .resume_thread(ResumeThreadParams {

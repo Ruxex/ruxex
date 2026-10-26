@@ -28,7 +28,7 @@ impl CodeModeToolOutput {
         output.body.insert(
             0,
             FunctionCallOutputContentItem::InputText {
-                text: format!("{status}\nWall time {wall_time_seconds:.1} seconds\nOutput:\n"),
+                text: format!("{status}\nWall time {wall_time_seconds:.1} seconds\nOutput:"),
             },
         );
         Self {
@@ -57,7 +57,7 @@ impl ToolOutput for CodeModeToolOutput {
         let overhead_seconds = total_seconds - host_seconds;
         self.output.body[0] = FunctionCallOutputContentItem::InputText {
             text: format!(
-                "{}\nWall time {total_seconds:.3} seconds (code-mode {host_seconds:.3} seconds; overhead {overhead_seconds:.3} seconds)\nOutput:\n",
+                "{}\nWall time {total_seconds:.3} seconds (code-mode {host_seconds:.3} seconds; overhead {overhead_seconds:.3} seconds)\nOutput:",
                 self.status
             ),
         };

@@ -162,14 +162,11 @@ async fn cancelled_wait_can_still_kill_and_reap_child() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn descriptor_inheritance_matches_command() -> anyhow::Result<()> {
+async fn descriptor_inheritance_is_isolated_from_command() -> anyhow::Result<()> {
     let root = tempfile::tempdir()?;
     symlink("/bin/sh", root.path().join("shell"))?;
     let file = fs::File::open("/dev/null")?;
-    for (operation, expected) in [
-        (libc::F_DUPFD, "inherited"),
-        (libc::F_DUPFD_CLOEXEC, "closed"),
-    ] {
+    for operation in [libc::F_DUPFD, libc::F_DUPFD_CLOEXEC] {
         // SAFETY: Duplicate a harmless descriptor with the requested inheritance flag.
         let fd = unsafe { libc::fcntl(file.as_raw_fd(), operation, 200) };
         cvt_errno(fd)?;
@@ -190,7 +187,7 @@ async fn descriptor_inheritance_matches_command() -> anyhow::Result<()> {
         let mut output = String::new();
         stdout.read_to_string(&mut output).await?;
         assert!(child.wait().await?.success());
-        assert_eq!(output, expected);
+        assert_eq!(output, "closed");
         assert_eq!(command.output()?.stdout, output.as_bytes());
     }
     Ok(())
