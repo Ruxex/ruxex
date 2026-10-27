@@ -128,14 +128,12 @@ use ruxex_app_server_protocol::TurnError as AppServerTurnError;
 use ruxex_app_server_protocol::TurnStatus;
 use ruxex_app_server_protocol::WriteStatus;
 use ruxex_config::LoaderOverrides;
-use ruxex_config::types::ModelAvailabilityNuxConfig;
 use ruxex_exec_server::EnvironmentManager;
 use ruxex_features::Feature;
 #[cfg(test)]
 use ruxex_features::FeaturesToml;
 use ruxex_otel::SessionTelemetry;
 use ruxex_protocol::ThreadId;
-use ruxex_protocol::model_types::ModelAvailabilityNux;
 use ruxex_protocol::model_types::ModelPreset;
 use ruxex_protocol::model_types::ModelUpgrade;
 use ruxex_protocol::model_types::ReasoningEffort as ReasoningEffortConfig;
@@ -738,11 +736,9 @@ impl App {
             has_managed_account: self.chat_widget.has_managed_account(),
             has_ruxex_backend_auth: self.chat_widget.has_ruxex_backend_auth(),
             model_catalog: self.model_catalog.clone(),
-            is_first_run: false,
             status_account_display: self.chat_widget.status_account_display().cloned(),
             initial_plan_type: self.chat_widget.current_plan_type(),
             model: Some(self.chat_widget.current_model().to_string()),
-            startup_tooltip_override: None,
             status_line_invalid_items_warned: self.status_line_invalid_items_warned.clone(),
             terminal_title_invalid_items_warned: self.terminal_title_invalid_items_warned.clone(),
             session_telemetry: self.session_telemetry.clone(),

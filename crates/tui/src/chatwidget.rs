@@ -462,11 +462,9 @@ pub(crate) struct ChatWidgetInit {
     pub(crate) has_managed_account: bool,
     pub(crate) has_ruxex_backend_auth: bool,
     pub(crate) model_catalog: Arc<ModelCatalog>,
-    pub(crate) is_first_run: bool,
     pub(crate) status_account_display: Option<StatusAccountDisplay>,
     pub(crate) initial_plan_type: Option<PlanType>,
     pub(crate) model: Option<String>,
-    pub(crate) startup_tooltip_override: Option<String>,
     // Shared latch so we only warn once about invalid status-line item IDs.
     pub(crate) status_line_invalid_items_warned: Arc<AtomicBool>,
     // Shared latch so we only warn once about invalid terminal-title item IDs.
@@ -608,10 +606,6 @@ pub(crate) struct ChatWidget {
     forked_from: Option<ThreadId>,
     interrupted_turn_notice_mode: InterruptedTurnNoticeMode,
     frame_requester: FrameRequester,
-    // Whether to include the initial welcome banner on session configured
-    show_welcome_banner: bool,
-    // One-shot tooltip override for the primary startup session.
-    startup_tooltip_override: Option<String>,
     // When resuming an existing session (selected via resume picker), avoid an
     // immediate redraw on SessionConfigured to prevent a gratuitous UI flicker.
     suppress_session_configured_redraw: bool,

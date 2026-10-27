@@ -153,7 +153,7 @@ impl App {
         initial_prompt: Option<String>,
         initial_images: Vec<PathBuf>,
         session_selection: SessionSelection,
-        is_first_run: bool,
+        _is_first_run: bool,
         app_server_target: AppServerTarget,
         state_db: Option<StateDbHandle>,
         environment_manager: Arc<EnvironmentManager>,
@@ -187,7 +187,7 @@ impl App {
             Ok(())
         }
 
-        let mut local_settings = crate::local_settings::LocalSettings::from(&config);
+        let local_settings = crate::local_settings::LocalSettings::from(&config);
         let startup_started_at = Instant::now();
         let (app_event_tx, mut app_event_rx) = unbounded_channel();
         let app_event_tx = AppEventSender::new(app_event_tx);
@@ -398,25 +398,6 @@ impl App {
                         managed_worktree.clone(),
                     );
                 }
-                // Count a startup tooltip once the initial chat widget can render it.
-                let startup_tooltip_override = if start_in_agents_overview {
-                    None
-                } else {
-                    match startup_draft
-                        .run_until(
-                            tui,
-                            prepare_startup_tooltip_override(
-                                &mut local_settings,
-                                &available_models,
-                                is_first_run,
-                            ),
-                        )
-                        .await
-                    {
-                        Ok(tooltip_override) => tooltip_override,
-                        Err(err) => return shutdown_on_startup_error(app_server, err).await,
-                    }
-                };
                 let init = crate::chatwidget::ChatWidgetInit {
                     local_settings: local_settings.clone(),
                     config: config.clone(),
@@ -434,11 +415,9 @@ impl App {
                     has_managed_account,
                     has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
-                    is_first_run,
                     status_account_display: status_account_display.clone(),
                     initial_plan_type,
                     model: Some(model.clone()),
-                    startup_tooltip_override,
                     status_line_invalid_items_warned: status_line_invalid_items_warned.clone(),
                     terminal_title_invalid_items_warned: terminal_title_invalid_items_warned
                         .clone(),
@@ -555,11 +534,9 @@ impl App {
                     has_managed_account,
                     has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
-                    is_first_run,
                     status_account_display: status_account_display.clone(),
                     initial_plan_type,
                     model: config.model.clone(),
-                    startup_tooltip_override: None,
                     status_line_invalid_items_warned: status_line_invalid_items_warned.clone(),
                     terminal_title_invalid_items_warned: terminal_title_invalid_items_warned
                         .clone(),
@@ -659,11 +636,9 @@ impl App {
                     has_managed_account,
                     has_ruxex_backend_auth,
                     model_catalog: model_catalog.clone(),
-                    is_first_run,
                     status_account_display: status_account_display.clone(),
                     initial_plan_type,
                     model: config.model.clone(),
-                    startup_tooltip_override: None,
                     status_line_invalid_items_warned: status_line_invalid_items_warned.clone(),
                     terminal_title_invalid_items_warned: terminal_title_invalid_items_warned
                         .clone(),

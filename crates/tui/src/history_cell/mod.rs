@@ -28,7 +28,6 @@ use crate::render::line_utils::line_to_static;
 use crate::render::line_utils::prefix_lines;
 use crate::render::line_utils::push_owned_lines;
 use crate::render::renderable::Renderable;
-use crate::session_state::ThreadSessionState;
 use crate::style::proposed_plan_style;
 use crate::style::user_message_style;
 use crate::terminal_hyperlinks::HyperlinkLine;
@@ -38,9 +37,7 @@ use crate::terminal_hyperlinks::prefix_hyperlink_lines;
 use crate::terminal_hyperlinks::visible_lines;
 use crate::text_formatting::format_and_truncate_tool_result;
 use crate::text_formatting::truncate_text;
-use crate::tooltips;
 use crate::ui_consts::LIVE_PREFIX_COLS;
-use crate::version::RUXEX_CLI_VERSION;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_line;
 use crate::wrapping::adaptive_wrap_lines;
@@ -65,7 +62,6 @@ use ruxex_config::types::McpServerTransportConfig;
 #[cfg(test)]
 use ruxex_mcp::qualified_mcp_tool_name_prefix;
 use ruxex_otel::RuntimeMetricsSummary;
-use ruxex_protocol::account::PlanType;
 use ruxex_protocol::approvals::ExecPolicyAmendment;
 use ruxex_protocol::approvals::NetworkPolicyAmendment;
 #[cfg(test)]

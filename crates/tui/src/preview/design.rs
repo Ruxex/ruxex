@@ -18,7 +18,6 @@ pub struct PreviewBrand {
     pub welcome_tagline: Option<String>,
     pub prompt_placeholder: Option<String>,
     pub side_prompt_placeholder: Option<String>,
-    pub startup_guide_intro: Option<String>,
     pub version_label: Option<String>,
     pub welcome_art: Vec<String>,
 }
@@ -142,7 +141,6 @@ struct RawBrand {
     welcome_tagline: Option<String>,
     prompt_placeholder: Option<String>,
     side_prompt_placeholder: Option<String>,
-    startup_guide_intro: Option<String>,
     version_label: Option<String>,
     #[serde(default)]
     welcome_art: Vec<String>,
@@ -159,7 +157,6 @@ impl RawBrand {
                 "side_prompt_placeholder",
                 self.side_prompt_placeholder.as_deref(),
             ),
-            ("startup_guide_intro", self.startup_guide_intro.as_deref()),
             ("version_label", self.version_label.as_deref()),
         ] {
             if let Some(value) = value {
@@ -181,7 +178,6 @@ impl RawBrand {
             welcome_tagline: self.welcome_tagline,
             prompt_placeholder: self.prompt_placeholder,
             side_prompt_placeholder: self.side_prompt_placeholder,
-            startup_guide_intro: self.startup_guide_intro,
             version_label: self.version_label,
             welcome_art: self.welcome_art,
         })

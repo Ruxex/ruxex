@@ -476,11 +476,9 @@ fn set_test_initial_prompt(app: &mut App, initial_prompt: String) {
         has_managed_account: false,
         has_ruxex_backend_auth: false,
         model_catalog: app.model_catalog.clone(),
-        is_first_run: false,
         status_account_display: None,
         initial_plan_type: None,
         model: Some(model),
-        startup_tooltip_override: None,
         status_line_invalid_items_warned: app.status_line_invalid_items_warned.clone(),
         terminal_title_invalid_items_warned: app.terminal_title_invalid_items_warned.clone(),
         session_telemetry: app.session_telemetry.clone(),
@@ -4596,14 +4594,6 @@ async fn render_clear_ui_header_after_long_transcript_for_snapshot() -> String {
             rollout_path: Some(PathBuf::new()),
         };
         Arc::new(new_session_info_with_brand(
-            app.chat_widget.config_ref(),
-            &app.local_settings,
-            app.chat_widget.current_model(),
-            &session,
-            is_first,
-            /*tooltip_override*/ None,
-            /*auth_plan*/ None,
-            "Provider",
             &crate::brand::DefaultTuiBrandProfile,
         )) as Arc<dyn HistoryCell>
     };
@@ -5704,14 +5694,6 @@ async fn backtrack_selection_preserves_selected_prompt_and_requests_branch() {
             rollout_path: Some(PathBuf::new()),
         };
         Arc::new(new_session_info_with_brand(
-            app.chat_widget.config_ref(),
-            &app.local_settings,
-            app.chat_widget.current_model(),
-            &session,
-            is_first,
-            /*tooltip_override*/ None,
-            /*auth_plan*/ None,
-            "Provider",
             &crate::brand::DefaultTuiBrandProfile,
         )) as Arc<dyn HistoryCell>
     };
@@ -6671,11 +6653,9 @@ async fn replace_chat_widget_reseeds_collab_agent_metadata_for_replay() {
         has_managed_account: app.chat_widget.has_managed_account(),
         has_ruxex_backend_auth: app.chat_widget.has_ruxex_backend_auth(),
         model_catalog: app.model_catalog.clone(),
-        is_first_run: false,
         status_account_display: app.chat_widget.status_account_display().cloned(),
         initial_plan_type: app.chat_widget.current_plan_type(),
         model: Some(app.chat_widget.current_model().to_string()),
-        startup_tooltip_override: None,
         status_line_invalid_items_warned: app.status_line_invalid_items_warned.clone(),
         terminal_title_invalid_items_warned: app.terminal_title_invalid_items_warned.clone(),
         session_telemetry: app.session_telemetry.clone(),

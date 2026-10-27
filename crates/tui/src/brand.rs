@@ -16,8 +16,6 @@ pub(crate) const WELCOME_ART: &[&str] = &[
 pub(crate) const WELCOME_TAGLINE: &str = "A terminal-native agent runtime";
 pub(crate) const PROMPT_PLACEHOLDER: &str = "Describe a task or ask a question...";
 pub(crate) const SIDE_PROMPT_PLACEHOLDER: &str = "Ask a side question...";
-pub(crate) const STARTUP_GUIDE_INTRO: &str =
-    "  To get started, describe a task or try one of these commands:";
 
 /// The status-line item IDs used by the default Ruxex TUI profile.
 pub const DEFAULT_TUI_STATUS_LINE_ITEMS: &[&str] =
@@ -168,10 +166,6 @@ pub trait TuiBrandProfile: Send + Sync {
         None
     }
 
-    fn startup_guide_intro(&self) -> Option<&str> {
-        None
-    }
-
     fn version_label(&self) -> Option<String> {
         None
     }
@@ -214,10 +208,6 @@ impl TuiBrandProfile for DefaultTuiBrandProfile {
 
     fn side_prompt_placeholder(&self) -> Option<&str> {
         Some(SIDE_PROMPT_PLACEHOLDER)
-    }
-
-    fn startup_guide_intro(&self) -> Option<&str> {
-        Some(STARTUP_GUIDE_INTRO)
     }
 
     fn version_label(&self) -> Option<String> {

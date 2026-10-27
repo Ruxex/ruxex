@@ -31,7 +31,6 @@ fn notify_mcp_status_error(chat: &mut ChatWidget, name: &str, error: &str) {
 #[tokio::test]
 async fn mcp_startup_ignores_status_for_other_thread() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["sentry".to_string()]);
     let parent_thread_id = ThreadId::new();
     let child_thread_id = ThreadId::new();
@@ -73,7 +72,6 @@ async fn mcp_startup_ignores_status_for_other_thread() {
 #[tokio::test]
 async fn mcp_startup_dedupes_same_round_duplicate_failure_warning() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);
@@ -374,7 +372,6 @@ async fn turn_start_replaces_idle_completed_mcp_startup_header() {
 #[tokio::test]
 async fn mcp_startup_complete_preserves_review_status() {
     let (mut chat, _rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string()]);
     handle_turn_started(&mut chat, "turn-1");
 
@@ -426,7 +423,6 @@ async fn mcp_startup_complete_preserves_review_status() {
 #[tokio::test]
 async fn app_server_mcp_startup_lag_reports_only_explicit_cancellations() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers([
         "alpha".to_string(),
         "beta".to_string(),
@@ -456,7 +452,6 @@ async fn app_server_mcp_startup_lag_reports_only_explicit_cancellations() {
 #[tokio::test]
 async fn app_server_mcp_startup_reports_failure_after_lag() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string()]);
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);
 
@@ -481,7 +476,6 @@ async fn app_server_mcp_startup_reports_failure_after_lag() {
 #[tokio::test]
 async fn app_server_mcp_startup_reports_cancellation_after_lag() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string()]);
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);
 
@@ -503,7 +497,6 @@ async fn app_server_mcp_startup_reports_cancellation_after_lag() {
 #[tokio::test]
 async fn app_server_mcp_startup_after_lag_can_settle_without_starting_updates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     chat.finish_mcp_startup_after_lag();
@@ -534,7 +527,6 @@ async fn app_server_mcp_startup_after_lag_can_settle_without_starting_updates() 
 #[tokio::test]
 async fn app_server_mcp_startup_after_lag_preserves_partial_terminal_only_round() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);
@@ -575,7 +567,6 @@ async fn app_server_mcp_startup_after_lag_preserves_partial_terminal_only_round(
 #[tokio::test]
 async fn app_server_mcp_startup_next_round_discards_stale_terminal_updates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);
@@ -619,7 +610,6 @@ async fn app_server_mcp_startup_next_round_discards_stale_terminal_updates() {
 #[tokio::test]
 async fn app_server_mcp_startup_next_round_keeps_terminal_statuses_after_starting() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     chat.finish_mcp_startup_after_lag();
@@ -656,7 +646,6 @@ async fn app_server_mcp_startup_next_round_keeps_terminal_statuses_after_startin
 #[tokio::test]
 async fn app_server_mcp_startup_next_round_with_empty_expected_servers_reactivates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(std::iter::empty::<String>());
     chat.finish_mcp_startup(Vec::new(), Vec::new());
 
@@ -682,7 +671,6 @@ async fn app_server_mcp_startup_next_round_with_empty_expected_servers_reactivat
 #[tokio::test]
 async fn app_server_mcp_startup_after_lag_includes_runtime_servers_with_expected_set() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string()]);
 
     notify_mcp_status_error(
@@ -711,7 +699,6 @@ async fn app_server_mcp_startup_after_lag_includes_runtime_servers_with_expected
 #[tokio::test]
 async fn app_server_mcp_startup_next_round_after_lag_can_settle_without_starting_updates() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
-    chat.show_welcome_banner = false;
     chat.set_mcp_startup_expected_servers(["alpha".to_string(), "beta".to_string()]);
 
     notify_mcp_status(&mut chat, "alpha", McpServerStartupState::Starting);

@@ -20,14 +20,6 @@ fn insert_splash(app: &mut App, tui: &mut tui::Tui) {
     app.insert_history_cell(
         tui,
         Box::new(history_cell::new_session_info_with_brand(
-            &app.config,
-            &app.local_settings,
-            "model-test",
-            &session,
-            /*is_first_event*/ false,
-            /*tooltip_override*/ None,
-            /*auth_plan*/ None,
-            "Provider",
             &crate::brand::DefaultTuiBrandProfile,
         )),
     );

@@ -1,8 +1,6 @@
 use super::*;
 use assert_matches::assert_matches;
-use ruxex_config::types::ModelAvailabilityNuxConfig;
 use ruxex_protocol::config_types::ServiceTier;
-use ruxex_protocol::model_types::ModelAvailabilityNux;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -143,15 +141,6 @@ fn model_presets_with_test_upgrades() -> Vec<ModelPreset> {
     presets
 }
 
-fn model_availability_nux_config(shown_count: &[(&str, u32)]) -> ModelAvailabilityNuxConfig {
-    ModelAvailabilityNuxConfig {
-        shown_count: shown_count
-            .iter()
-            .map(|(model, count)| ((*model).to_string(), *count))
-            .collect(),
-    }
-}
-
 fn model_migration_copy_to_plain_text(copy: &crate::model_migration::ModelMigrationCopy) -> String {
     if let Some(markdown) = copy.markdown.as_ref() {
         return markdown.clone();
@@ -211,160 +200,6 @@ fn retired_model_migration_respects_catalog_metadata() {
         .upgrade = None;
     assert_eq!(model_upgrade_for_migration("legacy-model", &presets), None);
 }
-
-#[test]
-fn select_model_availability_nux_picks_only_eligible_model() {
-    let mut presets = all_model_presets();
-    presets.iter_mut().for_each(|preset| {
-        preset.availability_nux = None;
-    });
-    let target = presets
-        .iter_mut()
-        .find(|preset| preset.model == "provider-model-d")
-        .expect("target preset present");
-    target.availability_nux = Some(ModelAvailabilityNux {
-        message: "provider-model-d is available".to_string(),
-    });
-
-    let selected = select_model_availability_nux(&presets, &model_availability_nux_config(&[]));
-
-    assert_eq!(
-        selected,
-        Some(StartupTooltipOverride {
-            model_slug: "provider-model-d".to_string(),
-            message: "provider-model-d is available".to_string(),
-        })
-    );
-}
-
-#[test]
-fn select_model_availability_nux_does_not_fall_back_to_older_announcement() {
-    let mut presets = all_model_presets();
-    presets.iter_mut().for_each(|preset| {
-        preset.availability_nux = None;
-    });
-    let model_5 = presets
-        .iter_mut()
-        .find(|preset| preset.model == "provider-model-d")
-        .expect("provider-model-d preset present");
-    model_5.availability_nux = Some(ModelAvailabilityNux {
-        message: "provider-model-d is available".to_string(),
-    });
-    let model_5_2 = presets
-        .iter_mut()
-        .find(|preset| preset.model == "example-model")
-        .expect("example-model preset present");
-    model_5_2.availability_nux = Some(ModelAvailabilityNux {
-        message: "example-model is available".to_string(),
-    });
-
-    let selected = select_model_availability_nux(
-        &presets,
-        &model_availability_nux_config(&[("provider-model-d", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
-    );
-
-    assert_eq!(selected, None);
-}
-
-#[test]
-fn select_model_availability_nux_uses_existing_model_order_as_priority() {
-    let mut presets = all_model_presets();
-    presets.iter_mut().for_each(|preset| {
-        preset.availability_nux = None;
-    });
-    let first = presets
-        .iter_mut()
-        .find(|preset| preset.model == "example-model")
-        .expect("example-model preset present");
-    first.availability_nux = Some(ModelAvailabilityNux {
-        message: "first".to_string(),
-    });
-    let second = presets
-        .iter_mut()
-        .find(|preset| preset.model == "provider-model-d")
-        .expect("provider-model-d preset present");
-    second.availability_nux = Some(ModelAvailabilityNux {
-        message: "second".to_string(),
-    });
-
-    let selected = select_model_availability_nux(&presets, &model_availability_nux_config(&[]));
-
-    assert_eq!(
-        selected,
-        Some(StartupTooltipOverride {
-            model_slug: "provider-model-d".to_string(),
-            message: "second".to_string(),
-        })
-    );
-}
-
-#[test]
-fn select_model_availability_nux_returns_none_when_all_models_are_exhausted() {
-    let mut presets = all_model_presets();
-    presets.iter_mut().for_each(|preset| {
-        preset.availability_nux = None;
-    });
-    let target = presets
-        .iter_mut()
-        .find(|preset| preset.model == "provider-model-d")
-        .expect("target preset present");
-    target.availability_nux = Some(ModelAvailabilityNux {
-        message: "provider-model-d is available".to_string(),
-    });
-
-    let selected = select_model_availability_nux(
-        &presets,
-        &model_availability_nux_config(&[("provider-model-d", MODEL_AVAILABILITY_NUX_MAX_SHOW_COUNT)]),
-    );
-
-    assert_eq!(selected, None);
-}
-
-#[tokio::test]
-async fn prepare_startup_tooltip_override_persists_model_availability_nux_count() {
-    let ruxex_home = tempdir().expect("temp ruxex home");
-    let config = ConfigBuilder::default()
-        .ruxex_home(ruxex_home.path().to_path_buf())
-        .build()
-        .await
-        .expect("config");
-    let mut presets = all_model_presets();
-    presets.iter_mut().for_each(|preset| {
-        preset.availability_nux = None;
-    });
-    let target = presets
-        .iter_mut()
-        .find(|preset| preset.model == "provider-model-d")
-        .expect("target preset present");
-    target.availability_nux = Some(ModelAvailabilityNux {
-        message: "provider-model-d is available".to_string(),
-    });
-
-    let mut local_settings = crate::local_settings::LocalSettings::from(&config);
-    let tooltip = prepare_startup_tooltip_override(
-        &mut local_settings,
-        &presets,
-        /*is_first_run*/ false,
-    )
-    .await;
-
-    assert_eq!(tooltip.as_deref(), Some("provider-model-d is available"));
-    assert_eq!(
-        local_settings.tui.model_availability_nux.shown_count,
-        HashMap::from([("provider-model-d".to_string(), 1)])
-    );
-
-    let reloaded = ConfigBuilder::default()
-        .ruxex_home(ruxex_home.path().to_path_buf())
-        .build()
-        .await
-        .expect("reloaded config");
-    assert_eq!(
-        reloaded.model_availability_nux.shown_count,
-        HashMap::from([("provider-model-d".to_string(), 1)])
-    );
-}
-
 
 #[tokio::test]
 async fn model_migration_prompt_respects_hide_flag_and_self_target() {

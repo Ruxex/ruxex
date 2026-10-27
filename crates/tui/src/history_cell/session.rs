@@ -1,4 +1,4 @@
-//! Session headers, onboarding guidance, and transcript cards.
+//! Session headers and transcript cards.
 
 use super::*;
 use crate::brand::TuiBrandProfile;
@@ -65,44 +65,6 @@ fn with_border_internal(
 }
 
 #[derive(Debug)]
-struct TooltipHistoryCell {
-    tip: String,
-    cwd: PathBuf,
-}
-
-impl TooltipHistoryCell {
-    fn new(tip: String, cwd: &Path) -> Self {
-        Self {
-            tip,
-            cwd: cwd.to_path_buf(),
-        }
-    }
-}
-
-impl HistoryCell for TooltipHistoryCell {
-    fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
-        let indent = "  ";
-        let indent_width = display_width(indent);
-        let wrap_width = usize::from(width.max(1))
-            .saturating_sub(indent_width)
-            .max(1);
-        let mut lines: Vec<Line<'static>> = Vec::new();
-        append_markdown(
-            &format!("**Tip:** {}", self.tip),
-            Some(wrap_width),
-            Some(self.cwd.as_path()),
-            &mut lines,
-        );
-
-        prefix_lines(lines, indent.into(), indent.into())
-    }
-
-    fn raw_lines(&self) -> Vec<Line<'static>> {
-        vec![Line::from(format!("Tip: {}", self.tip))]
-    }
-}
-
-#[derive(Debug)]
 pub struct SessionInfoCell(CompositeHistoryCell);
 
 impl HistoryCell for SessionInfoCell {
@@ -123,91 +85,17 @@ impl HistoryCell for SessionInfoCell {
     }
 }
 
-#[expect(
-    clippy::too_many_arguments,
-    reason = "keep local preferences separate while the legacy Config parameter is still required"
-)]
-pub(crate) fn new_session_info_with_brand(
-    config: &Config,
-    local_settings: &crate::local_settings::LocalSettings,
-    requested_model: &str,
-    session: &ThreadSessionState,
-    is_first_event: bool,
-    tooltip_override: Option<String>,
-    auth_plan: Option<PlanType>,
-    provider_name: &str,
-    brand_profile: &dyn TuiBrandProfile,
-) -> SessionInfoCell {
-    // Header box rendered as history (so it appears at the very top)
-    let header = SessionHeaderHistoryCell::new(
-        session.model.clone(),
-        session.reasoning_effort.clone(),
-        config.cwd.to_path_buf(),
-        RUXEX_CLI_VERSION,
-    )
-    .with_provider_name(provider_name.to_string())
-    .with_yolo_mode(has_yolo_permissions(
-        session.approval_policy,
-        &session.permission_profile,
-    ));
-    let mut parts: Vec<Box<dyn HistoryCell>> = vec![Box::new(header)];
+pub(crate) fn new_session_info_with_brand(brand_profile: &dyn TuiBrandProfile) -> SessionInfoCell {
+    let lines = brand_profile
+        .welcome_art()
+        .unwrap_or_default()
+        .iter()
+        .map(|line| Line::from((*line).to_string().dim()))
+        .collect();
 
-    if is_first_event {
-        // Help lines below the header (new copy and list)
-        let mut help_lines: Vec<Line<'static>> = Vec::new();
-        if let Some(intro) = brand_profile.startup_guide_intro() {
-            help_lines.push(intro.to_string().dim().into());
-            help_lines.push(Line::from(""));
-        }
-        let product_name = brand_profile.product_name().unwrap_or("the agent");
-        help_lines.extend([
-            Line::from(vec![
-                "  ".into(),
-                "/init".into(),
-                format!(" - create an AGENTS.md file with instructions for {product_name}").dim(),
-            ]),
-            Line::from(vec![
-                "  ".into(),
-                "/status".into(),
-                " - show current session configuration".dim(),
-            ]),
-            Line::from(vec![
-                "  ".into(),
-                "/permissions".into(),
-                format!(" - choose what {product_name} is allowed to do").dim(),
-            ]),
-            Line::from(vec![
-                "  ".into(),
-                "/model".into(),
-                " - choose what model and reasoning effort to use".dim(),
-            ]),
-            Line::from(vec![
-                "  ".into(),
-                "/review".into(),
-                " - review any changes and find issues".dim(),
-            ]),
-        ]);
-
-        parts.push(Box::new(PlainHistoryCell { lines: help_lines }));
-    } else {
-        if local_settings.tui.show_tooltips
-            && let Some(tooltips) = tooltip_override
-                .or_else(|| tooltips::get_tooltip(auth_plan))
-                .map(|tip| TooltipHistoryCell::new(tip, &config.cwd))
-        {
-            parts.push(Box::new(tooltips));
-        }
-        if requested_model != session.model.as_str() {
-            let lines = vec![
-                "model changed:".magenta().bold().into(),
-                format!("requested: {requested_model}").into(),
-                format!("used: {}", session.model).into(),
-            ];
-            parts.push(Box::new(PlainHistoryCell { lines }));
-        }
-    }
-
-    SessionInfoCell(CompositeHistoryCell { parts })
+    SessionInfoCell(CompositeHistoryCell {
+        parts: vec![Box::new(PlainHistoryCell { lines })],
+    })
 }
 
 pub(crate) fn is_yolo_mode(config: &Config) -> bool {
@@ -231,6 +119,33 @@ pub(crate) fn has_yolo_permissions(
                 }
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn session_info_is_brand_art_only() {
+        let cell = new_session_info_with_brand(&crate::brand::DefaultTuiBrandProfile);
+        let rendered: Vec<String> = cell
+            .raw_lines()
+            .into_iter()
+            .map(|line| {
+                line.spans
+                    .into_iter()
+                    .map(|span| span.content.into_owned())
+                    .collect()
+            })
+            .collect();
+
+        let expected = crate::brand::WELCOME_ART
+            .iter()
+            .map(|line| (*line).to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(rendered, expected);
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct SessionHeaderHistoryCell {
     provider_name: String,

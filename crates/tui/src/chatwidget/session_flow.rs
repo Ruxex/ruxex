@@ -151,20 +151,9 @@ impl ChatWidget {
         self.sync_plugins_command_enabled();
         self.sync_goal_command_enabled();
         self.refresh_plugin_mentions();
-        let model_for_header = self.current_model().to_string();
         if display == SessionConfiguredDisplay::Normal {
-            let startup_tooltip_override = self.startup_tooltip_override.take();
-            let session_info_cell = history_cell::new_session_info_with_brand(
-                &self.config,
-                &self.local_settings,
-                &model_for_header,
-                &session,
-                self.show_welcome_banner,
-                startup_tooltip_override,
-                self.plan_type,
-                &self.provider_display_name,
-                self.brand_profile.as_ref(),
-            );
+            let session_info_cell =
+                history_cell::new_session_info_with_brand(self.brand_profile.as_ref());
             self.apply_session_info_cell(session_info_cell);
         } else if self
             .transcript

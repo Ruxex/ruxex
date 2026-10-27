@@ -505,70 +505,35 @@ fn final_message_separator_includes_worked_label_after_one_minute() {
 }
 
 
-#[tokio::test]
-async fn session_info_uses_availability_nux_tooltip_override() {
-    let config = test_config().await;
-    let cell = new_session_info_with_brand(
-        &config,
-        &crate::local_settings::LocalSettings::from(&config),
-        "example-model",
-        &session_configured_event("example-model"),
-        /*is_first_event*/ false,
-        Some("Model just became available".to_string()),
-        Some(PlanType::Free),
-        "Provider",
-        &crate::brand::DefaultTuiBrandProfile,
-    );
+#[test]
+fn session_info_renders_brand_art_without_provider_details_or_tips() {
+    let cell = new_session_info_with_brand(&crate::brand::DefaultTuiBrandProfile);
 
     let rendered = render_transcript(&cell).join("\n");
-    assert!(rendered.contains("Model just became available"));
+    assert!(rendered.contains("RUXEX"));
+    assert!(!rendered.contains("Tip:"));
+    assert!(!rendered.contains("provider"));
+    assert!(!rendered.contains("model:"));
 }
 
-#[tokio::test]
-#[cfg_attr(
-    target_os = "windows",
-    ignore = "snapshot path rendering differs on Windows"
-)]
-
-
-#[tokio::test]
-async fn session_info_first_event_suppresses_tooltips_and_nux() {
-    let config = test_config().await;
-    let cell = new_session_info_with_brand(
-        &config,
-        &crate::local_settings::LocalSettings::from(&config),
-        "example-model",
-        &session_configured_event("example-model"),
-        /*is_first_event*/ true,
-        Some("Model just became available".to_string()),
-        Some(PlanType::Free),
-        "Provider",
-        &crate::brand::DefaultTuiBrandProfile,
-    );
+#[test]
+fn session_info_omits_startup_guide_and_tips() {
+    let cell = new_session_info_with_brand(&crate::brand::DefaultTuiBrandProfile);
 
     let rendered = render_transcript(&cell).join("\n");
-    assert!(!rendered.contains("Model just became available"));
-    assert!(rendered.contains("To get started"));
+    assert!(rendered.contains("RUXEX"));
+    assert!(!rendered.contains("To get started"));
+    assert!(!rendered.contains("/init"));
+    assert!(!rendered.contains("Tip:"));
 }
 
-#[tokio::test]
-async fn session_info_hides_tooltips_when_disabled() {
-    let mut config = test_config().await;
-    config.show_tooltips = false;
-    let cell = new_session_info_with_brand(
-        &config,
-        &crate::local_settings::LocalSettings::from(&config),
-        "example-model",
-        &session_configured_event("example-model"),
-        /*is_first_event*/ false,
-        Some("Model just became available".to_string()),
-        Some(PlanType::Free),
-        "Provider",
-        &crate::brand::DefaultTuiBrandProfile,
-    );
+#[test]
+fn session_info_brand_art_does_not_depend_on_tip_settings() {
+    let cell = new_session_info_with_brand(&crate::brand::DefaultTuiBrandProfile);
 
     let rendered = render_transcript(&cell).join("\n");
-    assert!(!rendered.contains("Model just became available"));
+    assert!(rendered.contains("RUXEX"));
+    assert!(!rendered.contains("Tip:"));
 }
 
 
