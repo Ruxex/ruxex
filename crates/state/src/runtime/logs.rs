@@ -418,9 +418,10 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         runtime
             .insert_logs(&[LogEntry {
-                ts: 1,
+                ts: now,
                 ts_nanos: 0,
                 level: "INFO".to_string(),
                 target: "cli".to_string(),
@@ -574,10 +575,11 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         runtime
             .insert_logs(&[
                 LogEntry {
-                    ts: 1_700_000_001,
+                    ts: now + 1,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -590,7 +592,7 @@ mod tests {
                     module_path: None,
                 },
                 LogEntry {
-                    ts: 1_700_000_002,
+                    ts: now + 2,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -629,10 +631,11 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         runtime
             .insert_logs(&[
                 LogEntry {
-                    ts: 1,
+                    ts: now + 1,
                     ts_nanos: 0,
                     level: "TRACE".to_string(),
                     target: "cli".to_string(),
@@ -645,7 +648,7 @@ mod tests {
                     module_path: None,
                 },
                 LogEntry {
-                    ts: 2,
+                    ts: now + 2,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -658,7 +661,7 @@ mod tests {
                     module_path: None,
                 },
                 LogEntry {
-                    ts: 3,
+                    ts: now + 3,
                     ts_nanos: 0,
                     level: "warn".to_string(),
                     target: "cli".to_string(),
@@ -671,7 +674,7 @@ mod tests {
                     module_path: None,
                 },
                 LogEntry {
-                    ts: 4,
+                    ts: now + 4,
                     ts_nanos: 0,
                     level: "ERROR".to_string(),
                     target: "cli".to_string(),
@@ -716,11 +719,12 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let six_mebibytes = "a".repeat(6 * 1024 * 1024);
         runtime
             .insert_logs(&[
                 LogEntry {
-                    ts: 1,
+                    ts: now + 1,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -733,7 +737,7 @@ mod tests {
                     module_path: Some("mod".to_string()),
                 },
                 LogEntry {
-                    ts: 2,
+                    ts: now + 2,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -758,7 +762,7 @@ mod tests {
             .expect("query thread logs");
 
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].ts, 2);
+        assert_eq!(rows[0].ts, now + 2);
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
@@ -812,11 +816,12 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let six_mebibytes = "b".repeat(6 * 1024 * 1024);
         runtime
             .insert_logs(&[
                 LogEntry {
-                    ts: 1,
+                    ts: now + 1,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -829,7 +834,7 @@ mod tests {
                     module_path: Some("mod".to_string()),
                 },
                 LogEntry {
-                    ts: 2,
+                    ts: now + 2,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -842,7 +847,7 @@ mod tests {
                     module_path: Some("mod".to_string()),
                 },
                 LogEntry {
-                    ts: 3,
+                    ts: now + 3,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -869,7 +874,7 @@ mod tests {
 
         let mut timestamps: Vec<i64> = rows.into_iter().map(|row| row.ts).collect();
         timestamps.sort_unstable();
-        assert_eq!(timestamps, vec![2, 3]);
+        assert_eq!(timestamps, vec![now + 2, now + 3]);
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
@@ -923,11 +928,12 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let six_mebibytes = "c".repeat(6 * 1024 * 1024);
         runtime
             .insert_logs(&[
                 LogEntry {
-                    ts: 1,
+                    ts: now + 1,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -940,7 +946,7 @@ mod tests {
                     module_path: Some("mod".to_string()),
                 },
                 LogEntry {
-                    ts: 2,
+                    ts: now + 2,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -953,7 +959,7 @@ mod tests {
                     module_path: Some("mod".to_string()),
                 },
                 LogEntry {
-                    ts: 3,
+                    ts: now + 3,
                     ts_nanos: 0,
                     level: "INFO".to_string(),
                     target: "cli".to_string(),
@@ -979,7 +985,7 @@ mod tests {
 
         let mut timestamps: Vec<i64> = rows.into_iter().map(|row| row.ts).collect();
         timestamps.sort_unstable();
-        assert_eq!(timestamps, vec![2, 3]);
+        assert_eq!(timestamps, vec![now + 2, now + 3]);
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
@@ -1033,9 +1039,10 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let entries: Vec<LogEntry> = (1..=1_001)
             .map(|ts| LogEntry {
-                ts,
+                ts: now + ts,
                 ts_nanos: 0,
                 level: "INFO".to_string(),
                 target: "cli".to_string(),
@@ -1063,8 +1070,8 @@ mod tests {
 
         let timestamps: Vec<i64> = rows.into_iter().map(|row| row.ts).collect();
         assert_eq!(timestamps.len(), 1_000);
-        assert_eq!(timestamps.first().copied(), Some(2));
-        assert_eq!(timestamps.last().copied(), Some(1_001));
+        assert_eq!(timestamps.first().copied(), Some(now + 2));
+        assert_eq!(timestamps.last().copied(), Some(now + 1_001));
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
@@ -1078,9 +1085,10 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let entries: Vec<LogEntry> = (1..=1_001)
             .map(|ts| LogEntry {
-                ts,
+                ts: now + ts,
                 ts_nanos: 0,
                 level: "INFO".to_string(),
                 target: "cli".to_string(),
@@ -1112,8 +1120,8 @@ mod tests {
             .map(|row| row.ts)
             .collect();
         assert_eq!(timestamps.len(), 1_000);
-        assert_eq!(timestamps.first().copied(), Some(2));
-        assert_eq!(timestamps.last().copied(), Some(1_001));
+        assert_eq!(timestamps.first().copied(), Some(now + 2));
+        assert_eq!(timestamps.last().copied(), Some(now + 1_001));
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
@@ -1127,9 +1135,10 @@ mod tests {
         .await
         .expect("initialize runtime");
 
+        let now = Utc::now().timestamp();
         let entries: Vec<LogEntry> = (1..=1_001)
             .map(|ts| LogEntry {
-                ts,
+                ts: now + ts,
                 ts_nanos: 0,
                 level: "INFO".to_string(),
                 target: "cli".to_string(),
@@ -1161,8 +1170,8 @@ mod tests {
             .map(|row| row.ts)
             .collect();
         assert_eq!(timestamps.len(), 1_000);
-        assert_eq!(timestamps.first().copied(), Some(2));
-        assert_eq!(timestamps.last().copied(), Some(1_001));
+        assert_eq!(timestamps.first().copied(), Some(now + 2));
+        assert_eq!(timestamps.last().copied(), Some(now + 1_001));
 
         let _ = tokio::fs::remove_dir_all(ruxex_home).await;
     }
