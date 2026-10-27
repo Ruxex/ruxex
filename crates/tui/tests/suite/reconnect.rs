@@ -78,11 +78,11 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
                 let result = match request.method.as_str() {
                     "initialize" => json!({"userAgent": "reconnect-pty"}),
                     "account/read" => {
-                        json!({"providerId": "provider", "account": {"type": "apiKey"}, "authStatus": "authenticated"})
+                        json!({"providerId": "ruxex-tui-test-provider", "account": {"type": "apiKey"}, "authStatus": "authenticated"})
                     }
                     "modelProvider/read" => json!({
-                        "id": "responses",
-                        "name": "responses",
+                        "id": "ruxex-tui-test-provider",
+                        "name": "Ruxex TUI Test Provider",
                         "authStatus": "authenticated"
                     }),
                     "modelProvider/capabilities/read" => json!({
@@ -188,7 +188,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
     let mut disconnect_tx = Some(disconnect_tx);
     let mut restore_tx = Some(restore_tx);
     for expected in [
-        "provider-model-d",
+        "Provider model",
         "preserved-draft",
         "Reconnecting",
         "preserved-draft!",
@@ -204,7 +204,7 @@ async fn automatic_reconnect_restores_draft_and_routes_new_notifications() -> Re
             terminal.screen_contents()
         );
         match expected {
-            "provider-model-d" => terminal.write_input(b"preserved-draft")?,
+            "Provider model" => terminal.write_input(b"preserved-draft")?,
             "preserved-draft" => {
                 disconnect_tx.take().unwrap().send(()).unwrap();
             }

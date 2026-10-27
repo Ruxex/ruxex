@@ -6,7 +6,6 @@ product_slug = "ruxex-preview"
 welcome_tagline = "Design the terminal-native agent experience"
 prompt_placeholder = "Describe a task..."
 side_prompt_placeholder = "Ask a side question..."
-startup_guide_intro = "Start with a task or choose a command:"
 version_label = "v0.1.0-preview"
 welcome_art = ["+------------------+", "|  RUXEX PREVIEW   |", "+------------------+"]
 
