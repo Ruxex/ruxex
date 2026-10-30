@@ -91,9 +91,10 @@ explicit marker is used.
   `timeout_ms` value.
 - `approval` returns a fixed `exec_command` call with
   `sandbox_permissions: "require_escalated"` and a fixed justification. The
-  client/runtime must use `approval_policy = "on-request"` (or an equivalent
-  override) to show an approval prompt. The dummy provider keeps its default
-  `approval_policy = "never"`; approval and denial are handled by the client.
+  dummy provider defaults to `approval_policy = "on-request"` with
+  `sandbox_mode = "read-only"`, so the client/runtime shows an approval prompt
+  without an additional override. Approval and denial are handled by the
+  client.
   `approval:deny` and `approval:cancel` use distinct call IDs and provide
   fixed continuation text after the client returns the corresponding result.
 - `workflow` emits an assistant message, then a fixed tool call, then a fixed
@@ -107,7 +108,8 @@ explicit marker is used.
 - `user-input` emits a fixed `request_user_input` call with one question and
   completes after the client returns its result.
 - `permissions` emits a fixed `request_permissions` call with file-system
-  permissions and completes after the client returns its result. Permission
+  permissions and completes after the client returns its result. The dummy
+  provider enables `request_permissions_tool` in its default config. Permission
   selection remains client/runtime-owned.
 - `mcp` returns a fixed `example/echo` call when the fixture MCP tool is
   available. Otherwise it returns a fixed unavailable message.
