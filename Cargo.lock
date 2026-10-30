@@ -232,7 +232,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "app_test_support"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1454,7 +1454,7 @@ dependencies = [
 
 [[package]]
 name = "core_test_support"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -8190,7 +8190,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-api",
  "ruxex-app-server",
@@ -8212,12 +8212,13 @@ dependencies = [
  "ruxex-providers",
  "ruxex-tui",
  "ruxex-utils-absolute-path",
+ "ruxex-utils-cli",
  "ruxex-utils-home-dir",
 ]
 
 [[package]]
 name = "ruxex-agent-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "core_test_support",
@@ -8229,7 +8230,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-graph-store"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-protocol",
@@ -8244,7 +8245,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-agent-roles"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-config",
  "ruxex-file-system",
@@ -8257,7 +8258,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-ansi-escape"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ansi-to-tui",
  "pretty_assertions",
@@ -8269,7 +8270,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-api"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_matches",
@@ -8306,7 +8307,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "app_test_support",
@@ -8401,7 +8402,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "pretty_assertions",
@@ -8431,7 +8432,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-daemon"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -8454,7 +8455,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-mock"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "ruxex-app-server-protocol",
@@ -8467,7 +8468,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "inventory",
@@ -8501,11 +8502,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol-noop-macros"
-version = "0.4.11"
+version = "0.5.0"
 
 [[package]]
 name = "ruxex-app-server-test-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -8527,7 +8528,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-transport"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -8571,7 +8572,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-apply-patch"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -8591,7 +8592,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-arg0"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "dotenvy",
@@ -8610,7 +8611,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-async-utils"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "rand 0.9.3",
@@ -8620,7 +8621,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-attachment-store"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "serde",
@@ -8630,7 +8631,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-build-info"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-install-context",
@@ -8643,7 +8644,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-bwrap"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "cc",
  "libc",
@@ -8652,7 +8653,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-cli"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -8735,7 +8736,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "http",
@@ -8747,7 +8748,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "http-body-util",
@@ -8770,7 +8771,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode-host"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -8798,7 +8799,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode-protocol"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "glob",
  "pretty_assertions",
@@ -8816,7 +8817,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-code-mode-runtime"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "deno_core_icudata",
@@ -8834,11 +8835,11 @@ dependencies = [
 
 [[package]]
 name = "ruxex-collaboration-mode-templates"
-version = "0.4.11"
+version = "0.5.0"
 
 [[package]]
 name = "ruxex-config"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -8878,7 +8879,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-config-schema"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -8887,7 +8888,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-context-fragments"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-protocol",
@@ -8896,7 +8897,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -9016,7 +9017,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core-api"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-app-server-protocol",
  "ruxex-arg0",
@@ -9036,7 +9037,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-core-plugins"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9085,7 +9086,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-credential-broker"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "tokio",
 ]
@@ -9110,7 +9111,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-diagnostics"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "libc",
  "pretty_assertions",
@@ -9118,7 +9119,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -9165,7 +9166,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -9216,7 +9217,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server-protocol"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "pretty_assertions",
@@ -9231,7 +9232,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-exec-server-test-support"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "futures",
@@ -9245,7 +9246,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-execpolicy"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -9263,7 +9264,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-experimental-api-macros"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9272,7 +9273,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-api"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-config",
@@ -9290,7 +9291,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-extension-items"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-utils-absolute-path",
@@ -9302,7 +9303,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-features"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-network-proxy",
@@ -9316,7 +9317,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-search"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -9332,7 +9333,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-system"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "bytes",
  "futures",
@@ -9344,7 +9345,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-file-watcher"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "notify",
  "pretty_assertions",
@@ -9355,7 +9356,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-git-utils"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9381,7 +9382,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-goal-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -9405,7 +9406,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "pretty_assertions",
@@ -9417,7 +9418,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-history-notes-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "core_test_support",
  "http",
@@ -9440,7 +9441,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-home"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-extension-api",
@@ -9452,7 +9453,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-hooks"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -9478,7 +9479,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-http-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "bytes",
  "futures",
@@ -9510,7 +9511,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-install-context"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-utils-absolute-path",
@@ -9523,7 +9524,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-keyring-store"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "keyring",
  "tracing",
@@ -9531,7 +9532,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-linux-sandbox"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "clap",
  "globset",
@@ -9559,7 +9560,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-login"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9593,7 +9594,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -9626,7 +9627,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mcp-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -9654,7 +9655,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-mermaid"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "insta",
  "pretty_assertions",
@@ -9663,7 +9664,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-message-history"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "memchr",
  "pretty_assertions",
@@ -9677,7 +9678,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -9708,7 +9709,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider-contract-tests"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "ruxex-http-client",
@@ -9723,7 +9724,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-model-provider-info"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "http",
  "maplit",
@@ -9740,7 +9741,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-models-manager"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "pretty_assertions",
@@ -9758,7 +9759,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-network-proxy"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9803,7 +9804,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-otel"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "eventsource-stream",
@@ -9835,7 +9836,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-otel-trace-websocket"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -9846,7 +9847,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-plugin"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-config",
@@ -9860,7 +9861,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-process-hardening"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "libc",
  "pretty_assertions",
@@ -9868,7 +9869,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-prompts"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "pretty_assertions",
@@ -9884,7 +9885,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-protocol"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chardetng",
@@ -9929,7 +9930,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-provider-auth"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-model-provider",
  "tokio",
@@ -9937,7 +9938,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-provider-host-example"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "futures",
@@ -9961,7 +9962,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-providers"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "futures",
@@ -9992,7 +9993,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-queue-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "core_test_support",
@@ -10115,7 +10116,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-response-debug-context"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "http",
  "pretty_assertions",
@@ -10124,7 +10125,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rmcp-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -10171,7 +10172,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10198,7 +10199,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-rollout-trace"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "http",
@@ -10214,7 +10215,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-sandboxing"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "dunce",
@@ -10237,7 +10238,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-secrets"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "age",
  "anyhow",
@@ -10258,7 +10259,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-shell-command"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -10280,7 +10281,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "include_dir",
  "pretty_assertions",
@@ -10297,7 +10298,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-skills-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "assert_matches",
  "dirs",
@@ -10332,7 +10333,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-state"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -10358,7 +10359,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-stdio-to-uds"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "pretty_assertions",
@@ -10370,7 +10371,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tcp-tunnel"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "bytes",
@@ -10391,7 +10392,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-terminal-detection"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "tracing",
@@ -10399,7 +10400,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-test-binary-support"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-arg0",
  "tempfile",
@@ -10407,7 +10408,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-thread-store"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "futures",
@@ -10452,7 +10453,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tools"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "bitflags 2.13.1",
  "jsonptr",
@@ -10475,7 +10476,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-tui"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "app_test_support",
@@ -10608,7 +10609,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-uds"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "libc",
  "pretty_assertions",
@@ -10618,7 +10619,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-user-verification"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "core-foundation 0.10.1",
@@ -10638,7 +10639,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-absolute-path"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "dirs",
  "dunce",
@@ -10652,14 +10653,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-approval-presets"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-protocol",
 ]
 
 [[package]]
 name = "ruxex-utils-audio"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "pretty_assertions",
@@ -10673,7 +10674,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cache"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "lru",
  "sha1 0.10.6",
@@ -10682,7 +10683,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cargo-bin"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "assert_cmd",
  "thiserror 2.0.18",
@@ -10690,7 +10691,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-cli"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "clap",
  "pretty_assertions",
@@ -10702,15 +10703,15 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-elapsed"
-version = "0.4.11"
+version = "0.5.0"
 
 [[package]]
 name = "ruxex-utils-fuzzy-match"
-version = "0.4.11"
+version = "0.5.0"
 
 [[package]]
 name = "ruxex-utils-git-discovery"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "pretty_assertions",
@@ -10723,7 +10724,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-home-dir"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "dirs",
  "pretty_assertions",
@@ -10733,7 +10734,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-image"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "divan",
@@ -10746,7 +10747,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-json-to-toml"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "serde_json",
@@ -10755,7 +10756,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-output-truncation"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-protocol",
@@ -10764,7 +10765,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "dunce",
  "pretty_assertions",
@@ -10774,7 +10775,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-path-uri"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "base64 0.22.1",
  "ruxex-utils-absolute-path",
@@ -10788,7 +10789,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-plugins"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "ruxex-exec-server",
  "ruxex-exec-server-protocol",
@@ -10802,7 +10803,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-pty"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "libc",
@@ -10813,7 +10814,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-redacted-string"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "schemars 0.8.22",
  "serde",
@@ -10821,14 +10822,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-rustls-provider"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "rustls",
 ]
 
 [[package]]
 name = "ruxex-utils-sandbox-summary"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "ruxex-protocol",
@@ -10838,7 +10839,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-sleep-inhibitor"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "core-foundation 0.9.4",
  "libc",
@@ -10847,14 +10848,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-stream-parser"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
 ]
 
 [[package]]
 name = "ruxex-utils-string"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
  "regex-lite",
@@ -10864,14 +10865,14 @@ dependencies = [
 
 [[package]]
 name = "ruxex-utils-template"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "pretty_assertions",
 ]
 
 [[package]]
 name = "ruxex-web-search-extension"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "http",
  "pretty_assertions",
@@ -10893,7 +10894,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-websocket-client"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "futures",
  "pretty_assertions",
@@ -10909,7 +10910,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-worktree"
-version = "0.4.11"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "dunce",

@@ -24,6 +24,10 @@ contract is available directly from `ruxex::provider`, while configuration,
 authentication, protocol values, and Ruxex HTTP transport helpers are grouped
 under `ruxex::provider::{config, auth, protocol, transport}`.
 
+For a desktop client that embeds Ruxex, use the coarse `desktop` feature. For
+an interactive provider-injected CLI, use the `cli` feature. `ruxex::provider`
+is the canonical provider contract facade.
+
 ```rust
 use ruxex::provider::{ModelProvider, ModelProviderFactory, ProviderInit};
 use ruxex::provider::config::ModelProviderInfo;

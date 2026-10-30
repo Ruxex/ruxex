@@ -50,9 +50,17 @@ ruxex = {
 }
 ```
 
-The default `full` feature preserves the App Server, CLI, and TUI facade. A
-host that embeds the App Server without the terminal UI can opt out of the
-default integration features:
+The default `full` feature preserves the App Server, CLI, TUI, and desktop
+facades. Choose the profile that matches the application you are building:
+
+- `desktop` is for embedded desktop clients such as Tauri applications. It
+  exposes the App Server client, daemon, protocol, configuration, provider,
+  and host-launch surfaces without enabling the TUI or interactive CLI;
+- `cli` is for a provider-injected interactive client and implies `app-server`
+  and `tui`;
+- `app-server` remains available as a lower-level building feature.
+
+An embedded desktop host can opt out of the default integration features:
 
 ```toml
 [dependencies]
@@ -60,13 +68,13 @@ ruxex = {
     git = "https://github.com/Ruxex/ruxex.git",
     tag = "v0.3.0",
     default-features = false,
-    features = ["app-server"]
+    features = ["desktop"]
 }
 ```
 
-The `cli` feature implies `app-server` and `tui`, because the current CLI
-implementation uses the TUI integration. The provider-neutral contract and
-protocol modules remain available without these facade features.
+The provider-neutral contract and protocol modules remain available without
+these facade features. The two supported application profiles are intentionally
+coarse; workspace crate boundaries are not part of the public dependency model.
 
 The CLI/TUI entry point accepts all three host-defined pieces. The CLI invokes
 the provider factory and constructs the App Server internally:
@@ -107,18 +115,17 @@ When the default product identity is sufficient, the shorter
 `ruxex::run::<MyProvider>(arg0_paths, brand_profile)` entry point is also
 available.
 
-Hosts that need lower-level App Server integration can use the grouped facade
-surfaces without depending on each workspace crate directly:
+Hosts that need App Server integration can use the curated desktop facade
+without depending on each workspace crate directly:
 
-- `ruxex::app_server::client` for in-process and remote clients;
-- `ruxex::app_server::daemon` for managed daemon lifecycle operations;
-- `ruxex::app_server::protocol` for App Server JSON-RPC types;
-- `ruxex::config`, `ruxex::core`, `ruxex::providers`, and
-  `ruxex::utils::absolute_path` for embedded-host setup types; and
+- `ruxex::desktop::client`, `ruxex::desktop::daemon`, and
+  `ruxex::desktop::protocol` for the curated desktop profile;
+- `ruxex::desktop::host` for provider-owned App Server daemon startup;
 - `ruxex::protocol` for shared protocol types.
 
-These grouped surfaces are intentionally broad during the facade migration.
-Feature-specific narrowing and a curated prelude will follow separately.
+The `app-server` and `tui` features remain implementation-level building
+blocks for the profile features. A curated prelude can be added separately
+without expanding the profile count.
 
 See [`crates/model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
 for the provider contract and the linked documents above for the three host
