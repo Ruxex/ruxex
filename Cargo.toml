@@ -22,7 +22,16 @@ include = [
 [features]
 default = ["full"]
 full = ["app-server", "cli", "tui"]
-app-server = ["dep:ruxex-app-server"]
+app-server = [
+    "dep:ruxex-app-server",
+    "dep:ruxex-app-server-client",
+    "dep:ruxex-app-server-daemon",
+    "dep:ruxex-app-server-protocol",
+    "dep:ruxex-config",
+    "dep:ruxex-core",
+    "dep:ruxex-providers",
+    "dep:ruxex-utils-absolute-path",
+]
 tui = ["dep:ruxex-tui"]
 cli = ["app-server", "tui", "dep:ruxex-cli"]
 
@@ -30,7 +39,12 @@ cli = ["app-server", "tui", "dep:ruxex-cli"]
 ruxex-arg0 = { workspace = true }
 ruxex-api = { workspace = true }
 ruxex-app-server = { workspace = true, default-features = false, optional = true }
+ruxex-app-server-client = { workspace = true, optional = true }
+ruxex-app-server-daemon = { workspace = true, optional = true }
+ruxex-app-server-protocol = { workspace = true, optional = true }
 ruxex-cli = { workspace = true, optional = true }
+ruxex-config = { workspace = true, optional = true }
+ruxex-core = { workspace = true, optional = true }
 ruxex-home = { workspace = true }
 ruxex-http-client = { workspace = true }
 ruxex-login = { workspace = true }
@@ -39,7 +53,9 @@ ruxex-model-provider-info = { workspace = true }
 ruxex-provider-auth = { workspace = true }
 ruxex-models-manager = { workspace = true }
 ruxex-protocol = { workspace = true }
+ruxex-providers = { workspace = true, optional = true }
 ruxex-tui = { workspace = true, optional = true }
+ruxex-utils-absolute-path = { workspace = true, optional = true }
 ruxex-utils-home-dir = { workspace = true }
 
 [workspace]
@@ -169,7 +185,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.4.10"
+version = "0.4.11"
 # Track the edition for all workspace crates in one place. Individual
 # crates can still override this value, but keeping it here means new
 # crates created with `cargo new -w ...` automatically inherit the 2024

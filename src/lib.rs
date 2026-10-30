@@ -4,9 +4,9 @@
 //! crate presents the main host integration points from one dependency.
 
 #[cfg(feature = "app-server")]
+pub use ruxex_app_server::ProviderRuntimeFactory;
+#[cfg(feature = "app-server")]
 pub use ruxex_app_server::runtime::AppServerRuntimeBuilder;
-#[cfg(feature = "cli")]
-pub use ruxex_cli::ProviderRuntimeFactory;
 #[cfg(feature = "cli")]
 pub use ruxex_cli::run;
 #[cfg(feature = "cli")]
@@ -130,6 +130,52 @@ pub mod provider {
 #[cfg(feature = "app-server")]
 pub mod app_server {
     pub use ruxex_app_server::*;
+
+    /// App Server client and in-process/remote transport APIs.
+    pub mod client {
+        pub use ruxex_app_server_client::*;
+    }
+
+    /// Managed App Server daemon lifecycle APIs.
+    pub mod daemon {
+        pub use ruxex_app_server_daemon::*;
+    }
+
+    /// App Server JSON-RPC request, response, and notification types.
+    pub mod protocol {
+        pub use ruxex_app_server_protocol::*;
+    }
+}
+
+/// Configuration types used by embedded App Server hosts.
+#[cfg(feature = "app-server")]
+pub mod config {
+    pub use ruxex_config::*;
+}
+
+/// Core runtime types used by embedded App Server hosts.
+#[cfg(feature = "app-server")]
+pub mod core {
+    pub use ruxex_core::*;
+}
+
+/// Provider implementations shipped with Ruxex.
+#[cfg(feature = "app-server")]
+pub mod providers {
+    pub use ruxex_providers::*;
+}
+
+/// Protocol types shared by the App Server and its clients.
+pub mod protocol {
+    pub use ruxex_protocol::*;
+}
+
+/// Low-level utility types used by host integration APIs.
+#[cfg(feature = "app-server")]
+pub mod utils {
+    pub mod absolute_path {
+        pub use ruxex_utils_absolute_path::*;
+    }
 }
 
 /// CLI and provider-owned host lifecycle APIs.

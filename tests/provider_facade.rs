@@ -142,6 +142,24 @@ fn facade_exposes_api_client_and_protocol_surfaces() {
     let _: Option<&dyn RequestTelemetry> = None;
 }
 
+#[test]
+fn facade_exposes_desktop_app_server_surfaces() {
+    let _: Option<ruxex::app_server::client::AppServerClient> = None;
+    let _: Option<ruxex::app_server::client::InProcessClientStartArgs> = None;
+    let _: Option<ruxex::app_server::client::RemoteAppServerEndpoint> = None;
+    let _: Option<ruxex::app_server::daemon::LifecycleCommand> = None;
+    let _: Option<ruxex::app_server::daemon::LifecycleOutput> = None;
+    let _: Option<ruxex::app_server::protocol::ClientRequest> = None;
+    let _: Option<ruxex::app_server::protocol::ClientResponse> = None;
+
+    let _: Option<ruxex::config::LoaderOverrides> = None;
+    let _: Option<ruxex::core::config::Config> = None;
+    let _: Option<ruxex::core::config::ConfigOverrides> = None;
+    let _: Option<ruxex::protocol::protocol::SessionSource> = None;
+    let _: Option<ruxex::providers::ResponsesModelProvider> = None;
+    let _: Option<ruxex::utils::absolute_path::AbsolutePathBuf> = None;
+}
+
 fn accepts_provider_init(_: ProviderInit) {}
 
 #[derive(Debug)]

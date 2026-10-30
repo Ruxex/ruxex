@@ -107,6 +107,19 @@ When the default product identity is sufficient, the shorter
 `ruxex::run::<MyProvider>(arg0_paths, brand_profile)` entry point is also
 available.
 
+Hosts that need lower-level App Server integration can use the grouped facade
+surfaces without depending on each workspace crate directly:
+
+- `ruxex::app_server::client` for in-process and remote clients;
+- `ruxex::app_server::daemon` for managed daemon lifecycle operations;
+- `ruxex::app_server::protocol` for App Server JSON-RPC types;
+- `ruxex::config`, `ruxex::core`, `ruxex::providers`, and
+  `ruxex::utils::absolute_path` for embedded-host setup types; and
+- `ruxex::protocol` for shared protocol types.
+
+These grouped surfaces are intentionally broad during the facade migration.
+Feature-specific narrowing and a curated prelude will follow separately.
+
 See [`crates/model-provider/src/contract.rs`](crates/model-provider/src/contract.rs)
 for the provider contract and the linked documents above for the three host
 integration points. If you embed the App Server without the CLI, you can use
