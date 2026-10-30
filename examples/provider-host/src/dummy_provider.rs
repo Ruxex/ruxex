@@ -30,19 +30,60 @@ const FIXED_TOOL_ANSWER: &str =
     "The example tool result was received. This is a fixed tool integration response.";
 const FIXED_COMMAND_ANSWER: &str =
     "The command result was received. This is a fixed command integration response.";
+const FIXED_APPROVAL_ANSWER: &str = "The approved command result was received.";
+const FIXED_APPROVAL_DENIED_ANSWER: &str = "The approval was denied by the client.";
+const FIXED_APPROVAL_CANCELLED_ANSWER: &str = "The approval was cancelled by the client.";
+const FIXED_USER_INPUT_ANSWER: &str = "The fixed user input was received.";
+const FIXED_PERMISSIONS_ANSWER: &str = "The fixed permissions response was received.";
 const FIXED_MCP_ANSWER: &str =
     "The MCP tool result was received. This is a fixed MCP integration response.";
 const FIXED_MCP_UNAVAILABLE: &str = "The Example Provider MCP tool is unavailable.";
 const FIXED_COMMAND: &str = "printf 'example-provider command output\\n'";
+const FIXED_APPROVAL_COMMAND: &str = "printf 'approval-required command output\\n'";
+const FIXED_APPROVAL_JUSTIFICATION: &str = "Run the example provider approval command.";
+const FIXED_WORKFLOW_START: &str = "Starting the sequential workflow.";
+const FIXED_WORKFLOW_AFTER_TOOL: &str = "The first tool completed; running the command step.";
+const FIXED_WORKFLOW_ANSWER: &str = "The sequential workflow completed.";
+const FIXED_PARALLEL_ANSWER: &str = "The parallel tools completed.";
+const FIXED_LONG_STREAM_ANSWER: &str = r#"# Long stream fixture
+
+This is a deterministic long response for client rendering tests. It contains
+enough text to exercise incremental layout, scrolling, and message grouping.
+
+## Details
+
+- The response is split into bounded text deltas.
+- The content is fixed across every run.
+- Slow mode changes timing, not content.
+
+```rust
+fn fixed_fixture_step(index: usize) -> usize {
+    index.saturating_add(1)
+}
+```
+
+The final paragraph confirms that the long stream reached completion."#;
 const FIXED_LS_COMMAND: &str = "ls";
 const FIXED_SLEEP_COMMAND: &str =
     "echo 'example-provider before sleep'; sleep 3; echo 'example-provider after sleep'";
+const FIXED_LARGE_COMMAND: &str =
+    "for i in $(seq 1 120); do printf 'example-provider output line %03d\\n' \"$i\"; done";
+const FIXED_FAIL_COMMAND: &str = "printf 'example-provider stderr\\n' >&2; exit 7";
+const FIXED_TIMEOUT_COMMAND: &str = "sleep 5";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DummyScenario {
     Basic,
     Tool,
     Command,
+    Approval,
+    ApprovalDeny,
+    ApprovalCancel,
+    Workflow,
+    ParallelTools,
+    LongStream,
+    UserInput,
+    Permissions,
     Mcp,
     Multi,
     Error,
@@ -55,6 +96,9 @@ enum DummyCommandVariant {
     Fixed,
     List,
     Sleep,
+    Large,
+    Fail,
+    Timeout,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -65,6 +109,7 @@ struct ScenarioSelection {
     stream: bool,
     multi_turn: usize,
     continuation: bool,
+    step: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -317,10 +362,24 @@ fn scenario_chat_stream(
         Ok(ProviderChatEvent::ServerModel("A".to_string())),
     ];
 
+    if matches!(
+        selection.scenario,
+        DummyScenario::ApprovalDeny
+            | DummyScenario::ApprovalCancel
+            | DummyScenario::Workflow
+            | DummyScenario::ParallelTools
+            | DummyScenario::UserInput
+            | DummyScenario::Permissions
+    ) {
+        return fixed_step_chat_stream(selection, events);
+    }
+
     let final_text = match selection.scenario {
         DummyScenario::Basic => Some(FIXED_CHAT_ANSWER),
         DummyScenario::Tool if selection.continuation => Some(FIXED_TOOL_ANSWER),
         DummyScenario::Command if selection.continuation => Some(FIXED_COMMAND_ANSWER),
+        DummyScenario::Approval if selection.continuation => Some(FIXED_APPROVAL_ANSWER),
+        DummyScenario::LongStream => Some(FIXED_LONG_STREAM_ANSWER),
         DummyScenario::Mcp if selection.continuation => Some(FIXED_MCP_ANSWER),
         DummyScenario::Mcp if !has_mcp_tool => Some(FIXED_MCP_UNAVAILABLE),
         DummyScenario::Multi => Some(match selection.multi_turn {
@@ -354,6 +413,12 @@ fn scenario_chat_stream(
             ))));
             return complete_stream(events, response_id, false, selection.slow);
         }
+        DummyScenario::Approval => {
+            events.push(Ok(ProviderChatEvent::OutputItemDone(
+                example_approval_command_call(call_id),
+            )));
+            return complete_stream(events, response_id, false, selection.slow);
+        }
         DummyScenario::Mcp => {
             events.push(Ok(ProviderChatEvent::OutputItemDone(example_mcp_call(
                 call_id,
@@ -361,13 +426,23 @@ fn scenario_chat_stream(
             return complete_stream(events, response_id, false, selection.slow);
         }
         DummyScenario::Error | DummyScenario::RateLimit => None,
+        DummyScenario::ApprovalDeny
+        | DummyScenario::ApprovalCancel
+        | DummyScenario::Workflow
+        | DummyScenario::ParallelTools
+        | DummyScenario::UserInput
+        | DummyScenario::Permissions => {
+            unreachable!("fixed-step scenarios return before the simple stream")
+        }
     };
 
     if let Some(text) = final_text {
         events.push(Ok(ProviderChatEvent::OutputItemAdded(
             assistant_message_item(None),
         )));
-        let chunks = if selection.stream {
+        let chunks = if selection.scenario == DummyScenario::LongStream {
+            long_stream_text_chunks(text)
+        } else if selection.stream {
             stream_text_chunks(text)
         } else {
             vec![text]
@@ -403,7 +478,9 @@ fn text_chat_stream(
             None,
         ))),
     ];
-    let chunks = if selection.stream {
+    let chunks = if selection.scenario == DummyScenario::LongStream {
+        long_stream_text_chunks(text)
+    } else if selection.stream {
         stream_text_chunks(text)
     } else {
         vec![text]
@@ -417,6 +494,169 @@ fn text_chat_stream(
         assistant_message_item(Some(text)),
     )));
     complete_stream(events, response_id, true, selection.slow)
+}
+
+fn fixed_step_chat_stream(
+    selection: ScenarioSelection,
+    mut events: Vec<ProviderResult<ProviderChatEvent>>,
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    match selection.scenario {
+        DummyScenario::ApprovalDeny => {
+            approval_outcome_chat_stream(selection, events, FIXED_APPROVAL_DENIED_ANSWER)
+        }
+        DummyScenario::ApprovalCancel => {
+            approval_outcome_chat_stream(selection, events, FIXED_APPROVAL_CANCELLED_ANSWER)
+        }
+        DummyScenario::Workflow => match selection.step {
+            0 => {
+                push_assistant_text(&mut events, FIXED_WORKFLOW_START);
+                events.push(Ok(ProviderChatEvent::OutputItemDone(
+                    example_tool_call_with_id("example-workflow-tool-call-1"),
+                )));
+                complete_stream(events, response_id, false, selection.slow)
+            }
+            1 => {
+                push_assistant_text(&mut events, FIXED_WORKFLOW_AFTER_TOOL);
+                events.push(Ok(ProviderChatEvent::OutputItemDone(
+                    example_command_call_with_id("example-workflow-command-call-1"),
+                )));
+                complete_stream(events, response_id, false, selection.slow)
+            }
+            _ => text_chat_stream_with_events(
+                events,
+                response_id,
+                FIXED_WORKFLOW_ANSWER,
+                selection.stream,
+                selection.slow,
+            ),
+        },
+        DummyScenario::ParallelTools => {
+            if selection.step == 0 {
+                events.push(Ok(ProviderChatEvent::OutputItemDone(
+                    example_tool_call_with_id("example-parallel-tool-call-1"),
+                )));
+                events.push(Ok(ProviderChatEvent::OutputItemDone(
+                    example_command_call_with_id("example-parallel-command-call-1"),
+                )));
+                complete_stream(events, response_id, false, selection.slow)
+            } else {
+                text_chat_stream_with_events(
+                    events,
+                    response_id,
+                    FIXED_PARALLEL_ANSWER,
+                    selection.stream,
+                    selection.slow,
+                )
+            }
+        }
+        DummyScenario::UserInput => interaction_chat_stream(
+            selection,
+            events,
+            example_user_input_call,
+            FIXED_USER_INPUT_ANSWER,
+        ),
+        DummyScenario::Permissions => interaction_chat_stream(
+            selection,
+            events,
+            example_permissions_call,
+            FIXED_PERMISSIONS_ANSWER,
+        ),
+        _ => unreachable!("fixed step stream called for a simple scenario"),
+    }
+}
+
+fn approval_outcome_chat_stream(
+    selection: ScenarioSelection,
+    mut events: Vec<ProviderResult<ProviderChatEvent>>,
+    answer: &str,
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    if selection.step == 0 {
+        let call_id = format!("example-{}-call-1", selection.scenario.as_str());
+        events.push(Ok(ProviderChatEvent::OutputItemDone(
+            example_approval_command_call(call_id),
+        )));
+        complete_stream(events, response_id, false, selection.slow)
+    } else {
+        text_chat_stream_with_events(
+            events,
+            response_id,
+            answer,
+            selection.stream,
+            selection.slow,
+        )
+    }
+}
+
+fn interaction_chat_stream(
+    selection: ScenarioSelection,
+    mut events: Vec<ProviderResult<ProviderChatEvent>>,
+    call_builder: fn(String) -> ResponseItem,
+    answer: &str,
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    if selection.step == 0 {
+        let call_id = format!("example-{}-call-1", selection.scenario.as_str());
+        events.push(Ok(ProviderChatEvent::OutputItemDone(call_builder(call_id))));
+        complete_stream(events, response_id, false, selection.slow)
+    } else {
+        text_chat_stream_with_events(
+            events,
+            response_id,
+            answer,
+            selection.stream,
+            selection.slow,
+        )
+    }
+}
+
+fn push_assistant_text(events: &mut Vec<ProviderResult<ProviderChatEvent>>, text: &str) {
+    events.push(Ok(ProviderChatEvent::OutputItemAdded(
+        assistant_message_item(None),
+    )));
+    events.push(Ok(ProviderChatEvent::OutputTextDelta(text.to_string())));
+    events.push(Ok(ProviderChatEvent::OutputItemDone(
+        assistant_message_item(Some(text)),
+    )));
+}
+
+fn text_chat_stream_with_events(
+    mut events: Vec<ProviderResult<ProviderChatEvent>>,
+    response_id: String,
+    text: &str,
+    stream: bool,
+    slow: bool,
+) -> ruxex::provider::ProviderChatStream {
+    events.push(Ok(ProviderChatEvent::OutputItemAdded(
+        assistant_message_item(None),
+    )));
+    let chunks = if stream {
+        stream_text_chunks(text)
+    } else {
+        vec![text]
+    };
+    events.extend(
+        chunks
+            .into_iter()
+            .map(|chunk| Ok(ProviderChatEvent::OutputTextDelta(chunk.to_string()))),
+    );
+    events.push(Ok(ProviderChatEvent::OutputItemDone(
+        assistant_message_item(Some(text)),
+    )));
+    complete_stream(events, response_id, true, slow)
 }
 
 fn assistant_message_item(text: Option<&str>) -> ResponseItem {
@@ -485,27 +725,108 @@ fn example_tool_call(call_id: String) -> ResponseItem {
     }
 }
 
+fn example_tool_call_with_id(call_id: &str) -> ResponseItem {
+    example_tool_call(call_id.to_string())
+}
+
 fn example_command_call(
     call_id: String,
     command_variant: DummyCommandVariant,
     slow: bool,
 ) -> ResponseItem {
-    let command = match command_variant {
+    let (command, timeout_ms) = match command_variant {
         DummyCommandVariant::Fixed => {
             if slow {
-                FIXED_SLEEP_COMMAND
+                (FIXED_SLEEP_COMMAND, None)
             } else {
-                FIXED_COMMAND
+                (FIXED_COMMAND, None)
             }
         }
-        DummyCommandVariant::List => FIXED_LS_COMMAND,
-        DummyCommandVariant::Sleep => FIXED_SLEEP_COMMAND,
+        DummyCommandVariant::List => (FIXED_LS_COMMAND, None),
+        DummyCommandVariant::Sleep => (FIXED_SLEEP_COMMAND, None),
+        DummyCommandVariant::Large => (FIXED_LARGE_COMMAND, None),
+        DummyCommandVariant::Fail => (FIXED_FAIL_COMMAND, None),
+        DummyCommandVariant::Timeout => (FIXED_TIMEOUT_COMMAND, Some(1000)),
     };
+    let mut arguments = serde_json::json!({"cmd": command});
+    if let Some(timeout_ms) = timeout_ms {
+        arguments["timeout_ms"] = serde_json::json!(timeout_ms);
+    }
     ResponseItem::FunctionCall {
         id: None,
         name: "exec_command".to_string(),
         namespace: None,
-        arguments: serde_json::json!({"cmd": command}).to_string(),
+        arguments: arguments.to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_command_call_with_id(call_id: &str) -> ResponseItem {
+    example_command_call(call_id.to_string(), DummyCommandVariant::Fixed, false)
+}
+
+fn example_approval_command_call(call_id: String) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "exec_command".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({
+            "cmd": FIXED_APPROVAL_COMMAND,
+            "sandbox_permissions": "require_escalated",
+            "justification": FIXED_APPROVAL_JUSTIFICATION,
+        })
+        .to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_user_input_call(call_id: String) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "request_user_input".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({
+            "questions": [{
+                "id": "confirm_fixture",
+                "header": "Confirm",
+                "question": "Proceed with the fixed UI test?",
+                "options": [
+                    {
+                        "label": "Yes",
+                        "description": "Continue the fixed fixture."
+                    },
+                    {
+                        "label": "No",
+                        "description": "Stop the fixed fixture."
+                    }
+                ]
+            }]
+        })
+        .to_string(),
+        encrypted_function_args: None,
+        call_id,
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_permissions_call(call_id: String) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "request_permissions".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({
+            "reason": "Select a workspace root",
+            "permissions": {
+                "file_system": {
+                    "write": [".", "../shared"]
+                }
+            }
+        })
+        .to_string(),
         encrypted_function_args: None,
         call_id,
         internal_chat_message_metadata_passthrough: None,
@@ -531,6 +852,13 @@ fn stream_text_chunks(text: &str) -> Vec<&str> {
     }
 }
 
+fn long_stream_text_chunks(text: &str) -> Vec<&str> {
+    text.as_bytes()
+        .chunks(32)
+        .map(|chunk| std::str::from_utf8(chunk).expect("long stream fixture is ASCII"))
+        .collect()
+}
+
 fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> {
     if let Some(scenario) = continuation_scenario(input) {
         return Ok(ScenarioSelection {
@@ -540,6 +868,7 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
             stream: false,
             multi_turn: 1,
             continuation: true,
+            step: scenario_step(input, scenario),
         });
     }
 
@@ -553,8 +882,22 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
     }
 
     let lower = latest_user_text.to_ascii_lowercase();
-    let scenario = if lower.contains("mcp") {
+    let scenario = if lower.contains("parallel-tools") {
+        DummyScenario::ParallelTools
+    } else if lower.contains("workflow") {
+        DummyScenario::Workflow
+    } else if lower.contains("long stream") || lower.contains("long-stream") {
+        DummyScenario::LongStream
+    } else if lower.contains("user input") || lower.contains("user-input") {
+        DummyScenario::UserInput
+    } else if lower.contains("permissions") {
+        DummyScenario::Permissions
+    } else if lower.contains("approval") {
+        DummyScenario::Approval
+    } else if lower.contains("mcp") {
         DummyScenario::Mcp
+    } else if lower.contains("large") || lower.contains("fail") || lower.contains("timeout") {
+        DummyScenario::Command
     } else if lower.contains("command") || lower.contains("exec") {
         DummyScenario::Command
     } else if lower.contains("tool") {
@@ -583,6 +926,12 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
     let command_variant = if scenario == DummyScenario::Command {
         if lower.split_whitespace().any(|word| word == "ls") {
             DummyCommandVariant::List
+        } else if lower.contains("large") {
+            DummyCommandVariant::Large
+        } else if lower.contains("fail") {
+            DummyCommandVariant::Fail
+        } else if lower.contains("timeout") {
+            DummyCommandVariant::Timeout
         } else if lower.contains("sleep") || slow {
             DummyCommandVariant::Sleep
         } else {
@@ -596,9 +945,12 @@ fn select_scenario(input: &[ResponseItem]) -> ProviderResult<ScenarioSelection> 
         scenario,
         command_variant,
         slow,
-        stream: lower.contains("stream") || (scenario == DummyScenario::Basic && slow),
+        stream: lower.contains("stream")
+            || matches!(scenario, DummyScenario::Basic | DummyScenario::LongStream) && slow
+            || scenario == DummyScenario::LongStream,
         multi_turn,
         continuation: false,
+        step: 0,
     })
 }
 
@@ -606,53 +958,146 @@ fn explicit_scenario(text: &str) -> Option<ProviderResult<ScenarioSelection>> {
     let start = text.find("[[example:")?;
     let end = text[start..].find("]]").map(|offset| start + offset)?;
     let parts: Vec<_> = text[start + "[[example:".len()..end].split(':').collect();
-    let scenario = match parts.first().copied() {
-        Some("basic") => DummyScenario::Basic,
-        Some("tool") => DummyScenario::Tool,
-        Some("command") => DummyScenario::Command,
-        Some("mcp") => DummyScenario::Mcp,
-        Some("multi") => DummyScenario::Multi,
-        Some("error") => DummyScenario::Error,
-        Some("rate-limit") => DummyScenario::RateLimit,
-        Some("disconnect") => DummyScenario::Disconnect,
-        Some(name) => {
+    let scenario = match (parts.first().copied(), parts.get(1).copied()) {
+        (Some("basic"), _) => DummyScenario::Basic,
+        (Some("tool"), _) => DummyScenario::Tool,
+        (Some("command"), _) => DummyScenario::Command,
+        (Some("approval"), Some("deny")) => DummyScenario::ApprovalDeny,
+        (Some("approval"), Some("cancel")) => DummyScenario::ApprovalCancel,
+        (Some("approval"), _) => DummyScenario::Approval,
+        (Some("workflow"), _) => DummyScenario::Workflow,
+        (Some("parallel-tools"), _) => DummyScenario::ParallelTools,
+        (Some("long-stream"), _) => DummyScenario::LongStream,
+        (Some("user-input"), _) => DummyScenario::UserInput,
+        (Some("permissions"), _) => DummyScenario::Permissions,
+        (Some("mcp"), _) => DummyScenario::Mcp,
+        (Some("multi"), _) => DummyScenario::Multi,
+        (Some("error"), _) => DummyScenario::Error,
+        (Some("rate-limit"), _) => DummyScenario::RateLimit,
+        (Some("disconnect"), _) => DummyScenario::Disconnect,
+        (Some(name), _) => {
             return Some(Err(ProviderError::InvalidRequest(format!(
                 "unknown example scenario: {name}"
             ))));
         }
-        None => {
+        (None, _) => {
             return Some(Err(ProviderError::InvalidRequest(
                 "empty example scenario".to_string(),
             )));
         }
     };
-    let invalid_modifier = parts.iter().skip(1).any(|modifier| {
-        let valid = match scenario {
-            DummyScenario::Command => matches!(*modifier, "slow" | "ls" | "sleep"),
-            _ => matches!(*modifier, "slow" | "stream"),
-        };
-        !valid
-    });
-    if invalid_modifier || parts.len() > 2 {
+    let approval_outcome = matches!(
+        scenario,
+        DummyScenario::ApprovalDeny | DummyScenario::ApprovalCancel
+    );
+    let invalid_modifier = if approval_outcome {
+        parts.len() > 2
+    } else {
+        parts.iter().skip(1).any(|modifier| {
+            let valid = match scenario {
+                DummyScenario::Command => matches!(
+                    *modifier,
+                    "slow" | "ls" | "sleep" | "large" | "fail" | "timeout"
+                ),
+                DummyScenario::Approval => false,
+                _ => matches!(*modifier, "slow" | "stream"),
+            };
+            !valid
+        })
+    };
+    if invalid_modifier || (!approval_outcome && parts.len() > 2) {
         return Some(Err(ProviderError::InvalidRequest(
             "unsupported example scenario modifier".to_string(),
         )));
     }
-    let modifier = parts.get(1).copied();
+    let modifier = (!approval_outcome).then(|| parts.get(1).copied()).flatten();
     let slow = modifier == Some("slow");
     let command_variant = match (scenario, modifier) {
         (DummyScenario::Command, Some("ls")) => DummyCommandVariant::List,
         (DummyScenario::Command, Some("sleep" | "slow")) => DummyCommandVariant::Sleep,
+        (DummyScenario::Command, Some("large")) => DummyCommandVariant::Large,
+        (DummyScenario::Command, Some("fail")) => DummyCommandVariant::Fail,
+        (DummyScenario::Command, Some("timeout")) => DummyCommandVariant::Timeout,
         _ => DummyCommandVariant::Fixed,
     };
     Some(Ok(ScenarioSelection {
         scenario,
         command_variant,
         slow,
-        stream: parts.contains(&"stream") || (scenario == DummyScenario::Basic && slow),
+        stream: parts.contains(&"stream")
+            || (scenario == DummyScenario::Basic && slow)
+            || scenario == DummyScenario::LongStream,
         multi_turn: 1,
         continuation: false,
+        step: 0,
     }))
+}
+
+fn scenario_step(input: &[ResponseItem], scenario: DummyScenario) -> usize {
+    match scenario {
+        DummyScenario::Workflow => {
+            if has_function_call_output(input, "example-workflow-command-call-1") {
+                2
+            } else if has_function_call_output(input, "example-workflow-tool-call-1") {
+                1
+            } else {
+                0
+            }
+        }
+        DummyScenario::ParallelTools => {
+            if has_function_call_output(input, "example-parallel-tool-call-1")
+                && has_function_call_output(input, "example-parallel-command-call-1")
+            {
+                1
+            } else {
+                0
+            }
+        }
+        DummyScenario::ApprovalDeny => usize::from(function_call_output_contains(
+            input,
+            "example-approval-deny-call-1",
+            "example approval denied",
+        )),
+        DummyScenario::ApprovalCancel => usize::from(function_call_output_contains(
+            input,
+            "example-approval-cancel-call-1",
+            "example approval cancelled",
+        )),
+        DummyScenario::UserInput => {
+            usize::from(has_function_call_output(input, "example-user-input-call-1"))
+        }
+        DummyScenario::Permissions => usize::from(has_function_call_output(
+            input,
+            "example-permissions-call-1",
+        )),
+        _ => 0,
+    }
+}
+
+fn has_function_call_output(input: &[ResponseItem], expected_call_id: &str) -> bool {
+    input.iter().any(|item| {
+        matches!(
+            item,
+            ResponseItem::FunctionCallOutput { call_id, .. }
+                if call_id.as_deref() == Some(expected_call_id)
+        )
+    })
+}
+
+fn function_call_output_contains(
+    input: &[ResponseItem],
+    expected_call_id: &str,
+    expected_text: &str,
+) -> bool {
+    input.iter().any(|item| {
+        matches!(
+            item,
+            ResponseItem::FunctionCallOutput {
+                call_id, output, ..
+            } if call_id.as_deref() == Some(expected_call_id)
+                && output.to_string().contains(expected_text)
+        )
+    })
 }
 
 fn latest_user_text(input: &[ResponseItem]) -> Option<String> {
@@ -705,6 +1150,24 @@ fn scenario_from_call_id(call_id: &str) -> Option<DummyScenario> {
         Some(DummyScenario::Tool)
     } else if call_id.starts_with("example-command-call-") {
         Some(DummyScenario::Command)
+    } else if call_id.starts_with("example-approval-call-") {
+        Some(DummyScenario::Approval)
+    } else if call_id.starts_with("example-approval-deny-call-") {
+        Some(DummyScenario::ApprovalDeny)
+    } else if call_id.starts_with("example-approval-cancel-call-") {
+        Some(DummyScenario::ApprovalCancel)
+    } else if call_id.starts_with("example-workflow-tool-call-")
+        || call_id.starts_with("example-workflow-command-call-")
+    {
+        Some(DummyScenario::Workflow)
+    } else if call_id.starts_with("example-parallel-tool-call-")
+        || call_id.starts_with("example-parallel-command-call-")
+    {
+        Some(DummyScenario::ParallelTools)
+    } else if call_id.starts_with("example-user-input-call-") {
+        Some(DummyScenario::UserInput)
+    } else if call_id.starts_with("example-permissions-call-") {
+        Some(DummyScenario::Permissions)
     } else if call_id.starts_with("example-mcp-call-") {
         Some(DummyScenario::Mcp)
     } else {
@@ -725,6 +1188,14 @@ impl DummyScenario {
             Self::Basic => "basic",
             Self::Tool => "tool",
             Self::Command => "command",
+            Self::Approval => "approval",
+            Self::ApprovalDeny => "approval-deny",
+            Self::ApprovalCancel => "approval-cancel",
+            Self::Workflow => "workflow",
+            Self::ParallelTools => "parallel-tools",
+            Self::LongStream => "long-stream",
+            Self::UserInput => "user-input",
+            Self::Permissions => "permissions",
             Self::Mcp => "mcp",
             Self::Multi => "multi",
             Self::Error => "error",
@@ -895,6 +1366,435 @@ mod tests {
     }
 
     #[test]
+    fn selects_explicit_approval_scenario() {
+        let selection = select_scenario(&[user_message("[[example:approval]]")])
+            .expect("approval scenario should be valid");
+
+        assert_eq!(selection.scenario.as_str(), "approval");
+    }
+
+    #[test]
+    fn selects_approval_shorthand() {
+        let selection = select_scenario(&[user_message("approval")])
+            .expect("approval shorthand should be valid");
+
+        assert_eq!(selection.scenario.as_str(), "approval");
+    }
+
+    fn function_call_output(call_id: &str, name: &str) -> ResponseItem {
+        function_call_output_with_text(call_id, name, "fixed tool output")
+    }
+
+    fn function_call_output_with_text(call_id: &str, name: &str, text: &str) -> ResponseItem {
+        ResponseItem::FunctionCallOutput {
+            id: None,
+            call_id: Some(call_id.to_string()),
+            name: Some(name.to_string()),
+            namespace: None,
+            output: serde_json::from_value(serde_json::json!(text)).expect("valid function output"),
+            internal_chat_message_metadata_passthrough: None,
+        }
+    }
+
+    #[test]
+    fn selects_explicit_workflow_and_shorthand() {
+        let explicit = select_scenario(&[user_message("[[example:workflow]]")])
+            .expect("workflow scenario should be valid");
+        let shorthand = select_scenario(&[user_message("workflow")])
+            .expect("workflow shorthand should be valid");
+
+        assert_eq!(explicit.scenario.as_str(), "workflow");
+        assert_eq!(shorthand.scenario.as_str(), "workflow");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn workflow_scenario_progresses_from_tool_to_command_to_final() {
+        let initial = select_scenario(&[user_message("[[example:workflow]]")])
+            .expect("workflow scenario should be valid");
+        let initial_events = scenario_chat_stream(initial, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(initial_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                call_id,
+                ..
+            })) if call_id == "example-workflow-tool-call-1"
+        )));
+        assert!(matches!(
+            initial_events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(false),
+                ..
+            }))
+        ));
+
+        let after_tool = select_scenario(&[
+            user_message("[[example:workflow]]"),
+            function_call_output("example-workflow-tool-call-1", "example_tool"),
+        ])
+        .expect("workflow command phase should be valid");
+        assert_eq!(after_tool.step, 1);
+        let command_events = scenario_chat_stream(after_tool, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(command_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                call_id,
+                ..
+            })) if name == "exec_command" && call_id == "example-workflow-command-call-1"
+        )));
+        assert!(matches!(
+            command_events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(false),
+                ..
+            }))
+        ));
+
+        let after_command = select_scenario(&[
+            user_message("[[example:workflow]]"),
+            function_call_output("example-workflow-tool-call-1", "example_tool"),
+            function_call_output("example-workflow-command-call-1", "exec_command"),
+        ])
+        .expect("workflow final phase should be valid");
+        assert_eq!(after_command.step, 2);
+        let final_events = scenario_chat_stream(after_command, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(final_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The sequential workflow completed."
+        )));
+        assert!(matches!(
+            final_events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(true),
+                ..
+            }))
+        ));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn parallel_tools_share_a_response_and_finish_after_both_outputs() {
+        let initial = select_scenario(&[user_message("[[example:parallel-tools]]")])
+            .expect("parallel tools scenario should be valid");
+        let initial_events = scenario_chat_stream(initial, true)
+            .collect::<Vec<_>>()
+            .await;
+        let response_ids = initial_events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::Created { response_id }) => response_id.clone(),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        let call_ids = initial_events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                    call_id,
+                    ..
+                })) => Some(call_id.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(response_ids, vec!["example-parallel-tools-response-1"]);
+        assert_eq!(
+            call_ids,
+            vec![
+                "example-parallel-tool-call-1".to_string(),
+                "example-parallel-command-call-1".to_string()
+            ]
+        );
+
+        let after_outputs = select_scenario(&[
+            user_message("[[example:parallel-tools]]"),
+            function_call_output("example-parallel-tool-call-1", "example_tool"),
+            function_call_output("example-parallel-command-call-1", "exec_command"),
+        ])
+        .expect("parallel completion should be valid");
+        let final_events = scenario_chat_stream(after_outputs, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(final_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The parallel tools completed."
+        )));
+        assert!(matches!(
+            final_events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(true),
+                ..
+            }))
+        ));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn long_stream_scenario_emits_bounded_markdown_chunks() {
+        let selection = select_scenario(&[user_message("[[example:long-stream]]")])
+            .expect("long stream scenario should be valid");
+        let events = scenario_chat_stream(selection, true)
+            .collect::<Vec<_>>()
+            .await;
+        let deltas = events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputTextDelta(text)) => Some(text.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        let combined = deltas.concat();
+
+        assert!(deltas.len() >= 8);
+        assert!(deltas.len() <= 64);
+        assert!(combined.contains("# Long stream fixture"));
+        assert!(combined.contains("```rust"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn slow_long_stream_keeps_content_and_adds_delay_flag() {
+        let selection = select_scenario(&[user_message("[[example:long-stream:slow]]")])
+            .expect("slow long stream scenario should be valid");
+
+        assert!(selection.slow);
+        assert!(selection.stream);
+    }
+
+    #[test]
+    fn command_variants_emit_fixed_large_failure_and_timeout_commands() {
+        for (marker, expected) in [
+            ("[[example:command:large]]", "example-provider output line"),
+            ("[[example:command:fail]]", "example-provider stderr"),
+            ("[[example:command:timeout]]", "sleep 5"),
+        ] {
+            let selection =
+                select_scenario(&[user_message(marker)]).expect("command variant should be valid");
+            let events = futures::executor::block_on(
+                scenario_chat_stream(selection, true).collect::<Vec<_>>(),
+            );
+
+            assert!(events.iter().any(|event| matches!(
+                event,
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                    name,
+                    arguments,
+                    ..
+                })) if name == "exec_command" && arguments.contains(expected)
+            )));
+        }
+
+        let selection = select_scenario(&[user_message("[[example:command:timeout]]")])
+            .expect("timeout command should be valid");
+        let events =
+            futures::executor::block_on(scenario_chat_stream(selection, true).collect::<Vec<_>>());
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                arguments, ..
+            })) if arguments.contains("\"timeout_ms\":1000")
+        )));
+    }
+
+    #[test]
+    fn command_variant_keywords_select_the_fixed_commands() {
+        for (text, variant) in [
+            ("large", DummyCommandVariant::Large),
+            ("fail", DummyCommandVariant::Fail),
+            ("timeout", DummyCommandVariant::Timeout),
+        ] {
+            let selection = select_scenario(&[user_message(text)])
+                .expect("command keyword should select a scenario");
+            assert_eq!(selection.scenario, DummyScenario::Command);
+            assert_eq!(selection.command_variant, variant);
+        }
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn approval_scenario_emits_an_escalated_command() {
+        let selection = select_scenario(&[user_message("[[example:approval]]")])
+            .expect("approval scenario should be valid");
+        let events = scenario_chat_stream(selection, true)
+            .collect::<Vec<_>>()
+            .await;
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                call_id,
+                ..
+            })) if name == "exec_command"
+                && arguments.contains("approval-required command output")
+                && arguments.contains("require_escalated")
+                && arguments.contains("Run the example provider approval command.")
+                && call_id == "example-approval-call-1"
+        )));
+        assert!(matches!(
+            events.last(),
+            Some(Ok(ProviderChatEvent::Completed {
+                end_turn: Some(false),
+                ..
+            }))
+        ));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn approval_scenario_continues_after_command_result() {
+        let approval_call = ResponseItem::FunctionCallOutput {
+            id: None,
+            call_id: Some("example-approval-call-1".to_string()),
+            name: Some("exec_command".to_string()),
+            namespace: None,
+            output: serde_json::from_value(serde_json::json!("approved command output"))
+                .expect("valid function output"),
+            internal_chat_message_metadata_passthrough: None,
+        };
+
+        assert_eq!(
+            continuation_scenario(&[approval_call]),
+            Some(DummyScenario::Approval)
+        );
+
+        let mut selection = select_scenario(&[user_message("[[example:approval]]")])
+            .expect("approval scenario should be valid");
+        selection.continuation = true;
+        let events = scenario_chat_stream(selection, true)
+            .collect::<Vec<_>>()
+            .await;
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The approved command result was received."
+        )));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn approval_outcomes_keep_decisions_on_the_client_side() {
+        for (marker, call_id, result, answer) in [
+            (
+                "[[example:approval:deny]]",
+                "example-approval-deny-call-1",
+                "example approval denied",
+                "The approval was denied by the client.",
+            ),
+            (
+                "[[example:approval:cancel]]",
+                "example-approval-cancel-call-1",
+                "example approval cancelled",
+                "The approval was cancelled by the client.",
+            ),
+        ] {
+            let initial = select_scenario(&[user_message(marker)])
+                .expect("approval outcome scenario should be valid");
+            let initial_events = scenario_chat_stream(initial, true)
+                .collect::<Vec<_>>()
+                .await;
+            assert!(initial_events.iter().any(|event| matches!(
+                event,
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                    call_id: emitted_call_id,
+                    arguments,
+                    ..
+                })) if emitted_call_id == call_id
+                    && arguments.contains("require_escalated")
+            )));
+            assert!(matches!(
+                initial_events.last(),
+                Some(Ok(ProviderChatEvent::Completed {
+                    end_turn: Some(false),
+                    ..
+                }))
+            ));
+
+            let continuation = select_scenario(&[
+                user_message(marker),
+                function_call_output_with_text(call_id, "exec_command", result),
+            ])
+            .expect("approval outcome continuation should be valid");
+            let events = scenario_chat_stream(continuation, true)
+                .collect::<Vec<_>>()
+                .await;
+            assert!(events.iter().any(|event| matches!(
+                event,
+                Ok(ProviderChatEvent::OutputTextDelta(text)) if text == answer
+            )));
+        }
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn user_input_and_permissions_scenarios_request_fixed_client_interactions() {
+        let user_input = select_scenario(&[user_message("[[example:user-input]]")])
+            .expect("user input scenario should be valid");
+        let user_input_events = scenario_chat_stream(user_input, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(user_input_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                call_id,
+                ..
+            })) if name == "request_user_input"
+                && call_id == "example-user-input-call-1"
+                && arguments.contains("Proceed with the fixed UI test?")
+        )));
+
+        let user_input_continuation = select_scenario(&[
+            user_message("[[example:user-input]]"),
+            function_call_output("example-user-input-call-1", "request_user_input"),
+        ])
+        .expect("user input continuation should be valid");
+        let user_input_final = scenario_chat_stream(user_input_continuation, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(user_input_final.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The fixed user input was received."
+        )));
+
+        let permissions = select_scenario(&[user_message("[[example:permissions]]")])
+            .expect("permissions scenario should be valid");
+        let permissions_events = scenario_chat_stream(permissions, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(permissions_events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                call_id,
+                ..
+            })) if name == "request_permissions"
+                && call_id == "example-permissions-call-1"
+                && arguments.contains("Select a workspace root")
+                && arguments.contains("../shared")
+        )));
+
+        let permissions_continuation = select_scenario(&[
+            user_message("[[example:permissions]]"),
+            function_call_output("example-permissions-call-1", "request_permissions"),
+        ])
+        .expect("permissions continuation should be valid");
+        let permissions_final = scenario_chat_stream(permissions_continuation, true)
+            .collect::<Vec<_>>()
+            .await;
+        assert!(permissions_final.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The fixed permissions response was received."
+        )));
+    }
+
+    #[test]
     fn tool_output_continues_the_matching_scenario() {
         let input = vec![
             user_message("tool"),
@@ -983,6 +1883,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 true,
             )
@@ -1020,6 +1921,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 true,
             )
@@ -1048,6 +1950,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 FIXED_MCP_UNAVAILABLE,
             )
@@ -1114,6 +2017,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 true,
             )
@@ -1174,6 +2078,7 @@ mod tests {
                     stream: true,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 false,
             )
@@ -1242,6 +2147,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 false,
             )
@@ -1266,6 +2172,7 @@ mod tests {
                     stream: false,
                     multi_turn: 1,
                     continuation: false,
+                    step: 0,
                 },
                 FIXED_CHAT_ANSWER,
             )

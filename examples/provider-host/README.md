@@ -31,6 +31,18 @@ as modifiers.
 [[example:command:ls]]
 [[example:command:sleep]]
 [[example:command:slow]]
+[[example:command:large]]
+[[example:command:fail]]
+[[example:command:timeout]]
+[[example:approval]]
+[[example:approval:deny]]
+[[example:approval:cancel]]
+[[example:workflow]]
+[[example:parallel-tools]]
+[[example:long-stream]]
+[[example:long-stream:slow]]
+[[example:user-input]]
+[[example:permissions]]
 [[example:mcp]]
 [[example:multi]]
 [[example:error]]
@@ -41,18 +53,26 @@ as modifiers.
 If there is no explicit marker, the provider checks the latest user message
 for scenario keywords. The current keyword priority is:
 
-1. `mcp`
-2. `command` or `exec`
-3. `tool`
-4. `multi`
-5. `rate-limit`
-6. `disconnect`
-7. `error`
+1. `parallel-tools`
+2. `workflow`
+3. `long stream` or `long-stream`
+4. `user input` or `user-input`
+5. `permissions`
+6. `approval`
+7. `mcp`
+8. `command` or `exec`
+9. `tool`
+10. `multi`
+11. `rate-limit`
+12. `disconnect`
+13. `error`
 
 The `slow` and `delay` keywords add delays to the response stream. The
 `stream` keyword splits the fixed basic response into multiple text deltas.
 `[[example:basic:slow]]` combines both behaviors. `[[example:command:slow]]`
-is retained as an alias for `[[example:command:sleep]]`.
+is retained as an alias for `[[example:command:sleep]]`. The `large`, `fail`,
+and `timeout` keywords select the corresponding command variants when no
+explicit marker is used.
 
 ### Scenario behavior
 
@@ -66,6 +86,29 @@ is retained as an alias for `[[example:command:sleep]]`.
   `command:sleep` runs `echo`, `sleep 3`, and `echo` in sequence so command
   output can be observed before and after the delay. The `slow` marker is a
   compatibility alias for `command:sleep` and also delays provider events.
+  `command:large` produces many fixed output lines, `command:fail` writes
+  fixed stderr and exits non-zero, and `command:timeout` sleeps with a fixed
+  `timeout_ms` value.
+- `approval` returns a fixed `exec_command` call with
+  `sandbox_permissions: "require_escalated"` and a fixed justification. The
+  client/runtime must use `approval_policy = "on-request"` (or an equivalent
+  override) to show an approval prompt. The dummy provider keeps its default
+  `approval_policy = "never"`; approval and denial are handled by the client.
+  `approval:deny` and `approval:cancel` use distinct call IDs and provide
+  fixed continuation text after the client returns the corresponding result.
+- `workflow` emits an assistant message, then a fixed tool call, then a fixed
+  command call, and finally a completion. Each step is selected from the
+  exact output IDs in the request history.
+- `parallel-tools` emits one fixed tool call and one fixed command call under a
+  shared response ID. It completes after both outputs are returned.
+- `long-stream` returns a fixed Markdown response with code content split into
+  bounded text deltas. The `slow` modifier adds inter-delta delays without
+  changing the content.
+- `user-input` emits a fixed `request_user_input` call with one question and
+  completes after the client returns its result.
+- `permissions` emits a fixed `request_permissions` call with file-system
+  permissions and completes after the client returns its result. Permission
+  selection remains client/runtime-owned.
 - `mcp` returns a fixed `example/echo` call when the fixture MCP tool is
   available. Otherwise it returns a fixed unavailable message.
 - `multi` returns a different fixed English response for each of three turns.
@@ -74,6 +117,9 @@ is retained as an alias for `[[example:command:sleep]]`.
 - `rate-limit` returns a rate-limit error with a three-second retry hint.
 - `disconnect` emits partial output and then terminates the stream with a
   transport error.
+
+Reconnect/resume behavior is intentionally not included in this scenario
+catalog.
 
 All user-visible fixture responses are in English. Only the user input and
 request history select the scenario; the response content remains fixed.
