@@ -19,6 +19,8 @@ use ruxex_core::ThreadManager;
 use ruxex_core::config::Config;
 use ruxex_core_plugins::ConfiguredMarketplace;
 use ruxex_core_plugins::ConfiguredMarketplacePlugin;
+use ruxex_core_plugins::MarketplaceAssetResolver;
+use ruxex_core_plugins::MarketplaceAssetUrls;
 use ruxex_core_plugins::PluginInstallRequest;
 use ruxex_core_plugins::PluginMarketplaceContext;
 use ruxex_core_plugins::PluginReadRequest;
@@ -105,7 +107,9 @@ impl PluginRequestProcessor {
         let roots = params.cwds.unwrap_or_default();
         let config = self.load_catalog_config(&roots).await?;
         let context = self.load_marketplace_context(roots, &config).await;
-        let (marketplaces, errors) = self.local_marketplaces(&context)?;
+        let (marketplaces, errors) = self
+            .local_marketplaces(&context, &config.http_client_factory())
+            .await?;
         let _ = params.marketplace_kinds;
         Ok(Some(
             PluginListResponse {
@@ -123,7 +127,9 @@ impl PluginRequestProcessor {
         let roots = params.cwds.unwrap_or_default();
         let config = self.load_catalog_config(&roots).await?;
         let context = self.load_marketplace_context(roots, &config).await;
-        let (mut marketplaces, errors) = self.local_marketplaces(&context)?;
+        let (mut marketplaces, errors) = self
+            .local_marketplaces(&context, &config.http_client_factory())
+            .await?;
         for marketplace in &mut marketplaces {
             marketplace.plugins.retain(|plugin| plugin.installed);
         }
@@ -212,9 +218,10 @@ impl PluginRequestProcessor {
         Ok(Some(PluginUninstallResponse {}.into()))
     }
 
-    fn local_marketplaces(
+    async fn local_marketplaces(
         &self,
         context: &PluginMarketplaceContext,
+        http_client_factory: &ruxex_http_client::HttpClientFactory,
     ) -> Result<
         (
             Vec<PluginMarketplaceEntry>,
@@ -227,12 +234,14 @@ impl PluginRequestProcessor {
             .plugins_manager()
             .list_marketplaces_for_context(context)
             .map_err(|err| internal_error(format!("failed to list marketplace plugins: {err}")))?;
+        let resolver = MarketplaceAssetResolver::new(http_client_factory.clone());
+        let mut marketplaces = Vec::with_capacity(outcome.marketplaces.len());
+        for marketplace in outcome.marketplaces {
+            let asset_urls = resolver.resolve_marketplace(&marketplace).await;
+            marketplaces.push(marketplace_to_api(marketplace, &asset_urls));
+        }
         Ok((
-            outcome
-                .marketplaces
-                .into_iter()
-                .map(marketplace_to_api)
-                .collect(),
+            marketplaces,
             outcome
                 .errors
                 .into_iter()
@@ -247,7 +256,10 @@ impl PluginRequestProcessor {
     }
 }
 
-fn marketplace_to_api(marketplace: ConfiguredMarketplace) -> PluginMarketplaceEntry {
+fn marketplace_to_api(
+    marketplace: ConfiguredMarketplace,
+    asset_urls: &std::collections::HashMap<String, MarketplaceAssetUrls>,
+) -> PluginMarketplaceEntry {
     PluginMarketplaceEntry {
         name: marketplace.name,
         path: Some(marketplace.path),
@@ -259,12 +271,18 @@ fn marketplace_to_api(marketplace: ConfiguredMarketplace) -> PluginMarketplaceEn
         plugins: marketplace
             .plugins
             .into_iter()
-            .map(plugin_to_summary)
+            .map(|plugin| {
+                let plugin_urls = asset_urls.get(&plugin.id);
+                plugin_to_summary(plugin, plugin_urls)
+            })
             .collect(),
     }
 }
 
-fn plugin_to_summary(plugin: ConfiguredMarketplacePlugin) -> PluginSummary {
+fn plugin_to_summary(
+    plugin: ConfiguredMarketplacePlugin,
+    asset_urls: Option<&MarketplaceAssetUrls>,
+) -> PluginSummary {
     PluginSummary {
         id: plugin.id,
         local_version: plugin.local_version,
@@ -289,14 +307,16 @@ fn plugin_to_summary(plugin: ConfiguredMarketplacePlugin) -> PluginSummary {
             terms_of_service_url: interface.terms_of_service_url,
             default_prompt: interface.default_prompt,
             brand_color: interface.brand_color,
-            composer_icon: interface.composer_icon,
-            composer_icon_url: None,
-            logo: interface.logo,
-            logo_dark: interface.logo_dark,
-            logo_url: None,
-            logo_url_dark: None,
-            screenshots: interface.screenshots,
-            screenshot_urls: Vec::new(),
+            composer_icon: None,
+            composer_icon_url: asset_urls.and_then(|urls| urls.composer_icon_url.clone()),
+            logo: None,
+            logo_dark: None,
+            logo_url: asset_urls.and_then(|urls| urls.logo_url.clone()),
+            logo_url_dark: asset_urls.and_then(|urls| urls.logo_url_dark.clone()),
+            screenshots: Vec::new(),
+            screenshot_urls: asset_urls
+                .map(|urls| urls.screenshot_urls.clone())
+                .unwrap_or_default(),
         }),
         keywords: plugin.keywords,
     }
@@ -338,13 +358,13 @@ fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> Plugi
             terms_of_service_url: interface.terms_of_service_url,
             default_prompt: interface.default_prompt,
             brand_color: interface.brand_color,
-            composer_icon: interface.composer_icon,
+            composer_icon: None,
             composer_icon_url: None,
-            logo: interface.logo,
-            logo_dark: interface.logo_dark,
+            logo: None,
+            logo_dark: None,
             logo_url: None,
             logo_url_dark: None,
-            screenshots: interface.screenshots,
+            screenshots: Vec::new(),
             screenshot_urls: Vec::new(),
         }),
         keywords: outcome.plugin.keywords,
@@ -385,5 +405,95 @@ fn marketplace_plugin_source_to_api(source: MarketplacePluginSource) -> PluginSo
             version,
             registry,
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ruxex_core_plugins::MarketplaceAssetUrls;
+    use ruxex_core_plugins::MarketplaceOrigin;
+    use ruxex_core_plugins::manifest::PluginManifestInterface;
+    use ruxex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
+    use ruxex_core_plugins::marketplace::MarketplacePluginInstallPolicy;
+    use ruxex_core_plugins::marketplace::MarketplacePluginPolicy;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use std::collections::HashMap;
+
+    #[test]
+    fn marketplace_summary_contains_resolved_asset_urls() {
+        let interface = PluginManifestInterface {
+            composer_icon: Some(AbsolutePathBuf::try_from("/tmp/catalog/icon.svg").unwrap()),
+            logo: Some(AbsolutePathBuf::try_from("/tmp/catalog/logo.svg").unwrap()),
+            logo_dark: Some(AbsolutePathBuf::try_from("/tmp/catalog/logo-dark.svg").unwrap()),
+            screenshots: vec![AbsolutePathBuf::try_from("/tmp/catalog/screenshot.png").unwrap()],
+            ..Default::default()
+        };
+        let plugin = ConfiguredMarketplacePlugin {
+            id: "weather@catalog".to_string(),
+            name: "weather".to_string(),
+            local_version: None,
+            installed_version: None,
+            source: MarketplacePluginSource::Git {
+                url: "https://github.com/acme/weather".to_string(),
+                path: None,
+                ref_name: None,
+                sha: None,
+            },
+            policy: MarketplacePluginPolicy {
+                installation: MarketplacePluginInstallPolicy::Available,
+                authentication: MarketplacePluginAuthPolicy::OnInstall,
+                products: None,
+            },
+            interface: Some(interface),
+            keywords: Vec::new(),
+            manifest_fallback: None,
+            installed: false,
+            enabled: false,
+        };
+        let marketplace = ConfiguredMarketplace {
+            name: "catalog".to_string(),
+            path: AbsolutePathBuf::try_from("/tmp/catalog/marketplace.json").unwrap(),
+            root: AbsolutePathBuf::try_from("/tmp/catalog").unwrap(),
+            origin: MarketplaceOrigin::Unknown,
+            interface: None,
+            plugins: vec![plugin],
+        };
+        let mut asset_urls = HashMap::new();
+        asset_urls.insert(
+            "weather@catalog".to_string(),
+            MarketplaceAssetUrls {
+                composer_icon_url: Some(
+                    "https://raw.githubusercontent.com/acme/weather/HEAD/icon.svg".to_string(),
+                ),
+                logo_url: Some(
+                    "https://raw.githubusercontent.com/acme/weather/HEAD/logo.svg".to_string(),
+                ),
+                logo_url_dark: None,
+                screenshot_urls: vec![
+                    "https://raw.githubusercontent.com/acme/weather/HEAD/screenshot.png"
+                        .to_string(),
+                ],
+            },
+        );
+
+        let entry = marketplace_to_api(marketplace, &asset_urls);
+        let interface = entry.plugins[0]
+            .interface
+            .as_ref()
+            .expect("plugin interface should be present");
+        assert_eq!(
+            interface.composer_icon_url.as_deref(),
+            Some("https://raw.githubusercontent.com/acme/weather/HEAD/icon.svg")
+        );
+        assert_eq!(
+            interface.logo_url.as_deref(),
+            Some("https://raw.githubusercontent.com/acme/weather/HEAD/logo.svg")
+        );
+        assert_eq!(interface.screenshot_urls.len(), 1);
+        assert!(interface.composer_icon.is_none());
+        assert!(interface.logo.is_none());
+        assert!(interface.logo_dark.is_none());
+        assert!(interface.screenshots.is_empty());
     }
 }

@@ -58,7 +58,7 @@ impl PluginRequestProcessor {
                 let marketplace_path = marketplace.path.clone();
                 let query = search_term.clone();
                 marketplace.plugins.into_iter().filter_map(move |plugin| {
-                    let summary = super::plugin_to_summary(plugin);
+                    let summary = super::plugin_to_summary(plugin, None);
                     let values = [
                         summary.name.to_lowercase(),
                         summary.id.to_lowercase(),

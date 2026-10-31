@@ -1737,6 +1737,8 @@ enabled = false
                 tmp.path().join("repo/.agents/plugins/marketplace.json"),
             )
             .unwrap(),
+            root: AbsolutePathBuf::try_from(tmp.path().join("repo")).unwrap(),
+            origin: crate::MarketplaceOrigin::Unknown,
             interface: None,
             plugins: vec![
                 ConfiguredMarketplacePlugin {
@@ -2614,6 +2616,8 @@ enabled = true
                 tmp.path().join("repo/.agents/plugins/marketplace.json"),
             )
             .unwrap(),
+            root: AbsolutePathBuf::try_from(tmp.path().join("repo")).unwrap(),
+            origin: crate::MarketplaceOrigin::Unknown,
             interface: None,
             plugins: vec![ConfiguredMarketplacePlugin {
                 id: "sample-plugin@debug".to_string(),

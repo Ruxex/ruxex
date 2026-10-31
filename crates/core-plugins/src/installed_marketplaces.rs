@@ -7,9 +7,61 @@ use ruxex_utils_absolute_path::AbsolutePathBuf;
 use tracing::warn;
 
 use crate::marketplace::find_marketplace_manifest_path;
+use crate::marketplace_assets::MarketplaceOrigin;
 use crate::marketplace_policy::policy_filtered_plugin_config;
+use std::collections::HashMap;
 
 pub const INSTALLED_MARKETPLACES_DIR: &str = ".tmp/marketplaces";
+
+/// Returns configured marketplace origins keyed by their resolved checkout roots.
+pub fn configured_marketplace_origins_from_layer_stack(
+    config_layer_stack: &ConfigLayerStack,
+    ruxex_home: &Path,
+) -> HashMap<AbsolutePathBuf, MarketplaceOrigin> {
+    let Some(effective_config) = policy_filtered_plugin_config(config_layer_stack, ruxex_home)
+    else {
+        return HashMap::new();
+    };
+    let Some(marketplaces) = effective_config
+        .get("marketplaces")
+        .and_then(toml::Value::as_table)
+    else {
+        return HashMap::new();
+    };
+
+    let default_install_root = marketplace_install_root(ruxex_home);
+    marketplaces
+        .iter()
+        .filter_map(|(marketplace_name, marketplace)| {
+            let root = resolve_configured_marketplace_root(
+                marketplace_name,
+                marketplace,
+                &default_install_root,
+            )?;
+            let root = AbsolutePathBuf::try_from(root).ok()?;
+            let origin = match marketplace.get("source_type").and_then(toml::Value::as_str) {
+                Some("git") => MarketplaceOrigin::Git {
+                    url: marketplace
+                        .get("source")
+                        .and_then(toml::Value::as_str)
+                        .unwrap_or_default()
+                        .to_string(),
+                    ref_name: marketplace
+                        .get("ref")
+                        .and_then(toml::Value::as_str)
+                        .map(str::to_string),
+                    revision: marketplace
+                        .get("last_revision")
+                        .and_then(toml::Value::as_str)
+                        .map(str::to_string),
+                },
+                Some("local") => MarketplaceOrigin::Local { path: root.clone() },
+                _ => MarketplaceOrigin::Unknown,
+            };
+            Some((root, origin))
+        })
+        .collect()
+}
 
 pub fn marketplace_install_root(ruxex_home: &Path) -> PathBuf {
     ruxex_home.join(INSTALLED_MARKETPLACES_DIR)

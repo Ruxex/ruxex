@@ -6,6 +6,7 @@ pub use marketplace_context::PluginMarketplaceScope;
 use super::LoadedPlugin;
 use super::PluginLoadOutcome;
 use crate::PluginGitMode;
+use crate::installed_marketplaces::configured_marketplace_origins_from_layer_stack;
 use crate::installed_marketplaces::installed_marketplace_roots_from_layer_stack;
 use crate::loaded_cache_metrics;
 use crate::loaded_cache_metrics::RequestOutcome;
@@ -37,6 +38,7 @@ use crate::marketplace::find_marketplace_plugin;
 use crate::marketplace::home_dir;
 use crate::marketplace::list_marketplaces_with_home;
 use crate::marketplace::plugin_interface_with_marketplace_category;
+use crate::marketplace_assets::MarketplaceOrigin;
 use crate::marketplace_policy::MarketplacePolicy;
 use crate::marketplace_policy::configured_plugins_from_stack;
 use crate::marketplace_upgrade::ConfigLayerReload;
@@ -202,6 +204,8 @@ pub struct PluginHookSummary {
 pub struct ConfiguredMarketplace {
     pub name: String,
     pub path: AbsolutePathBuf,
+    pub root: AbsolutePathBuf,
+    pub origin: MarketplaceOrigin,
     pub interface: Option<MarketplaceInterface>,
     pub plugins: Vec<ConfiguredMarketplacePlugin>,
 }
@@ -735,6 +739,10 @@ impl PluginsManager {
         plugin_states: &ConfiguredPluginStates,
     ) -> Result<ConfiguredMarketplaceListOutcome, MarketplaceError> {
         let marketplace_roots = self.marketplace_roots(config, additional_roots);
+        let marketplace_origins = configured_marketplace_origins_from_layer_stack(
+            &config.config_layer_stack,
+            self.ruxex_home.as_path(),
+        );
         let marketplace_outcome = self.list_marketplaces_with_policy(config, &marketplace_roots)?;
         let mut seen_plugin_keys = HashSet::new();
         let marketplaces = marketplace_outcome
@@ -800,9 +808,20 @@ impl PluginsManager {
                     })
                     .collect::<Vec<_>>();
 
+                let root = marketplace_roots
+                    .iter()
+                    .find(|candidate| {
+                        crate::marketplace::find_marketplace_manifest_path(candidate.as_path())
+                            .as_ref()
+                            == Some(&marketplace.path)
+                    })
+                    .cloned()
+                    .unwrap_or_else(|| marketplace.path.clone());
                 (!plugins.is_empty()).then_some(ConfiguredMarketplace {
                     name: marketplace.name,
                     path: marketplace.path,
+                    root: root.clone(),
+                    origin: marketplace_origins.get(&root).cloned().unwrap_or_default(),
                     interface: marketplace.interface,
                     plugins,
                 })
