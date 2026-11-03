@@ -38,7 +38,11 @@ use crate::marketplace::find_marketplace_plugin;
 use crate::marketplace::home_dir;
 use crate::marketplace::list_marketplaces_with_home;
 use crate::marketplace::plugin_interface_with_marketplace_category;
+use crate::marketplace_assets::MarketplaceAssetFiles;
 use crate::marketplace_assets::MarketplaceOrigin;
+use crate::marketplace_assets::resolve_local_marketplace_asset_files;
+use crate::marketplace_assets::validate_marketplace_asset_files;
+use crate::marketplace_git_assets::GitAssetMaterializer;
 use crate::marketplace_policy::MarketplacePolicy;
 use crate::marketplace_policy::configured_plugins_from_stack;
 use crate::marketplace_upgrade::ConfigLayerReload;
@@ -184,6 +188,7 @@ pub struct PluginDetail {
     pub source: MarketplacePluginSource,
     pub policy: MarketplacePluginPolicy,
     pub interface: Option<PluginManifestInterface>,
+    pub asset_files: MarketplaceAssetFiles,
     pub keywords: Vec<String>,
     pub installed: bool,
     pub enabled: bool,
@@ -719,6 +724,23 @@ impl PluginsManager {
         context.list_marketplaces(self)
     }
 
+    /// Resolves and validates optional marketplace interface assets without exposing remote URLs.
+    /// Asset failures are intentionally non-fatal: a plugin remains listable without an image.
+    pub fn resolve_marketplace_asset_files(
+        &self,
+        marketplace: &ConfiguredMarketplace,
+    ) -> HashMap<String, MarketplaceAssetFiles> {
+        let materializer = GitAssetMaterializer::new(self.ruxex_home.as_path()).ok();
+        marketplace
+            .plugins
+            .iter()
+            .filter_map(|plugin| {
+                resolve_configured_marketplace_plugin_assets(&self.store, &materializer, plugin)
+                    .map(|files| (plugin.id.clone(), files))
+            })
+            .collect()
+    }
+
     pub fn list_marketplaces_for_config(
         &self,
         config: &PluginsConfigInput,
@@ -914,7 +936,6 @@ impl PluginsManager {
                 },
             )
             .await?;
-
         Ok(PluginReadOutcome {
             marketplace_name,
             marketplace_path: Some(request.marketplace_path.clone()),
@@ -1039,6 +1060,17 @@ impl PluginsManager {
         let mut mcp_server_names = mcp_servers.into_keys().collect::<Vec<_>>();
         mcp_server_names.sort_unstable();
         mcp_server_names.dedup();
+        let asset_files = interface
+            .as_ref()
+            .and_then(|interface| {
+                resolve_local_marketplace_asset_files(
+                    source_path.as_path(),
+                    source_path.as_path(),
+                    interface,
+                )
+            })
+            .map(|files| validate_marketplace_asset_files(&files, source_path.as_path()))
+            .unwrap_or_default();
 
         Ok(PluginDetail {
             id: plugin.id,
@@ -1048,6 +1080,7 @@ impl PluginsManager {
             source: plugin.source,
             policy: plugin.policy,
             interface,
+            asset_files,
             keywords: manifest.keywords,
             installed: plugin.installed,
             enabled: plugin.enabled,
@@ -1460,6 +1493,81 @@ impl PluginsManager {
         });
         Ok(outcome)
     }
+}
+
+fn resolve_configured_marketplace_plugin_assets(
+    store: &PluginStore,
+    materializer: &Option<GitAssetMaterializer>,
+    plugin: &ConfiguredMarketplacePlugin,
+) -> Option<MarketplaceAssetFiles> {
+    match &plugin.source {
+        MarketplacePluginSource::Local { path } => {
+            let interface = plugin.interface.as_ref()?;
+            let files =
+                resolve_local_marketplace_asset_files(path.as_path(), path.as_path(), interface)?;
+            Some(validate_marketplace_asset_files(&files, path.as_path()))
+        }
+        MarketplacePluginSource::Git { .. } if plugin.installed => {
+            let plugin_id = PluginId::parse(&plugin.id).ok()?;
+            let plugin_root = store.active_plugin_root(&plugin_id)?;
+            let interface = plugin.interface.as_ref()?;
+            let files = resolve_local_marketplace_asset_files(
+                plugin_root.as_path(),
+                plugin_root.as_path(),
+                interface,
+            )?;
+            Some(validate_marketplace_asset_files(
+                &files,
+                plugin_root.as_path(),
+            ))
+        }
+        MarketplacePluginSource::Git { .. } => {
+            let materializer = materializer.as_ref()?;
+            let first = materializer.materialize(&plugin.source, &[]).ok()?;
+            let manifest = load_plugin_manifest(first.plugin_root.as_path())?;
+            let interface = manifest.interface?;
+            let requested_paths = interface_asset_paths(&interface, first.plugin_root.as_path());
+            let materialized = materializer
+                .materialize(&plugin.source, &requested_paths)
+                .ok()?;
+            let files = resolve_local_marketplace_asset_files(
+                materialized.root.as_path(),
+                materialized.plugin_root.as_path(),
+                &interface,
+            )?;
+            Some(validate_marketplace_asset_files(
+                &files,
+                materialized.plugin_root.as_path(),
+            ))
+        }
+        MarketplacePluginSource::Npm { .. } => None,
+    }
+}
+
+fn interface_asset_paths(interface: &PluginManifestInterface, plugin_root: &Path) -> Vec<String> {
+    let mut paths = Vec::new();
+    let mut push = |path: &AbsolutePathBuf| {
+        let relative = path.as_path().strip_prefix(plugin_root).ok()?;
+        let relative = relative.to_str()?;
+        if relative.is_empty() || relative.contains('\\') {
+            return None;
+        }
+        paths.push(relative.to_string());
+        Some(())
+    };
+    if let Some(path) = interface.composer_icon.as_ref() {
+        let _ = push(path);
+    }
+    if let Some(path) = interface.logo.as_ref() {
+        let _ = push(path);
+    }
+    if let Some(path) = interface.logo_dark.as_ref() {
+        let _ = push(path);
+    }
+    for path in &interface.screenshots {
+        let _ = push(path);
+    }
+    paths
 }
 
 #[derive(Debug, thiserror::Error)]

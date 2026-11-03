@@ -19,8 +19,7 @@ use ruxex_core::ThreadManager;
 use ruxex_core::config::Config;
 use ruxex_core_plugins::ConfiguredMarketplace;
 use ruxex_core_plugins::ConfiguredMarketplacePlugin;
-use ruxex_core_plugins::MarketplaceAssetResolver;
-use ruxex_core_plugins::MarketplaceAssetUrls;
+use ruxex_core_plugins::MarketplaceAssetFiles;
 use ruxex_core_plugins::PluginInstallRequest;
 use ruxex_core_plugins::PluginMarketplaceContext;
 use ruxex_core_plugins::PluginReadRequest;
@@ -107,9 +106,7 @@ impl PluginRequestProcessor {
         let roots = params.cwds.unwrap_or_default();
         let config = self.load_catalog_config(&roots).await?;
         let context = self.load_marketplace_context(roots, &config).await;
-        let (marketplaces, errors) = self
-            .local_marketplaces(&context, &config.http_client_factory())
-            .await?;
+        let (marketplaces, errors) = self.local_marketplaces(&context).await?;
         let _ = params.marketplace_kinds;
         Ok(Some(
             PluginListResponse {
@@ -127,9 +124,7 @@ impl PluginRequestProcessor {
         let roots = params.cwds.unwrap_or_default();
         let config = self.load_catalog_config(&roots).await?;
         let context = self.load_marketplace_context(roots, &config).await;
-        let (mut marketplaces, errors) = self
-            .local_marketplaces(&context, &config.http_client_factory())
-            .await?;
+        let (mut marketplaces, errors) = self.local_marketplaces(&context).await?;
         for marketplace in &mut marketplaces {
             marketplace.plugins.retain(|plugin| plugin.installed);
         }
@@ -221,7 +216,6 @@ impl PluginRequestProcessor {
     async fn local_marketplaces(
         &self,
         context: &PluginMarketplaceContext,
-        http_client_factory: &ruxex_http_client::HttpClientFactory,
     ) -> Result<
         (
             Vec<PluginMarketplaceEntry>,
@@ -234,11 +228,19 @@ impl PluginRequestProcessor {
             .plugins_manager()
             .list_marketplaces_for_context(context)
             .map_err(|err| internal_error(format!("failed to list marketplace plugins: {err}")))?;
-        let resolver = MarketplaceAssetResolver::new(http_client_factory.clone());
         let mut marketplaces = Vec::with_capacity(outcome.marketplaces.len());
+        let plugins_manager = self.thread_manager.plugins_manager();
         for marketplace in outcome.marketplaces {
-            let asset_urls = resolver.resolve_marketplace(&marketplace).await;
-            marketplaces.push(marketplace_to_api(marketplace, &asset_urls));
+            let manager = Arc::clone(&plugins_manager);
+            let asset_marketplace = marketplace.clone();
+            let asset_files = tokio::task::spawn_blocking(move || {
+                manager.resolve_marketplace_asset_files(&asset_marketplace)
+            })
+            .await
+            .map_err(|err| {
+                internal_error(format!("failed to resolve marketplace assets: {err}"))
+            })?;
+            marketplaces.push(marketplace_to_api(marketplace, &asset_files));
         }
         Ok((
             marketplaces,
@@ -258,7 +260,7 @@ impl PluginRequestProcessor {
 
 fn marketplace_to_api(
     marketplace: ConfiguredMarketplace,
-    asset_urls: &std::collections::HashMap<String, MarketplaceAssetUrls>,
+    asset_files: &std::collections::HashMap<String, MarketplaceAssetFiles>,
 ) -> PluginMarketplaceEntry {
     PluginMarketplaceEntry {
         name: marketplace.name,
@@ -272,8 +274,8 @@ fn marketplace_to_api(
             .plugins
             .into_iter()
             .map(|plugin| {
-                let plugin_urls = asset_urls.get(&plugin.id);
-                plugin_to_summary(plugin, plugin_urls)
+                let plugin_files = asset_files.get(&plugin.id);
+                plugin_to_summary(plugin, plugin_files)
             })
             .collect(),
     }
@@ -281,7 +283,7 @@ fn marketplace_to_api(
 
 fn plugin_to_summary(
     plugin: ConfiguredMarketplacePlugin,
-    asset_urls: Option<&MarketplaceAssetUrls>,
+    asset_files: Option<&MarketplaceAssetFiles>,
 ) -> PluginSummary {
     PluginSummary {
         id: plugin.id,
@@ -295,35 +297,45 @@ fn plugin_to_summary(
         must_show_installation_interstitial: None,
         auth_policy: plugin.policy.authentication.into(),
         availability: PluginAvailability::Available,
-        interface: plugin.interface.map(|interface| PluginInterface {
-            display_name: interface.display_name,
-            short_description: interface.short_description,
-            long_description: interface.long_description,
-            developer_name: interface.developer_name,
-            category: interface.category,
-            capabilities: interface.capabilities,
-            website_url: interface.website_url,
-            privacy_policy_url: interface.privacy_policy_url,
-            terms_of_service_url: interface.terms_of_service_url,
-            default_prompt: interface.default_prompt,
-            brand_color: interface.brand_color,
-            composer_icon: None,
-            composer_icon_url: asset_urls.and_then(|urls| urls.composer_icon_url.clone()),
-            logo: None,
-            logo_dark: None,
-            logo_url: asset_urls.and_then(|urls| urls.logo_url.clone()),
-            logo_url_dark: asset_urls.and_then(|urls| urls.logo_url_dark.clone()),
-            screenshots: Vec::new(),
-            screenshot_urls: asset_urls
-                .map(|urls| urls.screenshot_urls.clone())
-                .unwrap_or_default(),
-        }),
+        interface: plugin
+            .interface
+            .map(|interface| plugin_interface_to_api(interface, asset_files)),
         keywords: plugin.keywords,
+    }
+}
+
+fn plugin_interface_to_api(
+    interface: ruxex_core_plugins::manifest::PluginManifestInterface,
+    asset_files: Option<&MarketplaceAssetFiles>,
+) -> PluginInterface {
+    PluginInterface {
+        display_name: interface.display_name,
+        short_description: interface.short_description,
+        long_description: interface.long_description,
+        developer_name: interface.developer_name,
+        category: interface.category,
+        capabilities: interface.capabilities,
+        website_url: interface.website_url,
+        privacy_policy_url: interface.privacy_policy_url,
+        terms_of_service_url: interface.terms_of_service_url,
+        default_prompt: interface.default_prompt,
+        brand_color: interface.brand_color,
+        composer_icon: asset_files.and_then(|files| files.composer_icon.clone()),
+        composer_icon_url: None,
+        logo: asset_files.and_then(|files| files.logo.clone()),
+        logo_dark: asset_files.and_then(|files| files.logo_dark.clone()),
+        logo_url: None,
+        logo_url_dark: None,
+        screenshots: asset_files
+            .map(|files| files.screenshots.clone())
+            .unwrap_or_default(),
+        screenshot_urls: Vec::new(),
     }
 }
 
 fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> PluginDetail {
     let skills = plugin_skills_to_api(&outcome.plugin.skills, &outcome.plugin.disabled_skill_paths);
+    let asset_files = outcome.plugin.asset_files.clone();
     let onboarding_skill = if outcome.plugin.enabled {
         outcome.plugin.onboarding_skill.as_ref().and_then(|path| {
             skills
@@ -346,27 +358,10 @@ fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> Plugi
         must_show_installation_interstitial: None,
         auth_policy: outcome.plugin.policy.authentication.into(),
         availability: PluginAvailability::Available,
-        interface: outcome.plugin.interface.map(|interface| PluginInterface {
-            display_name: interface.display_name,
-            short_description: interface.short_description,
-            long_description: interface.long_description,
-            developer_name: interface.developer_name,
-            category: interface.category,
-            capabilities: interface.capabilities,
-            website_url: interface.website_url,
-            privacy_policy_url: interface.privacy_policy_url,
-            terms_of_service_url: interface.terms_of_service_url,
-            default_prompt: interface.default_prompt,
-            brand_color: interface.brand_color,
-            composer_icon: None,
-            composer_icon_url: None,
-            logo: None,
-            logo_dark: None,
-            logo_url: None,
-            logo_url_dark: None,
-            screenshots: Vec::new(),
-            screenshot_urls: Vec::new(),
-        }),
+        interface: outcome
+            .plugin
+            .interface
+            .map(|interface| plugin_interface_to_api(interface, Some(&asset_files))),
         keywords: outcome.plugin.keywords,
     };
     PluginDetail {
@@ -411,7 +406,7 @@ fn marketplace_plugin_source_to_api(source: MarketplacePluginSource) -> PluginSo
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ruxex_core_plugins::MarketplaceAssetUrls;
+    use ruxex_core_plugins::MarketplaceAssetFiles;
     use ruxex_core_plugins::MarketplaceOrigin;
     use ruxex_core_plugins::manifest::PluginManifestInterface;
     use ruxex_core_plugins::marketplace::MarketplacePluginAuthPolicy;
@@ -421,7 +416,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn marketplace_summary_contains_resolved_asset_urls() {
+    fn marketplace_summary_contains_validated_local_asset_paths() {
         let interface = PluginManifestInterface {
             composer_icon: Some(AbsolutePathBuf::try_from("/tmp/catalog/icon.svg").unwrap()),
             logo: Some(AbsolutePathBuf::try_from("/tmp/catalog/logo.svg").unwrap()),
@@ -459,41 +454,39 @@ mod tests {
             interface: None,
             plugins: vec![plugin],
         };
-        let mut asset_urls = HashMap::new();
-        asset_urls.insert(
+        let mut asset_files = HashMap::new();
+        asset_files.insert(
             "weather@catalog".to_string(),
-            MarketplaceAssetUrls {
-                composer_icon_url: Some(
-                    "https://raw.githubusercontent.com/acme/weather/HEAD/icon.svg".to_string(),
-                ),
-                logo_url: Some(
-                    "https://raw.githubusercontent.com/acme/weather/HEAD/logo.svg".to_string(),
-                ),
-                logo_url_dark: None,
-                screenshot_urls: vec![
-                    "https://raw.githubusercontent.com/acme/weather/HEAD/screenshot.png"
-                        .to_string(),
+            MarketplaceAssetFiles {
+                composer_icon: Some(AbsolutePathBuf::try_from("/tmp/catalog/icon.svg").unwrap()),
+                logo: Some(AbsolutePathBuf::try_from("/tmp/catalog/logo.svg").unwrap()),
+                logo_dark: None,
+                screenshots: vec![
+                    AbsolutePathBuf::try_from("/tmp/catalog/screenshot.png").unwrap(),
                 ],
             },
         );
 
-        let entry = marketplace_to_api(marketplace, &asset_urls);
+        let entry = marketplace_to_api(marketplace, &asset_files);
         let interface = entry.plugins[0]
             .interface
             .as_ref()
             .expect("plugin interface should be present");
         assert_eq!(
-            interface.composer_icon_url.as_deref(),
-            Some("https://raw.githubusercontent.com/acme/weather/HEAD/icon.svg")
+            interface
+                .composer_icon
+                .as_ref()
+                .map(AbsolutePathBuf::as_path),
+            Some(Path::new("/tmp/catalog/icon.svg"))
         );
         assert_eq!(
-            interface.logo_url.as_deref(),
-            Some("https://raw.githubusercontent.com/acme/weather/HEAD/logo.svg")
+            interface.logo.as_ref().map(AbsolutePathBuf::as_path),
+            Some(Path::new("/tmp/catalog/logo.svg"))
         );
-        assert_eq!(interface.screenshot_urls.len(), 1);
-        assert!(interface.composer_icon.is_none());
-        assert!(interface.logo.is_none());
+        assert_eq!(interface.screenshots.len(), 1);
+        assert!(interface.composer_icon_url.is_none());
+        assert!(interface.logo_url.is_none());
         assert!(interface.logo_dark.is_none());
-        assert!(interface.screenshots.is_empty());
+        assert!(interface.screenshot_urls.is_empty());
     }
 }
