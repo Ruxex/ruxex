@@ -607,19 +607,23 @@ pub struct PluginInterface {
     /// 128 characters per entry.
     pub default_prompt: Option<Vec<String>>,
     pub brand_color: Option<String>,
-    /// Local composer icon path, resolved from the installed plugin package.
+    /// Local composer icon path, resolved from an installed plugin package or a validated
+    /// marketplace materialization on the same host as the app server.
     pub composer_icon: Option<AbsolutePathBuf>,
     /// Remote composer icon URL from the plugin catalog.
     pub composer_icon_url: Option<String>,
-    /// Local logo path, resolved from the installed plugin package.
+    /// Local logo path, resolved from an installed plugin package or a validated marketplace
+    /// materialization on the same host as the app server.
     pub logo: Option<AbsolutePathBuf>,
-    /// Local dark-mode logo path, resolved from the installed plugin package.
+    /// Local dark-mode logo path, resolved from an installed plugin package or a validated
+    /// marketplace materialization on the same host as the app server.
     pub logo_dark: Option<AbsolutePathBuf>,
     /// Remote logo URL from the plugin catalog.
     pub logo_url: Option<String>,
     /// Remote dark-mode logo URL from the plugin catalog.
     pub logo_url_dark: Option<String>,
-    /// Local screenshot paths, resolved from the installed plugin package.
+    /// Local screenshot paths, resolved from an installed plugin package or a validated marketplace
+    /// materialization on the same host as the app server.
     pub screenshots: Vec<AbsolutePathBuf>,
     /// Remote screenshot URLs from the plugin catalog.
     pub screenshot_urls: Vec<String>,

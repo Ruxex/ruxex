@@ -1,7 +1,4 @@
-//! Safe resolution of marketplace-declared plugin assets to public GitHub URLs.
-//!
-//! This module deliberately resolves URLs only. It does not fetch image bytes; clients must fetch,
-//! validate, sanitize, and cache the returned URLs before rendering them.
+//! Safe resolution and materialization metadata for marketplace-declared plugin assets.
 
 use crate::ConfiguredMarketplace;
 use crate::ConfiguredMarketplacePlugin;
@@ -53,6 +50,23 @@ pub struct MarketplaceAssetPaths {
     pub screenshots: Vec<String>,
 }
 
+/// The normalized source kind that controls how marketplace assets are obtained.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarketplaceAssetSourceKind {
+    Local,
+    Git,
+    Npm,
+}
+
+/// Validated local asset locations ready for the app-server protocol.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct MarketplaceAssetFiles {
+    pub composer_icon: Option<AbsolutePathBuf>,
+    pub logo: Option<AbsolutePathBuf>,
+    pub logo_dark: Option<AbsolutePathBuf>,
+    pub screenshots: Vec<AbsolutePathBuf>,
+}
+
 /// Public URLs that a client may resolve and validate before rendering.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct MarketplaceAssetUrls {
@@ -60,6 +74,51 @@ pub struct MarketplaceAssetUrls {
     pub logo_url: Option<String>,
     pub logo_url_dark: Option<String>,
     pub screenshot_urls: Vec<String>,
+}
+
+/// Classifies an already-normalized source without inspecting its URL syntax.
+pub fn classify_marketplace_asset_source(
+    source: &MarketplacePluginSource,
+) -> MarketplaceAssetSourceKind {
+    match source {
+        MarketplacePluginSource::Local { .. } => MarketplaceAssetSourceKind::Local,
+        MarketplacePluginSource::Git { .. } => MarketplaceAssetSourceKind::Git,
+        MarketplacePluginSource::Npm { .. } => MarketplaceAssetSourceKind::Npm,
+    }
+}
+
+/// Resolves existing local interface assets while enforcing both repository roots.
+///
+/// Missing or unsafe optional assets are omitted. A plugin root outside the marketplace root
+/// invalidates the whole local asset set.
+pub fn resolve_local_marketplace_asset_files(
+    marketplace_root: &Path,
+    plugin_root: &Path,
+    interface: &crate::manifest::PluginManifestInterface,
+) -> Option<MarketplaceAssetFiles> {
+    let marketplace_root = marketplace_root.canonicalize().ok()?;
+    let plugin_root = plugin_root.canonicalize().ok()?;
+    if !plugin_root.starts_with(&marketplace_root) {
+        return None;
+    }
+
+    let resolve = |path: &AbsolutePathBuf| {
+        let path = path.as_path().canonicalize().ok()?;
+        if !path.is_file()
+            || !path.starts_with(&plugin_root)
+            || !path.starts_with(&marketplace_root)
+        {
+            return None;
+        }
+        AbsolutePathBuf::try_from(path).ok()
+    };
+
+    Some(MarketplaceAssetFiles {
+        composer_icon: interface.composer_icon.as_ref().and_then(resolve),
+        logo: interface.logo.as_ref().and_then(resolve),
+        logo_dark: interface.logo_dark.as_ref().and_then(resolve),
+        screenshots: interface.screenshots.iter().filter_map(resolve).collect(),
+    })
 }
 
 /// Resolves marketplace asset metadata while leaving asset-byte fetching to clients.
@@ -411,12 +470,102 @@ fn safe_reference_segment(segment: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::manifest::PluginManifestInterface;
+    use crate::marketplace::MarketplacePluginSource;
     use ruxex_http_client::OutboundProxyPolicy;
+    use ruxex_utils_absolute_path::AbsolutePathBuf;
+    use std::fs;
+    use tempfile::tempdir;
     use wiremock::Mock;
     use wiremock::MockServer;
     use wiremock::ResponseTemplate;
     use wiremock::matchers::method;
     use wiremock::matchers::path;
+
+    #[test]
+    fn classifies_asset_source_from_the_normalized_source_kind() {
+        assert_eq!(
+            classify_marketplace_asset_source(&MarketplacePluginSource::Local {
+                path: AbsolutePathBuf::try_from("/tmp/plugin").unwrap(),
+            }),
+            MarketplaceAssetSourceKind::Local
+        );
+        assert_eq!(
+            classify_marketplace_asset_source(&MarketplacePluginSource::Git {
+                url: "https://example.com/not-a-git-looking-url".to_string(),
+                path: None,
+                ref_name: None,
+                sha: None,
+            }),
+            MarketplaceAssetSourceKind::Git
+        );
+        assert_eq!(
+            classify_marketplace_asset_source(&MarketplacePluginSource::Npm {
+                package: "weather".to_string(),
+                version: None,
+                registry: None,
+            }),
+            MarketplaceAssetSourceKind::Npm
+        );
+    }
+
+    #[test]
+    fn resolves_only_existing_assets_inside_the_plugin_and_marketplace_roots() {
+        let root = tempdir().unwrap();
+        let plugin_root = root.path().join("plugins/weather");
+        let assets_root = plugin_root.join("assets");
+        fs::create_dir_all(&assets_root).unwrap();
+        fs::write(assets_root.join("logo.svg"), b"<svg />").unwrap();
+        fs::write(root.path().join("outside.svg"), b"<svg />").unwrap();
+
+        let interface = PluginManifestInterface {
+            logo: Some(AbsolutePathBuf::try_from(assets_root.join("logo.svg")).unwrap()),
+            logo_dark: Some(AbsolutePathBuf::try_from(root.path().join("outside.svg")).unwrap()),
+            ..Default::default()
+        };
+
+        let files = resolve_local_marketplace_asset_files(root.path(), &plugin_root, &interface)
+            .expect("plugin root should be inside marketplace root");
+
+        assert_eq!(
+            files.logo.as_ref().map(AbsolutePathBuf::as_path),
+            Some(assets_root.join("logo.svg").as_path())
+        );
+        assert!(files.logo_dark.is_none());
+    }
+
+    #[test]
+    fn rejects_a_plugin_root_outside_the_marketplace_root() {
+        let root = tempdir().unwrap();
+        let outside = tempdir().unwrap();
+        let interface = PluginManifestInterface::default();
+
+        assert!(
+            resolve_local_marketplace_asset_files(root.path(), outside.path(), &interface)
+                .is_none()
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_asset_symlinks_that_escape_the_plugin_root() {
+        use std::os::unix::fs::symlink;
+
+        let root = tempdir().unwrap();
+        let plugin_root = root.path().join("plugins/weather");
+        fs::create_dir_all(&plugin_root).unwrap();
+        let outside = root.path().join("secret.svg");
+        fs::write(&outside, b"<svg />").unwrap();
+        symlink(&outside, plugin_root.join("logo.svg")).unwrap();
+        let interface = PluginManifestInterface {
+            logo: Some(AbsolutePathBuf::try_from(plugin_root.join("logo.svg")).unwrap()),
+            ..Default::default()
+        };
+
+        let files =
+            resolve_local_marketplace_asset_files(root.path(), &plugin_root, &interface).unwrap();
+        assert!(files.logo.is_none());
+    }
 
     #[tokio::test]
     async fn fetches_bounded_manifest_metadata_without_following_redirects() {
