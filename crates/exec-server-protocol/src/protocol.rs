@@ -48,6 +48,7 @@ pub const CAPABILITY_ROOTS_DISCOVER_METHOD: &str = "capabilityRoots/discoverV1";
 /// Ordered plugin manifest paths recognized beneath a plugin root.
 pub const DISCOVERABLE_PLUGIN_MANIFEST_PATHS: &[&str] = &[
     ".ruxex-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
     ".claude-plugin/plugin.json",
     ".cursor-plugin/plugin.json",
 ];

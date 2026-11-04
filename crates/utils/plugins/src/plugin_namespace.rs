@@ -132,6 +132,7 @@ mod tests {
     use tempfile::tempdir;
 
     const ALTERNATE_PLUGIN_CLA_MANIFEST_RELATIVE_PATH: &str = ".claude-plugin/plugin.json";
+    const ALTERNATE_PLUGIN_CODEX_MANIFEST_RELATIVE_PATH: &str = ".codex-plugin/plugin.json";
     const ALTERNATE_PLUGIN_CUR_MANIFEST_RELATIVE_PATH: &str = ".cursor-plugin/plugin.json";
 
     #[tokio::test]
@@ -180,6 +181,19 @@ mod tests {
             .await,
             Some("sample".to_string())
         );
+        assert_eq!(find_plugin_manifest_path(&plugin_root), Some(manifest_path));
+    }
+
+    #[test]
+    fn recognizes_codex_plugin_manifest_path() {
+        let tmp = tempdir().expect("tempdir");
+        let plugin_root = tmp.path().join("plugins/sample");
+        let manifest_path = plugin_root.join(ALTERNATE_PLUGIN_CODEX_MANIFEST_RELATIVE_PATH);
+
+        fs::create_dir_all(manifest_path.parent().expect("manifest parent"))
+            .expect("mkdir manifest");
+        fs::write(&manifest_path, r#"{"name":"sample"}"#).expect("write manifest");
+
         assert_eq!(find_plugin_manifest_path(&plugin_root), Some(manifest_path));
     }
 
