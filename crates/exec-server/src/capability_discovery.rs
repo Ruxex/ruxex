@@ -26,7 +26,7 @@ const MAX_FILE_BYTES: usize = 1024 * 1024;
 const MAX_BUNDLE_BYTES_PER_ROOT: usize = 16 * 1024 * 1024;
 const MAX_CONCURRENT_ROOTS: usize = 8;
 const SKILL_FILE_NAME: &str = "SKILL.md";
-const SKILL_METADATA_PATH: &str = "agents/ruxex.yaml";
+const SKILL_METADATA_PATHS: [&str; 2] = ["agents/openai.yaml", "agents/ruxex.yaml"];
 const DEFAULT_MCP_CONFIG_PATH: &str = ".mcp.json";
 
 #[derive(Debug, thiserror::Error)]
@@ -244,22 +244,25 @@ async fn discover_root(
         else {
             continue;
         };
-        let metadata = match skill_path
-            .parent()
-            .and_then(|skill_dir| skill_dir.join(SKILL_METADATA_PATH).ok())
-        {
-            Some(metadata_path) => {
-                read_optional_text_file(
+        let mut metadata = None;
+        if let Some(skill_dir) = skill_path.parent() {
+            for relative_path in SKILL_METADATA_PATHS {
+                let Some(metadata_path) = skill_dir.join(relative_path).ok() else {
+                    continue;
+                };
+                metadata = read_optional_text_file(
                     file_system,
                     metadata_path,
                     sandbox,
                     &mut budget,
                     &mut discovery.warnings,
                 )
-                .await
+                .await;
+                if metadata.is_some() {
+                    break;
+                }
             }
-            None => None,
-        };
+        }
         discovery.skills.push(DiscoveredSkillFiles {
             instructions,
             metadata,

@@ -21,8 +21,6 @@ use ruxex_utils_plugins::SkillDiscoveryMode;
 use tracing::error;
 
 use super::MAX_QUALIFIED_NAME_LEN;
-use super::SKILLS_METADATA_DIR;
-use super::SKILLS_METADATA_FILENAME;
 use super::discovery::DirectorySymlinkPolicy;
 use super::discovery::DiscoveredSkill;
 use super::discovery::HiddenDirectoryPolicy;
@@ -345,13 +343,13 @@ async fn parse_skill_file(
     plugin_identity: Option<&PluginIdentity>,
     plugin_root: Option<&AbsolutePathBuf>,
 ) -> Result<SkillMetadata, String> {
-    let metadata_path = path_uri
-        .parent()
-        .and_then(|parent| parent.join(SKILLS_METADATA_DIR).ok())
-        .and_then(|directory| directory.join(SKILLS_METADATA_FILENAME).ok());
     let metadata = match &skill.metadata {
-        SkillMetadataDiscovery::Present(_) => metadata_path.map(SkillMetadataDiscovery::Present),
-        SkillMetadataDiscovery::Probe(_) => metadata_path.map(SkillMetadataDiscovery::Probe),
+        SkillMetadataDiscovery::Present(metadata_path) => {
+            Some(SkillMetadataDiscovery::Present(metadata_path.clone()))
+        }
+        SkillMetadataDiscovery::Probe(metadata_path) => {
+            Some(SkillMetadataDiscovery::Probe(metadata_path.clone()))
+        }
         SkillMetadataDiscovery::Absent => None,
     }
     .unwrap_or(SkillMetadataDiscovery::Absent);

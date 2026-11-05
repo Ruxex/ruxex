@@ -8,6 +8,7 @@ use ruxex_utils_path_uri::PathUri;
 use ruxex_utils_plugins::DISCOVERABLE_PLUGIN_MANIFEST_PATHS;
 use ruxex_utils_plugins::SkillDiscoveryMode;
 
+use super::LEGACY_SKILLS_METADATA_FILENAME;
 use super::MAX_SCAN_DEPTH;
 use super::MAX_SKILLS_DIRS_PER_ROOT;
 use super::SKILLS_FILENAME;
@@ -202,11 +203,13 @@ fn discover_skill_metadata(
     let Ok(metadata_dir) = skill_dir.join(SKILLS_METADATA_DIR) else {
         return SkillMetadataDiscovery::Absent;
     };
-    let Ok(metadata_path) = metadata_dir.join(SKILLS_METADATA_FILENAME) else {
-        return SkillMetadataDiscovery::Absent;
-    };
-    if file_paths.contains(&metadata_path) {
-        return SkillMetadataDiscovery::Present(metadata_path);
+    for filename in [SKILLS_METADATA_FILENAME, LEGACY_SKILLS_METADATA_FILENAME] {
+        let Ok(metadata_path) = metadata_dir.join(filename) else {
+            continue;
+        };
+        if file_paths.contains(&metadata_path) {
+            return SkillMetadataDiscovery::Present(metadata_path);
+        }
     }
 
     if inventory_complete && !metadata_directory_parents.contains(&skill_dir) {
@@ -214,7 +217,11 @@ fn discover_skill_metadata(
     } else {
         // A complete walk proves ordinary absence, but keep a filesystem probe for case aliases,
         // file symlinks omitted by the walk, and incomplete inventories.
-        SkillMetadataDiscovery::Probe(metadata_path)
+        SkillMetadataDiscovery::Probe(
+            metadata_dir
+                .join(SKILLS_METADATA_FILENAME)
+                .expect("metadata path should be joinable"),
+        )
     }
 }
 

@@ -22,7 +22,6 @@ use super::MAX_DEPENDENCY_TRANSPORT_LEN;
 use super::MAX_DEPENDENCY_TYPE_LEN;
 use super::MAX_DEPENDENCY_URL_LEN;
 use super::MAX_DEPENDENCY_VALUE_LEN;
-use super::SKILLS_METADATA_FILENAME;
 use super::discovery::SkillMetadataDiscovery;
 
 #[derive(Debug, Default, Deserialize)]
@@ -101,7 +100,7 @@ pub(super) async fn load_host_skill_metadata(
                 Err(error) => {
                     tracing::warn!(
                         "ignoring {path}: failed to stat {label}: {error}",
-                        label = SKILLS_METADATA_FILENAME
+                        label = "skill metadata"
                     );
                     return LoadedSkillMetadata::default();
                 }
@@ -109,6 +108,9 @@ pub(super) async fn load_host_skill_metadata(
             path
         }
     };
+    let metadata_label = metadata_path
+        .basename()
+        .unwrap_or_else(|| "skill metadata".to_string());
 
     let contents = match file_system
         .read_file_text(metadata_path, ReadFileOptions::default())
@@ -118,7 +120,7 @@ pub(super) async fn load_host_skill_metadata(
         Err(error) => {
             tracing::warn!(
                 "ignoring {metadata_path}: failed to read {label}: {error}",
-                label = SKILLS_METADATA_FILENAME
+                label = metadata_label
             );
             return LoadedSkillMetadata::default();
         }
@@ -129,7 +131,7 @@ pub(super) async fn load_host_skill_metadata(
         Err(error) => {
             tracing::warn!(
                 "ignoring {metadata_path}: invalid {label}: {error}",
-                label = SKILLS_METADATA_FILENAME
+                label = metadata_label
             );
             return LoadedSkillMetadata::default();
         }

@@ -40,6 +40,12 @@ fn write_metadata(root: &TempDir, directory: &str, contents: &str) {
     fs::write(metadata_dir.join("ruxex.yaml"), contents).expect("write metadata");
 }
 
+fn write_openai_metadata(root: &TempDir, directory: &str, contents: &str) {
+    let metadata_dir = root.path().join(directory).join("agents");
+    fs::create_dir_all(&metadata_dir).expect("create metadata directory");
+    fs::write(metadata_dir.join("openai.yaml"), contents).expect("write metadata");
+}
+
 fn root_for(temp_dir: &TempDir, scope: SkillScope) -> HostSkillRoot {
     HostSkillRoot::host(
         AbsolutePathBuf::from_absolute_path(temp_dir.path()).expect("absolute root"),
@@ -150,6 +156,43 @@ policy:
                 allow_implicit_invocation: Some(false),
                 products: vec![Product::Codex, Product::Unknown, Product::Unknown],
             }),
+            path_to_skills_md: skill_path,
+            scope: SkillScope::User,
+            plugin_id: None,
+            remote_plugin_id: None,
+        }]
+    );
+}
+
+#[tokio::test]
+async fn loads_openai_skill_interface_metadata() {
+    let root = TempDir::new().expect("temp dir");
+    let skill_path = write_skill(&root, "demo", "name: demo\ndescription: Demo skill");
+    write_openai_metadata(
+        &root,
+        "demo",
+        "interface:\n  display_name: Demo\n  short_description: Interface summary\n",
+    );
+
+    let snapshot = load_host_skill_root(root_for(&root, SkillScope::User)).await;
+
+    assert_eq!(snapshot.errors, Vec::new());
+    assert_eq!(
+        snapshot.skills,
+        vec![SkillMetadata {
+            name: "demo".to_string(),
+            description: "Demo skill".to_string(),
+            short_description: None,
+            interface: Some(SkillInterface {
+                display_name: Some("Demo".to_string()),
+                short_description: Some("Interface summary".to_string()),
+                icon_small: None,
+                icon_large: None,
+                brand_color: None,
+                default_prompt: None,
+            }),
+            dependencies: None,
+            policy: None,
             path_to_skills_md: skill_path,
             scope: SkillScope::User,
             plugin_id: None,
