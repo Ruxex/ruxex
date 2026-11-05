@@ -1233,8 +1233,12 @@ pub fn prepare_home() -> anyhow::Result<PathBuf> {
     let home = std::env::var_os(DUMMY_HOME_ENV)
         .map(PathBuf::from)
         .unwrap_or_else(|| std::env::temp_dir().join("ruxex-dummy-provider"));
-    ruxex_model_provider::mount_provider_home(&home, &DummyProvider::provider_descriptor())
-        .map_err(|error| anyhow::anyhow!(error))?;
+    ruxex_model_provider::mount_provider_home(
+        &home,
+        ruxex::ProductIdentity::ruxex().home_marker_file(),
+        &DummyProvider::provider_descriptor(),
+    )
+    .map_err(|error| anyhow::anyhow!(error))?;
     let config_path = home.join("config.toml");
     if !config_path.exists() {
         fs::write(&config_path, DEFAULT_DUMMY_CONFIG)?;

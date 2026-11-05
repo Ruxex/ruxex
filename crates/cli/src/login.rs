@@ -8,14 +8,19 @@ use ruxex_model_provider::SharedModelProvider;
 use ruxex_model_provider::mount_provider_home;
 use ruxex_protocol::account::ProviderAuthStatus;
 use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::ProductIdentity;
 use std::sync::Arc;
 
 async fn load_cli_credential_manager(
     config: &Config,
     provider_descriptor: &ProviderDescriptor,
 ) -> anyhow::Result<Arc<CredentialManager>> {
-    mount_provider_home(&config.ruxex_home, &provider_descriptor)
-        .map_err(|err| anyhow::anyhow!("failed to mount provider data root: {err}"))?;
+    mount_provider_home(
+        &config.ruxex_home,
+        ProductIdentity::ruxex().home_marker_file(),
+        &provider_descriptor,
+    )
+    .map_err(|err| anyhow::anyhow!("failed to mount provider data root: {err}"))?;
     Ok(CredentialManager::shared_from_config(config, /*enable_api_key_env*/ true).await?)
 }
 

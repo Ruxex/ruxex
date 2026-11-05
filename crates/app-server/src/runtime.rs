@@ -15,7 +15,6 @@ use ruxex_model_provider::ProviderHomeMarker;
 use ruxex_model_provider::ProviderInit;
 use ruxex_model_provider::SharedModelProvider;
 use ruxex_model_provider::mount_provider_home;
-use ruxex_model_provider::mount_provider_home_with_marker;
 use ruxex_model_provider_info::ModelProviderInfo;
 
 /// The single provider contract shared by an AppServer transport and its clients.
@@ -46,20 +45,10 @@ pub struct AppServerRuntimeBuilder {
 /// This must run before the caller opens SQLite, sessions, caches, or credentials.
 pub fn mount_provider_home_for_config(
     config: &Config,
-) -> Result<ProviderHomeMarker, ProviderHomeError> {
-    mount_provider_home_for_config_with_marker(
-        config,
-        ruxex_model_provider::PROVIDER_HOME_MARKER_FILE,
-    )
-}
-
-/// Mounts a configured provider home with a product-specific marker filename.
-pub fn mount_provider_home_for_config_with_marker(
-    config: &Config,
     marker_file: impl AsRef<std::path::Path>,
 ) -> Result<ProviderHomeMarker, ProviderHomeError> {
     let descriptor = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
-    mount_provider_home_with_marker(&config.ruxex_home, marker_file, &descriptor)
+    mount_provider_home(&config.ruxex_home, marker_file, &descriptor)
 }
 
 /// Mounts the provider-scoped data root for an already-injected runtime.
@@ -70,21 +59,9 @@ pub fn mount_provider_home_for_config_with_marker(
 pub fn mount_provider_home_for_runtime(
     config: &Config,
     runtime: &AppServerRuntime,
-) -> Result<ProviderHomeMarker, ProviderHomeError> {
-    mount_provider_home_for_runtime_with_marker(
-        config,
-        runtime,
-        ruxex_model_provider::PROVIDER_HOME_MARKER_FILE,
-    )
-}
-
-/// Mounts an injected provider home with a product-specific marker filename.
-pub fn mount_provider_home_for_runtime_with_marker(
-    config: &Config,
-    runtime: &AppServerRuntime,
     marker_file: impl AsRef<std::path::Path>,
 ) -> Result<ProviderHomeMarker, ProviderHomeError> {
-    mount_provider_home_with_marker(
+    mount_provider_home(
         &config.ruxex_home,
         marker_file,
         &runtime.provider_descriptor(),
@@ -97,8 +74,9 @@ pub async fn provider_init_from_config_with_descriptor(
     config: &Config,
     enable_api_key_env: bool,
     descriptor: &ProviderDescriptor,
+    marker_file: impl AsRef<std::path::Path>,
 ) -> anyhow::Result<ProviderInit> {
-    mount_provider_home(&config.ruxex_home, descriptor)
+    mount_provider_home(&config.ruxex_home, marker_file, descriptor)
         .context("failed to mount provider data root")?;
     let credential_manager = CredentialManager::shared_from_config(config, enable_api_key_env)
         .await
@@ -190,8 +168,11 @@ mod tests {
             .expect("config should build");
         let expected = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
 
-        let marker =
-            mount_provider_home_for_config(&config).expect("configured provider home should mount");
+        let marker = mount_provider_home_for_config(
+            &config,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )
+        .expect("configured provider home should mount");
 
         assert_eq!(marker.provider_kind, expected.provider_kind);
         assert_eq!(
@@ -210,12 +191,16 @@ mod tests {
             .expect("config should build");
         mount_provider_home(
             temp.path(),
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
             &ProviderDescriptor::new("different-provider", CURRENT_PROVIDER_PROTOCOL_VERSION),
         )
         .expect("fixture marker should be written");
 
         assert!(matches!(
-            mount_provider_home_for_config(&config),
+            mount_provider_home_for_config(
+                &config,
+                ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+            ),
             Err(ProviderHomeError::DescriptorMismatch { .. })
         ));
     }
@@ -231,8 +216,12 @@ mod tests {
         let runtime =
             AppServerRuntimeBuilder::new(test_provider_with_id("injected-provider")).build();
 
-        let marker = mount_provider_home_for_runtime(&config, &runtime)
-            .expect("injected provider home should mount");
+        let marker = mount_provider_home_for_runtime(
+            &config,
+            &runtime,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )
+        .expect("injected provider home should mount");
 
         assert_eq!(marker.provider_kind, "injected-provider");
     }
@@ -246,7 +235,12 @@ mod tests {
             .await
             .expect("config should build");
         let expected = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
-        mount_provider_home(temp.path(), &expected).expect("expected fixture marker should exist");
+        mount_provider_home(
+            temp.path(),
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+            &expected,
+        )
+        .expect("expected fixture marker should exist");
         std::fs::write(temp.path().join("state.sqlite"), b"existing state")
             .expect("state fixture should be written");
         let different =
@@ -258,12 +252,35 @@ mod tests {
         )
         .expect("fixture marker should be replaced");
 
-        let error = match provider_init_from_config_with_descriptor(&config, true, &expected).await
+        let error = match provider_init_from_config_with_descriptor(
+            &config,
+            true,
+            &expected,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )
+        .await
         {
             Ok(_) => panic!("mismatched marker must reject runtime startup"),
             Err(error) => error,
         };
 
         assert!(format!("{error:#}").contains("incompatible marker"));
+    }
+
+    #[tokio::test]
+    async fn provider_init_accepts_a_product_specific_marker_filename() {
+        let temp = tempfile::tempdir().expect("temporary provider home");
+        let config = ruxex_core::config::ConfigBuilder::default()
+            .ruxex_home(temp.path().to_path_buf())
+            .build()
+            .await
+            .expect("config should build");
+        let expected = AppServerRuntimeBuilder::descriptor_for(&config.model_provider);
+        mount_provider_home(temp.path(), "cloudflare-home.json", &expected)
+            .expect("custom fixture marker should exist");
+
+        provider_init_from_config_with_descriptor(&config, true, &expected, "cloudflare-home.json")
+            .await
+            .expect("custom marker should be used for provider initialization");
     }
 }

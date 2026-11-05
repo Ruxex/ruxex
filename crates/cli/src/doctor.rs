@@ -57,7 +57,7 @@ use ruxex_model_provider::ProviderError;
 use ruxex_model_provider::ProviderInit;
 use ruxex_model_provider::ProviderRequestFormat;
 use ruxex_model_provider::ProviderStreamConnectRequest;
-use ruxex_model_provider::mount_provider_home_with_marker;
+use ruxex_model_provider::mount_provider_home;
 use ruxex_protocol::auth::AuthMode;
 use ruxex_protocol::protocol::AskForApproval;
 use ruxex_terminal_detection::Multiplexer;
@@ -66,6 +66,7 @@ use ruxex_terminal_detection::TerminalName;
 use ruxex_terminal_detection::terminal_info;
 use ruxex_tui::Cli as TuiCli;
 use ruxex_utils_cli::CliConfigOverrides;
+use ruxex_utils_home_dir::ProductIdentity;
 use serde::Serialize;
 use supports_color::Stream;
 
@@ -2211,9 +2212,9 @@ fn mount_provider_home_for_doctor(
     config: &Config,
     provider_descriptor: &ProviderDescriptor,
 ) -> Result<ruxex_model_provider::ProviderHomeMarker, ruxex_model_provider::ProviderHomeError> {
-    mount_provider_home_with_marker(
+    mount_provider_home(
         &config.ruxex_home,
-        ruxex_model_provider::PROVIDER_HOME_MARKER_FILE,
+        ProductIdentity::ruxex().home_marker_file(),
         provider_descriptor,
     )
 }

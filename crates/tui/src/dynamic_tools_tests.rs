@@ -15,7 +15,10 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
         .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await?;
-    ruxex_app_server_client::mount_provider_home_for_config(&config)?;
+    ruxex_app_server_client::mount_provider_home_for_config(
+        &config,
+        ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+    )?;
     let target = create_fake_paginated_rollout(
         ruxex_home.path(),
         "2026-01-02T00-00-00",

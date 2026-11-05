@@ -8,7 +8,7 @@ use ruxex_login::default_client::get_user_agent;
 use ruxex_login::default_client::set_default_client_residency_requirement;
 use ruxex_login::default_client::set_default_originator;
 use ruxex_model_provider::ProviderDescriptor;
-use ruxex_model_provider::mount_provider_home_with_marker;
+use ruxex_model_provider::mount_provider_home;
 use ruxex_protocol::mcp::ClientMcpExtensions;
 use ruxex_utils_home_dir::ProductIdentity;
 
@@ -166,7 +166,7 @@ impl InitializeRequestProcessor {
         }
 
         let user_agent = get_user_agent();
-        let marker = mount_provider_home_with_marker(
+        let marker = mount_provider_home(
             &self.config.ruxex_home,
             self.product_identity.home_marker_file(),
             &self.provider_descriptor,

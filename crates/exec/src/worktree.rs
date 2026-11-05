@@ -24,7 +24,13 @@ pub(super) async fn fork_source(
         >,
         ResponsesModelProvider::provider_descriptor(),
     ));
-    let init = provider_init_from_config_with_descriptor(config, true, &provider_factory.1).await?;
+    let init = provider_init_from_config_with_descriptor(
+        config,
+        true,
+        &provider_factory.1,
+        ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+    )
+    .await?;
     let runtime = (provider_factory.0)(init);
     let state_db = ruxex_core::init_state_db(config).await;
     let environment_manager = EnvironmentManager::from_ruxex_home(

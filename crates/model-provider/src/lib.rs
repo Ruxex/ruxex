@@ -115,7 +115,6 @@ pub use home_marker::PROVIDER_HOME_MARKER_FILE;
 pub use home_marker::ProviderHomeError;
 pub use home_marker::ProviderHomeMarker;
 pub use home_marker::mount_provider_home;
-pub use home_marker::mount_provider_home_with_marker;
 pub use model_catalog_source::ProviderModelCatalogSource;
 #[doc(hidden)]
 pub use models_endpoint::ModelsEndpoint;

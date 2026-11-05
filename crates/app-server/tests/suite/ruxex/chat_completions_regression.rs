@@ -1199,7 +1199,11 @@ async fn start_regression_app_with_config(
         Some(credential_manager),
     ))
     .build();
-    ruxex_app_server::runtime::mount_provider_home_for_runtime(&config, &runtime)?;
+    ruxex_app_server::runtime::mount_provider_home_for_runtime(
+        &config,
+        &runtime,
+        ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+    )?;
     let state_db = ruxex_rollout::state_db::try_init(config.as_ref()).await?;
 
     let app_server = in_process::start(InProcessStartArgs {

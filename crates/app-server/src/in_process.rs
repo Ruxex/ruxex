@@ -456,7 +456,7 @@ async fn start_uninitialized(args: InProcessStartArgs) -> IoResult<InProcessClie
             "in-process App Server startup requires an injected provider runtime",
         )
     })?;
-    let mount_result = crate::runtime::mount_provider_home_for_runtime_with_marker(
+    let mount_result = crate::runtime::mount_provider_home_for_runtime(
         &args.config,
         runtime,
         args.product_identity.home_marker_file(),
@@ -884,8 +884,11 @@ mod tests {
 
     async fn build_test_config(ruxex_home: &Path) -> Config {
         let config = load_test_config(ruxex_home).await;
-        crate::runtime::mount_provider_home_for_config(&config)
-            .expect("test provider home should mount");
+        crate::runtime::mount_provider_home_for_config(
+            &config,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )
+        .expect("test provider home should mount");
         config
     }
 
@@ -991,8 +994,12 @@ mod tests {
             AppServerRuntimeBuilder::descriptor_for(&config.model_provider),
             runtime.provider_descriptor()
         );
-        crate::runtime::mount_provider_home_for_runtime(&config, &runtime)
-            .expect("injected provider home should mount");
+        crate::runtime::mount_provider_home_for_runtime(
+            &config,
+            &runtime,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )
+        .expect("injected provider home should mount");
         let state_db = ruxex_rollout::state_db::try_init(config.as_ref())
             .await
             .expect("state db should initialize for in-process test");

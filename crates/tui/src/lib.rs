@@ -384,13 +384,13 @@ fn mount_provider_home_for_config_with_identity(
     product_identity: &ProductIdentity,
 ) -> std::io::Result<()> {
     let result = if let Some((_, descriptor)) = provider_factory {
-        ruxex_model_provider::mount_provider_home_with_marker(
+        ruxex_model_provider::mount_provider_home(
             &config.ruxex_home,
             product_identity.home_marker_file(),
             descriptor,
         )
     } else {
-        ruxex_app_server_client::mount_provider_home_for_config_with_marker(
+        ruxex_app_server_client::mount_provider_home_for_config(
             config,
             product_identity.home_marker_file(),
         )
@@ -676,11 +676,16 @@ where
         })
         .collect();
     let provider_factory = provider_factory.unwrap_or_else(default_provider_factory);
-    let init = provider_init_from_config_with_descriptor(&config, false, &provider_factory.1)
-        .await
-        .map_err(|err| {
-            color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
-        })?;
+    let init = provider_init_from_config_with_descriptor(
+        &config,
+        false,
+        &provider_factory.1,
+        product_identity.home_marker_file(),
+    )
+    .await
+    .map_err(|err| {
+        color_eyre::eyre::eyre!("failed to prepare embedded app-server runtime: {err}")
+    })?;
     let runtime = (provider_factory.0)(init);
     let client = start_client(InProcessClientStartArgs {
         arg0_paths,

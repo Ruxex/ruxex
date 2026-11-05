@@ -145,8 +145,11 @@ async fn resolve_sqlite_config(args: &Args) -> anyhow::Result<SqliteConfig> {
         config_builder = config_builder.ruxex_home(ruxex_home.clone());
     }
     let config = config_builder.build().await?;
-    mount_provider_home_for_config(&config)
-        .context("failed to mount provider data root before opening logs database")?;
+    mount_provider_home_for_config(
+        &config,
+        ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+    )
+    .context("failed to mount provider data root before opening logs database")?;
     Ok(config.sqlite_config().clone())
 }
 

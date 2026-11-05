@@ -31,7 +31,7 @@ pub(crate) fn mount_provider_home_for_provider(
     provider_descriptor: &ProviderDescriptor,
     product_identity: &ProductIdentity,
 ) -> Result<ruxex_model_provider::ProviderHomeMarker> {
-    ruxex_model_provider::mount_provider_home_with_marker(
+    ruxex_model_provider::mount_provider_home(
         &config.ruxex_home,
         product_identity.home_marker_file(),
         provider_descriptor,

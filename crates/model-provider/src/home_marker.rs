@@ -79,14 +79,6 @@ pub enum ProviderHomeError {
 /// Initializes or validates a provider-scoped data root without opening any state or credentials.
 pub fn mount_provider_home(
     path: impl AsRef<Path>,
-    descriptor: &ProviderDescriptor,
-) -> Result<ProviderHomeMarker, ProviderHomeError> {
-    mount_provider_home_with_marker(path, PROVIDER_HOME_MARKER_FILE, descriptor)
-}
-
-/// Initializes or validates a provider-scoped data root using a product-specific marker.
-pub fn mount_provider_home_with_marker(
-    path: impl AsRef<Path>,
     marker_file: impl AsRef<Path>,
     descriptor: &ProviderDescriptor,
 ) -> Result<ProviderHomeMarker, ProviderHomeError> {
@@ -218,8 +210,9 @@ mod tests {
         let temp = tempfile::tempdir().expect("temporary home");
         let home = temp.path().join("provider-home");
 
-        let marker = mount_provider_home(&home, &descriptor("provider-a"))
-            .expect("new home should be initialized");
+        let marker =
+            mount_provider_home(&home, PROVIDER_HOME_MARKER_FILE, &descriptor("provider-a"))
+                .expect("new home should be initialized");
 
         assert_eq!(marker.provider_kind, "provider-a");
         assert_eq!(marker.format_version, PROVIDER_HOME_FORMAT_VERSION);
@@ -234,8 +227,12 @@ mod tests {
     fn empty_existing_home_is_initialized_with_a_marker() {
         let temp = tempfile::tempdir().expect("temporary home");
 
-        let marker = mount_provider_home(temp.path(), &descriptor("provider-a"))
-            .expect("empty home should be initialized");
+        let marker = mount_provider_home(
+            temp.path(),
+            PROVIDER_HOME_MARKER_FILE,
+            &descriptor("provider-a"),
+        )
+        .expect("empty home should be initialized");
 
         assert_eq!(marker.provider_kind, "provider-a");
     }
@@ -246,8 +243,12 @@ mod tests {
         fs::write(temp.path().join("state.sqlite"), b"existing state")
             .expect("state fixture should be written");
 
-        let error = mount_provider_home(temp.path(), &descriptor("provider-a"))
-            .expect_err("unmarked existing home should be rejected");
+        let error = mount_provider_home(
+            temp.path(),
+            PROVIDER_HOME_MARKER_FILE,
+            &descriptor("provider-a"),
+        )
+        .expect_err("unmarked existing home should be rejected");
 
         assert!(matches!(error, ProviderHomeError::MissingMarker { .. }));
     }
@@ -255,11 +256,19 @@ mod tests {
     #[test]
     fn mismatched_provider_marker_is_rejected() {
         let temp = tempfile::tempdir().expect("temporary home");
-        mount_provider_home(temp.path(), &descriptor("provider-a"))
-            .expect("initial mount should succeed");
+        mount_provider_home(
+            temp.path(),
+            PROVIDER_HOME_MARKER_FILE,
+            &descriptor("provider-a"),
+        )
+        .expect("initial mount should succeed");
 
-        let error = mount_provider_home(temp.path(), &descriptor("provider-b"))
-            .expect_err("different provider should be rejected");
+        let error = mount_provider_home(
+            temp.path(),
+            PROVIDER_HOME_MARKER_FILE,
+            &descriptor("provider-b"),
+        )
+        .expect_err("different provider should be rejected");
 
         assert!(matches!(
             error,
@@ -271,8 +280,10 @@ mod tests {
     fn matching_provider_marker_is_reused() {
         let temp = tempfile::tempdir().expect("temporary home");
         let descriptor = descriptor("provider-a");
-        let first = mount_provider_home(temp.path(), &descriptor).expect("initial mount");
-        let second = mount_provider_home(temp.path(), &descriptor).expect("reuse mount");
+        let first = mount_provider_home(temp.path(), PROVIDER_HOME_MARKER_FILE, &descriptor)
+            .expect("initial mount");
+        let second = mount_provider_home(temp.path(), PROVIDER_HOME_MARKER_FILE, &descriptor)
+            .expect("reuse mount");
 
         assert_eq!(first, second);
     }
@@ -282,8 +293,10 @@ mod tests {
         let temp = tempfile::tempdir().expect("temporary home");
         let descriptor = descriptor("provider-a");
 
-        let first = mount_provider_home(temp.path(), &descriptor).expect("initial mount");
-        let second = mount_provider_home(temp.path(), &descriptor).expect("reuse mount");
+        let first = mount_provider_home(temp.path(), PROVIDER_HOME_MARKER_FILE, &descriptor)
+            .expect("initial mount");
+        let second = mount_provider_home(temp.path(), PROVIDER_HOME_MARKER_FILE, &descriptor)
+            .expect("reuse mount");
 
         assert!(!first.server_signature.is_empty());
         assert_eq!(first.server_signature, second.server_signature);
@@ -303,8 +316,12 @@ mod tests {
         )
         .expect("old marker should be written");
 
-        let error = mount_provider_home(temp.path(), &descriptor("provider-a"))
-            .expect_err("old marker should not be opened implicitly");
+        let error = mount_provider_home(
+            temp.path(),
+            PROVIDER_HOME_MARKER_FILE,
+            &descriptor("provider-a"),
+        )
+        .expect_err("old marker should not be opened implicitly");
 
         assert!(matches!(error, ProviderHomeError::InvalidMarker { .. }));
     }
@@ -314,12 +331,12 @@ mod tests {
         let temp = tempfile::tempdir().expect("temporary home");
         let descriptor = descriptor("provider-a");
 
-        mount_provider_home_with_marker(temp.path(), "example-home.json", &descriptor)
+        mount_provider_home(temp.path(), "example-home.json", &descriptor)
             .expect("custom marker should initialize");
 
         assert!(temp.path().join("example-home.json").is_file());
         assert!(!temp.path().join(PROVIDER_HOME_MARKER_FILE).exists());
-        mount_provider_home_with_marker(temp.path(), "example-home.json", &descriptor)
+        mount_provider_home(temp.path(), "example-home.json", &descriptor)
             .expect("custom marker should be reusable");
     }
 
@@ -328,9 +345,8 @@ mod tests {
         let temp = tempfile::tempdir().expect("temporary home");
         let descriptor = descriptor("provider-a");
 
-        let error =
-            mount_provider_home_with_marker(temp.path(), "nested/example-home.json", &descriptor)
-                .expect_err("nested marker paths should be rejected");
+        let error = mount_provider_home(temp.path(), "nested/example-home.json", &descriptor)
+            .expect_err("nested marker paths should be rejected");
 
         assert!(matches!(error, ProviderHomeError::InvalidMarkerFile { .. }));
     }

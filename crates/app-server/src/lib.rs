@@ -29,7 +29,7 @@ use crate::outgoing_message::OutgoingEnvelope;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::QueuedOutgoingMessage;
 use crate::plugin_config_reload::PluginStartupConfig;
-use crate::runtime::mount_provider_home_for_runtime_with_marker;
+use crate::runtime::mount_provider_home_for_runtime;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::ConnectionOrigin;
 use crate::transport::ConnectionState;
@@ -57,7 +57,7 @@ use ruxex_exec_server::EnvironmentManager;
 use ruxex_exec_server::ExecServerRuntimePaths;
 use ruxex_features::Feature;
 use ruxex_login::CredentialManager;
-use ruxex_model_provider::mount_provider_home_with_marker;
+use ruxex_model_provider::mount_provider_home;
 use ruxex_protocol::protocol::SessionSource;
 use ruxex_rollout::state_db as rollout_state_db;
 use ruxex_state::log_db;
@@ -629,7 +629,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
     config.auth_config().validate()?;
     let (runtime, credential_manager) = match injected_runtime {
         Some(runtime) => {
-            mount_provider_home_for_runtime_with_marker(
+            mount_provider_home_for_runtime(
                 &config,
                 &runtime,
                 runtime_options.product_identity.home_marker_file(),
@@ -649,7 +649,7 @@ async fn run_main_with_transport_options_and_optional_runtime(
                     "App Server startup requires an injected provider factory",
                 ));
             };
-            mount_provider_home_with_marker(
+            mount_provider_home(
                 &config.ruxex_home,
                 runtime_options.product_identity.home_marker_file(),
                 &descriptor,

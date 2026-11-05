@@ -131,7 +131,10 @@ impl Harness {
         // generic configured provider contract that preserves the injected identity.
         config.model_provider = ModelProviderInfo::create_responses_provider(None);
         config.model_provider_id = "test-provider".into();
-        mount_provider_home_for_config(&config)?;
+        mount_provider_home_for_config(
+            &config,
+            ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+        )?;
         let config = Arc::new(config);
         let auth = CredentialManager::from_auth_for_testing_with_home(
             RuxexAuth::Headers(AuthHeaders::new(HeaderMap::new()).with_account_id("account-1")),

@@ -1917,6 +1917,7 @@ async fn runtime_for_provider(
         config,
         enable_api_key_env,
         &provider_factory.1,
+        ProductIdentity::ruxex().home_marker_file(),
     )
     .await?;
     Ok((provider_factory.0)(init))
@@ -2133,7 +2134,7 @@ async fn mount_provider_home_before_daemon(
 ) -> anyhow::Result<()> {
     let config = cloud_config::load_config(config_overrides, LoaderOverrides::default()).await?;
     if let Some(provider_factory) = provider_factory {
-        ruxex_model_provider::mount_provider_home_with_marker(
+        ruxex_model_provider::mount_provider_home(
             &config.ruxex_home,
             product_identity.home_marker_file(),
             &provider_factory.1,
@@ -2141,7 +2142,7 @@ async fn mount_provider_home_before_daemon(
         .map(|_| ())
         .map_err(anyhow::Error::from)
     } else {
-        ruxex_app_server::runtime::mount_provider_home_for_config_with_marker(
+        ruxex_app_server::runtime::mount_provider_home_for_config(
             &config,
             product_identity.home_marker_file(),
         )

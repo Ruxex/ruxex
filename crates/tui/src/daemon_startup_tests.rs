@@ -64,7 +64,10 @@ async fn local_daemon_state_db_rejects_a_mismatched_provider_home_before_opening
         .ruxex_home(home.path().to_path_buf())
         .build()
         .await?;
-    ruxex_app_server_client::mount_provider_home_for_config(&config)?;
+    ruxex_app_server_client::mount_provider_home_for_config(
+        &config,
+        ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
+    )?;
 
     let marker_path = home.path().join(PROVIDER_HOME_MARKER_FILE);
     let mut marker: serde_json::Value =

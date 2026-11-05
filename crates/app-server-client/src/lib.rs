@@ -37,7 +37,6 @@ use ruxex_app_server::in_process::InProcessStartArgs;
 use ruxex_app_server::in_process::LogDbLayer;
 pub use ruxex_app_server::in_process::StateDbHandle;
 pub use ruxex_app_server::runtime::mount_provider_home_for_config;
-pub use ruxex_app_server::runtime::mount_provider_home_for_config_with_marker;
 pub use ruxex_app_server::runtime::provider_init_from_config_with_descriptor;
 use ruxex_app_server_protocol::AppServerIdentity;
 use ruxex_app_server_protocol::ClientInfo;
@@ -78,12 +77,12 @@ fn mount_provider_home_for_startup(
     product_identity: &ProductIdentity,
 ) -> IoResult<AppServerIdentity> {
     let marker = match runtime {
-        Some(runtime) => ruxex_app_server::runtime::mount_provider_home_for_runtime_with_marker(
+        Some(runtime) => ruxex_app_server::runtime::mount_provider_home_for_runtime(
             config,
             runtime,
             product_identity.home_marker_file(),
         ),
-        None => ruxex_app_server::runtime::mount_provider_home_for_config_with_marker(
+        None => ruxex_app_server::runtime::mount_provider_home_for_config(
             config,
             product_identity.home_marker_file(),
         ),
@@ -975,7 +974,7 @@ mod tests {
     ) -> TestClient {
         let ruxex_home = TempDir::new().expect("temp dir");
         let config = Arc::new(build_test_config_for_ruxex_home(ruxex_home.path()).await);
-        mount_provider_home_for_config(&config)
+        mount_provider_home_for_config(&config, ProductIdentity::ruxex().home_marker_file())
             .expect("provider home should mount before state DB");
         let state_db = init_state_db(config.as_ref())
             .await

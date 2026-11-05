@@ -601,7 +601,7 @@ async fn load_plugin_command_context(
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    ruxex_model_provider::mount_provider_home_with_marker(
+    ruxex_model_provider::mount_provider_home(
         &config.ruxex_home,
         product_identity.home_marker_file(),
         &provider_factory.1,
