@@ -582,7 +582,7 @@ impl Session {
                 refresh_strategy,
                 config.http_client_factory(),
             )
-            .await;
+            .await?;
         if allow_model_fallback
             && let Some(requested_model) = config.model.as_ref()
             && model != *requested_model

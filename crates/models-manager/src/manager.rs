@@ -8,6 +8,7 @@ use chrono::Utc;
 use ruxex_http_client::HttpClientFactory;
 use ruxex_protocol::config_types::CollaborationModeMask;
 use ruxex_protocol::error::Result as CoreResult;
+use ruxex_protocol::error::RuxexErr;
 use ruxex_protocol::model_types::ModelCatalog;
 use ruxex_protocol::model_types::ModelInfo;
 use ruxex_protocol::model_types::ModelPreset;
@@ -242,18 +243,18 @@ pub trait ModelsManager: fmt::Debug + Send + Sync {
     ///
     /// If `model` is provided, preserves it unless the caller allows model fallback within the
     /// mounted provider's authoritative catalog. Otherwise selects the default from available
-    /// models.
+    /// models, or returns an error when the catalog has no usable models.
     fn get_default_model<'a>(
         &'a self,
         model: &'a Option<String>,
         allow_model_fallback: bool,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsManagerFuture<'a, String> {
+    ) -> ModelsManagerFuture<'a, CoreResult<String>> {
         Box::pin(
             async move {
                 if let Some(model) = model.as_ref() {
-                    return model.to_string();
+                    return Ok(model.to_string());
                 }
                 default_model_from_available(
                     self.list_models(refresh_strategy, http_client_factory)
@@ -718,7 +719,7 @@ impl ModelsManager for StaticModelsManager {
         allow_model_fallback: bool,
         refresh_strategy: RefreshStrategy,
         http_client_factory: HttpClientFactory,
-    ) -> ModelsManagerFuture<'a, String> {
+    ) -> ModelsManagerFuture<'a, CoreResult<String>> {
         Box::pin(
             async move {
                 let available_models = self
@@ -730,14 +731,14 @@ impl ModelsManager for StaticModelsManager {
                     if requested_model_is_available(requested_model, &available_models)
                         && let Some(requested_model) = requested_model
                     {
-                        return requested_model.to_string();
+                        return Ok(requested_model.to_string());
                     }
                     return default_model_from_available(available_models);
                 }
 
                 model
                     .clone()
-                    .unwrap_or_else(|| default_model_from_available(available_models))
+                    .map_or_else(|| default_model_from_available(available_models), Ok)
             }
             .instrument(tracing::info_span!(
                 "get_default_model",
@@ -785,13 +786,17 @@ impl ModelsManager for StaticModelsManager {
     }
 }
 
-fn default_model_from_available(available: Vec<ModelPreset>) -> String {
+fn default_model_from_available(available: Vec<ModelPreset>) -> CoreResult<String> {
     available
         .iter()
         .find(|model| model.is_default)
         .or_else(|| available.first())
         .map(|model| model.model.clone())
-        .unwrap_or_default()
+        .ok_or_else(|| {
+            RuxexErr::InvalidRequest(
+                "provider model catalog is empty; cannot select a default model".to_string(),
+            )
+        })
 }
 
 fn requested_model_is_available(

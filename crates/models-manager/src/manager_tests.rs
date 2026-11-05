@@ -397,7 +397,10 @@ async fn static_manager_preserves_supported_requested_model_when_fallback_is_all
         )
         .await;
 
-    assert_eq!(model, "provider-supported");
+    assert_eq!(
+        model.expect("supported model should be selected"),
+        "provider-supported"
+    );
 }
 
 #[tokio::test]
@@ -419,7 +422,10 @@ async fn static_manager_falls_back_from_unsupported_requested_model_when_allowed
         )
         .await;
 
-    assert_eq!(model, "provider-default");
+    assert_eq!(
+        model.expect("default model should be selected"),
+        "provider-default"
+    );
 }
 
 #[tokio::test]
@@ -442,11 +448,14 @@ async fn static_manager_preserves_unsupported_requested_model_when_fallback_is_d
         )
         .await;
 
-    assert_eq!(model, "unsupported");
+    assert_eq!(
+        model.expect("explicit model should be preserved"),
+        "unsupported"
+    );
 }
 
 #[tokio::test]
-async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_is_empty() {
+async fn static_manager_rejects_empty_catalog_when_fallback_is_allowed() {
     let manager = static_manager_for_tests(ModelCatalog { models: Vec::new() });
     let requested_model = Some("unsupported".to_string());
 
@@ -459,7 +468,12 @@ async fn static_manager_uses_empty_default_when_fallback_is_allowed_and_catalog_
         )
         .await;
 
-    assert_eq!(model, "");
+    assert_eq!(
+        model
+            .expect_err("an empty model catalog must be rejected")
+            .to_string(),
+        "provider model catalog is empty; cannot select a default model"
+    );
 }
 
 #[tokio::test]
@@ -478,7 +492,10 @@ async fn dynamic_manager_preserves_requested_model_when_fallback_is_allowed() {
         )
         .await;
 
-    assert_eq!(model, "unsupported");
+    assert_eq!(
+        model.expect("explicit model should be preserved"),
+        "unsupported"
+    );
     assert_eq!(endpoint.fetch_count(), 0);
 }
 

@@ -1280,7 +1280,9 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
     .await;
     let elapsed = start.elapsed();
     // get_model should return a default model even when refresh times out
-    let default_model = model.expect("get_model should finish and return default model");
+    let default_model = model
+        .expect("get_model should finish and return default model")
+        .expect("a default model should be available after a timed-out refresh");
     let expected_default = bundled_default_model_slug();
     assert!(
         default_model == expected_default,
@@ -1347,7 +1349,10 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
             ruxex_core::test_support::default_http_client_factory(),
         )
         .await;
-    assert_eq!(selected, bundled_default_model_slug());
+    assert_eq!(
+        selected.expect("a bundled default model should be available"),
+        bundled_default_model_slug()
+    );
 
     let available = manager
         .list_models(
