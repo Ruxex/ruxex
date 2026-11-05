@@ -1,49 +1,45 @@
-#[cfg(not(feature = "dummy-provider"))]
-mod cloudflare;
-#[cfg(not(feature = "dummy-provider"))]
-mod cloudflare_auth;
 #[cfg(feature = "dummy-provider")]
 use ruxex_provider_host_example::dummy_provider;
 
-#[cfg(not(feature = "dummy-provider"))]
-use cloudflare::CloudflareProvider;
-#[cfg(not(feature = "dummy-provider"))]
-use cloudflare_auth::CloudflareCredentials;
-#[cfg(not(feature = "dummy-provider"))]
-use cloudflare_auth::create_cloudflare_credential_resolver;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex::provider::credentials::ProviderCredentialResolverRegistry;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex::provider::transport::HttpClientFactory;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex::provider::transport::OutboundProxyPolicy;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_app_server::AppServerRuntime;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_app_server::AppServerRuntimeBuilder;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_app_server::ProviderDescriptor;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_app_server::ProviderInit;
 use ruxex_arg0::Arg0DispatchPaths;
 use ruxex_arg0::arg0_dispatch_or_else;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_cli::APP_SERVER_DAEMON_MODE_ARG;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_cli::run_host_app_server_daemon;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_model_provider::CURRENT_PROVIDER_PROTOCOL_VERSION;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_model_provider::ModelProviderFactory;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_model_provider_info::ModelProviderInfo;
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
+use ruxex_provider_host_example::cloudflare::CloudflareProvider;
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
+use ruxex_provider_host_example::cloudflare_auth::CloudflareCredentials;
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
+use ruxex_provider_host_example::cloudflare_auth::create_cloudflare_credential_resolver;
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 use ruxex_providers::ResponsesModelProvider;
 
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 const TEST_PROVIDER_INFO_ENV: &str = "RUXEX_TEST_PROVIDER_INFO";
 
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 fn test_provider_descriptor() -> ProviderDescriptor {
     let provider_info: ModelProviderInfo = serde_json::from_str(
         &std::env::var(TEST_PROVIDER_INFO_ENV)
@@ -59,7 +55,7 @@ fn test_provider_descriptor() -> ProviderDescriptor {
     )
 }
 
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 fn test_provider_runtime(init: ProviderInit) -> AppServerRuntime {
     let provider_info: ModelProviderInfo = serde_json::from_str(
         &std::env::var(TEST_PROVIDER_INFO_ENV)
@@ -72,12 +68,12 @@ fn test_provider_runtime(init: ProviderInit) -> AppServerRuntime {
     })
 }
 
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 fn test_provider_factory() -> ruxex_cli::ProviderRuntimeFactory {
     (test_provider_runtime, test_provider_descriptor())
 }
 
-#[cfg(not(feature = "dummy-provider"))]
+#[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
 async fn run_default(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
     let test_provider = std::env::var_os(TEST_PROVIDER_INFO_ENV).is_some();
     if std::env::args_os().any(|arg| arg == APP_SERVER_DAEMON_MODE_ARG) {
@@ -137,7 +133,7 @@ fn main() -> anyhow::Result<()> {
         {
             dummy_provider::run(arg0_paths).await?;
         }
-        #[cfg(not(feature = "dummy-provider"))]
+        #[cfg(all(not(feature = "dummy-provider"), feature = "cloudflare-provider"))]
         {
             run_default(arg0_paths).await?;
         }

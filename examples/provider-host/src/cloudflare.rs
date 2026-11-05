@@ -50,6 +50,8 @@ use ruxex::provider::protocol::ProviderAccount;
 use ruxex::provider::protocol::ProviderAuthStatus;
 use ruxex::provider::transport::ClientRouteClass;
 use ruxex::provider::transport::HttpClientFactory;
+use ruxex_app_server::AppServerRuntimeBuilder;
+use ruxex_cli::ProviderRuntimeFactory;
 use serde_json::Value;
 
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
@@ -210,6 +212,13 @@ impl ModelProviderFactory for CloudflareProvider {
             http_client_factory: init.http_client_factory,
         }
     }
+}
+
+pub fn provider_factory() -> ProviderRuntimeFactory {
+    (
+        AppServerRuntimeBuilder::build_from_provider_factory::<CloudflareProvider>,
+        CloudflareProvider::provider_descriptor(),
+    )
 }
 
 impl ModelProvider for CloudflareProvider {

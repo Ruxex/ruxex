@@ -6,7 +6,8 @@ license.workspace = true
 publish = false
 
 [features]
-default = []
+default = ["cloudflare-provider"]
+cloudflare-provider = []
 dummy-provider = ["dep:ruxex-login", "dep:ruxex-models-manager"]
 
 [[bin]]
