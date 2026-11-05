@@ -10,6 +10,8 @@ pub struct PluginManifest<Resource> {
     pub version: Option<String>,
     pub description: Option<String>,
     pub keywords: Vec<String>,
+    /// Optional OpenAI app dependency manifest declared by the plugin.
+    pub app_manifest: Option<Resource>,
     pub paths: PluginManifestPaths<Resource>,
     pub interface: Option<PluginManifestInterface<Resource>>,
 }
@@ -100,6 +102,7 @@ impl<Resource> PluginManifest<Resource> {
             version,
             description,
             keywords,
+            app_manifest,
             paths,
             interface,
         } = self;
@@ -176,6 +179,7 @@ impl<Resource> PluginManifest<Resource> {
             version,
             description,
             keywords,
+            app_manifest: app_manifest.map(&mut map).transpose()?,
             paths: PluginManifestPaths {
                 skills: skills
                     .into_iter()

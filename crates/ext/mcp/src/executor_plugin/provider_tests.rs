@@ -421,6 +421,7 @@ fn resolved_plugin(
             version: None,
             description: None,
             keywords: Vec::new(),
+            app_manifest: None,
             paths: PluginManifestPaths {
                 skills: Vec::new(),
                 onboarding_skill: None,

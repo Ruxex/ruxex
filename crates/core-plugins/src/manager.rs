@@ -230,6 +230,30 @@ pub struct ConfiguredMarketplacePlugin {
     pub enabled: bool,
 }
 
+impl ConfiguredMarketplacePlugin {
+    /// Returns whether the plugin declares an OpenAI app dependency through its
+    /// `apps` manifest field.
+    pub fn uses_openai_app(&self) -> bool {
+        uses_openai_app_source(&self.source)
+    }
+}
+
+impl PluginDetail {
+    /// Returns whether the plugin declares an OpenAI app dependency through its
+    /// `apps` manifest field.
+    pub fn uses_openai_app(&self) -> bool {
+        uses_openai_app_source(&self.source)
+    }
+}
+
+fn uses_openai_app_source(source: &MarketplacePluginSource) -> bool {
+    match source {
+        MarketplacePluginSource::Local { path } => load_plugin_manifest(path.as_path())
+            .is_some_and(|manifest| manifest.app_manifest.is_some()),
+        MarketplacePluginSource::Git { .. } | MarketplacePluginSource::Npm { .. } => false,
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ConfiguredMarketplaceListOutcome {
     pub marketplaces: Vec<ConfiguredMarketplace>,

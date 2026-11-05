@@ -2,6 +2,7 @@ use super::*;
 use ruxex_app_server_protocol::PluginAvailability;
 use ruxex_app_server_protocol::PluginDetail;
 use ruxex_app_server_protocol::PluginInstallParams;
+use ruxex_app_server_protocol::PluginInstallPolicySource;
 use ruxex_app_server_protocol::PluginInstallResponse;
 use ruxex_app_server_protocol::PluginInstalledParams;
 use ruxex_app_server_protocol::PluginInstalledResponse;
@@ -285,6 +286,9 @@ fn plugin_to_summary(
     plugin: ConfiguredMarketplacePlugin,
     asset_files: Option<&MarketplaceAssetFiles>,
 ) -> PluginSummary {
+    let install_policy_source = plugin
+        .uses_openai_app()
+        .then_some(PluginInstallPolicySource::ImplicitCanonicalApp);
     PluginSummary {
         id: plugin.id,
         local_version: plugin.local_version,
@@ -293,7 +297,7 @@ fn plugin_to_summary(
         installed: plugin.installed,
         enabled: plugin.enabled,
         install_policy: plugin.policy.installation.into(),
-        install_policy_source: None,
+        install_policy_source,
         must_show_installation_interstitial: None,
         auth_policy: plugin.policy.authentication.into(),
         availability: PluginAvailability::Available,
@@ -336,6 +340,7 @@ fn plugin_interface_to_api(
 fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> PluginDetail {
     let skills = plugin_skills_to_api(&outcome.plugin.skills, &outcome.plugin.disabled_skill_paths);
     let asset_files = outcome.plugin.asset_files.clone();
+    let uses_openai_app = outcome.plugin.uses_openai_app();
     let onboarding_skill = if outcome.plugin.enabled {
         outcome.plugin.onboarding_skill.as_ref().and_then(|path| {
             skills
@@ -354,7 +359,8 @@ fn plugin_detail_to_api(outcome: ruxex_core_plugins::PluginReadOutcome) -> Plugi
         installed: outcome.plugin.installed,
         enabled: outcome.plugin.enabled,
         install_policy: outcome.plugin.policy.installation.into(),
-        install_policy_source: None,
+        install_policy_source: uses_openai_app
+            .then_some(PluginInstallPolicySource::ImplicitCanonicalApp),
         must_show_installation_interstitial: None,
         auth_policy: outcome.plugin.policy.authentication.into(),
         availability: PluginAvailability::Available,

@@ -52,6 +52,8 @@ struct RawPluginManifest {
     description: Option<String>,
     #[serde(default)]
     keywords: Vec<String>,
+    #[serde(default)]
+    apps: Option<String>,
     // Keep manifest paths as raw strings so we can validate the required `./...` syntax before
     // resolving them under the plugin root.
     #[serde(default)]
@@ -291,6 +293,7 @@ fn resolve_raw_plugin_manifest(
         version,
         description,
         keywords,
+        apps,
         skills,
         mcp_servers,
         hooks,
@@ -386,6 +389,7 @@ fn resolve_raw_plugin_manifest(
         version,
         description,
         keywords,
+        app_manifest: resolve_manifest_path(plugin_root, "apps", apps.as_deref()),
         paths: ruxex_plugin::manifest::PluginManifestPaths {
             skills: resolve_manifest_paths(plugin_root, "skills", skills.as_ref()),
             onboarding_skill: resolve_onboarding_skill(plugin_root, &extensions),
@@ -1022,6 +1026,7 @@ mod tests {
                 version: None,
                 description: None,
                 keywords: Vec::new(),
+                app_manifest: Some(plugin_root.join("apps").expect("apps URI")),
                 paths: PluginManifestPaths {
                     skills: vec![plugin_root.join("skills").expect("skills URI")],
                     onboarding_skill: None,
