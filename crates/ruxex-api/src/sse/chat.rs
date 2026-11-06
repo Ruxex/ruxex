@@ -11,6 +11,7 @@ use ruxex_protocol::models::ContentItem;
 use ruxex_protocol::models::ReasoningItemContent;
 use ruxex_protocol::models::ResponseItem;
 use ruxex_protocol::protocol::TokenUsage;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -340,19 +341,66 @@ pub async fn process_chat_sse<S>(
                         debug!("Skipping tool call at index {index} because name is missing");
                         continue;
                     };
+                    let call_id = id.unwrap_or_else(|| format!("tool-call-{index}"));
+                    let arguments_shape = classify_tool_arguments(&arguments);
+                    if arguments_shape == ToolArgumentsShape::NestedJsonString {
+                        tracing::error!(
+                            tool_name = %name,
+                            call_id = %call_id,
+                            arguments_shape = ?arguments_shape,
+                            arguments_bytes = arguments.len(),
+                            "chat completion tool arguments are wrapped in an extra JSON string"
+                        );
+                    } else {
+                        tracing::debug!(
+                            tool_name = %name,
+                            call_id = %call_id,
+                            arguments_shape = ?arguments_shape,
+                            arguments_bytes = arguments.len(),
+                            "parsed chat completion tool arguments"
+                        );
+                    }
                     let item = ResponseItem::FunctionCall {
                         id: None,
                         namespace: None,
                         name,
                         arguments,
                         encrypted_function_args: None,
-                        call_id: id.unwrap_or_else(|| format!("tool-call-{index}")),
+                        call_id,
                         internal_chat_message_metadata_passthrough: None,
                     };
                     let _ = tx_event.send(Ok(ResponseEvent::OutputItemDone(item))).await;
                 }
             }
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum ToolArgumentsShape {
+    JsonObject,
+    JsonArray,
+    JsonScalar,
+    JsonString,
+    NestedJsonString,
+    InvalidJson,
+    Empty,
+}
+
+fn classify_tool_arguments(arguments: &str) -> ToolArgumentsShape {
+    if arguments.trim().is_empty() {
+        return ToolArgumentsShape::Empty;
+    }
+
+    match serde_json::from_str::<Value>(arguments) {
+        Ok(Value::Object(_)) => ToolArgumentsShape::JsonObject,
+        Ok(Value::Array(_)) => ToolArgumentsShape::JsonArray,
+        Ok(Value::String(inner)) => match serde_json::from_str::<Value>(&inner) {
+            Ok(Value::Object(_)) | Ok(Value::Array(_)) => ToolArgumentsShape::NestedJsonString,
+            Ok(_) | Err(_) => ToolArgumentsShape::JsonString,
+        },
+        Ok(_) => ToolArgumentsShape::JsonScalar,
+        Err(_) => ToolArgumentsShape::InvalidJson,
     }
 }
 
@@ -436,6 +484,18 @@ mod tests {
             body.push_str(&format!("event: message\ndata: {e}\n\n"));
         }
         body
+    }
+
+    #[test]
+    fn classifies_nested_json_string_tool_arguments() {
+        assert_eq!(
+            classify_tool_arguments(r#"{"cmd":"ls"}"#),
+            ToolArgumentsShape::JsonObject
+        );
+        assert_eq!(
+            classify_tool_arguments(r#""{\"cmd\":\"ls\"}""#),
+            ToolArgumentsShape::NestedJsonString
+        );
     }
 
     /// Regression test: the stream should complete when we see a `[DONE]` sentinel.

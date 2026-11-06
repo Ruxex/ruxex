@@ -52,12 +52,14 @@ use ruxex::provider::transport::ClientRouteClass;
 use ruxex::provider::transport::HttpClientFactory;
 use ruxex_app_server::AppServerRuntimeBuilder;
 use ruxex_cli::ProviderRuntimeFactory;
+use ruxex_protocol::models::ResponseItem;
 use serde_json::Value;
 
 const CLOUDFLARE_API_ROOT: &str = "https://api.cloudflare.com/client/v4";
 const CLOUDFLARE_PROVIDER_ID: &str = "cloudflare";
 const CLOUDFLARE_API_TOKEN_ENV_VAR: &str = "CLOUDFLARE_API_TOKEN";
 const CLOUDFLARE_ACCOUNT_ID_ENV_VAR: &str = "CLOUDFLARE_ACCOUNT_ID";
+const CLOUDFLARE_MODEL_ENV_VAR: &str = "CLOUDFLARE_MODEL";
 const CLOUDFLARE_TEXT_GENERATION_TASK: &str = "Text%20Generation";
 
 #[derive(Clone, Debug)]
@@ -273,10 +275,14 @@ impl ModelProvider for CloudflareProvider {
             .await
             .map_err(|error| ProviderError::Transport(error.to_string()))?;
             let api = Arc::new(StandardChatCompletionApi);
-            let chat_request = api
+            let model = cloudflare_model_for_request(
+                &request.model,
+                configured_cloudflare_model().as_deref(),
+            );
+            let mut chat_request = api
                 .build_request(ChatRequestInput {
                     provider: &provider,
-                    model: &request.model,
+                    model: &model,
                     instructions: &request.instructions,
                     input: &request.input,
                     tools: &request.tools,
@@ -284,6 +290,7 @@ impl ModelProvider for CloudflareProvider {
                     session_source: request.session_source,
                 })
                 .map_err(map_api_error_to_provider_error)?;
+            normalize_cloudflare_chat_request(&mut chat_request.body);
             let stream = ChatClient::with_api(
                 ReqwestTransport::from_http_client(client),
                 provider,
@@ -309,6 +316,7 @@ impl ModelProvider for CloudflareProvider {
         Box::pin(async move {
             let credentials = self.credentials().await?;
             let auth = Self::auth_provider(&credentials);
+            let configured_model = configured_cloudflare_model();
             let mut models = Vec::new();
             let mut etag = None;
 
@@ -341,6 +349,7 @@ impl ModelProvider for CloudflareProvider {
                     break;
                 }
             }
+            let models = select_configured_cloudflare_models(models, configured_model.as_deref())?;
 
             Ok(ProviderModelCatalog {
                 catalog: ModelCatalog { models },
@@ -459,7 +468,9 @@ fn provider_chat_event_from_api(event: ResponseEvent) -> ProviderChatEvent {
                 faster_model: buffering.faster_model,
             })
         }
-        ResponseEvent::OutputItemDone(item) => ProviderChatEvent::OutputItemDone(item),
+        ResponseEvent::OutputItemDone(item) => {
+            ProviderChatEvent::OutputItemDone(normalize_cloudflare_tool_arguments(item))
+        }
         ResponseEvent::OutputItemAdded(item) => ProviderChatEvent::OutputItemAdded(item),
         ResponseEvent::ServerModel(model) => ProviderChatEvent::ServerModel(model),
         ResponseEvent::ModelVerifications(verifications) => {
@@ -517,6 +528,123 @@ fn provider_chat_event_from_api(event: ResponseEvent) -> ProviderChatEvent {
         }
         ResponseEvent::RateLimits(snapshot) => ProviderChatEvent::RateLimits(snapshot),
         ResponseEvent::ModelsEtag(etag) => ProviderChatEvent::ModelsEtag(etag),
+    }
+}
+
+fn configured_cloudflare_model() -> Option<String> {
+    std::env::var(CLOUDFLARE_MODEL_ENV_VAR)
+        .ok()
+        .map(|model| model.trim().to_owned())
+        .filter(|model| !model.is_empty())
+}
+
+fn cloudflare_model_for_request(request_model: &str, configured_model: Option<&str>) -> String {
+    configured_model
+        .filter(|model| !model.trim().is_empty())
+        .unwrap_or(request_model)
+        .to_owned()
+}
+
+fn select_configured_cloudflare_models(
+    models: Vec<ModelInfo>,
+    configured_model: Option<&str>,
+) -> ProviderResult<Vec<ModelInfo>> {
+    let Some(configured_model) = configured_model else {
+        return Ok(models);
+    };
+
+    let selected: Vec<_> = models
+        .into_iter()
+        .filter(|model| model.slug == configured_model)
+        .collect();
+    if selected.is_empty() {
+        return Err(ProviderError::InvalidRequest(format!(
+            "{CLOUDFLARE_MODEL_ENV_VAR}={configured_model} was not found in the Cloudflare model catalog"
+        )));
+    }
+
+    Ok(selected)
+}
+
+fn normalize_cloudflare_tool_arguments(item: ResponseItem) -> ResponseItem {
+    let ResponseItem::FunctionCall {
+        id,
+        namespace,
+        name,
+        arguments,
+        encrypted_function_args,
+        call_id,
+        internal_chat_message_metadata_passthrough,
+    } = item
+    else {
+        return item;
+    };
+
+    let arguments = unwrap_nested_json_arguments(&arguments).unwrap_or(arguments);
+    ResponseItem::FunctionCall {
+        id,
+        namespace,
+        name,
+        arguments,
+        encrypted_function_args,
+        call_id,
+        internal_chat_message_metadata_passthrough,
+    }
+}
+
+fn unwrap_nested_json_arguments(arguments: &str) -> Option<String> {
+    let Value::String(inner) = serde_json::from_str(arguments).ok()? else {
+        return None;
+    };
+
+    match serde_json::from_str::<Value>(&inner).ok()? {
+        Value::Object(_) | Value::Array(_) => Some(inner),
+        _ => None,
+    }
+}
+
+/// Workers AI models do not consistently accept the full OpenAI Chat Completions
+/// message shape during a multi-turn tool call. Keep this compatibility change
+/// scoped to Cloudflare instead of changing the shared request builder.
+fn normalize_cloudflare_chat_request(body: &mut Value) {
+    let Some(messages) = body.get_mut("messages").and_then(Value::as_array_mut) else {
+        return;
+    };
+
+    for message in messages {
+        let Some(message) = message.as_object_mut() else {
+            continue;
+        };
+        let content = message.remove("content").unwrap_or(Value::Null);
+        message.insert(
+            "content".to_string(),
+            normalize_cloudflare_message_content(content),
+        );
+    }
+}
+
+fn normalize_cloudflare_message_content(content: Value) -> Value {
+    match content {
+        Value::Null => Value::String(String::new()),
+        Value::String(_) => content,
+        Value::Array(parts) => {
+            let mut text = String::new();
+            for part in parts {
+                match &part {
+                    Value::String(value) => text.push_str(value),
+                    Value::Object(object) => {
+                        if let Some(value) = object.get("text").and_then(Value::as_str) {
+                            text.push_str(value);
+                        } else {
+                            text.push_str(&part.to_string());
+                        }
+                    }
+                    _ => text.push_str(&part.to_string()),
+                }
+            }
+            Value::String(text)
+        }
+        value => Value::String(value.to_string()),
     }
 }
 
@@ -592,7 +720,56 @@ mod tests {
     use ruxex::provider::config::WireApi;
     use ruxex::provider::transport::OutboundProxyPolicy;
     use ruxex_model_provider_contract_tests::{ChatContractConfig, assert_provider_chat_contract};
-    use ruxex_protocol::models::{ContentItem, ResponseItem};
+    use ruxex_protocol::models::ContentItem;
+
+    #[test]
+    fn cloudflare_normalizes_multiturn_message_content() {
+        let mut body = serde_json::json!({
+            "messages": [
+                {"role": "user", "content": [{"type": "text", "text": "run ls"}]},
+                {"role": "assistant", "content": null, "tool_calls": []},
+                {"role": "tool", "tool_call_id": "call-1", "content": [{"type": "text", "text": "file.txt"}]},
+                {"role": "assistant", "tool_calls": []}
+            ]
+        });
+
+        normalize_cloudflare_chat_request(&mut body);
+
+        assert_eq!(body["messages"][0]["content"], serde_json::json!("run ls"));
+        assert_eq!(body["messages"][1]["content"], serde_json::json!(""));
+        assert_eq!(
+            body["messages"][2]["content"],
+            serde_json::json!("file.txt")
+        );
+        assert_eq!(body["messages"][3]["content"], serde_json::json!(""));
+    }
+
+    #[test]
+    fn cloudflare_unwraps_nested_tool_arguments() {
+        let nested_arguments = serde_json::to_string(&serde_json::json!({
+            "cmd": "ls"
+        }))
+        .expect("tool arguments should serialize");
+        let event = provider_chat_event_from_api(ResponseEvent::OutputItemDone(
+            ResponseItem::FunctionCall {
+                id: None,
+                namespace: None,
+                name: "exec_command".to_string(),
+                arguments: serde_json::to_string(&nested_arguments)
+                    .expect("nested tool arguments should serialize"),
+                encrypted_function_args: None,
+                call_id: "call-1".to_string(),
+                internal_chat_message_metadata_passthrough: None,
+            },
+        ));
+
+        let ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall { arguments, .. }) = event
+        else {
+            panic!("expected a normalized function call event");
+        };
+
+        assert_eq!(arguments, nested_arguments);
+    }
 
     #[test]
     fn cloudflare_chat_base_url_uses_the_account_id() {
@@ -626,6 +803,63 @@ mod tests {
         assert_eq!(
             models[0].description.as_deref(),
             Some("Llama 3.1 8B instruct")
+        );
+    }
+
+    #[test]
+    fn cloudflare_model_catalog_can_be_limited_to_a_configured_model() {
+        let models = decode_cloudflare_models(
+            br#"{
+                "success": true,
+                "result": [
+                    {"name": "@cf/meta/llama-3.1-8b-instruct"},
+                    {"name": "@cf/meta/llama-3.1-70b-instruct"}
+                ]
+            }"#,
+            1,
+        )
+        .expect("Cloudflare model response should decode")
+        .models;
+
+        let models =
+            select_configured_cloudflare_models(models, Some("@cf/meta/llama-3.1-70b-instruct"))
+                .expect("configured Cloudflare model should be available");
+
+        assert_eq!(models.len(), 1);
+        assert_eq!(models[0].slug, "@cf/meta/llama-3.1-70b-instruct");
+    }
+
+    #[test]
+    fn cloudflare_model_catalog_rejects_an_unavailable_configured_model() {
+        let models = decode_cloudflare_models(
+            br#"{
+                "success": true,
+                "result": [{"name": "@cf/meta/llama-3.1-8b-instruct"}]
+            }"#,
+            1,
+        )
+        .expect("Cloudflare model response should decode")
+        .models;
+
+        let error = select_configured_cloudflare_models(models, Some("@cf/meta/missing-model"))
+            .expect_err("an unavailable configured model should fail clearly");
+
+        assert!(error.to_string().contains("CLOUDFLARE_MODEL"));
+        assert!(error.to_string().contains("@cf/meta/missing-model"));
+    }
+
+    #[test]
+    fn cloudflare_chat_uses_the_configured_model_over_the_client_selection() {
+        assert_eq!(
+            cloudflare_model_for_request(
+                "@cf/meta/llama-3.1-8b-instruct",
+                Some("@cf/meta/llama-3.1-70b-instruct"),
+            ),
+            "@cf/meta/llama-3.1-70b-instruct"
+        );
+        assert_eq!(
+            cloudflare_model_for_request("client-model", None),
+            "client-model"
         );
     }
 
