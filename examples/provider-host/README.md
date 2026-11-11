@@ -19,35 +19,36 @@ the normal `~/.ruxex` directory.
 ## Chat scenarios
 
 The recommended way to select a scenario is an explicit marker in the user
-message. Use the form `[[example:scenario]]`; `slow` and `stream` can be added
+message. Use the form `example:scenario`; `slow` and `stream` can be added
 as modifiers.
 
 ```text
-[[example:basic]]
-[[example:basic:stream]]
-[[example:basic:slow]]
-[[example:tool]]
-[[example:command]]
-[[example:command:ls]]
-[[example:command:sleep]]
-[[example:command:slow]]
-[[example:command:large]]
-[[example:command:fail]]
-[[example:command:timeout]]
-[[example:approval]]
-[[example:approval:deny]]
-[[example:approval:cancel]]
-[[example:workflow]]
-[[example:parallel-tools]]
-[[example:long-stream]]
-[[example:long-stream:slow]]
-[[example:user-input]]
-[[example:permissions]]
-[[example:mcp]]
-[[example:multi]]
-[[example:error]]
-[[example:rate-limit]]
-[[example:disconnect]]
+example:basic
+example:basic:stream
+example:basic:slow
+example:tool
+example:command
+example:command:ls
+example:command:sleep
+example:command:slow
+example:command:large
+example:command:fail
+example:command:timeout
+example:approval
+example:approval:deny
+example:approval:cancel
+example:workflow
+example:parallel-tools
+example:long-stream
+example:long-stream:slow
+example:user-input
+example:permissions
+example:goal
+example:mcp
+example:multi
+example:error
+example:rate-limit
+example:disconnect
 ```
 
 If there is no explicit marker, the provider checks the latest user message
@@ -58,21 +59,27 @@ for scenario keywords. The current keyword priority is:
 3. `long stream` or `long-stream`
 4. `user input` or `user-input`
 5. `permissions`
-6. `approval`
-7. `mcp`
-8. `command` or `exec`
-9. `tool`
-10. `multi`
-11. `rate-limit`
-12. `disconnect`
-13. `error`
+6. goal-setting phrases such as `set it as a goal`
+7. `approval`
+8. `mcp`
+9. `command` or `exec`
+10. `tool`
+11. `multi`
+12. `rate-limit`
+13. `disconnect`
+14. `error`
 
 The `slow` and `delay` keywords add delays to the response stream. The
 `stream` keyword splits the fixed basic response into multiple text deltas.
-`[[example:basic:slow]]` combines both behaviors. `[[example:command:slow]]`
-is retained as an alias for `[[example:command:sleep]]`. The `large`, `fail`,
+`example:basic:slow` combines both behaviors. `example:command:slow`
+is retained as an alias for `example:command:sleep`. The `large`, `fail`,
 and `timeout` keywords select the corresponding command variants when no
 explicit marker is used.
+
+`example:goal` is a goal lifecycle fixture. The first turn emits a
+`create_goal` call from natural-language input; after the next user turn, it
+emits `update_goal` with `complete` so clients can verify both goal
+notifications.
 
 ### Scenario behavior
 
