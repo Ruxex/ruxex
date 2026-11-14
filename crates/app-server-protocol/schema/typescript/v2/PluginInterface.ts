@@ -10,7 +10,8 @@ export type PluginInterface = { displayName: string | null, shortDescription: st
  */
 defaultPrompt: Array<string> | null, brandColor: string | null,
 /**
- * Local composer icon path, resolved from the installed plugin package.
+ * Local composer icon path, resolved from an installed plugin package or a validated
+ * marketplace materialization on the same host as the app server.
  */
 composerIcon: AbsolutePathBuf | null,
 /**
@@ -18,11 +19,13 @@ composerIcon: AbsolutePathBuf | null,
  */
 composerIconUrl: string | null,
 /**
- * Local logo path, resolved from the installed plugin package.
+ * Local logo path, resolved from an installed plugin package or a validated marketplace
+ * materialization on the same host as the app server.
  */
 logo: AbsolutePathBuf | null,
 /**
- * Local dark-mode logo path, resolved from the installed plugin package.
+ * Local dark-mode logo path, resolved from an installed plugin package or a validated
+ * marketplace materialization on the same host as the app server.
  */
 logoDark: AbsolutePathBuf | null,
 /**
@@ -34,7 +37,8 @@ logoUrl: string | null,
  */
 logoUrlDark: string | null,
 /**
- * Local screenshot paths, resolved from the installed plugin package.
+ * Local screenshot paths, resolved from an installed plugin package or a validated marketplace
+ * materialization on the same host as the app server.
  */
 screenshots: Array<AbsolutePathBuf>,
 /**

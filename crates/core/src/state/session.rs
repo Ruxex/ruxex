@@ -209,7 +209,15 @@ impl SessionState {
         root_turn_id: String,
         response_id: String,
         usage: &TokenUsage,
-    ) -> TokenUsageRecord {
+        amount: Option<f64>,
+    ) -> Option<TokenUsageRecord> {
+        if self
+            .latest_token_usage_record
+            .as_ref()
+            .is_some_and(|record| record.response_id == response_id)
+        {
+            return None;
+        }
         let mut turn_token_usage = self
             .latest_token_usage_record
             .as_ref()
@@ -225,6 +233,36 @@ impl SessionState {
                 record.thread_token_usage.clone()
             });
         thread_token_usage.add_assign(usage);
+        let same_turn = self
+            .latest_token_usage_record
+            .as_ref()
+            .is_some_and(|record| record.turn_id == turn_id);
+        let turn_amount = if same_turn {
+            match (
+                self.latest_token_usage_record
+                    .as_ref()
+                    .and_then(|record| record.turn_amount),
+                amount,
+            ) {
+                (Some(total), Some(amount)) => Some(total + amount),
+                (Some(total), None) => Some(total),
+                (None, Some(amount)) => Some(amount),
+                (None, None) => None,
+            }
+        } else {
+            amount
+        };
+        let thread_amount = match (
+            self.latest_token_usage_record
+                .as_ref()
+                .and_then(|record| record.thread_amount),
+            amount,
+        ) {
+            (Some(total), Some(amount)) => Some(total + amount),
+            (Some(total), None) => Some(total),
+            (None, Some(amount)) => Some(amount),
+            (None, None) => None,
+        };
         let record = TokenUsageRecord {
             thread_id,
             turn_id: turn_id.to_string(),
@@ -232,11 +270,14 @@ impl SessionState {
             root_turn_id,
             response_id,
             usage: usage.clone(),
+            amount,
             turn_token_usage,
             thread_token_usage,
+            turn_amount,
+            thread_amount,
         };
         self.latest_token_usage_record = Some(record.clone());
-        record
+        Some(record)
     }
 
     pub(crate) fn set_reference_context_item(&mut self, item: Option<TurnContextItem>) {
@@ -251,9 +292,11 @@ impl SessionState {
     pub(crate) fn update_token_info_from_usage(
         &mut self,
         usage: &TokenUsage,
+        amount: Option<f64>,
         model_context_window: Option<i64>,
     ) {
-        self.history.update_token_info(usage, model_context_window);
+        self.history
+            .update_token_info(usage, amount, model_context_window);
     }
 
     pub(crate) fn ensure_auto_compact_window_server_prefill_from_usage(

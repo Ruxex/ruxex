@@ -1854,8 +1854,8 @@ pub struct TokenUsage {
     pub ruxex_rollout_budget_units: Option<serde_json::Number>,
 }
 
-/// Best-effort Responses API usage observed for one completed response.
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, JsonSchema, TS)]
+/// Best-effort token and provider amount usage observed for one completed response.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, JsonSchema, TS)]
 pub struct TokenUsageRecord {
     pub thread_id: ThreadId,
     pub turn_id: String,
@@ -1863,14 +1863,29 @@ pub struct TokenUsageRecord {
     pub root_turn_id: String,
     pub response_id: String,
     pub usage: TokenUsage,
+    /// Amount reported for this API response, without a currency conversion.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub amount: Option<f64>,
     pub turn_token_usage: TokenUsage,
     pub thread_token_usage: TokenUsage,
+    /// Sum of reported response amounts for this turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub turn_amount: Option<f64>,
+    /// Sum of reported response amounts for this thread.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thread_amount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, JsonSchema, TS)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, JsonSchema, TS)]
 pub struct TokenUsageInfo {
     pub total_token_usage: TokenUsage,
     pub last_token_usage: TokenUsage,
+    /// Sum of provider amounts reported alongside token usage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub total_amount: Option<f64>,
+    /// Provider amount for the latest API response that reported token usage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_amount: Option<f64>,
     // TODO(aibrahim): make this not optional
     #[ts(type = "number | null")]
     pub model_context_window: Option<i64>,
@@ -1891,6 +1906,8 @@ impl TokenUsageInfo {
             None => Self {
                 total_token_usage: TokenUsage::default(),
                 last_token_usage: TokenUsage::default(),
+                total_amount: None,
+                last_amount: None,
                 model_context_window,
             },
         };
@@ -1903,9 +1920,26 @@ impl TokenUsageInfo {
         Some(info)
     }
 
+    pub fn new_or_append_with_amount(
+        info: &Option<TokenUsageInfo>,
+        last: &Option<TokenUsage>,
+        amount: Option<f64>,
+        model_context_window: Option<i64>,
+    ) -> Option<Self> {
+        let mut info = Self::new_or_append(info, last, model_context_window)?;
+        if last.is_some() {
+            info.last_amount = amount;
+        }
+        if let Some(amount) = amount {
+            info.total_amount = Some(info.total_amount.unwrap_or_default() + amount);
+        }
+        Some(info)
+    }
+
     pub fn append_last_usage(&mut self, last: &TokenUsage) {
         self.total_token_usage.add_assign(last);
         self.last_token_usage = last.clone();
+        self.last_amount = None;
     }
 
     pub fn fill_to_context_window(&mut self, context_window: i64) {
@@ -1921,12 +1955,15 @@ impl TokenUsageInfo {
             total_tokens: delta,
             ..TokenUsage::default()
         };
+        self.last_amount = None;
     }
 
     pub fn full_context_window(context_window: i64) -> Self {
         let mut info = Self {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
+            total_amount: None,
+            last_amount: None,
             model_context_window: Some(context_window),
         };
         info.fill_to_context_window(context_window);
@@ -5904,6 +5941,8 @@ mod tests {
         let initial = Some(TokenUsageInfo {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
+            total_amount: None,
+            last_amount: None,
             model_context_window: Some(258_400),
         });
         let last = Some(TokenUsage {
@@ -5927,6 +5966,8 @@ mod tests {
         let initial = Some(TokenUsageInfo {
             total_token_usage: TokenUsage::default(),
             last_token_usage: TokenUsage::default(),
+            total_amount: None,
+            last_amount: None,
             model_context_window: Some(258_400),
         });
         let last = Some(TokenUsage {

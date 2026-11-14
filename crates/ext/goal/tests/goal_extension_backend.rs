@@ -1800,6 +1800,8 @@ impl GoalExtensionHarness {
         let token_usage = TokenUsageInfo {
             total_token_usage: usage.clone(),
             last_token_usage: last_usage.clone(),
+            total_amount: None,
+            last_amount: None,
             model_context_window: None,
         };
         for contributor in self.registry.token_usage_contributors() {

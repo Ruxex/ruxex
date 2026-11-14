@@ -4013,7 +4013,12 @@ impl Session {
         token_usage: Option<&TokenUsage>,
     ) -> RuxexResult<()> {
         let result = self
-            .record_token_usage_info(turn_context, &turn_context.initial_settings, token_usage)
+            .record_token_usage_info(
+                turn_context,
+                &turn_context.initial_settings,
+                token_usage,
+                None,
+            )
             .await;
         self.send_token_count_event(turn_context).await;
         result
@@ -4025,18 +4030,18 @@ impl Session {
         response_id: &str,
         usage: Option<&TokenUsage>,
         usage_metadata: Option<&ResponseUsageMetadata>,
-    ) {
-        self.send_event(
-            turn_context,
-            EventMsg::RawResponseCompleted(RawResponseCompletedEvent {
-                response_id: response_id.to_string(),
-                token_usage: usage.cloned(),
-                usage_metadata: usage_metadata.cloned(),
-            }),
-        )
-        .await;
+    ) -> bool {
         let Some(usage) = usage else {
-            return;
+            self.send_event(
+                turn_context,
+                EventMsg::RawResponseCompleted(RawResponseCompletedEvent {
+                    response_id: response_id.to_string(),
+                    token_usage: None,
+                    usage_metadata: usage_metadata.cloned(),
+                }),
+            )
+            .await;
+            return false;
         };
         let record = self.state.lock().await.record_token_usage(
             self.thread_id,
@@ -4048,9 +4053,23 @@ impl Session {
                 .unwrap_or_else(|| turn_context.sub_id.clone()),
             response_id.to_string(),
             usage,
+            usage_metadata.and_then(|metadata| metadata.amount),
         );
+        let Some(record) = record else {
+            return false;
+        };
+        self.send_event(
+            turn_context,
+            EventMsg::RawResponseCompleted(RawResponseCompletedEvent {
+                response_id: response_id.to_string(),
+                token_usage: Some(usage.clone()),
+                usage_metadata: usage_metadata.cloned(),
+            }),
+        )
+        .await;
         self.persist_rollout_items(&[RolloutItem::TokenUsageRecord(record)])
             .await;
+        true
     }
 
     pub(crate) async fn record_token_usage_info(
@@ -4058,12 +4077,16 @@ impl Session {
         turn_context: &TurnContext,
         settings: &ResolvedStepSettings,
         token_usage: Option<&TokenUsage>,
+        amount: Option<f64>,
     ) -> RuxexResult<()> {
         if let Some(token_usage) = token_usage {
             let token_info = {
                 let mut state = self.state.lock().await;
-                state
-                    .update_token_info_from_usage(token_usage, turn_context.model_context_window());
+                state.update_token_info_from_usage(
+                    token_usage,
+                    amount,
+                    turn_context.model_context_window(),
+                );
                 if matches!(
                     turn_context.config.model_auto_compact_token_limit_scope,
                     AutoCompactTokenLimitScope::BodyAfterPrefix
@@ -4114,6 +4137,8 @@ impl Session {
             let mut info = state.token_info().unwrap_or(TokenUsageInfo {
                 total_token_usage: TokenUsage::default(),
                 last_token_usage: TokenUsage::default(),
+                total_amount: None,
+                last_amount: None,
                 model_context_window: None,
             });
 

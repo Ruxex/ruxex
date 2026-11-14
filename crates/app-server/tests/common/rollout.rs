@@ -121,6 +121,8 @@ pub fn create_fake_rollout_with_token_usage(
                 total_tokens: 90,
                 ruxex_rollout_budget_units: None,
             },
+            total_amount: None,
+            last_amount: None,
             model_context_window: Some(200_000),
         }),
         rate_limits: None,

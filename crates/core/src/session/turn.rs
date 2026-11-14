@@ -2162,20 +2162,25 @@ async fn try_run_sampling_request(
                     &mut assistant_message_stream_parsers,
                 )
                 .await;
-                sess.record_observed_response_completed(
-                    &turn_context,
-                    &response_id,
-                    token_usage.as_ref(),
-                    usage_metadata.as_ref(),
-                )
-                .await;
-                let budget_result = sess
-                    .record_token_usage_info(
+                let response_usage_recorded = sess
+                    .record_observed_response_completed(
+                        &turn_context,
+                        &response_id,
+                        token_usage.as_ref(),
+                        usage_metadata.as_ref(),
+                    )
+                    .await;
+                let budget_result = if response_usage_recorded {
+                    sess.record_token_usage_info(
                         &turn_context,
                         &step_context.settings,
                         token_usage.as_ref(),
+                        usage_metadata.as_ref().and_then(|metadata| metadata.amount),
                     )
-                    .await;
+                    .await
+                } else {
+                    Ok(())
+                };
                 should_emit_token_count = true;
                 should_emit_turn_diff = true;
                 if let Err(err) = budget_result {

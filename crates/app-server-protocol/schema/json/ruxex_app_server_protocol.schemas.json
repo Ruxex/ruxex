@@ -11471,7 +11471,7 @@
                 "type": "null"
               }
             ],
-            "description": "Local composer icon path, resolved from the installed plugin package."
+            "description": "Local composer icon path, resolved from an installed plugin package or a validated marketplace materialization on the same host as the app server."
           },
           "composerIconUrl": {
             "description": "Remote composer icon URL from the plugin catalog.",
@@ -11511,7 +11511,7 @@
                 "type": "null"
               }
             ],
-            "description": "Local logo path, resolved from the installed plugin package."
+            "description": "Local logo path, resolved from an installed plugin package or a validated marketplace materialization on the same host as the app server."
           },
           "logoDark": {
             "anyOf": [
@@ -11522,7 +11522,7 @@
                 "type": "null"
               }
             ],
-            "description": "Local dark-mode logo path, resolved from the installed plugin package."
+            "description": "Local dark-mode logo path, resolved from an installed plugin package or a validated marketplace materialization on the same host as the app server."
           },
           "logoUrl": {
             "description": "Remote logo URL from the plugin catalog.",
@@ -11558,7 +11558,7 @@
             "type": "array"
           },
           "screenshots": {
-            "description": "Local screenshot paths, resolved from the installed plugin package.",
+            "description": "Local screenshot paths, resolved from an installed plugin package or a validated marketplace materialization on the same host as the app server.",
             "items": {
               "$ref": "#/definitions/v2/AbsolutePathBuf"
             },
@@ -13564,8 +13564,9 @@
         "description": "Usage metadata reported for one upstream response.",
         "properties": {
           "amount": {
+            "format": "double",
             "type": [
-              "string",
+              "number",
               "null"
             ]
           },
@@ -18263,6 +18264,14 @@
           "last": {
             "$ref": "#/definitions/v2/TokenUsageBreakdown"
           },
+          "lastAmount": {
+            "description": "Provider-reported amount for the latest API response.",
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "modelContextWindow": {
             "format": "int64",
             "type": [
@@ -18272,6 +18281,14 @@
           },
           "total": {
             "$ref": "#/definitions/v2/TokenUsageBreakdown"
+          },
+          "totalAmount": {
+            "description": "Sum of provider-reported amounts across the thread.",
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
           }
         },
         "required": [

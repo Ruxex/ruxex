@@ -1751,7 +1751,7 @@ pub struct RawResponseCompletedNotification {
 #[serde(rename_all = "camelCase")]
 #[ts(export_to = "v2/")]
 pub struct ResponseUsageMetadata {
-    pub amount: Option<String>,
+    pub amount: Option<f64>,
     pub metadata: Option<JsonValue>,
 }
 
@@ -1770,6 +1770,10 @@ impl From<ruxex_protocol::ResponseUsageMetadata> for ResponseUsageMetadata {
 pub struct ThreadTokenUsage {
     pub total: TokenUsageBreakdown,
     pub last: TokenUsageBreakdown,
+    /// Sum of provider-reported amounts across the thread.
+    pub total_amount: Option<f64>,
+    /// Provider-reported amount for the latest API response.
+    pub last_amount: Option<f64>,
     // TODO(aibrahim): make this not optional
     #[ts(type = "number | null")]
     pub model_context_window: Option<i64>,
@@ -1780,6 +1784,8 @@ impl From<CoreTokenUsageInfo> for ThreadTokenUsage {
         Self {
             total: value.total_token_usage.into(),
             last: value.last_token_usage.into(),
+            total_amount: value.total_amount,
+            last_amount: value.last_amount,
             model_context_window: value.model_context_window,
         }
     }

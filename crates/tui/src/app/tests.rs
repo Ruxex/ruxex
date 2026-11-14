@@ -5456,6 +5456,8 @@ fn token_usage_notification(
                 output_tokens: 5,
                 reasoning_output_tokens: 0,
             },
+            total_amount: None,
+            last_amount: None,
             model_context_window,
         },
     })

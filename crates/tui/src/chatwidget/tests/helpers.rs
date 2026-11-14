@@ -443,6 +443,8 @@ pub(super) fn handle_token_count(chat: &mut ChatWidget, info: Option<TokenUsageI
                         token_usage: ruxex_app_server_protocol::ThreadTokenUsage {
                             total: token_usage_breakdown(info.total_token_usage),
                             last: token_usage_breakdown(info.last_token_usage),
+                            total_amount: None,
+                            last_amount: None,
                             model_context_window: info.model_context_window,
                         },
                     },

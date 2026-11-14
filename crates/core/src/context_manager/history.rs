@@ -470,11 +470,13 @@ impl ContextManager {
     pub(crate) fn update_token_info(
         &mut self,
         usage: &TokenUsage,
+        amount: Option<f64>,
         model_context_window: Option<i64>,
     ) {
-        self.token_info = TokenUsageInfo::new_or_append(
+        self.token_info = TokenUsageInfo::new_or_append_with_amount(
             &self.token_info,
             &Some(usage.clone()),
+            amount,
             model_context_window,
         );
     }

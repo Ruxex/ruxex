@@ -3103,6 +3103,8 @@ mod tests {
                         ruxex_rollout_budget_units: None,
                     },
                     last_token_usage: ruxex_protocol::protocol::TokenUsage::default(),
+                    total_amount: None,
+                    last_amount: None,
                     model_context_window: None,
                 }),
                 rate_limits: None,

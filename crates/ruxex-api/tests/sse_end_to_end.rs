@@ -175,7 +175,7 @@ async fn responses_stream_parses_items_and_completed_end_to_end() -> Result<()> 
             assert_eq!(
                 usage_metadata,
                 &Some(ruxex_protocol::ResponseUsageMetadata {
-                    amount: Some("0.12345678901234567890".to_string()),
+                    amount: Some(0.12345678901234568),
                     metadata: Some(expected_metadata),
                 })
             );

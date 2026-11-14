@@ -199,7 +199,7 @@ async fn responses_websocket_preserves_credit_usage_metadata() {
     assert_eq!(
         usage_metadata,
         Some(ruxex_protocol::ResponseUsageMetadata {
-            amount: Some("0.12345678901234567890".to_string()),
+            amount: Some(0.12345678901234568),
             metadata: Some(expected_metadata),
         }),
     );

@@ -4290,6 +4290,14 @@
         "last": {
           "$ref": "#/definitions/TokenUsageBreakdown"
         },
+        "lastAmount": {
+          "description": "Provider-reported amount for the latest API response.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
         "modelContextWindow": {
           "format": "int64",
           "type": [
@@ -4299,6 +4307,14 @@
         },
         "total": {
           "$ref": "#/definitions/TokenUsageBreakdown"
+        },
+        "totalAmount": {
+          "description": "Sum of provider-reported amounts across the thread.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
         }
       },
       "required": [

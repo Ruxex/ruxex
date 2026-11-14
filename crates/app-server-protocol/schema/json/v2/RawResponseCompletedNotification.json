@@ -5,8 +5,9 @@
       "description": "Usage metadata reported for one upstream response.",
       "properties": {
         "amount": {
+          "format": "double",
           "type": [
-            "string",
+            "number",
             "null"
           ]
         },
