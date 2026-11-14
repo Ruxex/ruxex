@@ -8,6 +8,7 @@ use futures::stream;
 use ruxex::provider::auth::{CredentialManager, ProviderAuth};
 use ruxex::provider::protocol::{
     ModelCatalog, ModelInfo, ProviderAccount, ProviderAuthStatus, ResponseItem,
+    ResponseUsageMetadata, TokenUsage,
 };
 use ruxex::provider::{
     ChatRequest, ListModelsRequest, ModelProvider, ModelProviderFactory, ProviderAccountState,
@@ -37,9 +38,66 @@ const FIXED_USER_INPUT_ANSWER: &str = "The fixed user input was received.";
 const FIXED_PERMISSIONS_ANSWER: &str = "The fixed permissions response was received.";
 const FIXED_GOAL_SET_ANSWER: &str = "The fixture review goal was set.";
 const FIXED_GOAL_COMPLETED_ANSWER: &str = "The fixture review goal was completed.";
+const FIXED_PLAN_UNAVAILABLE: &str = "The update_plan tool is unavailable in this request.";
+const FIXED_PLAN_ANSWER: &str = "The fixed plan fixture is complete.";
+const FIXED_REASONING_SUMMARY: &str =
+    "I will keep this fixture response concise and show the summary separately.";
+const FIXED_REASONING_ANSWER: &str = "This response follows the fixed reasoning summary.";
+const FIXED_SUBAGENT_UNAVAILABLE: &str = "The spawn_agent tool is unavailable in this request.";
+const FIXED_SUBAGENT_ANSWER: &str = "The Example subagent fixture is complete.";
+const FIXED_PARALLEL_SUBAGENT_ANSWER: &str = "The Example parallel subagent fixture is complete.";
 const FIXED_MCP_ANSWER: &str =
     "The MCP tool result was received. This is a fixed MCP integration response.";
 const FIXED_MCP_UNAVAILABLE: &str = "The Example Provider MCP tool is unavailable.";
+const FIXED_MARKDOWN_ANSWER: &str = r###"# Markdown rendering fixture
+
+This response is a **bold** and *italic* visual check with ~~strikethrough~~.
+It also includes `inline code` and a [Ruxex](https://example.com) link.
+
+## Lists and quote
+
+1. Ordered item
+2. Another ordered item
+
+- Unordered item
+- Another unordered item
+
+- [x] Completed task
+- [ ] Pending task
+
+> A blockquote for checking indentation and text color.
+
+## Table
+
+| Feature | Rendering |
+| --- | --- |
+| Table | GFM |
+| Mermaid | Diagram |
+
+---
+
+## Code blocks
+
+```rust
+fn fixed_fixture() -> &'static str {
+    "Markdown and Mermaid"
+}
+```
+
+```diff
+- old fixture
++ new fixture
+  unchanged line
+```
+
+## Mermaid
+
+```mermaid
+graph TD
+  Start[Start] --> Markdown[Markdown]
+  Markdown --> Mermaid[Mermaid]
+```
+"###;
 const FIXED_COMMAND: &str = "printf 'example-provider command output\\n'";
 const FIXED_APPROVAL_COMMAND: &str = "printf 'approval-required command output\\n'";
 const FIXED_APPROVAL_JUSTIFICATION: &str = "Run the example provider approval command.";
@@ -91,6 +149,11 @@ enum DummyScenario {
     Permissions,
     Goal,
     Mcp,
+    Plan,
+    Reasoning,
+    Markdown,
+    Subagent,
+    ParallelSubagents,
     Multi,
     Error,
     RateLimit,
@@ -195,6 +258,17 @@ impl ModelProvider for DummyProvider {
                     if !selection.continuation && !has_example_mcp_tool(&request.tools) =>
                 {
                     Ok(text_chat_stream(selection, FIXED_MCP_UNAVAILABLE))
+                }
+                DummyScenario::Plan => Ok(plan_scenario_chat_stream(
+                    selection,
+                    has_request_tool(&request.tools, "update_plan"),
+                )),
+                DummyScenario::Subagent | DummyScenario::ParallelSubagents => {
+                    Ok(subagent_scenario_chat_stream(
+                        selection,
+                        spawn_agent_tool_form(&request.tools),
+                        &request.input,
+                    ))
                 }
                 _ => Ok(scenario_chat_stream(
                     selection,
@@ -386,6 +460,8 @@ fn scenario_chat_stream(
         DummyScenario::Tool if selection.continuation => Some(FIXED_TOOL_ANSWER),
         DummyScenario::Command if selection.continuation => Some(FIXED_COMMAND_ANSWER),
         DummyScenario::Approval if selection.continuation => Some(FIXED_APPROVAL_ANSWER),
+        DummyScenario::Reasoning => Some(FIXED_REASONING_ANSWER),
+        DummyScenario::Markdown => Some(FIXED_MARKDOWN_ANSWER),
         DummyScenario::LongStream => Some(FIXED_LONG_STREAM_ANSWER),
         DummyScenario::Mcp if selection.continuation => Some(FIXED_MCP_ANSWER),
         DummyScenario::Mcp if !has_mcp_tool => Some(FIXED_MCP_UNAVAILABLE),
@@ -432,17 +508,28 @@ fn scenario_chat_stream(
             ))));
             return complete_stream(events, response_id, false, selection.slow);
         }
+        DummyScenario::Plan => unreachable!("plan scenario uses a tool-aware stream"),
         DummyScenario::Error | DummyScenario::RateLimit => None,
         DummyScenario::ApprovalDeny
         | DummyScenario::ApprovalCancel
         | DummyScenario::Workflow
         | DummyScenario::ParallelTools
+        | DummyScenario::Subagent
+        | DummyScenario::ParallelSubagents
         | DummyScenario::UserInput
         | DummyScenario::Permissions
         | DummyScenario::Goal => {
             unreachable!("fixed-step scenarios return before the simple stream")
         }
     };
+
+    if selection.scenario == DummyScenario::Reasoning {
+        events.push(Ok(ProviderChatEvent::ReasoningSummaryDone {
+            item_id: format!("example-reasoning-summary-{}", selection.multi_turn),
+            text: FIXED_REASONING_SUMMARY.to_string(),
+            summary_index: 0,
+        }));
+    }
 
     if let Some(text) = final_text {
         events.push(Ok(ProviderChatEvent::OutputItemAdded(
@@ -502,6 +589,166 @@ fn text_chat_stream(
         assistant_message_item(Some(text)),
     )));
     complete_stream(events, response_id, true, selection.slow)
+}
+
+fn plan_scenario_chat_stream(
+    selection: ScenarioSelection,
+    has_update_plan_tool: bool,
+) -> ruxex::provider::ProviderChatStream {
+    if selection.step == 0 && !has_update_plan_tool {
+        return text_chat_stream(selection, FIXED_PLAN_UNAVAILABLE);
+    }
+
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    let mut events = vec![
+        Ok(ProviderChatEvent::Created {
+            response_id: Some(response_id.clone()),
+        }),
+        Ok(ProviderChatEvent::ServerModel("A".to_string())),
+    ];
+
+    if selection.step == 0 {
+        events.push(Ok(ProviderChatEvent::OutputItemDone(
+            example_update_plan_tool_call("example-plan-call-1"),
+        )));
+        complete_stream(events, response_id, false, selection.slow)
+    } else {
+        text_chat_stream_with_events(
+            events,
+            response_id,
+            FIXED_PLAN_ANSWER,
+            selection.stream,
+            selection.slow,
+        )
+    }
+}
+
+fn example_update_plan_tool_call(call_id: &str) -> ResponseItem {
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "update_plan".to_string(),
+        namespace: None,
+        arguments: serde_json::json!({
+            "plan": [
+                {"step": "Inspect the Example provider activity", "status": "in_progress"},
+                {"step": "Review the rendered fixture", "status": "pending"}
+            ]
+        })
+        .to_string(),
+        encrypted_function_args: None,
+        call_id: call_id.to_string(),
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SpawnAgentToolForm {
+    V1,
+    V2,
+}
+
+fn subagent_scenario_chat_stream(
+    selection: ScenarioSelection,
+    tool_form: Option<SpawnAgentToolForm>,
+    input: &[ResponseItem],
+) -> ruxex::provider::ProviderChatStream {
+    let response_id = format!(
+        "example-{}-response-{}",
+        selection.scenario.as_str(),
+        selection.multi_turn
+    );
+    let calls = match (selection.scenario, selection.step) {
+        (DummyScenario::Subagent, 0) => vec![(
+            "example-subagent-call-1",
+            "example_worker",
+            "Reply in one short sentence confirming that the Example fixture can spawn an agent. Do not call tools.",
+        )],
+        (DummyScenario::Subagent, _) => {
+            return text_chat_stream(selection, FIXED_SUBAGENT_ANSWER);
+        }
+        (DummyScenario::ParallelSubagents, 0) => vec![
+            (
+                "example-parallel-subagent-call-1",
+                "example_worker",
+                "Reply in one short sentence confirming that the Example fixture can launch a worker. Do not call tools.",
+            ),
+            (
+                "example-parallel-subagent-call-2",
+                "example_reviewer",
+                "Reply in one short sentence confirming that the Example fixture can launch a reviewer. Do not call tools.",
+            ),
+        ],
+        (DummyScenario::ParallelSubagents, 1) => {
+            let mut missing = Vec::new();
+            if !has_function_call_output(input, "example-parallel-subagent-call-1") {
+                missing.push((
+                    "example-parallel-subagent-call-1",
+                    "example_worker",
+                    "Reply in one short sentence confirming that the Example fixture can launch a worker. Do not call tools.",
+                ));
+            }
+            if !has_function_call_output(input, "example-parallel-subagent-call-2") {
+                missing.push((
+                    "example-parallel-subagent-call-2",
+                    "example_reviewer",
+                    "Reply in one short sentence confirming that the Example fixture can launch a reviewer. Do not call tools.",
+                ));
+            }
+            missing
+        }
+        (DummyScenario::ParallelSubagents, _) => {
+            return text_chat_stream(selection, FIXED_PARALLEL_SUBAGENT_ANSWER);
+        }
+        _ => unreachable!("subagent stream requires a subagent scenario"),
+    };
+
+    let Some(tool_form) = tool_form else {
+        return text_chat_stream(selection, FIXED_SUBAGENT_UNAVAILABLE);
+    };
+
+    let mut events = vec![
+        Ok(ProviderChatEvent::Created {
+            response_id: Some(response_id.clone()),
+        }),
+        Ok(ProviderChatEvent::ServerModel("A".to_string())),
+    ];
+    events.extend(calls.into_iter().map(|(call_id, task_name, message)| {
+        Ok(ProviderChatEvent::OutputItemDone(example_spawn_agent_call(
+            call_id, task_name, message, tool_form,
+        )))
+    }));
+    complete_stream(events, response_id, false, selection.slow)
+}
+
+fn example_spawn_agent_call(
+    call_id: &str,
+    task_name: &str,
+    message: &str,
+    tool_form: SpawnAgentToolForm,
+) -> ResponseItem {
+    let (namespace, arguments) = match tool_form {
+        SpawnAgentToolForm::V1 => (
+            Some("multi_agent_v1".to_string()),
+            serde_json::json!({"message": message}).to_string(),
+        ),
+        SpawnAgentToolForm::V2 => (
+            None,
+            serde_json::json!({"task_name": task_name, "message": message}).to_string(),
+        ),
+    };
+    ResponseItem::FunctionCall {
+        id: None,
+        name: "spawn_agent".to_string(),
+        namespace,
+        arguments,
+        encrypted_function_args: None,
+        call_id: call_id.to_string(),
+        internal_chat_message_metadata_passthrough: None,
+    }
 }
 
 fn fixed_step_chat_stream(
@@ -720,8 +967,16 @@ fn complete_stream(
 ) -> ruxex::provider::ProviderChatStream {
     events.push(Ok(ProviderChatEvent::Completed {
         response_id,
-        token_usage: None,
-        usage_metadata: None,
+        token_usage: Some(TokenUsage {
+            input_tokens: 100,
+            output_tokens: 20,
+            total_tokens: 120,
+            ..TokenUsage::default()
+        }),
+        usage_metadata: Some(ResponseUsageMetadata {
+            amount: Some(0.001),
+            metadata: None,
+        }),
         end_turn: Some(end_turn),
     }));
     event_stream(events, slow)
@@ -1056,6 +1311,11 @@ fn explicit_scenario(text: &str) -> Option<ProviderResult<ScenarioSelection>> {
         (Some("permissions"), _) => DummyScenario::Permissions,
         (Some("goal"), _) => DummyScenario::Goal,
         (Some("mcp"), _) => DummyScenario::Mcp,
+        (Some("plan"), _) => DummyScenario::Plan,
+        (Some("reasoning"), _) => DummyScenario::Reasoning,
+        (Some("markdown"), _) => DummyScenario::Markdown,
+        (Some("subagent"), _) => DummyScenario::Subagent,
+        (Some("parallel-subagents"), _) => DummyScenario::ParallelSubagents,
         (Some("multi"), _) => DummyScenario::Multi,
         (Some("error"), _) => DummyScenario::Error,
         (Some("rate-limit"), _) => DummyScenario::RateLimit,
@@ -1138,6 +1398,21 @@ fn is_goal_prompt(text: &str) -> bool {
 
 fn scenario_step(input: &[ResponseItem], scenario: DummyScenario) -> usize {
     match scenario {
+        DummyScenario::Plan => usize::from(has_function_call_output(input, "example-plan-call-1")),
+        DummyScenario::Subagent => {
+            usize::from(has_function_call_output(input, "example-subagent-call-1"))
+        }
+        DummyScenario::ParallelSubagents => {
+            let worker_done = has_function_call_output(input, "example-parallel-subagent-call-1");
+            let reviewer_done = has_function_call_output(input, "example-parallel-subagent-call-2");
+            if worker_done && reviewer_done {
+                2
+            } else if worker_done || reviewer_done {
+                1
+            } else {
+                0
+            }
+        }
         DummyScenario::Goal => {
             if has_function_call_output(input, "example-goal-update-call-1") {
                 3
@@ -1268,6 +1543,12 @@ fn continuation_scenario(input: &[ResponseItem]) -> Option<DummyScenario> {
 fn scenario_from_call_id(call_id: &str) -> Option<DummyScenario> {
     if call_id.starts_with("example-goal-") {
         Some(DummyScenario::Goal)
+    } else if call_id.starts_with("example-plan-call-") {
+        Some(DummyScenario::Plan)
+    } else if call_id.starts_with("example-subagent-call-") {
+        Some(DummyScenario::Subagent)
+    } else if call_id.starts_with("example-parallel-subagent-call-") {
+        Some(DummyScenario::ParallelSubagents)
     } else if call_id.starts_with("example-tool-call-") {
         Some(DummyScenario::Tool)
     } else if call_id.starts_with("example-command-call-") {
@@ -1304,6 +1585,50 @@ fn has_example_mcp_tool(tools: &[serde_json::Value]) -> bool {
     })
 }
 
+fn has_request_tool(tools: &[serde_json::Value], expected_name: &str) -> bool {
+    fn contains_tool_name(value: &serde_json::Value, expected_name: &str) -> bool {
+        match value {
+            serde_json::Value::Object(object) => {
+                object.get("name").and_then(serde_json::Value::as_str) == Some(expected_name)
+                    || object
+                        .values()
+                        .any(|value| contains_tool_name(value, expected_name))
+            }
+            serde_json::Value::Array(values) => values
+                .iter()
+                .any(|value| contains_tool_name(value, expected_name)),
+            _ => false,
+        }
+    }
+
+    tools
+        .iter()
+        .any(|tool| contains_tool_name(tool, expected_name))
+}
+
+fn spawn_agent_tool_form(tools: &[serde_json::Value]) -> Option<SpawnAgentToolForm> {
+    let has_top_level_v2_tool = tools
+        .iter()
+        .any(|tool| tool.get("name").and_then(serde_json::Value::as_str) == Some("spawn_agent"));
+    if has_top_level_v2_tool {
+        return Some(SpawnAgentToolForm::V2);
+    }
+
+    let has_v1_namespace_tool = tools.iter().any(|tool| {
+        tool.get("name").and_then(serde_json::Value::as_str) == Some("multi_agent_v1")
+            && tool
+                .get("tools")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|nested| {
+                    nested.iter().any(|nested_tool| {
+                        nested_tool.get("name").and_then(serde_json::Value::as_str)
+                            == Some("spawn_agent")
+                    })
+                })
+    });
+    has_v1_namespace_tool.then_some(SpawnAgentToolForm::V1)
+}
+
 impl DummyScenario {
     fn as_str(self) -> &'static str {
         match self {
@@ -1320,6 +1645,11 @@ impl DummyScenario {
             Self::Permissions => "permissions",
             Self::Goal => "goal",
             Self::Mcp => "mcp",
+            Self::Plan => "plan",
+            Self::Reasoning => "reasoning",
+            Self::Markdown => "markdown",
+            Self::Subagent => "subagent",
+            Self::ParallelSubagents => "parallel-subagents",
             Self::Multi => "multi",
             Self::Error => "error",
             Self::RateLimit => "rate-limit",
@@ -1397,6 +1727,87 @@ mod tests {
             "content": [{"type": "input_text", "text": text}],
         }))
         .expect("valid user message")
+    }
+
+    fn dummy_provider_for_test() -> DummyProvider {
+        DummyProvider {
+            credential_manager: CredentialManager::from_auth_for_testing(
+                ruxex_login::RuxexAuth::from_api_key("dummy-key"),
+            ),
+        }
+    }
+
+    fn scenario_request(text: &str, tools: Vec<serde_json::Value>) -> ChatRequest {
+        scenario_request_with_input(vec![user_message(text)], tools)
+    }
+
+    fn scenario_request_with_input(
+        input: Vec<ResponseItem>,
+        tools: Vec<serde_json::Value>,
+    ) -> ChatRequest {
+        ChatRequest {
+            model: "A".to_string(),
+            instructions: "Answer briefly.".to_string(),
+            input,
+            tools,
+            metadata: BTreeMap::new(),
+            conversation_id: None,
+            session_source: None,
+            tool_choice: "auto".to_string(),
+            parallel_tool_calls: true,
+            reasoning: None,
+            store: false,
+            stream: true,
+            stream_options: None,
+            include: Vec::new(),
+            service_tier: None,
+            prompt_cache_key: None,
+            text: None,
+            client_metadata: None,
+            transport: ChatTransportOptions {
+                session_id: None,
+                thread_id: None,
+                extra_headers: BTreeMap::new(),
+                compression: ProviderRequestCompression::None,
+                turn_state: None,
+                connection_key: None,
+                credential_snapshot: None,
+            },
+        }
+    }
+
+    fn run_scenario_request(
+        provider: &DummyProvider,
+        request: ChatRequest,
+    ) -> Vec<ProviderResult<ProviderChatEvent>> {
+        let events = futures::executor::block_on(async {
+            provider
+                .chat(request)
+                .await
+                .expect("scenario request should produce a stream")
+                .collect::<Vec<_>>()
+                .await
+        });
+        assert_fixed_response_usage(&events);
+        events
+    }
+
+    fn assert_fixed_response_usage(events: &[ProviderResult<ProviderChatEvent>]) {
+        let (token_usage, usage_metadata) = events
+            .iter()
+            .find_map(|event| match event {
+                Ok(ProviderChatEvent::Completed {
+                    token_usage: Some(token_usage),
+                    usage_metadata: Some(usage_metadata),
+                    ..
+                }) => Some((token_usage, usage_metadata)),
+                _ => None,
+            })
+            .expect("completed scenario response should include usage");
+        assert_eq!(token_usage.input_tokens, 100);
+        assert_eq!(token_usage.output_tokens, 20);
+        assert_eq!(token_usage.total_tokens, 120);
+        assert_eq!(usage_metadata.amount, Some(0.001));
     }
 
     #[tokio::test(flavor = "current_thread")]
@@ -2222,6 +2633,366 @@ mod tests {
             event,
             Ok(ProviderChatEvent::OutputTextDelta(text)) if text == FIXED_MCP_UNAVAILABLE
         )));
+    }
+
+    #[test]
+    fn plan_scenario_uses_update_plan_when_available() {
+        let provider = dummy_provider_for_test();
+        let events = run_scenario_request(
+            &provider,
+            scenario_request(
+                "example:plan",
+                vec![serde_json::json!({"type":"function", "name":"update_plan"})],
+            ),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                name,
+                arguments,
+                ..
+            })) if name == "update_plan"
+                && arguments.contains("in_progress")
+                && arguments.contains("pending")
+        )));
+    }
+
+    #[test]
+    fn plan_scenario_falls_back_when_update_plan_is_unavailable() {
+        let provider = dummy_provider_for_test();
+        let events = run_scenario_request(&provider, scenario_request("example:plan", Vec::new()));
+
+        assert!(!events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(
+                ResponseItem::FunctionCall { .. }
+            ))
+        )));
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text)) if text.contains("update_plan")
+        )));
+    }
+
+    #[test]
+    fn plan_scenario_completes_after_update_plan_output() {
+        let provider = dummy_provider_for_test();
+        let events = run_scenario_request(
+            &provider,
+            scenario_request_with_input(
+                vec![
+                    user_message("example:plan"),
+                    function_call_output("example-plan-call-1", "update_plan"),
+                ],
+                vec![serde_json::json!({"type":"function", "name":"update_plan"})],
+            ),
+        );
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The fixed plan fixture is complete."
+        )));
+        assert!(!events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(
+                ResponseItem::FunctionCall { .. }
+            ))
+        )));
+    }
+
+    #[test]
+    fn reasoning_scenario_emits_a_fixed_summary() {
+        let provider = dummy_provider_for_test();
+        let events =
+            run_scenario_request(&provider, scenario_request("example:reasoning", Vec::new()));
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::ReasoningSummaryDone { text, .. })
+                if text == "I will keep this fixture response concise and show the summary separately."
+        )));
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "This response follows the fixed reasoning summary."
+        )));
+    }
+
+    #[test]
+    fn markdown_scenario_contains_renderer_fixture_syntax() {
+        let provider = dummy_provider_for_test();
+        let events =
+            run_scenario_request(&provider, scenario_request("example:markdown", Vec::new()));
+        let answer = events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputTextDelta(text)) => Some(text.as_str()),
+                _ => None,
+            })
+            .collect::<String>();
+
+        for syntax in [
+            "# Markdown rendering fixture",
+            "**bold**",
+            "~~strikethrough~~",
+            "`inline code`",
+            "[Ruxex](https://example.com)",
+            "1. Ordered item",
+            "- [x] Completed task",
+            "> A blockquote",
+            "| Feature | Rendering |",
+            "---",
+            "```rust",
+            "```diff",
+            "```mermaid",
+        ] {
+            assert!(answer.contains(syntax), "missing Markdown syntax: {syntax}");
+        }
+    }
+
+    #[test]
+    fn single_subagent_scenario_emits_supported_spawn_agent_form() {
+        let provider = dummy_provider_for_test();
+        let tool_forms = [
+            (
+                serde_json::json!({
+                    "type": "namespace",
+                    "name": "multi_agent_v1",
+                    "tools": [{"type": "function", "name": "spawn_agent"}]
+                }),
+                Some("multi_agent_v1"),
+            ),
+            (
+                serde_json::json!({"type": "function", "name": "spawn_agent"}),
+                None,
+            ),
+        ];
+
+        for (tool, expected_namespace) in tool_forms {
+            let events =
+                run_scenario_request(&provider, scenario_request("example:subagent", vec![tool]));
+            let calls = events
+                .iter()
+                .filter_map(|event| match event {
+                    Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                        namespace,
+                        name,
+                        arguments,
+                        call_id,
+                        ..
+                    })) => Some((
+                        namespace.as_deref(),
+                        name.as_str(),
+                        arguments.as_str(),
+                        call_id.as_str(),
+                    )),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+
+            assert_eq!(calls.len(), 1);
+            let (namespace, name, arguments, call_id) = calls[0];
+            assert_eq!(namespace, expected_namespace);
+            assert_eq!(name, "spawn_agent");
+            assert_eq!(call_id, "example-subagent-call-1");
+            let arguments: serde_json::Value =
+                serde_json::from_str(arguments).expect("spawn_agent arguments should be JSON");
+            assert!(
+                arguments["message"]
+                    .as_str()
+                    .unwrap()
+                    .contains("Do not call tools.")
+            );
+            if expected_namespace.is_none() {
+                assert_eq!(arguments["task_name"], "example_worker");
+            }
+        }
+    }
+
+    #[test]
+    fn parallel_subagents_scenario_emits_two_calls_with_distinct_names() {
+        let provider = dummy_provider_for_test();
+        let events = run_scenario_request(
+            &provider,
+            scenario_request(
+                "example:parallel-subagents",
+                vec![serde_json::json!({"type":"function", "name":"spawn_agent"})],
+            ),
+        );
+        let calls = events
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                    namespace,
+                    name,
+                    arguments,
+                    call_id,
+                    ..
+                })) => Some((namespace, name, arguments, call_id)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(calls.len(), 2);
+        assert!(calls.iter().all(|(namespace, name, ..)| {
+            namespace.is_none() && name.as_str() == "spawn_agent"
+        }));
+        assert_eq!(calls[0].3, "example-parallel-subagent-call-1");
+        assert_eq!(calls[1].3, "example-parallel-subagent-call-2");
+        assert!(calls[0].2.contains("example_worker"));
+        assert!(calls[1].2.contains("example_reviewer"));
+    }
+
+    #[test]
+    fn subagent_scenario_falls_back_without_spawn_tool() {
+        let provider = dummy_provider_for_test();
+        let events =
+            run_scenario_request(&provider, scenario_request("example:subagent", Vec::new()));
+
+        assert!(!events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(
+                ResponseItem::FunctionCall { .. }
+            ))
+        )));
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text)) if text.contains("spawn_agent")
+        )));
+    }
+
+    #[test]
+    fn subagent_scenarios_complete_after_matching_tool_outputs() {
+        let provider = dummy_provider_for_test();
+        let v2_spawn_tool = vec![serde_json::json!({"type":"function", "name":"spawn_agent"})];
+
+        let single = run_scenario_request(
+            &provider,
+            scenario_request_with_input(
+                vec![
+                    user_message("example:subagent"),
+                    function_call_output("example-subagent-call-1", "spawn_agent"),
+                ],
+                v2_spawn_tool.clone(),
+            ),
+        );
+        assert!(single.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The Example subagent fixture is complete."
+        )));
+        assert!(!single.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(
+                ResponseItem::FunctionCall { .. }
+            ))
+        )));
+
+        let after_first_parallel_output = run_scenario_request(
+            &provider,
+            scenario_request_with_input(
+                vec![
+                    user_message("example:parallel-subagents"),
+                    function_call_output("example-parallel-subagent-call-1", "spawn_agent"),
+                ],
+                v2_spawn_tool.clone(),
+            ),
+        );
+        let remaining_calls = after_first_parallel_output
+            .iter()
+            .filter_map(|event| match event {
+                Ok(ProviderChatEvent::OutputItemDone(ResponseItem::FunctionCall {
+                    call_id,
+                    ..
+                })) => Some(call_id.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(remaining_calls, vec!["example-parallel-subagent-call-2"]);
+        assert!(!after_first_parallel_output.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The Example parallel subagent fixture is complete."
+        )));
+
+        let parallel = run_scenario_request(
+            &provider,
+            scenario_request_with_input(
+                vec![
+                    user_message("example:parallel-subagents"),
+                    function_call_output("example-parallel-subagent-call-1", "spawn_agent"),
+                    function_call_output("example-parallel-subagent-call-2", "spawn_agent"),
+                ],
+                v2_spawn_tool,
+            ),
+        );
+        assert!(parallel.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "The Example parallel subagent fixture is complete."
+        )));
+        assert!(!parallel.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputItemDone(
+                ResponseItem::FunctionCall { .. }
+            ))
+        )));
+    }
+
+    #[test]
+    fn completed_text_and_tool_responses_report_fixed_usage() {
+        for marker in ["example:basic", "example:tool"] {
+            let selection = select_scenario(&[user_message(marker)])
+                .expect("usage fixture scenario should be valid");
+            let events = futures::executor::block_on(
+                scenario_chat_stream(selection, true).collect::<Vec<_>>(),
+            );
+            let (token_usage, usage_metadata) = events
+                .iter()
+                .find_map(|event| match event {
+                    Ok(ProviderChatEvent::Completed {
+                        token_usage: Some(token_usage),
+                        usage_metadata: Some(usage_metadata),
+                        ..
+                    }) => Some((token_usage, usage_metadata)),
+                    _ => None,
+                })
+                .expect("completed response should include token and amount usage");
+
+            assert_eq!(token_usage.input_tokens, 100, "{marker}");
+            assert_eq!(token_usage.cached_input_tokens, 0, "{marker}");
+            assert_eq!(token_usage.cache_write_input_tokens, 0, "{marker}");
+            assert_eq!(token_usage.output_tokens, 20, "{marker}");
+            assert_eq!(token_usage.reasoning_output_tokens, 0, "{marker}");
+            assert_eq!(token_usage.total_tokens, 120, "{marker}");
+            assert_eq!(usage_metadata.amount, Some(0.001), "{marker}");
+        }
+    }
+
+    #[test]
+    fn disconnect_scenario_emits_partial_output_without_completion() {
+        let selection = select_scenario(&[user_message("example:disconnect")])
+            .expect("disconnect scenario should be valid");
+        let events =
+            futures::executor::block_on(scenario_chat_stream(selection, true).collect::<Vec<_>>());
+
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Ok(ProviderChatEvent::OutputTextDelta(text))
+                if text == "This response is intentionally interrupted."
+        )));
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Err(ProviderError::Transport(message))
+                if message == "example provider disconnected after partial output"
+        )));
+        assert!(
+            !events
+                .iter()
+                .any(|event| matches!(event, Ok(ProviderChatEvent::Completed { .. })))
+        );
     }
 
     #[test]
