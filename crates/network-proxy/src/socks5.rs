@@ -1108,6 +1108,7 @@ mod tests {
             enabled: true,
             mode: NetworkMode::Full,
             mitm: true,
+            allow_local_binding: true,
             mitm_hooks: vec![MitmHookConfig {
                 host: "api.github.com".to_string(),
                 matcher: MitmHookMatchConfig {

@@ -125,6 +125,7 @@ async fn thread_start_keeps_unknown_field_compatibility_with_named_permissions()
         .send_raw_request(
             "thread/start",
             Some(json!({
+                "model": "test-model",
                 "permissions": ":read-only",
                 "futureField": { "ignored": true }
             })),
@@ -161,7 +162,10 @@ async fn request_handlers_reject_remote_image_urls() -> Result<()> {
         .await?;
 
     let thread_request_id = mcp
-        .send_thread_start_request_with_auto_env(ThreadStartParams::default())
+        .send_thread_start_request_with_auto_env(ThreadStartParams {
+            model: Some("test-model".to_string()),
+            ..ThreadStartParams::default()
+        })
         .await?;
     let ThreadStartResponse { thread, .. } =
         timeout(DEFAULT_READ_TIMEOUT, mcp.read_response(thread_request_id)).await??;

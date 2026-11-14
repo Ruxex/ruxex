@@ -52,6 +52,7 @@ async fn thread_delete_rejects_paginated_writer_owned_by_another_process() -> Re
             params: ThreadResumeParams {
                 thread_id: thread_id.clone(),
                 exclude_turns: true,
+                model: Some("test-model".to_string()),
                 ..Default::default()
             },
         })
@@ -278,7 +279,13 @@ async fn thread_delete_handles_live_threads_before_rollout_exists() -> Result<()
         .build_initialized()
         .await?;
 
-    let persisted_thread = mcp.start_thread(ThreadStartParams::default()).await?.thread;
+    let persisted_thread = mcp
+        .start_thread(ThreadStartParams {
+            model: Some("test-model".to_string()),
+            ..ThreadStartParams::default()
+        })
+        .await?
+        .thread;
     let rollout_path = find_thread_path_by_id_str(
         ruxex_home.path(),
         &persisted_thread.id,
@@ -298,6 +305,7 @@ async fn thread_delete_handles_live_threads_before_rollout_exists() -> Result<()
 
     let ThreadStartResponse { thread, .. } = mcp
         .start_thread(ThreadStartParams {
+            model: Some("test-model".to_string()),
             ephemeral: Some(true),
             ..Default::default()
         })

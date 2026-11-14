@@ -344,12 +344,12 @@ async fn parse_skill_file(
     plugin_root: Option<&AbsolutePathBuf>,
 ) -> Result<SkillMetadata, String> {
     let metadata = match &skill.metadata {
-        SkillMetadataDiscovery::Present(metadata_path) => {
-            Some(SkillMetadataDiscovery::Present(metadata_path.clone()))
-        }
-        SkillMetadataDiscovery::Probe(metadata_path) => {
-            Some(SkillMetadataDiscovery::Probe(metadata_path.clone()))
-        }
+        SkillMetadataDiscovery::Present(metadata_path) => Some(SkillMetadataDiscovery::Present(
+            canonicalize_metadata_path(file_system, metadata_path).await,
+        )),
+        SkillMetadataDiscovery::Probe(metadata_path) => Some(SkillMetadataDiscovery::Probe(
+            canonicalize_metadata_path(file_system, metadata_path).await,
+        )),
         SkillMetadataDiscovery::Absent => None,
     }
     .unwrap_or(SkillMetadataDiscovery::Absent);
@@ -382,6 +382,16 @@ async fn parse_skill_file(
         plugin_id: plugin_identity.map(|identity| identity.plugin_id.clone()),
         remote_plugin_id: plugin_identity.and_then(|identity| identity.remote_plugin_id.clone()),
     })
+}
+
+async fn canonicalize_metadata_path(
+    file_system: &dyn EnvironmentAccess,
+    metadata_path: &PathUri,
+) -> PathUri {
+    file_system
+        .canonicalize(metadata_path)
+        .await
+        .unwrap_or_else(|_| metadata_path.clone())
 }
 
 fn default_skill_name(path: &AbsolutePathBuf) -> String {

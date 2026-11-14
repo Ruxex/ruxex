@@ -31,15 +31,18 @@ async fn start_session(
 #[tokio::test]
 async fn archived_session_requires_confirmation_before_resume_or_fork() -> Result<()> {
     for action in [
-        SessionStartAction::Resume(ResumeModelSettings::RestoreFromThread),
-        SessionStartAction::Fork(crate::app_server_session::ForkPermissionMode::InheritSaved),
+        SessionStartAction::Resume(ResumeModelSettings::OverrideFromCurrentConfig),
+        SessionStartAction::Fork(
+            crate::app_server_session::ForkPermissionMode::OverrideFromCurrentConfig,
+        ),
     ] {
         let ruxex_home = TempDir::new()?;
-        let config = ConfigBuilder::default()
+        let mut config = ConfigBuilder::default()
             .ruxex_home(ruxex_home.path().to_path_buf())
             .loader_overrides(LoaderOverrides::without_managed_config_for_tests())
             .build()
             .await?;
+        config.model = Some("test-model".to_string());
         ruxex_app_server_client::mount_provider_home_for_config(
             &config,
             ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
@@ -144,7 +147,7 @@ async fn archived_session_requires_confirmation_before_resume_or_fork() -> Resul
             &mut app_server,
             &config,
             &target,
-            SessionStartAction::Resume(ResumeModelSettings::RestoreFromThread),
+            SessionStartAction::Resume(ResumeModelSettings::OverrideFromCurrentConfig),
             async || panic!("active sessions must not prompt"),
         )
         .await?

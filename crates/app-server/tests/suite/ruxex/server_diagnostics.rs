@@ -31,7 +31,10 @@ async fn server_diagnostics_exposes_process_and_registered_thread_gauge() -> Res
         .build_initialized()
         .await?;
     app_server
-        .start_thread(ThreadStartParams::default())
+        .start_thread(ThreadStartParams {
+            model: Some("test-model".to_string()),
+            ..ThreadStartParams::default()
+        })
         .await?;
 
     let diagnostics: ServerDiagnosticsResponse = app_server

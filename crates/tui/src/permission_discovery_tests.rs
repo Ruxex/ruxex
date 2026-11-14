@@ -221,11 +221,12 @@ async fn explicit_permission_selection_uses_server_effective_profile() {
         .to_string(),
     )
     .unwrap();
-    let server_config = ConfigBuilder::default()
+    let mut server_config = ConfigBuilder::default()
         .ruxex_home(server_home.path().to_path_buf())
         .build()
         .await
         .unwrap();
+    server_config.model = Some("test-model".to_string());
     let client_home = tempfile::tempdir().unwrap();
     std::fs::write(
         client_home.path().join("config.toml"),
@@ -243,11 +244,12 @@ async fn explicit_permission_selection_uses_server_effective_profile() {
         .to_string(),
     )
     .unwrap();
-    let client_config = ConfigBuilder::default()
+    let mut client_config = ConfigBuilder::default()
         .ruxex_home(client_home.path().to_path_buf())
         .build()
         .await
         .unwrap();
+    client_config.model = Some("test-model".to_string());
     let selection = PermissionProfileSelection {
         profile_id: "server-only".into(),
         approval_policy: Some(AskForApproval::OnRequest),

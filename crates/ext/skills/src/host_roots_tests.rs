@@ -399,10 +399,13 @@ async fn unique_extra_root_loads_as_recursive_user_root() {
 }
 
 #[tokio::test]
-async fn repo_ancestry_without_project_marker_does_not_walk_parents() {
+async fn repo_ancestry_does_not_walk_above_project_root() {
     let temp_dir = TempDir::new().expect("temp dir");
     let outer = absolute(temp_dir.path().join("outer"));
     let cwd = outer.join("nested/inner");
+    let project_root = outer.join("nested");
+    fs::create_dir_all(&cwd).expect("create nested cwd");
+    fs::write(project_root.join(".git"), "gitdir: fake\n").expect("write project marker");
     fs::create_dir_all(outer.join(".agents/skills")).expect("create outer skills");
     fs::create_dir_all(cwd.join(".agents/skills")).expect("create cwd skills");
 

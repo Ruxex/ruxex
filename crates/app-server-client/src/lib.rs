@@ -1275,6 +1275,7 @@ mod tests {
                 .request_typed(ClientRequest::ThreadStart {
                     request_id: RequestId::Integer(2),
                     params: ThreadStartParams {
+                        model: Some("test-model".to_string()),
                         ephemeral: Some(true),
                         ..ThreadStartParams::default()
                     },
@@ -1294,6 +1295,7 @@ mod tests {
             .request_typed(ClientRequest::ThreadStart {
                 request_id: RequestId::Integer(3),
                 params: ThreadStartParams {
+                    model: Some("test-model".to_string()),
                     ephemeral: Some(true),
                     ..ThreadStartParams::default()
                 },

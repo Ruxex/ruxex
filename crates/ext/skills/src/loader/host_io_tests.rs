@@ -117,7 +117,9 @@ async fn host_loading_reuses_walk_inventory_for_symlinked_skill_pack() {
         calls
             .read_files
             .iter()
-            .all(|path| !path.starts_with(&linked_root))
+            .all(|path| !path.starts_with(&linked_root)),
+        "unexpected read paths: {:?}",
+        calls.read_files
     );
     assert!(
         calls

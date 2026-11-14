@@ -16,6 +16,7 @@ use ruxex_skills::resolve_skill_interface;
 use ruxex_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 
+use super::LEGACY_SKILLS_METADATA_FILENAME;
 use super::MAX_DEPENDENCY_COMMAND_LEN;
 use super::MAX_DEPENDENCY_DESCRIPTION_LEN;
 use super::MAX_DEPENDENCY_TRANSPORT_LEN;
@@ -85,26 +86,35 @@ pub(super) async fn load_host_skill_metadata(
         return LoadedSkillMetadata::default();
     };
     let metadata_path = match metadata {
-        SkillMetadataDiscovery::Present(path) => path,
+        SkillMetadataDiscovery::Present(path) => path.clone(),
         SkillMetadataDiscovery::Absent => return LoadedSkillMetadata::default(),
         SkillMetadataDiscovery::Probe(path) => {
-            match file_system
-                .get_metadata(path, GetMetadataOptions::default())
-                .await
-            {
-                Ok(metadata) if metadata.is_file => {}
-                Ok(_) => return LoadedSkillMetadata::default(),
-                Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                    return LoadedSkillMetadata::default();
-                }
-                Err(error) => {
-                    tracing::warn!(
-                        "ignoring {path}: failed to stat {label}: {error}",
-                        label = "skill metadata"
-                    );
-                    return LoadedSkillMetadata::default();
+            let legacy_path = path
+                .parent()
+                .and_then(|parent| parent.join(LEGACY_SKILLS_METADATA_FILENAME).ok());
+            let mut found = None;
+            for candidate in std::iter::once(path).chain(legacy_path.as_ref()) {
+                match file_system
+                    .get_metadata(candidate, GetMetadataOptions::default())
+                    .await
+                {
+                    Ok(metadata) if metadata.is_file => {
+                        found = Some(candidate.clone());
+                        break;
+                    }
+                    Ok(_) => {}
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                    Err(error) => {
+                        tracing::warn!(
+                            "ignoring {candidate}: failed to stat {label}: {error}",
+                            label = "skill metadata"
+                        );
+                    }
                 }
             }
+            let Some(path) = found else {
+                return LoadedSkillMetadata::default();
+            };
             path
         }
     };
@@ -113,7 +123,7 @@ pub(super) async fn load_host_skill_metadata(
         .unwrap_or_else(|| "skill metadata".to_string());
 
     let contents = match file_system
-        .read_file_text(metadata_path, ReadFileOptions::default())
+        .read_file_text(&metadata_path, ReadFileOptions::default())
         .await
     {
         Ok(contents) => contents,

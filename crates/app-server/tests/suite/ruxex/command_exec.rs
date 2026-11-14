@@ -1074,6 +1074,14 @@ async fn command_exec_process_ids_are_connection_scoped_and_disconnect_terminate
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let ruxex_home = TempDir::new()?;
     create_config_toml(ruxex_home.path(), &server.uri(), "never")?;
+    // This test covers connection-scoped process IDs and disconnect cleanup;
+    // sandbox launch behavior is covered by the dedicated command/exec tests.
+    let config_path = ruxex_home.path().join("config.toml");
+    let config = std::fs::read_to_string(&config_path)?;
+    std::fs::write(
+        config_path,
+        config.replace("sandbox_mode = \"read-only\"", "sandbox_mode = \"danger-full-access\""),
+    )?;
     let marker = format!(
         "ruxex-command-exec-marker-{}",
         std::time::SystemTime::now()

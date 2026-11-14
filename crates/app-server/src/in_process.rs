@@ -1077,6 +1077,7 @@ mod tests {
                 .request(ClientRequest::ThreadStart {
                     request_id: RequestId::Integer(2),
                     params: ThreadStartParams {
+                        model: Some("test-model".to_string()),
                         ephemeral: Some(true),
                         ..ThreadStartParams::default()
                     },

@@ -723,6 +723,10 @@ async fn execute_inner(
                     request_id,
                     params: ThreadForkParams {
                         thread_id: thread_id.clone(),
+                        model: thread
+                            .model
+                            .clone()
+                            .or_else(|| thread_start_params.model.clone()),
                         before_turn_id: before_turn_id.clone(),
                         ephemeral: thread.ephemeral,
                         exclude_turns,

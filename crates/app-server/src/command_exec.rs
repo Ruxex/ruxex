@@ -345,7 +345,6 @@ impl CommandExecManager {
             }
             controls
         };
-
         for control in controls {
             let CommandExecSession::Active { control_tx } = control;
             let _ = control_tx

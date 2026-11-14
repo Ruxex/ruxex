@@ -11,10 +11,11 @@ use tempfile::TempDir;
 
 async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String, String)> {
     let ruxex_home = tempfile::tempdir()?;
-    let config = ConfigBuilder::default()
+    let mut config = ConfigBuilder::default()
         .ruxex_home(ruxex_home.path().to_path_buf())
         .build()
         .await?;
+    config.model = Some("test-model".to_string());
     ruxex_app_server_client::mount_provider_home_for_config(
         &config,
         ruxex_utils_home_dir::ProductIdentity::ruxex().home_marker_file(),
@@ -96,7 +97,7 @@ async fn test_server() -> color_eyre::Result<(TempDir, AppServerSession, String,
             &crate::local_settings::LocalSettings::from(&config),
             config,
             ThreadId::from_string(&target)?,
-            ResumeModelSettings::RestoreFromThread,
+            ResumeModelSettings::OverrideFromCurrentConfig,
         )
         .await?;
     Ok((ruxex_home, server, source, target))
@@ -120,6 +121,7 @@ async fn call_tool(
             arguments,
         },
         ThreadStartParams {
+            model: Some("test-model".to_string()),
             dynamic_tools: Some(tool_specs()),
             ephemeral: Some(true),
             ..ThreadStartParams::default()
@@ -653,6 +655,7 @@ async fn task_creation_and_followup_start_background_turns() -> color_eyre::Resu
             ClientRequest::ThreadStart {
                 request_id,
                 params: ThreadStartParams {
+                    model: Some("test-model".to_string()),
                     ephemeral: Some(true),
                     ..ThreadStartParams::default()
                 },

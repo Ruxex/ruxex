@@ -16,6 +16,7 @@ use ruxex_skills::parse_skill_frontmatter_metadata;
 use ruxex_utils_path_uri::PathUri;
 use ruxex_utils_plugins::SkillDiscoveryMode;
 
+use super::LEGACY_SKILLS_METADATA_FILENAME;
 use super::MAX_QUALIFIED_NAME_LEN;
 use super::discovery::DirectorySymlinkPolicy;
 use super::discovery::DiscoveredSkill;
@@ -338,19 +339,30 @@ async fn probe_skill_metadata(
     file_system: &dyn EnvironmentAccess,
     metadata_path: &PathUri,
 ) -> (Option<SkillDependencies>, Option<SkillPolicy>) {
-    match file_system
-        .get_metadata(metadata_path, GetMetadataOptions::default())
-        .await
-    {
-        Ok(metadata) if metadata.is_file => {}
-        Ok(_) => return (None, None),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return (None, None),
-        Err(error) => {
-            tracing::warn!("ignoring {metadata_path}: failed to stat metadata: {error}");
-            return (None, None);
+    let legacy_path = metadata_path
+        .parent()
+        .and_then(|parent| parent.join(LEGACY_SKILLS_METADATA_FILENAME).ok());
+    let mut found = None;
+    for candidate in std::iter::once(metadata_path).chain(legacy_path.as_ref()) {
+        match file_system
+            .get_metadata(candidate, GetMetadataOptions::default())
+            .await
+        {
+            Ok(metadata) if metadata.is_file => {
+                found = Some(candidate.clone());
+                break;
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => {
+                tracing::warn!("ignoring {candidate}: failed to stat metadata: {error}");
+            }
         }
     }
-    read_skill_metadata(file_system, metadata_path).await
+    match found {
+        Some(metadata_path) => read_skill_metadata(file_system, &metadata_path).await,
+        None => (None, None),
+    }
 }
 
 async fn read_skill_metadata(
