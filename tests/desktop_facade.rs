@@ -28,7 +28,17 @@ fn desktop_facade_exposes_embedded_host_surface() {
     let _: Option<RemoteAppServerClient> = None;
     let _: Option<RemoteAppServerConnectArgs> = None;
     let _: Option<RemoteAppServerEndpoint> = None;
-    let _ = provider_init_from_config_with_descriptor;
+    let _provider_init = |config: &Config,
+                          enable_api_key_env: bool,
+                          descriptor: &ruxex::provider::ProviderDescriptor,
+                          marker_file: std::path::PathBuf| {
+        drop(provider_init_from_config_with_descriptor(
+            config,
+            enable_api_key_env,
+            descriptor,
+            marker_file,
+        ));
+    };
 
     let _: Option<CliConfigOverrides> = None;
     let _: Option<LoaderOverrides> = None;
