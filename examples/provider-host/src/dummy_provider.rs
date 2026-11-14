@@ -524,11 +524,9 @@ fn scenario_chat_stream(
     };
 
     if selection.scenario == DummyScenario::Reasoning {
-        events.push(Ok(ProviderChatEvent::ReasoningSummaryDone {
-            item_id: format!("example-reasoning-summary-{}", selection.multi_turn),
-            text: FIXED_REASONING_SUMMARY.to_string(),
-            summary_index: 0,
-        }));
+        events.push(Ok(ProviderChatEvent::OutputItemDone(
+            example_reasoning_item(),
+        )));
     }
 
     if let Some(text) = final_text {
@@ -665,7 +663,7 @@ fn subagent_scenario_chat_stream(
         (DummyScenario::Subagent, 0) => vec![(
             "example-subagent-call-1",
             "example_worker",
-            "Reply in one short sentence confirming that the Example fixture can spawn an agent. Do not call tools.",
+            "Reply in one short sentence confirming that the Example fixture can spawn an agent; no further action is needed.",
         )],
         (DummyScenario::Subagent, _) => {
             return text_chat_stream(selection, FIXED_SUBAGENT_ANSWER);
@@ -674,12 +672,12 @@ fn subagent_scenario_chat_stream(
             (
                 "example-parallel-subagent-call-1",
                 "example_worker",
-                "Reply in one short sentence confirming that the Example fixture can launch a worker. Do not call tools.",
+                "Reply in one short sentence confirming that the Example fixture can launch a worker; no further action is needed.",
             ),
             (
                 "example-parallel-subagent-call-2",
                 "example_reviewer",
-                "Reply in one short sentence confirming that the Example fixture can launch a reviewer. Do not call tools.",
+                "Reply in one short sentence confirming that the Example fixture can launch a reviewer; no further action is needed.",
             ),
         ],
         (DummyScenario::ParallelSubagents, 1) => {
@@ -688,14 +686,14 @@ fn subagent_scenario_chat_stream(
                 missing.push((
                     "example-parallel-subagent-call-1",
                     "example_worker",
-                    "Reply in one short sentence confirming that the Example fixture can launch a worker. Do not call tools.",
+                    "Reply in one short sentence confirming that the Example fixture can launch a worker; no further action is needed.",
                 ));
             }
             if !has_function_call_output(input, "example-parallel-subagent-call-2") {
                 missing.push((
                     "example-parallel-subagent-call-2",
                     "example_reviewer",
-                    "Reply in one short sentence confirming that the Example fixture can launch a reviewer. Do not call tools.",
+                    "Reply in one short sentence confirming that the Example fixture can launch a reviewer; no further action is needed.",
                 ));
             }
             missing
@@ -733,11 +731,16 @@ fn example_spawn_agent_call(
     let (namespace, arguments) = match tool_form {
         SpawnAgentToolForm::V1 => (
             Some("multi_agent_v1".to_string()),
-            serde_json::json!({"message": message}).to_string(),
+            serde_json::json!({"message": message, "fork_context": false}).to_string(),
         ),
         SpawnAgentToolForm::V2 => (
             None,
-            serde_json::json!({"task_name": task_name, "message": message}).to_string(),
+            serde_json::json!({
+                "task_name": task_name,
+                "message": message,
+                "fork_turns": "none"
+            })
+            .to_string(),
         ),
     };
     ResponseItem::FunctionCall {
@@ -747,6 +750,20 @@ fn example_spawn_agent_call(
         arguments,
         encrypted_function_args: None,
         call_id: call_id.to_string(),
+        internal_chat_message_metadata_passthrough: None,
+    }
+}
+
+fn example_reasoning_item() -> ResponseItem {
+    ResponseItem::Reasoning {
+        id: None,
+        summary: vec![
+            ruxex_protocol::models::ReasoningItemReasoningSummary::SummaryText {
+                text: FIXED_REASONING_SUMMARY.to_string(),
+            },
+        ],
+        content: None,
+        encrypted_content: None,
         internal_chat_message_metadata_passthrough: None,
     }
 }
@@ -2710,8 +2727,14 @@ mod tests {
 
         assert!(events.iter().any(|event| matches!(
             event,
-            Ok(ProviderChatEvent::ReasoningSummaryDone { text, .. })
-                if text == "I will keep this fixture response concise and show the summary separately."
+            Ok(ProviderChatEvent::OutputItemDone(ResponseItem::Reasoning {
+                summary,
+                ..
+            })) if summary.iter().any(|part| matches!(
+                part,
+                ruxex_protocol::models::ReasoningItemReasoningSummary::SummaryText { text }
+                    if text == "I will keep this fixture response concise and show the summary separately."
+            ))
         )));
         assert!(events.iter().any(|event| matches!(
             event,
@@ -2799,16 +2822,43 @@ mod tests {
             assert_eq!(call_id, "example-subagent-call-1");
             let arguments: serde_json::Value =
                 serde_json::from_str(arguments).expect("spawn_agent arguments should be JSON");
-            assert!(
-                arguments["message"]
-                    .as_str()
-                    .unwrap()
-                    .contains("Do not call tools.")
+            assert_eq!(
+                arguments["message"],
+                "Reply in one short sentence confirming that the Example fixture can spawn an agent; no further action is needed."
             );
             if expected_namespace.is_none() {
                 assert_eq!(arguments["task_name"], "example_worker");
+                assert_eq!(arguments["fork_turns"], "none");
+            } else {
+                assert_eq!(arguments["fork_context"], false);
             }
         }
+
+        let v1_child_prompt = user_message(
+            "Reply in one short sentence confirming that the Example fixture can spawn an agent; no further action is needed.",
+        );
+        assert_eq!(
+            select_scenario(&[v1_child_prompt])
+                .expect("V1 child prompt should select a scenario")
+                .scenario,
+            DummyScenario::Basic
+        );
+
+        let v2_child_prompt = ResponseItem::AgentMessage {
+            id: None,
+            author: "assistant".to_string(),
+            recipient: "example_worker".to_string(),
+            content: vec![ruxex_protocol::models::AgentMessageInputContent::InputText {
+                text: "Reply in one short sentence confirming that the Example fixture can spawn an agent; no further action is needed.".to_string(),
+            }],
+            internal_chat_message_metadata_passthrough: None,
+        };
+        assert_eq!(
+            select_scenario(&[v2_child_prompt])
+                .expect("V2 child prompt should select a scenario")
+                .scenario,
+            DummyScenario::Basic
+        );
     }
 
     #[test]
