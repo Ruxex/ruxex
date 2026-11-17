@@ -424,6 +424,8 @@ pub enum PluginStartupTasks {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppServerRuntimeOptions {
     pub product_identity: ProductIdentity,
+    /// Optional host-supplied default base instructions for newly started threads.
+    pub default_base_instructions: Option<String>,
     pub code_mode_host_transport: CodeModeHostTransport,
     pub plugin_startup_tasks: PluginStartupTasks,
     pub install_shutdown_signal_handler: bool,
@@ -434,6 +436,7 @@ impl Default for AppServerRuntimeOptions {
     fn default() -> Self {
         Self {
             product_identity: ProductIdentity::ruxex(),
+            default_base_instructions: None,
             code_mode_host_transport: CodeModeHostTransport::Local,
             plugin_startup_tasks: PluginStartupTasks::Start,
             install_shutdown_signal_handler: true,
@@ -585,7 +588,8 @@ async fn run_main_with_transport_options_and_optional_runtime(
         strict_config,
         arg0_paths.clone(),
         Arc::new(NoopThreadConfigLoader),
-    );
+    )
+    .with_default_base_instructions(runtime_options.default_base_instructions.clone());
     match config_manager
         .load_latest_config(/*fallback_cwd*/ None)
         .await

@@ -343,7 +343,8 @@ async fn snapshot_for_config_merges_extension_host_and_legacy_plugin_roots() {
         vec![plugin_skill_root],
         config_layer_stack,
     );
-    let skills_service = HostSkillsService::new(
+    let skills_service = HostSkillsService::new_with_host_home_dir(
+        ruxex_home.path().abs(),
         ruxex_home.path().abs(),
         /*bundled_skills_enabled*/ false,
     );
@@ -387,7 +388,8 @@ async fn snapshot_for_config_preserves_host_precedence_for_symlinked_plugin_root
     )
     .expect("symlink user skills root to plugin skills root");
     let config_layer_stack = config_stack(&ruxex_home, "[skills.bundled]\nenabled = false\n");
-    let skills_service = HostSkillsService::new(
+    let skills_service = HostSkillsService::new_with_host_home_dir(
+        ruxex_home.path().abs(),
         ruxex_home.path().abs(),
         /*bundled_skills_enabled*/ false,
     );
@@ -416,6 +418,44 @@ async fn snapshot_for_config_preserves_host_precedence_for_symlinked_plugin_root
             plugin_id: None,
             remote_plugin_id: None,
         }]
+    );
+}
+
+#[tokio::test]
+async fn snapshot_for_config_loads_home_agents_skills_from_injected_host_home() {
+    let ruxex_home = tempfile::tempdir().expect("Ruxex home");
+    let host_home = tempfile::tempdir().expect("host home");
+    let cwd = tempfile::tempdir().expect("working directory");
+    let skill_dir = host_home.path().join(".agents/skills/host-home-skill");
+    fs::create_dir_all(&skill_dir).expect("create host-home skill directory");
+    fs::write(
+        skill_dir.join("SKILL.md"),
+        "---\nname: host-home-skill\ndescription: from injected host home\n---\n\n# Body\n",
+    )
+    .expect("write host-home skill");
+    let input = HostSkillsLoadInput::new(
+        cwd.path().abs(),
+        Vec::new(),
+        config_stack(&ruxex_home, "[skills.bundled]\nenabled = false\n"),
+    );
+    let skills_service = HostSkillsService::new_with_host_home_dir(
+        ruxex_home.path().abs(),
+        host_home.path().abs(),
+        /*bundled_skills_enabled*/ false,
+    );
+
+    let snapshot = skills_service
+        .snapshot_for_config(&input, Some(Arc::clone(&LOCAL_FS)))
+        .await;
+
+    assert_eq!(
+        snapshot
+            .outcome()
+            .skills
+            .iter()
+            .map(|skill| skill.name.as_str())
+            .collect::<Vec<_>>(),
+        vec!["host-home-skill"]
     );
 }
 

@@ -1147,6 +1147,35 @@ pub async fn run_with_provider_factory_and_identity_and_resolvers(
     product_identity: ProductIdentity,
     brand_profile: Option<Arc<dyn TuiBrandProfile>>,
 ) -> std::io::Result<AppExitInfo> {
+    run_with_provider_factory_and_identity_and_resolvers_and_base_instructions(
+        cli,
+        arg0_paths,
+        loader_overrides,
+        explicit_remote_endpoint,
+        provider_factory,
+        provider_credential_resolvers,
+        provider_executable,
+        product_identity,
+        brand_profile,
+        None,
+    )
+    .await
+}
+
+/// Runs the TUI with an optional host-supplied default base-instructions value.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_with_provider_factory_and_identity_and_resolvers_and_base_instructions(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    loader_overrides: LoaderOverrides,
+    explicit_remote_endpoint: Option<RemoteAppServerEndpoint>,
+    provider_factory: Option<ProviderRuntimeFactory>,
+    provider_credential_resolvers: Option<ProviderCredentialResolverRegistry>,
+    provider_executable: Option<PathBuf>,
+    product_identity: ProductIdentity,
+    brand_profile: Option<Arc<dyn TuiBrandProfile>>,
+    default_base_instructions: Option<String>,
+) -> std::io::Result<AppExitInfo> {
     system_motion::initialize().await;
     // Keep the startup future out of the CLI caller's frame while the TUI is running.
     match Box::pin(startup_orchestration::run_main_inner(
@@ -1159,6 +1188,7 @@ pub async fn run_with_provider_factory_and_identity_and_resolvers(
         provider_executable,
         brand_profile,
         product_identity,
+        default_base_instructions,
     ))
     .await
     {

@@ -1336,6 +1336,11 @@ impl ThreadRequestProcessor {
                 .map_err(|err| config_load_error(&err))?;
         }
 
+        // A host prompt profile is a default for new conversations only. Apply it
+        // after project trust may have reloaded the effective config, and only
+        // when neither config nor this thread supplied its own instructions.
+        config_manager.apply_default_base_instructions(&mut config);
+
         // Thread config can include project-local warnings absent at initialization.
         let mut config_warnings = config
             .startup_warnings

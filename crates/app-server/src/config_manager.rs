@@ -26,6 +26,7 @@ pub(crate) struct ConfigManager {
     strict_config: bool,
     arg0_paths: Arg0DispatchPaths,
     thread_config_loader: Arc<dyn ThreadConfigLoader>,
+    default_base_instructions: Option<String>,
 }
 
 impl ConfigManager {
@@ -44,7 +45,16 @@ impl ConfigManager {
             strict_config,
             arg0_paths,
             thread_config_loader,
+            default_base_instructions: None,
         }
+    }
+
+    pub(crate) fn with_default_base_instructions(
+        mut self,
+        default_base_instructions: Option<String>,
+    ) -> Self {
+        self.default_base_instructions = default_base_instructions;
+        self
     }
 
     pub(crate) fn ruxex_home(&self) -> &Path {
@@ -218,6 +228,16 @@ impl ConfigManager {
             .await?;
         self.apply_arg0_paths(&mut config);
         Ok(config)
+    }
+
+    pub(crate) fn apply_default_base_instructions(&self, config: &mut Config) {
+        if config.base_instructions.is_none()
+            && let Some(default_base_instructions) = &self.default_base_instructions
+        {
+            config.base_instructions = Some(default_base_instructions.clone());
+            config.base_instructions_provenance =
+                Some(ruxex_protocol::models::BaseInstructionsProvenance::Custom);
+        }
     }
 
     pub(crate) async fn load_config_layers_for_cwd(

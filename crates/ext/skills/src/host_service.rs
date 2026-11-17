@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::Weak;
 
+use dirs::home_dir;
 use ruxex_config::ConfigLayerStack;
 use ruxex_config::SkillConfigRules;
 use ruxex_config::bundled_skills_enabled_from_stack;
@@ -31,7 +32,7 @@ use ruxex_skills::install_system_skills;
 
 use crate::HostSkillsSnapshot;
 use crate::SkillLoadOutcome;
-use crate::host_roots::resolve_skill_roots;
+use crate::host_roots::resolve_skill_roots_with_home_dir;
 use crate::loader::HostSkillRoot;
 use crate::loader::HostSkillRootSnapshot;
 use crate::loader::MAX_CONCURRENT_ROOT_SCANS;
@@ -82,6 +83,7 @@ impl HostSkillsLoadInput {
 /// Source-specific model exposure remains the responsibility of the skills extension.
 pub struct HostSkillsService {
     ruxex_home: AbsolutePathBuf,
+    host_home_dir: Option<AbsolutePathBuf>,
     restriction_product: Option<Product>,
     extra_roots: RwLock<Vec<AbsolutePathBuf>>,
     cache_by_cwd: RwLock<HashMap<AbsolutePathBuf, HostSkillsSnapshot>>,
@@ -127,8 +129,42 @@ impl HostSkillsService {
         bundled_skills_enabled: bool,
         restriction_product: Option<Product>,
     ) -> Self {
+        let host_home_dir =
+            home_dir().and_then(|path| AbsolutePathBuf::from_absolute_path_checked(path).ok());
+        Self::new_with_host_home_dir_and_restriction_product(
+            ruxex_home,
+            host_home_dir,
+            bundled_skills_enabled,
+            restriction_product,
+        )
+    }
+
+    /// Creates a service that discovers home-level `.agents/skills` under `host_home_dir`.
+    ///
+    /// Regular constructors resolve this directory from the process environment. Hosts that
+    /// manage home directories themselves can pass the resolved path explicitly.
+    pub fn new_with_host_home_dir(
+        ruxex_home: AbsolutePathBuf,
+        host_home_dir: AbsolutePathBuf,
+        bundled_skills_enabled: bool,
+    ) -> Self {
+        Self::new_with_host_home_dir_and_restriction_product(
+            ruxex_home,
+            Some(host_home_dir),
+            bundled_skills_enabled,
+            Some(Product::Codex),
+        )
+    }
+
+    fn new_with_host_home_dir_and_restriction_product(
+        ruxex_home: AbsolutePathBuf,
+        host_home_dir: Option<AbsolutePathBuf>,
+        bundled_skills_enabled: bool,
+        restriction_product: Option<Product>,
+    ) -> Self {
         let service = Self {
             ruxex_home,
+            host_home_dir,
             restriction_product,
             extra_roots: RwLock::new(Vec::new()),
             cache_by_cwd: RwLock::new(HashMap::new()),
@@ -223,10 +259,11 @@ impl HostSkillsService {
         if bundled_skills_enabled {
             self.ensure_system_skills_installed();
         }
-        let mut roots = resolve_skill_roots(
+        let mut roots = resolve_skill_roots_with_home_dir(
             fs,
             &input.config_layer_stack,
             &input.cwd,
+            self.host_home_dir.as_ref(),
             input.effective_skill_roots.clone(),
             self.extra_roots(),
         )
@@ -257,10 +294,11 @@ impl HostSkillsService {
             return snapshot;
         }
 
-        let mut roots = resolve_skill_roots(
+        let mut roots = resolve_skill_roots_with_home_dir(
             fs.clone(),
             &input.config_layer_stack,
             &input.cwd,
+            self.host_home_dir.as_ref(),
             input.effective_skill_roots.clone(),
             self.extra_roots(),
         )

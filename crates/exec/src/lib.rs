@@ -250,7 +250,7 @@ fn exec_stderr_env_filter() -> EnvFilter {
 pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
 pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
-    run_main_with_runtime_factory(cli, arg0_paths, None).await
+    run_main_with_runtime_factory(cli, arg0_paths, None, None).await
 }
 
 /// Runs exec with a provider factory supplied by the embedding host.
@@ -259,13 +259,31 @@ pub async fn run_main_with_provider_factory(
     arg0_paths: Arg0DispatchPaths,
     provider_factory: ProviderRuntimeFactory,
 ) -> anyhow::Result<()> {
-    run_main_with_runtime_factory(cli, arg0_paths, Some(provider_factory)).await
+    run_main_with_provider_factory_and_base_instructions(cli, arg0_paths, provider_factory, None)
+        .await
+}
+
+/// Runs exec with a provider factory and optional host-supplied default instructions.
+pub async fn run_main_with_provider_factory_and_base_instructions(
+    cli: Cli,
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ProviderRuntimeFactory,
+    default_base_instructions: Option<String>,
+) -> anyhow::Result<()> {
+    run_main_with_runtime_factory(
+        cli,
+        arg0_paths,
+        Some(provider_factory),
+        default_base_instructions,
+    )
+    .await
 }
 
 async fn run_main_with_runtime_factory(
     cli: Cli,
     arg0_paths: Arg0DispatchPaths,
     provider_factory: Option<ProviderRuntimeFactory>,
+    default_base_instructions: Option<String>,
 ) -> anyhow::Result<()> {
     if let Err(err) = set_default_originator("ruxex_exec".to_string()) {
         tracing::warn!(?err, "Failed to set Ruxex exec originator override {err:?}");
@@ -524,7 +542,14 @@ async fn run_main_with_runtime_factory(
             .strict_config(strict_config)
             .build()
     };
-    let config = build_config(overrides).await?;
+    let mut config = build_config(overrides).await?;
+    if config.base_instructions.is_none()
+        && let Some(default_base_instructions) = default_base_instructions
+    {
+        config.base_instructions = Some(default_base_instructions);
+        config.base_instructions_provenance =
+            Some(ruxex_protocol::models::BaseInstructionsProvenance::Custom);
+    }
 
     #[allow(clippy::print_stderr)]
     match check_execpolicy_for_warnings(&config.config_layer_stack).await {

@@ -1927,6 +1927,12 @@ pub(crate) fn thread_start_params_from_config(
             ThreadParamsMode::Embedded => new_thread_reasoning_overrides(config),
             ThreadParamsMode::Remote => config_request_overrides_from_config(config),
         },
+        base_instructions: config.base_instructions.clone().filter(|_| {
+            !matches!(
+                config.base_instructions_provenance,
+                Some(BaseInstructionsProvenance::Model { .. })
+            )
+        }),
         ephemeral: Some(config.ephemeral),
         history_mode: (!config.ephemeral).then_some(ThreadHistoryMode::Paginated),
         session_start_source,

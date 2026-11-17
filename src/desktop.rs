@@ -66,6 +66,7 @@ pub mod host {
     use ruxex_protocol::protocol::SessionSource;
     use ruxex_utils_cli::CliConfigOverrides;
     use ruxex_utils_home_dir::{ProductIdentity, find_product_home};
+    use std::sync::Arc;
 
     pub type ProviderRuntimeFactory = (fn(ProviderInit) -> AppServerRuntime, ProviderDescriptor);
 
@@ -94,6 +95,40 @@ pub mod host {
             AppServerWebsocketAuthSettings::default(),
             AppServerRuntimeOptions {
                 product_identity,
+                managed_daemon: true,
+                ..Default::default()
+            },
+            provider_factory,
+        )
+        .await
+    }
+
+    /// Runs the provider-owned daemon with an optional host system prompt profile.
+    pub async fn run_host_app_server_daemon_with_provider_factory_and_identity_and_system_prompt_profile(
+        arg0_paths: Arg0DispatchPaths,
+        cli_config_overrides: CliConfigOverrides,
+        loader_overrides: LoaderOverrides,
+        strict_config: bool,
+        provider_factory: ProviderRuntimeFactory,
+        product_identity: ProductIdentity,
+        system_prompt_profile: Option<Arc<dyn crate::SystemPromptProfile>>,
+    ) -> std::io::Result<AppServerExit> {
+        let ruxex_home = find_product_home(&product_identity)?;
+        let socket_path = app_server_control_socket_path(&ruxex_home)?;
+        let default_base_instructions = system_prompt_profile
+            .and_then(|profile| profile.base_instructions().map(str::to_owned));
+        run_main_with_transport_options_and_provider_factory(
+            arg0_paths,
+            cli_config_overrides,
+            loader_overrides,
+            strict_config,
+            false,
+            AppServerTransport::UnixSocket { socket_path },
+            SessionSource::Cli,
+            AppServerWebsocketAuthSettings::default(),
+            AppServerRuntimeOptions {
+                product_identity,
+                default_base_instructions,
                 managed_daemon: true,
                 ..Default::default()
             },

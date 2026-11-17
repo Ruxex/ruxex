@@ -812,6 +812,7 @@ pub async fn run<P: ModelProviderFactory>(
         None,
         ProductIdentity::ruxex(),
         brand_profile,
+        None,
     )
     .await
 }
@@ -828,6 +829,7 @@ pub async fn run_with_provider_factory(
         None,
         ProductIdentity::ruxex(),
         brand_profile,
+        None,
     )
     .await
 }
@@ -845,6 +847,7 @@ pub async fn run_with_provider_factory_and_identity(
         None,
         product_identity,
         brand_profile,
+        None,
     )
     .await
 }
@@ -883,6 +886,26 @@ pub async fn run_with_provider_factory_and_identity_and_resolvers(
         provider_credential_resolvers,
         product_identity,
         brand_profile,
+        None,
+    )
+    .await
+}
+
+/// Runs the CLI with host-supplied default base instructions for new threads.
+pub async fn run_with_provider_factory_and_identity_and_base_instructions(
+    arg0_paths: Arg0DispatchPaths,
+    provider_factory: ruxex_tui::ProviderRuntimeFactory,
+    product_identity: ProductIdentity,
+    brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
+    default_base_instructions: Option<String>,
+) -> anyhow::Result<()> {
+    run_cli_with_product_identity(
+        arg0_paths,
+        Some(provider_factory),
+        None,
+        product_identity,
+        brand_profile,
+        default_base_instructions,
     )
     .await
 }
@@ -893,6 +916,7 @@ async fn run_cli_with_product_identity(
     provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
     product_identity: ProductIdentity,
     brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
+    default_base_instructions: Option<String>,
 ) -> anyhow::Result<()> {
     let MultitoolCli {
         config_overrides: mut root_config_overrides,
@@ -983,6 +1007,7 @@ async fn run_cli_with_product_identity(
                 provider_factory.clone(),
                 provider_credential_resolvers.clone(),
                 brand_profile.clone(),
+                default_base_instructions.clone(),
                 product_identity.clone(),
             )
             .await?;
@@ -1006,10 +1031,11 @@ async fn run_cli_with_product_identity(
                 root_config_overrides.clone(),
             );
             if let Some(provider_factory) = provider_factory.clone() {
-                ruxex_exec::run_main_with_provider_factory(
+                ruxex_exec::run_main_with_provider_factory_and_base_instructions(
                     exec_cli,
                     arg0_paths.clone(),
                     provider_factory,
+                    default_base_instructions.clone(),
                 )
                 .await?;
             } else {
@@ -1036,10 +1062,11 @@ async fn run_cli_with_product_identity(
                 root_config_overrides.clone(),
             );
             if let Some(provider_factory) = provider_factory.clone() {
-                ruxex_exec::run_main_with_provider_factory(
+                ruxex_exec::run_main_with_provider_factory_and_base_instructions(
                     exec_cli,
                     arg0_paths.clone(),
                     provider_factory,
+                    default_base_instructions.clone(),
                 )
                 .await?;
             } else {
@@ -1157,6 +1184,7 @@ async fn run_cli_with_product_identity(
                     let runtime_options = ruxex_app_server::AppServerRuntimeOptions {
                         code_mode_host_transport: code_mode_host.into(),
                         managed_daemon,
+                        default_base_instructions: default_base_instructions.clone(),
                         ..Default::default()
                     };
                     let exit =
@@ -1295,6 +1323,7 @@ async fn run_cli_with_product_identity(
                 provider_factory.clone(),
                 provider_credential_resolvers.clone(),
                 brand_profile.clone(),
+                default_base_instructions.clone(),
                 product_identity.clone(),
             )
             .await?;
@@ -1382,6 +1411,7 @@ async fn run_cli_with_product_identity(
                 provider_factory.clone(),
                 provider_credential_resolvers.clone(),
                 brand_profile.clone(),
+                default_base_instructions.clone(),
                 product_identity.clone(),
             )
             .await?;
@@ -2179,6 +2209,7 @@ async fn run_interactive_tui(
     provider_factory: Option<ProviderRuntimeFactory>,
     provider_credential_resolvers: Option<ruxex_tui::ProviderCredentialResolverRegistry>,
     brand_profile: Option<Arc<dyn ruxex_tui::TuiBrandProfile>>,
+    default_base_instructions: Option<String>,
     product_identity: ProductIdentity,
 ) -> std::io::Result<AppExitInfo> {
     if interactive.no_daemon {
@@ -2252,7 +2283,7 @@ async fn run_interactive_tui(
         None
     };
     let start_tui = || {
-        ruxex_tui::run_with_provider_factory_and_identity_and_resolvers(
+        ruxex_tui::run_with_provider_factory_and_identity_and_resolvers_and_base_instructions(
             interactive.clone(),
             arg0_paths.clone(),
             ruxex_config::LoaderOverrides::default(),
@@ -2262,6 +2293,7 @@ async fn run_interactive_tui(
             provider_executable.clone(),
             product_identity.clone(),
             brand_profile.clone(),
+            default_base_instructions.clone(),
         )
     };
     run_tui_with_recovery(start_tui, remote_auth_token_env.as_deref()).await

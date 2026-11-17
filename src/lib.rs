@@ -27,6 +27,40 @@ pub use ruxex_tui::DEFAULT_TUI_STATUS_LINE_ITEMS;
 pub use ruxex_tui::TuiBrandProfile;
 pub use ruxex_utils_home_dir::ProductIdentity;
 
+/// Host-supplied default instructions for new model conversations.
+///
+/// Implement this trait in the application binary to provide product-specific
+/// instructions at compile time. The profile is optional; returning `None`
+/// keeps Ruxex's configured or model-specific instructions.
+pub trait SystemPromptProfile: Send + Sync {
+    /// Returns the base instructions to use by default for new threads.
+    fn base_instructions(&self) -> Option<&str> {
+        None
+    }
+}
+
+/// Runs the CLI with a host-selected provider, product identity, TUI brand,
+/// and optional compile-time system prompt profile.
+#[cfg(feature = "cli")]
+pub async fn run_with_provider_factory_and_identity_and_system_prompt_profile(
+    arg0_paths: ruxex_arg0::Arg0DispatchPaths,
+    provider_factory: ProviderRuntimeFactory,
+    product_identity: ProductIdentity,
+    brand_profile: Option<std::sync::Arc<dyn TuiBrandProfile>>,
+    system_prompt_profile: Option<std::sync::Arc<dyn SystemPromptProfile>>,
+) -> anyhow::Result<()> {
+    let default_base_instructions =
+        system_prompt_profile.and_then(|profile| profile.base_instructions().map(str::to_owned));
+    ruxex_cli::run_with_provider_factory_and_identity_and_base_instructions(
+        arg0_paths,
+        provider_factory,
+        product_identity,
+        brand_profile,
+        default_base_instructions,
+    )
+    .await
+}
+
 /// Arg0 dispatch and helper executable setup APIs.
 pub mod arg0 {
     pub use ruxex_arg0::*;

@@ -76,8 +76,9 @@ The provider-neutral contract and protocol modules remain available without
 these facade features. The two supported application profiles are intentionally
 coarse; workspace crate boundaries are not part of the public dependency model.
 
-The CLI/TUI entry point accepts all three host-defined pieces. The CLI invokes
-the provider factory and constructs the App Server internally:
+The CLI/TUI entry point accepts a provider, product identity, and TUI brand,
+with an optional system prompt profile. The CLI invokes the provider factory
+and constructs the App Server internally:
 
 ```rust
 use std::sync::Arc;
@@ -107,6 +108,32 @@ ruxex::run_with_provider_factory_and_identity(
     provider_factory,
     product_identity,
     Some(Arc::new(MyTuiBrandProfile)),
+)
+.await?;
+```
+
+Applications can also provide a compile-time default system prompt. Implement
+`SystemPromptProfile` and pass it to the profile-aware entry point. The profile
+is optional; a missing profile or `None` keeps the configured or model-specific
+instructions. Explicit thread-level `base_instructions` remain higher priority.
+Embedded desktop hosts can pass the same optional profile to
+`ruxex::desktop::host::run_host_app_server_daemon_with_provider_factory_and_identity_and_system_prompt_profile`.
+
+```rust
+struct ExamplePrompt;
+
+impl ruxex::SystemPromptProfile for ExamplePrompt {
+    fn base_instructions(&self) -> Option<&str> {
+        Some("You are the Example Agent support assistant.")
+    }
+}
+
+ruxex::run_with_provider_factory_and_identity_and_system_prompt_profile(
+    arg0_paths,
+    provider_factory,
+    product_identity,
+    Some(Arc::new(MyTuiBrandProfile)),
+    Some(Arc::new(ExamplePrompt)),
 )
 .await?;
 ```

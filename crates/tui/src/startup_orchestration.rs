@@ -17,6 +17,7 @@ pub(super) async fn run_main_inner(
     host_executable: Option<std::path::PathBuf>,
     brand_profile: Option<std::sync::Arc<dyn TuiBrandProfile>>,
     product_identity: ProductIdentity,
+    default_base_instructions: Option<String>,
 ) -> std::io::Result<AppExitInfo> {
     if cli.no_daemon && explicit_remote_endpoint.is_some() {
         return Err(std::io::Error::other(
@@ -273,6 +274,13 @@ pub(super) async fn run_main_inner(
             strict_config,
         ))
         .await?;
+    if config.base_instructions.is_none()
+        && let Some(default_base_instructions) = default_base_instructions
+    {
+        config.base_instructions = Some(default_base_instructions);
+        config.base_instructions_provenance =
+            Some(ruxex_protocol::models::BaseInstructionsProvenance::Custom);
+    }
     let auto_start_daemon = config.features.enabled(Feature::DaemonAutoStart)
         && !cli.agents_overview
         && !cli.no_daemon
