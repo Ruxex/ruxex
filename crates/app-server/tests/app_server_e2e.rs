@@ -48,5 +48,8 @@ mod thread_delete;
 #[path = "suite/ruxex/thread_sections.rs"]
 mod thread_sections;
 #[rustfmt::skip]
+#[path = "suite/ruxex/thread_token_usage.rs"]
+mod thread_token_usage;
+#[rustfmt::skip]
 #[path = "suite/ruxex/user_verification.rs"]
 mod user_verification;

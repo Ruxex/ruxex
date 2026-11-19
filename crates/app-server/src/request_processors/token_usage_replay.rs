@@ -63,6 +63,35 @@ pub(super) fn restored_token_usage_turn_id(
         .unwrap_or_else(|| latest_token_usage_turn_id(turns))
 }
 
+/// Restores the latest thread-scoped usage snapshot stored in rollout history.
+pub(super) fn restored_thread_token_usage(
+    rollout_items: &[RolloutItem],
+) -> Option<ThreadTokenUsage> {
+    rollout_items.iter().rev().find_map(|item| match item {
+        RolloutItem::EventMsg(EventMsg::TokenCount(event)) => {
+            event.info.clone().map(ThreadTokenUsage::from)
+        }
+        RolloutItem::TokenUsageRecord(record) => Some(thread_token_usage_from_record(record)),
+        RolloutItem::Compacted(compacted) => compacted
+            .latest_token_usage_record
+            .as_ref()
+            .map(thread_token_usage_from_record),
+        _ => None,
+    })
+}
+
+fn thread_token_usage_from_record(
+    record: &ruxex_protocol::protocol::TokenUsageRecord,
+) -> ThreadTokenUsage {
+    ThreadTokenUsage {
+        total: record.thread_token_usage.clone().into(),
+        last: record.usage.clone().into(),
+        total_amount: record.thread_amount,
+        last_amount: record.amount,
+        model_context_window: None,
+    }
+}
+
 /// Identifies the turn that was active when the latest `TokenCount` record appeared.
 ///
 /// The id is preferred when it still appears in the rebuilt thread. The position is a
@@ -114,9 +143,108 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use ruxex_app_server_protocol::build_turns_from_rollout_items;
+    use ruxex_protocol::SessionId;
     use ruxex_protocol::protocol::AgentMessageEvent;
     use ruxex_protocol::protocol::TokenCountEvent;
+    use ruxex_protocol::protocol::TokenUsage;
+    use ruxex_protocol::protocol::TokenUsageInfo;
+    use ruxex_protocol::protocol::TokenUsageRecord;
     use ruxex_protocol::protocol::UserMessageEvent;
+    use ruxex_rollout::CompactedItem;
+
+    #[test]
+    fn restored_thread_token_usage_restores_legacy_token_count() {
+        let mut rollout_items = token_usage_history();
+        rollout_items[2] = RolloutItem::EventMsg(EventMsg::TokenCount(TokenCountEvent {
+            info: Some(TokenUsageInfo {
+                total_token_usage: token_usage(150),
+                last_token_usage: token_usage(90),
+                total_amount: Some(0.56),
+                last_amount: Some(0.03),
+                model_context_window: Some(200_000),
+            }),
+            rate_limits: None,
+        }));
+
+        let usage = restored_thread_token_usage(&rollout_items).unwrap();
+
+        assert_eq!(usage.total.total_tokens, 150);
+        assert_eq!(usage.last.total_tokens, 90);
+        assert_eq!(usage.total_amount, Some(0.56));
+        assert_eq!(usage.last_amount, Some(0.03));
+        assert_eq!(usage.model_context_window, Some(200_000));
+    }
+
+    #[test]
+    fn restored_thread_token_usage_returns_none_without_snapshot() {
+        assert_eq!(restored_thread_token_usage(&token_usage_history()), None);
+    }
+
+    #[test]
+    fn restored_thread_token_usage_restores_usage_record() {
+        let rollout_items = vec![RolloutItem::TokenUsageRecord(token_usage_record())];
+
+        let usage = restored_thread_token_usage(&rollout_items).unwrap();
+
+        assert_eq!(usage.total.total_tokens, 150);
+        assert_eq!(usage.last.total_tokens, 90);
+        assert_eq!(usage.total_amount, Some(0.56));
+        assert_eq!(usage.last_amount, Some(0.03));
+        assert_eq!(usage.model_context_window, None);
+    }
+
+    #[test]
+    fn restored_thread_token_usage_uses_latest_record_and_skips_empty_token_count() {
+        let mut newer_record = token_usage_record();
+        newer_record.thread_token_usage = token_usage(250);
+        newer_record.usage = token_usage(100);
+        newer_record.thread_amount = Some(0.88);
+        newer_record.amount = Some(0.05);
+        let rollout_items = vec![
+            RolloutItem::TokenUsageRecord(token_usage_record()),
+            RolloutItem::TokenUsageRecord(newer_record),
+            RolloutItem::EventMsg(EventMsg::TokenCount(TokenCountEvent {
+                info: None,
+                rate_limits: None,
+            })),
+        ];
+
+        let usage = restored_thread_token_usage(&rollout_items).unwrap();
+
+        assert_eq!(usage.total.total_tokens, 250);
+        assert_eq!(usage.last.total_tokens, 100);
+        assert_eq!(usage.total_amount, Some(0.88));
+        assert_eq!(usage.last_amount, Some(0.05));
+    }
+
+    #[test]
+    fn restored_thread_token_usage_restores_compacted_snapshot() {
+        let rollout_items = vec![RolloutItem::Compacted(compacted_with_record(
+            token_usage_record(),
+        ))];
+
+        let usage = restored_thread_token_usage(&rollout_items).unwrap();
+
+        assert_eq!(usage.total.total_tokens, 150);
+        assert_eq!(usage.last.total_tokens, 90);
+        assert_eq!(usage.total_amount, Some(0.56));
+        assert_eq!(usage.last_amount, Some(0.03));
+    }
+
+    #[test]
+    fn restored_thread_token_usage_obeys_compacted_snapshot_order() {
+        let mut older_record = token_usage_record();
+        older_record.thread_token_usage = token_usage(250);
+        let rollout_items = vec![
+            RolloutItem::TokenUsageRecord(older_record),
+            RolloutItem::Compacted(compacted_with_record(token_usage_record())),
+        ];
+
+        let usage = restored_thread_token_usage(&rollout_items).unwrap();
+
+        assert_eq!(usage.total.total_tokens, 150);
+        assert_eq!(usage.total_amount, Some(0.56));
+    }
 
     #[test]
     fn replay_attribution_uses_already_loaded_history() {
@@ -192,5 +320,47 @@ mod tests {
                 ..Default::default()
             })),
         ]
+    }
+
+    fn token_usage(amount: i64) -> TokenUsage {
+        TokenUsage {
+            input_tokens: amount,
+            cached_input_tokens: 20,
+            cache_write_input_tokens: 2,
+            output_tokens: 30,
+            reasoning_output_tokens: 10,
+            total_tokens: amount,
+            ruxex_rollout_budget_units: None,
+        }
+    }
+
+    fn token_usage_record() -> TokenUsageRecord {
+        TokenUsageRecord {
+            thread_id: ThreadId::default(),
+            turn_id: "turn-1".to_string(),
+            session_id: SessionId::default(),
+            root_turn_id: "turn-1".to_string(),
+            response_id: "response-1".to_string(),
+            usage: token_usage(90),
+            amount: Some(0.03),
+            turn_token_usage: token_usage(90),
+            thread_token_usage: token_usage(150),
+            turn_amount: Some(0.03),
+            thread_amount: Some(0.56),
+        }
+    }
+
+    fn compacted_with_record(record: TokenUsageRecord) -> CompactedItem {
+        CompactedItem {
+            message: String::new(),
+            replacement_history: None,
+            retained_context: None,
+            window_number: None,
+            first_window_id: None,
+            previous_window_id: None,
+            window_id: None,
+            compaction_response_id: None,
+            latest_token_usage_record: Some(record),
+        }
     }
 }

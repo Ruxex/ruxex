@@ -429,6 +429,8 @@ export type { ThreadStatus } from "./ThreadStatus";
 export type { ThreadStatusChangedNotification } from "./ThreadStatusChangedNotification";
 export type { ThreadTimelineEntry } from "./ThreadTimelineEntry";
 export type { ThreadTokenUsage } from "./ThreadTokenUsage";
+export type { ThreadTokenUsageReadParams } from "./ThreadTokenUsageReadParams";
+export type { ThreadTokenUsageReadResponse } from "./ThreadTokenUsageReadResponse";
 export type { ThreadTokenUsageUpdatedNotification } from "./ThreadTokenUsageUpdatedNotification";
 export type { ThreadTurnsListParams } from "./ThreadTurnsListParams";
 export type { ThreadTurnsListResponse } from "./ThreadTurnsListResponse";

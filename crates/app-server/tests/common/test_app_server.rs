@@ -92,6 +92,7 @@ use ruxex_app_server_protocol::ThreadSettingsUpdateParams;
 use ruxex_app_server_protocol::ThreadShellCommandParams;
 use ruxex_app_server_protocol::ThreadStartParams;
 use ruxex_app_server_protocol::ThreadStartResponse;
+use ruxex_app_server_protocol::ThreadTokenUsageReadParams;
 use ruxex_app_server_protocol::ThreadTurnsListParams;
 use ruxex_app_server_protocol::ThreadUnarchiveParams;
 use ruxex_app_server_protocol::ThreadUnsubscribeParams;
@@ -609,6 +610,15 @@ impl TestAppServer {
     ) -> anyhow::Result<i64> {
         let params = Some(serde_json::to_value(params)?);
         self.send_request("thread/read", params).await
+    }
+
+    /// Send a `thread/tokenUsage/read` JSON-RPC request.
+    pub async fn send_thread_token_usage_read_request(
+        &mut self,
+        params: ThreadTokenUsageReadParams,
+    ) -> anyhow::Result<i64> {
+        let params = Some(serde_json::to_value(params)?);
+        self.send_request("thread/tokenUsage/read", params).await
     }
 
     /// Send a `thread/turns/list` JSON-RPC request.

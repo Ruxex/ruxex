@@ -181,6 +181,8 @@ use ruxex_app_server_protocol::ThreadStartedNotification;
 use ruxex_app_server_protocol::ThreadStatus;
 use ruxex_app_server_protocol::ThreadTimelineListParams;
 use ruxex_app_server_protocol::ThreadTimelineListResponse;
+use ruxex_app_server_protocol::ThreadTokenUsageReadParams;
+use ruxex_app_server_protocol::ThreadTokenUsageReadResponse;
 use ruxex_app_server_protocol::ThreadTurnsListParams;
 use ruxex_app_server_protocol::ThreadTurnsListResponse;
 use ruxex_app_server_protocol::ThreadUnarchiveParams;
@@ -399,6 +401,7 @@ use crate::thread_state::ConnectionCapabilities;
 use crate::thread_state::ThreadListenerCommand;
 use crate::thread_state::ThreadState;
 use crate::thread_state::ThreadStateManager;
+use token_usage_replay::restored_thread_token_usage;
 use token_usage_replay::restored_token_usage_turn_id;
 use token_usage_replay::send_thread_token_usage_update_to_connection;
 

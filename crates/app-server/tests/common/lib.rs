@@ -50,6 +50,7 @@ pub use rollout::create_fake_rollout_with_session_and_thread_source;
 pub use rollout::create_fake_rollout_with_source;
 pub use rollout::create_fake_rollout_with_text_elements;
 pub use rollout::create_fake_rollout_with_token_usage;
+pub use rollout::create_fake_rollout_with_token_usage_and_amount;
 pub use rollout::rollout_path;
 use ruxex_app_server_protocol::JSONRPCResponse;
 use serde::de::DeserializeOwned;

@@ -829,6 +829,37 @@ impl ThreadRequestProcessor {
         Ok(Some(response.into()))
     }
 
+    pub(crate) async fn thread_token_usage_read(
+        &self,
+        params: ThreadTokenUsageReadParams,
+    ) -> Result<Option<ClientResponsePayload>, JSONRPCErrorError> {
+        let thread_id = ThreadId::from_string(&params.thread_id)
+            .map_err(|err| invalid_request(format!("invalid thread id: {err}")))?;
+
+        // Read the ordered persisted history even when the thread is loaded. Resume
+        // currently seeds the in-memory TokenUsageInfo from legacy TokenCount events,
+        // while newer TokenUsageRecord entries may follow them in the rollout.
+        let stored_thread = self
+            .read_stored_thread_for_read(thread_id, /*include_history*/ true)
+            .await
+            .map_err(thread_read_view_error)?;
+        let Some(stored_thread) = stored_thread else {
+            // A thread can exist in metadata without a rollout. Validate only this path so the
+            // common persisted-history read does not first load the same thread twice.
+            self.read_thread_view(thread_id, /*include_turns*/ false)
+                .await
+                .map_err(thread_read_view_error)?;
+            return Ok(Some(
+                ThreadTokenUsageReadResponse { token_usage: None }.into(),
+            ));
+        };
+        let token_usage = stored_thread
+            .history
+            .and_then(|history| restored_thread_token_usage(&history.items));
+
+        Ok(Some(ThreadTokenUsageReadResponse { token_usage }.into()))
+    }
+
     pub(crate) async fn thread_turns_list(
         &self,
         params: ThreadTurnsListParams,

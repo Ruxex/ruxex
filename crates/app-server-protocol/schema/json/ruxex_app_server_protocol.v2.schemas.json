@@ -1387,6 +1387,30 @@
             },
             "method": {
               "enum": [
+                "thread/tokenUsage/read"
+              ],
+              "title": "Thread/tokenUsage/readRequestMethod",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/definitions/ThreadTokenUsageReadParams"
+            }
+          },
+          "required": [
+            "id",
+            "method",
+            "params"
+          ],
+          "title": "Thread/tokenUsage/readRequest",
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/RequestId"
+            },
+            "method": {
+              "enum": [
                 "thread/turns/list"
               ],
               "title": "Thread/turns/listRequestMethod",
@@ -16262,6 +16286,36 @@
         "last",
         "total"
       ],
+      "type": "object"
+    },
+    "ThreadTokenUsageReadParams": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "threadId"
+      ],
+      "title": "ThreadTokenUsageReadParams",
+      "type": "object"
+    },
+    "ThreadTokenUsageReadResponse": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "tokenUsage": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ThreadTokenUsage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "title": "ThreadTokenUsageReadResponse",
       "type": "object"
     },
     "ThreadTokenUsageUpdatedNotification": {

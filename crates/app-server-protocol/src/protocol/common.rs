@@ -749,6 +749,11 @@ client_request_definitions! {
         serialization: thread_id(params.thread_id),
         response: v2::ThreadReadResponse,
     },
+    ThreadTokenUsageRead => "thread/tokenUsage/read" {
+        params: v2::ThreadTokenUsageReadParams,
+        serialization: thread_id(params.thread_id),
+        response: v2::ThreadTokenUsageReadResponse,
+    },
     ThreadTurnsList => "thread/turns/list" {
         params: v2::ThreadTurnsListParams,
         // Explicitly concurrent: this primarily reads append-only rollout storage.
@@ -1714,6 +1719,28 @@ mod tests {
             let actual = ClientRequest::try_from(request).map_err(|err| err.to_string());
             assert_eq!(actual, expected);
         }
+    }
+
+    #[test]
+    fn thread_token_usage_read_decodes() {
+        let request = JSONRPCRequest {
+            id: request_id(),
+            method: "thread/tokenUsage/read".to_string(),
+            params: Some(json!({"threadId": "thread-1"})),
+            trace: None,
+        };
+
+        let actual = ClientRequest::try_from(request)
+            .expect("thread/tokenUsage/read should decode as a client request");
+        assert_eq!(
+            actual,
+            ClientRequest::ThreadTokenUsageRead {
+                request_id: request_id(),
+                params: v2::ThreadTokenUsageReadParams {
+                    thread_id: "thread-1".to_string(),
+                },
+            }
+        );
     }
 
     #[test]

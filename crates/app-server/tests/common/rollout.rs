@@ -94,6 +94,41 @@ pub fn create_fake_rollout_with_token_usage(
     meta_rfc3339: &str,
     preview: &str,
 ) -> Result<String> {
+    create_fake_rollout_with_token_usage_amounts(
+        ruxex_home,
+        filename_ts,
+        meta_rfc3339,
+        preview,
+        None,
+        None,
+    )
+}
+
+/// Creates a minimal rollout whose persisted token usage includes provider-reported amounts.
+pub fn create_fake_rollout_with_token_usage_and_amount(
+    ruxex_home: &Path,
+    filename_ts: &str,
+    meta_rfc3339: &str,
+    preview: &str,
+) -> Result<String> {
+    create_fake_rollout_with_token_usage_amounts(
+        ruxex_home,
+        filename_ts,
+        meta_rfc3339,
+        preview,
+        Some(0.56),
+        Some(0.03),
+    )
+}
+
+fn create_fake_rollout_with_token_usage_amounts(
+    ruxex_home: &Path,
+    filename_ts: &str,
+    meta_rfc3339: &str,
+    preview: &str,
+    total_amount: Option<f64>,
+    last_amount: Option<f64>,
+) -> Result<String> {
     let thread_id = create_fake_rollout(
         ruxex_home,
         filename_ts,
@@ -121,8 +156,8 @@ pub fn create_fake_rollout_with_token_usage(
                 total_tokens: 90,
                 ruxex_rollout_budget_units: None,
             },
-            total_amount: None,
-            last_amount: None,
+            total_amount,
+            last_amount,
             model_context_window: Some(200_000),
         }),
         rate_limits: None,
