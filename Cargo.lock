@@ -8190,7 +8190,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "ruxex-api",
@@ -8308,7 +8308,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "app_test_support",
@@ -8469,7 +8469,7 @@ dependencies = [
 
 [[package]]
 name = "ruxex-app-server-protocol"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "inventory",

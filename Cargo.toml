@@ -1,6 +1,6 @@
 [package]
 name = "ruxex"
-version.workspace = true
+version = "0.9.0"
 edition.workspace = true
 license.workspace = true
 description = "Provider-neutral AI agent framework for Rust applications"
@@ -205,12 +205,12 @@ ruxex-agent-roles = { path = "crates/agent-roles", version = "0.8.0" }
 ruxex-ansi-escape = { path = "crates/ansi-escape", version = "0.8.0" }
 ruxex-api = { path = "crates/ruxex-api", version = "0.8.0" }
 ruxex-attachment-store = { path = "crates/attachment-store", version = "0.8.0" }
-ruxex-app-server = { path = "crates/app-server", version = "0.8.0", default-features = false }
+ruxex-app-server = { path = "crates/app-server", version = "0.9.0", default-features = false }
 ruxex-app-server-mock = { path = "crates/app-server-mock", version = "0.8.0" }
 ruxex-app-server-transport = { path = "crates/app-server-transport", version = "0.8.0" }
 ruxex-app-server-daemon = { path = "crates/app-server-daemon", version = "0.8.0" }
 ruxex-app-server-client = { path = "crates/app-server-client", version = "0.8.0" }
-ruxex-app-server-protocol = { path = "crates/app-server-protocol", version = "0.8.0" }
+ruxex-app-server-protocol = { path = "crates/app-server-protocol", version = "0.9.0" }
 ruxex-app-server-protocol-noop-macros = { path = "crates/app-server-protocol-noop-macros", version = "0.8.0" }
 ruxex-app-server-test-client = { path = "crates/app-server-test-client", version = "0.8.0" }
 ruxex-apply-patch = { path = "crates/apply-patch", version = "0.8.0" }
